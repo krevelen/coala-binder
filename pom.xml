@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>io.coala</groupId>
-	<artifactId>coala-binder</artifactId>
+	<artifactId>coala-root</artifactId>
 	<version>0.0.1</version>
 	<packaging>pom</packaging>
 
@@ -33,14 +33,17 @@
 		<!-- COALA Core API and utilities-->
 		<module>apis/core-api</module>
 
-		<!-- Enterprise Ontology API -->
-		<module>apis/enterprise-api</module>
-
 		<!-- Guice 3 adapter of the relevant core APIs -->
 		<module>adapters/guice3-adapter</module>
 
 		<!-- Eve 3 adapter of the relevant core APIs -->
 		<module>adapters/eve3-adapter</module>
+
+		<!-- DSOL2 adapter of the relevant core APIs -->
+		<module>adapters/dsol2-adapter</module>
+
+		<!-- Enterprise Ontology API requires eve and dsol -->
+		<module>apis/enterprise-api</module>
 
 		<!-- Conway's game of life -->
 		<module>demos/conway</module>
@@ -113,7 +116,7 @@
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>coala-binder</artifactId>
+				<artifactId>coala-core-api</artifactId>
 				<version>${project.parent.version}</version>
 			</dependency>
 
