@@ -1,0 +1,129 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>io.coala</groupId>
+		<artifactId>coala-root</artifactId>
+		<version>0.0.1</version>
+		<relativePath>../..</relativePath>
+	</parent>
+
+	<artifactId>dsol2-coala-adapter</artifactId>
+	<version>0.0.1</version>
+
+	<name>${project.artifactId} ${project.version}</name>
+	<description>
+		Utility and demo code for the Distributed Simulation Objects Library (DSOL)
+		$Id$
+	</description>
+
+	<properties>
+		<dsol.version>2.1.0</dsol.version>
+		<javafx.version>2.2</javafx.version>
+		<javafx.path>${java.home}/lib/jfxrt.jar</javafx.path>
+		<!-- jre8: ${java.home}/lib/jfxswt.jar -->
+	</properties>
+
+	<repositories>
+		<!-- COALA public Maven repository -->
+		<repository>
+			<name>COALA Public Maven Repository</name>
+			<id>coala-public</id>
+			<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+		
+		<!-- TU Delft simulation repository -->
+		<repository>
+			<name>DSOL Public Repository</name>
+			<id>dsol</id>
+			<!-- <url>http://sk-33.tbm.tudelft.nl/maven/</url> -->
+			<url>http://simulation.tudelft.nl/maven</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>coala-core-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>dsol</groupId>
+			<artifactId>dsol</artifactId>
+			<version>${dsol.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>jcommon</groupId>
+					<artifactId>jcommon</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+		<!-- 
+		<dependency>
+			<groupId>com.oracle</groupId>
+			<artifactId>javafx</artifactId>
+			<version>${javafx.version}</version>
+			<systemPath>${javafx.path}</systemPath>
+			<scope>system</scope>
+		</dependency>
+ 		-->
+ 
+		<dependency>
+			<!-- Java Extension API for dependency injection (and/or aspect oriented 
+				programming) -->
+			<groupId>javax.inject</groupId>
+			<artifactId>javax.inject</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>guice3-coala-adapter</artifactId>
+			<version>0.0.1</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>eve3-coala-adapter</artifactId>
+			<version>0.0.1</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- 
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>aglobe5-coala-adapter</artifactId>
+			<version>0.0.1</version>
+			<scope>test</scope>
+		</dependency>
+		 -->
+
+	</dependencies>
+</project>
