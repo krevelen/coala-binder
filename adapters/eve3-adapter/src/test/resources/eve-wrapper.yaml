@@ -1,0 +1,38 @@
+# Eve configuration
+
+# $Id$
+# $URL$
+
+templates:
+   testAgent:
+      class: io.coala.eve3.TestAgent
+      state:
+         builder: com.almende.eve.state.memory.MemoryStateBuilder
+      scheduler:
+         builder: com.almende.eve.scheduling.SimpleSchedulerBuilder
+      protocols:
+      -  builder: com.almende.eve.algorithms.clustering.GlobalAddressProtocolBuilder
+      transports:
+      -  builder: com.almende.eve.transport.http.HttpTransportBuilder
+         servletUrl: http://localhost:8081/agents/
+         servletLauncher: JettyLauncher
+         servletClass: com.almende.eve.transport.http.DebugServlet
+         doShortcut: true
+         doAuthentication: false
+         jetty: 
+           port: 8081
+      -  builder: com.almende.eve.algorithms.clustering.GlobalAddressTransportBuilder
+         realAddressPattern: http://localhost:8081/agents/
+      -  builder: com.almende.eve.transport.ws.WebsocketTransportBuilder
+         address: ws://localhost:8081/ws
+         servletLauncher: JettyLauncher
+         server: true
+         doShortcut: true
+         doAuthentication: false
+         jetty:
+           port: 8081
+
+agents:
+-  id: agent1
+   extends: templates/testAgent
+
