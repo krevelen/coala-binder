@@ -121,7 +121,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 		{
 			updateWrapperStatus(BasicAgentStatus.PASSIVE);
 			// let Eve perform the activate() method, not this observer
-			getScheduler().schedule(null, 
+			getScheduler().schedule(//null, 
 					new JSONRequest("activate", JsonUtil.getJOM()
 							.createObjectNode()), 0);
 		} else if (status.isFinishedStatus() || status.isFailedStatus())
@@ -129,7 +129,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 			updateWrapperStatus(BasicAgentStatus.COMPLETE);
 
 			// let Eve perform the finish() method, not this observer
-			getScheduler().schedule(null, 
+			getScheduler().schedule(//null, 
 					new JSONRequest("finish", JsonUtil.getJOM()
 							.createObjectNode()), 0);
 		}
@@ -167,14 +167,14 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 	// }
 
 	@Override
-	public final void onReady()
+	public final void onInit()//onReady()
 	{
-		super.onReady();
+		super.onInit();//onReady();
 //		System.err.println("init "+getId());
 		updateWrapperStatus(BasicAgentStatus.CREATED);
 		
 		// get Eve container to run initialize() when the scheduler is running
-		getScheduler().schedule(null, 
+		getScheduler().schedule(//null, 
 				new JSONRequest("initialize", JsonUtil.getJOM()
 						.createObjectNode()), 0);
 	}
@@ -231,9 +231,9 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 	}
 
 	@Override
-	protected final void destroy(final Boolean instanceOnly)
+	protected final void destroy()//final Boolean instanceOnly)
 	{
-		super.destroy(instanceOnly);
+		super.destroy();//instanceOnly);
 		final AgentID agentID = getAgentID();
 		final List<URI> addresses = EveAgentManager.getInstance().getAddress(
 				agentID);

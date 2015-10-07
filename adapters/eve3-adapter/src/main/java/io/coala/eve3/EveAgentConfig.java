@@ -242,7 +242,7 @@ public interface EveAgentConfig extends ReplicationConfig
 		@Override
 		public AgentConfig convert(final Method method, final String input)
 		{
-			return AgentConfig.decorate((ObjectNode) JsonUtil.fromJSON(input));
+			return new AgentConfig((ObjectNode) JsonUtil.fromJSON(input));
 		}
 	}
 

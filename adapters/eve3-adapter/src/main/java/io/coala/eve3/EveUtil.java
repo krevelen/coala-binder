@@ -22,13 +22,6 @@ package io.coala.eve3;
 
 import static org.aeonbits.owner.util.Collections.entry;
 import static org.aeonbits.owner.util.Collections.map;
-import io.coala.agent.AgentID;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.log.LogUtil;
-import io.coala.message.Message;
-import io.coala.util.Util;
-import io.coala.web.WebUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,11 +37,19 @@ import org.apache.log4j.Logger;
 import com.almende.eve.agent.Agent;
 import com.almende.eve.agent.AgentBuilder;
 import com.almende.eve.agent.AgentConfig;
-import com.almende.eve.config.Config;
+import com.almende.eve.capabilities.Config;
 import com.almende.eve.config.YamlReader;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.coala.agent.AgentID;
+import io.coala.exception.CoalaException;
+import io.coala.exception.CoalaExceptionFactory;
+import io.coala.log.LogUtil;
+import io.coala.message.Message;
+import io.coala.util.Util;
+import io.coala.web.WebUtil;
 
 /**
  * {@link EveUtil}
@@ -266,7 +267,7 @@ public class EveUtil implements Util
 			for (Map.Entry<String, ? extends JsonNode> param : parameters)
 				agentConfig.set(param.getKey(), param.getValue());
 
-		final T result = (T) new AgentBuilder().withConfig(agentConfig).build();
+		final T result = (T) new AgentBuilder().with(agentConfig).build();
 		LOG.trace("Created agent with config: " + agentConfig);
 		return result;
 	}
@@ -305,7 +306,7 @@ public class EveUtil implements Util
 
 				LOG.trace("Creating agent " + id + " from config at "
 						+ cfg.agentConfigUri());
-				return valueOf(AgentConfig.decorate((ObjectNode) agent), agentType,
+				return valueOf(new AgentConfig((ObjectNode) agent), agentType,
 						parameters);
 			}
 		}
