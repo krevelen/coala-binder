@@ -20,17 +20,8 @@
  */
 package io.coala.example.conway;
 
-import io.coala.agent.AgentStatusObserver;
-import io.coala.agent.AgentStatusUpdate;
-import io.coala.bind.Binder;
-import io.coala.bind.BinderFactory;
-import io.coala.capability.admin.CreatingCapability;
-import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.exception.CoalaException;
-import io.coala.log.LogUtil;
-import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
-import io.coala.time.TimeUnit;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.HashSet;
 import java.util.List;
@@ -41,9 +32,21 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import io.coala.agent.AgentStatusObserver;
+import io.coala.agent.AgentStatusUpdate;
+import io.coala.bind.Binder;
+import io.coala.bind.BinderFactory;
+import io.coala.capability.admin.CreatingCapability;
+import io.coala.capability.configure.ConfiguringCapability;
+import io.coala.capability.replicate.ReplicationConfig;
+import io.coala.exception.CoalaException;
+import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
+import io.coala.time.SimTime;
+import io.coala.time.SimTimeFactory;
+import io.coala.time.TimeUnit;
 import rx.functions.Action1;
 
 /**
@@ -53,7 +56,7 @@ import rx.functions.Action1;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  */
-@Ignore
+// @Ignore
 public class ConwayTest
 {
 
@@ -66,52 +69,52 @@ public class ConwayTest
 	@BeforeClass
 	public static void setupBinderFactory() throws CoalaException
 	{
-		CellWorldLattice.getGlobalTransitions().subscribe(
-				new Action1<CellStateTransition>()
-				{
-
-					@Override
-					public void call(final CellStateTransition transition)
-					{
-						LOG.trace("Observed transition: " + transition);
-					}
-				});
+		CellWorld.Util.GLOBAL_TRANSITIONS.subscribe(new Action1<CellState>()
+		{
+			@Override
+			public void call(final CellState transition)
+			{
+				LOG.trace("Observed transition: " + transition);
+			}
+		});
 	}
 
 	// @Test
 	public void testBasicMethods() throws Exception
 	{
-		final Binder binder = BinderFactory.Builder
-				.fromFile(CONFIG_FILE)
+		final Binder binder = BinderFactory.Builder.fromFile(CONFIG_FILE)
 				.withProperty(ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY,
-						"testModel" + System.currentTimeMillis()).build()
-				.create("methodTester");
+						"testModel" + System.currentTimeMillis())
+				.build().create("methodTester");
 
 		final SimTimeFactory timer = binder.inject(SimTimeFactory.class);
 		final SimTime t1 = timer.create(1.5, TimeUnit.TICKS);
 		final SimTime t2 = timer.create(1.6, TimeUnit.TICKS);
 
 		final CellID cellID1 = new CellID(binder.getID().getModelID(), 1, 1);
-		final CellState state1 = new CellState(t1, cellID1, LifeState.ALIVE);
+		final CellState state1 = new CellState(t1, cellID1, LifeStatus.ALIVE);
 		LOG.trace("Created: " + state1);
 
-		final CellState state2 = new CellState(t2, cellID1, LifeState.ALIVE);
+		final CellState state2 = new CellState(t2, cellID1, LifeStatus.ALIVE);
 		LOG.trace("Created: " + state2);
 
 		final CellID cellID2 = new CellID(binder.getID().getModelID(), 1, 2);
 		LOG.trace("Booted agent with id: " + cellID1);
 
-		final CellState state3a = new CellState(t2, cellID2, LifeState.DEAD);
-		final CellState state3b = new CellState(t2, cellID2, LifeState.DEAD);
+		final CellState state3a = new CellState(t2, cellID2, LifeStatus.DEAD);
+		final CellState state3b = new CellState(t2, cellID2, LifeStatus.DEAD);
 		LOG.trace("Created: " + state3a);
 
-		Assert.assertNotEquals("Hash codes should not match for " + state1
-				+ " and " + state2, state1.hashCode(), state2.hashCode());
-		Assert.assertNotEquals("Hash codes should not match for " + state2
-				+ " and " + state3a, state2.hashCode(), state3a.hashCode());
-		Assert.assertNotEquals("Hash codes should not match for " + state1
-				+ " and " + state3a, state1.hashCode(), state3a.hashCode());
+		Assert.assertNotEquals(
+				"Hash codes should not match for " + state1 + " and " + state2,
+				state1.hashCode(), state2.hashCode());
+		Assert.assertNotEquals(
+				"Hash codes should not match for " + state2 + " and " + state3a,
+				state2.hashCode(), state3a.hashCode());
+		Assert.assertNotEquals(
+				"Hash codes should not match for " + state1 + " and " + state3a,
+				state1.hashCode(), state3a.hashCode());
 
 		Assert.assertTrue("Should be smaller", state1.compareTo(state2) < 0);
 		Assert.assertTrue("Should be smaller", state2.compareTo(state3a) < 0);
@@ -119,55 +122,72 @@ public class ConwayTest
 
 		Assert.assertEquals("Should be equal", state3a, state3b);
 
-		final CellStateTransition tran = new CellStateTransition(state1, state2);
-		LOG.trace("Created: " + tran.toString());
+		// final CellStateTransition tran = new CellStateTransition(state1,
+		// state2);
+		LOG.trace("Created: " + state2);
 	}
 
 	@Test
 	public void testCellWorld() throws Exception
 	{
-		final Binder binder = BinderFactory.Builder
-				.fromFile(CONFIG_FILE)
+		final Binder binder = BinderFactory.Builder.fromFile(CONFIG_FILE)
 				.withProperty(ReplicationConfig.class,
-						ReplicationConfig.MODEL_NAME_KEY,
-						"testModel" + System.currentTimeMillis()).build()
-				.create("conwayBooter");
+						ReplicationConfig.MODEL_NAME_KEY, "torus1")
+				.build().create("conwayBooter");
 
-		final CellWorldLattice world = (CellWorldLattice) binder
-				.inject(CellWorld.class);
 		final CreatingCapability booterSvc = binder
 				.inject(CreatingCapability.class);
-		final List<Map<CellID, LifeState>> cellStates = world
-				.getInitialStates();
-		LOG.trace("Got initial states: " + cellStates);
-		final CountDownLatch latch = new CountDownLatch(cellStates.size()
-				* cellStates.get(0).size());
+		final List<Map<CellID, LifeStatus>> cellStates = CellWorld.Util
+				.importLattice(binder.getID().getModelID(),
+						binder.inject(ConfiguringCapability.class));
+		final int total = cellStates.size() * cellStates.get(0).size();
+		assertEquals("Should import all initial cell states", 9, total);
+		LOG.trace("Initial states: " + JsonUtil.toPrettyJSON(cellStates));
+
+		final CountDownLatch initializedLatch = new CountDownLatch(total);
+		final CountDownLatch completedLatch = new CountDownLatch(total);
 		final Set<CellID> initialized = new HashSet<CellID>();
-		for (Map<CellID, LifeState> row : cellStates)
+		final Set<CellID> completed = new HashSet<CellID>();
+		for (Map<CellID, LifeStatus> row : cellStates)
 			for (CellID cellID : row.keySet())
 			{
 				final CellID myCellID = cellID;
-				LOG.trace("Booting agent with id: " + cellID
-						+ ", initialized: " + initialized);
-				booterSvc.createAgent(cellID, BasicCell.class).subscribe(
-						new AgentStatusObserver()
+				// LOG.trace("Booting agent with id: " + cellID + ",
+				// initialized: "
+				// + initialized);
+				booterSvc.createAgent(cellID, BasicCell.class)
+						.subscribe(new AgentStatusObserver()
 						{
 							@Override
 							public void onNext(final AgentStatusUpdate update)
 							{
-								LOG.trace("Observed status update: "
-										+ update);
-								if (update.getStatus().isInitializedStatus()
-										&& initialized.add((CellID) update
-												.getAgentID()))
-									latch.countDown();
+								// LOG.trace("Observed status update: " +
+								// update);
+								if (update.getStatus().isInitializedStatus())
+								{
+									if (initialized
+											.add((CellID) update.getAgentID()))
+										initializedLatch.countDown();
+									else
+										LOG.warn("already initialized "
+												+ update.getAgentID());
+								} else
+									if (update.getStatus().isCompleteStatus())
+								{
+									if (completed
+											.add((CellID) update.getAgentID()))
+										completedLatch.countDown();
+									else
+										LOG.warn("already completed "
+												+ update.getAgentID());
+								} else if (update.getStatus().isFailedStatus())
+									fail("Cell failed: " + update.getAgentID());
 							}
 
 							@Override
 							public void onCompleted()
 							{
-								LOG.trace("No more updates for "
-										+ myCellID);
+								LOG.trace("No more updates for " + myCellID);
 							}
 
 							@Override
@@ -177,7 +197,14 @@ public class ConwayTest
 							}
 						});
 			}
-		latch.await();
-		LOG.trace("Cells initialized: " + initialized);
+		initializedLatch.await(2, java.util.concurrent.TimeUnit.SECONDS);
+		assertEquals("Cells should have initialized in <2s", 0,
+				initializedLatch.getCount());
+		LOG.trace("All cells initialized: " + initialized);
+
+		completedLatch.await(10, java.util.concurrent.TimeUnit.SECONDS);
+		assertEquals("Cells should have completed in <10s", 0,
+				completedLatch.getCount());
+		LOG.trace("All cells completed: " + completed);
 	}
 }

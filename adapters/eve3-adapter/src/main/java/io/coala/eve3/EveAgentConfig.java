@@ -87,7 +87,7 @@ public interface EveAgentConfig extends ReplicationConfig
 	String AGENT_ID_KEY = "master.agent.id";
 
 	/** */
-	String AGENT_ID_DEFAULT = "time-control";
+	String AGENT_ID_DEFAULT = "my-agent";
 
 	/** */
 	String AGENT_CONFIG_FILE_KEY = "agent.config-uri";
@@ -172,14 +172,14 @@ public interface EveAgentConfig extends ReplicationConfig
 	Class<? extends Scheduler> schedulerBuilder();
 
 	@Key(SCHEDULER_CONFIG_KEY)
-	@DefaultValue("{\"builder\":\"${" + SCHEDULER_BUILDER_KEY + "}\"}")
+	@DefaultValue("{\"class\":\"${" + SCHEDULER_BUILDER_KEY + "}\"}")
 	JsonNode schedulerConfig();
 
 	@Key(STATE_BUILDER_KEY)
 	Class<? extends State> stateBuilder();
 
 	@Key(STATE_CONFIG_KEY)
-	@DefaultValue("{\"builder\":\"${" + STATE_BUILDER_KEY + "}\"}")
+	@DefaultValue("{\"class\":\"${" + STATE_BUILDER_KEY + "}\"}")
 	JsonNode stateConfig();
 
 	@Key(HTTP_TRANSPORT_BUILDER_KEY)
@@ -194,7 +194,7 @@ public interface EveAgentConfig extends ReplicationConfig
 	boolean transportAuthenticate();
 
 	@Key(HTTP_TRANSPORT_CONFIG_KEY)
-	@DefaultValue("{\"builder\":\"${" + HTTP_TRANSPORT_BUILDER_KEY
+	@DefaultValue("{\"class\":\"${" + HTTP_TRANSPORT_BUILDER_KEY
 			+ "}\",\"servletUrl\":\"${"
 			+ HTTP_TRANSPORT_SERVLET_URL_KEY
 			+ "}\",\"doAuthentication\":${"

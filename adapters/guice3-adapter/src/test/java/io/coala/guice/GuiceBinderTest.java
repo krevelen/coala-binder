@@ -20,15 +20,6 @@
  */
 package io.coala.guice;
 
-import io.coala.agent.Agent;
-import io.coala.agent.AgentFactory;
-import io.coala.bind.BinderFactory;
-import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.log.LogUtil;
-import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
-import io.coala.time.TimeUnit;
-
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
@@ -36,6 +27,14 @@ import com.google.inject.assistedinject.AssistedInjectBinding;
 import com.google.inject.assistedinject.AssistedInjectTargetVisitor;
 import com.google.inject.assistedinject.AssistedMethod;
 import com.google.inject.spi.DefaultBindingTargetVisitor;
+
+import io.coala.agent.Agent;
+import io.coala.agent.AgentFactory;
+import io.coala.bind.BinderFactory;
+import io.coala.capability.replicate.ReplicationConfig;
+import io.coala.log.LogUtil;
+import io.coala.time.SimTime;
+import io.coala.time.TimeUnit;
 
 /**
  * {@link GuiceBinderTest}
@@ -58,12 +57,14 @@ public class GuiceBinderTest
 	 * @version $Revision: 312 $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
-	public static class Visitor extends
-			DefaultBindingTargetVisitor<Object, Void> implements
-			AssistedInjectTargetVisitor<Object, Void>
+	public static class Visitor
+			extends DefaultBindingTargetVisitor<Object, Void>
+			implements AssistedInjectTargetVisitor<Object, Void>
 	{
 
-		/** @see AssistedInjectTargetVisitor#visit(AssistedInjectBinding) */
+		/**
+		 * @see AssistedInjectTargetVisitor#visit(AssistedInjectBinding)
+		 */
 		@Override
 		public Void visit(final AssistedInjectBinding<? extends Object> binding)
 		{
@@ -85,11 +86,11 @@ public class GuiceBinderTest
 	@Test
 	public void injectTest() throws Exception
 	{
-		final BinderFactory factory = BinderFactory.Builder
-				.fromFile()
+		final BinderFactory factory = BinderFactory.Builder.fromFile()
 				.withProperty(ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY,
-						"testModel" + System.currentTimeMillis()).build();
+						"testModel" + System.currentTimeMillis())
+				.build();
 
 		final GuiceBinder binder = (GuiceBinder) factory.create("testAgent",
 				TestAgent.class);
@@ -106,10 +107,10 @@ public class GuiceBinderTest
 
 		// test SimTimeFactory; log binding using a visitor
 
-		binder.getInjector().getBinding(SimTimeFactory.class)
+		binder.getInjector().getBinding(SimTime.Factory.class)
 				.acceptTargetVisitor(new Visitor());
 
-		final SimTime testTime = (SimTime) binder.inject(SimTimeFactory.class)
+		final SimTime testTime = (SimTime) binder.inject(SimTime.Factory.class)
 				.create(1, TimeUnit.TICKS);
 		LOG.trace("Assisted Injector created a time: " + testTime
 		// + ", in base time units: " + testTime.toBaseUnit()

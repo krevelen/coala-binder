@@ -20,6 +20,26 @@
  */
 package io.coala.guice;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.inject.Provider;
+
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Module;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.matcher.Matchers;
+import com.google.inject.name.Names;
+
 import io.coala.agent.Agent;
 import io.coala.agent.AgentFactory;
 import io.coala.agent.AgentID;
@@ -40,28 +60,7 @@ import io.coala.random.impl.RandomDistributionFactoryImpl;
 import io.coala.random.impl.RandomNumberStreamFactoryWell19937c;
 import io.coala.time.SimTime;
 import io.coala.time.SimTimeFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import javax.inject.Provider;
-
-import org.apache.log4j.Logger;
-
 import rx.Observable;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.Module;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.matcher.Matchers;
-import com.google.inject.name.Names;
 
 /**
  * {@link GuiceBinder}
@@ -71,8 +70,8 @@ import com.google.inject.name.Names;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  */
-public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
-		Binder
+@SuppressWarnings("deprecation")
+public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 {
 
 	/** */
@@ -105,8 +104,9 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
 			final Observable<AgentStatusUpdate> ownerStatus,
 			final Module... modules)
 	{
-		this(config, config.getReplicationConfig().newID()
-				.createAgentID(clientName), clientType, ownerStatus, modules);
+		this(config,
+				config.getReplicationConfig().newID().createAgentID(clientName),
+				clientType, ownerStatus, modules);
 	}
 
 	/**
@@ -116,8 +116,8 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
 	 * @param clientType
 	 */
 	@SuppressWarnings("rawtypes")
-	public GuiceBinder(final BinderFactoryConfig config,
-			final AgentID clientID, final Class<? extends Agent> clientType,
+	public GuiceBinder(final BinderFactoryConfig config, final AgentID clientID,
+			final Class<? extends Agent> clientType,
 			final Observable<AgentStatusUpdate> ownerStatus,
 			final Module... modules)
 	{
@@ -126,9 +126,9 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
 		this.ownerStatus = ownerStatus;
 
 		final Class<? extends Agent> agentType = clientType != null ? clientType
-				: config.getCustomAgentTypes().containsKey(getID()) ? config
-						.getCustomAgentTypes().get(getID()) : config
-						.getDefaultAgentType();
+				: config.getCustomAgentTypes().containsKey(getID())
+						? config.getCustomAgentTypes().get(getID())
+						: config.getDefaultAgentType();
 		LOG.trace("Agent type for: " + getID() + " = " + agentType
 				+ ", configured: " + config.getCustomAgentTypes());
 
@@ -142,7 +142,7 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
 			@Override
 			protected void configure()
 			{
-				// bind BAAL @InjectLogger injection annotation
+				// bind @InjectLogger injection annotation
 				bindListener(Matchers.any(), new InjectLoggerTypeListener());
 
 				bind(Binder.class).toInstance(GuiceBinder.this);
@@ -151,19 +151,19 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
 
 				bind(BinderFactoryConfig.class).toInstance(config);
 
-				bind(ModelComponentIDFactory.class).toInstance(
-						config.getReplicationConfig().newID());
+				bind(ModelComponentIDFactory.class)
+						.toInstance(config.getReplicationConfig().newID());
 
-				bind(ReplicationConfig.class).toInstance(
-						config.getReplicationConfig());
-
-				// FIXME replace by binder config
-				bind(RandomDistribution.Factory.class).to(
-						RandomDistributionFactoryImpl.class);
+				bind(ReplicationConfig.class)
+						.toInstance(config.getReplicationConfig());
 
 				// FIXME replace by binder config
-				bind(RandomNumberStream.Factory.class).to(
-						RandomNumberStreamFactoryWell19937c.class);
+				bind(RandomDistribution.Factory.class)
+						.to(RandomDistributionFactoryImpl.class);
+
+				// FIXME replace by binder config
+				bind(RandomNumberStream.Factory.class)
+						.to(RandomNumberStreamFactoryWell19937c.class);
 
 				LOG.trace("Bound " + Binder.class.getName() + " to "
 						+ GuiceBinder.this + " for client: " + getID());
@@ -174,8 +174,8 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
 				// http://beust.com/weblog/2013/07/12/flexible-configuration-with-guice/
 				// and OWNER API at http://owner.aeonbits.org/
 
-				bindConstant().annotatedWith(Names.named(AGENT_TYPE)).to(
-						agentType == null ? Agent.class : agentType);
+				bindConstant().annotatedWith(Names.named(AGENT_TYPE))
+						.to(agentType == null ? Agent.class : agentType);
 
 				for (Entry<Class<? extends CapabilityFactory>, Class<? extends Capability>> entry : config
 						.getSingletonServiceTypes().entrySet())
@@ -187,11 +187,16 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements
 						.getInstantServiceTypes().entrySet())
 					bindService(entry.getKey(), entry.getValue());
 
-				install(new FactoryModuleBuilder().implement(SimTime.class,
-						GuiceSimTime.class).build(SimTimeFactory.class));
+				install(new FactoryModuleBuilder()
+						.implement(SimTime.class, GuiceSimTime.class)
+						.build(SimTimeFactory.class));
+				install(new FactoryModuleBuilder()
+						.implement(SimTime.class, GuiceSimTime.class)
+						.build(SimTime.Factory.class));
 
-				install(new FactoryModuleBuilder().implement(Agent.class,
-						agentType == null ? BasicAgent.class : agentType)
+				install(new FactoryModuleBuilder()
+						.implement(Agent.class, agentType == null
+								? BasicAgent.class : agentType)
 						.build(AgentFactory.class));
 
 			}

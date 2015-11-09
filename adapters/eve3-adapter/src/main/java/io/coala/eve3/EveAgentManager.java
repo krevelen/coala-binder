@@ -20,6 +20,12 @@
  */
 package io.coala.eve3;
 
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.coala.agent.AbstractAgentManager;
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
@@ -28,15 +34,6 @@ import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
-import io.coala.log.LogUtil;
-
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
 
 /**
  * {@link EveAgentManager}
@@ -50,7 +47,8 @@ public class EveAgentManager extends AbstractAgentManager
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(EveAgentManager.class);
+	// private static final Logger LOG =
+	// LogUtil.getLogger(EveAgentManager.class);
 
 	/** */
 	private static EveAgentManager INSTANCE;
@@ -78,8 +76,8 @@ public class EveAgentManager extends AbstractAgentManager
 		if (INSTANCE == null)
 			try
 			{
-				INSTANCE = getInstance(BinderFactory.Builder
-						.fromFile(configPath));
+				INSTANCE = getInstance(
+						BinderFactory.Builder.fromFile(configPath));
 			} catch (final CoalaException e)
 			{
 				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime(e,
@@ -123,6 +121,12 @@ public class EveAgentManager extends AbstractAgentManager
 		return INSTANCE;
 	}
 
+	// TODO store wrapper agent address(es) in (distributed) hash map
+
+	/** */
+	private final Map<AgentID, List<URI>> agentURLs = Collections
+			.synchronizedMap(new HashMap<AgentID, List<URI>>());
+
 	/**
 	 * {@link EveAgentManager} constructor
 	 * 
@@ -143,6 +147,7 @@ public class EveAgentManager extends AbstractAgentManager
 		super(binder);
 	}
 
+	/* exposes the super method within this package */
 	@Override
 	protected void updateWrapperAgentStatus(final AgentID agentID,
 			final AgentStatus<?> status)
@@ -158,21 +163,14 @@ public class EveAgentManager extends AbstractAgentManager
 	@Override
 	protected AgentID boot(final Agent agent) throws CoalaException
 	{
-		final AgentID agentID = agent.getID();
-		final String eveAgentID = EveUtil.toEveAgentId(agentID);
-		if (EveUtil.hasWrapperAgent(eveAgentID))
-		{
-			LOG.warn("Agent already wrapped by an Eve agent: " + agentID);
-			return agentID;
-		}
 		try
 		{
-			EveUtil.createWrapperAgent(eveAgentID);
-			return agentID;
+			EveUtil.createWrapperAgent(agent.getID());
+			return agent.getID();
 		} catch (final Exception e)
 		{
-			throw CoalaExceptionFactory.AGENT_CREATION_FAILED
-					.create(e, agentID);
+			throw CoalaExceptionFactory.AGENT_CREATION_FAILED.create(e,
+					agent.getID());
 		}
 	}
 
@@ -188,23 +186,16 @@ public class EveAgentManager extends AbstractAgentManager
 		// FIXME destroy/cleanup eve host somehow
 	}
 
-	// TODO store wrapper agent address(es) in (distributed) hash map
-
-	/** */
-	private final Map<AgentID, List<URI>> agentURLs = Collections
-			.synchronizedMap(new HashMap<AgentID, List<URI>>());
-
 	protected void setExposed(final AgentID agentID, final Object exposed)
 			throws Exception
 	{
-		final String agentId = EveUtil.toEveAgentId(agentID);
-		if (!EveUtil.hasWrapperAgent(agentId))
-			throw new IllegalStateException("No wrapper agent for: " + agentID);
-
-		((EveExposingAgent) EveUtil.getWrapperAgent(agentId)).setExposed(exposed);
+		((EveExposingAgent) EveUtil.getWrapperAgent(agentID))
+				.setExposed(exposed);
 	}
 
 	/**
+	 * Overrides the current addresses of an Eve wrapper agent
+	 * 
 	 * @param agentID
 	 * @param eveURLs
 	 */
@@ -215,7 +206,7 @@ public class EveAgentManager extends AbstractAgentManager
 
 	/**
 	 * @param agentID
-	 * @return
+	 * @return the Eve wrapper agent's current addresses
 	 */
 	protected List<URI> getAddress(final AgentID agentID)
 	{

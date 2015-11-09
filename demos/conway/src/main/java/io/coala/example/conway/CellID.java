@@ -75,10 +75,10 @@ public class CellID extends AgentID
 		return this.col;
 	}
 
-	/** @see AbstractIdentifier#compareTo(AbstractIdentifier) */
 	@Override
 	public int compareTo(final AbstractIdentifier<String> other)
 	{
+		super.hashCode();
 		if (other instanceof CellID)
 		{
 			final CellID that = (CellID) other;
@@ -90,10 +90,10 @@ public class CellID extends AgentID
 		return super.compareTo(other);
 	}
 
-	@Override
-	public String toString()
-	{
-		return String.format("%s[%02d,%02d]", getModelID(), getRow(), getCol());
-	}
+//	@Override
+//	public String toString()
+//	{
+//		return String.format("%s[%02d,%02d]", getModelID(), getRow(), getCol());
+//	}
 
 }

@@ -54,15 +54,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  */
-public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
-		Observer<AgentStatusUpdate>, EveSenderAgent, EveReceiverAgent,
-		EveExposingAgent
+public class EveWrapperAgent extends com.almende.eve.agent.Agent
+		implements Observer<AgentStatusUpdate>, EveSenderAgent,
+		EveReceiverAgent, EveExposingAgent
 {
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger(EveWrapperAgent.class);
 
-	/** @return the {@link AgentID} identifier of the wrapped agent */
+	/**
+	 * @return the {@link AgentID} identifier of the wrapped agent
+	 */
 	protected final AgentID getAgentID()
 	{
 		return EveUtil.toAgentID(getId());
@@ -73,8 +75,8 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 	 */
 	protected final void updateWrapperStatus(final BasicAgentStatus status)
 	{
-		final AgentID agentID = getAgentID();
-		EveAgentManager.getInstance().updateWrapperAgentStatus(agentID, status);
+		EveAgentManager.getInstance().updateWrapperAgentStatus(getAgentID(),
+				status);
 	}
 
 	/**
@@ -85,8 +87,9 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 	{
 		final AgentID agentID = getAgentID();
 		final List<URI> eveURLs = getUrls();
-		LOG.info(String.format("Eve wrapper: %s of agent: %s "
-				+ "went online at: %s", getId(), agentID, eveURLs));
+		LOG.info(String.format(
+				"Eve wrapper: %s of agent: %s " + "went online at: %s", getId(),
+				agentID, eveURLs));
 
 		try
 		{
@@ -95,51 +98,65 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 					.subscribe(this);
 		} catch (final Throwable t)
 		{
-			LOG.error(String.format("Problem for wrapper %s getting "
-					+ "status updates from agent %s", getId(), agentID), t);
+			LOG.error(
+					String.format(
+							"Problem for wrapper %s getting "
+									+ "status updates from agent %s",
+							getId(), agentID),
+					t);
 		}
 	}
 
-	/** @see Observer#onError(Throwable) */
+	/**
+	 * @see Observer#onError(Throwable)
+	 */
 	@Override
 	public final void onError(final Throwable t)
 	{
 		t.printStackTrace();
 	}
 
-	/** @see Observer#onNext(Object) */
+	/**
+	 * @see Observer#onNext(Object)
+	 */
 	@Override
 	public final void onNext(final AgentStatusUpdate update)
 	{
+		// System.err.println(
+		// "Wrapper " + getId() + " observed agent status: " + update);
 		final AgentStatus<?> status = update.getStatus();
 		if (this.destroyed)
 			throw CoalaExceptionFactory.STATUS_UPDATE_FAILED.createRuntime(
-					(Agent) null, status, "Eve wrapper " + getId()
-							+ " ALREADY DESTROYED");
+					(Agent) null, status,
+					"Eve wrapper " + getId() + " ALREADY DESTROYED");
 
 		if (status.isInitializedStatus())
 		{
 			updateWrapperStatus(BasicAgentStatus.PASSIVE);
 			// let Eve perform the activate() method, not this observer
-			getScheduler().schedule(//null, 
-					new JSONRequest("activate", JsonUtil.getJOM()
-							.createObjectNode()), 0);
+			getScheduler().schedule(// null,
+					new JSONRequest("activate",
+							JsonUtil.getJOM().createObjectNode()),
+					0);
 		} else if (status.isFinishedStatus() || status.isFailedStatus())
 		{
 			updateWrapperStatus(BasicAgentStatus.COMPLETE);
 
 			// let Eve perform the finish() method, not this observer
-			getScheduler().schedule(//null, 
-					new JSONRequest("finish", JsonUtil.getJOM()
-							.createObjectNode()), 0);
+			getScheduler().schedule(// null,
+					new JSONRequest("finish",
+							JsonUtil.getJOM().createObjectNode()),
+					0);
 		}
 	}
 
-	/** @see Observer#onCompleted() */
+	/**
+	 * @see Observer#onCompleted()
+	 */
 	@Override
 	public final void onCompleted()
 	{
-		System.err.println(getAgentID()+" completed, destroy wrapper?");
+		System.err.println(getAgentID() + " completed, destroy wrapper?");
 	}
 
 	// @Override
@@ -167,21 +184,24 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 	// }
 
 	@Override
-	public final void onInit()//onReady()
+	public final void onBoot()// onReady()
 	{
-		super.onInit();//onReady();
-//		System.err.println("init "+getId());
-		updateWrapperStatus(BasicAgentStatus.CREATED);
-		
+		super.onBoot();// onReady();
+		// System.err.println("init "+getId());
+
 		// get Eve container to run initialize() when the scheduler is running
-		getScheduler().schedule(//null, 
-				new JSONRequest("initialize", JsonUtil.getJOM()
-						.createObjectNode()), 0);
+		if (getScheduler() == null)
+			throw new NullPointerException("No scheduler ?!?");
+		getScheduler().schedule(// null,
+				new JSONRequest("initialize",
+						JsonUtil.getJOM().createObjectNode()),
+				0);
 	}
 
 	@Access(AccessType.SELF)
 	public final void initialize()
 	{
+		updateWrapperStatus(BasicAgentStatus.CREATED);
 		LOG.trace("Eve wrapper " + getId() + " now initializing...");
 
 		configureLifeCycleHandling();
@@ -224,27 +244,29 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 			// EveUtil.getEveHost().deleteAgent(getId());
 		} catch (final Throwable t)
 		{
-			LOG.error(String.format("Problem deleting"
-					+ " Eve wrapper %s of agent: %s", getId(), getAgentID()), t);
+			LOG.error(String.format(
+					"Problem deleting" + " Eve wrapper %s of agent: %s",
+					getId(), getAgentID()), t);
 			updateWrapperStatus(BasicAgentStatus.FAILED);
 		}
 	}
 
 	@Override
-	protected final void destroy()//final Boolean instanceOnly)
+	protected final void destroy()// final Boolean instanceOnly)
 	{
-		super.destroy();//instanceOnly);
+		super.destroy();// instanceOnly);
 		final AgentID agentID = getAgentID();
-		final List<URI> addresses = EveAgentManager.getInstance().getAddress(
-				agentID);
-		LOG.info(String.format("Eve wrapper: %s of agent: %s "
-				+ "went offline at: %s", getId(), agentID, addresses));
+		final List<URI> addresses = EveAgentManager.getInstance()
+				.getAddress(agentID);
+		LOG.info(String.format(
+				"Eve wrapper: %s of agent: %s " + "went offline at: %s",
+				getId(), agentID, addresses));
 		EveAgentManager.getInstance().delete(agentID);
 	}
 
 	@Override
-	public final void doSend(final Message<?> payload) throws IOException,
-			JSONRPCException
+	public final void doSend(final Message<?> payload)
+			throws IOException, JSONRPCException
 	{
 		final ObjectNode params = JsonUtil.getJOM().createObjectNode();
 		params.set(PAYLOAD_FIELD_NAME, JsonUtil.getJOM().valueToTree(payload));
@@ -281,7 +303,9 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 	public Object getExposed()
 	{
 		final Object result = getState().get(NAMESPACE, Object.class);
-		LOG.trace("Getting exposed object: " + result);
+		if (result != null)
+			LOG.trace("Using exposed object: " + result.getClass().getName());
+		// null is okay, e.g. during Eve's method discovery attempts
 		return result;
 	}
 

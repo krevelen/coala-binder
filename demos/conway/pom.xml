@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>coala-conway-demo</artifactId>
-	<version>0.0.1</version>
+	<version>1.0.0-SNAPSHOT</version>
 
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
@@ -46,11 +46,6 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>io.coala</groupId>
-			<artifactId>coala-core-api</artifactId>
-		</dependency>
-
-		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>guice3-coala-adapter</artifactId>
 			<version>0.0.1</version>
@@ -66,7 +61,6 @@
 			<groupId>io.coala</groupId>
 			<artifactId>dsol2-coala-adapter</artifactId>
 			<version>0.0.1</version>
-			<scope>test</scope>
 		</dependency>
 		
 		<dependency>

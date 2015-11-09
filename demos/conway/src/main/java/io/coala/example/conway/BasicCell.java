@@ -20,31 +20,26 @@
  */
 package io.coala.example.conway;
 
-import io.coala.agent.BasicAgent;
-import io.coala.bind.Binder;
-import io.coala.log.InjectLogger;
-import io.coala.time.SimTime;
-
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 
+import io.coala.agent.BasicAgent;
+import io.coala.bind.Binder;
+import io.coala.capability.BasicCapabilityStatus;
+import io.coala.log.InjectLogger;
 import rx.Observable;
 import rx.Observer;
-import rx.functions.Func1;
-import rx.subjects.ReplaySubject;
+import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
 /**
  * {@link BasicCell}
  * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
-public class BasicCell extends BasicAgent implements
-		Cell, Observer<CellStateTransition>
+public class BasicCell extends BasicAgent implements Cell
 {
 
 	/** */
@@ -55,11 +50,11 @@ public class BasicCell extends BasicAgent implements
 	private transient Logger LOG;
 
 	/** */
-	private transient final Subject<CellState, CellState> states = ReplaySubject
+	private final transient Subject<CellState, CellState> states = PublishSubject
 			.create();
 
 	/**
-	 * {@link BasicCell} constructor
+	 * {@link BasicCell} constructor, even works when {@code private} ?!?
 	 * 
 	 * @param binder
 	 */
@@ -68,72 +63,40 @@ public class BasicCell extends BasicAgent implements
 	{
 		super(binder);
 	}
-	
-	/** @see BasicAgent#initialize() */
+
 	@Override
 	public void initialize() throws Exception
 	{
 		super.initialize();
-		
-		// handle state transition percepts
-		getWorld().perceiveTransitions().subscribe(this);
+
+		getBinder().inject(CellWorld.class).getStatusHistory()
+				.subscribe(new Observer<BasicCapabilityStatus>()
+				{
+					@Override
+					public void onCompleted()
+					{
+						// world has ended
+						die();
+					}
+
+					@Override
+					public void onError(final Throwable e)
+					{
+						e.printStackTrace();
+					}
+
+					@Override
+					public void onNext(final BasicCapabilityStatus ignore)
+					{
+						// ignore
+					}
+				});
 	}
 
-	/**
-	 * @param cell
-	 * @return
-	 */
-	protected CellWorld getWorld()
-	{
-		return getBinder().inject(CellWorld.class);
-	}
-
-	/**
-	 * @param state
-	 */
-	protected synchronized void setState(final CellState state)
-	{
-		this.states.onNext(state);
-	}
-
-	/** @see Cell#getState() */
 	@Override
-	public synchronized Observable<CellState> getState(final SimTime time)
+	public Observable<CellState> myStates()
 	{
-		return this.states.filter(new Func1<CellState, Boolean>()
-		{
-			@Override
-			public Boolean call(final CellState state)
-			{
-				return state.getTime().compareTo(time) >= 0;
-			}
-		}).first(); // return the first state for that matches this filter
+		return this.states.asObservable();
 	}
 
-	/** @see Observer#onError(Throwable) */
-	@Override
-	public void onError(final Throwable e)
-	{
-		e.printStackTrace();
-	}
-
-	/** @see Observer#onNext(Object) */
-	@Override
-	public void onNext(final CellStateTransition transition)
-	{
-		LOG.trace("Perceived transition: " + transition.toString());
-		final CellState toState = transition.getToState();
-		setState(toState);
-
-		// next cycle
-		getWorld().perceiveLinks().subscribe(
-				new CellLinkPerceptObserver(this, toState));
-	}
-
-	/** @see Observer#onCompleted() */
-	@Override
-	public void onCompleted()
-	{
-		LOG.info("Simulation complete!");
-	}
 }

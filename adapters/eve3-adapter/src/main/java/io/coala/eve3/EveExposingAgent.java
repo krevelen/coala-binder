@@ -45,7 +45,7 @@ public interface EveExposingAgent
 	@Access(AccessType.SELF)
 	void setExposed(Object exposed);
 
-	/** @return the exposed object */
+	/** @return the exposed object, or {@code null} if none (yet) */
 	@JsonIgnore
 	@Access(AccessType.SELF)
 	@Namespace(NAMESPACE)

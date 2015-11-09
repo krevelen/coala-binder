@@ -21,19 +21,14 @@
 package io.coala.example.conway;
 
 import io.coala.agent.Agent;
-import io.coala.time.SimTime;
 import rx.Observable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
- * {@link Cell}
+ * {@link Cell} simply exchanges with the cell's environment its own state
+ * updates for those from its neighboring Cells
  * 
- * @date $Date: 2014-06-03 13:55:16 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 295 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <THIS> the implementation type of {@link Cell}
  */
 public interface Cell extends Agent
 {
@@ -42,7 +37,17 @@ public interface Cell extends Agent
 	 * @param time the {@link SimTime} to return the state of
 	 * @return the {@link Cell}'s state at specified {@link SimTime}
 	 */
-	@JsonIgnore
-	Observable<CellState> getState(SimTime time);
+	// CellState getStateAt(SimTime time);
 
+	/** @return {@link Observable} {@link CellState} transitions, for neighbors */
+	Observable<CellState> myStates();
+
+	// CellWorld getWorld();
+
+	/**
+	 * for explicit initialization override
+	 * 
+	 * @param initialState
+	 */
+	// void initialize(CellState initialState);
 }

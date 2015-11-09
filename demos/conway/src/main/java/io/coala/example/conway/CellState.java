@@ -20,11 +20,16 @@
  */
 package io.coala.example.conway;
 
-import io.coala.json.JsonUtil;
-import io.coala.time.SimTime;
-import io.coala.time.Timed;
+import java.util.Map;
 
-import java.io.Serializable;
+import com.eaio.uuid.UUID;
+
+import io.coala.message.AbstractMessage;
+import io.coala.message.MessageID;
+import io.coala.model.ModelID;
+import io.coala.time.SimDuration;
+import io.coala.time.SimTime;
+import io.coala.time.TimeUnit;
 
 /**
  * {@link CellState}
@@ -33,58 +38,59 @@ import java.io.Serializable;
  * @version $Revision: 302 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-public class CellState implements Serializable, Comparable<CellState>,
-		Timed<SimTime>
+public class CellState extends AbstractMessage<CellState.ID>
+// implements Serializable, Comparable<CellState>, Timed<SimTime>
 {
+
+	@SuppressWarnings("serial")
+	public static class ID extends MessageID<UUID, SimTime>
+	{
+		public ID(final ModelID modelID, final SimTime time)
+		{
+			super(modelID, new UUID(), time);
+		}
+	}
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private SimTime generation = null;
-
-	/** */
-	private CellID cellID = null;
-
-	/** */
-	private LifeState state = null;
+	private LifeStatus state = null;
 
 	/**
-	 * {@link CellState} constructor
-	 * 
-	 * @param generation
-	 * @param cellID
-	 * @param lifeState
-	 */
-	public CellState(final SimTime generation, final CellID cellID,
-			final LifeState lifeState)
-	{
-		this.generation = generation;
-		this.cellID = cellID;
-		this.state = lifeState;
-	}
-	
-	/**
-	 * {@link CellState} constructor
+	 * {@link CellState} zero-arg bean constructor
 	 */
 	protected CellState()
 	{
 		super();
 	}
 
-	/** @see Timed#getTime() */
-	@Override
-	public SimTime getTime()
+	/**
+	 * {@link CellState} constructor
+	 * 
+	 * @param generation
+	 * @param fromID
+	 * @param lifeState
+	 */
+	public CellState(final SimTime generation, final CellID fromID,
+			final LifeStatus lifeState)
 	{
-		return this.generation;
+		this(generation, fromID, fromID, lifeState);
 	}
 
 	/**
-	 * @return the generation
+	 * {@link CellState} constructor for copies etc.
+	 * 
+	 * @param generation
+	 * @param fromID
+	 * @param toID
+	 * @param lifeState
 	 */
-	public SimTime getGeneration()
+	protected CellState(final SimTime generation, final CellID fromID,
+			final CellID toID, final LifeStatus lifeState)
 	{
-		return this.generation;
+		super(new ID(fromID.getModelID(), generation), fromID, fromID, toID);
+		this.state = lifeState;
 	}
 
 	/**
@@ -92,83 +98,42 @@ public class CellState implements Serializable, Comparable<CellState>,
 	 */
 	public CellID getCellID()
 	{
-		return this.cellID;
+		return (CellID) getSenderID();
+	}
+
+	/**
+	 * @return the generation in {@link TimeUnit#TICKS}
+	 */
+	public SimTime getGeneration()
+	{
+		return getID().getTime();
 	}
 
 	/**
 	 * @return the lifeState
 	 */
-	public LifeState getState()
+	public LifeStatus getState()
 	{
 		return this.state;
 	}
 
-	/** @see Object#hashCode() */
-	@Override
-	public int hashCode()
+	/**
+	 * @param neighborID {@link CellID} of the neighbor to inform
+	 * @return a new {@link CellState} copy
+	 */
+	public CellState copyFor(final CellID neighborID)
 	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((this.cellID == null) ? 0 : this.cellID.hashCode());
-		result = prime * result
-				+ ((this.generation == null) ? 0 : this.generation.hashCode());
-		result = prime * result
-				+ ((this.state == null) ? 0 : this.state.hashCode());
-		return result;
+		return new CellState(getGeneration(), getCellID(), neighborID,
+				getState());
 	}
 
-	/** @see Object#equals(Object) */
-	@Override
-	public boolean equals(final Object obj)
+	public CellState next(final SimDuration cycleDuration,
+			final Map<LifeStatus, Integer> myNeighborStateCount)
 	{
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-
-		final CellState other = (CellState) obj;
-		if (this.cellID == null)
-		{
-			if (other.cellID != null)
-				return false;
-		} else if (!this.cellID.equals(other.cellID))
-			return false;
-		if (this.generation == null)
-		{
-			if (other.generation != null)
-				return false;
-		} else if (!this.generation.equals(other.generation))
-			return false;
-		if (this.state != other.state)
-			return false;
-		return true;
-	}
-
-	/** @see Comparable#compareTo(Object) */
-	@Override
-	public int compareTo(final CellState o)
-	{
-		int genCompare = Double.compare(this.generation.doubleValue(),
-				o.generation.doubleValue());
-		if (genCompare != 0)
-			return genCompare;
-		int cellCompare = getCellID().compareTo(o.getCellID());
-		if (cellCompare != 0)
-			return cellCompare;
-		int stateCompare = getState().compareTo(o.getState());
-		if (stateCompare != 0)
-			return stateCompare;
-		return 0;
-	}
-
-	/** @see Object#toString() */
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + JsonUtil.toJSONString(this);
+		final SimTime toTime = getID().getTime().plus(cycleDuration);
+		final LifeStatus toState = getState()
+				.getTransition(myNeighborStateCount);
+		return new CellState(toTime, getCellID(), toState);
 	}
 
 }

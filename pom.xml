@@ -116,7 +116,7 @@
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>coala-core-api</artifactId>
+				<artifactId>coala-binder-api</artifactId>
 				<version>${project.parent.version}</version>
 			</dependency>
 

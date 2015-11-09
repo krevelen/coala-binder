@@ -20,6 +20,12 @@
  */
 package io.coala.guice;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
 import io.coala.agent.AgentStatus;
@@ -30,13 +36,6 @@ import io.coala.bind.BinderFactoryConfig;
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
 import rx.Observable;
 import rx.functions.Func1;
 import rx.subjects.BehaviorSubject;

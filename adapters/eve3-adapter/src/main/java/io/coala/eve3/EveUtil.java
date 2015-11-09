@@ -20,9 +20,6 @@
  */
 package io.coala.eve3;
 
-import static org.aeonbits.owner.util.Collections.entry;
-import static org.aeonbits.owner.util.Collections.map;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -39,6 +36,10 @@ import com.almende.eve.agent.AgentBuilder;
 import com.almende.eve.agent.AgentConfig;
 import com.almende.eve.capabilities.Config;
 import com.almende.eve.config.YamlReader;
+import com.almende.eve.deploy.Boot;
+import com.almende.eve.instantiation.InstantiationServiceConfig;
+import com.almende.eve.state.file.FileStateConfig;
+import com.almende.util.jackson.JOM;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -88,8 +89,9 @@ public class EveUtil implements Util
 		// FIXME create/employ global lookup service/agent
 
 		final AgentID result = AGENT_ID_CACHE.get(id);
-		if (result == null)
-			LOG.warn("Unknown wrapped agentID for Eve agent Id: " + id);
+		if (id == null || result == null)
+			throw new NullPointerException(
+					"Unknown wrapper agentID for Eve agent Id: " + id);
 
 		return AGENT_ID_CACHE.get(id);
 	}
@@ -101,9 +103,7 @@ public class EveUtil implements Util
 	public static String toEveAgentId(final AgentID agentID)
 	{
 		// be robust against spaces, weird characters, etc.
-		final String result = WebUtil.urlEncode(agentID.toString());
-		AGENT_ID_CACHE.put(result, agentID);
-		return result;
+		return WebUtil.urlEncode(agentID.getValue());
 	}
 
 	/**
@@ -127,7 +127,7 @@ public class EveUtil implements Util
 	{
 		try
 		{
-			getWrapperAgent(toEveAgentId(msg.getReceiverID())).doReceive(msg);
+			getWrapperAgent(msg.getReceiverID()).doReceive(msg);
 		} catch (final Throwable t)
 		{
 			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime(t,
@@ -166,11 +166,11 @@ public class EveUtil implements Util
 	{
 		try
 		{
-			getWrapperAgent(toEveAgentId(msg.getSenderID())).doSend(msg);
+			getWrapperAgent(msg.getSenderID()).doSend(msg);
 		} catch (final Throwable t)
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime(msg
-					.getSenderID());
+			throw CoalaExceptionFactory.AGENT_UNAVAILABLE
+					.createRuntime(msg.getSenderID());
 		}
 	}
 
@@ -200,12 +200,11 @@ public class EveUtil implements Util
 	 * @return
 	 * @throws CoalaException
 	 */
-	public static List<URI> getAddresses(final AgentID id)
-			throws CoalaException
+	public static List<URI> getAddresses(final AgentID id) throws CoalaException
 	{
 		try
 		{
-			final Agent agent = getWrapperAgent(toEveAgentId(id));
+			final Agent agent = getWrapperAgent(id);
 			if (agent != null)
 				return agent.getUrls();
 		} catch (final Exception e)
@@ -232,16 +231,20 @@ public class EveUtil implements Util
 	/**
 	 * @param eveAgentID
 	 */
-	protected static EveWrapperAgent createWrapperAgent(final String eveAgentID)
+	protected static EveWrapperAgent createWrapperAgent(final AgentID agentID)
 	{
 		synchronized (WRAPPER_AGENT_CACHE)
 		{
+			final String eveAgentID = toEveAgentId(agentID);
 			EveWrapperAgent result = WRAPPER_AGENT_CACHE.get(eveAgentID);
 			if (result == null)
 			{
-				result = valueOf(eveAgentID, EveWrapperAgent.class);
+				result = valueOf(agentID, EveWrapperAgent.class);
 				WRAPPER_AGENT_CACHE.put(eveAgentID, result);
-			}
+				result.onBoot();
+			} else
+				LOG.info("Reusing Eve wrapper agent " + eveAgentID + " for "
+						+ toAgentID(eveAgentID));
 			return result;
 		}
 	}
@@ -249,9 +252,27 @@ public class EveUtil implements Util
 	/**
 	 * @param eveAgentID
 	 */
-	protected static EveWrapperAgent getWrapperAgent(final String eveAgentID)
+	protected static EveWrapperAgent getWrapperAgent(final AgentID agentID)
 	{
-		return createWrapperAgent(eveAgentID);
+		return createWrapperAgent(agentID);
+	}
+
+	private static void boot()
+	{
+		// TODO prevent multiple boots?
+
+		final ObjectNode config = JOM.createObjectNode();
+		final InstantiationServiceConfig instantiationConfig = new InstantiationServiceConfig();
+		final FileStateConfig state = new FileStateConfig();
+		state.setPath(".wakeservices");
+		state.setId("testWakeService");
+		instantiationConfig.setState(state);
+		final ArrayNode services = JOM.createArrayNode();
+		services.add(instantiationConfig);
+		config.set("instantiationServices", services);
+
+		// Basic boot action:
+		Boot.boot(config);
 	}
 
 	/** */
@@ -261,6 +282,9 @@ public class EveUtil implements Util
 			final AgentConfig agentConfig, final Class<T> agentType,
 			final Map.Entry<String, ? extends JsonNode>... parameters)
 	{
+
+		boot();
+
 		// checkRegistered(agentType);
 
 		if (parameters != null && parameters.length != 0)
@@ -274,43 +298,46 @@ public class EveUtil implements Util
 
 	/** */
 	@SafeVarargs
-	public static final <T extends Agent> T valueOf(final String id,
+	public static final <T extends Agent> T valueOf(final AgentID agentId,
 			final Class<T> agentType,
 			final Map.Entry<String, ? extends JsonNode>... parameters)
 	{
-		@SuppressWarnings("unchecked")
-		final EveAgentConfig cfg = ConfigFactory.create(
-				EveAgentConfig.class,
-				EveAgentConfig.DEFAULT_VALUES,
-				map(entry(EveAgentConfig.AGENT_CLASS_KEY, agentType.getName()),
-						entry(EveAgentConfig.AGENT_ID_KEY, id),
-						entry(EveAgentConfig.AGENT_ID_KEY, id)));
+		final String eveId = toEveAgentId(agentId);
+		AGENT_ID_CACHE.put(eveId, agentId);
+		@SuppressWarnings("serial")
+		final EveAgentConfig cfg = ConfigFactory.create(EveAgentConfig.class,
+				EveAgentConfig.DEFAULT_VALUES, new HashMap<String, String>()
+				{
+					{
+						put(EveAgentConfig.AGENT_CLASS_KEY,
+								agentType.getName());
+						put(EveAgentConfig.AGENT_ID_KEY, eveId);
+					}
+				});
 
-		final InputStream is = cfg.agentConfigStream();
-		if (is != null)
+		try (final InputStream is = cfg.agentConfigStream())
 		{
-			final Config config = YamlReader.load(is);//.expand();
-			try
-			{
-				is.close();
-			} catch (final IOException ignore)
-			{
-				// empty
-			}
+			final Config config = YamlReader.load(is);// .expand();
+			final ArrayNode agentConfigs = (ArrayNode) config.get("agents");
+			if (agentConfigs != null)
+				for (final JsonNode agent : agentConfigs)
+				{
+					final JsonNode idNode = agent.get("id");
+					if (idNode != null
+							&& !idNode.asText().equals(eveId.toString()))
+						continue;
 
-			for (final JsonNode agent : (ArrayNode) config.get("agents"))
-			{
-				final JsonNode idNode = agent.get("id");
-				if (idNode != null && !idNode.asText().equals(id))
-					continue;
-
-				LOG.trace("Creating agent " + id + " from config at "
-						+ cfg.agentConfigUri());
-				return valueOf(new AgentConfig((ObjectNode) agent), agentType,
-						parameters);
-			}
+					LOG.trace("Creating agent " + eveId + " from config at "
+							+ cfg.agentConfigUri());
+					return valueOf(new AgentConfig((ObjectNode) agent),
+							agentType, parameters);
+				}
+		} catch (final IOException e)
+		{
+			LOG.warn("Problem creating agent " + eveId + " from config at "
+					+ cfg.agentConfigUri(), e);
 		}
-		LOG.trace("No config for agent " + id + " found at: "
+		LOG.trace("No valid config for agent " + eveId + " found at: "
 				+ cfg.agentConfigUri() + ". Using default config");
 		return valueOf(cfg.agentConfig(), agentType, parameters);
 	}
