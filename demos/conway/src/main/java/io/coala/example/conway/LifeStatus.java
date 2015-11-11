@@ -61,9 +61,13 @@ public enum LifeStatus
 	 */
 	public LifeStatus getTransition(final Map<LifeStatus, Integer> states)
 	{
-		int aliveCount = states.containsKey(ALIVE) ? states.get(ALIVE) : 0;
-		int deadCount = states.containsKey(DEAD) ? states.get(DEAD) : 0;
-		int total = aliveCount + deadCount;
+		final int aliveCount, deadCount, total;
+		synchronized (states)
+		{
+			aliveCount = states.containsKey(ALIVE) ? states.get(ALIVE) : 0;
+			deadCount = states.containsKey(DEAD) ? states.get(DEAD) : 0;
+		}
+		total = aliveCount + deadCount;
 
 		// sanity check
 		if (total != 8)

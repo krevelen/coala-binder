@@ -26,12 +26,10 @@ import org.apache.log4j.Logger;
 
 import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
-import io.coala.capability.BasicCapabilityStatus;
+import io.coala.capability.interact.ReceivingCapability;
 import io.coala.log.InjectLogger;
 import rx.Observable;
-import rx.Observer;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import rx.functions.Action0;
 
 /**
  * {@link BasicCell}
@@ -50,11 +48,10 @@ public class BasicCell extends BasicAgent implements Cell
 	private transient Logger LOG;
 
 	/** */
-	private final transient Subject<CellState, CellState> states = PublishSubject
-			.create();
+	private transient Observable<CellState> states;
 
 	/**
-	 * {@link BasicCell} constructor, even works when {@code private} ?!?
+	 * {@link BasicCell} constructor
 	 * 
 	 * @param binder
 	 */
@@ -65,38 +62,30 @@ public class BasicCell extends BasicAgent implements Cell
 	}
 
 	@Override
+	public Observable<CellState> myStates()
+	{
+		return this.states.asObservable();
+	}
+
+	@Override
 	public void initialize() throws Exception
 	{
 		super.initialize();
 
-		getBinder().inject(CellWorld.class).getStatusHistory()
-				.subscribe(new Observer<BasicCapabilityStatus>()
+		// link to inputs / observable percepts
+		final Observable<CellState> incoming = getBinder()
+				.inject(ReceivingCapability.class).getIncoming()
+				.ofType(CellState.class);
+		this.states = getBinder().inject(CellWorld.class).myStates(incoming)
+				.doOnCompleted(new Action0()
 				{
 					@Override
-					public void onCompleted()
+					public void call()
 					{
 						// world has ended
 						die();
 					}
-
-					@Override
-					public void onError(final Throwable e)
-					{
-						e.printStackTrace();
-					}
-
-					@Override
-					public void onNext(final BasicCapabilityStatus ignore)
-					{
-						// ignore
-					}
 				});
-	}
-
-	@Override
-	public Observable<CellState> myStates()
-	{
-		return this.states.asObservable();
 	}
 
 }

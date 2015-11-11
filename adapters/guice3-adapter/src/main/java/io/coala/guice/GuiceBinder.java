@@ -53,6 +53,7 @@ import io.coala.capability.replicate.ReplicationConfig;
 import io.coala.guice.log.InjectLoggerTypeListener;
 import io.coala.log.LogUtil;
 import io.coala.model.ModelComponentIDFactory;
+import io.coala.model.ModelID;
 import io.coala.name.AbstractIdentifiable;
 import io.coala.random.RandomDistribution;
 import io.coala.random.RandomNumberStream;
@@ -151,6 +152,8 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 
 				bind(BinderFactoryConfig.class).toInstance(config);
 
+				bind(ModelID.class).toInstance(clientID.getModelID());
+				
 				bind(ModelComponentIDFactory.class)
 						.toInstance(config.getReplicationConfig().newID());
 

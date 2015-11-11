@@ -243,7 +243,7 @@ public class EveUtil implements Util
 				WRAPPER_AGENT_CACHE.put(eveAgentID, result);
 				result.onBoot();
 			} else
-				LOG.info("Reusing Eve wrapper agent " + eveAgentID + " for "
+				LOG.trace("Reusing Eve wrapper agent " + eveAgentID + " for "
 						+ toAgentID(eveAgentID));
 			return result;
 		}
@@ -261,15 +261,14 @@ public class EveUtil implements Util
 	{
 		// TODO prevent multiple boots?
 
-		final ObjectNode config = JOM.createObjectNode();
 		final InstantiationServiceConfig instantiationConfig = new InstantiationServiceConfig();
 		final FileStateConfig state = new FileStateConfig();
 		state.setPath(".wakeservices");
 		state.setId("testWakeService");
 		instantiationConfig.setState(state);
-		final ArrayNode services = JOM.createArrayNode();
-		services.add(instantiationConfig);
-		config.set("instantiationServices", services);
+		final ObjectNode config = (ObjectNode) JOM.createObjectNode().set(
+				"instantiationServices",
+				JOM.createArrayNode().add(instantiationConfig));
 
 		// Basic boot action:
 		Boot.boot(config);

@@ -136,4 +136,11 @@ public class CellState extends AbstractMessage<CellState.ID>
 		return new CellState(toTime, getCellID(), toState);
 	}
 
+	@Override
+	public String toString()
+	{
+		return String.format("%s|%s|%s", getCellID().getValue(),
+				getGeneration().intValue(), getState());
+	}
+
 }

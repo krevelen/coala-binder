@@ -28,12 +28,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.coala.bind.Binder;
 import io.coala.capability.CapabilityFactory;
 import io.coala.capability.configure.ConfiguringCapability;
 import io.coala.capability.embody.GroundingCapability;
 import io.coala.exception.CoalaException;
 import io.coala.model.ModelID;
+import io.coala.time.SimTime;
+import io.coala.time.TimeUnit;
 import io.coala.time.Timed;
+import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
@@ -56,10 +60,30 @@ public interface CellWorld extends GroundingCapability
 		// empty
 	}
 
+	/** global sniffing */
+	Subject<CellState, CellState> GLOBAL_TRANSITION_SNIFFER = PublishSubject
+			.create();
+
+	/** TODO use Config */
+	String INITIAL_STATES_CONFIG_KEY = "initialStates";
+
+	/** TODO use Config */
+	String CYCLE_DURATION_CONFIG_KEY = "cycleDuration";
+
+	/** TODO use Config */
+	Number CYCLE_DURATION_DEFAULT = 1;
+
+	/** TODO use Config */
+	String CYCLE_TOTAL_CONFIG_KEY = "cycleTotal";
+
+	/** TODO use Config */
+	Number CYCLE_TOTAL_DEFAULT = 100;
+
 	/**
-	 * 
+	 * @param neighborStates the source stream of incoming neighbor states
+	 * @return a stream of outgoing local states
 	 */
-	void proceed() throws Exception;
+	Observable<CellState> myStates(Observable<CellState> neighborStates);
 
 	/**
 	 * @return my {@link Timed} {@link CellState}, or {@code null} if not
@@ -75,102 +99,114 @@ public interface CellWorld extends GroundingCapability
 	class Util
 	{
 
-		/** global cache */
-		private static final Map<ModelID, List<List<CellID>>> CELL_IDS = Collections
-				.synchronizedMap(new HashMap<ModelID, List<List<CellID>>>());
+		/** caches {@link CellID} layout per lattice's {@link ModelID} */
+		private static final Map<ModelID, List<List<CellID>>> CELL_ID_CACHE = new HashMap<>();
 
-		/** global sniffing */
-		public static final Subject<CellState, CellState> GLOBAL_TRANSITIONS = PublishSubject
-				.create();
-
-		/** global cache */
-		private static final Map<ModelID, List<Map<CellID, LifeStatus>>> INITIAL_STATE_CACHE = Collections
-				.synchronizedMap(
-						new HashMap<ModelID, List<Map<CellID, LifeStatus>>>());
-
-		public static synchronized List<Map<CellID, LifeStatus>> importLattice(
-				final ModelID modelID, final ConfiguringCapability config)
-						throws CoalaException
-		{
-			List<Map<CellID, LifeStatus>> result = INITIAL_STATE_CACHE
-					.get(modelID);
-			if (result != null)
-				return result;
-
-			result = new ArrayList<Map<CellID, LifeStatus>>();
-			INITIAL_STATE_CACHE.put(modelID,
-					Collections.unmodifiableList(result));
-
-			final int[][] initialStates = config.getProperty("initialStates")
-					.getJSON(int[][].class);
-
-			for (List<CellID> row : getLatticeCellIDs(modelID,
-					initialStates.length, initialStates[0].length))
-			{
-				final Map<CellID, LifeStatus> rowStates = new HashMap<CellID, LifeStatus>();
-				result.add(rowStates);
-
-				for (CellID cellID : row)
-					rowStates
-							.put(cellID,
-									initialStates[cellID.getRow()][cellID
-											.getCol()] == 0 ? LifeStatus.DEAD
-													: LifeStatus.ALIVE);
-			}
-			return result;
-		}
+		/** caches initial {@link LifeStatus}es per lattice's {@link ModelID} */
+		private static final Map<ModelID, int[][]> INITIAL_STATE_CACHE = new HashMap<>();
 
 		/**
-		 * @param agentIDFactory
-		 * @param rows
-		 * @param cols
-		 * @return
-		 */
-		public static List<List<CellID>> getLatticeCellIDs(final ModelID modelID,
-				final int rows, final int cols)
-		{
-			List<List<CellID>> result = CELL_IDS.get(modelID);
-			if (result != null)
-				return result;
-
-			result = new ArrayList<List<CellID>>(rows);
-			for (int row = 0; row < rows; row++)
-			{
-				final List<CellID> rowMap = new ArrayList<CellID>(cols);
-				result.add(Collections.unmodifiableList(rowMap));
-
-				for (int col = 0; col < cols; col++)
-					rowMap.add(new CellID(modelID, row, col));
-			}
-			result = Collections.unmodifiableList(result);
-			CELL_IDS.put(modelID, result);
-			return result;
-		}
-
-		/**
-		 * @param cellID the local {@link CellID}
-		 * @param config the local {@link ConfiguringCapability}
+		 * @param binder
+		 * @param modelID
 		 * @return
 		 * @throws CoalaException
 		 */
-		public static Collection<CellID> getTorusNeighborIDs(
-				final CellID cellID, final ConfiguringCapability config)
-						throws CoalaException
+		public static int[][] importInitialValues(final Binder binder)
+				throws CoalaException
 		{
-			final ModelID modelID = cellID.getModelID();
-			final List<Map<CellID, LifeStatus>> lattice = importLattice(modelID,
-					config);
-			final int rows = lattice.size();
-			final int cols = lattice.get(0).size();
-			List<List<CellID>> cellIDs = getLatticeCellIDs(modelID, rows, cols);
+			final int[][] result, tempStates;
+			final ModelID modelID = binder.getID().getModelID();
+			synchronized (INITIAL_STATE_CACHE)
+			{
+				tempStates = INITIAL_STATE_CACHE.get(modelID);
+				if (tempStates == null)
+				{
+					result = binder.inject(ConfiguringCapability.class)
+							.getProperty(INITIAL_STATES_CONFIG_KEY)
+							.getJSON(int[][].class);
+					INITIAL_STATE_CACHE.put(modelID, result);
+				} else
+					result = tempStates;
+			}
+			return result;
+		}
 
+		/**
+		 * @param binder the local {@link Binder}
+		 * @return the initial {@link CellState}
+		 * @throws CoalaException if parsing failed
+		 */
+		public static CellState parseInitialState(final Binder binder)
+				throws CoalaException
+		{
+			final int[][] values = importInitialValues(binder);
+			final CellID myID = (CellID) binder.getID();
+			final LifeStatus startState = values[myID.getRow()][myID
+					.getCol()] == 0 ? LifeStatus.DEAD : LifeStatus.ALIVE;
+			final SimTime startCycle = binder.inject(SimTime.Factory.class)
+					.create(0, TimeUnit.TICKS);
+			return new CellState(startCycle, myID, startState);
+		}
+
+		/**
+		 * @param modelID the {@link ModelID} for new cells
+		 * @param rows lattice height
+		 * @param cols lattice width
+		 * @return a matrix (row-{@link List} containing column-{@link List}s)
+		 *         of respective {@link CellID}s
+		 * @throws CoalaException
+		 */
+		public static List<List<CellID>> createLatticeLayout(
+				final Binder binder) throws CoalaException
+		{
+			synchronized (CELL_ID_CACHE)
+			{
+				List<List<CellID>> result = CELL_ID_CACHE
+						.get(binder.getID().getModelID());
+				if (result != null)
+					return result;
+
+				final int[][] values = importInitialValues(binder);
+				final int rows = values.length;
+				final int cols = values[0].length;
+				final List<List<CellID>> tempLayout = new ArrayList<>(rows);
+				result = Collections.unmodifiableList(tempLayout);
+				CELL_ID_CACHE.put(binder.getID().getModelID(), result);
+
+				for (int row = 0; row < rows; row++)
+				{
+					final List<CellID> rowMap = new ArrayList<>(cols);
+					tempLayout.add(Collections.unmodifiableList(rowMap));
+
+					for (int col = 0; col < cols; col++)
+						rowMap.add(new CellID(binder.getID().getModelID(), row,
+								col));
+				}
+				return result;
+			}
+		}
+
+		/**
+		 * @param binder the local {@link Binder}
+		 * @return a {@link Collection} of neighboring {@link CellID}s
+		 * @throws CoalaException
+		 */
+		public static Collection<CellID> determineTorusNeighbors(
+				final Binder binder) throws CoalaException
+		{
+
+			final CellID cellID = (CellID) binder.getID();
+			final List<List<CellID>> cellIDs = createLatticeLayout(binder);
+
+			final int rows = cellIDs.size();
+			final int cols = cellIDs.get(0).size();
 			final int row = cellID.getRow();
 			final int col = cellID.getCol();
 			final int north = (rows + row - 1) % rows;
 			final int south = (rows + row + 1) % rows;
 			final int west = (cols + col - 1) % cols;
 			final int east = (cols + col + 1) % cols;
-			final Collection<CellID> result = Arrays.asList(
+			return Arrays.asList( //
 					cellIDs.get(north).get(west), // northwest
 					cellIDs.get(row).get(west), // west
 					cellIDs.get(south).get(west), // south-west
@@ -179,7 +215,6 @@ public interface CellWorld extends GroundingCapability
 					cellIDs.get(north).get(east), // northeast
 					cellIDs.get(row).get(east), // east
 					cellIDs.get(south).get(east)); // south-east
-			return result;
 		}
 	}
 

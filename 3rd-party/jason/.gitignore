@@ -2,7 +2,7 @@
 .settings
 .classpath
 .project
-download
 target
 gitstats
+download/
 

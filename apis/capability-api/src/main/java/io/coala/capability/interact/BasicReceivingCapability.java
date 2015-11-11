@@ -1,20 +1,17 @@
 package io.coala.capability.interact;
 
-import io.coala.bind.Binder;
-import io.coala.capability.BasicCapability;
-import io.coala.log.InjectLogger;
-import io.coala.message.Message;
-import io.coala.message.MessageHandler;
-
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 
+import io.coala.bind.Binder;
+import io.coala.capability.BasicCapability;
+import io.coala.log.InjectLogger;
+import io.coala.message.Message;
+import io.coala.message.MessageHandler;
 import rx.Observable;
 import rx.subjects.ReplaySubject;
 import rx.subjects.Subject;
@@ -26,8 +23,8 @@ import rx.subjects.Subject;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * @author <a href="mailto:Suki@almende.org">Suki</a>
  */
-public class BasicReceivingCapability extends BasicCapability implements
-		ReceivingCapability, MessageHandler
+public class BasicReceivingCapability extends BasicCapability
+		implements ReceivingCapability, MessageHandler
 {
 
 	/** */
@@ -46,7 +43,8 @@ public class BasicReceivingCapability extends BasicCapability implements
 	 * @param binder
 	 */
 	@Inject
-	protected <T extends Message<?>> BasicReceivingCapability(final Binder binder)
+	protected <T extends Message<?>> BasicReceivingCapability(
+			final Binder binder)
 	{
 		super(binder);
 	}
@@ -139,25 +137,23 @@ public class BasicReceivingCapability extends BasicCapability implements
 
 	private void handleBacklog()
 	{
+		final Deque<Message<?>> queue;
 		synchronized (this.backlog)
 		{
-			final Deque<Message<?>> queue = new LinkedList<>(this.backlog);
+			LOG.trace("EMPTYING BACKLOG, total: " + this.backlog.size());
+			queue = new LinkedList<>(this.backlog);
 			this.backlog.clear();
-			while (!queue.isEmpty())
-			{
-				this.incoming.onNext(queue.removeFirst());
-			}
 		}
+		Observable.from(queue).subscribe(this.incoming);
 	}
 
-	private final SortedSet<Message<?>> backlog = new TreeSet<Message<?>>();
+	private final Deque<Message<?>> backlog = new LinkedList<>();
 
 	@Override
 	public void onMessage(final Message<?> message)
 	{
 		synchronized (this.backlog)
 		{
-			System.err.println(message.getStatus());
 			if (this.ownerReady)
 				try
 				{
@@ -181,7 +177,7 @@ public class BasicReceivingCapability extends BasicCapability implements
 				}
 			else
 			{
-				System.err.println("BACKLOGGING MSG " + message);
+				LOG.trace("Agent not ready, backlogging: " + message);
 				this.backlog.add(message);
 			}
 		}

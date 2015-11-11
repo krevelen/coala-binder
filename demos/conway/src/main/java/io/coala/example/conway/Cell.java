@@ -39,7 +39,7 @@ public interface Cell extends Agent
 	 */
 	// CellState getStateAt(SimTime time);
 
-	/** @return {@link Observable} {@link CellState} transitions, for neighbors */
+	/** @return {@link Observable} stream of my {@link CellState} transitions */
 	Observable<CellState> myStates();
 
 	// CellWorld getWorld();

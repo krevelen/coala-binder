@@ -83,6 +83,14 @@ public class CellLink extends AbstractIdentifiable<CellLink.ID>
 
 	/**
 	 * {@link CellLink} constructor
+	 */
+	protected CellLink()
+	{
+		super();
+	}
+
+	/**
+	 * {@link CellLink} constructor
 	 * 
 	 * @param neighborID
 	 */
@@ -91,14 +99,6 @@ public class CellLink extends AbstractIdentifiable<CellLink.ID>
 		super(new ID());
 		this.neighborID = neighborID;
 		this.type = type;
-	}
-
-	/**
-	 * {@link CellLink} constructor
-	 */
-	protected CellLink()
-	{
-		super();
 	}
 
 	public CellID getNeighborID()

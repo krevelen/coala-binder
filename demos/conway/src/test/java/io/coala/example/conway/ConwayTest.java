@@ -25,7 +25,6 @@ import static org.junit.Assert.fail;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
@@ -39,13 +38,11 @@ import io.coala.agent.AgentStatusUpdate;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.capability.admin.CreatingCapability;
-import io.coala.capability.configure.ConfiguringCapability;
 import io.coala.capability.replicate.ReplicationConfig;
 import io.coala.exception.CoalaException;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
 import io.coala.time.TimeUnit;
 import rx.functions.Action1;
 
@@ -69,12 +66,12 @@ public class ConwayTest
 	@BeforeClass
 	public static void setupBinderFactory() throws CoalaException
 	{
-		CellWorld.Util.GLOBAL_TRANSITIONS.subscribe(new Action1<CellState>()
+		CellWorld.GLOBAL_TRANSITION_SNIFFER.subscribe(new Action1<CellState>()
 		{
 			@Override
 			public void call(final CellState transition)
 			{
-				LOG.trace("Observed transition: " + transition);
+				System.err.println("Observed transition: " + transition);
 			}
 		});
 	}
@@ -88,7 +85,7 @@ public class ConwayTest
 						"testModel" + System.currentTimeMillis())
 				.build().create("methodTester");
 
-		final SimTimeFactory timer = binder.inject(SimTimeFactory.class);
+		final SimTime.Factory timer = binder.inject(SimTime.Factory.class);
 		final SimTime t1 = timer.create(1.5, TimeUnit.TICKS);
 		final SimTime t2 = timer.create(1.6, TimeUnit.TICKS);
 
@@ -135,34 +132,29 @@ public class ConwayTest
 						ReplicationConfig.MODEL_NAME_KEY, "torus1")
 				.build().create("conwayBooter");
 
-		final CreatingCapability booterSvc = binder
-				.inject(CreatingCapability.class);
-		final List<Map<CellID, LifeStatus>> cellStates = CellWorld.Util
-				.importLattice(binder.getID().getModelID(),
-						binder.inject(ConfiguringCapability.class));
+		final List<List<CellID>> cellStates = CellWorld.Util
+				.createLatticeLayout(binder);
 		final int total = cellStates.size() * cellStates.get(0).size();
 		assertEquals("Should import all initial cell states", 9, total);
-		LOG.trace("Initial states: " + JsonUtil.toPrettyJSON(cellStates));
+		LOG.trace("Initial states: " + JsonUtil
+				.toPrettyJSON(CellWorld.Util.importInitialValues(binder)));
 
 		final CountDownLatch initializedLatch = new CountDownLatch(total);
 		final CountDownLatch completedLatch = new CountDownLatch(total);
 		final Set<CellID> initialized = new HashSet<CellID>();
 		final Set<CellID> completed = new HashSet<CellID>();
-		for (Map<CellID, LifeStatus> row : cellStates)
-			for (CellID cellID : row.keySet())
+
+		for (List<CellID> row : cellStates)
+			for (CellID cellID : row)
 			{
 				final CellID myCellID = cellID;
-				// LOG.trace("Booting agent with id: " + cellID + ",
-				// initialized: "
-				// + initialized);
-				booterSvc.createAgent(cellID, BasicCell.class)
+				binder.inject(CreatingCapability.class)
+						.createAgent(cellID, BasicCell.class)
 						.subscribe(new AgentStatusObserver()
 						{
 							@Override
 							public void onNext(final AgentStatusUpdate update)
 							{
-								// LOG.trace("Observed status update: " +
-								// update);
 								if (update.getStatus().isInitializedStatus())
 								{
 									if (initialized
@@ -187,7 +179,7 @@ public class ConwayTest
 							@Override
 							public void onCompleted()
 							{
-								LOG.trace("No more updates for " + myCellID);
+								LOG.trace("Cell finished: " + myCellID);
 							}
 
 							@Override

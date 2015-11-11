@@ -50,6 +50,14 @@ public class CellID extends AgentID
 	private int col;
 
 	/**
+	 * {@link CellID} zero-arg bean constructor
+	 */
+	protected CellID()
+	{
+		super();
+	}
+	
+	/**
 	 * {@link CellID} constructor
 	 * 
 	 * @param modelID
