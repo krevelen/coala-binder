@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/messenger/MessengerService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,16 +17,18 @@
  */
 package io.coala.capability.interact;
 
+import org.joda.time.Duration;
+
 import io.coala.capability.BasicCapabilityStatus;
 import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
 import io.coala.message.Message;
+import rx.Observer;
 
 /**
  * {@link SendingCapability}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public interface SendingCapability extends Capability<BasicCapabilityStatus>
@@ -38,7 +37,7 @@ public interface SendingCapability extends Capability<BasicCapabilityStatus>
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Revision: 296 $
+	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface Factory extends CapabilityFactory<SendingCapability>
@@ -46,9 +45,25 @@ public interface SendingCapability extends Capability<BasicCapabilityStatus>
 		// empty
 	}
 
-	/** @param msg the {@link Message} to transport 
-	 * @throws Exception */
+	/**
+	 * @param msg the {@link Message} to transport
+	 * @throws Exception
+	 */
 	void send(Message<?> msg) throws Exception;
-	
-	//Observable<MessageSentEvent> getMessageSentEvents(MessageFilter filter);
+
+	/**
+	 * @param msg the {@link Message} to transport
+	 * @param timeout any non-{@code null} positive {@link Duration} indicates
+	 *            an allowed delivery timeout
+	 * @throws Exception
+	 */
+	void send(Message<?> msg, Duration timeout) throws Exception;
+
+	/**
+	 * @param timeout any non-{@code null} positive {@link Duration} indicates
+	 *            an allowed delivery timeout
+	 * @return an {@link Observer} of outgoing {@link Message}s
+	 */
+	<T extends Message<?>> Observer<T> outgoing(Duration timeout);
+
 }

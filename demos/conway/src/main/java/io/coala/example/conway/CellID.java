@@ -20,12 +20,11 @@
  */
 package io.coala.example.conway;
 
-import io.coala.agent.AgentID;
-import io.coala.model.ModelID;
-import io.coala.name.AbstractIdentifier;
-
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
+
+import io.coala.agent.AgentID;
+import io.coala.name.AbstractIdentifier;
 
 /**
  * {@link CellID}
@@ -56,7 +55,7 @@ public class CellID extends AgentID
 	{
 		super();
 	}
-	
+
 	/**
 	 * {@link CellID} constructor
 	 * 
@@ -65,10 +64,10 @@ public class CellID extends AgentID
 	 * @param col the {@link Cell}'s column in the lattice
 	 */
 	@AssistedInject
-	public CellID(final ModelID modelID, @Assisted final int row,
-			@Assisted final int col)
+	public CellID(@Assisted final AgentID parentID, final int row,
+			final int col)
 	{
-		super(modelID, String.format(CELL_ID_FORMAT, row, col));
+		super(parentID, String.format(CELL_ID_FORMAT, row, col));
 		this.row = row;
 		this.col = col;
 	}
@@ -98,10 +97,10 @@ public class CellID extends AgentID
 		return super.compareTo(other);
 	}
 
-//	@Override
-//	public String toString()
-//	{
-//		return String.format("%s[%02d,%02d]", getModelID(), getRow(), getCol());
-//	}
+	// @Override
+	// public String toString()
+	// {
+	// return String.format("%s[%02d,%02d]", getModelID(), getRow(), getCol());
+	// }
 
 }

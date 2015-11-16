@@ -20,11 +20,11 @@
  */
 package io.coala.model;
 
+import java.io.Serializable;
+
 import io.coala.agent.AgentID;
 import io.coala.name.Identifiable;
 import io.coala.time.Instant;
-
-import java.io.Serializable;
 
 /**
  * {@link ModelComponent}

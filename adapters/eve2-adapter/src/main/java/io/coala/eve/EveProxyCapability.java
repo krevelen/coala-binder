@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 42ba9586e2e32cc62fccbccfc7188356445f5017 $
  * $URL: https://dev.almende.com/svn/abms/eve-util/src/main/java/com/almende/coala/eve/EveProxyService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

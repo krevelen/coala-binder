@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/finalizer/FinalizerService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -24,16 +21,14 @@ import io.coala.agent.AgentID;
 import io.coala.capability.BasicCapabilityStatus;
 import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
+import io.coala.lifecycle.LifeCycleHooks;
 
 /**
+ * {@link DestroyingCapability} helps to invoke another {@link Agent}'s
+ * {@link LifeCycleHooks#finish()} method;
  * 
- * {@link DestroyingCapability} is a service that invokes the agents finalizer
- * methods;
- * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:suki@almende.org">suki</a>
- * 
  */
 public interface DestroyingCapability extends Capability<BasicCapabilityStatus>
 {
@@ -41,7 +36,6 @@ public interface DestroyingCapability extends Capability<BasicCapabilityStatus>
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Revision: 296 $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface Factory extends CapabilityFactory<DestroyingCapability>
@@ -56,7 +50,7 @@ public interface DestroyingCapability extends Capability<BasicCapabilityStatus>
 	AgentID destroy() throws Exception;
 
 	/**
-	 * @param id the agent identifier
+	 * @param id the {@link AgentID}
 	 * @return the specified {@link AgentID} again once it has been killed
 	 * @throws Exception if kill failed
 	 */

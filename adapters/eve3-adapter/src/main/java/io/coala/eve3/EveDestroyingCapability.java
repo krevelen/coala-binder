@@ -65,6 +65,7 @@ public class EveDestroyingCapability extends BasicCapability
 
 		if (agent == null)
 		{
+			// TODO try other/distributed/connected VMs?
 			LOG.warn("Could not kill agent, not available in this VM");
 			return agentID;
 		}

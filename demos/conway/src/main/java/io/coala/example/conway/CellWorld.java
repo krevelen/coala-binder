@@ -38,8 +38,6 @@ import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import io.coala.time.Timed;
 import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 /**
  * {@link CellWorld} observes percepts from, and performs actions in, an
@@ -48,7 +46,7 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-public interface CellWorld extends GroundingCapability
+public interface CellWorld extends GroundingCapability, Timed<SimTime>
 {
 
 	/**
@@ -59,10 +57,6 @@ public interface CellWorld extends GroundingCapability
 	{
 		// empty
 	}
-
-	/** global sniffing */
-	Subject<CellState, CellState> GLOBAL_TRANSITION_SNIFFER = PublishSubject
-			.create();
 
 	/** TODO use Config */
 	String INITIAL_STATES_CONFIG_KEY = "initialStates";
@@ -179,8 +173,7 @@ public interface CellWorld extends GroundingCapability
 					tempLayout.add(Collections.unmodifiableList(rowMap));
 
 					for (int col = 0; col < cols; col++)
-						rowMap.add(new CellID(binder.getID().getModelID(), row,
-								col));
+						rowMap.add(new CellID(binder.getID(), row, col));
 				}
 				return result;
 			}

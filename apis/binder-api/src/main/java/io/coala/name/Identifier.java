@@ -22,6 +22,9 @@ package io.coala.name;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 /**
  * {@link Identifier}
  * 
@@ -30,9 +33,10 @@ import java.io.Serializable;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <T> the type of the {@link Comparable} and {@link Serializable}
- *        value/content for this {@link AbstractIdentifier}
+ *            value/content for this {@link AbstractIdentifier}
  * @param <THIS> the type of {@link AbstractIdentifier} to compare with
  */
+@JsonInclude(Include.NON_NULL)
 public interface Identifier<T extends Comparable<T> & Serializable, THIS extends Identifier<T, ?>>
 		extends Serializable, Comparable<THIS>
 {

@@ -30,7 +30,6 @@ import java.util.concurrent.CountDownLatch;
 
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.coala.agent.AgentStatusObserver;
@@ -38,10 +37,11 @@ import io.coala.agent.AgentStatusUpdate;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.capability.admin.CreatingCapability;
+import io.coala.capability.interact.ReceivingCapability;
 import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.exception.CoalaException;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
+import io.coala.message.Message;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import rx.functions.Action1;
@@ -63,19 +63,6 @@ public class ConwayTest
 	/** */
 	private static final String CONFIG_FILE = "conway.properties";
 
-	@BeforeClass
-	public static void setupBinderFactory() throws CoalaException
-	{
-		CellWorld.GLOBAL_TRANSITION_SNIFFER.subscribe(new Action1<CellState>()
-		{
-			@Override
-			public void call(final CellState transition)
-			{
-				System.err.println("Observed transition: " + transition);
-			}
-		});
-	}
-
 	// @Test
 	public void testBasicMethods() throws Exception
 	{
@@ -89,14 +76,14 @@ public class ConwayTest
 		final SimTime t1 = timer.create(1.5, TimeUnit.TICKS);
 		final SimTime t2 = timer.create(1.6, TimeUnit.TICKS);
 
-		final CellID cellID1 = new CellID(binder.getID().getModelID(), 1, 1);
+		final CellID cellID1 = new CellID(binder.getID(), 1, 1);
 		final CellState state1 = new CellState(t1, cellID1, LifeStatus.ALIVE);
 		LOG.trace("Created: " + state1);
 
 		final CellState state2 = new CellState(t2, cellID1, LifeStatus.ALIVE);
 		LOG.trace("Created: " + state2);
 
-		final CellID cellID2 = new CellID(binder.getID().getModelID(), 1, 2);
+		final CellID cellID2 = new CellID(binder.getID(), 1, 2);
 		LOG.trace("Booted agent with id: " + cellID1);
 
 		final CellState state3a = new CellState(t2, cellID2, LifeStatus.DEAD);
@@ -130,12 +117,11 @@ public class ConwayTest
 		final Binder binder = BinderFactory.Builder.fromFile(CONFIG_FILE)
 				.withProperty(ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY, "torus1")
-				.build().create("conwayBooter");
+				.build().create("booter");
 
 		final List<List<CellID>> cellStates = CellWorld.Util
 				.createLatticeLayout(binder);
 		final int total = cellStates.size() * cellStates.get(0).size();
-		assertEquals("Should import all initial cell states", 9, total);
 		LOG.trace("Initial states: " + JsonUtil
 				.toPrettyJSON(CellWorld.Util.importInitialValues(binder)));
 
@@ -144,12 +130,23 @@ public class ConwayTest
 		final Set<CellID> initialized = new HashSet<CellID>();
 		final Set<CellID> completed = new HashSet<CellID>();
 
+		/** global sniffing */
+		binder.inject(ReceivingCapability.class).getIncoming()
+				.subscribe(new Action1<Message<?>>()
+				{
+					@Override
+					public void call(final Message<?> msg)
+					{
+						System.err.println("Received child message: " + msg);
+					}
+				});
+
 		for (List<CellID> row : cellStates)
 			for (CellID cellID : row)
 			{
 				final CellID myCellID = cellID;
 				binder.inject(CreatingCapability.class)
-						.createAgent(cellID, BasicCell.class)
+						.createAgent(myCellID, BasicCell.class)
 						.subscribe(new AgentStatusObserver()
 						{
 							@Override
@@ -185,17 +182,17 @@ public class ConwayTest
 							@Override
 							public void onError(final Throwable e)
 							{
-								e.printStackTrace();
+								LOG.trace("Cell failed: " + myCellID, e);
 							}
 						});
 			}
 		initializedLatch.await(2, java.util.concurrent.TimeUnit.SECONDS);
-		assertEquals("Cells should have initialized in <2s", 0,
+		assertEquals("Cells should have initialized in 2sec", 0,
 				initializedLatch.getCount());
 		LOG.trace("All cells initialized: " + initialized);
 
 		completedLatch.await(10, java.util.concurrent.TimeUnit.SECONDS);
-		assertEquals("Cells should have completed in <10s", 0,
+		assertEquals("Cells should have completed in 10sec", 0,
 				completedLatch.getCount());
 		LOG.trace("All cells completed: " + completed);
 	}

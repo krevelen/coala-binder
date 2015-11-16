@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/time/Instant.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,11 +30,10 @@ import org.joda.time.DateTimeZone;
 /**
  * {@link Instant}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
- * @param <THIS> the type of {@link Instant} to compare with
+ * @param <THIS> the concrete type of {@link Instant} to compare/build
  */
 public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 		Comparable<Instant<?>>

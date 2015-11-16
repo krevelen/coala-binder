@@ -90,13 +90,6 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 	/** */
 	private boolean finalized = false;
 
-	/** @see Observer#onError(Throwable) */
-	@Override
-	public final void onError(final Throwable t)
-	{
-		t.printStackTrace();
-	}
-
 	@Override
 	protected void setStatus(final BasicCapabilityStatus status)
 	{
@@ -230,6 +223,16 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 				update.getStatus(), "unexpected");
 	}
 
+	/** @see Observer#onError(Throwable) */
+	@Override
+	public final void onError(final Throwable t)
+	{
+		if (LOG == null)
+			LOG = LogUtil.getLogger(AbstractCapability.class.getName(), this);
+
+		LOG.error("Problem with owner agent", t);
+	}
+
 	/** @see Observer#onCompleted() */
 	@Override
 	public final void onCompleted()
@@ -237,7 +240,7 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 		if (LOG == null)
 			LOG = LogUtil.getLogger(AbstractCapability.class.getName(), this);
 
-		LOG.trace("Cleaning up " + getID() + "...");
+		LOG.trace("Owner finished, cleaning up " + getID() + "...");
 		if (this.finalized)
 			return;
 		if (this.initialized)

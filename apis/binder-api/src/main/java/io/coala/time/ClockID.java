@@ -26,6 +26,8 @@ import io.coala.model.ModelID;
 import javax.inject.Inject;
 //import javax.persistence.Embeddable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * {@link ClockID} contains a value to identify some {@link Clock}
  * 
@@ -63,6 +65,12 @@ public class ClockID extends ModelComponentID<String>
 	public String getValue()
 	{
 		return super.getValue();
+	}
+	
+	@JsonIgnore
+	public ModelID getModelID()
+	{
+		return super.getModelID();
 	}
 
 }

@@ -20,6 +20,17 @@
  */
 package io.coala.enterprise.role;
 
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
+import javax.inject.Inject;
+//import javax.inject.Named;
+import javax.inject.Named;
+
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
 import io.coala.agent.AgentStatusUpdate;
@@ -51,25 +62,12 @@ import io.coala.model.ModelComponentIDFactory;
 import io.coala.process.Job;
 import io.coala.random.RandomDistribution;
 import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
 import io.coala.time.TimeUnit;
 import io.coala.time.Trigger;
-
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
-import javax.inject.Inject;
-//import javax.inject.Named;
-import javax.inject.Named;
-
-import org.apache.log4j.Logger;
-
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.ReplaySubject;
 import rx.subjects.Subject;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * {@link AbstractActorRole}
@@ -326,7 +324,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 	 */
 	protected SimTime newTime(final Number value, final TimeUnit unit)
 	{
-		return getBinder().inject(SimTimeFactory.class).create(value, unit);
+		return getBinder().inject(SimTime.Factory.class).create(value, unit);
 	}
 
 	/** @see ActorRole#getTime() */

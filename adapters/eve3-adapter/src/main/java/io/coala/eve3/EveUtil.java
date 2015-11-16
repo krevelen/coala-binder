@@ -45,10 +45,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.coala.agent.AgentID;
+import io.coala.bind.Binder;
+import io.coala.capability.interact.ReceivingCapability;
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.log.LogUtil;
 import io.coala.message.Message;
+import io.coala.message.MessageHandler;
 import io.coala.util.Util;
 import io.coala.web.WebUtil;
 
@@ -103,7 +106,7 @@ public class EveUtil implements Util
 	public static String toEveAgentId(final AgentID agentID)
 	{
 		// be robust against spaces, weird characters, etc.
-		return WebUtil.urlEncode(agentID.getValue());
+		return WebUtil.urlEncode(agentID.toString());
 	}
 
 	/**
@@ -125,14 +128,23 @@ public class EveUtil implements Util
 	protected static <M extends Message<?>> void receiveMessageByPointer(
 			final M msg)
 	{
-		try
+		final io.coala.agent.Agent ag = EveAgentManager.getInstance()
+				.getAgent(msg.getReceiverID(), false);
+		final Binder binder;
+		if (ag == null)
 		{
-			getWrapperAgent(msg.getReceiverID()).doReceive(msg);
-		} catch (final Throwable t)
-		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime(t,
-					msg.getReceiverID());
-		}
+			// allow delivery for orphan-binders (created programmatically)
+			if (msg.getReceiverID().isOrphan())
+				binder = EveAgentManager.getInstance()
+						.getBinder(msg.getReceiverID());
+			else
+				throw CoalaExceptionFactory.AGENT_UNAVAILABLE
+						.createRuntime(msg.getReceiverID());
+		} else
+			binder = ag.getBinder();
+
+		((MessageHandler) binder.inject(ReceivingCapability.class))
+				.onMessage(msg);
 	}
 
 	/**
@@ -166,7 +178,7 @@ public class EveUtil implements Util
 	{
 		try
 		{
-			getWrapperAgent(msg.getSenderID()).doSend(msg);
+			getWrapperAgent(msg.getSenderID(), true).doSend(msg);
 		} catch (final Throwable t)
 		{
 			throw CoalaExceptionFactory.AGENT_UNAVAILABLE
@@ -204,7 +216,7 @@ public class EveUtil implements Util
 	{
 		try
 		{
-			final Agent agent = getWrapperAgent(id);
+			final Agent agent = getWrapperAgent(id, false);
 			if (agent != null)
 				return agent.getUrls();
 		} catch (final Exception e)
@@ -233,27 +245,38 @@ public class EveUtil implements Util
 	 */
 	protected static EveWrapperAgent createWrapperAgent(final AgentID agentID)
 	{
+		final EveWrapperAgent result;
 		synchronized (WRAPPER_AGENT_CACHE)
 		{
 			final String eveAgentID = toEveAgentId(agentID);
-			EveWrapperAgent result = WRAPPER_AGENT_CACHE.get(eveAgentID);
-			if (result == null)
+			if (WRAPPER_AGENT_CACHE.containsKey(eveAgentID))
 			{
-				result = valueOf(agentID, EveWrapperAgent.class);
-				WRAPPER_AGENT_CACHE.put(eveAgentID, result);
-				result.onBoot();
-			} else
-				LOG.trace("Reusing Eve wrapper agent " + eveAgentID + " for "
-						+ toAgentID(eveAgentID));
-			return result;
+				LOG.warn("Duplicate wrapper for " + agentID + " > "
+						+ eveAgentID);
+				return WRAPPER_AGENT_CACHE.get(eveAgentID);
+			}
+			result = valueOf(agentID, EveWrapperAgent.class);
+			WRAPPER_AGENT_CACHE.put(eveAgentID, result);
 		}
+		result.onBoot();
+		return result;
 	}
 
 	/**
 	 * @param eveAgentID
 	 */
-	protected static EveWrapperAgent getWrapperAgent(final AgentID agentID)
+	protected static EveWrapperAgent getWrapperAgent(final AgentID agentID,
+			final boolean createIfNone)
 	{
+		synchronized (WRAPPER_AGENT_CACHE)
+		{
+			final String eveAgentID = toEveAgentId(agentID);
+			final EveWrapperAgent result = WRAPPER_AGENT_CACHE.get(eveAgentID);
+			if (result != null)
+				return result;
+		}
+		if (!createIfNone)
+			return null;
 		return createWrapperAgent(agentID);
 	}
 
@@ -291,7 +314,8 @@ public class EveUtil implements Util
 				agentConfig.set(param.getKey(), param.getValue());
 
 		final T result = (T) new AgentBuilder().with(agentConfig).build();
-		LOG.trace("Created agent with config: " + agentConfig);
+		LOG.trace("Created " + agentType.getSimpleName() + " with config: "
+				+ agentConfig);
 		return result;
 	}
 

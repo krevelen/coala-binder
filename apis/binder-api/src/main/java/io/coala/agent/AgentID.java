@@ -87,7 +87,8 @@ public class AgentID extends ModelComponentID<String>
 	public static AgentID from(final ModelComponentIDFactory agentIDFactory,
 			final String agentName)
 	{
-		return agentName == null ? null : agentIDFactory.createAgentID(agentName);
+		return agentName == null ? null
+				: agentIDFactory.createAgentID(agentName);
 	}
 
 	/**
@@ -97,7 +98,8 @@ public class AgentID extends ModelComponentID<String>
 	 * @param agentNames
 	 * @return
 	 */
-	public static List<AgentID> from(final ModelComponentIDFactory agentIDFactory,
+	public static List<AgentID> from(
+			final ModelComponentIDFactory agentIDFactory,
 			final String... agentNames)
 	{
 		final List<AgentID> result = new ArrayList<AgentID>();
@@ -115,7 +117,8 @@ public class AgentID extends ModelComponentID<String>
 	 * @return
 	 */
 	public static <T> Map<AgentID, T> from(
-			final ModelComponentIDFactory agentIDFactory, final Map<String, T> map)
+			final ModelComponentIDFactory agentIDFactory,
+			final Map<String, T> map)
 	{
 		final Map<AgentID, T> result = new HashMap<AgentID, T>();
 		if (map != null && !map.isEmpty())

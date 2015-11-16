@@ -165,7 +165,7 @@ public class EveAgentManager extends AbstractAgentManager
 	{
 		try
 		{
-			EveUtil.createWrapperAgent(agent.getID());
+			EveUtil.getWrapperAgent(agent.getID(), true);
 			return agent.getID();
 		} catch (final Exception e)
 		{
@@ -180,6 +180,11 @@ public class EveAgentManager extends AbstractAgentManager
 		return super.delete(agentID);
 	}
 
+	protected Binder getBinder(final AgentID agentID)
+	{
+		return super.getBinderFactory().create(agentID);
+	}
+
 	@Override
 	protected void shutdown()
 	{
@@ -189,7 +194,7 @@ public class EveAgentManager extends AbstractAgentManager
 	protected void setExposed(final AgentID agentID, final Object exposed)
 			throws Exception
 	{
-		((EveExposingAgent) EveUtil.getWrapperAgent(agentID))
+		((EveExposingAgent) EveUtil.getWrapperAgent(agentID, true))
 				.setExposed(exposed);
 	}
 

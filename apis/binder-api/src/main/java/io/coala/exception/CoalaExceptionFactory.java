@@ -61,7 +61,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link AgentID} the agent identifier
 	 * </ul>
 	 */
-	AGENT_NOT_ALLOWED("Agent with id '%s' is not allowed in this model",
+	AGENT_NOT_ALLOWED("Agent with id '%s' is not (yet) valid in this model",
 			AgentID.class),
 
 	/**
@@ -72,7 +72,8 @@ public enum CoalaExceptionFactory
 	 * <li>{@link AgentID} the agent identifier
 	 * </ul>
 	 */
-	AGENT_UNAVAILABLE("Agent with id '%s' is not available", AgentID.class),
+	AGENT_UNAVAILABLE("Agent with id '%s' is not (yet) available in this JVM",
+			AgentID.class),
 
 	/**
 	 * This {@link CoalaException} is thrown when a configuration property was
@@ -245,16 +246,17 @@ public enum CoalaExceptionFactory
 		for (int i = 0; i < this.argumentTypes.length; i++)
 			if (values[i] == null)
 			{
-//				new NullPointerException("Value " + i + " for " + name()
-//						+ " can't be null!").printStackTrace();
-//				return false;
+				// new NullPointerException("Value " + i + " for " + name()
+				// + " can't be null!").printStackTrace();
+				// return false;
 			} else if (!ClassUtil.isAssignableFrom(this.argumentTypes[i],
 					values[i].getClass()))
 			{
-				new IllegalArgumentException("Incorrect value type for "
-						+ name() + ". Value " + i + " (" + values[i]
-						+ ") should be of type: "
-						+ this.argumentTypes[i].getName()).printStackTrace();
+				new IllegalArgumentException(
+						"Incorrect value type for " + name() + ". Value " + i
+								+ " (" + values[i] + ") should be of type: "
+								+ this.argumentTypes[i].getName())
+										.printStackTrace();
 				return false;
 			}
 		return true;
@@ -263,15 +265,16 @@ public enum CoalaExceptionFactory
 	protected static String formatMessage(final String messageFormat,
 			final Object... values)
 	{
-		return values == null || values.length == 0 ? messageFormat : String
-				.format(messageFormat, values);
+		return values == null || values.length == 0 ? messageFormat
+				: String.format(messageFormat, values);
 	}
 
 	protected String formatMessage(final Object... values)
 	{
 		if (values == null || values.length <= this.argumentTypes.length)
-			return checkArgumentTypes(values) ? formatMessage(
-					this.messageFormat, values) : this.messageFormat;
+			return checkArgumentTypes(values)
+					? formatMessage(this.messageFormat, values)
+					: this.messageFormat;
 
 		final Object[] shortValues = new Object[this.argumentTypes.length];
 		final Object[] remainingValues = new Object[values.length
@@ -280,8 +283,9 @@ public enum CoalaExceptionFactory
 		System.arraycopy(values, shortValues.length, remainingValues, 0,
 				remainingValues.length);
 		for (int i = 0; i < remainingValues.length; i++)
-			remainingValues[i] = remainingValues[i] instanceof Identifiable ? ((Identifiable<?>) remainingValues[i])
-					.getID() : remainingValues[i];
+			remainingValues[i] = remainingValues[i] instanceof Identifiable
+					? ((Identifiable<?>) remainingValues[i]).getID()
+					: remainingValues[i];
 		final String result = this.messageFormat + " "
 				+ Arrays.asList(remainingValues);
 		return checkArgumentTypes(values) ? formatMessage(result, shortValues)

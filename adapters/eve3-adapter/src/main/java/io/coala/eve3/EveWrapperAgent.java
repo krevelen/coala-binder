@@ -20,6 +20,18 @@
  */
 package io.coala.eve3;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import com.almende.eve.protocol.jsonrpc.annotation.Access;
+import com.almende.eve.protocol.jsonrpc.annotation.AccessType;
+import com.almende.eve.protocol.jsonrpc.formats.JSONRPCException;
+import com.almende.eve.protocol.jsonrpc.formats.JSONRequest;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
 import io.coala.agent.AgentStatus;
@@ -31,20 +43,8 @@ import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.message.Message;
 import io.coala.message.MessageHandler;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
+import rx.Observable;
 import rx.Observer;
-
-import com.almende.eve.protocol.jsonrpc.annotation.Access;
-import com.almende.eve.protocol.jsonrpc.annotation.AccessType;
-import com.almende.eve.protocol.jsonrpc.formats.JSONRPCException;
-import com.almende.eve.protocol.jsonrpc.formats.JSONRequest;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * {@link EveWrapperAgent}
@@ -94,8 +94,12 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		try
 		{
 			EveAgentManager.getInstance().setAddress(getId(), eveURLs);
-			EveAgentManager.getInstance().getAgentStatus(agentID)
-					.subscribe(this);
+			final Observable<AgentStatusUpdate> statusstream = EveAgentManager
+					.getInstance().getAgentStatus(agentID);
+			if (statusstream != null)
+				statusstream.subscribe(this);
+			else
+				LOG.warn("No agent status updates available");
 		} catch (final Throwable t)
 		{
 			LOG.error(
@@ -174,14 +178,8 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	public String getType()
 	{
 		return EveAgentManager.getInstance().getAgent(getAgentID(), true)
-				.getClass().getSimpleName();
+				.getClass().getSimpleName() + " $Id$";
 	}
-
-	// @Override
-	// public String getVersion() {
-	// super.getType()
-	// return "$Id$";
-	// }
 
 	@Override
 	public final void onBoot()// onReady()
@@ -202,7 +200,6 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	public final void initialize()
 	{
 		updateWrapperStatus(BasicAgentStatus.CREATED);
-		LOG.trace("Eve wrapper " + getId() + " now initializing...");
 
 		configureLifeCycleHandling();
 
@@ -213,12 +210,12 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	@Access(AccessType.SELF)
 	public final void activate()
 	{
-		LOG.trace("Eve wrapper " + getId() + " now activating...");
+		// LOG.trace("Eve wrapper " + getId() + " now activating...");
 
 		// trigger activation of wrapped agent
 		updateWrapperStatus(BasicAgentStatus.ACTIVE);
 
-		LOG.trace("Eve wrapper " + getId() + " now deactivating...");
+		// LOG.trace("Eve wrapper " + getId() + " now deactivating...");
 
 		// completed activation of wrapped agent
 		updateWrapperStatus(BasicAgentStatus.PASSIVE);
@@ -236,7 +233,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		}
 
 		this.destroyed = true;
-		LOG.trace("Eve wrapper " + getId() + " now finishing...");
+		// LOG.trace("Eve wrapper " + getId() + " now finishing...");
 		try
 		{
 			updateWrapperStatus(BasicAgentStatus.FINISHED);
@@ -290,6 +287,8 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		((MessageHandler) EveAgentManager.getInstance()
 				.getAgent(getAgentID(), true).getBinder()
 				.inject(ReceivingCapability.class)).onMessage(payload);
+		// LOG.trace("Received " + payload.getSenderID().getValue() + " > "
+		// + getAgentID().getValue());
 	}
 
 	@Override

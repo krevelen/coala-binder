@@ -153,7 +153,7 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 				bind(BinderFactoryConfig.class).toInstance(config);
 
 				bind(ModelID.class).toInstance(clientID.getModelID());
-				
+
 				bind(ModelComponentIDFactory.class)
 						.toInstance(config.getReplicationConfig().newID());
 
@@ -178,7 +178,7 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 				// and OWNER API at http://owner.aeonbits.org/
 
 				bindConstant().annotatedWith(Names.named(AGENT_TYPE))
-						.to(agentType == null ? Agent.class : agentType);
+						.to(agentType == null ? Void.class : agentType);
 
 				for (Entry<Class<? extends CapabilityFactory>, Class<? extends Capability>> entry : config
 						.getSingletonServiceTypes().entrySet())

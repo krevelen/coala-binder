@@ -25,10 +25,12 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
+import org.joda.time.Duration;
 
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
@@ -36,6 +38,7 @@ import io.coala.capability.BasicCapabilityStatus;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.example.conway.CellLink.CellLinkStatus;
 import io.coala.exception.CoalaException;
+import io.coala.json.JsonUtil;
 import io.coala.log.InjectLogger;
 import io.coala.time.SimDuration;
 import io.coala.time.SimTime;
@@ -62,17 +65,15 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private static final int TRANSITION_THRESHOLD = 8;
-
-	/** TODO from config */
 	private final transient SimTime endCycle = getBinder()
 			.inject(SimTime.Factory.class)
-			.create(getProperty(CYCLE_DURATION_CONFIG_KEY)
-					.getNumber(CYCLE_DURATION_DEFAULT), TimeUnit.TICKS);
+			.create(getProperty(CYCLE_TOTAL_CONFIG_KEY)
+					.getNumber(CYCLE_TOTAL_DEFAULT), TimeUnit.TICKS);
 
 	/** */
 	private final transient SimDuration cycleDuration = new SimDuration(
-			getProperty(CYCLE_TOTAL_CONFIG_KEY).getNumber(CYCLE_TOTAL_DEFAULT),
+			getProperty(CYCLE_DURATION_CONFIG_KEY)
+					.getNumber(CYCLE_DURATION_DEFAULT),
 			TimeUnit.TICKS);
 
 	/** */
@@ -82,16 +83,16 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	/** */
 	private final transient Map<CellID, Subscription> myNeighbors = new HashMap<>();
 
-	/** TODO use persistence capability? */
-	private final Map<LifeStatus, Integer> myNeighborStateCount = new EnumMap<>(
-			LifeStatus.class);
-
 	/** */
 	@InjectLogger
 	private transient Logger LOG;
 
-	/** */
-	private final CellID myID = (CellID) getID().getOwnerID();
+	/** TODO use persistence capability? */
+	private final Map<LifeStatus, Integer> myNeighborStateCount = new EnumMap<>(
+			LifeStatus.class);
+
+	/** TODO use persistence capability? */
+	private final Collection<CellID> missing = new TreeSet<>();
 
 	/** TODO use persistence capability? */
 	private CellState myState = null;
@@ -128,7 +129,7 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 		if (this.myState == null && state == null)
 			throw new IllegalStateException("Can't remain in null state");
 		if (this.myState != null && state != null && this.myState.equals(state))
-			throw new IllegalStateException("Can't remain in same tick");
+			throw new IllegalStateException("Can't remain in same state");
 
 		LOG.trace("Transitioning to: " + state);
 		this.myState = state;
@@ -156,8 +157,6 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	@Override
 	public synchronized void initialize() throws CoalaException
 	{
-		this.myNeighbors.put(myID,
-				this.myStates.subscribe(GLOBAL_TRANSITION_SNIFFER));
 		myLinks().subscribe(new Observer<CellLink>()
 		{
 
@@ -179,6 +178,18 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 				handleLinkUpdate(link);
 			}
 		});
+		this.myStates.map(new Func1<CellState, CellState>()
+		{
+			public CellState call(final CellState state)
+			{
+				// forward local state stream to owner
+				// LOG.trace("Forwarding "
+				// + getID().getOwnerID().getValue() + " > "
+				// + linkUpdate.getNeighborID().getValue());
+				return state.copyFor(getID().getOwnerID().getParentID());
+			}
+		}).subscribe(getBinder().inject(SendingCapability.class)
+				.outgoing(Duration.millis(1000)));
 
 		setState(CellWorld.Util.parseInitialState(getBinder()));
 		for (LifeStatus status : LifeStatus.values())
@@ -189,14 +200,23 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	public void finish()
 	{
 		// stop Util.GLOBAL_SNIFFER from sniffing this cell
-		this.myNeighbors.get(this.myID).unsubscribe();
+		this.myStates.onCompleted();
+		for (Subscription sub : this.myNeighbors.values())
+			if (sub != null)
+				sub.unsubscribe();
 	}
 
 	@Override
-	public Observable<CellState> myStates(
-			final Observable<CellState> neighborStates)
+	public SimTime getTime()
 	{
-		neighborStates.subscribe(new Observer<CellState>()
+		return this.myState == null ? null : this.myState.getGeneration();
+	}
+
+	@Override
+	public Observable<CellState> myStates(final Observable<CellState> incoming)
+	{
+		// subscribe to all incoming neighbor events
+		incoming.subscribe(new Observer<CellState>()
 		{
 			@Override
 			public void onCompleted()
@@ -214,64 +234,48 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 			@Override
 			public void onNext(final CellState state)
 			{
+				// System.err.println("HANDLING: " + state);
 				handleNeighborState(state);
 			}
 		});
 		return this.myStates.asObservable();
 	}
 
+	/**
+	 * TODO move to {@link BasicCell}?
+	 * 
+	 * @param linkUpdate
+	 */
 	protected void handleLinkUpdate(final CellLink linkUpdate)
 	{
+		final Subscription sub;
 		synchronized (this.myNeighbors)
 		{
 			switch (linkUpdate.getType())
 			{
 			case CONNECTED:
-				// listen for incoming events from newly connected neighbor
-				// send outgoing events to newly connected neighbor
-				this.myNeighbors.put(linkUpdate.getNeighborID(),
-						this.myStates.subscribe(new Observer<CellState>()
-						{
-							@Override
-							public void onCompleted()
-							{
-								// state updates completed
-							}
-
-							@Override
-							public void onError(final Throwable e)
-							{
-								// state updates failed
-								e.printStackTrace();
-							}
-
-							@Override
-							public void onNext(final CellState t)
-							{
-								final CellState carbonCopy = t
-										.copyFor(linkUpdate.getNeighborID());
-								try
-								{
-									getBinder().inject(SendingCapability.class)
-											.send(carbonCopy);
-								} catch (final Exception e)
-								{
-									LOG.warn(
-											"Problem broadcasting state update: "
-													+ carbonCopy,
-											e);
-								}
-							}
-						}));
+				sub = this.myStates.map(new Func1<CellState, CellState>()
+				{
+					public CellState call(final CellState state)
+					{
+						// forward local state stream to new neighbor
+						// LOG.trace("Forwarding "
+						// + getID().getOwnerID().getValue() + " > "
+						// + linkUpdate.getNeighborID().getValue());
+						return state.copyFor(linkUpdate.getNeighborID());
+					}
+				}).subscribe(getBinder().inject(SendingCapability.class)
+						.outgoing(Duration.millis(1000)));
+				this.myNeighbors.put(linkUpdate.getNeighborID(), sub);
+				this.missing.add(linkUpdate.getNeighborID());
 				break;
 
 			case DISCONNECTED:
 				// stop listening to disconnected neighbor
-				final Subscription sub = this.myNeighbors
-						.remove(linkUpdate.getNeighborID());
-
+				this.missing.remove(linkUpdate.getNeighborID());
+				sub = this.myNeighbors.remove(linkUpdate.getNeighborID());
 				if (sub == null)
-					LOG.warn("Unexpected: aready disconnected " + linkUpdate);
+					LOG.warn("Unexpected: already disconnected " + linkUpdate);
 				else // cancel broadcasts to disconnected peer
 					sub.unsubscribe();
 				break;
@@ -282,51 +286,93 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 		}
 	}
 
+	private final Collection<CellState> pending = new TreeSet<>();
+
+	/**
+	 * TODO move to {@link BasicCell}?
+	 * 
+	 * @param state
+	 */
 	protected void handleNeighborState(final CellState state)
 	{
+		// LOG.trace("Handling " + state.getCellID().getValue() + " > "
+		// + getID().getOwnerID().getValue());
+
 		if (state.getTime().compareTo(this.endCycle) >= 0)
 		{
 			// world is complete, end it
-			LOG.info("Simulation complete, dying...");
+			LOG.info("Simulation complete: " + state.getTime() + ">="
+					+ this.endCycle + ", dying...");
 			setStatus(BasicCapabilityStatus.COMPLETE);
 		}
 
-		if (state.getTime().compareTo(myState().getTime()) != 0)
+		if (state.getTime().compareTo(myState().getTime()) > 0)
 		{
 			// connected neighbor and self are out-of-sync
-			LOG.warn("Ignoring neighbor state out-of-sync: self="
-					+ myState().getTime() + " <> them=" + state.getTime());
-			return;
+			LOG.warn("Pending future neighbor state: " + state + ", tally: "
+					+ this.myNeighborStateCount + ", missing: " + this.missing);
+			synchronized (this.pending)
+			{
+				this.pending.add(state);
+			}
 		}
 
-		final int total;
-		synchronized (this.myNeighborStateCount)
-		{
-			this.myNeighborStateCount.put(state.getState(),
-					this.myNeighborStateCount.get(state.getState()) + 1);
-			this.myNeighborStateCount.notifyAll();
-			total = this.myNeighborStateCount.get(LifeStatus.ALIVE)
-					+ this.myNeighborStateCount.get(LifeStatus.DEAD);
-		}
-		if (total == TRANSITION_THRESHOLD)
-		{
-			// LifeStatus.blockUntilTotalStatesReached(this.myNeighborStateCount,
-			// 8);
-			LOG.trace("Got all " + total + " " + this.myNeighborStateCount
-					+ ", transitioning...");
-			setState(this.myState.next(this.cycleDuration,
-					this.myNeighborStateCount));
+		// if (!this.myNeighbors.containsKey(state.getCellID()))
+		// LOG.warn("Received from unknown neighbor: " + state.getCellID());
+		// else
+		// LOG.info("Received from known neighbor: " + state.getCellID());
 
-			// reset counters
+		synchronized (this.myNeighbors)
+		{
+			if (!this.missing.remove(state.getCellID()))
+			{
+				LOG.warn(
+						"Ignoring unexpected update: "
+								+ JsonUtil.toPrettyJSON(state),
+						new IllegalStateException());
+				return;
+			}
 			synchronized (this.myNeighborStateCount)
 			{
-				this.myNeighborStateCount.clear();
-				for (LifeStatus status : LifeStatus.values())
-					this.myNeighborStateCount.put(status, Integer.valueOf(0));
+				this.myNeighborStateCount.put(state.getState(),
+						this.myNeighborStateCount.get(state.getState()) + 1);
+				this.myNeighborStateCount.notifyAll();
 			}
-		} else
-			LOG.trace("Tally at " + total + " " + this.myNeighborStateCount
-					+ ", got neighbor state: " + state);
+			if (this.missing.isEmpty())
+			{
+				// LifeStatus.blockUntilTotalStatesReached(this.myNeighborStateCount,
+				// 8);
+				LOG.trace("Got all " + this.myNeighbors.size() + " "
+						+ this.myNeighborStateCount + ", transitioning...");
+				setState(this.myState.next(this.cycleDuration,
+						this.myNeighborStateCount));
+
+				// reset counters
+				this.missing.addAll(this.myNeighbors.keySet());
+				synchronized (this.myNeighborStateCount)
+				{
+					this.myNeighborStateCount.clear();
+					for (LifeStatus status : LifeStatus.values())
+						this.myNeighborStateCount.put(status,
+								Integer.valueOf(0));
+				}
+				final Collection<CellState> pending;
+				synchronized (this.pending)
+				{
+					pending = new TreeSet<>(this.pending);
+					this.pending.clear();
+				}
+				for (CellState pendingState : pending)
+					handleNeighborState(pendingState);
+			} else
+			{
+				LOG.trace(
+						"Got " + (this.myNeighbors.size() - this.missing.size())
+								+ " of " + this.myNeighbors.size() + " "
+								+ this.myNeighborStateCount + ", received: "
+								+ state + ", missing: " + this.missing);
+			}
+		}
 	}
 
 }

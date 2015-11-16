@@ -150,20 +150,21 @@ public class SimTime extends AbstractInstant<SimTime>
 	@Override
 	public String toString()
 	{
-		return String.format("%1.4f%s @%s (%s)", getValue().doubleValue(),
-				getUnit().toString(), getClockID(), new DateTime(getIsoTime())
-						.toString(READABLE_DATETIME_SHORT_FORMAT));
+		final StringBuilder result = new StringBuilder(String.format("%1.4f%s",
+				getValue().doubleValue(), getUnit().toString()));
+		if (getClockID() != null && getClockID().getValue() != null
+				&& !getClockID().getValue().isEmpty())
+			result.append(" @").append(getClockID().getValue());
+		if (getIsoTime() != null)
+			result.append(" (")
+					.append(new DateTime(getIsoTime())
+							.toString(READABLE_DATETIME_SHORT_FORMAT))
+					.append(')');
+		return result.toString();
 	}
 
-	// /** @see Instant#getBaseUnit() */
-	// @Override
-	// public TimeUnit getBaseUnit()
-	// {
-	// return this.baseUnit;
-	// }
-
 	/**
-	 * @return
+	 * @return the derived offset, i.e. the ISO date for {@link SimTime#ZERO}
 	 */
 	public Date calcOffset()
 	{

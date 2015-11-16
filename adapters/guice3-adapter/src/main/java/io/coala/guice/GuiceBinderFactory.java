@@ -76,7 +76,9 @@ public class GuiceBinderFactory implements BinderFactory
 		// empty
 	}
 
-	/** @see BinderFactory#initialize(BinderFactoryConfig, Observable) */
+	/**
+	 * @see BinderFactory#initialize(BinderFactoryConfig, Observable)
+	 */
 	@Override
 	public BinderFactory initialize(final BinderFactoryConfig config,
 			final Observable<AgentStatusUpdate> ownerStatus)
@@ -88,14 +90,18 @@ public class GuiceBinderFactory implements BinderFactory
 		return this;
 	}
 
-	/** @see BinderFactory#getConfig() */
+	/**
+	 * @see BinderFactory#getConfig()
+	 */
 	@Override
 	public BinderFactoryConfig getConfig()
 	{
 		return this.config;
 	}
 
-	/** @see BinderFactory#create(AgentID) */
+	/**
+	 * @see BinderFactory#create(AgentID)
+	 */
 	@Override
 	public synchronized GuiceBinder create(final String agentName)
 
@@ -104,24 +110,23 @@ public class GuiceBinderFactory implements BinderFactory
 				.createAgentID(agentName));
 	}
 
-	/** @see BinderFactory#create(AgentID) */
+	/**
+	 * @see BinderFactory#create(AgentID)
+	 */
 	@Override
 	public synchronized GuiceBinder create(final String agentName,
 			final Class<? extends Agent> agentType)
 	{
-		return create(
-				getConfig().getReplicationConfig().newID()
-						.createAgentID(agentName), agentType);
+		return create(getConfig().getReplicationConfig().newID()
+				.createAgentID(agentName), agentType);
 	}
 
-	/** @see BinderFactory#create(AgentID) */
-	// @Override
+	@Override
 	public synchronized GuiceBinder create(final AgentID agentID)
 	{
 		return create(agentID, null);
 	}
 
-	/** @see BinderFactory#create(AgentID, Class) */
 	@Override
 	public synchronized GuiceBinder create(final AgentID agentID,
 			final Class<? extends Agent> agentType) // throws CoalaException
@@ -129,8 +134,8 @@ public class GuiceBinderFactory implements BinderFactory
 		final GuiceBinder cached = this.binderCache.get(agentID);
 		if (cached != null)
 		{
-			LOG.warn("UNEXPECTED: re-using binder previously created for agent: "
-					+ agentID);
+			if (!agentID.isOrphan())
+				LOG.warn("UNEXPECTED: re-using binder for: " + agentID);
 			return cached;
 		}
 		if (getConfig() == null)
@@ -154,14 +159,14 @@ public class GuiceBinderFactory implements BinderFactory
 			{
 				return BasicAgentStatus.CREATED;
 			}
-			
+
 			@Override
 			public String toString()
 			{
 				return JsonUtil.toJSONString(this);
 			}
 		};
-		
+
 		final Subject<AgentStatusUpdate, AgentStatusUpdate> behaviorSubject = BehaviorSubject
 				.create(defaultValue);
 
@@ -183,7 +188,9 @@ public class GuiceBinderFactory implements BinderFactory
 		return result;
 	}
 
-	/** @see BinderFactory#remove(AgentID) */
+	/**
+	 * @see BinderFactory#remove(AgentID)
+	 */
 	@Override
 	public GuiceBinder remove(final AgentID agentID)
 	{

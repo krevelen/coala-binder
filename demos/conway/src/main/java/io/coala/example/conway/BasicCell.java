@@ -76,6 +76,13 @@ public class BasicCell extends BasicAgent implements Cell
 		final Observable<CellState> incoming = getBinder()
 				.inject(ReceivingCapability.class).getIncoming()
 				.ofType(CellState.class);
+//		 incoming.subscribe(new Action1<CellState>()
+//		 {
+//		 public void call(final CellState message)
+//		 {
+//		 LOG.info("DELIVERING: " + message);
+//		 }
+//		 });
 		this.states = getBinder().inject(CellWorld.class).myStates(incoming)
 				.doOnCompleted(new Action0()
 				{

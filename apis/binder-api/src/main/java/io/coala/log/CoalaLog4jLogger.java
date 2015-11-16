@@ -25,9 +25,11 @@ import io.coala.name.Identifiable;
 import io.coala.name.Identifier;
 import io.coala.time.Instant;
 import io.coala.time.SimTime;
+import io.coala.time.Timed;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.Priority;
@@ -53,6 +55,9 @@ public class CoalaLog4jLogger extends Logger
 	private static final String NAN_TIME_PREFIX_FORMAT = "t=       ?%s - ";
 
 	/** */
+	private static final String NULL_TIME_PREFIX_FORMAT = "t=          ? - ";
+
+	/** */
 	private static final String POS_INF_TIME_PREFIX_FORMAT = "t=   +inf %s - ";
 
 	/** */
@@ -62,20 +67,24 @@ public class CoalaLog4jLogger extends Logger
 	private static final String TIME_PREFIX_FORMAT = "t=%10.4f%s - ";
 
 	/** */
-	private static final String SIMTIME_PREFIX_FORMAT = "t=%10.4f%s (%s) - ";
+	private static final String ISOTIME_PREFIX_FORMAT = "t=%10.4f%s (%s) - ";
 
 	/** */
-	private static final DateFormat SIMTIME_DATE_FORMAT = new SimpleDateFormat(
+	private static final DateFormat ISOTIME_DATE_FORMAT = new SimpleDateFormat(
 			"yyyy-MM-dd HH:mm:ss");
 
-	/** */
-	private static final String METHOD_AFFIX_FORMAT = " [at %s.%s(%s:%d)]";
+	/** TODO delegate to Log4J (pattern ) instead? */
+	private static final String METHOD_AFFIX_FORMAT = "";
+	// private static final String METHOD_AFFIX_FORMAT = " [at %s.%s(%s:%d)]";
 
 	/** */
 	private final String idPrefix;
 
 	/** */
 	private final ModelComponent<?> clock;
+
+	/** */
+	private final Timed<?> timed;
 
 	/**
 	 * @return
@@ -92,11 +101,12 @@ public class CoalaLog4jLogger extends Logger
 	public static String determineLoggerPrefixForObject(final Object source)
 	{
 		final String result = source == null ? EMPTY_PREFIX_FORMAT
-				: source instanceof Identifier ? String.format(
-						ID_PREFIX_FORMAT, (Identifier<?, ?>) source)
-						: source instanceof Identifiable ? String.format(
-								ID_PREFIX_FORMAT,
-								((Identifiable<?>) source).getID())
+				: source instanceof Identifier
+						? String.format(ID_PREFIX_FORMAT,
+								(Identifier<?, ?>) source)
+						: source instanceof Identifiable
+								? String.format(ID_PREFIX_FORMAT,
+										((Identifiable<?>) source).getID())
 								: EMPTY_PREFIX_FORMAT;
 
 		// System.err.println("Determined prefix for " + source.getClass() +
@@ -120,7 +130,7 @@ public class CoalaLog4jLogger extends Logger
 					.printStackTrace();
 
 		this.idPrefix = source instanceof String ? EMPTY_PREFIX_FORMAT
-		// String.format(ID_PREFIX_FORMAT, source)
+				// String.format(ID_PREFIX_FORMAT, source)
 				: determineLoggerPrefixForObject(source);
 
 		// System.err.println("New logger idPrefix: " + this.idPrefix + " for "
@@ -129,11 +139,19 @@ public class CoalaLog4jLogger extends Logger
 		if (source instanceof ModelComponent)
 		{
 			this.clock = (ModelComponent<?>) source;
+		} else
+		{
+			this.clock = null;
+		}
+
+		if (source instanceof Timed)
+		{
+			this.timed = (Timed<?>) source;
 			// System.err.println("1. start logger at time: " + getTimePrefix()
 			// + " for " + name);
 		} else
 		{
-			this.clock = null;
+			this.timed = null;
 			// System.err.println("1. no clock for " + getName());
 		}
 	}
@@ -143,17 +161,18 @@ public class CoalaLog4jLogger extends Logger
 	 */
 	protected String getTimePrefix()
 	{
-		if (this.clock == null)
+		if (this.clock == null && this.timed == null)
 		{
 			// System.err.println("2. clock was null for " + getName());
 			return EMPTY_PREFIX_FORMAT;
 		}
 
-		final Instant<?> time = this.clock.getTime();
+		final Instant<?> time = this.clock != null ? this.clock.getTime()
+				: this.timed.getTime();
 		if (time == null)
 		{
 			// System.err.println("2. time was null for " + getName());
-			return EMPTY_PREFIX_FORMAT;
+			return NULL_TIME_PREFIX_FORMAT;
 		}
 
 		if (time.getValue() instanceof Double)
@@ -162,22 +181,22 @@ public class CoalaLog4jLogger extends Logger
 			if (t == Double.NaN)
 			{
 				// System.err.println("2. time is NaN for " + getName());
-				return String.format(NAN_TIME_PREFIX_FORMAT, time.getUnit()
-						.toString());
+				return String.format(NAN_TIME_PREFIX_FORMAT,
+						time.getUnit().toString());
 			}
 
 			if (t == Double.NEGATIVE_INFINITY)
 			{
 				// System.err.println("2. time is pos inf for " + getName());
-				return String.format(NEG_INF_TIME_PREFIX_FORMAT, time.getUnit()
-						.toString());
+				return String.format(NEG_INF_TIME_PREFIX_FORMAT,
+						time.getUnit().toString());
 			}
 
 			if (t == Double.NEGATIVE_INFINITY)
 			{
 				// System.err.println("2. time is neg inf for " + getName());
-				return String.format(POS_INF_TIME_PREFIX_FORMAT, time.getUnit()
-						.toString());
+				return String.format(POS_INF_TIME_PREFIX_FORMAT,
+						time.getUnit().toString());
 			}
 		}
 
@@ -185,11 +204,17 @@ public class CoalaLog4jLogger extends Logger
 		try
 		{
 			if (time instanceof SimTime)
-				return String.format(SIMTIME_PREFIX_FORMAT, time.doubleValue(),
-						time.getUnit().toString(), SIMTIME_DATE_FORMAT
-								.format(((SimTime) time).getIsoTime()));
-			return String.format(TIME_PREFIX_FORMAT, time.doubleValue(), time
-					.getUnit().toString());
+			{
+				final Date isoTime = ((SimTime) time).getIsoTime();
+				return isoTime == null
+						? String.format(TIME_PREFIX_FORMAT, time.doubleValue(),
+								time.getUnit())
+						: String.format(ISOTIME_PREFIX_FORMAT,
+								time.doubleValue(), time.getUnit(),
+								ISOTIME_DATE_FORMAT.format(isoTime));
+			}
+			return String.format(TIME_PREFIX_FORMAT, time.doubleValue(),
+					time.getUnit().toString());
 		} catch (final Throwable t)
 		{
 			t.printStackTrace();
@@ -200,17 +225,17 @@ public class CoalaLog4jLogger extends Logger
 	/** */
 	private static final String[] loggingPackages = {
 
-	/* */
-	org.apache.commons.logging.Log.class.getPackage().getName(),
+			/* */
+			org.apache.commons.logging.Log.class.getPackage().getName(),
 
-	/* */
-	org.slf4j.Logger.class.getPackage().getName(),
+			/* */
+			org.slf4j.Logger.class.getPackage().getName(),
 
-	/* */
-	java.util.logging.Logger.class.getPackage().getName(),
+			/* */
+			java.util.logging.Logger.class.getPackage().getName(),
 
-	/* */
-	org.apache.log4j.Logger.class.getPackage().getName()
+			/* */
+			org.apache.log4j.Logger.class.getPackage().getName()
 
 	};
 
@@ -243,12 +268,14 @@ public class CoalaLog4jLogger extends Logger
 		// System.err.println("3. time prefix: " + timePrefix + " for "
 		// + getName());
 
-		final String methodAffix = getMethodAffix();
+		final String methodAffix = METHOD_AFFIX_FORMAT.isEmpty()
+				? METHOD_AFFIX_FORMAT : getMethodAffix();
 		try
 		{
 			callAppenders(new LoggingEvent(fqcn, this, level,
 					new StringBuilder(timePrefix).append(this.idPrefix)
-							.append(message).append(methodAffix).toString(), t));
+							.append(message).append(methodAffix).toString(),
+					t));
 		} catch (final Throwable e)
 		{
 			e.printStackTrace();

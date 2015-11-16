@@ -23,7 +23,9 @@ package io.coala.example.conway;
 import java.util.Map;
 
 import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.coala.agent.AgentID;
 import io.coala.message.AbstractMessage;
 import io.coala.message.MessageID;
 import io.coala.model.ModelID;
@@ -87,7 +89,7 @@ public class CellState extends AbstractMessage<CellState.ID>
 	 * @param lifeState
 	 */
 	protected CellState(final SimTime generation, final CellID fromID,
-			final CellID toID, final LifeStatus lifeState)
+			final AgentID toID, final LifeStatus lifeState)
 	{
 		super(new ID(fromID.getModelID(), generation), fromID, fromID, toID);
 		this.state = lifeState;
@@ -96,6 +98,7 @@ public class CellState extends AbstractMessage<CellState.ID>
 	/**
 	 * @return the cellID
 	 */
+	@JsonIgnore
 	public CellID getCellID()
 	{
 		return (CellID) getSenderID();
@@ -104,6 +107,7 @@ public class CellState extends AbstractMessage<CellState.ID>
 	/**
 	 * @return the generation in {@link TimeUnit#TICKS}
 	 */
+	@JsonIgnore
 	public SimTime getGeneration()
 	{
 		return getID().getTime();
@@ -118,12 +122,12 @@ public class CellState extends AbstractMessage<CellState.ID>
 	}
 
 	/**
-	 * @param neighborID {@link CellID} of the neighbor to inform
+	 * @param receiverID {@link AgentID} of the receiver to inform
 	 * @return a new {@link CellState} copy
 	 */
-	public CellState copyFor(final CellID neighborID)
+	public CellState copyFor(final AgentID receiverID)
 	{
-		return new CellState(getGeneration(), getCellID(), neighborID,
+		return new CellState(getGeneration(), getCellID(), receiverID,
 				getState());
 	}
 

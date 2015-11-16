@@ -52,7 +52,7 @@ public interface CreatingCapability extends Capability<BasicCapabilityStatus>
 	}
 
 	Observable<AgentID> getChildIDs(boolean currentOnly);
-	
+
 	/**
 	 * @param agentID the agent identifier
 	 * @return an {@link Observable} of the new agent's
@@ -77,8 +77,9 @@ public interface CreatingCapability extends Capability<BasicCapabilityStatus>
 	Observable<AgentStatusUpdate> createAgent(AgentID agentID);
 
 	/**
+	 * @param <A> extends {@link Agent}
 	 * @param agentID the agent identifier
-	 * @param agentType the type of {@link Agent} to boot
+	 * @param agentType the concrete type of {@link Agent} to boot
 	 * @return an {@link Observable} of the new agent's
 	 *         {@link AgentStatusUpdate}
 	 */

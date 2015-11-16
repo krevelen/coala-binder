@@ -151,7 +151,7 @@ public abstract class AbstractAgentManager implements AgentManager
 		@Override
 		public void onError(final Throwable t)
 		{
-			t.printStackTrace();
+			// t.printStackTrace();
 		}
 
 		@Override
@@ -172,17 +172,18 @@ public abstract class AbstractAgentManager implements AgentManager
 				try
 				{
 					hooks.initialize();
-					if(agent.getStatus()==null)
+					if (agent.getStatus() == null)
 					{
 						LOG.warn("Agent has no status value: " + agentID);
-//						updateAgentStatus(agent, BasicAgentStatus.CREATED);
+						// updateAgentStatus(agent, BasicAgentStatus.CREATED);
 					}
-					if (agent.getStatus()==null||agent.getStatus().isCreatedStatus())
+					if (agent.getStatus() == null
+							|| agent.getStatus().isCreatedStatus())
 						updateAgentStatus(agent, BasicAgentStatus.INITIALIZED);
 				} catch (final Throwable e)
 				{
 					LOG.error("Problem initializing agent: " + agentID, e);
-//					onError(e);
+					// onError(e);
 					updateAgentStatus(agent, BasicAgentStatus.FAILED);
 				}
 			} else if (wrapperUpdate.getStatus().isPassiveStatus())
@@ -222,7 +223,7 @@ public abstract class AbstractAgentManager implements AgentManager
 								"Wrapper could not "
 										+ "activate/complete agent %s",
 								agentID), t);
-//						onError(t);
+						// onError(t);
 						updateAgentStatus(agent, BasicAgentStatus.FAILED);
 					}
 					break;
@@ -246,7 +247,7 @@ public abstract class AbstractAgentManager implements AgentManager
 								"Wrapper could not "
 										+ "activate/complete agent %s",
 								agentID), t);
-//						onError(t);
+						// onError(t);
 						updateAgentStatus(agent, BasicAgentStatus.FAILED);
 					}
 					break;
@@ -270,7 +271,7 @@ public abstract class AbstractAgentManager implements AgentManager
 				{
 					LOG.trace(String.format("Problem destroying agent: %s",
 							agentID), t);
-//					onError(t);
+					// onError(t);
 				}
 			}
 		}
@@ -294,7 +295,7 @@ public abstract class AbstractAgentManager implements AgentManager
 		@Override
 		public void onError(final Throwable t)
 		{
-			t.printStackTrace();
+			// t.printStackTrace();
 		}
 
 		@Override
@@ -304,8 +305,11 @@ public abstract class AbstractAgentManager implements AgentManager
 			final Agent agent = get(agentID, false);
 			if (agent == null)
 			{
-				LOG.trace("Agent already deleted, ignoring state update: "
-						+ update.getStatus());
+				LOG.warn(
+						"Agent already deleted, ignoring state update: "
+								+ update.getStatus(),
+						CoalaExceptionFactory.AGENT_NOT_ALLOWED
+								.create(agentID));
 				return;
 			}
 			if (update.getStatus().isCompleteStatus())
@@ -321,8 +325,9 @@ public abstract class AbstractAgentManager implements AgentManager
 				{
 					LOG.trace(String
 							.format("Problem while wrapper was finishing for "
-									+ "agent: %s", agentID));
-					onError(e);
+									+ "agent: %s", agentID),
+							e);
+					// onError(e);
 					updateAgentStatus(agent, BasicAgentStatus.FAILED);
 				}
 			}
@@ -416,16 +421,16 @@ public abstract class AbstractAgentManager implements AgentManager
 		}
 
 		if (!isCreated(agentID))
-			LOG.warn(
-					"Unknown agent: " + agentID + " reports status: " + status);
-
-		// Schedulers.trampoline().createWorker().schedule(new Action0()
-		// {
-		// @Override
-		// public void call()
-		// {
-		this.wrapperStatusUpdates
-				.onNext(new BasicAgentStatusUpdate(agentID, status));
+			LOG.warn("Missing agent: " + agentID + ", wrapper status: "
+					+ status);
+		else
+			// Schedulers.trampoline().createWorker().schedule(new Action0()
+			// {
+			// @Override
+			// public void call()
+			// {
+			this.wrapperStatusUpdates
+					.onNext(new BasicAgentStatusUpdate(agentID, status));
 		// }
 		// });
 	}
@@ -592,7 +597,7 @@ public abstract class AbstractAgentManager implements AgentManager
 				@Override
 				public void onError(final Throwable e)
 				{
-					e.printStackTrace();
+					// e.printStackTrace();
 				}
 
 				@Override

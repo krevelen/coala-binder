@@ -52,6 +52,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @version $Revision: 324 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
+@SuppressWarnings("deprecation")
 @LoadPolicy(LoadType.MERGE)
 @Sources({ "file:${" + ConfigUtil.FILE_NAME_PROPERTY + "}",
 		"classpath:${" + ConfigUtil.FILE_NAME_PROPERTY + "}",

@@ -99,42 +99,54 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 		return getBinder().inject(ConfiguringCapability.class).getProperty(key);
 	}
 
-	/** @return the agent's local {@link CreatingCapability} */
+	/**
+	 * @return the agent's local {@link CreatingCapability}
+	 */
 	@JsonIgnore
 	protected CreatingCapability getBooter()
 	{
 		return getBinder().inject(CreatingCapability.class);
 	}
 
-	/** @return the agent's local {@link SchedulingCapability} */
+	/**
+	 * @return the agent's local {@link SchedulingCapability}
+	 */
 	@JsonIgnore
 	protected SchedulingCapability<?> getScheduler()
 	{
 		return getSimulator();
 	}
 
-	/** @return the agent's local {@link ReplicatingCapability} */
+	/**
+	 * @return the agent's local {@link ReplicatingCapability}
+	 */
 	@JsonIgnore
 	protected ReplicatingCapability getSimulator()
 	{
 		return getBinder().inject(ReplicatingCapability.class);
 	}
 
-	/** @return the agent's local {@link SendingCapability} */
+	/**
+	 * @return the agent's local {@link SendingCapability}
+	 */
 	@JsonIgnore
 	protected SendingCapability getMessenger()
 	{
 		return getBinder().inject(SendingCapability.class);
 	}
 
-	/** @return the agent's local {@link ReceivingCapability} */
+	/**
+	 * @return the agent's local {@link ReceivingCapability}
+	 */
 	@JsonIgnore
 	protected ReceivingCapability getReceiver()
 	{
 		return getBinder().inject(ReceivingCapability.class);
 	}
 
-	/** @return the agent's local {@link ReasoningCapability} */
+	/**
+	 * @return the agent's local {@link ReasoningCapability}
+	 */
 	@JsonIgnore
 	protected ReasoningCapability getReasoner()
 	{
@@ -147,21 +159,27 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 		return getBinder().inject(DestroyingCapability.class);
 	}
 
-	/** @return the agent's local {@link RandomizingCapability} */
+	/**
+	 * @return the agent's local {@link RandomizingCapability}
+	 */
 	@JsonIgnore
 	protected RandomizingCapability getRandomizer()
 	{
 		return getSimulator();// getBinder().bind(RandomizerService.class);
 	}
 
-	/** @return the agent's local {@link GroundingCapability} */
+	/**
+	 * @return the agent's local {@link GroundingCapability}
+	 */
 	@JsonIgnore
 	protected GroundingCapability getWorld()
 	{
 		return getBinder().inject(GroundingCapability.class);
 	}
 
-	/** @see Agent#getBinder() */
+	/**
+	 * @see Agent#getBinder()
+	 */
 	@Override
 	public final synchronized Binder getBinder()
 	{
@@ -177,39 +195,49 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	/** */
 	private boolean initialized = false;
 
-	/** @see LifeCycle#initialize() */
+	/**
+	 * @see LifeCycle#initialize()
+	 */
 	@Override
 	public void initialize() throws Exception
 	{
 		if (this.initialized)
-			throw new IllegalStateException("Agent already initialized: "
-					+ getID());
+			throw new IllegalStateException(
+					"Agent already initialized: " + getID());
 
 		this.initialized = true;
 	}
 
-	/** @see Process#activate() */
+	/**
+	 * @see Process#activate()
+	 */
 	@Override
 	public void activate() throws Exception
 	{
 		// override me
 	}
 
-	/** @see LifeCycle#deactivate() */
+	/**
+	 * @see LifeCycle#deactivate()
+	 */
 	@Override
 	public void deactivate() throws Exception
 	{
 		// override me
 	}
 
-	/** @see LifeCycle#finish() */
+	/**
+	 * @see LifeCycle#finish()
+	 */
 	@Override
 	public void finish() throws Exception
 	{
 		// override me
 	}
 
-	/** @see LifeCycle#getActivationType() */
+	/**
+	 * @see LifeCycle#getActivationType()
+	 */
 	@Override
 	public ActivationType getActivationType()
 	{

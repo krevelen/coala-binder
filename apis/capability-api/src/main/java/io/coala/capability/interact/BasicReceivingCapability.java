@@ -1,12 +1,16 @@
 package io.coala.capability.interact;
 
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.apache.log4j.Logger;
 
+import io.coala.agent.Agent;
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.log.InjectLogger;
@@ -35,10 +39,16 @@ public class BasicReceivingCapability extends BasicCapability
 	private Logger LOG;
 
 	/** */
+	@SuppressWarnings("rawtypes")
+	@Inject
+	@Named(Binder.AGENT_TYPE)
+	private Class ownerType;
+
+	/** */
 	private Subject<Message<?>, Message<?>> incoming = ReplaySubject.create();
 
 	/**
-	 * {@link AGlobeMessengerService} constructor
+	 * {@link BasicReceivingCapability} constructor
 	 * 
 	 * @param binder
 	 */
@@ -49,72 +59,18 @@ public class BasicReceivingCapability extends BasicCapability
 		super(binder);
 	}
 
-	// private class InterruptibleDeliveryTask implements Runnable
-	// {
-	//
-	// private final Message<?> message;
-	//
-	// private volatile boolean suspended = false;
-	//
-	// public InterruptibleDeliveryTask(final Message<?> message)
-	// {
-	// this.message = message;
-	// }
-	//
-	// public void suspend()
-	// {
-	// this.suspended = true;
-	// }
-	//
-	// public void resume()
-	// {
-	// this.suspended = false;
-	// synchronized (this)
-	// {
-	// notifyAll();
-	// }
-	// }
-	//
-	// @Override
-	// public void run()
-	// {
-	// while (!Thread.currentThread().isInterrupted())
-	// {
-	// if (!this.suspended)
-	// {
-	// incoming.onNext(this.message);
-	// LOG.trace("Delivered: " + message);
-	// deliveryTasks.remove(this);
-	// } else
-	// {
-	// LOG.trace("Suspended delivery of " + this.message);
-	// try
-	// {
-	// while (this.suspended)
-	// {
-	// synchronized (this)
-	// {
-	// wait();
-	// }
-	// }
-	// } catch (final InterruptedException ignore)
-	// {
-	// }
-	// }
-	// }
-	// LOG.trace("Cancelled delivery of " + this.message);
-	// }
-	//
-	// }
-	//
-	// private static final ExecutorService MESSAGE_DELIVERY = Executors
-	// .newCachedThreadPool();
-	//
-	// private SortedSet<InterruptibleDeliveryTask> deliveryTasks = Collections
-	// .synchronizedSortedSet(new TreeSet<InterruptibleDeliveryTask>());
+	/** orphan owners are always ready to receive, child owners are managed */
+	private boolean ownerReady = getID().getOwnerID().isOrphan();
 
-	/** */
-	private boolean ownerReady = false;
+	@Override
+	public final void initialize()
+	{
+		if (!Agent.class.isAssignableFrom(this.ownerType))
+		{
+			LOG.warn("BEWARE! " + getID() + " has no transport layer and is "
+					+ "reachable only via pointer within the same JVM");
+		}
+	}
 
 	@Override
 	public final void activate()
@@ -140,14 +96,25 @@ public class BasicReceivingCapability extends BasicCapability
 		final Deque<Message<?>> queue;
 		synchronized (this.backlog)
 		{
-			LOG.trace("EMPTYING BACKLOG, total: " + this.backlog.size());
+			// System.err.println(getID().getOwnerID()
+			// + " EMPTYING BACKLOG, total: " + this.backlog.size());
+			if (this.backlog.isEmpty())
+				return;
 			queue = new LinkedList<>(this.backlog);
 			this.backlog.clear();
 		}
-		Observable.from(queue).subscribe(this.incoming);
+		try
+		{
+			while (!queue.isEmpty())
+				this.incoming.onNext(queue.removeFirst());
+		} catch (final Throwable t)
+		{
+			this.incoming.onError(t);
+		}
 	}
 
-	private final Deque<Message<?>> backlog = new LinkedList<>();
+	private final List<Message<?>> backlog = Collections
+			.synchronizedList(new LinkedList<Message<?>>());
 
 	@Override
 	public void onMessage(final Message<?> message)
@@ -157,15 +124,6 @@ public class BasicReceivingCapability extends BasicCapability
 			if (this.ownerReady)
 				try
 				{
-					// LOG.info("DELIVERING " + message);
-					// final InterruptibleDeliveryTask deliveryTask = new
-					// InterruptibleDeliveryTask(
-					// message);
-					// if (!getStatus().isStartedStatus())
-					// deliveryTask.suspend();
-					// MESSAGE_DELIVERY.submit(deliveryTask);
-					// this.deliveryTasks.add(deliveryTask);
-
 					// LOG.info("DELIVERING: " + message);
 					this.incoming.onNext(message);
 					// LOG.info("DELIVERED: " + message);
@@ -177,8 +135,9 @@ public class BasicReceivingCapability extends BasicCapability
 				}
 			else
 			{
-				LOG.trace("Agent not ready, backlogging: " + message);
 				this.backlog.add(message);
+				// System.err.println(getID().getOwnerID()
+				// + " not ready, backlog at: " + this.backlog.size());
 			}
 		}
 	}

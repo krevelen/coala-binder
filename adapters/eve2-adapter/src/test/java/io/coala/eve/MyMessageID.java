@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 55348422652f944b6e38d90ea251da12a25fb188 $
  * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/MyMessageID.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 3f71fd0f43480216d424f7e2f510d93e4f897935 $
  * $URL$
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -148,7 +148,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent implements
 
 	@Override
 	public String getVersion() {
-		return "$Id$";
+		return "$Id: 3f71fd0f43480216d424f7e2f510d93e4f897935 $";
 	}
 
 	@Override

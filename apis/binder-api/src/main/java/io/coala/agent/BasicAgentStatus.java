@@ -162,7 +162,7 @@ public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 	private static final Logger LOG = LogUtil.getLogger(BasicAgentStatus.class);
 
 	/**
-	 * @param agent the agent to examine
+	 * @param agent the {@link Agent} to examine
 	 * @return either {@link BasicAgentStatus#COMPLETE COMPLETE} for normal
 	 *         termination, or {@link BasicAgentStatus#FINISHED FINISHED} for
 	 *         abnormal termination (already completed/failed/finished)

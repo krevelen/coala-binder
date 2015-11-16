@@ -20,9 +20,11 @@
  */
 package io.coala.model;
 
-import io.coala.name.AbstractIdentifier;
-
 import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import io.coala.name.AbstractIdentifier;
 
 /**
  * {@link ModelComponentID}
@@ -126,12 +128,18 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 		return this.parentID;
 	}
 
+	@JsonIgnore
+	public boolean isOrphan()
+	{
+		return getParentID() == null;
+	}
+
 	@Override
 	public String toString()
 	{
 		return getModelID() == this ? getValue().toString()
-				: (getParentID() != null ? getParentID().toString()
-						: getModelID() == null ? ORPHAN_MODEL_ID
+				: (/*!isOrphan() ? getParentID().toString()
+						:*/ getModelID() == null ? ORPHAN_MODEL_ID
 								: getModelID().getValue())
 						+ PATH_SEP + getValue();
 	}
