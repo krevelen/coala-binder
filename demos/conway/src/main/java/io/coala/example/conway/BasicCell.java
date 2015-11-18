@@ -29,7 +29,7 @@ import io.coala.bind.Binder;
 import io.coala.capability.interact.ReceivingCapability;
 import io.coala.log.InjectLogger;
 import rx.Observable;
-import rx.functions.Action0;
+import rx.Observer;
 
 /**
  * {@link BasicCell}
@@ -47,9 +47,6 @@ public class BasicCell extends BasicAgent implements Cell
 	@InjectLogger
 	private transient Logger LOG;
 
-	/** */
-	private transient Observable<CellState> states;
-
 	/**
 	 * {@link BasicCell} constructor
 	 * 
@@ -62,12 +59,6 @@ public class BasicCell extends BasicAgent implements Cell
 	}
 
 	@Override
-	public Observable<CellState> myStates()
-	{
-		return this.states.asObservable();
-	}
-
-	@Override
 	public void initialize() throws Exception
 	{
 		super.initialize();
@@ -76,21 +67,27 @@ public class BasicCell extends BasicAgent implements Cell
 		final Observable<CellState> incoming = getBinder()
 				.inject(ReceivingCapability.class).getIncoming()
 				.ofType(CellState.class);
-//		 incoming.subscribe(new Action1<CellState>()
-//		 {
-//		 public void call(final CellState message)
-//		 {
-//		 LOG.info("DELIVERING: " + message);
-//		 }
-//		 });
-		this.states = getBinder().inject(CellWorld.class).myStates(incoming)
-				.doOnCompleted(new Action0()
+
+		getBinder().inject(CellWorld.class).myStates(incoming)
+				.subscribe(new Observer<CellState>()
 				{
 					@Override
-					public void call()
+					public void onCompleted()
 					{
-						// world has ended
+						LOG.trace("My world has ended, simulation done!");
 						die();
+					}
+
+					@Override
+					public void onError(final Throwable e)
+					{
+						LOG.error("Problem in my state transition stream", e);
+					}
+
+					@Override
+					public void onNext(final CellState t)
+					{
+						// ignore
 					}
 				});
 	}

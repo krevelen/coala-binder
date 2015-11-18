@@ -137,7 +137,7 @@ public class ConwayTest
 					@Override
 					public void call(final Message<?> msg)
 					{
-						System.err.println("Received child message: " + msg);
+						// System.err.println("Received child message: " + msg);
 					}
 				});
 

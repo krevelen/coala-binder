@@ -34,11 +34,9 @@ import org.joda.time.Duration;
 
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
-import io.coala.capability.BasicCapabilityStatus;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.example.conway.CellLink.CellLinkStatus;
 import io.coala.exception.CoalaException;
-import io.coala.json.JsonUtil;
 import io.coala.log.InjectLogger;
 import io.coala.time.SimDuration;
 import io.coala.time.SimTime;
@@ -131,7 +129,7 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 		if (this.myState != null && state != null && this.myState.equals(state))
 			throw new IllegalStateException("Can't remain in same state");
 
-		LOG.trace("Transitioning to: " + state);
+		LOG.trace(this.myNeighborStateCount + " -> " + state.getState());
 		this.myState = state;
 		this.myStates.onNext(state);
 	}
@@ -301,35 +299,32 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 		if (state.getTime().compareTo(this.endCycle) >= 0)
 		{
 			// world is complete, end it
-			LOG.info("Simulation complete: " + state.getTime() + ">="
-					+ this.endCycle + ", dying...");
-			setStatus(BasicCapabilityStatus.COMPLETE);
+			LOG.info("End cycle reached: " + state.getTime() + ">="
+					+ this.endCycle + ", ending world...");
+			this.myStates.onCompleted();
+			return;
 		}
 
 		if (state.getTime().compareTo(myState().getTime()) > 0)
 		{
 			// connected neighbor and self are out-of-sync
-			LOG.warn("Pending future neighbor state: " + state + ", tally: "
-					+ this.myNeighborStateCount + ", missing: " + this.missing);
+			// LOG.warn("Backlogging pending neighbor state: " + state
+			// + ", tally: " + this.myNeighborStateCount + ", missing: "
+			// + this.missing);
 			synchronized (this.pending)
 			{
 				this.pending.add(state);
+				return;
 			}
 		}
-
-		// if (!this.myNeighbors.containsKey(state.getCellID()))
-		// LOG.warn("Received from unknown neighbor: " + state.getCellID());
-		// else
-		// LOG.info("Received from known neighbor: " + state.getCellID());
 
 		synchronized (this.myNeighbors)
 		{
 			if (!this.missing.remove(state.getCellID()))
 			{
-				LOG.warn(
-						"Ignoring unexpected update: "
-								+ JsonUtil.toPrettyJSON(state),
-						new IllegalStateException());
+				LOG.warn("Ignoring unexpected update",
+						new IllegalStateException(state.getCellID()
+								+ " not yet missing: " + this.missing));
 				return;
 			}
 			synchronized (this.myNeighborStateCount)
@@ -338,40 +333,39 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 						this.myNeighborStateCount.get(state.getState()) + 1);
 				this.myNeighborStateCount.notifyAll();
 			}
-			if (this.missing.isEmpty())
+			// cycle incomplete
+			if (!this.missing.isEmpty())
 			{
-				// LifeStatus.blockUntilTotalStatesReached(this.myNeighborStateCount,
-				// 8);
-				LOG.trace("Got all " + this.myNeighbors.size() + " "
-						+ this.myNeighborStateCount + ", transitioning...");
-				setState(this.myState.next(this.cycleDuration,
-						this.myNeighborStateCount));
-
-				// reset counters
-				this.missing.addAll(this.myNeighbors.keySet());
-				synchronized (this.myNeighborStateCount)
-				{
-					this.myNeighborStateCount.clear();
-					for (LifeStatus status : LifeStatus.values())
-						this.myNeighborStateCount.put(status,
-								Integer.valueOf(0));
-				}
-				final Collection<CellState> pending;
-				synchronized (this.pending)
-				{
-					pending = new TreeSet<>(this.pending);
-					this.pending.clear();
-				}
-				for (CellState pendingState : pending)
-					handleNeighborState(pendingState);
-			} else
-			{
-				LOG.trace(
-						"Got " + (this.myNeighbors.size() - this.missing.size())
-								+ " of " + this.myNeighbors.size() + " "
-								+ this.myNeighborStateCount + ", received: "
-								+ state + ", missing: " + this.missing);
+				// LOG.trace(
+				// "Got " + (this.myNeighbors.size() - this.missing.size())
+				// + " of " + this.myNeighbors.size() + " "
+				// + this.myNeighborStateCount + ", received: "
+				// + state + ", missing: " + this.missing);
+				return;
 			}
+
+			// reset counters
+			this.missing.addAll(this.myNeighbors.keySet());
+			final Collection<CellState> pending;
+			synchronized (this.pending)
+			{
+				pending = new TreeSet<>(this.pending);
+				this.pending.clear();
+			}
+
+			// LOG.trace("Got all " + this.myNeighbors.size() + " "
+			// + this.myNeighborStateCount + ", transitioning...");
+			setState(this.myState.next(this.cycleDuration,
+					this.myNeighborStateCount));
+			synchronized (this.myNeighborStateCount)
+			{
+				this.myNeighborStateCount.clear();
+				for (LifeStatus status : LifeStatus.values())
+					this.myNeighborStateCount.put(status, Integer.valueOf(0));
+			}
+
+			for (CellState pendingState : pending)
+				handleNeighborState(pendingState);
 		}
 	}
 

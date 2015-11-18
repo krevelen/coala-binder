@@ -21,7 +21,6 @@
 package io.coala.example.conway;
 
 import io.coala.agent.Agent;
-import rx.Observable;
 
 /**
  * {@link Cell} simply exchanges with the cell's environment its own state
@@ -39,8 +38,10 @@ public interface Cell extends Agent
 	 */
 	// CellState getStateAt(SimTime time);
 
-	/** @return {@link Observable} stream of my {@link CellState} transitions */
-	Observable<CellState> myStates();
+	/**
+	 * @return {@link Observable} stream of my {@link CellState} transitions
+	 */
+	// Observable<CellState> myStates();
 
 	// CellWorld getWorld();
 
