@@ -20,6 +20,10 @@
  */
 package io.coala.dsol;
 
+import javax.inject.Inject;
+
+import org.apache.log4j.Logger;
+
 import io.coala.agent.AgentID;
 import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
@@ -31,13 +35,8 @@ import io.coala.log.InjectLogger;
 import io.coala.model.ModelComponent;
 import io.coala.time.Instant;
 import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
 import io.coala.time.TimeUnit;
 import io.coala.time.Trigger;
-
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
 
 /**
  * {@link DsolTestAgent}
@@ -58,9 +57,9 @@ public class DsolTestAgent extends BasicAgent implements
 	private static Logger LOG;
 
 	/**
-	 * {@link DsolTestAgent} constructor
+	 * {@link DsolTestAgent} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected DsolTestAgent(final Binder binder)
@@ -84,9 +83,9 @@ public class DsolTestAgent extends BasicAgent implements
 		return (DsolSimulatorService) getBinder().inject(ReplicatingCapability.class);
 	}
 
-	protected SimTimeFactory newSimTime()
+	protected SimTime.Factory newSimTime()
 	{
-		return getBinder().inject(SimTimeFactory.class);
+		return getBinder().inject(SimTime.Factory.class);
 	}
 
 	private static final String schedulableMethodID = "testMethodID";

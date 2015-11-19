@@ -92,31 +92,41 @@ public class ResourceStreamer
 		return this.streams;
 	}
 
-	/** @return the first emitted {@link ResourceStream} */
+	/**
+	 * @return the first emitted {@link ResourceStream}
+	 */
 	public ResourceStream first()
 	{
 		return RxUtil.awaitFirst(getStreams());
 	}
 
-	/** @return the first {@code num} emitted {@link ResourceStream}s */
+	/**
+	 * @return the first {@code num} emitted {@link ResourceStream}s
+	 */
 	public List<ResourceStream> first(final int num)
 	{
 		return RxUtil.awaitAll(getStreams().take(num));
 	}
 
-	/** @return the lst emitted {@link ResourceStream} */
+	/**
+	 * @return the lst emitted {@link ResourceStream}
+	 */
 	public ResourceStream last()
 	{
 		return RxUtil.awaitFirst(getStreams().last());
 	}
 
-	/** @return the first {@code num} emitted {@link ResourceStream}s */
+	/**
+	 * @return the first {@code num} emitted {@link ResourceStream}s
+	 */
 	public List<ResourceStream> last(final int num)
 	{
 		return RxUtil.awaitAll(getStreams().takeLast(num));
 	}
 
-	/** @return a {@link List} of all emitted {@link ResourceStream} */
+	/**
+	 * @return a {@link List} of all emitted {@link ResourceStream}
+	 */
 	public List<ResourceStream> all()
 	{
 		return RxUtil.awaitAll(getStreams());
@@ -166,14 +176,14 @@ public class ResourceStreamer
 			copy(input, output);
 			input.close();
 		}
-
+	
 		public void copySync(final Writer output) throws Throwable
 		{
 			final InputStream input = getSync();
 			write(input, output);
 			input.close();
 		}
-
+	
 		public static void write(final InputStream input, final Writer output)
 				throws IOException
 		{
@@ -182,7 +192,7 @@ public class ResourceStreamer
 			while ((bytesRead = input.read(buffer)) != -1)
 				output.append(new String(buffer, 0, bytesRead));
 		}
-
+	
 		public static void copy(final InputStream input, final OutputStream output)
 				throws IOException
 		{
@@ -204,7 +214,7 @@ public class ResourceStreamer
 			// output.write(buffer, 0, bytesRead);
 			throw new IOException("NOT IMPLEMENTED");
 		}
-
+	
 		public String toString(final InputStream is)
 		{
 			try
@@ -351,8 +361,8 @@ public class ResourceStreamer
 		if (content == null || content.length == 0)
 			return empty();
 
-		return from(Observable.from(Arrays.asList(content)).map(
-				new Func1<String, ResourceStream>()
+		return from(Observable.from(Arrays.asList(content))
+				.map(new Func1<String, ResourceStream>()
 				{
 					@Override
 					public ResourceStream call(final String s)
@@ -487,8 +497,8 @@ public class ResourceStreamer
 					@Override
 					public ResourceStream call(final String p) throws Throwable
 					{
-						return ResourceStream.of(
-								FileUtil.getFileAsInputStream(p), type, p);
+						return ResourceStream
+								.of(FileUtil.getFileAsInputStream(p), type, p);
 					}
 				}));
 	}
@@ -577,7 +587,7 @@ public class ResourceStreamer
 							throws Throwable
 					{
 						return ResourceStream.of(obj, ResourceType.JSON,
-								JsonUtil.toJSONString(obj));
+								JsonUtil.toString(obj));
 					}
 				}));
 	}

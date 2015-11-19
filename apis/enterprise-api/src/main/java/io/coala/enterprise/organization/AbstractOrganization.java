@@ -1,7 +1,4 @@
 /* $Id: ec23e7aafd0e52a041ba7241eeb0cce4cc307b5d $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/organization/AbstractOrganization.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,21 +17,19 @@
  */
 package io.coala.enterprise.organization;
 
+import javax.inject.Inject;
+
 import io.coala.agent.AgentID;
 import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
 import io.coala.capability.replicate.ReplicatingCapability;
-import io.coala.model.ModelComponent;
 import io.coala.time.SimTime;
-
-import javax.inject.Inject;
 
 /**
  * {@link AbstractOrganization}
  * 
- * @version $Revision: 324 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public abstract class AbstractOrganization extends BasicAgent implements
 		Organization
@@ -44,9 +39,9 @@ public abstract class AbstractOrganization extends BasicAgent implements
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * {@link AbstractOrganization} constructor
+	 * {@link AbstractOrganization} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected AbstractOrganization(final Binder binder)
@@ -54,7 +49,6 @@ public abstract class AbstractOrganization extends BasicAgent implements
 		super(binder);
 	}
 
-	/** @see ModelComponent#getOwnerID() */
 	@Override
 	public AgentID getOwnerID()
 	{
@@ -68,7 +62,6 @@ public abstract class AbstractOrganization extends BasicAgent implements
 		return getBinder().inject(ReplicatingCapability.class);
 	}
 
-	/** @see Organization#getTime() */
 	@Override
 	public SimTime getTime()
 	{

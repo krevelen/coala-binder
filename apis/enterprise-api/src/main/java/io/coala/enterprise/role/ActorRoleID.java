@@ -1,7 +1,4 @@
 /* $Id: cfeb39dd3abb0d3a29f1bf72e4e4e55de74b8bab $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/role/ActorRoleID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not

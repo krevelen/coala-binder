@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/model/ModelComponentID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -29,10 +26,8 @@ import io.coala.name.AbstractIdentifier;
 /**
  * {@link ModelComponentID}
  * 
- * @date $Date: 2014-06-20 10:08:26 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 311 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class ModelComponentID<T extends Serializable & Comparable<T>>
 		extends AbstractIdentifier<T>
@@ -62,8 +57,7 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	private ModelComponentID<?> parentID = null;
 
 	/**
-	 * {@link ModelComponentID} zero-arg constructor, to adhere to
-	 * bean-convention
+	 * {@link ModelComponentID} zero-arg bean constructor
 	 */
 	protected ModelComponentID()
 	{

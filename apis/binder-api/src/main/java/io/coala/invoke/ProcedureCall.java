@@ -78,7 +78,7 @@ public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 		else
 			this.arguments = Arrays.asList(args);
 
-		setStatus(BasicProcessStatus.INITIALIZED);
+		forceStatus(BasicProcessStatus.INITIALIZED);
 	}
 
 	/**
@@ -117,18 +117,18 @@ public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 		this.called = true;
 		try
 		{
-			setStatus(BasicProcessStatus.ACTIVE);
+			forceStatus(BasicProcessStatus.ACTIVE);
 			activate();
-			setStatus(BasicProcessStatus.COMPLETE);
+			forceStatus(BasicProcessStatus.COMPLETE);
 			finish();
-			setStatus(BasicProcessStatus.FINISHED);
+			forceStatus(BasicProcessStatus.FINISHED);
 			return null;
 		} catch (final CoalaRuntimeException t)
 		{
 			throw t;
 		} catch (final Throwable t)
 		{
-			setStatus(BasicProcessStatus.FAILED);
+			forceStatus(BasicProcessStatus.FAILED);
 			throw CoalaExceptionFactory.INVOCATION_FAILED.createRuntime(t,
 					this.procedureID.getValue(), getTarget(), this.arguments);
 		}

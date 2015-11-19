@@ -1,7 +1,4 @@
 /* $Id: 6b2aa6282208757bc058922543d8c3c0a2190b59 $
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/TestAgent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -29,22 +26,17 @@ import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
 import io.coala.capability.admin.DestroyingCapability;
 import io.coala.capability.interact.ReceivingCapability;
-import io.coala.lifecycle.MachineUtil;
 import io.coala.log.InjectLogger;
 import io.coala.message.AbstractMessage;
 import io.coala.message.MessageID;
-import io.coala.process.BasicProcessStatus;
 import io.coala.time.NanoInstant;
 import rx.Observer;
-import rx.schedulers.Schedulers;
 
 /**
  * {@link CleanupTestAgent}
  * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 @SuppressWarnings("serial")
 public class CleanupTestAgent extends BasicAgent
@@ -66,9 +58,9 @@ public class CleanupTestAgent extends BasicAgent
 	private Logger LOG;
 
 	/**
-	 * {@link CleanupTestAgent} constructor
+	 * {@link CleanupTestAgent} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	public CleanupTestAgent(final Binder binder)
@@ -76,7 +68,7 @@ public class CleanupTestAgent extends BasicAgent
 		super(binder);
 
 		getBinder().inject(ReceivingCapability.class).getIncoming()
-				.ofType(Harakiri.class)//.observeOn(Schedulers.trampoline())
+				.ofType(Harakiri.class)// .observeOn(Schedulers.trampoline())
 				.subscribe(new Observer<Harakiri>()
 				{
 					@Override
@@ -101,7 +93,8 @@ public class CleanupTestAgent extends BasicAgent
 
 						try
 						{
-							getBinder().inject(DestroyingCapability.class).destroy();
+							getBinder().inject(DestroyingCapability.class)
+									.destroy();
 						} catch (final Exception e)
 						{
 							LOG.error("Problem committing Hara Kiri", e);
@@ -111,9 +104,6 @@ public class CleanupTestAgent extends BasicAgent
 				});
 	}
 
-	/**
-	 * @see BasicAgent#initialize()
-	 */
 	@Override
 	public void initialize()
 	{

@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/message/MessageID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -29,11 +26,10 @@ import java.io.Serializable;
 /**
  * {@link MessageID} sets the identifier value type of a {@link Message}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
- * @param <ID> the type of identifier value for this {@link MessageID}
+ * @param <ID> the {@link Serializable} and {@link Comparable} value type
  * @param <I> the type of {@link Instant}
  * @param <THIS> the type of {@link MessageID} to compare with
  */
@@ -47,7 +43,7 @@ public class MessageID<ID extends Serializable & Comparable<ID>, I extends Insta
 	/**
 	 * {@link MessageID} zero-arg bean constructor
 	 */
-	public MessageID()
+	protected MessageID()
 	{
 
 	}

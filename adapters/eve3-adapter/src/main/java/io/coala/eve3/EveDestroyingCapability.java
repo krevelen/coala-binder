@@ -18,10 +18,8 @@ import rx.schedulers.Schedulers;
 /**
  * {@link EveDestroyingCapability}
  * 
- * @date $Date: 2014-06-17 15:03:44 +0200 (Tue, 17 Jun 2014) $
- * @version $Revision: 302 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class EveDestroyingCapability extends BasicCapability
 		implements DestroyingCapability
@@ -35,9 +33,9 @@ public class EveDestroyingCapability extends BasicCapability
 	private Logger LOG;
 
 	/**
-	 * {@link EveDestroyingCapability} constructor
+	 * {@link EveDestroyingCapability} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	private EveDestroyingCapability(final Binder binder)
@@ -45,18 +43,12 @@ public class EveDestroyingCapability extends BasicCapability
 		super(binder);
 	}
 
-	/**
-	 * @see DestroyingCapability#destroy(AgentID)
-	 */
 	@Override
 	public AgentID destroy()
 	{
 		return destroy(getID().getOwnerID());
 	}
 
-	/**
-	 * @see DestroyingCapability#destroy(AgentID)
-	 */
 	@Override
 	public AgentID destroy(final AgentID agentID)
 	{
@@ -84,21 +76,5 @@ public class EveDestroyingCapability extends BasicCapability
 
 		return agentID;
 	}
-
-	/**
-	 * @see com.almende.coala.service.finalizer.FinalizerService#terminate(com.almende.coala.service.ServiceID)
-	 */
-	/*@Override
-	public <T extends ServiceID> T terminate(AbstractService<T> service) throws Exception
-	{
-		final BasicServiceStatus status = BasicServiceStatus.
-				determineKillStatus(service);
-		final T serviceID = service.getID();
-		LOG.info("terminating service:"+serviceID);
-		MachineUtil.setStatus(service, status, status.isFinishedStatus()
-				|| status.isFailedStatus());
-		
-		return serviceID;
-	}*/
 
 }

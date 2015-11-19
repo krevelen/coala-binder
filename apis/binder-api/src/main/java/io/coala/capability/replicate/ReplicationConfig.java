@@ -20,15 +20,6 @@
  */
 package io.coala.capability.replicate;
 
-import io.coala.config.ConfigUtil;
-import io.coala.model.BasicModelComponentIDFactory;
-import io.coala.model.ModelComponentIDFactory;
-import io.coala.model.ModelID;
-import io.coala.time.ClockID;
-import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
-import io.coala.time.TimeUnit;
-
 import java.lang.reflect.Method;
 import java.util.Date;
 
@@ -44,6 +35,15 @@ import org.joda.time.Interval;
 import org.joda.time.Period;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import io.coala.config.ConfigUtil;
+import io.coala.model.BasicModelComponentIDFactory;
+import io.coala.model.ModelComponentIDFactory;
+import io.coala.model.ModelID;
+import io.coala.time.ClockID;
+import io.coala.time.SimTime;
+import io.coala.time.SimTimeFactory;
+import io.coala.time.TimeUnit;
 
 /**
  * {@link ReplicationConfig} uses the <A href="http://owner.aeonbits.org/">OWNER
@@ -140,12 +140,12 @@ public interface ReplicationConfig extends Mutable // Config
 
 	@DefaultValue("${modelName}|${clockName}|${offset}")
 	@ConverterClass(SimTimeFactoryConverter.class)
-	SimTimeFactory newTime();
+	SimTime.Factory newTime();
 
 	/**
 	 * {@link DateTimeConverter}
 	 * 
-	 * @version $Revision$
+	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class DateTimeConverter implements Converter<DateTime>

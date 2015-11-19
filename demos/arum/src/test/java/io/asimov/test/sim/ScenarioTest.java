@@ -1,5 +1,11 @@
 package io.asimov.test.sim;
 
+import java.util.concurrent.CountDownLatch;
+
+import org.apache.log4j.Logger;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import io.asimov.agent.scenario.ScenarioManagementOrganization;
 import io.asimov.db.Datasource;
 import io.coala.agent.AgentStatusObserver;
@@ -10,19 +16,9 @@ import io.coala.capability.admin.CreatingCapability;
 import io.coala.capability.configure.ConfiguringCapability;
 import io.coala.capability.replicate.ReplicatingCapability;
 import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.exception.CoalaException;
 import io.coala.log.LogUtil;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
-
-import java.util.concurrent.CountDownLatch;
-
-import javax.xml.bind.JAXBException;
-
-import org.apache.log4j.Logger;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import rx.Observer;
 
 

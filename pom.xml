@@ -30,8 +30,14 @@
 	</developers>
 
 	<modules>
-		<!-- COALA Core API and utilities-->
-		<module>apis/core-api</module>
+		<!-- Binder API and utilities -->
+		<module>apis/binder-api</module>
+
+		<!-- Capability API and utilities requires Binder API -->
+		<module>apis/capability-api</module>
+
+		<!-- Time API and utilities requires Capability API -->
+		<module>apis/time-api</module>
 
 		<!-- Guice 3 adapter of the relevant core APIs -->
 		<module>adapters/guice3-adapter</module>
@@ -58,7 +64,7 @@
 		<project.build.sourceLevel>${source}</project.build.sourceLevel>
 		<project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
-		
+
 		<!-- set reporting versions (e.g. unit test code coverage) -->
 		<cobertura-maven-plugin.version>2.6</cobertura-maven-plugin.version>
 		<jacoco-maven-plugin.version>0.7.2.201409121644</jacoco-maven-plugin.version>
@@ -117,6 +123,18 @@
 			<dependency>
 				<groupId>${project.groupId}</groupId>
 				<artifactId>coala-binder-api</artifactId>
+				<version>${project.parent.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>coala-capability-api</artifactId>
+				<version>${project.parent.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>coala-time-api</artifactId>
 				<version>${project.parent.version}</version>
 			</dependency>
 
@@ -284,8 +302,8 @@
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
 
-								<!-- Configure "org.codehaus.mojo:cobertura-maven-plugin:clean" 
-									goal execution in Eclipse IDE -->
+								<!-- Configure "org.codehaus.mojo:cobertura-maven-plugin:clean" goal 
+									execution in Eclipse IDE -->
 								<pluginExecution>
 									<pluginExecutionFilter>
 										<groupId>org.codehaus.mojo</groupId>
@@ -322,8 +340,8 @@
 						</lifecycleMappingMetadata>
 					</configuration>
 				</plugin>
-				</plugins>
-				</pluginManagement>
+			</plugins>
+		</pluginManagement>
 
 		<plugins>
 			<!-- Have Eclipse IDE's Maven integration (specified in <pluginManagement/>) 

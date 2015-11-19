@@ -1,7 +1,4 @@
 /* $Id: bb830e6692b6329df6ad5516530bc652aed51cea $
- * $URL: https://dev.almende.com/svn/abms/coala-examples/src/main/java/io/coala/example/conway/CellWorldLattice.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -51,10 +48,8 @@ import rx.subjects.Subject;
 /**
  * {@link CellWorldFixedLattice}
  * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 {
@@ -96,13 +91,12 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	private CellState myState = null;
 
 	/**
-	 * {@link CellWorldFixedLattice} constructor
+	 * {@link CellWorldFixedLattice} CDI constructor
 	 * 
-	 * @param host
-	 * @throws CoalaException
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	public CellWorldFixedLattice(final Binder binder) throws CoalaException
+	public CellWorldFixedLattice(final Binder binder)
 	{
 		super(binder);
 	}

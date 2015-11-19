@@ -1,7 +1,4 @@
 /* $Id: 09f914abc5c3bba5c23035532334e494adb71b31 $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/role/ActorRole.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link ActorRole}
  * 
- * @version $Revision: 300 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <F> the (super)type of {@link CoordinationFact}

@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/LifeCycleHooks.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,16 +17,14 @@
  */
 package io.coala.lifecycle;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * {@link LifeCycleHooks} provides the default hooks of a managed
  * {@link LifeCycle} object
  * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <S> the type of {@link LifeCycleStatus}
- * @param <THIS> the (sub)type of {@link LifeCycleHooks} to build
  */
 public interface LifeCycleHooks
 {
@@ -38,10 +33,10 @@ public interface LifeCycleHooks
 	 * @return the type of {@link #activate()} phase management for this
 	 *         {@link LifeCycle} object
 	 */
+	@JsonIgnore
 	ActivationType getActivationType();
 
 	/** Hook called by its container to setup the {@link LifeCycle} object */
-	@AfterInstantiation
 	void initialize() throws Exception;
 
 	/**
@@ -49,7 +44,6 @@ public interface LifeCycleHooks
 	 * depending on the {@link ActivationType} returned by
 	 * {@link #getActivationType()}
 	 */
-	@BeforeMethodCalls
 	void activate() throws Exception;
 
 	/**
@@ -57,11 +51,9 @@ public interface LifeCycleHooks
 	 * depending on the {@link ActivationType} returned by
 	 * {@link #getActivationType()}
 	 */
-	@AfterMethodCalls
 	void deactivate() throws Exception;
 
 	/** Hook called by its container to finalize the {@link LifeCycle} object */
-	@BeforeDestruction
 	void finish() throws Exception;
 
 }

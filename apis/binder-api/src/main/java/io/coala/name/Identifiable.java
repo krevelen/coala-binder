@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/identity/Identifiable.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -24,45 +21,49 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
 /**
  * {@link Identifiable} owns an {@link AbstractIdentifier}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
- * @param <ID> the type of {@link AbstractIdentifier} value
- * @param <THIS> the (sub)type of {@link Identifiable} to build
+ * @param <ID> the {@link Identifier} type
+ * @param <THIS> the concrete {@link Identifiable} type
  */
 @JsonInclude(Include.NON_NULL)
+@JsonTypeInfo(use = Id.CLASS, include = As.PROPERTY, property = "class")
 public interface Identifiable<ID extends Identifier<?, ?>>
 		extends Comparable<Identifiable<ID>>
 {
 
-	/** @return the identifier */
-	@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=As.PROPERTY, property="class")
+	/**
+	 * @return the {@link ID} value
+	 */
 	ID getID();
 
 	/**
 	 * {@link Builder}
 	 * 
-	 * @version $Revision: 296 $
+	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 * 
-	 * @param <ID>
-	 * @param <T>
-	 * @param <THIS>
+	 * @param <ID> the {@link Identifiable}'s {@link Identifier} type
+	 * @param <T> the {@link Identifiable} type
+	 * @param <THIS> the concrete {@link Builder} type
 	 */
 	public interface Builder<ID extends Identifier<?, ?>, T extends Identifiable<ID>, THIS extends Builder<ID, T, THIS>>
 	{
 		/**
-		 * @param id the {@link Identifier} to set
-		 * @return this {@link Builder}
+		 * @param id the {@link ID} value to set
+		 * @return this {@link Builder} for chaining
 		 */
 		THIS withID(ID id);
-		
-		/** @return the built {@link Identifiable} result */
+
+		/**
+		 * @return the built {@link T} result
+		 */
 		T build();
 	}
 

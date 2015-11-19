@@ -163,7 +163,7 @@ public class GuiceBinderFactory implements BinderFactory
 			@Override
 			public String toString()
 			{
-				return JsonUtil.toJSONString(this);
+				return JsonUtil.toString(this);
 			}
 		};
 

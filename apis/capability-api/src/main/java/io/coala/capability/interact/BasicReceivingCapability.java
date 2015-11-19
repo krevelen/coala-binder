@@ -38,7 +38,7 @@ public class BasicReceivingCapability extends BasicCapability
 	@InjectLogger
 	private Logger LOG;
 
-	/** */
+	/** type of {@link Agent} owning the {@link Binder} */
 	@SuppressWarnings("rawtypes")
 	@Inject
 	@Named(Binder.AGENT_TYPE)
@@ -48,9 +48,9 @@ public class BasicReceivingCapability extends BasicCapability
 	private Subject<Message<?>, Message<?>> incoming = ReplaySubject.create();
 
 	/**
-	 * {@link BasicReceivingCapability} constructor
+	 * {@link BasicReceivingCapability} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected <T extends Message<?>> BasicReceivingCapability(

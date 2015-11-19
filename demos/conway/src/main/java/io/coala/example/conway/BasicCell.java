@@ -48,9 +48,9 @@ public class BasicCell extends BasicAgent implements Cell
 	private transient Logger LOG;
 
 	/**
-	 * {@link BasicCell} constructor
+	 * {@link BasicCell} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	private BasicCell(final Binder binder)

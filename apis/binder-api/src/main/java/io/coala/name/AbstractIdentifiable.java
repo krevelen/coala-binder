@@ -81,7 +81,7 @@ public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 
 	/**
 	 * @param iD the {@link AbstractIdentifier} identifying this
-	 *        {@link Identifiable} object
+	 *            {@link Identifiable} object
 	 */
 	protected void setID(final ID iD)
 	{
@@ -111,7 +111,7 @@ public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 	{
 		try
 		{
-			return getClass().getSimpleName() + JsonUtil.toJSONString(this);
+			return getClass().getSimpleName() + JsonUtil.toString(this);
 		} catch (final Throwable t)
 		{
 			t.printStackTrace();

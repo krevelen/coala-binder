@@ -1,7 +1,4 @@
 /* $Id: 9c2bf099c4653f4a94dc05a0c601d47a5589e822 $
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/main/java/com/almende/coala/eve/EveBooterService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -37,10 +34,8 @@ import rx.Observable;
 /**
  * {@link EveCreatingCapability}
  * 
- * @date $Date: 2014-08-08 16:20:51 +0200 (Fri, 08 Aug 2014) $
- * @version $Revision: 353 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class EveCreatingCapability extends BasicCapability implements
 		CreatingCapability
@@ -54,9 +49,9 @@ public class EveCreatingCapability extends BasicCapability implements
 	private Logger LOG;
 
 	/**
-	 * {@link EveCreatingCapability} constructor
+	 * {@link EveCreatingCapability} CDI constructor
 	 * 
-	 * @param clientID
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	private EveCreatingCapability(final Binder binder)

@@ -1,7 +1,4 @@
 /* $Id: 5b690749a3606a04ef5d34fcc9eefad68552ca82 $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/role/Executor.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -25,13 +22,14 @@ import io.coala.enterprise.fact.CoordinationFact;
 /**
  * {@link Executor}
  * 
- * @version $Revision: 300 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
+ * @param <F> the type of {@link CoordinationFact} being handled
  */
 public interface Executor<F extends CoordinationFact> extends ActorRole<F>
 {
-	
+
 	// marker interface
 
 	/**
@@ -44,43 +42,43 @@ public interface Executor<F extends CoordinationFact> extends ActorRole<F>
 	 * </ul>
 	 * 
 	 * @param request
-	 * */
-//	void onRequested(F request);
-//
-//	/** @param cancel */
-//	void onCancelledRequest(F cancel);
-//
-//	/** @param promise */
-//	void onExpiredPromise(F promise);
-//
-//	/** @param cancel */
-//	void onExpiredPromiseCancellation(F cancel);
-//
-//	/** @param allow */
-//	void onAllowedPromiseCancellation(F allow);
-//
-//	/** @param refuse */
-//	void onRefusedPromiseCancellation(F refuse);
-//
-//	/** @param state */
-//	void onExpiredState(F state);
-//
-//	/** @param cancel */
-//	void onExpiredStateCancellation(F cancel);
-//
-//	/** @param allow */
-//	void onAllowedStateCancellation(F allow);
-//
-//	/** @param refuse */
-//	void onRefusedStateCancellation(F refuse);
-//
-//	/** @param accept */
-//	void onAccepted(F accept);
-//
-//	/** @param cancel */
-//	void onCancelledAccept(F cancel);
-//
-//	/** @param reject */
-//	void onRejected(F reject);
+	 */
+	// void onRequested(F request);
+	//
+	// /** @param cancel */
+	// void onCancelledRequest(F cancel);
+	//
+	// /** @param promise */
+	// void onExpiredPromise(F promise);
+	//
+	// /** @param cancel */
+	// void onExpiredPromiseCancellation(F cancel);
+	//
+	// /** @param allow */
+	// void onAllowedPromiseCancellation(F allow);
+	//
+	// /** @param refuse */
+	// void onRefusedPromiseCancellation(F refuse);
+	//
+	// /** @param state */
+	// void onExpiredState(F state);
+	//
+	// /** @param cancel */
+	// void onExpiredStateCancellation(F cancel);
+	//
+	// /** @param allow */
+	// void onAllowedStateCancellation(F allow);
+	//
+	// /** @param refuse */
+	// void onRefusedStateCancellation(F refuse);
+	//
+	// /** @param accept */
+	// void onAccepted(F accept);
+	//
+	// /** @param cancel */
+	// void onCancelledAccept(F cancel);
+	//
+	// /** @param reject */
+	// void onRejected(F reject);
 
 }

@@ -267,7 +267,9 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	{
 		final ObjectNode params = JsonUtil.getJOM().createObjectNode();
 		params.set(PAYLOAD_FIELD_NAME, JsonUtil.getJOM().valueToTree(payload));
-		call(EveUtil.getAddress(payload.getReceiverID()), "doReceive", params);
+		final URI receiverURI = EveUtil.getAddress(payload.getReceiverID());
+		System.err.println("Sending to " + receiverURI + ": " + params);
+		call(receiverURI, "doReceive", params);
 	}
 
 	@Override

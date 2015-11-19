@@ -1,7 +1,4 @@
 /* $Id: 1929d3174b5b648673b49b19c945bdab7cc915fa $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/test/java/io/coala/enterprise/test/impl/MyTestFactExecutorRole.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -37,9 +34,8 @@ import org.apache.log4j.Logger;
 /**
  * {@link MyTestFactInitiatorRole}
  * 
- * @version $Revision: 324 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class MyTestFactExecutorRole extends AbstractExecutor<TestFact.Request>
 		implements TestFact.Executor
@@ -53,9 +49,9 @@ public class MyTestFactExecutorRole extends AbstractExecutor<TestFact.Request>
 	private Logger LOG;
 
 	/**
-	 * {@link MyTestFactExecutorRole} constructor
+	 * {@link MyTestFactExecutorRole} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected MyTestFactExecutorRole(final Binder binder)

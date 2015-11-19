@@ -54,7 +54,10 @@ public class TransactionTypeID<F extends CoordinationFact, T extends Transaction
 	private Class<T> transactionType;
 
 	/**
-	 * @param value
+	 * {@link TransactionTypeID} CDI constructor
+	 * 
+	 * @param clientID the owner {@link AgentID}
+	 * @param cls the concrete {@link T} type
 	 */
 	@SuppressWarnings("unchecked")
 	@Inject
@@ -68,7 +71,7 @@ public class TransactionTypeID<F extends CoordinationFact, T extends Transaction
 	}
 
 	/**
-	 * @return the (super)type of {@link CoordinationFact}
+	 * @return the concrete type {@link F}
 	 */
 	protected Class<F> getFactType()
 	{
@@ -76,7 +79,7 @@ public class TransactionTypeID<F extends CoordinationFact, T extends Transaction
 	}
 
 	/**
-	 * @return the concrete type of {@link Transaction}
+	 * @return the concrete type {@link T}
 	 */
 	protected Class<T> getTransactionType()
 	{

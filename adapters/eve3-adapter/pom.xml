@@ -60,7 +60,7 @@
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>coala-binder-api</artifactId>
+			<artifactId>coala-capability-api</artifactId>
 		</dependency>
 
 		<dependency>

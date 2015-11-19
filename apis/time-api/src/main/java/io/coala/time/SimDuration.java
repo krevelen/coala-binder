@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/time/SimDuration.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,19 +17,16 @@
  */
 package io.coala.time;
 
+import org.apache.log4j.Logger;
+
 import io.coala.exception.CoalaRuntimeException;
 import io.coala.log.LogUtil;
-
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
 
 /**
  * {@link SimDuration}
  * 
- * @version $Revision: 312 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class SimDuration extends AbstractInstant<SimDuration>
 {
@@ -58,19 +52,17 @@ public class SimDuration extends AbstractInstant<SimDuration>
 	}
 
 	/**
+	 * {@link SimDuration} constructor
+	 * 
 	 * @param value
 	 * @param unit
 	 */
-	@Inject
 	public SimDuration(final Number value, final TimeUnit unit)
 	{
 		setValue(value);
 		setUnit(unit);
 	}
 
-	/**
-	 * @see Instant#plus(Number)
-	 */
 	@Override
 	public SimDuration plus(final Number value)
 	{
@@ -78,16 +70,6 @@ public class SimDuration extends AbstractInstant<SimDuration>
 				getUnit());
 	}
 
-	// /** @see Instant#getBaseUnit() */
-	// @Override
-	// public TimeUnit getBaseUnit()
-	// {
-	// return baseUnit;
-	// }
-
-	/**
-	 * @see Instant#toUnit(TimeUnit)
-	 */
 	@Override
 	public SimDuration toUnit(final TimeUnit unit)
 	{

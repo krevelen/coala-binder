@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/event/AbstractEvent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,26 +17,24 @@
  */
 package io.coala.event;
 
+import org.slf4j.Logger;
+
 import io.coala.agent.AgentID;
 import io.coala.lifecycle.ActivationType;
-import io.coala.lifecycle.LifeCycle;
 import io.coala.lifecycle.LifeCycleHooks;
 import io.coala.log.InjectLogger;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
 import io.coala.process.AbstractJob;
 
-import org.slf4j.Logger;
-
 /**
  * {@link AbstractEvent}
  * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
+ * @version $Id $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
- * @param <ID> the type of {@link EventID} identifier
- * @param <THIS> the concrete sub-type of {@link AbstractEvent}
+ * @param <ID> the concrete {@link EventID} type
+ * @param <THIS> the concrete {@link AbstractEvent} type
  */
 public abstract class AbstractEvent<ID extends EventID<?>> extends
 		AbstractJob<ID> implements Event<ID>, LifeCycleHooks
@@ -98,49 +93,42 @@ public abstract class AbstractEvent<ID extends EventID<?>> extends
 		this.producerID = producerID;
 	}
 
-	/** @see ModelComponent#getOwnerID() */
 	@Override
 	public AgentID getOwnerID()
 	{
 		return this.ownerID;
 	}
 
-	/** @see Event#getProducerID() */
 	@Override
 	public synchronized ModelComponentID<?> getProducerID()
 	{
 		return this.producerID;
 	}
 
-	/** @see LifeCycleHooks#initialize() */
 	@Override
 	public void initialize()
 	{
 		// override me
 	}
 
-	/** @see LifeCycleHooks#activate() */
 	@Override
 	public void activate()
 	{
 		// empty
 	}
 
-	/** @see LifeCycleHooks#deactivate() */
 	@Override
 	public void deactivate()
 	{
 		// empty
 	}
 
-	/** @see LifeCycleHooks#finish() */
 	@Override
 	public void finish()
 	{
 		// override me
 	}
 
-	/** @see LifeCycle#getActivationType() */
 	@Override
 	public ActivationType getActivationType()
 	{

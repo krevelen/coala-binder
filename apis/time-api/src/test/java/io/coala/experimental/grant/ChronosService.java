@@ -1,12 +1,5 @@
 package io.coala.experimental.grant;
 
-import io.coala.agent.AgentID;
-import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.log.LogUtil;
-import io.coala.model.ModelID;
-import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +9,12 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
+
+import io.coala.agent.AgentID;
+import io.coala.capability.replicate.ReplicationConfig;
+import io.coala.log.LogUtil;
+import io.coala.model.ModelID;
+import io.coala.time.SimTime;
 
 public class ChronosService
 {
@@ -38,7 +37,7 @@ public class ChronosService
 	 * @return the {@link ChronosService} instance
 	 */
 	public synchronized static ChronosService getInstance(
-			final SimTimeFactory timeFact, final ReplicationConfig config)
+			final SimTime.Factory timeFact, final ReplicationConfig config)
 	{
 		ChronosService instance = theInstances.get(config.getReplicationID());
 		if (instance == null)
@@ -73,11 +72,11 @@ public class ChronosService
 	/** */
 	private boolean granting = true;
 
-	private ChronosService(final SimTimeFactory timeFact,
+	private ChronosService(final SimTime.Factory timeFact,
 			final ReplicationConfig config)
 	{
-		this.LOG = LogUtil.getLogger(getClass().getSimpleName() + " "
-				+ config.getReplicationID());
+		this.LOG = LogUtil.getLogger(
+				getClass().getSimpleName() + " " + config.getReplicationID());
 		this.config = config;
 		this.lastGrant = timeFact.create(Double.NaN, config.getBaseTimeUnit());
 	}
@@ -132,8 +131,8 @@ public class ChronosService
 				if (!this.pendingGrants.isEmpty())
 				{
 					final SimTime firstKey = this.pendingGrants.firstKey();
-					if (this.inboxEmpty.containsAll(this.pendingGrants
-							.get(firstKey)))
+					if (this.inboxEmpty
+							.containsAll(this.pendingGrants.get(firstKey)))
 					{
 						LOG.trace("All inboxes emptied: " + this.inboxEmpty);
 						this.inboxEmpty.clear();
@@ -193,8 +192,8 @@ public class ChronosService
 
 		synchronized (this.pendingGrants)
 		{
-			final SimTime grant = this.pendingGrants.isEmpty() ? time : time
-					.max(this.pendingGrants.firstKey());
+			final SimTime grant = this.pendingGrants.isEmpty() ? time
+					: time.max(this.pendingGrants.firstKey());
 
 			Set<AgentID> agents = this.pendingGrants.get(grant);
 			if (agents == null)

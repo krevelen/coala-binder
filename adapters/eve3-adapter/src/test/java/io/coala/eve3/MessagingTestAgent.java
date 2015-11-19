@@ -1,7 +1,4 @@
 /* $Id: 6b2aa6282208757bc058922543d8c3c0a2190b59 $
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/TestAgent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -35,17 +32,14 @@ import io.coala.message.AbstractMessage;
 import io.coala.message.MessageID;
 import io.coala.model.ModelID;
 import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
 import io.coala.time.TimeUnit;
 import rx.Observer;
 
 /**
  * {@link MessagingTestAgent}
  * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class MessagingTestAgent extends BasicAgent
 {
@@ -53,7 +47,7 @@ public class MessagingTestAgent extends BasicAgent
 	/**
 	 * {@link MyMessageID}
 	 * 
-	 * @version $Revision: 290 $
+	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class MyMessageID extends MessageID<Long, SimTime>
@@ -66,7 +60,7 @@ public class MessagingTestAgent extends BasicAgent
 		private static long msgID = 0;
 
 		/**
-		 * {@link MyMessageID} constructor
+		 * {@link MyMessageID} zero-arg bean constructor
 		 */
 		protected MyMessageID()
 		{
@@ -75,8 +69,8 @@ public class MessagingTestAgent extends BasicAgent
 		/**
 		 * {@link MyMessageID} constructor
 		 * 
-		 * @param modelID
-		 * @param instant
+		 * @param modelID the {@link ModelID}
+		 * @param instant the {@link SimTime}
 		 */
 		public MyMessageID(final ModelID modelID, final SimTime instant)
 		{
@@ -88,9 +82,8 @@ public class MessagingTestAgent extends BasicAgent
 	/**
 	 * {@link MyMessage}
 	 * 
-	 * @version $Revision: 300 $
+	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 * 
 	 */
 	public static class MyMessage extends AbstractMessage<MyMessageID>
 	{
@@ -133,9 +126,9 @@ public class MessagingTestAgent extends BasicAgent
 	private Logger LOG;
 
 	/**
-	 * {@link MessagingTestAgent} constructor
+	 * {@link MessagingTestAgent} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	public MessagingTestAgent(final Binder binder)
@@ -197,7 +190,7 @@ public class MessagingTestAgent extends BasicAgent
 	 */
 	protected SimTime createTick(int t)
 	{
-		return getBinder().inject(SimTimeFactory.class).create(t,
+		return getBinder().inject(SimTime.Factory.class).create(t,
 				TimeUnit.TICKS);
 	}
 
@@ -240,10 +233,10 @@ public class MessagingTestAgent extends BasicAgent
 		if (getID().equals(MessagingTest.receiverAgentID))
 		{
 			pong();
-			setStatus(BasicAgentStatus.COMPLETE);
+			forceStatus(BasicAgentStatus.COMPLETE);
 		} else if (getID().equals(MessagingTest.senderAgentID))
 		{
-			setStatus(BasicAgentStatus.COMPLETE);
+			forceStatus(BasicAgentStatus.COMPLETE);
 		}
 	}
 

@@ -20,13 +20,12 @@
  */
 package io.coala.time;
 
-import io.coala.model.ModelComponentID;
-import io.coala.model.ModelID;
-
 import javax.inject.Inject;
-//import javax.persistence.Embeddable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import io.coala.model.ModelComponentID;
+import io.coala.model.ModelID;
 
 /**
  * {@link ClockID} contains a value to identify some {@link Clock}
@@ -35,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @version $Revision: 296 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-//@Embeddable
+// @Embeddable
 public class ClockID extends ModelComponentID<String>
 {
 
@@ -43,7 +42,7 @@ public class ClockID extends ModelComponentID<String>
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * @param value
+	 * {@link ClockID} zero-arg bean constructor
 	 */
 	protected ClockID()
 	{
@@ -51,22 +50,25 @@ public class ClockID extends ModelComponentID<String>
 	}
 
 	/**
+	 * {@link ClockID} CDI constructor
+	 * 
+	 * @param modelID
 	 * @param value
 	 */
 	@Inject
 	public ClockID(final ModelID modelID, final String value)
 	{
 		super(modelID, value);
-		if(modelID.getValue()==null)
+		if (modelID.getValue() == null)
 			throw new NullPointerException("No modelID value");
 	}
-	
+
 	@Override // expose for (JSON) serialization
 	public String getValue()
 	{
 		return super.getValue();
 	}
-	
+
 	@JsonIgnore
 	public ModelID getModelID()
 	{

@@ -14,9 +14,9 @@ import io.coala.message.Message;
 import rx.Observer;
 
 /**
- * {@link AGlobeMessengerService}
+ * {@link EveSendingCapability}
  * 
- * @version $Revision: 277 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class EveSendingCapability extends BasicCapability
@@ -31,27 +31,30 @@ public class EveSendingCapability extends BasicCapability
 	private Logger LOG;
 
 	/**
-	 * {@link AGlobeMessengerService} constructor
+	 * {@link EveSendingCapability} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	public EveSendingCapability(final Binder binder)
+	protected EveSendingCapability(final Binder binder)
 	{
 		super(binder);
 	}
 
-	/**
-	 * @see SendingCapability#send(Message)
-	 */
 	@Override
 	public void send(final Message<?> msg) throws Exception
 	{
-		send(msg, null);
+		// @SuppressWarnings("deprecation")
+		// EveUtil.receiveMessageByPointer(msg);
+		final EveWrapperAgent ag = EveUtil.getWrapperAgent(msg.getSenderID(),
+				true);
+		if (ag == null)
+			throw new IllegalStateException(
+					"No Eve agent exists for " + msg.getSenderID());
+		ag.doSend(msg);
 	}
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public void send(final Message<?> msg, final Duration timeout)
 			throws Exception
 	{
@@ -66,9 +69,10 @@ public class EveSendingCapability extends BasicCapability
 		final long timeoutMS = timeout == null ? 0 : timeout.getMillis();
 		if (timeoutMS <= 0)
 		{
-			EveUtil.receiveMessageByPointer(msg);
+			send(msg);
 			return;
 		}
+		// timeout specified
 		RuntimeException lastError = null;
 		int attempts = 0;
 		long elapsedMS = 0;
@@ -83,7 +87,7 @@ public class EveSendingCapability extends BasicCapability
 						+ lastError.getMessage());
 			try
 			{
-				EveUtil.receiveMessageByPointer(msg);
+				send(msg);
 				if (attempts != 0)
 					LOG.trace("Attempt " + (++attempts) + " @" + elapsedMS
 							+ "ms sucessful to " + msg.getReceiverID());

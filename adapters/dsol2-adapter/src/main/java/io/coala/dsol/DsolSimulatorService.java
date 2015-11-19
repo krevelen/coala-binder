@@ -17,6 +17,19 @@
  */
 package io.coala.dsol;
 
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import javax.inject.Inject;
+import javax.naming.NamingException;
+
+import org.apache.log4j.Logger;
+
 import io.coala.agent.AgentID;
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
@@ -30,6 +43,7 @@ import io.coala.dsol.util.ExperimentBuilder;
 import io.coala.dsol.util.ReplicationBuilder;
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
+import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.model.ModelComponent;
 import io.coala.name.Identifier;
@@ -39,22 +53,8 @@ import io.coala.random.RandomNumberStreamID;
 import io.coala.time.ClockID;
 import io.coala.time.Instant;
 import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
 import io.coala.time.TimeUnit;
-import io.coala.time.Timed;
 import io.coala.time.Trigger;
-
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import javax.inject.Inject;
-import javax.naming.NamingException;
-
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEvent;
@@ -65,9 +65,6 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventInterface;
 import nl.tudelft.simulation.event.EventListenerInterface;
 import nl.tudelft.simulation.event.EventType;
-
-import org.apache.log4j.Logger;
-
 import rx.Observable;
 import rx.functions.Action1;
 import rx.functions.Func1;
@@ -77,30 +74,34 @@ import rx.subjects.Subject;
 /**
  * {@link DsolSimulatorService}
  * 
- * @version $Revision: 324 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
-public class DsolSimulatorService extends BasicCapability implements
-		ReplicatingCapability, ModelComponent<CapabilityID>// , MessengerService
+public class DsolSimulatorService extends BasicCapability
+		implements ReplicatingCapability, ModelComponent<CapabilityID>// ,
+																		// MessengerService
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	// @InjectLogger // not useful if logging occurs during construction
-	private transient Logger LOG;
+	private static final Map<ClockID, ReplicationBuilder> SIMULATORS = Collections
+			.synchronizedMap(new HashMap<ClockID, ReplicationBuilder>());
+
+	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
+			.synchronizedMap(
+					new HashMap<RandomNumberStreamID, RandomNumberStream>());
 
 	/** */
-	// private static final Logger LOG = LogUtil
-	// .getLogger(DsolSimulatorService.class);
+	@InjectLogger // not useful if logging occurs during construction
+	private transient Logger LOG;
 
 	/** */
 	private transient ReplicationConfig config;
 
 	/** */
-	private transient SimTimeFactory newTime;
+	private transient SimTime.Factory newTime;
 
 	/** */
 	private transient ClockID clockID;
@@ -119,10 +120,6 @@ public class DsolSimulatorService extends BasicCapability implements
 
 	/** */
 	private transient Subject<ClockStatusUpdate, ClockStatusUpdate> statusUpdates;
-
-	/** */
-	private static final Map<ClockID, ReplicationBuilder> SIMULATORS = Collections
-			.synchronizedMap(new HashMap<ClockID, ReplicationBuilder>());
 
 	/** */
 	// private SimTime grant = null;
@@ -158,10 +155,8 @@ public class DsolSimulatorService extends BasicCapability implements
 				ReplicationBuilder repl;
 				try
 				{
-					repl = new ExperimentBuilder()
-							.withSimulator(simulator)
-							.withModel(model)
-							.newTreatment()
+					repl = new ExperimentBuilder().withSimulator(simulator)
+							.withModel(model).newTreatment()
 							.withTimeUnit(config.getBaseTimeUnit())
 							.withRunInterval(config.getInterval())
 							.newReplication(
@@ -200,11 +195,9 @@ public class DsolSimulatorService extends BasicCapability implements
 			this.simulator = simulator;
 			try
 			{
-				LOG.trace("["
-						+ Thread.currentThread().getName()
-						+ "] CONSTRUCTED model "
-						+ simulator.getReplication().getContext()
-								.getNameInNamespace());
+				LOG.trace("[" + Thread.currentThread().getName()
+						+ "] CONSTRUCTED model " + simulator.getReplication()
+								.getContext().getNameInNamespace());
 			} catch (final Exception e)
 			{
 				e.printStackTrace();
@@ -220,18 +213,14 @@ public class DsolSimulatorService extends BasicCapability implements
 	}
 
 	/**
-	 * {@link BasicSimulatorService} constructor
+	 * {@link DsolSimulatorService} CDI constructor
 	 * 
-	 * @param binder
-	 * @throws SimRuntimeException
-	 * @throws RemoteException
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected DsolSimulatorService(final Binder binder)
 	{
 		super(binder);
-
-		LOG = LogUtil.getLogger(DsolSimulatorService.class, this);
 	}
 
 	@Override
@@ -252,11 +241,11 @@ public class DsolSimulatorService extends BasicCapability implements
 		this.clockID = this.config.getClockID();
 		this.baseTimeUnit = this.config.getBaseTimeUnit();
 		this.newTime = this.config.newTime();
-		this.statusUpdates = BehaviorSubject
-				.create((ClockStatusUpdate) new ClockStatusUpdateImpl(
-						getClockID(), DsolSimulatorStatus.CREATED));
-		this.timeUpdates = BehaviorSubject.create(this.newTime.create(
-				Double.NaN, this.baseTimeUnit));
+		this.statusUpdates = BehaviorSubject.create(
+				(ClockStatusUpdate) new ClockStatusUpdateImpl(getClockID(),
+						DsolSimulatorStatus.CREATED));
+		this.timeUpdates = BehaviorSubject
+				.create(this.newTime.create(Double.NaN, this.baseTimeUnit));
 
 		synchronized (SIMULATORS)
 		{
@@ -299,17 +288,13 @@ public class DsolSimulatorService extends BasicCapability implements
 					@Override
 					public void notify(final EventInterface event)
 					{
-						if (Thread
-								.currentThread()
-								.getName()
-								.startsWith(
-										ModelInterface.class.getPackage()
-												.getName()))
+						if (Thread.currentThread().getName().startsWith(
+								ModelInterface.class.getPackage().getName()))
 						{
 							System.err.println("Resetting thread name: "
 									+ Thread.currentThread().getName());
-							Thread.currentThread().setName(
-									getClockID().getValue());
+							Thread.currentThread()
+									.setName(getClockID().getValue());
 						}
 						setTime((Double) event.getContent());
 					}
@@ -402,7 +387,6 @@ public class DsolSimulatorService extends BasicCapability implements
 		// notifyAll();
 	}
 
-	/** @see Timed#getTime() */
 	@Override
 	public synchronized SimTime getTime()
 	{
@@ -420,7 +404,6 @@ public class DsolSimulatorService extends BasicCapability implements
 		return this.time;
 	}
 
-	/** @see TimeService#getClockID() */
 	@Override
 	public ClockID getClockID()
 	{
@@ -436,13 +419,13 @@ public class DsolSimulatorService extends BasicCapability implements
 	private Map<Identifier<?, ?>, List<SimEvent>> pendingEvents = new HashMap<>();
 
 	/**
-	 * {@link CallableSimEvent}
+	 * {@link CallableSimEvent} wraps a {@link SimEvent} as {@link Callable}
 	 * 
-	 * @version $Revision: 324 $
+	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
-	public static class CallableSimEvent extends SimEvent implements
-			Callable<Void>
+	public static class CallableSimEvent extends SimEvent
+			implements Callable<Void>
 	{
 
 		/** */
@@ -473,8 +456,9 @@ public class DsolSimulatorService extends BasicCapability implements
 				// System.err.println("Executed sim event for: " + this.method);
 			} catch (final Exception e)
 			{
-				new SimRuntimeException("Problem executing call to "
-						+ this.method, e).printStackTrace();
+				new SimRuntimeException(
+						"Problem executing call to " + this.method, e)
+								.printStackTrace();
 			}
 		}
 
@@ -489,12 +473,12 @@ public class DsolSimulatorService extends BasicCapability implements
 
 	}
 
-	/** @see SchedulerService#schedule(Job, Trigger) */
 	@Override
 	public void schedule(final Job<?> job, final Trigger<?> trigger)
 	{
 		if (isComplete())
-			throw new IllegalStateException("Can't schedule, already complete!");
+			throw new IllegalStateException(
+					"Can't schedule, already complete!");
 		final DEVSSimulatorInterface simulator = getSimulator();
 		final List<SimEvent> simEvents = new ArrayList<>();
 		final List<SimEvent> oldEvents = this.pendingEvents.put(job.getID(),
@@ -505,8 +489,8 @@ public class DsolSimulatorService extends BasicCapability implements
 					"Already scheduled this job: " + job.getID()
 							+ ", pending events: " + oldEvents.size()
 							+ ", originator stack: " + job.getStackTrace(),
-					new IllegalStateException("Already scheduled "
-							+ job.getID()));
+					new IllegalStateException(
+							"Already scheduled " + job.getID()));
 			simEvents.addAll(oldEvents);
 		}
 		if (job instanceof Callable)
@@ -538,16 +522,17 @@ public class DsolSimulatorService extends BasicCapability implements
 						// System.err.println(1);
 						simEvents.add(event);
 						// System.err.println(2);
-						simulator.scheduleEvent(new SimEvent(event
-								.getAbsoluteExecutionTime(),
-								SimEventInterface.MIN_PRIORITY, this, this,
-								"removeEvent", new Object[] { job.getID(),
-										event }));
+						simulator.scheduleEvent(
+								new SimEvent(event.getAbsoluteExecutionTime(),
+										SimEventInterface.MIN_PRIORITY, this,
+										this, "removeEvent",
+										new Object[] { job.getID(), event }));
 						// System.err.println(3);
 						return Boolean.TRUE;
 					} catch (final Throwable t)
 					{
-						t.printStackTrace();
+						LOG.error("Problem scheduling " + job + " @ " + time,
+								t);
 						return Boolean.FALSE;
 					}
 				}
@@ -563,8 +548,8 @@ public class DsolSimulatorService extends BasicCapability implements
 				public void removeEvent(final Identifier<?, ?> jobID,
 						final SimEvent event)
 				{
-					final List<SimEvent> jobEvents = pendingEvents.get(job
-							.getID());
+					final List<SimEvent> jobEvents = pendingEvents
+							.get(job.getID());
 
 					if (jobEvents == null)
 						return;
@@ -580,8 +565,9 @@ public class DsolSimulatorService extends BasicCapability implements
 				public void call(final Boolean success)
 				{
 					if (!success)
-						LOG.error("Not all trigger events were scheduled for job: "
-								+ job.getID());
+						LOG.error(
+								"Not all trigger events were scheduled for job: "
+										+ job.getID());
 					// latch.countDown();
 				}
 			});
@@ -602,7 +588,6 @@ public class DsolSimulatorService extends BasicCapability implements
 					+ job.getClass().getName());
 	}
 
-	/** @see SchedulerService#unschedule(Job) */
 	@Override
 	public boolean unschedule(final Job<?> job)
 	{
@@ -618,12 +603,11 @@ public class DsolSimulatorService extends BasicCapability implements
 				simulator.cancelEvent(event);
 			} catch (final RemoteException e)
 			{
-				// ignore
+				throw new IllegalStateException("UNEXPECTED", e);
 			}
 		return true;
 	}
 
-	/** @see SimulatorService#isRunning() */
 	@Override
 	public boolean isRunning()
 	{
@@ -637,46 +621,18 @@ public class DsolSimulatorService extends BasicCapability implements
 		}
 	}
 
-	/** @see SimulatorService#isComplete() */
 	@Override
 	public boolean isComplete()
 	{
 		return this.complete;
 	}
 
-	// /**
-	// * @throws Exception
-	// * @see MessengerService#send(Message)
-	// */
-	// @Override
-	// public void send(final Message<?> msg) throws Exception
-	// {
-	// System.err.println("Scheduling send msg: " + msg);
-	// getSimulator().scheduleEvent(
-	// new SimEvent(config.getBaseTimeUnit().convertFrom(time)
-	// .doubleValue(), this, WRONGBINDERgetBinder().bind(
-	// ReceiverService.class),
-	// MessageHandler.RECEIVE_METHOD_ID, new Object[] { msg })
-	// {
-	// /** */
-	// private static final long serialVersionUID = 1L;
-	//
-	// public void execute() throws SimRuntimeException
-	// {
-	// System.err.println("Executing send msg: " + msg);
-	// super.execute();
-	// }
-	// });
-	// }
-
-	/** @see RandomizerService#getRNG() */
 	@Override
 	public RandomNumberStream getRNG()
 	{
 		return getRNG(MAIN_RNG_ID);
 	}
 
-	/** @see RandomizerService#getRNG(RandomNumberStreamID) */
 	@Override
 	public synchronized RandomNumberStream getRNG(
 			final RandomNumberStreamID rngID)
@@ -686,30 +642,24 @@ public class DsolSimulatorService extends BasicCapability implements
 		return this.rng.get(rngID);
 	}
 
-	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
-			.synchronizedMap(new HashMap<RandomNumberStreamID, RandomNumberStream>());
-
 	private RandomNumberStream newRNG(final RandomNumberStreamID streamID)
 	{
-		return getBinder().inject(RandomNumberStream.Factory.class).create(
-				streamID, CoalaProperty.randomSeed.value().getLong());
+		return getBinder().inject(RandomNumberStream.Factory.class)
+				.create(streamID, CoalaProperty.randomSeed.value().getLong());
 	}
 
-	/** @see TimeService#getStatusUpdates() */
 	@Override
 	public Observable<ClockStatusUpdate> getStatusUpdates()
 	{
 		return this.statusUpdates.asObservable();
 	}
 
-	/** @see TimeService#getTimeUpdates() */
 	@Override
 	public Observable<SimTime> getTimeUpdates()
 	{
 		return this.timeUpdates.asObservable();
 	}
 
-	/** @see ModelComponent#getOwnerID() */
 	@Override
 	public AgentID getOwnerID()
 	{
@@ -719,36 +669,36 @@ public class DsolSimulatorService extends BasicCapability implements
 	@Override
 	public SimTime getVirtualOffset()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		// TODO implement
+		throw new IllegalStateException("NOT IMPLEMENTED");
 	}
 
 	@Override
-	public SimTime toActualTime(SimTime virtualTime)
+	public SimTime toActualTime(final SimTime virtualTime)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		// TODO implement
+		throw new IllegalStateException("NOT IMPLEMENTED");
 	}
 
 	@Override
 	public SimTime getActualOffset()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		// TODO implement
+		throw new IllegalStateException("NOT IMPLEMENTED");
 	}
 
 	@Override
-	public SimTime toVirtualTime(SimTime actualTime)
+	public SimTime toVirtualTime(final SimTime actualTime)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		// TODO implement
+		throw new IllegalStateException("NOT IMPLEMENTED");
 	}
 
 	@Override
 	public Number getApproximateSpeedFactor()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		// TODO implement
+		throw new IllegalStateException("NOT IMPLEMENTED");
 	}
 
 }

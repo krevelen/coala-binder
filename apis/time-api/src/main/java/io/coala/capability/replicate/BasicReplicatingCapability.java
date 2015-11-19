@@ -20,23 +20,6 @@
  */
 package io.coala.capability.replicate;
 
-import io.coala.bind.Binder;
-import io.coala.capability.BasicCapability;
-import io.coala.capability.plan.ClockStatus;
-import io.coala.capability.plan.ClockStatusUpdate;
-import io.coala.capability.plan.ClockStatusUpdateImpl;
-import io.coala.log.InjectLogger;
-import io.coala.name.AbstractIdentifiable;
-import io.coala.process.Job;
-import io.coala.random.RandomNumberStream;
-import io.coala.random.RandomNumberStreamID;
-import io.coala.time.ClockID;
-import io.coala.time.Instant;
-import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
-import io.coala.time.TimeUnit;
-import io.coala.time.Trigger;
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -52,6 +35,21 @@ import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 
+import io.coala.bind.Binder;
+import io.coala.capability.BasicCapability;
+import io.coala.capability.plan.ClockStatus;
+import io.coala.capability.plan.ClockStatusUpdate;
+import io.coala.capability.plan.ClockStatusUpdateImpl;
+import io.coala.log.InjectLogger;
+import io.coala.name.AbstractIdentifiable;
+import io.coala.process.Job;
+import io.coala.random.RandomNumberStream;
+import io.coala.random.RandomNumberStreamID;
+import io.coala.time.ClockID;
+import io.coala.time.Instant;
+import io.coala.time.SimTime;
+import io.coala.time.TimeUnit;
+import io.coala.time.Trigger;
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.BehaviorSubject;
@@ -64,34 +62,41 @@ import rx.subjects.Subject;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  */
-public class BasicReplicatingCapability extends BasicCapability implements
-		ReplicatingCapability
+public class BasicReplicatingCapability extends BasicCapability
+		implements ReplicatingCapability
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
 	/** */
+	private static final Map<ClockID, Clock> CLOCK_CACHE = new HashMap<>();
+
+	/** */
+	private final transient Subject<SimTime, SimTime> timeUpdates;
+
+	/** */
+	private final transient Subject<ClockStatusUpdate, ClockStatusUpdate> statusUpdates;
+
+	/** */
+	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
+			.synchronizedMap(
+					new HashMap<RandomNumberStreamID, RandomNumberStream>());
+
+	/** */
 	private final ClockID clockID;
 
 	@InjectLogger
-	private Logger LOG;
+	private transient Logger LOG;
 
 	/** */
 	private final TimeUnit timeUnit;
 
-	/** */
-	private final Subject<SimTime, SimTime> timeUpdates;
-
-	/** */
-	private final Subject<ClockStatusUpdate, ClockStatusUpdate> statusUpdates;
-
 	/**
 	 * {@link ClockStatusEnum}
 	 * 
-	 * @version $Revision: 324 $
+	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	private enum ClockStatusEnum implements ClockStatus
 	{
@@ -106,14 +111,12 @@ public class BasicReplicatingCapability extends BasicCapability implements
 
 		;
 
-		/** @see ClockStatus#isRunning() */
 		@Override
 		public boolean isRunning()
 		{
 			return this == RUNNING;
 		}
 
-		/** @see ClockStatus#isFinished() */
 		@Override
 		public boolean isFinished()
 		{
@@ -123,9 +126,9 @@ public class BasicReplicatingCapability extends BasicCapability implements
 	}
 
 	/**
-	 * {@link BasicReplicatingCapability} constructor
+	 * {@link BasicReplicatingCapability} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected BasicReplicatingCapability(final Binder binder)
@@ -134,8 +137,9 @@ public class BasicReplicatingCapability extends BasicCapability implements
 		final ReplicationConfig cfg = binder.inject(ReplicationConfig.class);
 		this.clockID = cfg.getClockID();
 		this.timeUnit = cfg.getBaseTimeUnit();
-		this.timeUpdates = BehaviorSubject.create(binder.inject(
-				SimTimeFactory.class).create(Double.NaN, this.timeUnit));
+		this.timeUpdates = BehaviorSubject
+				.create(binder.inject(SimTime.Factory.class).create(Double.NaN,
+						this.timeUnit));
 		final ClockStatusUpdate initStatus = new ClockStatusUpdateImpl(
 				this.clockID, ClockStatusEnum.CREATED);
 		this.statusUpdates = BehaviorSubject.create(initStatus);
@@ -237,25 +241,23 @@ public class BasicReplicatingCapability extends BasicCapability implements
 		}
 	}
 
-	private static final Map<ClockID, Clock> CLOCKS = new HashMap<>();
-
 	@Override
 	public SimTime getTime()
 	{
-		return getBinder().inject(SimTimeFactory.class)
-				.create(0, this.timeUnit);
+		return getBinder().inject(SimTime.Factory.class).create(0,
+				this.timeUnit);
 	}
 
 	protected synchronized Clock getClock()
 	{
 		LOG.info("Obtaining clock with id: " + getClockID().getValue()
-				+ " from " + CLOCKS + " :: RESULT : "
-				+ CLOCKS.get(getClockID()));
+				+ " from " + CLOCK_CACHE + " :: RESULT : "
+				+ CLOCK_CACHE.get(getClockID()));
 
-		if (!CLOCKS.containsKey(getClockID()))
-			CLOCKS.put(getClockID(), new Clock(getClockID(), new Date()));
+		if (!CLOCK_CACHE.containsKey(getClockID()))
+			CLOCK_CACHE.put(getClockID(), new Clock(getClockID(), new Date()));
 
-		return CLOCKS.get(getClockID());
+		return CLOCK_CACHE.get(getClockID());
 	}
 
 	@Override
@@ -291,17 +293,17 @@ public class BasicReplicatingCapability extends BasicCapability implements
 	@Override
 	public SimTime toActualTime(final SimTime virtualTime)
 	{
-		return getClock().getActualOffset().plus(
-				virtualTime.min(getClock().getVirtualOffset()).dividedBy(
-						getClock().getApproximateSpeedFactor()));
+		return getClock().getActualOffset()
+				.plus(virtualTime.min(getClock().getVirtualOffset())
+						.dividedBy(getClock().getApproximateSpeedFactor()));
 	}
 
 	@Override
 	public SimTime toVirtualTime(final SimTime actualTime)
 	{
-		return getClock().getVirtualOffset().plus(
-				actualTime.min(getClock().getActualOffset()).multipliedBy(
-						getClock().getApproximateSpeedFactor()));
+		return getClock().getVirtualOffset()
+				.plus(actualTime.min(getClock().getActualOffset())
+						.multipliedBy(getClock().getApproximateSpeedFactor()));
 	}
 
 	@Override
@@ -313,13 +315,13 @@ public class BasicReplicatingCapability extends BasicCapability implements
 	@Override
 	public boolean isRunning()
 	{
-		return !CLOCKS.get(getClockID()).executor.isShutdown();
+		return !CLOCK_CACHE.get(getClockID()).executor.isShutdown();
 	}
 
 	@Override
 	public boolean isComplete()
 	{
-		return CLOCKS.get(getClockID()).executor.isShutdown();
+		return CLOCK_CACHE.get(getClockID()).executor.isShutdown();
 	}
 
 	@Override
@@ -337,13 +339,10 @@ public class BasicReplicatingCapability extends BasicCapability implements
 		return this.rng.get(rngID);
 	}
 
-	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
-			.synchronizedMap(new HashMap<RandomNumberStreamID, RandomNumberStream>());
-
 	private RandomNumberStream newRNG(final RandomNumberStreamID streamID)
 	{
-		return getBinder().inject(RandomNumberStream.Factory.class).create(
-				streamID, System.currentTimeMillis());
+		return getBinder().inject(RandomNumberStream.Factory.class)
+				.create(streamID, System.currentTimeMillis());
 	}
 
 	@Override

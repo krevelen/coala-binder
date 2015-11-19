@@ -22,13 +22,10 @@ package io.coala.example.conway;
 
 import java.util.Map;
 
-import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.agent.AgentID;
 import io.coala.message.AbstractMessage;
-import io.coala.message.MessageID;
-import io.coala.model.ModelID;
 import io.coala.time.SimDuration;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
@@ -36,25 +33,13 @@ import io.coala.time.TimeUnit;
 /**
  * {@link CellState}
  * 
- * @date $Date: 2014-06-17 15:03:44 +0200 (Tue, 17 Jun 2014) $
- * @version $Revision: 302 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-public class CellState extends AbstractMessage<CellState.ID>
+@SuppressWarnings("serial")
+public class CellState extends AbstractMessage<ID>
 // implements Serializable, Comparable<CellState>, Timed<SimTime>
 {
-
-	@SuppressWarnings("serial")
-	public static class ID extends MessageID<UUID, SimTime>
-	{
-		public ID(final ModelID modelID, final SimTime time)
-		{
-			super(modelID, new UUID(), time);
-		}
-	}
-
-	/** */
-	private static final long serialVersionUID = 1L;
 
 	/** */
 	private LifeStatus state = null;
@@ -81,7 +66,7 @@ public class CellState extends AbstractMessage<CellState.ID>
 	}
 
 	/**
-	 * {@link CellState} constructor for copies etc.
+	 * {@link CellState} constructor, for copies etc.
 	 * 
 	 * @param generation
 	 * @param fromID
@@ -96,7 +81,7 @@ public class CellState extends AbstractMessage<CellState.ID>
 	}
 
 	/**
-	 * @return the cellID
+	 * @return the origin {@link CellID}
 	 */
 	@JsonIgnore
 	public CellID getCellID()
@@ -114,11 +99,18 @@ public class CellState extends AbstractMessage<CellState.ID>
 	}
 
 	/**
-	 * @return the lifeState
+	 * @return the {@link LifeState}
 	 */
 	public LifeStatus getState()
 	{
 		return this.state;
+	}
+
+	@Override
+	public String toString()
+	{
+		return String.format("%s|%s|%s", getCellID().getValue(),
+				getGeneration().intValue(), getState());
 	}
 
 	/**
@@ -131,20 +123,18 @@ public class CellState extends AbstractMessage<CellState.ID>
 				getState());
 	}
 
-	public CellState next(final SimDuration cycleDuration,
+	/**
+	 * @param delta generation time delta to add
+	 * @param myNeighborStateCount neighborhood values
+	 * @return new value for this {@link CellState} after transition
+	 */
+	public CellState next(final SimDuration delta,
 			final Map<LifeStatus, Integer> myNeighborStateCount)
 	{
-		final SimTime toTime = getID().getTime().plus(cycleDuration);
 		final LifeStatus toState = getState()
 				.getTransition(myNeighborStateCount);
-		return new CellState(toTime, getCellID(), toState);
-	}
-
-	@Override
-	public String toString()
-	{
-		return String.format("%s|%s|%s", getCellID().getValue(),
-				getGeneration().intValue(), getState());
+		return new CellState(getGeneration().plus(delta), getCellID(),
+				toState);
 	}
 
 }

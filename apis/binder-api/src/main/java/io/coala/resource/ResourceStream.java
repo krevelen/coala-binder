@@ -141,7 +141,7 @@ public class ResourceStream
 	{
 		try
 		{
-			return JsonUtil.fromJSON(IOUtils.toString(getStream()));// getStream());
+			return JsonUtil.toTree(IOUtils.toString(getStream()));
 		} catch (final IOException e)
 		{
 			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e,
@@ -159,8 +159,8 @@ public class ResourceStream
 	{
 		try
 		{
-			return JsonUtil.fromJSONString(IOUtils.toString(getStream()),
-					resultType);// fromJSON(getStream(), resultType);
+			return JsonUtil.valueOf(IOUtils.toString(getStream()), resultType);
+			// valueOf(getStream(), resultType);
 		} catch (final IOException e)
 		{
 			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e,
@@ -227,7 +227,8 @@ public class ResourceStream
 	 * @param type
 	 * @return
 	 */
-	public static ResourceStream of(final String string, final ResourceType type)
+	public static ResourceStream of(final String string,
+			final ResourceType type)
 	{
 		return of(string, type, string);
 	}

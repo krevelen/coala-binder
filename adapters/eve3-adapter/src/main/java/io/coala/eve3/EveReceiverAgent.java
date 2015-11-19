@@ -1,9 +1,11 @@
 package io.coala.eve3;
 
+import com.almende.eve.protocol.jsonrpc.annotation.Access;
+import com.almende.eve.protocol.jsonrpc.annotation.AccessType;
+import com.almende.eve.protocol.jsonrpc.annotation.Name;
+
 import io.coala.exception.CoalaException;
 import io.coala.message.Message;
-
-import com.almende.eve.protocol.jsonrpc.annotation.Name;
 
 /**
  * {@link EveReceiverAgent}
@@ -23,7 +25,7 @@ public interface EveReceiverAgent extends EveWrapper
 	 * @param payload
 	 * @throws CoalaException
 	 */
-	//@Access(AccessType.PUBLIC)
+	@Access(AccessType.PUBLIC)
 	void doReceive(@Name(PAYLOAD_FIELD_NAME) Message<?> payload);
 
 }

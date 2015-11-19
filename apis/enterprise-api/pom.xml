@@ -7,7 +7,7 @@
 		<groupId>io.coala</groupId>
 		<artifactId>coala-root</artifactId>
 		<version>0.0.1</version>
-		<relativePath>..</relativePath>
+		<relativePath>../..</relativePath>
 	</parent>
 
 	<artifactId>coala-enterprise-api</artifactId>
@@ -56,8 +56,7 @@
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>coala-binder-api</artifactId>
-			<version>0.0.1</version>
+			<artifactId>coala-time-api</artifactId>
 		</dependency>
 
 		<dependency>
@@ -311,21 +310,9 @@
 				</goals> </execution> </executions> </plugin> -->
 
 			<!-- Used to generate source code based on XSD (schema) file -->
-			<!-- 
-			<plugin>
-				<groupId>org.apache.cxf</groupId>
-				<artifactId>cxf-xjc-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>generate-enterprise-ontology</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>xsdtojava</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			-->
+			<!-- <plugin> <groupId>org.apache.cxf</groupId> <artifactId>cxf-xjc-plugin</artifactId> 
+				<executions> <execution> <id>generate-enterprise-ontology</id> <phase>generate-sources</phase> 
+				<goals> <goal>xsdtojava</goal> </goals> </execution> </executions> </plugin> -->
 		</plugins>
 	</build>
 </project>

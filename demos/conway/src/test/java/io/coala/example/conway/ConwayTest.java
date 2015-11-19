@@ -21,6 +21,8 @@
 package io.coala.example.conway;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.HashSet;
@@ -29,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.log4j.Logger;
-import org.junit.Assert;
 import org.junit.Test;
 
 import io.coala.agent.AgentStatusObserver;
@@ -90,21 +91,21 @@ public class ConwayTest
 		final CellState state3b = new CellState(t2, cellID2, LifeStatus.DEAD);
 		LOG.trace("Created: " + state3a);
 
-		Assert.assertNotEquals(
+		assertNotEquals(
 				"Hash codes should not match for " + state1 + " and " + state2,
 				state1.hashCode(), state2.hashCode());
-		Assert.assertNotEquals(
+		assertNotEquals(
 				"Hash codes should not match for " + state2 + " and " + state3a,
 				state2.hashCode(), state3a.hashCode());
-		Assert.assertNotEquals(
+		assertNotEquals(
 				"Hash codes should not match for " + state1 + " and " + state3a,
 				state1.hashCode(), state3a.hashCode());
 
-		Assert.assertTrue("Should be smaller", state1.compareTo(state2) < 0);
-		Assert.assertTrue("Should be smaller", state2.compareTo(state3a) < 0);
-		Assert.assertTrue("Should be smaller", state1.compareTo(state3a) < 0);
+		assertTrue("Should be smaller", state1.compareTo(state2) < 0);
+		assertTrue("Should be smaller", state2.compareTo(state3a) < 0);
+		assertTrue("Should be smaller", state1.compareTo(state3a) < 0);
 
-		Assert.assertEquals("Should be equal", state3a, state3b);
+		assertEquals("Should be equal", state3a, state3b);
 
 		// final CellStateTransition tran = new CellStateTransition(state1,
 		// state2);
@@ -118,6 +119,24 @@ public class ConwayTest
 				.withProperty(ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY, "torus1")
 				.build().create("booter");
+
+		final CellID source = new CellID(binder.getID(), 1, 2);
+		final String sourceSer = JsonUtil.toTree(source).toString();
+		final CellID sourceDeser = JsonUtil.valueOf(sourceSer,
+				CellID.class);
+		assertEquals("De/serialization failed for " + CellID.class, source,
+				sourceDeser);
+		LOG.trace("De/serialization worked for " + source);
+
+		final CellState state = new CellState(
+				binder.inject(SimTime.Factory.class).create(1, TimeUnit.TICKS),
+				source, LifeStatus.ALIVE);
+		final String stateSer = JsonUtil.toTree(state).toString();
+		final CellState stateDeser = JsonUtil.valueOf(stateSer,
+				CellState.class);
+		assertEquals("De/serialization failed for " + CellState.class, state,
+				stateDeser);
+		LOG.trace("De/serialization worked for " + CellState.class);
 
 		final List<List<CellID>> cellStates = CellWorld.Util
 				.createLatticeLayout(binder);

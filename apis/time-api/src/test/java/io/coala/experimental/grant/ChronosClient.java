@@ -1,17 +1,16 @@
 package io.coala.experimental.grant;
 
-import io.coala.agent.AgentID;
-import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.experimental.grant.ChronosService.GrantCallback;
-import io.coala.log.LogUtil;
-import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
-
 import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
+
+import io.coala.agent.AgentID;
+import io.coala.capability.replicate.ReplicationConfig;
+import io.coala.experimental.grant.ChronosService.GrantCallback;
+import io.coala.log.LogUtil;
+import io.coala.time.SimTime;
 
 public class ChronosClient
 {
@@ -48,7 +47,7 @@ public class ChronosClient
 
 	// private boolean dead = false;
 
-	public ChronosClient(final SimTimeFactory timeFact,
+	public ChronosClient(final SimTime.Factory timeFact,
 			final ReplicationConfig config, final PacedAgent clientAgent)
 	{
 		this.chronos = ChronosService.getInstance(timeFact, config);
@@ -105,9 +104,9 @@ public class ChronosClient
 		{
 			if (time.isAfter(this.time))
 			{
-				LOG.info("Grant was further in future than expected "
-						+ getTime() + " for " + time + " "
-						+ this.owner.getAID());
+				LOG.info(
+						"Grant was further in future than expected " + getTime()
+								+ " for " + time + " " + this.owner.getAID());
 				ChronosClient.this.lastGrant = time;
 			} else
 			{
@@ -161,9 +160,8 @@ public class ChronosClient
 		SimTime t = this.lastGrant.max(this.requestTime).min(millis);
 		if (t.isBefore(millis) && millis.isAfter(this.lastGrant))
 		{
-			LOG.info(this.clientAgent.getAID()
-					+ " kept original earlier grant " + t
-					+ " and queued later grant request for: " + millis);
+			LOG.info(this.clientAgent.getAID() + " kept original earlier grant "
+					+ t + " and queued later grant request for: " + millis);
 			this.futureGrantRequests.add(millis);
 		} else if (t.isAfter(this.lastGrant))
 		{
@@ -200,8 +198,8 @@ public class ChronosClient
 		LOG.info(this.clientAgent.getAID() + " requests grant for time: "
 				+ this.requestTime);
 		this.requestedGrant = true;
-		this.chronos
-				.requestGrant(this.clientAgent.getAID(), this.agentCallback);
+		this.chronos.requestGrant(this.clientAgent.getAID(),
+				this.agentCallback);
 		this.requestTime = this.maxValue;
 	}
 

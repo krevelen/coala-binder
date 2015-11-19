@@ -20,15 +20,13 @@
  */
 package io.coala.message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.coala.agent.AgentID;
 import io.coala.event.AbstractTimedEvent;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
 import io.coala.time.Instant;
-
-import javax.inject.Inject;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * {@link AbstractMessage}
@@ -37,8 +35,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @version $Revision: 300 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-public abstract class AbstractMessage<ID extends MessageID<?, ?>> extends
-		AbstractTimedEvent<ID> implements Message<ID>
+public abstract class AbstractMessage<ID extends MessageID<?, ?>>
+		extends AbstractTimedEvent<ID>implements Message<ID>
 {
 
 	/** */
@@ -58,8 +56,8 @@ public abstract class AbstractMessage<ID extends MessageID<?, ?>> extends
 	 * @param senderID
 	 * @param receiverID
 	 */
-	@Inject
-	public AbstractMessage(final ID id, final ModelComponentID<?> producerID,
+	// @Inject
+	protected AbstractMessage(final ID id, final ModelComponentID<?> producerID,
 			final AgentID senderID, final AgentID receiverID)
 	{
 		super(id, null, null);

@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-examples/src/test/java/io/coala/example/pacing/PacedActor.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -39,9 +36,8 @@ import org.apache.log4j.Logger;
 /**
  * {@link PacedActor}
  * 
- * @version $Revision: 312 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 {
@@ -53,9 +49,9 @@ public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 	private Logger LOG;
 
 	/**
-	 * {@link PacedActor} constructor
+	 * {@link PacedActor} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected PacedActor(final Binder binder)
@@ -114,7 +110,6 @@ public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 		LOG.trace("Finishing");
 	}
 
-	/** @see ModelComponent#getOwnerID() */
 	@Override
 	public AgentID getOwnerID()
 	{

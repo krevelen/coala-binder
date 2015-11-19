@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/resource/BasicHTTPClientService.java $
- * 
- * Part of the EU project INERTIA, see http://www.inertia-project.eu/inertia/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -36,16 +33,21 @@ import javax.inject.Inject;
 /**
  * {@link BasicOnlineCapability}
  * 
- * @version $Revision: 358 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-public class BasicOnlineCapability extends BasicCapability implements
-		OnlineCapability
+public class BasicOnlineCapability extends BasicCapability
+		implements OnlineCapability
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * {@link BasicOnlineCapability} CDI constructor
+	 * 
+	 * @param binder the {@link Binder}
+	 */
 	@Inject
 	protected BasicOnlineCapability(final Binder binder)
 	{
@@ -79,7 +81,8 @@ public class BasicOnlineCapability extends BasicCapability implements
 	}
 
 	@Override
-	public ResourceStreamer request(final URI uri, final ResourceType resultType)
+	public ResourceStreamer request(final URI uri,
+			final ResourceType resultType)
 	{
 		return request(uri, HttpMethod.GET, resultType);
 	}
@@ -109,12 +112,12 @@ public class BasicOnlineCapability extends BasicCapability implements
 			final ResourceType resultType, final ResourceStreamer content)
 	{
 		if (method != HttpMethod.GET)
-			return ResourceStreamer.error(new IllegalStateException(
-					"NOT IMPLEMENTED: " + method));
+			return ResourceStreamer.error(
+					new IllegalStateException("NOT IMPLEMENTED: " + method));
 
 		if (content != null)
-			return ResourceStreamer.error(new IllegalStateException(
-					"NOT IMPLEMENTED: <content>"));
+			return ResourceStreamer.error(
+					new IllegalStateException("NOT IMPLEMENTED: <content>"));
 
 		return request(uri, resultType);
 	}
@@ -129,8 +132,11 @@ public class BasicOnlineCapability extends BasicCapability implements
 					"NOT IMPLEMENTED: PUT/POST with <formData>"));
 
 		return request(
-				toFormDataURI(uri, formData == null ? null : formData
-						.entrySet().toArray(new Map.Entry[formData.size()])),
+				toFormDataURI(uri,
+						formData == null ? null
+								: formData.entrySet()
+										.toArray(new Map.Entry[formData
+												.size()])),
 				method, resultType, (ResourceStreamer) null);
 	}
 

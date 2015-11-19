@@ -68,9 +68,8 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	private transient Binder binder;
 
 	/**
-	 * {@link BasicAgent} constructor
+	 * {@link BasicAgent} CDI constructor
 	 * 
-	 * @param id
 	 * @param binder
 	 */
 	@Inject
@@ -85,7 +84,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	 */
 	protected void die()
 	{
-		setStatus(BasicAgentStatus.COMPLETE);
+		forceStatus(BasicAgentStatus.COMPLETE);
 	}
 
 	/**

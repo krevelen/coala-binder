@@ -1,7 +1,4 @@
 /* $Id: e8b69dd0ad4cc3521f7609cef62c5bae0162e02c $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/role/AbstractActorRole.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -72,12 +69,13 @@ import rx.subjects.Subject;
 /**
  * {@link AbstractActorRole}
  * 
- * @version $Revision: 330 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * @param <F> the (super)type of {@link CoordinationFact} being handled
+ * 
+ * @param <F> the {@link CoordinationFact} type being handled
  */
-public abstract class AbstractActorRole<F extends CoordinationFact> extends
-		AbstractCapability<CapabilityID> implements ActorRole<F>
+public abstract class AbstractActorRole<F extends CoordinationFact>
+		extends AbstractCapability<CapabilityID>implements ActorRole<F>
 {
 
 	/** */
@@ -85,7 +83,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 
 	/** */
 	@InjectLogger
-	private Logger LOG;// = LogUtil.getLogger(AbstractActorRole.class);;
+	private Logger LOG;
 
 	/** */
 	@SuppressWarnings("rawtypes")
@@ -102,10 +100,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 	private final Observable<F> facts;
 
 	/**
-	 * {@link AbstractActorRole} constructor
+	 * {@link AbstractActorRole} CDI constructor
 	 * 
-	 * @param id
-	 * @param owner
+	 * @param binder the {@link Binder}
 	 */
 	@SuppressWarnings("unchecked")
 	@Inject
@@ -114,8 +111,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		super(null, binder);
 		setID(new ActorRoleID(binder.getID(), getClass()));
 
-		final List<Class<?>> typeArgs = ClassUtil.getTypeArguments(
-				AbstractActorRole.class, getClass());
+		final List<Class<?>> typeArgs = ClassUtil
+				.getTypeArguments(AbstractActorRole.class, getClass());
 		this.factType = (Class<F>) typeArgs.get(0);
 		// LOG.trace("Listening for messages of type: " +
 		// this.factType.getName());
@@ -148,20 +145,23 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		});
 	}
 
-	/** @param fact the ignored {@link CoordinationFact} to log */
+	/**
+	 * @param fact the ignored {@link CoordinationFact} to log
+	 */
 	protected void logIgnore(final F fact, final boolean expired)
 	{
 		final CoordinationFactType factType = fact.getID().getType();
 		final ActorRoleType roleType = expired ? factType.originatorRoleType()
 				: factType.responderRoleType();
-		final CoordinationFactType proceedType = factType.getDefaultResponse(
-				roleType, true).outcome();
-		final CoordinationFactType receedType = factType.getDefaultResponse(
-				roleType, false).outcome();
-		LOG.trace(String.format("%s ignoring %s (%s), default response type: "
-				+ "%s to proceed or %s otherwise", roleType,
-				(expired ? "expiration of " : "") + factType, fact.getClass()
-						.getSimpleName(), proceedType, receedType));
+		final CoordinationFactType proceedType = factType
+				.getDefaultResponse(roleType, true).outcome();
+		final CoordinationFactType receedType = factType
+				.getDefaultResponse(roleType, false).outcome();
+		LOG.trace(String.format(
+				"%s ignoring %s (%s), default response type: "
+						+ "%s to proceed or %s otherwise",
+				roleType, (expired ? "expiration of " : "") + factType,
+				fact.getClass().getSimpleName(), proceedType, receedType));
 	}
 
 	@Override
@@ -170,14 +170,18 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		return (ActorRoleID) super.getID();
 	}
 
-	/** @see ModelComponent#getOwnerID() */
+	/**
+	 * @see ModelComponent#getOwnerID()
+	 */
 	@Override
 	public AgentID getOwnerID()
 	{
 		return getID().getOwnerID();
 	}
 
-	/** @return the type of this {@link ActorRole}'s owner {@link Organization} */
+	/**
+	 * @return the type of this {@link ActorRole}'s owner {@link Organization}
+	 */
 	@SuppressWarnings("unchecked")
 	public Class<? extends Organization> getOwnerType()
 	{
@@ -186,15 +190,20 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 
 	/*	private class FactHandler implements Observer<F>
 		{
-			*//** @see Observer#onError(Throwable) */
+			*//**
+				 * @see Observer#onError(Throwable)
+				 */
 	/*
 	@Override
 	public void onError(final Throwable t)
 	{
 	t.printStackTrace();
 	}
+	
+	*//**
+		 * @see Observer#onNext(Object)
+		 */
 
-	*//** @see Observer#onNext(Object) */
 	/*
 	@Override
 	public void onNext(final F fact)
@@ -207,8 +216,10 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 	AbstractActorRole.this, FACT_HANDLER, fact),
 	Trigger.createAbsolute(now));
 	};
-
-	*//** @see Observer#onCompleted() */
+	
+	*//**
+		 * @see Observer#onCompleted()
+		 */
 	/*
 	@Override
 	public void onCompleted()
@@ -290,8 +301,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 				break;
 
 			default:
-				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime(
-						"factType", fact.getID().getType());
+				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED
+						.createRuntime("factType", fact.getID().getType());
 			}
 		} catch (final Throwable t)
 		{
@@ -305,8 +316,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 	 */
 	protected AgentID newAgentID(final String value)
 	{
-		return getBinder().inject(ModelComponentIDFactory.class).createAgentID(
-				value);
+		return getBinder().inject(ModelComponentIDFactory.class)
+				.createAgentID(value);
 	}
 
 	/**
@@ -327,14 +338,18 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		return getBinder().inject(SimTime.Factory.class).create(value, unit);
 	}
 
-	/** @see ActorRole#getTime() */
+	/**
+	 * @see ActorRole#getTime()
+	 */
 	@Override
 	public SimTime getTime()
 	{
 		return getSimulator().getTime();
 	}
 
-	/** @see ActorRole#replayFacts() */
+	/**
+	 * @see ActorRole#replayFacts()
+	 */
 	@Override
 	public Observable<F> replayFacts()
 	{
@@ -353,13 +368,17 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		return LOG;
 	}
 
-	/** @see ActorRole#onStopped(CoordinationFact) */
+	/**
+	 * @see ActorRole#onStopped(CoordinationFact)
+	 */
 	protected void onStopped(final F fact)
 	{
 		LOG().warn("Ignoring " + fact.getID().getType() + ": " + fact);
 	}
 
-	/** @see ActorRole#onQuit(CoordinationFact) */
+	/**
+	 * @see ActorRole#onQuit(CoordinationFact)
+	 */
 	protected void onQuit(final F fact)
 	{
 		LOG().warn("Ignoring " + fact.getID().getType() + ": " + fact);
@@ -405,10 +424,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 				} else if (update.getStatus().isInitializedStatus()// .equals(blockSimUntilState)
 				)
 				{
-					LOG().info(
-							"Child agent " + agentID
-									+ " reached unblock status: "
-									+ update.getStatus());
+					LOG().info("Child agent " + agentID
+							+ " reached unblock status: " + update.getStatus());
 					// first schedule/block, then countdown/yield
 					getSimulator().schedule(next,
 							Trigger.createAbsolute(getTime()));
@@ -422,11 +439,10 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 			{
 				if (success)
 					return;
-				LOG().warn(
-						"Child agent died but never reached blockable status"
-								+ ", scheduling next job now");
-				getSimulator()
-						.schedule(next, Trigger.createAbsolute(getTime()));
+				LOG().warn("Child agent died but never reached blockable status"
+						+ ", scheduling next job now");
+				getSimulator().schedule(next,
+						Trigger.createAbsolute(getTime()));
 				latch.countDown();
 			}
 
@@ -437,9 +453,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 			}
 		});
 
-		getSimulator().schedule(
-				ProcedureCall.create(this, this, AWAIT_METHOD_ID, latch,
-						agentID), Trigger.createAbsolute(getTime()));
+		getSimulator().schedule(ProcedureCall.create(this, this,
+				AWAIT_METHOD_ID, latch, agentID),
+				Trigger.createAbsolute(getTime()));
 
 		getBooter().createAgent(agentID, agentType).subscribe(status);
 
@@ -468,9 +484,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		{
 		}
 		Thread.yield();
-		getSimulator().schedule(
-				ProcedureCall.create(this, this, AWAIT_METHOD_ID, latch,
-						agentID), Trigger.createAbsolute(getTime()));
+		getSimulator().schedule(ProcedureCall.create(this, this,
+				AWAIT_METHOD_ID, latch, agentID),
+				Trigger.createAbsolute(getTime()));
 	}
 
 	/**
@@ -481,20 +497,26 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		return this.factType;
 	}
 
-	/** @see ActorRole#send(CoordinationFact) */
+	/**
+	 * @see ActorRole#send(CoordinationFact)
+	 */
 	protected <M extends Message<?>> M send(final M fact) throws Exception
 	{
 		return send(0, fact);
 	}
 
-	/** @see ActorRole#send(CoordinationFact) */
+	/**
+	 * @see ActorRole#send(CoordinationFact)
+	 */
 	protected <M extends Message<?>> M send(final Number delay, final M fact)
 			throws Exception
 	{
 		return send(newTime(delay, getTime().getUnit()), fact);
 	}
 
-	/** @see ActorRole#send(CoordinationFact) */
+	/**
+	 * @see ActorRole#send(CoordinationFact)
+	 */
 	protected <M extends Message<?>> M send(final SimTime delay, final M fact)
 			throws Exception
 	{
@@ -507,7 +529,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 
 	private static final String SEND_METHOD_ID = "actorRoleSend";
 
-	/** @see ActorRole#send(CoordinationFact) */
+	/**
+	 * @see ActorRole#send(CoordinationFact)
+	 */
 	@Schedulable(SEND_METHOD_ID)
 	private <M extends Message<?>> M doSend(final M fact) throws Exception
 	{
@@ -515,35 +539,45 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		return fact;
 	}
 
-	/** @return the agent's local {@link BooterService} */
+	/**
+	 * @return the agent's local {@link BooterService}
+	 */
 	@JsonIgnore
 	protected CreatingCapability getBooter()
 	{
 		return getBinder().inject(CreatingCapability.class);
 	}
 
-	/** @return the agent's local {@link SimulatorService} */
+	/**
+	 * @return the agent's local {@link SimulatorService}
+	 */
 	@JsonIgnore
 	protected SchedulingCapability<SimTime> getScheduler()
 	{
 		return getSimulator();
 	}
 
-	/** @return the agent's local {@link SimulatorService} */
+	/**
+	 * @return the agent's local {@link SimulatorService}
+	 */
 	@JsonIgnore
 	protected ReplicatingCapability getSimulator()
 	{
 		return getBinder().inject(ReplicatingCapability.class);
 	}
 
-	/** @return the agent's local {@link MessengerService} */
+	/**
+	 * @return the agent's local {@link MessengerService}
+	 */
 	@JsonIgnore
 	protected SendingCapability getMessenger()
 	{
 		return getBinder().inject(SendingCapability.class);
 	}
 
-	/** @return the agent's local {@link ReceiverService} */
+	/**
+	 * @return the agent's local {@link ReceiverService}
+	 */
 	@JsonIgnore
 	protected ReceivingCapability getReceiver()
 	{
@@ -560,7 +594,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		return getBinder().inject(ConfiguringCapability.class).getProperty(key);
 	}
 
-	/** @return the agent's local {@link ReasonerService} */
+	/**
+	 * @return the agent's local {@link ReasonerService}
+	 */
 	@JsonIgnore
 	protected ReasoningCapability getReasoner()
 	{
@@ -573,7 +609,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact> extends
 		return getBinder().inject(DestroyingCapability.class);
 	}
 
-	/** @return the agent's local {@link RandomizerService} */
+	/**
+	 * @return the agent's local {@link RandomizerService}
+	 */
 	@JsonIgnore
 	protected RandomizingCapability getRandomizer()
 	{

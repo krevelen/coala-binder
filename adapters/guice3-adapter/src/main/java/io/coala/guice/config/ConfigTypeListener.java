@@ -1,7 +1,4 @@
 /* $Id: 5f5243f9dcae3b2871440d95ee276bf491dca15b $
- * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/config/ConfigTypeListener.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,13 +30,12 @@ import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 
 /**
- * {@link ConfigTypeListener} inspired by <a
- * href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html"
- * >here</a>
+ * {@link ConfigTypeListener} inspired by
+ * <a href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html" >
+ * here</a>
  * 
- * @version $Revision: 300 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class ConfigTypeListener implements TypeListener
 {
@@ -48,7 +44,7 @@ public class ConfigTypeListener implements TypeListener
 	private final Configuration configuration;
 
 	/**
-	 * {@link ConfigTypeListener} constructor
+	 * {@link ConfigTypeListener} CDI constructor
 	 * 
 	 * @param configuration
 	 */
@@ -66,8 +62,8 @@ public class ConfigTypeListener implements TypeListener
 		{
 			if (field.isAnnotationPresent(InjectConfig.class))
 			{
-				encounter.register(new ConfigMembersInjector<T>(field,
-						configuration));
+				encounter.register(
+						new ConfigMembersInjector<T>(field, configuration));
 			}
 		}
 	}

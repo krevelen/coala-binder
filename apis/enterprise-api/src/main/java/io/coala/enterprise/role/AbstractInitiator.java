@@ -31,9 +31,10 @@ import org.slf4j.Logger;
 /**
  * {@link AbstractInitiator}
  * 
- * @version $Revision: 324 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * @param <F> the (super)type of {@link CoordinationFact} being handled
+ * 
+ * @param <F> the {@link CoordinationFact} type being handled
  */
 public abstract class AbstractInitiator<F extends CoordinationFact> extends
 		AbstractActorRole<F> implements Initiator<F>
@@ -47,9 +48,9 @@ public abstract class AbstractInitiator<F extends CoordinationFact> extends
 	private Logger LOG;
 
 	/**
-	 * {@link AbstractInitiator} constructor
+	 * {@link AbstractInitiator} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected AbstractInitiator(final Binder binder)
@@ -57,70 +58,58 @@ public abstract class AbstractInitiator<F extends CoordinationFact> extends
 		super(binder);
 	}
 
-	/** @see Initiator#onExpiredRequest(CoordinationFact) */
 	protected void onExpiredRequest(final F request)
 	{
 		logIgnore(request, true);
 	}
 
-	/** @see Initiator#onExpiredRequestCancellation(CoordinationFact) */
 	protected void onExpiredRequestCancellation(final F cancel)
 	{
 		logIgnore(cancel, true);
 	}
 
-	/** @see Initiator#onAllowedRequestCancellation(CoordinationFact) */
 	protected void onAllowedRequestCancellation(final F allow)
 	{
 		logIgnore(allow, false);
 	}
 
-	/** @see Initiator#onRefusedRequestCancellation(CoordinationFact) */
 	protected void onRefusedRequestCancellation(final F refuse)
 	{
 		logIgnore(refuse, false);
 	}
 
-	/** @see Initiator#onPromised(CoordinationFact) */
 	protected void onPromised(final F promise)
 	{
 		logIgnore(promise, false);
 	}
 
-	/** @see Initiator#onCancelledPromise(CoordinationFact) */
 	protected void onCancelledPromise(final F cancel)
 	{
 		logIgnore(cancel, false);
 	}
 
-	/** @see Initiator#onDeclined(CoordinationFact) */
 	protected void onDeclined(final F decline)
 	{
 		logIgnore(decline, false);
 	}
 
-	/** @see Initiator#onStated(CoordinationFact) */
 	protected abstract void onStated(F state);
 
-	/** @see Initiator#onCancelledState(CoordinationFact) */
 	protected void onCancelledState(final F cancel)
 	{
 		logIgnore(cancel, false);
 	}
 
-	/** @see Initiator#onExpiredAcceptCancellation(CoordinationFact) */
 	protected void onExpiredAcceptCancellation(final F cancel)
 	{
 		logIgnore(cancel, true);
 	}
 
-	/** @see Initiator#onAllowedAcceptCancellation(CoordinationFact) */
 	protected void onAllowedAcceptCancellation(final F allow)
 	{
 		logIgnore(allow, false);
 	}
 
-	/** @see Initiator#onRefusedAcceptCancellation(CoordinationFact) */
 	protected void onRefusedAcceptCancellation(final F refuse)
 	{
 		logIgnore(refuse, false);

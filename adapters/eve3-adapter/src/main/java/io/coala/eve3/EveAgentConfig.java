@@ -226,7 +226,7 @@ public interface EveAgentConfig extends ReplicationConfig
 		@Override
 		public JsonNode convert(final Method method, final String input)
 		{
-			return JsonUtil.fromJSON(input);
+			return JsonUtil.toTree(input);
 		}
 	}
 
@@ -242,7 +242,7 @@ public interface EveAgentConfig extends ReplicationConfig
 		@Override
 		public AgentConfig convert(final Method method, final String input)
 		{
-			return new AgentConfig((ObjectNode) JsonUtil.fromJSON(input));
+			return new AgentConfig((ObjectNode) JsonUtil.toTree(input));
 		}
 	}
 

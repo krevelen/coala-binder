@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/json/JsonUtil.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,9 +17,6 @@
  */
 package io.coala.json;
 
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.util.Util;
-
 import java.io.InputStream;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,13 +24,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.coala.exception.CoalaExceptionFactory;
+import io.coala.util.Util;
+
 /**
  * {@link JsonUtil}
  * 
- * @date $Date: 2014-08-14 05:46:34 +0200 (Thu, 14 Aug 2014) $
- * @version $Revision: 362 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class JsonUtil implements Util
 {
@@ -57,6 +52,40 @@ public class JsonUtil implements Util
 
 		// LOG.trace("Created JSON object mapper version: " +
 		// JOM.version());
+
+		/*JOM.registerModule(new SimpleModule()
+		{
+			{
+				addSerializer(UUID.class, new JsonSerializer<UUID>()
+				{
+					@Override
+					public void serialize(final UUID value,
+							final JsonGenerator gen,
+							final SerializerProvider serializers)
+									throws IOException, JsonProcessingException
+					{
+						// TODO optimize as in Jackson's UUIDSerializer
+						gen.writeString(value.toString());
+					}
+
+					@Override
+					public Class<UUID> handledType()
+					{
+						return UUID.class;
+					}
+				});
+				addDeserializer(UUID.class, new JsonDeserializer<UUID>()
+				{
+					@Override
+					public UUID deserialize(final JsonParser p,
+							final DeserializationContext ctxt)
+									throws IOException, JsonProcessingException
+					{
+						return new UUID(p.getValueAsString());
+					}
+				});
+			}
+		});*/
 	}
 
 	/** singleton design pattern constructor */
@@ -68,30 +97,30 @@ public class JsonUtil implements Util
 	/** */
 	public synchronized static ObjectMapper getJOM()
 	{
-		if (JOM == null)
+/*		if (JOM == null)
 		{
 			// JOM = new ObjectMapper()
 
 			// for marshalling private and protected fields
 			;
 		}
-
+*/
 		return JOM;
 	}
 
 	/**
-	 * @param object
+	 * @param value
 	 * @return
 	 */
-	public static String toJSONString(final Object object)
+	public static String toString(final Object value)
 	{
 		try
 		{
-			return JsonUtil.getJOM().writeValueAsString(object);
+			return JsonUtil.getJOM().writeValueAsString(value);
 		} catch (final JsonProcessingException e)
 		{
 			throw CoalaExceptionFactory.MARSHAL_FAILED.createRuntime(e,
-					object.getClass(), object.getClass());
+					value.getClass(), value.getClass());
 		}
 	}
 
@@ -116,10 +145,10 @@ public class JsonUtil implements Util
 
 	/**
 	 * @param json the {@link InputStream}
-	 * @param resultType the type of result {@link Object}
-	 * @return the unmarshalled {@link Object}
+	 * @param resultType the result type {@link T}
+	 * @return the unmarshalled {@link T} instance
 	 */
-	public static <T> T fromJSON(final InputStream json,
+	public static <T> T valueOf(final InputStream json,
 			final Class<T> resultType)
 	{
 		try
@@ -134,11 +163,10 @@ public class JsonUtil implements Util
 
 	/**
 	 * @param json
-	 * @param resultType the type of result {@link Object}
-	 * @return the unmarshalled {@link Object}
+	 * @param resultType the result type {@link T}
+	 * @return the unmarshalled {@link T} instance
 	 */
-	public static <T> T fromJSONString(final String json,
-			final Class<T> resultType)
+	public static <T> T valueOf(final String json, final Class<T> resultType)
 	{
 		try
 		{
@@ -151,10 +179,10 @@ public class JsonUtil implements Util
 	}
 
 	/**
-	 * @param stream
+	 * @param json
 	 * @return
 	 */
-	public static JsonNode fromJSON(final InputStream json)
+	public static JsonNode toTree(final String json)
 	{
 		try
 		{
@@ -164,31 +192,101 @@ public class JsonUtil implements Util
 			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e, json,
 					JsonNode.class);
 		}
+	}
+
+	/**
+	 * @param object
+	 * @return
+	 */
+	public static JsonNode toTree(final Object object)
+	{
+		return getJOM().valueToTree(object);
+	}
+
+	/**
+	 * @param stream
+	 * @return
+	 */
+	public static JsonNode toTree(final InputStream stream)
+	{
+		try
+		{
+			return getJOM().readTree(stream);
+		} catch (final Exception e)
+		{
+			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e,
+					stream == null ? null : stream.getClass(), JsonNode.class);
+		}
+	}
+
+	/**
+	 * @param value
+	 * @return
+	 * @deprecated use {@link #toTree(Object)}
+	 */
+	@Deprecated
+	public static JsonNode toJSON(final Object value)
+	{
+		return toTree(value);
+	}
+
+	/**
+	 * @param value
+	 * @return
+	 * @deprecated use {@link #toString(Object)}
+	 */
+	@Deprecated
+	public static String toJSONString(final Object value)
+	{
+		return toString(value);
+	}
+
+	/**
+	 * @param json
+	 * @return
+	 * @deprecated use {@link #toTree(InputStream)}
+	 */
+	@Deprecated
+	public static JsonNode fromJSON(final InputStream json)
+	{
+		return toTree(json);
 	}
 
 	/**
 	 * @param string
 	 * @return
+	 * @deprecated use {@link #toTree(String)}
 	 */
+	@Deprecated
 	public static JsonNode fromJSON(final String json)
 	{
-		try
-		{
-			return getJOM().readTree(json);
-		} catch (final Exception e)
-		{
-			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e, json,
-					JsonNode.class);
-		}
+		return toTree(json);
 	}
 
 	/**
-	 * @param profile
-	 * @return
+	 * @param json the {@link InputStream}
+	 * @param resultType the result type {@link T}
+	 * @return the unmarshalled {@link T} instance
+	 * @deprecated use {@link #valueOf(InputStream,Class)}
 	 */
-	public static JsonNode toJSON(final Object object)
+	@Deprecated
+	public static <T> T fromJSON(final InputStream json,
+			final Class<T> resultType)
 	{
-		return getJOM().valueToTree(object);
+		return valueOf(json, resultType);
+	}
+
+	/**
+	 * @param json
+	 * @param resultType the result type {@link T}
+	 * @return the unmarshalled {@link T} instance
+	 * @deprecated use {@link #valueOf(String,Class)}
+	 */
+	@Deprecated
+	public static <T> T fromJSONString(final String json,
+			final Class<T> resultType)
+	{
+		return valueOf(json, resultType);
 	}
 
 }

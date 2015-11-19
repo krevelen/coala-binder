@@ -1,7 +1,4 @@
 /* $Id: e0b325f0c0690c1e2d2940e8ff0d8ab979e6ec13 $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/test/java/io/coala/enterprise/test/impl/TestExecutorOrganizationImpl.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,9 +30,8 @@ import org.apache.log4j.Logger;
 /**
  * {@link TestExecutorOrganizationImpl}
  * 
- * @version $Revision: 324 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class TestExecutorOrganizationImpl extends AbstractOrganization
 		implements TestExecutorOrganization
@@ -49,9 +45,9 @@ public class TestExecutorOrganizationImpl extends AbstractOrganization
 	private Logger LOG;
 
 	/**
-	 * {@link TestExecutorOrganizationImpl} constructor
+	 * {@link TestExecutorOrganizationImpl} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected TestExecutorOrganizationImpl(final Binder binder)

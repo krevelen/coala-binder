@@ -1,7 +1,4 @@
 /* $Id: d41b4e7bde7db3a63853b0d60a3a7044ceacf296 $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/role/Initiator.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -25,9 +22,10 @@ import io.coala.enterprise.fact.CoordinationFact;
 /**
  * {@link Initiator}
  * 
- * @version $Revision: 300 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
+ * @param <F> the {@link CoordinationFact} type being handled
  */
 public interface Initiator<F extends CoordinationFact> extends ActorRole<F>
 {

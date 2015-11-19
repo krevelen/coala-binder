@@ -1,7 +1,4 @@
 /* $Id: 330674a63ce0cac9d247ae33499f3b412f93b729 $
- * $URL: https://dev.almende.com/svn/abms/guice-util/src/test/java/io/coala/guice/TestAgent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,22 +17,19 @@
  */
 package io.coala.guice;
 
-import io.coala.agent.BasicAgent;
-import io.coala.bind.Binder;
-import io.coala.lifecycle.LifeCycle;
-import io.coala.log.InjectLogger;
-
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 
+import io.coala.agent.BasicAgent;
+import io.coala.bind.Binder;
+import io.coala.log.InjectLogger;
+
 /**
  * {@link TestAgent}
  * 
- * @date $Date: 2014-04-18 17:39:26 +0200 (Fri, 18 Apr 2014) $
- * @version $Revision: 240 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class TestAgent extends BasicAgent
 {
@@ -48,10 +42,9 @@ public class TestAgent extends BasicAgent
 	private Logger LOG;
 
 	/**
-	 * {@link TestAgent} constructor
+	 * {@link TestAgent} CDI constructor
 	 * 
-	 * @param id
-	 * @param host
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	public TestAgent(final Binder host)
@@ -59,7 +52,6 @@ public class TestAgent extends BasicAgent
 		super(host);
 	}
 
-	/** @see LifeCycle#activate() */
 	@Override
 	public void activate()
 	{

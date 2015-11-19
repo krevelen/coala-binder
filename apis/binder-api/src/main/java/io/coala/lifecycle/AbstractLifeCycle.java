@@ -58,7 +58,7 @@ public abstract class AbstractLifeCycle<ID extends Identifier<?, ?>, S extends L
 	/**
 	 * @param status
 	 */
-	protected void setStatus(final S status)
+	protected void forceStatus(final S status)
 	{
 		super.setStatus(status,
 				status.isFinishedStatus() || status.isFailedStatus());

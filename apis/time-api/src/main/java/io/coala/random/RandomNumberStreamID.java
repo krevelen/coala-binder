@@ -22,8 +22,6 @@ package io.coala.random;
 
 import io.coala.name.AbstractIdentifier;
 
-import javax.inject.Inject;
-
 /**
  * {@link RandomNumberStreamID}
  * 
@@ -49,9 +47,9 @@ public class RandomNumberStreamID extends AbstractIdentifier<String>
 	 * {@link AbstractIdentifier} constructor
 	 * 
 	 * @param value the (unique) {@link T} value of this
-	 *        {@link AbstractIdentifier} object
+	 *            {@link AbstractIdentifier} object
 	 */
-	@Inject
+	// @Inject
 	public RandomNumberStreamID(final String value)
 	{
 		super(value);

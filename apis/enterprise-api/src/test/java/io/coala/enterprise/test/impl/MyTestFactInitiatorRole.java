@@ -1,7 +1,4 @@
 /* $Id: acbcd336f18f8e070089ac13b693055601c6c306 $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/test/java/io/coala/enterprise/test/impl/MyTestFactInitiatorRole.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -37,9 +34,8 @@ import org.apache.log4j.Logger;
 /**
  * {@link MyTestFactInitiatorRole}
  * 
- * @version $Revision: 324 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class MyTestFactInitiatorRole extends
 		AbstractInitiator<TestFact.Response> implements TestFact.Initiator
@@ -53,9 +49,9 @@ public class MyTestFactInitiatorRole extends
 	private Logger LOG;
 
 	/**
-	 * {@link TestFactInitiatorRole} constructor
+	 * {@link TestFactInitiatorRole} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected MyTestFactInitiatorRole(final Binder binder)

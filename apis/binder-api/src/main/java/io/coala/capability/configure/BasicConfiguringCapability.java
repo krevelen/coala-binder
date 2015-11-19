@@ -14,12 +14,12 @@ import org.apache.log4j.Logger;
 /**
  * {@link BasicConfiguringCapability}
  * 
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * @author <a href="mailto:Suki@almende.org">Suki</a>
  */
-public class BasicConfiguringCapability extends BasicCapability implements
-		ConfiguringCapability
+public class BasicConfiguringCapability extends BasicCapability
+		implements ConfiguringCapability
 {
 
 	/** */
@@ -30,22 +30,22 @@ public class BasicConfiguringCapability extends BasicCapability implements
 	private Logger LOG;
 
 	/**
-	 * {@link AGlobeMessengerService} constructor
+	 * {@link BasicConfiguringCapability} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	private <T extends Message<?>> BasicConfiguringCapability(final Binder binder)
+	private <T extends Message<?>> BasicConfiguringCapability(
+			final Binder binder)
 	{
 		super(binder);
 	}
 
-	/** @see BasicCapability#getProperty(String, String[]) */
 	@Override
 	public PropertyGetter getProperty(final String key,
 			final String... prefixes)
 	{
-		return new CoalaPropertyGetter(CoalaPropertyGetter.addKeyPrefixes(key,
-				prefixes));
+		return new CoalaPropertyGetter(
+				CoalaPropertyGetter.addKeyPrefixes(key, prefixes));
 	}
 }

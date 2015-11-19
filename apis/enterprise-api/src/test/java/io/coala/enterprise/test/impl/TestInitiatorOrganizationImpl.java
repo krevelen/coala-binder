@@ -1,7 +1,4 @@
 /* $Id: e31c6658163d9f6682dc65a18ca863aa48288473 $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/test/java/io/coala/enterprise/test/impl/TestInitiatorOrganizationImpl.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -41,9 +38,8 @@ import org.apache.log4j.Logger;
 /**
  * {@link TestInitiatorOrganizationImpl}
  * 
- * @version $Revision: 324 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class TestInitiatorOrganizationImpl extends AbstractOrganization
 		implements TestInitiatorOrganization
@@ -57,9 +53,9 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 	private Logger LOG;
 
 	/**
-	 * {@link TestInitiatorOrganizationImpl} constructor
+	 * {@link TestInitiatorOrganizationImpl} CDI constructor
 	 * 
-	 * @param binder
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected TestInitiatorOrganizationImpl(final Binder binder)
@@ -67,14 +63,12 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 		super(binder);
 	}
 
-	/** @see TestInitiatorOrganization#getTestFactInitiator() */
 	@Override
 	public TestFact.Initiator getTestFactInitiator()
 	{
 		return getBinder().inject(TestFact.Initiator.class);
 	}
 
-	/** @see AbstractOrganization#initializeRoles() */
 	@Override
 	public void initialize() throws Exception
 	{
@@ -99,8 +93,8 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 
 	protected AgentID newAgentID(final String value)
 	{
-		return getBinder().inject(ModelComponentIDFactory.class).createAgentID(
-				value);
+		return getBinder().inject(ModelComponentIDFactory.class)
+				.createAgentID(value);
 	}
 
 	/**
@@ -111,9 +105,9 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 	protected void newRequest(final long number) throws Exception
 	{
 		LOG.trace("Initiating request " + number);
-		final TestFact.Request req = getTestFactInitiator().initiate(
-				newAgentID(getConfig().getProperty(EXECUTOR_NAME_KEY).get(
-						EXECUTOR_NAME_DEFAULT)));
+		final TestFact.Request req = getTestFactInitiator()
+				.initiate(newAgentID(getConfig().getProperty(EXECUTOR_NAME_KEY)
+						.get(EXECUTOR_NAME_DEFAULT)));
 
 		if (number >= 2)
 		{

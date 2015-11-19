@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/event/TimedEventID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,12 +17,13 @@
  */
 package io.coala.event;
 
+import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.coala.model.ModelID;
-import io.coala.name.AbstractIdentifier;
 import io.coala.time.Instant;
 import io.coala.time.Timed;
-
-import java.io.Serializable;
 
 /**
  * {@link TimedEventID}
@@ -34,9 +32,8 @@ import java.io.Serializable;
  * @version $Revision: 336 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
- * @param <T> the type of value for this {@link AbstractIdentifier} of an
- *        {@link Event}
- * @param <I> the type of instant for the identified {@link Event}
+ * @param <T> the {@link Serializable} and {@link Comparable} value type
+ * @param <I> the {@link Instant} type
  */
 public class TimedEventID<T extends Serializable & Comparable<T>, I extends Instant<I>>
 		extends EventID<T> implements Timed<I>
@@ -49,17 +46,17 @@ public class TimedEventID<T extends Serializable & Comparable<T>, I extends Inst
 	private I instant;
 
 	/**
-	 * {@link TimedEventID} zreo-arg bean constructor
+	 * {@link TimedEventID} zero-arg bean constructor
 	 */
 	protected TimedEventID()
 	{
-
+		super();
 	}
 
 	/**
 	 * {@link TimedEventID} constructor
 	 * 
-	 * @param modelID
+	 * @param modelID the {@link ModelID}
 	 * @param value the (unique) value of this identifier
 	 * @param instant the {@link Instant} the identified {@link Event} occurs
 	 */
@@ -69,8 +66,8 @@ public class TimedEventID<T extends Serializable & Comparable<T>, I extends Inst
 		this.instant = instant;
 	}
 
-	/** @return the {@link Instant} the identified {@link Event} occurs */
 	@Override
+	@JsonIgnore
 	public I getTime()
 	{
 		return this.instant;

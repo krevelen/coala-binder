@@ -1,7 +1,4 @@
 /* $Id: 107ee0a96bd4034cf8be123e21f58331a7b67137 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/AbstractService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,34 +17,30 @@
  */
 package io.coala.capability;
 
-import io.coala.agent.Agent;
+import javax.inject.Inject;
+
+import org.apache.log4j.Logger;
+
 import io.coala.agent.AgentStatusObserver;
 import io.coala.agent.AgentStatusUpdate;
 import io.coala.bind.Binder;
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.lifecycle.AbstractLifeCycle;
 import io.coala.lifecycle.ActivationType;
-import io.coala.lifecycle.LifeCycle;
 import io.coala.lifecycle.LifeCycleHooks;
 import io.coala.lifecycle.MachineUtil;
 import io.coala.log.LogUtil;
 
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
-
-import rx.Observer;
-
 /**
  * {@link AbstractCapability}
  * 
- * @date $Date: 2014-08-08 16:20:51 +0200 (Fri, 08 Aug 2014) $
- * @version $Revision: 353 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
+ * @param <ID> the type of {@link CapabilityID}
  */
-public abstract class AbstractCapability<ID extends CapabilityID> extends
-		AbstractLifeCycle<ID, BasicCapabilityStatus> implements
+public abstract class AbstractCapability<ID extends CapabilityID>
+		extends AbstractLifeCycle<ID, BasicCapabilityStatus>implements
 		Capability<BasicCapabilityStatus>, AgentStatusObserver, LifeCycleHooks
 {
 
@@ -61,9 +54,10 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 	private transient Binder binder;
 
 	/**
-	 * {@link AbstractCapability} constructor
+	 * {@link AbstractCapability} CDI constructor
 	 * 
-	 * @param id
+	 * @param id the {@link ID}
+	 * @param binder the {@link Binder}
 	 */
 	@Inject
 	protected AbstractCapability(final ID id, final Binder binder)
@@ -72,7 +66,6 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 		this.binder = binder;
 	}
 
-	/** @see Agent#getBinder() */
 	protected final Binder getBinder()
 	{
 		return this.binder;
@@ -91,20 +84,18 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 	private boolean finalized = false;
 
 	@Override
-	protected void setStatus(final BasicCapabilityStatus status)
+	protected void forceStatus(final BasicCapabilityStatus status)
 	{
 		MachineUtil.setStatus(this, status,
 				status.isFinishedStatus() || status.isFailedStatus());
 	}
 
-	/** @see LifeCycle#getActivationType() */
 	@Override
 	public final ActivationType getActivationType()
 	{
 		return ActivationType.ACTIVATE_ONCE; // default behavior
 	}
 
-	/** @see Observer#onNext(Object) */
 	@Override
 	public synchronized final void onNext(final AgentStatusUpdate update)
 	{
@@ -114,17 +105,17 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 		if (this.complete && !update.getStatus().isFinishedStatus()
 				&& !update.getStatus().isFailedStatus())
 		{
-			LOG.warn(getID()
-					+ " already complete, ignoring owner status update: "
-					+ update.getStatus());
+			LOG.warn(
+					getID() + " already complete, ignoring owner status update: "
+							+ update.getStatus());
 			return;
 		}
 
 		if (this.finalized)
 		{
-			LOG.warn(getID()
-					+ " already finalized, ignoring owner status update: "
-					+ update.getStatus());
+			LOG.warn(
+					getID() + " already finalized, ignoring owner status update: "
+							+ update.getStatus());
 			return;
 		}
 
@@ -137,7 +128,7 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 				{
 					initialize();
 					this.initialized = true;
-					setStatus(BasicCapabilityStatus.INITIALIZED);
+					forceStatus(BasicCapabilityStatus.INITIALIZED);
 				}
 				// else
 				// LOG.warn("already initialized!");
@@ -150,13 +141,13 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 					// LOG.warn(getID() + " should already be initialized!");
 					initialize();
 					this.initialized = true;
-					setStatus(BasicCapabilityStatus.INITIALIZED);
+					forceStatus(BasicCapabilityStatus.INITIALIZED);
 				}
 				if (getActivationType() == ActivationType.ACTIVATE_NEVER)
 					return;
 				LOG.trace("activating...");
 				this.active = true;
-				setStatus(BasicCapabilityStatus.STARTED);
+				forceStatus(BasicCapabilityStatus.STARTED);
 				activate();
 			} else if (update.getStatus().isPassiveStatus())
 			{
@@ -165,11 +156,11 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 					// LOG.warn(getID() + " should already be initialized!");
 					initialize();
 					this.initialized = true;
-					setStatus(BasicCapabilityStatus.INITIALIZED);
+					forceStatus(BasicCapabilityStatus.INITIALIZED);
 					if (getActivationType() != ActivationType.ACTIVATE_NEVER)
 					{
 						this.active = true;
-						setStatus(BasicCapabilityStatus.STARTED);
+						forceStatus(BasicCapabilityStatus.STARTED);
 						activate();
 					}
 				}
@@ -179,14 +170,14 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 				{
 					this.active = false;
 					deactivate();
-					setStatus(BasicCapabilityStatus.PAUSED);
+					forceStatus(BasicCapabilityStatus.PAUSED);
 				}
 				if (getActivationType() == ActivationType.ACTIVATE_AND_FINISH)
 				{
 					this.complete = true;
-					setStatus(BasicCapabilityStatus.COMPLETE);
+					forceStatus(BasicCapabilityStatus.COMPLETE);
 					finish();
-					setStatus(BasicCapabilityStatus.FINISHED);
+					forceStatus(BasicCapabilityStatus.FINISHED);
 				}
 			} else if (update.getStatus().isCompleteStatus()
 					|| update.getStatus().isFinishedStatus()
@@ -197,24 +188,24 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 					LOG.warn(getID() + " should no longer be active!");
 					this.active = false;
 					deactivate();
-					setStatus(BasicCapabilityStatus.PAUSED);
+					forceStatus(BasicCapabilityStatus.PAUSED);
 				}
 				if (!this.complete)
 				{
-					setStatus(BasicCapabilityStatus.COMPLETE);
+					forceStatus(BasicCapabilityStatus.COMPLETE);
 					this.complete = true;
 				}
 				if (!this.finalized)
 				{
 					finish();
-					setStatus(BasicCapabilityStatus.FINISHED);
+					forceStatus(BasicCapabilityStatus.FINISHED);
 					this.finalized = true;
 				}
 			}
 			return;
 		} catch (final Throwable t)
 		{
-			setStatus(BasicCapabilityStatus.FAILED);
+			forceStatus(BasicCapabilityStatus.FAILED);
 			this.finalized = true;
 			onError(t);
 			// LOG.error("Problem executing " + getID(), t);
@@ -223,7 +214,6 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 				update.getStatus(), "unexpected");
 	}
 
-	/** @see Observer#onError(Throwable) */
 	@Override
 	public final void onError(final Throwable t)
 	{
@@ -233,7 +223,6 @@ public abstract class AbstractCapability<ID extends CapabilityID> extends
 		LOG.error("Problem with owner agent", t);
 	}
 
-	/** @see Observer#onCompleted() */
 	@Override
 	public final void onCompleted()
 	{

@@ -182,7 +182,7 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 	 * @param interval the duration between iterations
 	 * @param max the (exclusive) limit, or {@code null} for unlimited
 	 * @return the {@link Iterable} range of {@link Instant}s starting with this
-	 *         instant
+	 *         {@link THIS}
 	 */
 	Iterable<THIS> getRange(Instant<?> interval, Instant<?> max);
 

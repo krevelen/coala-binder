@@ -64,7 +64,7 @@ public class BasicCreatingCapability extends BasicCapability implements
 	private AgentManager agentManager;
 
 	/**
-	 * {@link BasicCreatingCapability} constructor
+	 * {@link BasicCreatingCapability} CDI constructor
 	 * 
 	 * @param binder
 	 */
