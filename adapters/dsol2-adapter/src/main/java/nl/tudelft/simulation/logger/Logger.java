@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 58e45fdad67c9619a2e44a84d2f937fcd5ffa67b $
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/nl/tudelft/simulation/logger/Logger.java $
  * 
  * @(#) Logger.java Aug 27, 2003 Copyright (c) 2002-2005 Delft University of
@@ -20,7 +20,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  * 
- * Copyright © 2010-2013 Almende B.V. 
+ * Copyright ï¿½ 2010-2013 Almende B.V. 
  * 
  */
 package nl.tudelft.simulation.logger;
@@ -448,7 +448,7 @@ public class Logger
      * @param arg4 the message
      * @param arg5 the parameter
      */
-    //@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4, final Object arg5)
@@ -468,7 +468,7 @@ public class Logger
      * @param arg4 the message
      * @param arg5 the parameters
      */
-    //@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4, final Object[] arg5)
@@ -488,7 +488,7 @@ public class Logger
      * @param arg4 the message
      * @param arg5 the parameters
      */
-    //@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4, final Throwable arg5)
@@ -506,7 +506,7 @@ public class Logger
      * @param arg3 the resource bundle
      * @param arg4 the message
      */
-    //@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4)

@@ -5,7 +5,7 @@
 
 	<parent>
 		<groupId>io.coala</groupId>
-		<artifactId>coala-root</artifactId>
+		<artifactId>coala</artifactId>
 		<version>0.0.1</version>
 		<relativePath>../..</relativePath>
 	</parent>
@@ -15,7 +15,7 @@
 	<name>${project.artifactId}</name>
 	<description>
 		Utility and demonstration code for a DEMO ontology API
-		$Id$
+		$Id: 07547fcd73ed13b3e7a8920680adc5ab20d86632 $
 	</description>
 	<url>https://demo.nl/</url>
 

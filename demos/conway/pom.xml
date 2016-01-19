@@ -5,7 +5,7 @@
 
 	<parent>
 		<groupId>io.coala</groupId>
-		<artifactId>coala-root</artifactId>
+		<artifactId>coala</artifactId>
 		<version>0.0.1</version>
 		<relativePath>../..</relativePath>
 	</parent>
@@ -15,10 +15,9 @@
 
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
-		Example code for the sim-common artifact
-		$Id$
+		Example code based on Conway's Game of Life
+		$Id: b7f170575eed40f92a69c104557a5e7086b59ced $
 	</description>
-	<url>http://sim.almende.com/</url>
 
 	<properties>
 		<!-- plugin versions -->
