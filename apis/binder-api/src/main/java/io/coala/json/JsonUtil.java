@@ -67,7 +67,7 @@ public class JsonUtil implements Util
 						// TODO optimize as in Jackson's UUIDSerializer
 						gen.writeString(value.toString());
 					}
-
+		
 					@Override
 					public Class<UUID> handledType()
 					{
@@ -140,6 +140,23 @@ public class JsonUtil implements Util
 		{
 			throw CoalaExceptionFactory.MARSHAL_FAILED.createRuntime(e, object,
 					object.getClass());
+		}
+	}
+
+	/**
+	 * @param tree the {@link JsonNode}
+	 * @param resultType the result type {@link T}
+	 * @return the unmarshalled {@link T} instance
+	 */
+	public static <T> T valueOf(final JsonNode tree, final Class<T> resultType)
+	{
+		try
+		{
+			return (T) JsonUtil.getJOM().treeToValue(tree, resultType);
+		} catch (final Exception e)
+		{
+			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e, tree,
+					resultType);
 		}
 	}
 

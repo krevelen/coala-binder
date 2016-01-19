@@ -49,6 +49,7 @@ import io.coala.bind.Binder;
 import io.coala.capability.interact.ReceivingCapability;
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.message.Message;
 import io.coala.message.MessageHandler;
@@ -178,7 +179,10 @@ public class EveUtil implements Util
 	{
 		try
 		{
-			getWrapperAgent(msg.getSenderID(), true).doSend(msg);
+			final URI receiverURI = getAddress(msg.getReceiverID());
+			final JsonNode payload = JsonUtil.toTree(msg);
+			getWrapperAgent(msg.getSenderID(), true).doSend(payload,
+					receiverURI);
 		} catch (final Throwable t)
 		{
 			throw CoalaExceptionFactory.AGENT_UNAVAILABLE

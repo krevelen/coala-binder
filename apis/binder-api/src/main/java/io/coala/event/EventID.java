@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/event/EventID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,21 +17,18 @@
  */
 package io.coala.event;
 
+import java.io.Serializable;
+
 import io.coala.model.ModelComponentID;
 import io.coala.model.ModelID;
-import io.coala.name.AbstractIdentifier;
-
-import java.io.Serializable;
 
 /**
  * {@link EventID}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
- * @param <T> the type of value for this {@link AbstractIdentifier} of an {@link Event}
- * @param <THIS> the type of {@link EventID} to compare with
+ * @param <T> the {@link Serializable} and {@link Comparable} value type
  */
 public class EventID<T extends Serializable & Comparable<T>>
 		extends ModelComponentID<T>
@@ -46,12 +40,14 @@ public class EventID<T extends Serializable & Comparable<T>>
 	/**
 	 * {@link EventID} zero-arg bean constructor
 	 */
-	public EventID(){
-		
+	public EventID()
+	{
+		super();
 	}
-	
+
 	/**
 	 * {@link EventID} constructor
+	 * 
 	 * @param modelID
 	 * @param value
 	 */

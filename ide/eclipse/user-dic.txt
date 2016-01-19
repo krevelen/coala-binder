@@ -51,3 +51,4 @@ wildcards
 sniffable
 système
 illuminance
+vaccination

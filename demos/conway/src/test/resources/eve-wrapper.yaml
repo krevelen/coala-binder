@@ -7,12 +7,16 @@ environment:
   Production:
     # production specific settings...
 
+protocols:
+  - class: com.almende.eve.protocol.jsonrpc.JSONRpcProtocolBuilder
+    rpcTimeout: 1
+       
 # transport services
-transport_services:
-- class: XmppService
-  host: openid.almende.org
-  port: 5222
-  service: openid.almende.org
+transports:
+#- class: XmppService
+#  host: openid.almende.org
+#  port: 5222
+#  service: openid.almende.org
 - class: HttpService
   servlet_url: http://localhost:8080/agents/
 - class: HttpService

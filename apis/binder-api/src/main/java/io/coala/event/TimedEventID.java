@@ -19,8 +19,6 @@ package io.coala.event;
 
 import java.io.Serializable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import io.coala.model.ModelID;
 import io.coala.time.Instant;
 import io.coala.time.Timed;
@@ -28,8 +26,7 @@ import io.coala.time.Timed;
 /**
  * {@link TimedEventID}
  * 
- * @date $Date: 2014-08-04 14:19:04 +0200 (Mon, 04 Aug 2014) $
- * @version $Revision: 336 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <T> the {@link Serializable} and {@link Comparable} value type
@@ -43,7 +40,7 @@ public class TimedEventID<T extends Serializable & Comparable<T>, I extends Inst
 	private static final long serialVersionUID = 1L;
 
 	/** the {@link Instant} the identified {@link Event} occurs */
-	private I instant;
+	private I time;
 
 	/**
 	 * {@link TimedEventID} zero-arg bean constructor
@@ -63,14 +60,13 @@ public class TimedEventID<T extends Serializable & Comparable<T>, I extends Inst
 	public TimedEventID(final ModelID modelID, final T value, final I instant)
 	{
 		super(modelID, value);
-		this.instant = instant;
+		this.time = instant;
 	}
 
 	@Override
-	@JsonIgnore
 	public I getTime()
 	{
-		return this.instant;
+		return this.time;
 	}
 
 	@Override

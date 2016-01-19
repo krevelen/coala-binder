@@ -37,6 +37,8 @@ import org.apache.log4j.Logger;
 
 import com.almende.eve.agent.Agent;
 import com.almende.eve.agent.AgentConfig;
+import com.almende.eve.protocol.Protocol;
+import com.almende.eve.protocol.jsonrpc.JSONRpcProtocolBuilder;
 import com.almende.eve.scheduling.Scheduler;
 import com.almende.eve.scheduling.SimpleSchedulerBuilder;
 import com.almende.eve.state.State;
@@ -49,33 +51,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * {@link EveAgentConfig}
  * 
- *       class: io.coala.eve3.TestAgent
-      state:
-         builder: com.almende.eve.state.memory.MemoryStateBuilder
-      scheduler:
-         builder: com.almende.eve.scheduling.SimpleSchedulerBuilder
-      protocols:
-      -  builder: com.almende.eve.algorithms.clustering.GlobalAddressProtocolBuilder
-      transports:
-      -  builder: com.almende.eve.transport.http.HttpTransportBuilder
-         servletUrl: http://localhost:8081/agents/
-         servletLauncher: JettyLauncher
-         servletClass: com.almende.eve.transport.http.DebugServlet
-         doShortcut: true
-         doAuthentication: false
-         jetty: 
-           port: 8081
-      -  builder: com.almende.eve.algorithms.clustering.GlobalAddressTransportBuilder
-         realAddressPattern: http://localhost:8081/agents/
-      -  builder: com.almende.eve.transport.ws.WebsocketTransportBuilder
-         address: ws://localhost:8081/ws
-         servletLauncher: JettyLauncher
-         server: true
-         doShortcut: true
-         doAuthentication: false
-         jetty:
-           port: 8081
-
  * @date $Date$
  * @version $Id$
  * @author <a href="mailto:rick@almende.org">Rick</a>
@@ -141,6 +116,15 @@ public interface EveAgentConfig extends ReplicationConfig
 	String HTTP_TRANSPORT_CONFIG_KEY = "master.transport.http";
 
 	/** */
+	String JSONRPC_PROTOCOL_BUILDER_KEY = "master.protocol.jsonrpc.builder";
+
+	/** */
+	Class<?> JSONRPC_BUILDER_DEFAULT = JSONRpcProtocolBuilder.class;
+
+	/** */
+	String JSONRPC_PROTOCOL_CONFIG_KEY = "master.protocol.jsonrpc";
+
+	/** */
 	String TRANSPORTS_CONFIG_KEY = "master.transports";
 
 	/**
@@ -151,7 +135,8 @@ public interface EveAgentConfig extends ReplicationConfig
 			entry(AGENT_CLASS_KEY, AGENT_CLASS_DEFAULT.getName()),
 			entry(STATE_BUILDER_KEY, STATE_BUILDER_DEFAULT.getName()),
 			entry(SCHEDULER_BUILDER_KEY, SCHEDULER_BUILDER_DEFAULT.getName()),
-			entry(HTTP_TRANSPORT_BUILDER_KEY, HTTP_TRANSPORT_BUILDER_DEFAULT.getName()));
+			entry(HTTP_TRANSPORT_BUILDER_KEY,
+					HTTP_TRANSPORT_BUILDER_DEFAULT.getName()));
 
 	@Key(AGENT_ID_KEY)
 	@DefaultValue(AGENT_ID_DEFAULT)
@@ -183,7 +168,10 @@ public interface EveAgentConfig extends ReplicationConfig
 	JsonNode stateConfig();
 
 	@Key(HTTP_TRANSPORT_BUILDER_KEY)
-	Class<? extends Transport> transportBuilder();
+	Class<? extends Transport> httpBuilder();
+
+	@Key(JSONRPC_PROTOCOL_BUILDER_KEY)
+	Class<? extends Protocol> jsonrpcBuilder();
 
 	@Key(HTTP_TRANSPORT_SERVLET_URL_KEY)
 	@DefaultValue(HTTP_TRANSPORT_SERVLET_URL_DEFAULT)
@@ -195,10 +183,8 @@ public interface EveAgentConfig extends ReplicationConfig
 
 	@Key(HTTP_TRANSPORT_CONFIG_KEY)
 	@DefaultValue("{\"class\":\"${" + HTTP_TRANSPORT_BUILDER_KEY
-			+ "}\",\"servletUrl\":\"${"
-			+ HTTP_TRANSPORT_SERVLET_URL_KEY
-			+ "}\",\"doAuthentication\":${"
-			+ HTTP_TRANSPORT_AUTHENTICATE_KEY
+			+ "}\",\"servletUrl\":\"${" + HTTP_TRANSPORT_SERVLET_URL_KEY
+			+ "}\",\"doAuthentication\":${" + HTTP_TRANSPORT_AUTHENTICATE_KEY
 			+ "},\"doShortcut\":true,"
 			+ "\"servletLauncher\":\"JettyLauncher\","
 			// \"initParams\":[{\"key\":\"servletUrl\",\"value\":\"${" +
@@ -207,11 +193,22 @@ public interface EveAgentConfig extends ReplicationConfig
 	@ConverterClass(JsonNodeConverter.class)
 	JsonNode httpTransportConfig();
 
+	@Key(JSONRPC_PROTOCOL_CONFIG_KEY)
+	@DefaultValue("{\"class\":\"${" + JSONRPC_PROTOCOL_BUILDER_KEY
+			+ "}\",rpcTimeout:1}")
+	@ConverterClass(JsonNodeConverter.class)
+	JsonNode jsonrpcProtocolConfig();
+
+	// protocols:
+	// - class: com.almende.eve.protocol.jsonrpc.JSONRpcProtocolBuilder
+	// rpcTimeout: 1
+
 	@ConverterClass(AgentConfigConverter.class)
 	@DefaultValue("{\"id\":\"${" + AGENT_ID_KEY + "}\",\"class\":\"${"
-			+ AGENT_CLASS_KEY + "}\",\"state\":${" + STATE_CONFIG_KEY + "},\"scheduler\":${"
-			+ SCHEDULER_CONFIG_KEY + "},\"transports\":[${" + HTTP_TRANSPORT_CONFIG_KEY
-			+ "}]}")
+			+ AGENT_CLASS_KEY + "}\",\"state\":${" + STATE_CONFIG_KEY
+			+ "},\"scheduler\":${" + SCHEDULER_CONFIG_KEY
+			+ "},\"transports\":[${" + HTTP_TRANSPORT_CONFIG_KEY
+			+ "}],\"protocols\":[${" + HTTP_TRANSPORT_CONFIG_KEY + "}]}")
 	AgentConfig agentConfig();
 
 	/**

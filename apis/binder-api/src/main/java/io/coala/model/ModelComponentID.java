@@ -65,6 +65,8 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	}
 
 	/**
+	 * {@link ModelComponentID} constructor for orphans
+	 * 
 	 * @param modelID
 	 * @param value
 	 */
@@ -76,7 +78,9 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	}
 
 	/**
-	 * @param modelID
+	 * {@link ModelComponentID} constructor for children
+	 * 
+	 * @param parentID
 	 * @param value
 	 */
 	// @Inject

@@ -22,7 +22,9 @@ package io.coala.eve3;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -30,6 +32,8 @@ import com.almende.eve.protocol.jsonrpc.annotation.Access;
 import com.almende.eve.protocol.jsonrpc.annotation.AccessType;
 import com.almende.eve.protocol.jsonrpc.formats.JSONRPCException;
 import com.almende.eve.protocol.jsonrpc.formats.JSONRequest;
+import com.almende.util.callback.AsyncCallback;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.coala.agent.Agent;
@@ -261,19 +265,65 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		EveAgentManager.getInstance().delete(agentID);
 	}
 
+	private final Map<URI, Integer> pendingCalls = new HashMap<>();
+
 	@Override
-	public final void doSend(final Message<?> payload)
-			throws IOException, JSONRPCException
+	public final void doSend(final JsonNode payload, final URI receiverURI)
+			throws JSONRPCException
 	{
 		final ObjectNode params = JsonUtil.getJOM().createObjectNode();
-		params.set(PAYLOAD_FIELD_NAME, JsonUtil.getJOM().valueToTree(payload));
-		final URI receiverURI = EveUtil.getAddress(payload.getReceiverID());
-		System.err.println("Sending to " + receiverURI + ": " + params);
-		call(receiverURI, "doReceive", params);
+		params.set(PAYLOAD_FIELD_NAME, payload);
+		// final URI receiverURI = EveUtil.getAddress(payload.getReceiverID());
+		synchronized (pendingCalls)
+		{
+			final Integer val = pendingCalls.get(receiverURI);
+			pendingCalls.put(receiverURI, val == null ? 1 : val + 1);
+		}
+		LOG.trace(getUrls().get(0) + " calling " + receiverURI
+				+ ", total pending: " + pendingCalls);
+		try
+		{
+		call(receiverURI, "doReceive", params, new AsyncCallback<Object>()
+		{
+			@Override
+			public void onSuccess(final Object result)
+			{
+				synchronized (pendingCalls)
+				{
+					final Integer val = pendingCalls.get(receiverURI);
+					if (val == null)
+						LOG.error("UNEXPECTED");
+					else
+						pendingCalls.put(receiverURI, val - 1);
+				}
+
+				// LOG.trace(getUrls().get(0) + " successfully called "
+				// + receiverURI + ": " + params);
+			}
+			@Override
+			public void onFailure(final Exception e)
+			{
+				LOG.error(getUrls().get(0) + " failed to reach " + receiverURI
+						+ ": " + params, e);
+			}
+		});
+		}catch(final IOException ioe)
+		{
+			LOG.error(getUrls().get(0) + " failed to reach " + receiverURI
+					+ ": " + params, ioe);
+			synchronized (pendingCalls)
+			{
+				final Integer val = pendingCalls.get(receiverURI);
+				if (val == null)
+					LOG.error("UNEXPECTED");
+				else
+					pendingCalls.put(receiverURI, val - 1);
+			}
+		}
 	}
 
 	@Override
-	public final void doReceive(final Message<?> payload)
+	public final void doReceive(final JsonNode payload)
 	{
 		// final ObjectNode params = JsonUtil.getJOM().createObjectNode();
 		// params.set(PAYLOAD_FIELD_NAME,
@@ -286,10 +336,13 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		// payload)
 		// throws BAALException
 		// {
-		((MessageHandler) EveAgentManager.getInstance()
-				.getAgent(getAgentID(), true).getBinder()
-				.inject(ReceivingCapability.class)).onMessage(payload);
-		// LOG.trace("Received " + payload.getSenderID().getValue() + " > "
+		final AgentID myID = getAgentID();
+		final Message<?> incoming = JsonUtil.valueOf(payload, Message.class);
+		((MessageHandler) EveAgentManager.getInstance().getAgent(myID, true)
+				.getBinder().inject(ReceivingCapability.class))
+						.onMessage(incoming);
+		// LOG.trace("Received " + incoming.getClass().getSimpleName() + ": "
+		// + incoming.getSenderID().getValue() + " > "
 		// + getAgentID().getValue());
 	}
 

@@ -54,16 +54,14 @@ public abstract class AbstractIdentifier<T extends Comparable<T> & Serializable>
 	 */
 	protected AbstractIdentifier()
 	{
-		//
+		super();
 	}
 
 	/**
-	 * {@link AbstractIdentifier} CDI constructor
+	 * {@link AbstractIdentifier} constructor
 	 * 
-	 * @param value the (unique) {@link T} value of this
-	 *            {@link AbstractIdentifier} object
+	 * @param value the (unique) {@link T} value
 	 */
-	// @Inject
 	protected AbstractIdentifier(final T value)
 	{
 		setValue(value);
@@ -79,43 +77,31 @@ public abstract class AbstractIdentifier<T extends Comparable<T> & Serializable>
 	}
 
 	/**
-	 * @return the identifier value of this {@link AbstractIdentifier} object
+	 * @return the identifier value
 	 */
 	public T getValue()
 	{
 		return this.value;
 	}
 
-	/**
-	 * @see Comparable#compareTo(Object)
-	 */
 	@Override
 	public int compareTo(final AbstractIdentifier<T> other)
 	{
 		return getValue().compareTo(other.getValue());
 	}
 
-	/**
-	 * @see Object#toString()
-	 */
 	@Override
 	public String toString()
 	{
 		return getValue().toString();
 	}
 
-	/**
-	 * @see Object#hashCode()
-	 */
 	@Override
 	public int hashCode()
 	{
 		return getValue() == null ? super.hashCode() : getValue().hashCode();
 	}
 
-	/**
-	 * @see Object#equals(Object)
-	 */
 	@Override
 	public boolean equals(final Object other)
 	{

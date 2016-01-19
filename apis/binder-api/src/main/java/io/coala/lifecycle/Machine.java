@@ -42,7 +42,6 @@ public interface Machine<S extends MachineStatus<S>>
 	S getStatus();
 
 	/** @return the {@link MachineStatus} of this Machine */
-	@JsonIgnore
 	Observable<S> getStatusHistory();
 
 }

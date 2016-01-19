@@ -1,14 +1,19 @@
 package io.coala.eve3;
 
+import java.net.URI;
+
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.joda.time.Duration;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.exception.CoalaExceptionFactory;
+import io.coala.json.JsonUtil;
 import io.coala.log.InjectLogger;
 import io.coala.message.Message;
 import rx.Observer;
@@ -51,7 +56,9 @@ public class EveSendingCapability extends BasicCapability
 		if (ag == null)
 			throw new IllegalStateException(
 					"No Eve agent exists for " + msg.getSenderID());
-		ag.doSend(msg);
+		final JsonNode payload = JsonUtil.toTree(msg);
+		final URI receiverURI = EveUtil.getAddress(msg.getReceiverID());
+		ag.doSend(payload, receiverURI);
 	}
 
 	@Override
@@ -90,7 +97,7 @@ public class EveSendingCapability extends BasicCapability
 				send(msg);
 				if (attempts != 0)
 					LOG.trace("Attempt " + (++attempts) + " @" + elapsedMS
-							+ "ms sucessful to " + msg.getReceiverID());
+							+ "ms succeeded to: " + msg.getReceiverID());
 				return;
 			} catch (final RuntimeException t)
 			{
@@ -130,8 +137,8 @@ public class EveSendingCapability extends BasicCapability
 					send(t, timeout);
 				} catch (final Throwable e)
 				{
-					LOG.warn("Problem sending message to " + t.getReceiverID(),
-							e);
+					LOG.warn("Problem sending to " + t.getReceiverID(), e);
+					e.printStackTrace();
 				}
 			}
 		};

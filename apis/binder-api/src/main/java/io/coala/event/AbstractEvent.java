@@ -54,6 +54,14 @@ public abstract class AbstractEvent<ID extends EventID<?>> extends
 	private AgentID ownerID;
 
 	/**
+	 * {@link AbstractEvent} zero-arg bean constructor
+	 */
+	protected AbstractEvent()
+	{
+		super();
+	}
+
+	/**
 	 * {@link AbstractEvent} constructor
 	 * 
 	 * @param id
@@ -76,14 +84,6 @@ public abstract class AbstractEvent<ID extends EventID<?>> extends
 		super(id);
 		this.ownerID = ownerID;
 		this.producerID = producerID;
-	}
-
-	/**
-	 * {@link AbstractEvent} zero-arg bean constructor
-	 */
-	protected AbstractEvent()
-	{
-		super();
 	}
 
 	/** @param producerID */

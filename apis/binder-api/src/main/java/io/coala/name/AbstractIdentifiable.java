@@ -1,7 +1,4 @@
 /* $Id: 5e294a74e4c087d25cd899618010bf19544ad1bd $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/identity/AbstractIdentifiable.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,26 +17,30 @@
  */
 package io.coala.name;
 
-import io.coala.json.JsonUtil;
-import io.coala.log.InjectLogger;
-
 import java.io.Serializable;
 
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+
+import io.coala.json.JsonUtil;
+import io.coala.log.InjectLogger;
 
 /**
  * {@link AbstractIdentifiable}
  * 
- * @date $Date: 2014-06-17 15:03:44 +0200 (Tue, 17 Jun 2014) $
  * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
- * @param <ID> the type of {@link AbstractIdentifier} value used
+ * @param <ID> the {@link Identifier} type
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = As.PROPERTY, property = "class")
+@JsonInclude(Include.NON_NULL)
+@JsonTypeInfo(use = Id.CLASS, include = As.PROPERTY, property = "class")
 public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 		implements Identifiable<ID>, Serializable
 {
@@ -52,12 +53,11 @@ public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 	private transient Logger LOG;
 
 	/** */
+	@JsonProperty("id")
 	private ID iD;
 
 	/**
 	 * {@link AbstractIdentifiable} zero-arg bean constructor
-	 * 
-	 * @param iD
 	 */
 	protected AbstractIdentifiable()
 	{
@@ -80,8 +80,7 @@ public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 	}
 
 	/**
-	 * @param iD the {@link AbstractIdentifier} identifying this
-	 *            {@link Identifiable} object
+	 * @param iD the {@link ID} identifying this object
 	 */
 	protected void setID(final ID iD)
 	{
@@ -90,14 +89,6 @@ public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 		else
 			LOG.warn("ID already set, ignoring: " + iD);
 	}
-
-	// /** @see Identifiable#withID(AbstractIdentifier) */
-	// @SuppressWarnings("unchecked")
-	// public THIS withID(final ID iD)
-	// {
-	// setID(iD);
-	// return (THIS) this;
-	// }
 
 	@SuppressWarnings("unchecked")
 	@Override

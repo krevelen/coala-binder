@@ -122,11 +122,10 @@ public class ConwayTest
 
 		final CellID source = new CellID(binder.getID(), 1, 2);
 		final String sourceSer = JsonUtil.toTree(source).toString();
-		final CellID sourceDeser = JsonUtil.valueOf(sourceSer,
-				CellID.class);
+		final CellID sourceDeser = JsonUtil.valueOf(sourceSer, CellID.class);
 		assertEquals("De/serialization failed for " + CellID.class, source,
 				sourceDeser);
-		LOG.trace("De/serialization worked for " + source);
+		// LOG.trace("De/serialization worked for " + source);
 
 		final CellState state = new CellState(
 				binder.inject(SimTime.Factory.class).create(1, TimeUnit.TICKS),
@@ -136,7 +135,7 @@ public class ConwayTest
 				CellState.class);
 		assertEquals("De/serialization failed for " + CellState.class, state,
 				stateDeser);
-		LOG.trace("De/serialization worked for " + CellState.class);
+		// LOG.trace("De/serialization worked for " + stateDeser);
 
 		final List<List<CellID>> cellStates = CellWorld.Util
 				.createLatticeLayout(binder);

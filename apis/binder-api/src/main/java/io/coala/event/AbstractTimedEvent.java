@@ -20,6 +20,8 @@
  */
 package io.coala.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.coala.agent.AgentID;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
@@ -35,18 +37,26 @@ import io.coala.time.Instant;
  * @param <ID> the type of {@link TimedEventID} for time-ordered event identity
  * @param <THIS> the (sub)type of {@link TimedEvent} to build
  */
-public abstract class AbstractTimedEvent<ID extends TimedEventID<?, ?>> extends
-		AbstractEvent<ID> implements TimedEvent<ID>
+public abstract class AbstractTimedEvent<ID extends TimedEventID<?, ?>>
+		extends AbstractEvent<ID>implements TimedEvent<ID>
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
 	/**
+	 * {@link AbstractTimedEvent} zero-arg bean constructor
+	 */
+	protected AbstractTimedEvent()
+	{
+		super();
+	}
+
+	/**
 	 * {@link AbstractTimedEvent} constructor
 	 * 
 	 * @param id
-	 * @param producerID
+	 * @param producer
 	 */
 	public AbstractTimedEvent(final ID id, final ModelComponent<?> producer)
 	{
@@ -66,14 +76,7 @@ public abstract class AbstractTimedEvent<ID extends TimedEventID<?, ?>> extends
 		super(id, ownerID, producerID);
 	}
 
-	/**
-	 * {@link AbstractTimedEvent} zero-arg bean constructor
-	 */
-	protected AbstractTimedEvent()
-	{
-		super();
-	}
-
+	@JsonIgnore
 	@Override
 	public Instant<?> getTime()
 	{

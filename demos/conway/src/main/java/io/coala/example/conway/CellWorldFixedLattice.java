@@ -220,13 +220,12 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 			public void onError(final Throwable e)
 			{
 				// neighbors can't talk to me anymore
-				e.printStackTrace();
+				LOG.error("Problem handling neighbor updates", e);
 			}
 
 			@Override
 			public void onNext(final CellState state)
 			{
-				// System.err.println("HANDLING: " + state);
 				handleNeighborState(state);
 			}
 		});
@@ -302,9 +301,9 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 		if (state.getTime().compareTo(myState().getTime()) > 0)
 		{
 			// connected neighbor and self are out-of-sync
-			// LOG.warn("Backlogging pending neighbor state: " + state
-			// + ", tally: " + this.myNeighborStateCount + ", missing: "
-			// + this.missing);
+			LOG.warn("Backlogging pending neighbor state: " + state
+					+ ", tally: " + this.myNeighborStateCount + ", missing: "
+					+ this.missing);
 			synchronized (this.pending)
 			{
 				this.pending.add(state);
@@ -330,11 +329,11 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 			// cycle incomplete
 			if (!this.missing.isEmpty())
 			{
-				// LOG.trace(
-				// "Got " + (this.myNeighbors.size() - this.missing.size())
-				// + " of " + this.myNeighbors.size() + " "
-				// + this.myNeighborStateCount + ", received: "
-				// + state + ", missing: " + this.missing);
+				LOG.trace(
+						"Got " + (this.myNeighbors.size() - this.missing.size())
+								+ " of " + this.myNeighbors.size() + " "
+								+ this.myNeighborStateCount + ", received: "
+								+ state + ", missing: " + this.missing);
 				return;
 			}
 
@@ -347,8 +346,9 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 				this.pending.clear();
 			}
 
-			// LOG.trace("Got all " + this.myNeighbors.size() + " "
-			// + this.myNeighborStateCount + ", transitioning...");
+			LOG.trace("Got all " + this.myNeighbors.size() + " "
+					+ this.myNeighborStateCount + ", transitioning with "
+					+ pending.size() + " pending...");
 			setState(this.myState.next(this.cycleDuration,
 					this.myNeighborStateCount));
 			synchronized (this.myNeighborStateCount)

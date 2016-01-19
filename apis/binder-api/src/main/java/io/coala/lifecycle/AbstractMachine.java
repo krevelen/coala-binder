@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/AbstractMachine.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,6 +17,8 @@
  */
 package io.coala.lifecycle;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.name.AbstractIdentifiable;
 import io.coala.name.Identifier;
@@ -30,10 +29,7 @@ import rx.subjects.Subject;
 /**
  * {@link AbstractMachine}
  * 
- * {@link AbstractMachine}
- * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <ID> the (super)type of {@link Identifier}
@@ -89,15 +85,14 @@ public abstract class AbstractMachine<ID extends Identifier<?, ?>, S extends Mac
 		MachineUtil.setStatus(this, status, completed);
 	}
 
-	/** @see Machine#getStatus() */
 	@Override
 	public synchronized S getStatus()
 	{
 		return this.status;
 	}
 
-	/** @see Machine#getStatusHistory() */
 	@Override
+	@JsonIgnore
 	public synchronized Observable<S> getStatusHistory()
 	{
 		return this.statusHistory.asObservable();

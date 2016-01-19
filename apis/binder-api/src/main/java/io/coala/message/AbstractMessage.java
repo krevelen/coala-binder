@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/message/AbstractMessage.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -26,14 +23,14 @@ import io.coala.agent.AgentID;
 import io.coala.event.AbstractTimedEvent;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
-import io.coala.time.Instant;
 
 /**
  * {@link AbstractMessage}
  * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * 
+ * @param <ID> the {@link MessageID} type
  */
 public abstract class AbstractMessage<ID extends MessageID<?, ?>>
 		extends AbstractTimedEvent<ID>implements Message<ID>
@@ -47,6 +44,14 @@ public abstract class AbstractMessage<ID extends MessageID<?, ?>>
 
 	/** */
 	private AgentID receiverID;
+
+	/**
+	 * {@link AbstractMessage} zero-arg bean constructor
+	 */
+	protected AbstractMessage()
+	{
+		super();
+	}
 
 	/**
 	 * {@link AbstractMessage} constructor
@@ -80,14 +85,6 @@ public abstract class AbstractMessage<ID extends MessageID<?, ?>>
 		this.receiverID = receiverID;
 	}
 
-	/**
-	 * {@link AbstractMessage} zero-arg bean constructor
-	 */
-	protected AbstractMessage()
-	{
-		super();
-	}
-
 	@JsonIgnore
 	@Override
 	public AgentID getProducerID()
@@ -100,13 +97,6 @@ public abstract class AbstractMessage<ID extends MessageID<?, ?>>
 	public AgentID getOwnerID()
 	{
 		return getSenderID();
-	}
-
-	@JsonIgnore
-	@Override
-	public Instant<?> getTime()
-	{
-		return getID().getTime();
 	}
 
 	@Override

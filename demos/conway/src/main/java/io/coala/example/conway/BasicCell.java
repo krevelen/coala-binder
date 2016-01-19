@@ -28,6 +28,7 @@ import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
 import io.coala.capability.interact.ReceivingCapability;
 import io.coala.log.InjectLogger;
+import io.coala.time.SimTime;
 import rx.Observable;
 import rx.Observer;
 
@@ -67,6 +68,32 @@ public class BasicCell extends BasicAgent implements Cell
 		final Observable<CellState> incoming = getBinder()
 				.inject(ReceivingCapability.class).getIncoming()
 				.ofType(CellState.class);
+//		incoming.subscribe(new Observer<CellState>()
+//		{
+//
+//			@Override
+//			public void onCompleted()
+//			{
+//				// TODO Auto-generated method stub
+//
+//			}
+//
+//			@Override
+//			public void onError(Throwable e)
+//			{
+//				// TODO Auto-generated method stub
+//
+//			}
+//
+//			@Override
+//			public void onNext(CellState t)
+//			{
+//				// LOG.trace("Received " + t.getClass().getSimpleName() + ": "
+//				// + t.getSenderID().getValue() + " > "
+//				// + getID().getValue());
+//
+//			}
+//		});
 
 		getBinder().inject(CellWorld.class).myStates(incoming)
 				.subscribe(new Observer<CellState>()
@@ -87,9 +114,14 @@ public class BasicCell extends BasicAgent implements Cell
 					@Override
 					public void onNext(final CellState t)
 					{
-						// ignore
 					}
 				});
+	}
+
+	@Override
+	public SimTime getTime()
+	{
+		return getBinder().inject(CellWorld.class).getTime();
 	}
 
 }

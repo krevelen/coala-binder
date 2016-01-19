@@ -17,12 +17,6 @@
  */
 package io.coala.name;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
-
 /**
  * {@link Identifiable} owns an {@link AbstractIdentifier}
  * 
@@ -32,8 +26,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
  * @param <ID> the {@link Identifier} type
  * @param <THIS> the concrete {@link Identifiable} type
  */
-@JsonInclude(Include.NON_NULL)
-@JsonTypeInfo(use = Id.CLASS, include = As.PROPERTY, property = "class")
 public interface Identifiable<ID extends Identifier<?, ?>>
 		extends Comparable<Identifiable<ID>>
 {

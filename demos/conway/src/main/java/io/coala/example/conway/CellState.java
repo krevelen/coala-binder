@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-examples/src/main/java/io/coala/example/conway/CellState.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -22,10 +19,13 @@ package io.coala.example.conway;
 
 import java.util.Map;
 
+import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.agent.AgentID;
 import io.coala.message.AbstractMessage;
+import io.coala.message.MessageID;
+import io.coala.model.ModelID;
 import io.coala.time.SimDuration;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
@@ -37,10 +37,25 @@ import io.coala.time.TimeUnit;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @SuppressWarnings("serial")
-public class CellState extends AbstractMessage<ID>
-// implements Serializable, Comparable<CellState>, Timed<SimTime>
+public class CellState extends AbstractMessage<CellState.ID>
 {
 
+	public static class ID extends MessageID<UUID, SimTime>
+	{
+		/**
+		 * {@link ID} zero-arg bean constructor
+		 */
+		protected ID()
+		{
+			super();
+		}
+
+		public ID(final ModelID modelID, final SimTime time)
+		{
+			super(modelID, new UUID(), time);
+		}
+	}
+	
 	/** */
 	private LifeStatus state = null;
 
@@ -80,6 +95,20 @@ public class CellState extends AbstractMessage<ID>
 		this.state = lifeState;
 	}
 
+	@Override
+	public ID getID()
+	{
+		return super.getID();
+	}
+
+	/**
+	 * @return the {@link LifeStatus}
+	 */
+	public LifeStatus getState()
+	{
+		return this.state;
+	}
+
 	/**
 	 * @return the origin {@link CellID}
 	 */
@@ -96,14 +125,6 @@ public class CellState extends AbstractMessage<ID>
 	public SimTime getGeneration()
 	{
 		return getID().getTime();
-	}
-
-	/**
-	 * @return the {@link LifeState}
-	 */
-	public LifeStatus getState()
-	{
-		return this.state;
 	}
 
 	@Override
@@ -133,8 +154,7 @@ public class CellState extends AbstractMessage<ID>
 	{
 		final LifeStatus toState = getState()
 				.getTransition(myNeighborStateCount);
-		return new CellState(getGeneration().plus(delta), getCellID(),
-				toState);
+		return new CellState(getGeneration().plus(delta), getCellID(), toState);
 	}
 
 }

@@ -46,7 +46,7 @@ public class ClockID extends ModelComponentID<String>
 	 */
 	protected ClockID()
 	{
-		this(null, null);
+		super();
 	}
 
 	/**
@@ -61,12 +61,6 @@ public class ClockID extends ModelComponentID<String>
 		super(modelID, value);
 		if (modelID.getValue() == null)
 			throw new NullPointerException("No modelID value");
-	}
-
-	@Override // expose for (JSON) serialization
-	public String getValue()
-	{
-		return super.getValue();
 	}
 
 	@JsonIgnore
