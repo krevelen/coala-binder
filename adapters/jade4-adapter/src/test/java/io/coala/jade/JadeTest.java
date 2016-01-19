@@ -1,4 +1,4 @@
-/* $Id: 0fcf6fd51c15dfd0f23bbb3a5c14776eac056262 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/jade-util/src/test/java/io/coala/jade/JadeTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

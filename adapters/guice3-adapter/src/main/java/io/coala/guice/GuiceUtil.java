@@ -1,4 +1,4 @@
-/* $Id: 075c20f507c2e30717e7b41881794c424f05c691 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/GuiceUtil.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

@@ -1,4 +1,4 @@
-/* $Id: ea1fecd44155e86870f80ea479f506f6e091d7b9 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/io/coala/dsol/util/ExperimentBuilder.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

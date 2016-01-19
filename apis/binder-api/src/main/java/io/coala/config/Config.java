@@ -11,7 +11,7 @@ import org.aeonbits.owner.Config.Sources;
  * {@link Config}
  * 
  * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Id: 0b646eb8ad3f4ce0f439374cc2ca0cbee6eb3677 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @LoadPolicy(LoadType.MERGE)

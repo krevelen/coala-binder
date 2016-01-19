@@ -1,4 +1,4 @@
-/* $Id: 130f32a1439ffa2dbf3d0838536fd0fa520a23e1 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/log/Log4JMembersInjector.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

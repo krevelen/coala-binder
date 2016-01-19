@@ -1,4 +1,4 @@
-/* $Id: d418d6451ad5db011ce7447d72c2f1a3e751ee01 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-httpcomponents-adapter/src/main/java/io/coala/http/ApacheHTTPClientService.java $
  * 
  * Part of the EU project INERTIA, see http://www.inertia-project.eu/inertia/

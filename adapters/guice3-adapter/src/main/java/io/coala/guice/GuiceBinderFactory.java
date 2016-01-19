@@ -1,4 +1,4 @@
-/* $Id: 190b4f8912de19a7af5949a3e96f7ec99faed5f8 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/GuiceBinderFactory.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

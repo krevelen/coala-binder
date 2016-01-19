@@ -1,4 +1,4 @@
-/* $Id: 0b646eb8ad3f4ce0f439374cc2ca0cbee6eb3677 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/agent/Agent.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -24,7 +24,7 @@ package io.coala;
  * {@link Coala} common statics/constants
  * 
  * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Id: 0b646eb8ad3f4ce0f439374cc2ca0cbee6eb3677 $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public interface Coala

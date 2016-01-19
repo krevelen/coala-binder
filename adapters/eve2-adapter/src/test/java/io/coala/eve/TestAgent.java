@@ -1,4 +1,4 @@
-/* $Id: 6b2aa6282208757bc058922543d8c3c0a2190b59 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/TestAgent.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
