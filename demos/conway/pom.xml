@@ -16,7 +16,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Example code based on Conway's Game of Life
-		$Id: b7f170575eed40f92a69c104557a5e7086b59ced $
+		$Id: ab0ba95b26096f49936694cd1859dc5dda9c4d4b $
 	</description>
 
 	<properties>

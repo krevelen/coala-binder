@@ -15,7 +15,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for Guice3 dependency injection
-		$Id: 7d8687d25a3dd3d63474116d099ff2eb1e5c6bb2 $
+		$Id: 76e20e218eee696f567142300dde35a4bb444a12 $
 	</description>
 	<url>https://code.google.com/p/google-guice/</url>
 
