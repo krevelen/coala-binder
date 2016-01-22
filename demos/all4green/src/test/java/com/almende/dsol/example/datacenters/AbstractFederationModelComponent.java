@@ -1,4 +1,4 @@
-/* $Id: 3ff746dae03573df6fd5bddf101a5eae9ce8b88f $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/test/java/com/almende/dsol/example/datacenters/AbstractFederationModelComponent.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

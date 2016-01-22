@@ -1,4 +1,4 @@
-/* $Id: ec7dacf3ad1382e6a401cb206b572730dff17b02 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/io/coala/dsol/util/DsolSimulatorFederation.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

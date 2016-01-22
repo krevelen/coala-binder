@@ -1,4 +1,4 @@
-/* $Id: a169ea6e6d18293af83289d8a996486703362bc0 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/config/ConfigModule.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

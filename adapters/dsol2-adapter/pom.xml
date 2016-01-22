@@ -5,18 +5,17 @@
 
 	<parent>
 		<groupId>io.coala</groupId>
-		<artifactId>coala-root</artifactId>
+		<artifactId>coala</artifactId>
 		<version>0.0.1</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
 	<artifactId>dsol2-coala-adapter</artifactId>
-	<version>0.0.1</version>
 
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for the Distributed Simulation Objects Library (DSOL)
-		$Id$
+		$Id: 14376961b36e0c64d50eda9c34b6ce71861f1dda $
 	</description>
 
 	<properties>

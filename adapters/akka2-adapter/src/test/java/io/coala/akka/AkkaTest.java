@@ -1,4 +1,4 @@
-/* $Id: 9052388e23cdad6b1f872482913f9cb660dd26d6 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/akka-util/src/test/java/com/almende/akka/test/AkkaTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

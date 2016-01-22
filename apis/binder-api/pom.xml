@@ -5,7 +5,7 @@
 
 	<parent>
 		<groupId>io.coala</groupId>
-		<artifactId>coala-root</artifactId>
+		<artifactId>coala</artifactId>
 		<version>0.0.1</version>
 		<relativePath>../..</relativePath>
 	</parent>
@@ -16,7 +16,7 @@
 	<url>http://coala.io/</url>
 	<description>
 		COALA binder API
-		$Id$
+		$Id: a16d52d6f0055da2df56a3916a4ff8a8a59df13b $
 	</description>
 
 	<properties>

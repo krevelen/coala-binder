@@ -24,7 +24,7 @@ package io.coala.experimental.stage;
  * {@link StageEvent}
  * 
  * @date $Date$
- * @version $Id: 4315b371d925dca6e1609359465a960d25eab26d $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public enum StageEvent

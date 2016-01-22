@@ -1,4 +1,4 @@
-/* $Id: 4366a3e3162e0ff5db35e6f202e77979f289a899 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/test/java/com/almende/dsol/example/datacenters/Service.java $
  * 
  * Part of the EU project All4Green, see http://www.all4green-project.eu/

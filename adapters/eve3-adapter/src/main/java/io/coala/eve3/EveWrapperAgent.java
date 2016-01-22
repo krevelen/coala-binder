@@ -1,4 +1,4 @@
-/* $Id: df7dcadbae1d69cf9f6990f757f01fc4d7b3f6cb $
+/* $Id$
  * $URL$
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

@@ -5,7 +5,7 @@
 
 	<parent>
 		<groupId>io.coala</groupId>
-		<artifactId>coala-root</artifactId>
+		<artifactId>coala</artifactId>
 		<version>0.0.1</version>
 		<relativePath>../..</relativePath>
 	</parent>
@@ -16,7 +16,7 @@
 	<url>http://coala.io/</url>
 	<description>
 		COALA agent API
-		$Id$
+		$Id: 599e4376aac6a7c1e2ef1567b1f11c25b82730b1 $
 	</description>
 
 	<properties>

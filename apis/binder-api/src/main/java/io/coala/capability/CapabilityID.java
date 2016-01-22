@@ -1,4 +1,4 @@
-/* $Id: 58ad1d3b30d2aa3c0e99d93990f66bd04a574a05 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/ServiceID.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

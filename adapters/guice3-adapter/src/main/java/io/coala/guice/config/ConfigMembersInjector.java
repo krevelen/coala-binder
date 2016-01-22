@@ -1,4 +1,4 @@
-/* $Id: a7de3264b511a4a50d4c973d0dafad9443d9b1e8 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/config/ConfigMembersInjector.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

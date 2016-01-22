@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>io.coala</groupId>
-	<artifactId>coala-root</artifactId>
+	<artifactId>coala</artifactId>
 	<version>0.0.1</version>
 	<packaging>pom</packaging>
 
@@ -13,15 +13,10 @@
 	<description> 
 		Binder for the Common Ontological Abstraction Layer for Agents (COALA)
 	</description>
-	<organization>
-		<name>Almende</name>
-		<url>http://www.almende.com</url>
-	</organization>
 	<developers>
 		<developer>
 			<id>krevelen</id>
 			<name>Rick van Krevelen</name>
-			<organization>Almende</organization>
 			<roles>
 				<role>developer</role>
 			</roles>

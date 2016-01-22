@@ -1,4 +1,4 @@
-/* $Id: 8752b628db48c2809c71552ab78231cf3d9e9b55 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/GuiceSimTime.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

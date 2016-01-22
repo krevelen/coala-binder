@@ -1,4 +1,4 @@
-/* $Id: 4315b371d925dca6e1609359465a960d25eab26d $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/BeforeDestruction.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * @BeforeClass, @Before, @After, @AfterClass, ...
  * 
  * @date $Date$
- * @version $Id: 4315b371d925dca6e1609359465a960d25eab26d $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @Documented
