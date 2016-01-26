@@ -1,4 +1,4 @@
-/* $Id: 6daeb7bf4a7061a9ae2afa48860a51a3c5d71f68 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/test/java/com/almende/dsol/example/datacenters/FederationModel.java $
  * 
  * Part of the EU project All4Green, see http://www.all4green-project.eu/
