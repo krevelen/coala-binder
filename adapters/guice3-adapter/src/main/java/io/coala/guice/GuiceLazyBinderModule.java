@@ -1,4 +1,4 @@
-/* $Id: 327e1cd3aec7a9356d77b8ee5e5b55ae9af2c045 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/GuiceLazyBinderModule.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

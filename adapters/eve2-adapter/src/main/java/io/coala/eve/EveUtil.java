@@ -1,4 +1,4 @@
-/* $Id: 38e381b650faf39f8cafe1e16f0b186d10aa5008 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/eve-util/src/main/java/com/almende/coala/eve/EveUtil.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

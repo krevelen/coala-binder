@@ -9,7 +9,6 @@
 	</parent>
 
 	<artifactId>dsol3-coala-adapter</artifactId>
-	<version>0.0.1</version>
 
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
@@ -18,7 +17,7 @@
 	</description>
 
 	<properties>
-		<dsol.version>3.00.15</dsol.version>
+		<dsol.version>3.00.18</dsol.version>
 	</properties>
 
 	<repositories>
@@ -58,7 +57,7 @@
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>coala-binder-api</artifactId>
+			<artifactId>coala-time-api</artifactId>
 		</dependency>
 
 		<dependency>
@@ -82,14 +81,14 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>guice3-coala-adapter</artifactId>
-			<version>0.0.1</version>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>eve3-coala-adapter</artifactId>
-			<version>0.0.1</version>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 

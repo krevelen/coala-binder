@@ -1,4 +1,4 @@
-/* $Id: f9b36771d5f7dc74383f3102c221cb7368ed7d86 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/booter/BasicBooterService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

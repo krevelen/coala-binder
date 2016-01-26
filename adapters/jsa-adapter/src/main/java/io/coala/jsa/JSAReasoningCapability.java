@@ -1,4 +1,4 @@
-/* $Id: db5c14f7cbf2965549e69ecd49aa3cf42854ca1f $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/jsa-util/src/main/java/com/almende/coala/jsa/JSAReasonerService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

@@ -1,4 +1,4 @@
-/* $Id: 2b9e18395fa592123fbfee75edf41de5d7f1cf7c $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/util/RxUtil.java $
  *  
  * Part of the EU project All4Green, see http://www.all4green-project.eu/

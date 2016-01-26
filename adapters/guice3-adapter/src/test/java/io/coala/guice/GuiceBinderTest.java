@@ -1,4 +1,4 @@
-/* $Id: db7197193c807477995bd3db08300092b19f5de7 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/test/java/io/coala/guice/GuiceBinderTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

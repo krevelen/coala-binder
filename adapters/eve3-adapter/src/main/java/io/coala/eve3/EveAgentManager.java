@@ -1,4 +1,4 @@
-/* $Id: 9f58a365c61ef290496e1ff99f898e23fc9e91df $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/eve-util/src/main/java/com/almende/coala/eve/EveAgentManager.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

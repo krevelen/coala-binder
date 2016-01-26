@@ -1,4 +1,4 @@
-/* $Id: bce97ab3ccc0bc9e51086e1bd8be65bf0d17a392 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/messenger/ReceiverService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

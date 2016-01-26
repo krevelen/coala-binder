@@ -1,4 +1,4 @@
-/* $Id: d9a2ab96116e8a6b1d3ae1c91d6959cfd18a8d7f $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/io/coala/dsol/util/DsolModelComponent.java $
  * 
  * Part of the EU project INERTIA, see http://www.inertia-project.eu/

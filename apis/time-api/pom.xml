@@ -5,7 +5,7 @@
 
 	<parent>
 		<groupId>io.coala</groupId>
-		<artifactId>coala-root</artifactId>
+		<artifactId>coala</artifactId>
 		<version>0.0.1</version>
 		<relativePath>../..</relativePath>
 	</parent>
@@ -16,7 +16,7 @@
 	<url>http://coala.io/</url>
 	<description>
 		COALA time API
-		$Id$
+		$Id: fc8bc535adf1fe5fbe28c60e1679e5dbe2d45369 $
 	</description>
 
 	<properties>

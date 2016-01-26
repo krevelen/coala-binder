@@ -15,7 +15,7 @@
 	<name>${project.artifactId}</name>
 	<description>
 		Utility and demo code for the Akka actor system
-		$Id: 0897537fb9cbaa04f14a966597843be2722da07b $
+		$Id$
 		$URL: https://dev.almende.com/svn/abms/akka-util/pom.xml $
 	</description>
 	<url>http://akka.io/</url>

@@ -33,7 +33,6 @@ import java.util.Properties;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.apache.log4j.spi.DefaultRepositorySelector;
 import org.apache.log4j.spi.RootLogger;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -120,34 +119,34 @@ public class LogUtil implements Util
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link Logger} instance for specified {@code clazz}
+	 * @return the {@link org.apache.log4j.Logger} instance for specified {@code clazz}
 	 */
-	public static Logger getLogger(final Class<?> clz)
+	public static org.apache.log4j.Logger getLogger(final Class<?> clz)
 	{
 		return getLogger(clz, clz);
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link Logger} instance for specified {@code clazz}
+	 * @return the {@link org.apache.log4j.Logger} instance for specified {@code clazz}
 	 */
-	public static Logger getLogger(final Class<?> clz, final Object source)
+	public static org.apache.log4j.Logger getLogger(final Class<?> clz, final Object source)
 	{
 		return getLogger(clz.getName(), source);
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link Logger} instance for specified {@code clazz}
+	 * @return the {@link org.apache.log4j.Logger} instance for specified {@code clazz}
 	 */
-	public static Logger getLogger(final String name, final Object source)
+	public static org.apache.log4j.Logger getLogger(final String name, final Object source)
 	{
 		// TODO use wrapper: intercept #forceLog() calls to add stack trace info
 
 		if (source == null)
 		{
 			new NullPointerException("Using root logger").printStackTrace();
-			return Logger.getRootLogger();
+			return org.apache.log4j.Logger.getRootLogger();
 		}
 
 		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository()).getLogger(name,
@@ -155,13 +154,13 @@ public class LogUtil implements Util
 	}
 
 	/**
-	 * this method is preferred over {@link Logger#getLogger} so as to
+	 * this method is preferred over {@link org.apache.log4j.Logger#getLogger} so as to
 	 * initialize the Log$j system correctly via this {@link LogUtil} class
 	 * 
 	 * @param name
 	 * @return
 	 */
-	public static Logger getLogger(final String name)
+	public static org.apache.log4j.Logger getLogger(final String name)
 	{
 		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository()).getLogger(name);
 	}
