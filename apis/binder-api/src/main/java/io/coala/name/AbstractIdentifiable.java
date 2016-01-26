@@ -1,4 +1,4 @@
-/* $Id: 1f88616a77135637049b71f5de3fba8f36303f7f $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.log.InjectLogger;
 /**
  * {@link AbstractIdentifiable}
  * 
- * @version $Id: 1f88616a77135637049b71f5de3fba8f36303f7f $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <ID>

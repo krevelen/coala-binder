@@ -1,4 +1,4 @@
-/* $Id: cb767c72d5b639c1e103e618527b6baa385862ce $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -31,7 +31,7 @@ import io.coala.json.JsonUtil;
 /**
  * {@link AbstractIdentifier} contains some identifier content type
  * 
- * @version $Id: cb767c72d5b639c1e103e618527b6baa385862ce $
+ * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <T>
