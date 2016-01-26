@@ -85,7 +85,6 @@
 				programming) -->
 			<groupId>javax.inject</groupId>
 			<artifactId>javax.inject</artifactId>
-			<scope>provided</scope>
 		</dependency>
 		
 		<!-- logging via SL4J -->
