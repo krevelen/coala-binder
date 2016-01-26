@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.0.1</version>
+		<version>0.2.0-SNAPSHOT</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -61,15 +61,6 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-capability-api</artifactId>
 		</dependency>
-
-		<dependency>
-			<!-- Java Extension API for dependency injection (and/or aspect oriented 
-				programming) -->
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
-			<scope>provided</scope>
-		</dependency>
-
 
 		<dependency>
 			<!-- JSON <-> Java object mapping -->
@@ -138,7 +129,7 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>guice3-coala-adapter</artifactId>
-			<version>0.0.1</version>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 
