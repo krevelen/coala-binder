@@ -25,29 +25,32 @@
 	</developers>
 
 	<modules>
+
+		<module>coala-common</module>
+		
 		<!-- Binder API and utilities -->
-		<module>apis/binder-api</module>
+		<module>coala-api</module>
 
 		<!-- Capability API and utilities requires Binder API -->
-		<module>apis/capability-api</module>
+		<module>coala-api-capability</module>
 
 		<!-- Time API and utilities requires Capability API -->
-		<module>apis/time-api</module>
+		<module>coala-api-time</module>
 
 		<!-- Guice 3 adapter of the relevant core APIs -->
-		<module>adapters/guice3-adapter</module>
+		<module>adapters/guice3-coala-adapter</module>
 
 		<!-- Eve 3 adapter of the relevant core APIs -->
-		<module>adapters/eve3-adapter</module>
+		<module>adapters/eve3-coala-adapter</module>
 
 		<!-- DSOL2 adapter of the relevant core APIs -->
-		<module>adapters/dsol2-adapter</module>
+		<module>adapters/dsol2-coala-adapter</module>
 
 		<!-- Enterprise Ontology API requires eve and dsol -->
-		<module>apis/enterprise-api</module>
+		<module>coala-api-enterprise</module>
 
 		<!-- Conway's game of life -->
-		<module>demos/conway</module>
+		<module>demos/coala-demo-conway</module>
 	</modules>
 
 	<properties>
@@ -114,6 +117,12 @@
 
 	<dependencyManagement>
 		<dependencies>
+
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>coala-common</artifactId>
+				<version>${project.parent.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
