@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.0.1</version>
+		<version>0.2.0-SNAPSHOT</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -15,7 +15,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for Guice3 dependency injection
-		$Id: 76e20e218eee696f567142300dde35a4bb444a12 $
+		$Id$
 	</description>
 	<url>https://code.google.com/p/google-guice/</url>
 
@@ -45,7 +45,7 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-time-api</artifactId>
-			<version>0.0.1</version>
+			<version>${project.version}</version>
 		</dependency>
 
 		<dependency>

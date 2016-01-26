@@ -1,4 +1,4 @@
-/* $Id: 3b777071b29fb2d69a68fef60ebeda626f703706 $
+/* $Id$
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/Machine.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

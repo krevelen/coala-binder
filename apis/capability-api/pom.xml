@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.0.1</version>
+		<version>0.2.0-SNAPSHOT</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -16,7 +16,7 @@
 	<url>http://coala.io/</url>
 	<description>
 		COALA agent API
-		$Id: 599e4376aac6a7c1e2ef1567b1f11c25b82730b1 $
+		$Id$
 	</description>
 
 	<properties>
@@ -45,17 +45,9 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-binder-api</artifactId>
-			<version>0.0.1</version>
+			<version>${project.version}</version>
 		</dependency>
-		
-		<dependency>
-			<!-- Java Extension API for dependency injection (and/or aspect oriented 
-				programming) -->
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		
+
 		<dependency>
 			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.0.1</version>
+		<version>0.2.0-SNAPSHOT</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -16,7 +16,7 @@
 	<url>http://coala.io/</url>
 	<description>
 		COALA time API
-		$Id: fc8bc535adf1fe5fbe28c60e1679e5dbe2d45369 $
+		$Id$
 	</description>
 
 	<properties>
@@ -45,15 +45,7 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-capability-api</artifactId>
-			<version>0.0.1</version>
-		</dependency>
-		
-		<dependency>
-			<!-- Java Extension API for dependency injection (and/or aspect oriented 
-				programming) -->
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
-			<scope>provided</scope>
+			<version>${project.version}</version>
 		</dependency>
 
 		<dependency>
