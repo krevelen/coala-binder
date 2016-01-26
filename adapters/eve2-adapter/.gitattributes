@@ -1,0 +1,4 @@
+*.java ident
+*.xml ident
+*.yaml ident
+*.properties ident
