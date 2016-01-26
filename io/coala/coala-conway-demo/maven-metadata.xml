@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>io.coala</groupId>
+  <artifactId>coala-conway-demo</artifactId>
+  <versioning>
+    <versions>
+      <version>1.0.0-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20160126112253</lastUpdated>
+  </versioning>
+</metadata>
