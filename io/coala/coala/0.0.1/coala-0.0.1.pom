@@ -5,7 +5,7 @@
 
 	<groupId>io.coala</groupId>
 	<artifactId>coala</artifactId>
-	<version>0.2.0-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<packaging>pom</packaging>
 
 	<name>${project.artifactId} ${project.version}</name>
@@ -72,7 +72,7 @@
 		<github.repository.branch>mvn-repo</github.repository.branch>
 		<github.repository.owner>krevelen@gmail.com</github.repository.owner>
 		<github.repository.localid>internal.repo</github.repository.localid>
-		<github.repository.tmpdir>${user.dir}</github.repository.tmpdir>
+		<github.repository.tmpdir>${user.dir}/target/mvn-repo</github.repository.tmpdir>
 		<github.repository.url>https://raw.github.com/krevelen/coala/mvn-repo/</github.repository.url>
 		<site-maven-plugin.version>0.9</site-maven-plugin.version>
 
