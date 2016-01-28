@@ -16,10 +16,11 @@
 	<url>http://coala.io/</url>
 	<description>
 		COALA common utilities
-		$Id$
+		$Id: 8c1d618bf3365179a356d41eb63b7a4ad91388ea $
 	</description>
 
 	<properties>
+		<!-- TODO <log4j2.version>2.3</log4j2.version> -->
 		<slf4j.version>1.7.7</slf4j.version>
 		<joda-time.version>2.1</joda-time.version>
 		<uuid.version>3.4</uuid.version>
@@ -104,6 +105,13 @@
 			<version>${slf4j.version}</version>
 		</dependency>
 
+		<!-- TODO <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-slf4j-impl</artifactId> 
+			<version>${log4j2.version}</version> </dependency> -->
+		<!-- TODO <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-jul</artifactId> 
+			<version>${log4j2.version}</version> </dependency> -->
+		<!-- TODO <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-core</artifactId> 
+			<version>${log4j2.version}</version> </dependency> -->
+
 		<dependency>
 			<!-- used for deserialization by ClassUtil, ConfigUtil -->
 			<groupId>commons-codec</groupId>
@@ -130,6 +138,12 @@
 			<groupId>com.eaio.uuid</groupId>
 			<artifactId>uuid</artifactId>
 			<version>${uuid.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- Observable pattern (re)implementation -->
@@ -150,6 +164,26 @@
 			<!-- JSON <-> Java object mapping -->
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+
+		<dependency>
+			<!-- JSON <-> Java object mapping for Joda time objects -->
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-joda</artifactId>
+			<version>${jackson.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>joda-time</groupId>
+					<artifactId>joda-time</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<!-- JSON <-> Java object mapping for YAML formats -->
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
 

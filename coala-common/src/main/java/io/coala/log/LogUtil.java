@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 8fe68e9395e5d5be7cd23c3751b3889b7d86e187 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/log/LogUtil.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,22 +20,20 @@
  */
 package io.coala.log;
 
-import io.coala.resource.FileUtil;
-import io.coala.util.Util;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.Properties;
 //import java.util.logging.Level;
 
-
-
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.spi.DefaultRepositorySelector;
 import org.apache.log4j.spi.RootLogger;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import io.coala.resource.FileUtil;
+import io.coala.util.Util;
 
 /**
  * {@link LogUtil}
@@ -164,6 +162,11 @@ public class LogUtil implements Util
 	{
 		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository()).getLogger(name);
 	}
+	
+//	public static org.apache.logging.log4j.Logger getLogger2(final Class<?> type)
+//	{
+//		return org.apache.logging.log4j.LogManager.getLogger(type);
+//	}
 
 	/**
 	 * @param clazz the object type generating the log messages

@@ -4,8 +4,8 @@
 
 	<parent>
 		<groupId>io.coala</groupId>
-		<artifactId>coala-root</artifactId>
-		<version>0.0.1</version>
+		<artifactId>coala</artifactId>
+		<version>0.2.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>dsol3-coala-adapter</artifactId>
@@ -13,7 +13,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for the Distributed Simulation Objects Library 3 (DSOL3)
-		$Id$
+		$Id: c1424d5e9dd1984cfda8ea9c6dae4b87c086dad5 $
 	</description>
 
 	<properties>
@@ -57,19 +57,13 @@
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>coala-time-api</artifactId>
+			<artifactId>coala-api-time</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>dsol</groupId>
 			<artifactId>dsol-core</artifactId>
 			<version>${dsol.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
-			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>

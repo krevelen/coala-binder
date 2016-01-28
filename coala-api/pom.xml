@@ -16,15 +16,15 @@
 	<url>http://coala.io/</url>
 	<description>
 		COALA binder API
-		$Id$
+		$Id: f5571cbee34f3c205e18b271e804aef66b2d1aa0 $
 	</description>
 
 	<properties>
+		<uuid.version>3.4</uuid.version>
 		<easymock.version>3.2</easymock.version>
 	</properties>
 
 	<repositories>
-		<!-- COALA public Maven repository -->
 		<repository>
 			<name>COALA Public Maven Repository</name>
 			<id>coala-public</id>
@@ -37,6 +37,11 @@
 				<enabled>false</enabled>
 				<updatePolicy>never</updatePolicy>
 			</snapshots>
+		</repository>
+		<repository>
+			<name>UUID Repository</name>
+			<id>eaio.com</id>
+			<url>http://eaio.com/maven2</url>
 		</repository>
 	</repositories>
 

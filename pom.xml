@@ -46,6 +46,9 @@
 		<!-- DSOL2 adapter of the relevant core APIs -->
 		<module>adapters/dsol2-coala-adapter</module>
 
+		<!-- DSOL3 adapter of the relevant core APIs -->
+		<module>adapters/dsol3-coala-adapter</module>
+
 		<!-- Enterprise Ontology API requires eve and dsol -->
 		<module>coala-api-enterprise</module>
 
