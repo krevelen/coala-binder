@@ -200,7 +200,7 @@ public interface Wrapper<T>
 	 * @version $Id$
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 *
-	 * @param <T> the type of wrapped objects
+	 * @param <T> the concrete {@link Comparable} type of wrapped objects
 	 * @param <THIS> the concrete type of {@link SimpleComparable} wrapper
 	 */
 	@SuppressWarnings( {"rawtypes","unchecked"} )

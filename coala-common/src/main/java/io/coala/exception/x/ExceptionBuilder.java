@@ -19,12 +19,14 @@
  */
 package io.coala.exception.x;
 
+import java.util.Formatter;
+
 import io.coala.exception.x.UncheckedException.Builder;
 
 /**
  * {@link ExceptionBuilder} creates {@link CheckedException}s and
- * {@link UncheckedException}s and publishes them as {@link Contextualized}
- * via static {@link #getObservable()} method.
+ * {@link UncheckedException}s and publishes them as {@link Contextualized} via
+ * static {@link #getObservable()} method.
  * <p>
  * TODO add createError(...) methods?
  * 
@@ -50,7 +52,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	 * @param cause the {@link Throwable} causing the new
 	 *            {@link CheckedException}, or {@code null} if none
 	 */
-	protected ExceptionBuilder(final String message, final Throwable cause)
+	protected ExceptionBuilder( final String message, final Throwable cause )
 	{
 		this.message = message;
 		this.cause = cause;
@@ -63,10 +65,10 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	 * @param value the context entry value
 	 * @return this {@link Builder}
 	 */
-	@SuppressWarnings("unchecked")
-	public THIS with(final String key, final Object value)
+	@SuppressWarnings( "unchecked" )
+	public THIS with( final String key, final Object value )
 	{
-		this.context.set(key, value);
+		this.context.set( key, value );
 		return (THIS) this;
 	}
 
@@ -81,7 +83,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	 * @param message
 	 * @return
 	 */
-	private static String toString(final Object message)
+	private static String toString( final Object message )
 	{
 		return message.toString();
 	}
@@ -89,125 +91,120 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	/**
 	 * Helper-method
 	 * 
-	 * @param messageFormat
-	 * @param args
-	 * @return
+	 * @param messageFormat following {@link Formatter} syntax
+	 * @param args stringifiable arguments as referenced in
+	 *            {@code messageFormat}
+	 * @return a formatted {@link String}
 	 */
-	private static String toString(final String messageFormat,
-			final Object... args)
+	private static String toString( final String messageFormat, final Object... args )
 	{
-		return String.format(messageFormat, args);
+		return String.format( messageFormat, args );
 	}
 
 	/**
-	 * @param message
-	 * @return
+	 * @param message the message this {@link CheckedException}
+	 * @return a {@link CheckedException.Builder}
 	 */
-	public static CheckedException.Builder checked(final Object message)
+	public static CheckedException.Builder checked( final Object message )
 	{
-		return new CheckedException.Builder(toString(message), null);
+		return new CheckedException.Builder( toString( message ), null );
 	}
 
 	/**
-	 * @param messageFormat
-	 * @param args
-	 * @return
+	 * @param messageFormat following {@link Formatter} syntax
+	 * @param args stringifiable arguments as referenced in
+	 *            {@code messageFormat}
+	 * @return a {@link CheckedException.Builder}
 	 */
-	public static CheckedException.Builder checked(final String messageFormat,
-			final Object... args)
+	public static CheckedException.Builder checked( final String messageFormat, final Object... args )
 	{
-		return new CheckedException.Builder(toString(messageFormat, args), null);
+		return new CheckedException.Builder( toString( messageFormat, args ), null );
 	}
 
 	/**
-	 * @param message
-	 * @param args
-	 * @return
+	 * @param message the message this {@link CheckedException}
+	 * @param cause the cause of this {@link CheckedException}
+	 * @return a {@link CheckedException.Builder}
 	 */
-	public static CheckedException.Builder checked(final String message,
-			final Throwable cause)
+	public static CheckedException.Builder checked( final String message, final Throwable cause )
 	{
-		return new CheckedException.Builder(toString(message), cause);
+		return new CheckedException.Builder( toString( message ), cause );
 	}
 
 	/**
-	 * @param cause
-	 * @param message
-	 * @return
+	 * @param cause the cause of this {@link CheckedException}
+	 * @param message the message this {@link CheckedException}
+	 * @return a {@link CheckedException.Builder}
 	 */
-	public static CheckedException.Builder checked(final Throwable cause,
-			final Object message)
+	public static CheckedException.Builder checked( final Throwable cause, final Object message )
 	{
-		return new CheckedException.Builder(toString(message), cause);
+		return new CheckedException.Builder( toString( message ), cause );
 	}
 
 	/**
-	 * @param cause
-	 * @param messageFormat
-	 * @param args
-	 * @return
+	 * @param cause the cause of this {@link CheckedException}
+	 * @param messageFormat following {@link Formatter} syntax
+	 * @param args stringifiable arguments as referenced in
+	 *            {@code messageFormat}
+	 * @return a {@link CheckedException.Builder}
 	 */
-	public static CheckedException.Builder checked(final Throwable cause,
-			final String messageFormat, final Object... args)
+	public static CheckedException.Builder checked( final Throwable cause, final String messageFormat,
+		final Object... args )
 	{
-		return new CheckedException.Builder(toString(messageFormat, args),
-				cause);
+		return new CheckedException.Builder( toString( messageFormat, args ), cause );
 	}
 
 	/**
-	 * @param message
-	 * @return
+	 * @param message the message this {@link UncheckedException}
+	 * @return a {@link UncheckedException.Builder}
 	 */
-	public static UncheckedException.Builder unchecked(final Object message)
+	public static UncheckedException.Builder unchecked( final Object message )
 	{
-		return new UncheckedException.Builder(toString(message), null);
+		return new UncheckedException.Builder( toString( message ), null );
 	}
 
 	/**
-	 * @param messageFormat
-	 * @param args
-	 * @return
+	 * @param messageFormat following {@link Formatter} syntax
+	 * @param args stringifiable arguments as referenced in
+	 *            {@code messageFormat}
+	 * @return a {@link UncheckedException.Builder}
 	 */
-	public static UncheckedException.Builder unchecked(
-			final String messageFormat, final Object... args)
+	public static UncheckedException.Builder unchecked( final String messageFormat, final Object... args )
 	{
-		return new UncheckedException.Builder(toString(messageFormat, args),
-				null);
+		return new UncheckedException.Builder( toString( messageFormat, args ), null );
 	}
 
 	/**
-	 * @param message
-	 * @param args
-	 * @return
+	 * @param message the message this {@link UncheckedException}
+	 * @param cause the cause of this {@link UncheckedException}
+	 * @return a {@link UncheckedException.Builder}
 	 */
-	public static UncheckedException.Builder unchecked(final String message,
-			final Throwable cause)
+	public static UncheckedException.Builder unchecked( final String message, final Throwable cause )
 	{
-		return new UncheckedException.Builder(toString(message), cause);
+		return new UncheckedException.Builder( toString( message ), cause );
 	}
 
 	/**
-	 * @param cause
-	 * @param message
-	 * @return
+	 * @param cause the cause of this {@link UncheckedException}
+	 * @param message the message this {@link UncheckedException}
+	 * @return a {@link UncheckedException.Builder}
 	 */
-	public static UncheckedException.Builder unchecked(final Throwable cause,
-			final Object message)
+	public static UncheckedException.Builder unchecked( final Throwable cause, final Object message )
 	{
-		return new UncheckedException.Builder(toString(message), cause);
+		return new UncheckedException.Builder( toString( message ), cause );
 	}
 
 	/**
-	 * @param cause
-	 * @param messageFormat
-	 * @param args
-	 * @return
+	 * @param cause the cause of this {@link UncheckedException}
+	 * @param messageFormat following {@link Formatter} syntax
+	 * @param args stringifiable arguments as referenced in
+	 *            {@code messageFormat}
+	 * @return a {@link UncheckedException.Builder}
 	 */
-	public static UncheckedException.Builder unchecked(final Throwable cause,
-			final String messageFormat, final Object... args)
+	public static UncheckedException.Builder unchecked( final Throwable cause, final String messageFormat,
+		final Object... args )
 	{
-		return new UncheckedException.Builder(toString(messageFormat, args),
-				cause);
+		return new UncheckedException.Builder( toString( messageFormat, args ), cause );
 	}
 
 }
