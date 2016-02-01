@@ -31,9 +31,7 @@ import javax.naming.NamingException;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import io.coala.json.x.Wrapper;
 import io.coala.log.LogUtil;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
@@ -41,12 +39,8 @@ import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.Executable;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
-import nl.tudelft.simulation.event.EventInterface;
-import nl.tudelft.simulation.event.EventListenerInterface;
-import rx.Observable;
+import nl.tudelft.simulation.event.EventProducer;
 import rx.Observer;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 /**
  * {@link DsolSimTest}
@@ -58,27 +52,15 @@ public class DsolSimTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger( DsolSimTest.class );
-
-	public static class TestEvent extends Wrapper.Simple<String>
-	{
-		public TestEvent withValue( final String value )
-		{
-			wrap( value );
-			return this;
-		}
-	}
+	static final Logger LOG = LogUtil.getLogger( DsolSimTest.class );
 
 	/** */
 	@SuppressWarnings( { "rawtypes", "serial" } )
-	public static class TestModel implements ModelInterface
+	public static class TestModel extends EventProducer
+		implements ModelInterface
 	{
 		/** the scheduler {@link DEVSSimulator} */
 		private DEVSSimulator<?, ?, DsolTime> scheduler;
-
-		/** the relay {@link Subject} */
-		private final transient Subject<TestEvent, TestEvent> relay = PublishSubject
-				.create();
 
 		private int jobCount = 0;
 
@@ -94,15 +76,6 @@ public class DsolSimTest
 			throws SimRuntimeException, RemoteException
 		{
 			this.scheduler = (DEVSSimulator<?, ?, DsolTime>) simulator;
-			this.scheduler.addListener( new EventListenerInterface()
-			{
-				@Override
-				public void notify( final EventInterface event )
-					throws RemoteException
-				{
-					relay.onCompleted();
-				}
-			}, SimulatorInterface.END_OF_REPLICATION_EVENT );
 
 			LOG.trace( "Schedulable job count: " + this.jobCount );
 			for( int i = 0; i < this.jobCount; i++ )
@@ -113,18 +86,12 @@ public class DsolSimTest
 					@Override
 					public void execute()
 					{
-						relay.onNext( new TestEvent()
-								.withValue( "SimEvent at t=" + getTime() ) );
+						fireEvent( DsolEvent
+								.valueOf( "SimEvent at t=" + getTime() ) );
 					}
 				} );
 				LOG.trace( "Scheduled execution at t=" + t );
 			}
-		}
-
-		/** using {@link rx.Observable} instead of {@link EventProducer} */
-		public Observable<TestEvent> events()
-		{
-			return this.relay.asObservable();
 		}
 
 		public DsolTime getTime()
@@ -139,13 +106,6 @@ public class DsolSimTest
 		}
 	}
 
-	static
-	{
-		// divert java.util.logging.Logger LogRecords to SLF4J
-		SLF4JBridgeHandler.removeHandlersForRootLogger();
-		SLF4JBridgeHandler.install();
-	}
-
 	@Test
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public void testDEVSSimulator()
@@ -157,37 +117,38 @@ public class DsolSimTest
 		LOG.trace( "Create model" );
 		final TestModel model = new TestModel().withJobCount( 10 );
 
-		// register listeners
-		model.events().subscribe( new Observer<TestEvent>()
-		{
-			@Override
-			public void onCompleted()
-			{
-				LOG.trace( "Simulation complete" );
-				latch.countDown();
-			}
-
-			@Override
-			public void onError( final Throwable e )
-			{
-				LOG.error( "Simulation failed", e );
-				fail( "Not yet completed" );
-			}
-
-			@Override
-			public void onNext( final TestEvent t )
-			{
-				LOG.trace( "Observed event at t="
-						+ model.getSimulator().getSimulatorTime() );
-			}
-		} );
-
 		LOG.trace( "Initialize sim" );
 		final DEVSSimulator sim = DsolTime.createDEVSSimulator();
 		sim.initialize( DsolTime.createReplication( "rep1",
 				DsolTime.valueOf( 0.0 ), BigDecimal.valueOf( 0.0 ),
 				BigDecimal.valueOf( 100.0 ), model ),
 				ReplicationMode.TERMINATING );
+
+		// register listeners
+		new DsolEventObservable().subscribeTo( model, DsolEvent.class ).events()
+				.ofType( DsolEvent.class ).subscribe( new Observer<DsolEvent>()
+				{
+					@Override
+					public void onCompleted()
+					{
+						LOG.trace( "Simulation complete" );
+						latch.countDown();
+					}
+
+					@Override
+					public void onError( final Throwable e )
+					{
+						LOG.error( "Simulation failed", e );
+						fail( e.getMessage() );
+					}
+
+					@Override
+					public void onNext( final DsolEvent t )
+					{
+						LOG.trace( "Observed event at t="
+								+ model.getSimulator().getSimulatorTime() );
+					}
+				} );
 
 		LOG.trace( "Starting sim" );
 		sim.start();
@@ -196,7 +157,7 @@ public class DsolSimTest
 			latch.await( 10, TimeUnit.SECONDS );
 		} catch( final InterruptedException e )
 		{
-			LOG.error( "Unexpected", e );
+			fail( "Unexpected interrupt" );
 		}
 		assertEquals( "Simulation hasn't finished yet", 0, latch.getCount() );
 	}

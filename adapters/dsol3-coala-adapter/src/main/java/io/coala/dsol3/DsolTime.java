@@ -35,7 +35,9 @@ import io.coala.log.LogUtil;
 import io.coala.time.x.Instant;
 import io.coala.time.x.TimeSpan;
 import nl.tudelft.simulation.dsol.ModelInterface;
+import nl.tudelft.simulation.dsol.experiment.Experiment;
 import nl.tudelft.simulation.dsol.experiment.Replication;
+import nl.tudelft.simulation.dsol.experiment.Treatment;
 import nl.tudelft.simulation.dsol.simtime.SimTime;
 import nl.tudelft.simulation.dsol.simtime.TimeUnit;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
@@ -106,7 +108,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	 * @return
 	 */
 	public static DsolTime
-		valueOf( @SuppressWarnings( "rawtypes" ) final SimTime time )
+		valueOf( @SuppressWarnings( "rawtypes" ) final SimTime time)
 	{
 		try
 		{
@@ -210,7 +212,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	public void add( final BigDecimal relativeTime )
 	{
 		LOG.warn( "Please use thread-safe plus(..)" );
-		wrap(unwrap().add( relativeTime ));
+		wrap( unwrap().add( relativeTime ) );
 	}
 
 	public DsolTime plus( final DsolTime relativeTime )
@@ -226,7 +228,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	public void subtract( final BigDecimal relativeTime )
 	{
 		LOG.warn( "Please use thread-safe minus(..)" );
-		wrap(unwrap().subtract( relativeTime ));
+		wrap( unwrap().subtract( relativeTime ) );
 	}
 
 	public DsolTime subtract( final DsolTime relativeTime )
