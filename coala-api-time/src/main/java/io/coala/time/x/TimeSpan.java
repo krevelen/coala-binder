@@ -27,6 +27,7 @@ import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.quantity.Duration;
+import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -105,7 +106,8 @@ public class TimeSpan extends DecimalMeasure
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
 	 */
-	public static final Measure<BigDecimal, Duration> parsePeriodOrMeasure( final String measure )
+	public static final Measure<BigDecimal, Duration>
+		parsePeriodOrMeasure( final String measure )
 	{
 		if( measure == null ) throw new NullPointerException();
 		DecimalMeasure<Duration> result;
@@ -123,11 +125,16 @@ public class TimeSpan extends DecimalMeasure
 				// final long millis = Period.parse(measure).getMillis();
 				// return DecimalMeasure.valueOf(BigDecimal.valueOf(millis),
 				// SI.MILLI(SI.SECOND));
-				final org.threeten.bp.Duration temp = org.threeten.bp.Duration.parse( measure );
-				result = temp.getNano() == 0
-						? DecimalMeasure.valueOf( BigDecimal.valueOf( temp.getSeconds() ), SI.SECOND )
-						: DecimalMeasure.valueOf( BigDecimal.valueOf( temp.getSeconds() )
-								.multiply( BigDecimal.TEN.pow( 9 ) ).add( BigDecimal.valueOf( temp.getNano() ) ),
+				final org.threeten.bp.Duration temp = org.threeten.bp.Duration
+						.parse( measure );
+				result = temp.getNano() == 0 ? DecimalMeasure.valueOf(
+						BigDecimal.valueOf( temp.getSeconds() ), SI.SECOND )
+						: DecimalMeasure
+								.valueOf(
+										BigDecimal.valueOf( temp.getSeconds() )
+												.multiply( BigDecimal.TEN
+														.pow( 9 ) )
+								.add( BigDecimal.valueOf( temp.getNano() ) ),
 								NANOS );
 				// LOG.trace(
 				// "Parsed '{}' using JSR-310 to JSR-275 measure/unit: {}",
@@ -137,7 +144,10 @@ public class TimeSpan extends DecimalMeasure
 			{
 				// LOG.trace("JSR-275 and JSR-310 failed, try Joda", e);
 				final Period joda = Period.parse( measure );
-				result = DecimalMeasure.valueOf( BigDecimal.valueOf( joda.toStandardDuration().getMillis() ), MILLIS );
+				result = DecimalMeasure.valueOf(
+						BigDecimal.valueOf(
+								joda.toStandardDuration().getMillis() ),
+						MILLIS );
 				// LOG.trace(
 				// "Parsed '{}' using Joda to JSR-275 measure/unit: {}",
 				// measure, result);
@@ -199,7 +209,8 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan( final Number value, final Unit unit )
 	{
-		super( value instanceof BigDecimal ? (BigDecimal) value : BigDecimal.valueOf( value.doubleValue() ), unit );
+		super( value instanceof BigDecimal ? (BigDecimal) value
+				: BigDecimal.valueOf( value.doubleValue() ), unit );
 	}
 
 	/**
@@ -222,8 +233,10 @@ public class TimeSpan extends DecimalMeasure
 	public static Measurable valueOf( final TemporalAmount temporal )
 	{
 		return new TimeSpan(
-				BigDecimal.valueOf( temporal.get( ChronoUnit.NANOS ) ).add(
-						BigDecimal.valueOf( temporal.get( ChronoUnit.MILLIS ) ).multiply( BigDecimal.TEN.pow( 6 ) ) ),
+				BigDecimal.valueOf( temporal.get( ChronoUnit.NANOS ) )
+						.add( BigDecimal
+								.valueOf( temporal.get( ChronoUnit.MILLIS ) )
+								.multiply( BigDecimal.TEN.pow( 6 ) ) ),
 				NANOS );
 	}
 
@@ -242,7 +255,8 @@ public class TimeSpan extends DecimalMeasure
 	 * 
 	 * @param value
 	 */
-	public static TimeSpan valueOf( final Measure<? extends Number, Duration> value )
+	public static TimeSpan
+		valueOf( final Measure<? extends Number, Duration> value )
 	{
 		return new TimeSpan( value );
 	}
@@ -254,7 +268,8 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public static TimeSpan valueOf( final Amount<Duration> value )
 	{
-		return new TimeSpan( BigDecimal.valueOf( value.getEstimatedValue() ), value.getUnit() );
+		return new TimeSpan( BigDecimal.valueOf( value.getEstimatedValue() ),
+				value.getUnit() );
 	}
 
 	/**
@@ -290,13 +305,30 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
+	 * Returns the decimal measure for the specified number stated in the
+	 * specified unit.
+	 * 
+	 * @param decimal the measurement value.
+	 * @param unit the measurement unit.
 	 */
-	public static TimeSpan valueOf( final Number millis )
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity> DecimalMeasure<Q>
+		valueOf( final BigDecimal decimal, final Unit<Q> unit )
 	{
-		return new TimeSpan( millis, MILLIS );
+		return new TimeSpan( decimal, unit );
 	}
 
-	public static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<TimeSpan>
+	/**
+	 * @param units the amount of time units
+	 * @return a {@link TimeSpan}
+	 */
+	public static TimeSpan valueOf( final Number units )
+	{
+		return new TimeSpan( units, Unit.ONE );
+	}
+
+	public static class JsonSerializer
+		extends com.fasterxml.jackson.databind.JsonSerializer<TimeSpan>
 	{
 		public JsonSerializer()
 		{
@@ -304,8 +336,9 @@ public class TimeSpan extends DecimalMeasure
 		}
 
 		@Override
-		public void serialize( final TimeSpan value, final JsonGenerator gen, final SerializerProvider serializers )
-			throws IOException, JsonProcessingException
+		public void serialize( final TimeSpan value, final JsonGenerator gen,
+			final SerializerProvider serializers )
+				throws IOException, JsonProcessingException
 		{
 			final String result = value.toString();
 			// if (value.getUnit().getClass() == ProductUnit.class)
@@ -315,7 +348,8 @@ public class TimeSpan extends DecimalMeasure
 		}
 	}
 
-	public static class JsonDeserializer extends com.fasterxml.jackson.databind.JsonDeserializer<TimeSpan>
+	public static class JsonDeserializer
+		extends com.fasterxml.jackson.databind.JsonDeserializer<TimeSpan>
 	{
 		public JsonDeserializer()
 		{
@@ -323,10 +357,12 @@ public class TimeSpan extends DecimalMeasure
 		}
 
 		@Override
-		public TimeSpan deserialize( final JsonParser p, final DeserializationContext ctxt )
-			throws IOException, JsonProcessingException
+		public TimeSpan deserialize( final JsonParser p,
+			final DeserializationContext ctxt )
+				throws IOException, JsonProcessingException
 		{
-			final TimeSpan result = p.getCurrentToken().isNumeric() ? TimeSpan.valueOf( p.getNumberValue() )
+			final TimeSpan result = p.getCurrentToken().isNumeric()
+					? TimeSpan.valueOf( p.getNumberValue() )
 					: TimeSpan.valueOf( p.getText() );
 			// LOG.trace("Deserialized {} {} to: {}", p.getCurrentToken(),
 			// p.getText(), result);

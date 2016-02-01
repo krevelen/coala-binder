@@ -174,7 +174,8 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	public Duration toDuration( final Instant offset )
 	{
 		return Duration.valueOf( offset == null ? unwrap().getValue()
-				: unwrap().getValue().subtract( offset.unwrap().to( unwrap().getUnit() ).getValue() ) );
+				: unwrap().getValue().subtract(
+						offset.unwrap().to( unwrap().getUnit() ).getValue() ) );
 	}
 
 	/**
@@ -227,15 +228,20 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	public static Instant valueOf( final org.threeten.bp.Instant value )
 	{
 		return valueOf( TimeSpan.valueOf( DecimalMeasure.valueOf(
-				BigDecimal.valueOf( value.get( ChronoField.NANO_OF_SECOND ) ).add( BigDecimal
-						.valueOf( value.get( ChronoField.INSTANT_SECONDS ) ).multiply( BigDecimal.TEN.pow( 9 ) ) ),
+				BigDecimal.valueOf( value.get( ChronoField.NANO_OF_SECOND ) )
+						.add( BigDecimal
+								.valueOf( value
+										.get( ChronoField.INSTANT_SECONDS ) )
+								.multiply( BigDecimal.TEN.pow( 9 ) ) ),
 				TimeSpan.NANOS ) ) );
 	}
 
 	/**
 	 * {@link Instant} static factory method
 	 * 
-	 * @param value
+	 * @param value the {@link Measure} (of
+	 *            {@link javax.measure.quantity.Duration Duration} or
+	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
 	 */
 	public static Instant valueOf( final Measure value )
 	{
@@ -245,11 +251,11 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	/**
 	 * {@link Instant} static factory method
 	 * 
-	 * @param millis the number of milliseconds
+	 * @param units the amount of time units
 	 */
-	public static Instant valueOf( final Number millis )
+	public static Instant valueOf( final Number units )
 	{
-		return valueOf( TimeSpan.valueOf( millis ) );
+		return valueOf( TimeSpan.valueOf( units ) );
 	}
 
 	/**

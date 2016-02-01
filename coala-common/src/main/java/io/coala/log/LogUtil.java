@@ -61,8 +61,8 @@ public class LogUtil implements Util
 	static
 	{
 		// FIXME allow override from COALA config
-		Locale.setDefault(Locale.forLanguageTag(System.getProperty(
-				LOCALE_PROPERTY_KEY, LOCALE_PROPERTY_DEFAULT)));
+		Locale.setDefault( Locale.forLanguageTag( System.getProperty(
+				LOCALE_PROPERTY_KEY, LOCALE_PROPERTY_DEFAULT ) ) );
 
 		// divert java.util.logging.Logger LogRecords to SLF4J
 		SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -72,20 +72,24 @@ public class LogUtil implements Util
 		// PropertyConfigurator.configure(loadProperties(System.getProperty(
 		// CONFIG_PROPERTY_KEY, CONFIG_PROPERTY_DEFAULT)));
 
-		LogManager.setRepositorySelector(new DefaultRepositorySelector(
-				new CoalaLog4jHierarchy(new RootLogger(Level.INFO))), LogUtil.class);
-		
+		LogManager
+				.setRepositorySelector(
+						new DefaultRepositorySelector( new CoalaLog4jHierarchy(
+								new RootLogger( Level.INFO ) ) ),
+				LogUtil.class );
+
 		// FIXME allow override from COALA config
-		new CoalaLog4jPropertyConfigurator().doConfigure(loadProperties(System
-				.getProperty(CONFIG_PROPERTY_KEY, CONFIG_PROPERTY_DEFAULT)),
-				LogManager.getLoggerRepository());
+		new CoalaLog4jPropertyConfigurator().doConfigure(
+				loadProperties( System.getProperty( CONFIG_PROPERTY_KEY,
+						CONFIG_PROPERTY_DEFAULT ) ),
+				LogManager.getLoggerRepository() );
 	}
 
 	/**
 	 * @param file the properties file location in the classpath
 	 * @return the properties loaded from specified location
 	 */
-	public static Properties loadProperties(final String file)
+	public static Properties loadProperties( final String file )
 	{
 
 		final Properties result = new Properties();
@@ -93,76 +97,83 @@ public class LogUtil implements Util
 		InputStream is = null;
 		try
 		{
-			is = FileUtil.getFileAsInputStream(file);
-			result.load(is);
-		} catch (final Exception e)
+			is = FileUtil.getFileAsInputStream( file );
+			result.load( is );
+		} catch( final Exception e )
 		{
-			System.err.println("Problem loading properties from file: " + file);
+			System.err
+					.println( "Problem loading properties from file: " + file );
 			e.printStackTrace();
 		} finally
 		{
-			if (is != null)
-				try
-				{
-					is.close();
-				} catch (final IOException e)
-				{
-					System.err.println("Problem closing properties file: "
-							+ file);
-					e.printStackTrace();
-				}
+			if( is != null ) try
+			{
+				is.close();
+			} catch( final IOException e )
+			{
+				System.err
+						.println( "Problem closing properties file: " + file );
+				e.printStackTrace();
+			}
 		}
 		return result;
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.log4j.Logger} instance for specified {@code clazz}
+	 * @return the {@link org.apache.log4j.Logger} instance for specified
+	 *         {@code clazz}
 	 */
-	public static org.apache.log4j.Logger getLogger(final Class<?> clz)
+	public static org.apache.log4j.Logger getLogger( final Class<?> clz )
 	{
-		return getLogger(clz, clz);
+		return getLogger( clz, clz );
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.log4j.Logger} instance for specified {@code clazz}
+	 * @return the {@link org.apache.log4j.Logger} instance for specified
+	 *         {@code clazz}
 	 */
-	public static org.apache.log4j.Logger getLogger(final Class<?> clz, final Object source)
+	public static org.apache.log4j.Logger getLogger( final Class<?> clz,
+		final Object source )
 	{
-		return getLogger(clz.getName(), source);
+		return getLogger( clz.getName(), source );
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.log4j.Logger} instance for specified {@code clazz}
+	 * @return the {@link org.apache.log4j.Logger} instance for specified
+	 *         {@code clazz}
 	 */
-	public static org.apache.log4j.Logger getLogger(final String name, final Object source)
+	public static org.apache.log4j.Logger getLogger( final String name,
+		final Object source )
 	{
 		// TODO use wrapper: intercept #forceLog() calls to add stack trace info
 
-		if (source == null)
+		if( source == null )
 		{
-			new NullPointerException("Using root logger").printStackTrace();
+			new NullPointerException( "Using root logger" ).printStackTrace();
 			return org.apache.log4j.Logger.getRootLogger();
 		}
 
-		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository()).getLogger(name,
-				source);
+		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
+				.getLogger( name, source );
 	}
 
 	/**
-	 * this method is preferred over {@link org.apache.log4j.Logger#getLogger} so as to
-	 * initialize the Log$j system correctly via this {@link LogUtil} class
+	 * this method is preferred over {@link org.apache.log4j.Logger#getLogger}
+	 * so as to initialize the Log$j system correctly via this {@link LogUtil}
+	 * class
 	 * 
 	 * @param name
 	 * @return
 	 */
-	public static org.apache.log4j.Logger getLogger(final String name)
+	public static org.apache.log4j.Logger getLogger( final String name )
 	{
-		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository()).getLogger(name);
+		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
+				.getLogger( name );
 	}
-	
+
 //	public static org.apache.logging.log4j.Logger getLogger2(final Class<?> type)
 //	{
 //		return org.apache.logging.log4j.LogManager.getLogger(type);
@@ -173,22 +184,22 @@ public class LogUtil implements Util
 	 * @return the {@link java.util.logging.Logger} instance for specified
 	 *         {@code clazz}
 	 */
-	public static java.util.logging.Logger getJavaLogger(final Class<?> clazz)
+	public static java.util.logging.Logger getJavaLogger( final Class<?> clazz )
 	{
-		return getJavaLogger(clazz.getName());
+		return getJavaLogger( clazz.getName() );
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
 	 * @param level the level up to which messages should be logged, if allowed
-	 *        by the bound (e.g. root) logger's settings
+	 *            by the bound (e.g. root) logger's settings
 	 * @return the {@link java.util.logging.Logger} instance for specified
 	 *         {@code clazz}
 	 */
-	public static java.util.logging.Logger getJavaLogger(final Class<?> clazz,
-			final java.util.logging.Level level)
+	public static java.util.logging.Logger getJavaLogger( final Class<?> clazz,
+		final java.util.logging.Level level )
 	{
-		return getJavaLogger(clazz.getName(), level);
+		return getJavaLogger( clazz.getName(), level );
 	}
 
 	/**
@@ -196,24 +207,25 @@ public class LogUtil implements Util
 	 * @return the {@link java.util.logging.Logger} instance for specified
 	 *         {@code name}
 	 */
-	public static java.util.logging.Logger getJavaLogger(final String name)
+	public static java.util.logging.Logger getJavaLogger( final String name )
 	{
-		return getJavaLogger(name, java.util.logging.Level.ALL);
+		return getJavaLogger( name,
+				java.util.logging.Logger.getGlobal().getLevel() );
 	}
 
 	/**
 	 * @param name the logger's name
 	 * @param level the level up to which messages should be logged, if allowed
-	 *        by the bound (e.g. root) logger's settings
+	 *            by the bound (e.g. root) logger's settings
 	 * @return the {@link java.util.logging.Logger} instance for specified
 	 *         {@code name}
 	 */
-	public static java.util.logging.Logger getJavaLogger(final String name,
-			final java.util.logging.Level level)
+	public static java.util.logging.Logger getJavaLogger( final String name,
+		final java.util.logging.Level level )
 	{
 		final java.util.logging.Logger result = java.util.logging.Logger
-				.getLogger(name);
-		result.setLevel(level);
+				.getLogger( name );
+		result.setLevel( level );
 		return result;
 	}
 }

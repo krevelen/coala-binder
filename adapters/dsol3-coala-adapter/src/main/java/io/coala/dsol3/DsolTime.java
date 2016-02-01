@@ -25,13 +25,20 @@ import javax.inject.Provider;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
+import javax.naming.NamingException;
+
+import org.apache.log4j.Logger;
 
 import io.coala.exception.x.ExceptionBuilder;
 import io.coala.json.x.Wrapper;
+import io.coala.log.LogUtil;
 import io.coala.time.x.Instant;
 import io.coala.time.x.TimeSpan;
+import nl.tudelft.simulation.dsol.ModelInterface;
+import nl.tudelft.simulation.dsol.experiment.Replication;
 import nl.tudelft.simulation.dsol.simtime.SimTime;
 import nl.tudelft.simulation.dsol.simtime.TimeUnit;
+import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 
 /**
  * {@link DsolTime} extends a DSOL {@link SimTime} to become a {@link Wrapper}
@@ -46,14 +53,8 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	implements Wrapper<BigDecimal>
 {
 
-	/** the ZERO constant */
-	public static final DsolTime ZERO = valueOf( 0d );
-
-	/** the DEFAULT_UNIT - TODO read from config */
-	public static final TimeUnit DEFAULT_UNIT = TimeUnit.DAY;
-
-	private static final Unit<?> DEFAULT_QUANTITY_UNIT = resolve(
-			DEFAULT_UNIT );
+	/** */
+	private static final Logger LOG = LogUtil.getLogger( DsolTime.class );
 
 	/** the DEFAULT_PROVIDER constant - TODO read from config */
 	public static final Provider<DsolTime> DEFAULT_PROVIDER = new Provider<DsolTime>()
@@ -64,6 +65,15 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 			return new DsolTime();
 		}
 	};
+
+	/** the ZERO constant */
+	public static final DsolTime ZERO = valueOf( 0d );
+
+	/** the DEFAULT_UNIT - TODO read from config */
+	public static final TimeUnit DEFAULT_UNIT = TimeUnit.DAY;
+
+	private static final Unit<?> DEFAULT_QUANTITY_UNIT = resolve(
+			DEFAULT_UNIT );
 
 	public static Unit<?> resolve( final TimeUnit unit )
 	{
@@ -96,7 +106,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	 * @return
 	 */
 	public static DsolTime
-		valueOf( @SuppressWarnings( "rawtypes" ) final SimTime time)
+		valueOf( @SuppressWarnings( "rawtypes" ) final SimTime time )
 	{
 		try
 		{
@@ -199,8 +209,13 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	@Override
 	public void add( final BigDecimal relativeTime )
 	{
-		throw ExceptionBuilder.unchecked( "Please use thread-safe add(..)" )
-				.build();
+		LOG.warn( "Please use thread-safe plus(..)" );
+		wrap(unwrap().add( relativeTime ));
+	}
+
+	public DsolTime plus( final DsolTime relativeTime )
+	{
+		return copy().plus( relativeTime.unwrap() );
 	}
 
 	/**
@@ -210,24 +225,19 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	@Override
 	public void subtract( final BigDecimal relativeTime )
 	{
-		throw ExceptionBuilder.unchecked( "Please use thread-safe minus(..)" )
-				.build();
+		LOG.warn( "Please use thread-safe minus(..)" );
+		wrap(unwrap().subtract( relativeTime ));
+	}
+
+	public DsolTime subtract( final DsolTime relativeTime )
+	{
+		return copy().minus( relativeTime.unwrap() );
 	}
 
 	@Override
 	public BigDecimal minus( final DsolTime absoluteTime )
 	{
 		return unwrap().subtract( absoluteTime.unwrap() );
-	}
-
-	public DsolTime subtract( final DsolTime relativeTime )
-	{
-		return minus( relativeTime.unwrap() );
-	}
-
-	public DsolTime add( final DsolTime relativeTime )
-	{
-		return plus( relativeTime.unwrap() );
 	}
 
 	@Override
@@ -253,5 +263,113 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	{
 		return zero();
 	}
+
+	/**
+	 * @return a {@link DEVSSimulator} scheduler for {@link DsolTime} amounts
+	 */
+	public static DEVSSimulator<BigDecimal, BigDecimal, DsolTime>
+		createDEVSSimulator()
+	{
+		return new DEVSSimulator<BigDecimal, BigDecimal, DsolTime>();
+	}
+
+	/**
+	 * constructs a stand-alone {@link Replication} along with a
+	 * {@link Treatment} and {@link Experiment}.
+	 * 
+	 * @param id the id of the replication.
+	 * @param startTime the start time as a time object.
+	 * @param warmupPeriod the warmup period, included in the runlength (!)
+	 * @param runLength the total length of the run, including the warm-up
+	 *            period.
+	 * @param model the model for which this is the replication
+	 * @throws NamingException in case a context for the replication cannot be
+	 *             created
+	 */
+	public static Replication<BigDecimal, BigDecimal, DsolTime>
+		createReplication( final String id, final DsolTime startTime,
+			final BigDecimal warmupPeriod, final BigDecimal runLength,
+			final ModelInterface<BigDecimal, BigDecimal, DsolTime> model )
+				throws NamingException
+	{
+		return new Replication<BigDecimal, BigDecimal, DsolTime>( id, startTime,
+				warmupPeriod, runLength, model );
+	}
+
+//	public static class DsolReplication
+//		extends Replication<BigDecimal, BigDecimal, DsolTime>
+//	{
+//		public DsolReplication( final DsolExperiment experiment )
+//			throws NamingException
+//		{
+//			super( experiment );
+//		}
+//
+//		protected DsolReplication( final String id, final DsolTime startTime,
+//			final BigDecimal warmupPeriod, final BigDecimal runLength,
+//			final ModelInterface<BigDecimal, BigDecimal, DsolTime> model )
+//				throws NamingException
+//		{
+//			super( id, startTime, warmupPeriod, runLength, model );
+//		}
+//	}
+
+//	public static class DsolTreatment
+//		extends Treatment<BigDecimal, BigDecimal, DsolTime>
+//	{
+//		/**
+//		 * constructs a {@link DsolTreatment}
+//		 * 
+//		 * @param experiment reflects the experiment
+//		 * @param id an id to recognize the treatment
+//		 * @param startTime the absolute start time of a run (can be zero)
+//		 * @param warmupPeriod the relative warm-up time of a run (can be zero),
+//		 *            <i>included</i> in the runLength
+//		 * @param runLength the run length of a run (relative to the start time)
+//		 * @param replicationMode the replication mode of this treatment
+//		 */
+//		public DsolTreatment( final DsolExperiment experiment, final String id,
+//			final DsolTime startTime, final BigDecimal warmupPeriod,
+//			final BigDecimal runLength, final ReplicationMode replicationMode )
+//		{
+//			super( experiment, id, startTime, warmupPeriod, runLength,
+//					replicationMode );
+//		}
+//
+//		/**
+//		 * constructs a {@link DsolTreatment}
+//		 * 
+//		 * @param experiment reflects the experiment
+//		 * @param id an id to recognize the treatment
+//		 * @param startTime the absolute start time of a run (can be zero)
+//		 * @param warmupPeriod the relative warm-up time of a run (can be zero),
+//		 *            <i>included</i> in the runLength
+//		 * @param runLength the run length of a run (relative to the start time)
+//		 */
+//		public DsolTreatment( final DsolExperiment experiment, final String id,
+//			final DsolTime startTime, final BigDecimal warmupPeriod,
+//			final BigDecimal runLength )
+//		{
+//			super( experiment, id, startTime, warmupPeriod, runLength );
+//		}
+//	}
+
+//	public static class DsolExperiment
+//		extends Experiment<BigDecimal, BigDecimal, DsolTime>
+//	{
+//
+//		/**
+//		 * constructs a new {@link DsolExperiment}
+//		 * 
+//		 * @param treatment the treatment for this experiment
+//		 * @param simulator the simulator
+//		 * @param model the model to experiment with
+//		 */
+//		public DsolExperiment( final DsolTreatment treatment,
+//			final DsolDEVSSimulator simulator, final DsolModel model )
+//		{
+//			super( treatment, simulator, model );
+//		}
+//	}
 
 }
