@@ -58,9 +58,8 @@ import io.coala.util.TypeUtil;
  * {@link Wrapper} is a tag for decorator types that are (or should be)
  * automatically un/wrapped upon JSON de/serialization
  * 
- * @date $Date$
  * @version $Id$
- * @author <a href="mailto:rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 // @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include =
 // JsonTypeInfo.As.PROPERTY, property = "@class")
@@ -92,9 +91,8 @@ public interface Wrapper<T>
 	 * values must be deserialized as custom defined {@code MyNumber} instances
 	 * (which also extend the default {@link Number} value type)
 	 * 
-	 * @date $Date$
 	 * @version $Id$
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
+	 * @author Rick van Krevelen
 	 */
 	@Documented
 	@Retention( RetentionPolicy.RUNTIME )
@@ -145,12 +143,10 @@ public interface Wrapper<T>
 	 * {@link Simple} implements a {@link Wrapper} with some basic redirection
 	 * to the wrapped {@link Object}'s {@link #hashCode()},
 	 * {@link #equals(Object)}, and {@link #toString()} methods
-	 * 
-	 * @date $Date$
-	 * @version $Id$
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 *
 	 * @param <T> the type of wrapped objects
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	class Simple<T> implements Wrapper<T>
 	{
@@ -195,31 +191,28 @@ public interface Wrapper<T>
 	 * {@link SimpleComparable} extends the {@link Simple} implementation with
 	 * redirection for wrapped {@link Comparable} object's
 	 * {@link #compareTo(Object)} method
-	 * 
-	 * @date $Date$
-	 * @version $Id$
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
 	 * @param <THIS> the concrete type of {@link SimpleComparable} wrapper
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
-	@SuppressWarnings( {"rawtypes","unchecked"} )
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	class SimpleComparable<T extends Comparable> extends Simple<T>
 		implements Comparable<SimpleComparable<T>>
 	{
 		@Override
 		public int compareTo( final SimpleComparable o )
 		{
-			return unwrap().compareTo( (T)o.unwrap() );
+			return unwrap().compareTo( (T) o.unwrap() );
 		}
 	}
 
 	/**
 	 * {@link Util}
 	 * 
-	 * @date $Date$
 	 * @version $Id$
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
+	 * @author Rick van Krevelen
 	 */
 	class Util
 	{
@@ -240,11 +233,13 @@ public interface Wrapper<T>
 		 * @param om the {@link ObjectMapper} to register with
 		 * @param type the {@link Wrapper} sub-type to register
 		 */
-		public static <S, T extends Wrapper<S>> void registerType( final ObjectMapper om, final Class<T> type )
+		public static <S, T extends Wrapper<S>> void
+			registerType( final ObjectMapper om, final Class<T> type )
 		{
 			// LOG.trace("Resolving value type arg for: " + type.getName());
 			@SuppressWarnings( "unchecked" )
-			final Class<S> valueType = (Class<S>) TypeUtil.getTypeArguments( Wrapper.class, type ).get( 0 );
+			final Class<S> valueType = (Class<S>) TypeUtil
+					.getTypeArguments( Wrapper.class, type ).get( 0 );
 			// LOG.trace("Resolved value type arg: " + valueType);
 			registerType( om, type, valueType );
 		}
@@ -254,11 +249,15 @@ public interface Wrapper<T>
 		 * @param type the {@link Wrapper} sub-type to register
 		 * @param valueType the wrapped type to de/serialize
 		 */
-		public static <S, T extends Wrapper<S>> void registerType( final ObjectMapper om, final Class<T> type,
+		public static <S, T extends Wrapper<S>> void registerType(
+			final ObjectMapper om, final Class<T> type,
 			final Class<S> valueType )
 		{
-			om.registerModule( new SimpleModule().addSerializer( type, createJsonSerializer( type, valueType ) )
-					.addDeserializer( type, createJsonDeserializer( type, valueType ) ) );
+			om.registerModule( new SimpleModule()
+					.addSerializer( type,
+							createJsonSerializer( type, valueType ) )
+					.addDeserializer( type,
+							createJsonDeserializer( type, valueType ) ) );
 		}
 
 		/**
@@ -266,21 +265,26 @@ public interface Wrapper<T>
 		 * @param valueType the wrapped type to serialize
 		 * @return the {@link JsonSerializer}
 		 */
-		public static final <S, T extends Wrapper<S>> JsonSerializer<T> createJsonSerializer( final Class<T> type,
-			final Class<S> valueType )
+		public static final <S, T extends Wrapper<S>> JsonSerializer<T>
+			createJsonSerializer( final Class<T> type,
+				final Class<S> valueType )
 		{
 			return new JsonSerializer<T>()
 			{
 				@Override
-				public void serialize( final T value, final JsonGenerator jgen, final SerializerProvider serializers )
-					throws IOException, JsonProcessingException
+				public void serialize( final T value, final JsonGenerator jgen,
+					final SerializerProvider serializers )
+						throws IOException, JsonProcessingException
 				{
-					serializers.findValueSerializer( valueType, null ).serialize( value.unwrap(), jgen, serializers );
+					serializers.findValueSerializer( valueType, null )
+							.serialize( value.unwrap(), jgen, serializers );
 				}
 
 				@Override
-				public void serializeWithType( final T value, final JsonGenerator jgen,
-					final SerializerProvider serializers, final TypeSerializer typeSer ) throws IOException
+				public void serializeWithType( final T value,
+					final JsonGenerator jgen,
+					final SerializerProvider serializers,
+					final TypeSerializer typeSer ) throws IOException
 				{
 					Class<?> clz = handledType();
 					if( clz == null ) clz = value.getClass();
@@ -296,23 +300,28 @@ public interface Wrapper<T>
 		 * @param valueType the wrapped type to deserialize
 		 * @return the {@link JsonDeserializer}
 		 */
-		public static final <S, T extends Wrapper<S>> JsonDeserializer<T> createJsonDeserializer( final Class<T> type,
-			final Class<S> valueType )
+		public static final <S, T extends Wrapper<S>> JsonDeserializer<T>
+			createJsonDeserializer( final Class<T> type,
+				final Class<S> valueType )
 		{
 			return new JsonDeserializer<T>()
 			{
-				private final Provider<T> provider = TypeUtil.createBeanProvider( type );
+				private final Provider<T> provider = TypeUtil
+						.createBeanProvider( type );
 
 				@Override
-				public T deserialize( final JsonParser jp, final DeserializationContext ctxt )
-					throws IOException, JsonProcessingException
+				public T deserialize( final JsonParser jp,
+					final DeserializationContext ctxt )
+						throws IOException, JsonProcessingException
 				{
-					if( jp.getText() == null || jp.getText().length() == 0 || jp.getText().equals( "null" ) )
+					if( jp.getText() == null || jp.getText().length() == 0
+							|| jp.getText().equals( "null" ) )
 						return null;
 
 					// LOG.trace("parsing " + jp.getText() + " as "
 					// + type.getName());
-					final Polymorphic annot = type.getAnnotation( Polymorphic.class );
+					final Polymorphic annot = type
+							.getAnnotation( Polymorphic.class );
 
 					final S value; // = jp.readValueAs(valueType)
 
@@ -320,8 +329,8 @@ public interface Wrapper<T>
 						value = jp.readValueAs( valueType );
 					else
 					{
-						final Class<? extends S> valueSubtype = resolveAnnotType( annot, valueType,
-								jp.getCurrentToken() );
+						final Class<? extends S> valueSubtype = resolveAnnotType(
+								annot, valueType, jp.getCurrentToken() );
 						// LOG.trace("parsing " + jp.getCurrentToken() + " ("
 						// + jp.getText() + ") as "
 						// + valueSubtype.getName());
@@ -368,9 +377,10 @@ public interface Wrapper<T>
 			 */
 
 			// FIXME use Jackson to determine concrete @class
-			return (T) JsonUtil.valueOf( json, new TypeReference<Wrapper.Simple<String>>()
-			{
-			} );
+			return (T) JsonUtil.valueOf( json,
+					new TypeReference<Wrapper.Simple<String>>()
+					{
+					} );
 		}
 
 		/**
@@ -378,7 +388,8 @@ public interface Wrapper<T>
 		 * @param type the type of {@link Wrapper} to generate
 		 * @return the deserialized {@link Wrapper} sub-type
 		 */
-		public static <S, T extends Wrapper<S>> T valueOf( final String json, final Class<T> type )
+		public static <S, T extends Wrapper<S>> T valueOf( final String json,
+			final Class<T> type )
 		{
 			return valueOf( json, TypeUtil.createBeanProvider( type ) );
 		}
@@ -388,7 +399,8 @@ public interface Wrapper<T>
 		 * @param provider a {@link Provider} of (empty) wrapper instances
 		 * @return the deserialized {@link Wrapper} sub-type
 		 */
-		public static <S, T extends Wrapper<S>> T valueOf( final String json, final Provider<T> provider )
+		public static <S, T extends Wrapper<S>> T valueOf( final String json,
+			final Provider<T> provider )
 		{
 			return valueOf( json, provider.get() );
 		}
@@ -399,30 +411,37 @@ public interface Wrapper<T>
 		 * @return the deserialized {@link Wrapper} sub-type
 		 */
 		@SuppressWarnings( "unchecked" )
-		public static <S, T extends Wrapper<S>> T valueOf( final String json, final T result )
+		public static <S, T extends Wrapper<S>> T valueOf( final String json,
+			final T result )
 		{
 			try
 			{
 				final Class<S> valueType = (Class<S>) TypeUtil
-						.getTypeArguments( Wrapper.class, result.getClass(), Wrapper.Util.WRAPPER_TYPE_ARGUMENT_CACHE )
+						.getTypeArguments( Wrapper.class, result.getClass(),
+								Wrapper.Util.WRAPPER_TYPE_ARGUMENT_CACHE )
 						.get( 0 );
 
-				final Polymorphic annot = result.getClass().getAnnotation( Polymorphic.class );
+				final Polymorphic annot = result.getClass()
+						.getAnnotation( Polymorphic.class );
 
 				final S value;
 
 				if( annot == null )
-					value = valueType == String.class ? (S) json : JsonUtil.valueOf( json, valueType );
+					value = valueType == String.class ? (S) json
+							: JsonUtil.valueOf( json, valueType );
 				else
 				{
 					final JsonNode tree = JsonUtil.toTree( json );
-					final Class<? extends S> annotType = resolveAnnotType( annot, valueType, tree.getNodeType() );
+					final Class<? extends S> annotType = resolveAnnotType(
+							annot, valueType, tree.getNodeType() );
 					value = JsonUtil.valueOf( json, annotType );
 				}
 				return valueOf( value, result );
 			} catch( final Throwable e )
 			{
-				throw ExceptionBuilder.unchecked( "Problem reading value: " + json, e ).build();
+				throw ExceptionBuilder
+						.unchecked( "Problem reading value: " + json, e )
+						.build();
 			}
 		}
 
@@ -431,7 +450,8 @@ public interface Wrapper<T>
 		 * @param result a {@link Wrapper} to (re)use
 		 * @return the deserialized {@link Wrapper} sub-type
 		 */
-		public static <S, T extends Wrapper<S>> T valueOf( final S value, final T result )
+		public static <S, T extends Wrapper<S>> T valueOf( final S value,
+			final T result )
 		{
 			result.wrap( value );
 			return result;
@@ -443,8 +463,9 @@ public interface Wrapper<T>
 		 * @param jsonToken the {@link JsonToken} being parsed
 		 * @return the corresponding {@link Wrapper} sub-type to generate
 		 */
-		public static <S, T extends Wrapper<S>> Class<? extends S> resolveAnnotType( final Polymorphic annot,
-			final Class<S> valueType, final JsonToken jsonToken )
+		public static <S, T extends Wrapper<S>> Class<? extends S>
+			resolveAnnotType( final Polymorphic annot, final Class<S> valueType,
+				final JsonToken jsonToken )
 		{
 			final Class<?> result;
 			switch( jsonToken )
@@ -468,12 +489,15 @@ public interface Wrapper<T>
 				return valueType;
 			}
 
-			if( result == null || result == Polymorphic.Empty.class ) return valueType;
+			if( result == null || result == Polymorphic.Empty.class )
+				return valueType;
 
 			if( !valueType.isAssignableFrom( result ) )
 			{
-				LOG.warn( Polymorphic.class.getSimpleName() + " annotation contains illegal value: " + result.getName()
-						+ " does not extend/implement " + valueType.getName() );
+				LOG.warn( Polymorphic.class.getSimpleName()
+						+ " annotation contains illegal value: "
+						+ result.getName() + " does not extend/implement "
+						+ valueType.getName() );
 				return valueType;
 			}
 
@@ -486,8 +510,9 @@ public interface Wrapper<T>
 		 * @param jsonNodeType the {@link JsonNodeType} being parsed
 		 * @return the corresponding {@link Wrapper} sub-type to generate
 		 */
-		public static <S, T extends Wrapper<S>> Class<? extends S> resolveAnnotType( final Polymorphic annot,
-			final Class<S> valueType, final JsonNodeType jsonNodeType )
+		public static <S, T extends Wrapper<S>> Class<? extends S>
+			resolveAnnotType( final Polymorphic annot, final Class<S> valueType,
+				final JsonNodeType jsonNodeType )
 		{
 			final Class<?> result;
 			switch( jsonNodeType )
@@ -511,12 +536,15 @@ public interface Wrapper<T>
 				return valueType;
 			}
 
-			if( result == null || result == Polymorphic.Empty.class ) return valueType;
+			if( result == null || result == Polymorphic.Empty.class )
+				return valueType;
 
 			if( !valueType.isAssignableFrom( result ) )
 			{
-				LOG.warn( Polymorphic.class.getSimpleName() + " annotation contains illegal value: " + result.getName()
-						+ " does not extend/implement " + valueType.getName() );
+				LOG.warn( Polymorphic.class.getSimpleName()
+						+ " annotation contains illegal value: "
+						+ result.getName() + " does not extend/implement "
+						+ valueType.getName() );
 				return valueType;
 			}
 
