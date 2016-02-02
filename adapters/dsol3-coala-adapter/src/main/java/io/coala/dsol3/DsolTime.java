@@ -270,7 +270,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	 * @return a {@link DEVSSimulator} scheduler for {@link DsolTime} amounts
 	 */
 	public static DEVSSimulator<BigDecimal, BigDecimal, DsolTime>
-		createDEVSSimulator()
+		createDEVSSimulator( final String threadName )
 	{
 		return new DEVSSimulator<BigDecimal, BigDecimal, DsolTime>();
 	}
