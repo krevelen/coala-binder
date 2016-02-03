@@ -42,7 +42,7 @@ import nl.tudelft.simulation.dsol.simtime.SimTime;
 public class DsolSimEvent extends Wrapper.SimpleComparable<DsolSimEvent.ID>
 	implements SimEventInterface<DsolTime>
 {
-	public static class ID extends Id<UUID>
+	public static class ID extends Id.Ordinal<UUID>
 	{
 		protected ID()
 		{

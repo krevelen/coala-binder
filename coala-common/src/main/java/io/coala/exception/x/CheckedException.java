@@ -132,7 +132,7 @@ public class CheckedException extends Exception implements Contextualized
 			final CheckedException ex = this.cause == null ? new CheckedException(
 					this.context, this.message) : new CheckedException(
 					this.context, this.message, this.cause);
-			return Publisher.toPublished(ex);
+			return ThrowablePublisher.toPublished(ex);
 		}
 
 	}

@@ -140,7 +140,7 @@ public class UncheckedException extends RuntimeException implements
 			final UncheckedException ex = this.cause == null ? new UncheckedException(
 					this.context, this.message) : new UncheckedException(
 					this.context, this.message, this.cause);
-			return Publisher.toPublished(ex);
+			return ThrowablePublisher.toPublished(ex);
 		}
 
 	}

@@ -40,7 +40,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @version $Id$
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+@JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+	property = "@class" )
 public interface Contextualized extends Comparable<Contextualized>
 {
 	/** @see Throwable#initCause(Throwable) */
@@ -76,7 +77,7 @@ public interface Contextualized extends Comparable<Contextualized>
 	/** @return the {@link ExceptionContext} */
 	ExceptionContext getContext();
 
-	/** @return the {@link UUID} */
+	/** @return the {@link UUID} used for ordering by timestamp */
 	UUID getUuid();
 
 	// context (application id, error code, ...)
@@ -99,54 +100,41 @@ public interface Contextualized extends Comparable<Contextualized>
 	Comparator<Contextualized> COMPARATOR = new Comparator<Contextualized>()
 	{
 		@Override
-		public int compare(final Contextualized o1, final Contextualized o2)
+		public int compare( final Contextualized o1, final Contextualized o2 )
 		{
-			if (o1.getUuid().getClockSeqAndNode() != o2.getUuid()
-					.getClockSeqAndNode())
+			if( o1.getUuid().getClockSeqAndNode() != o2.getUuid()
+					.getClockSeqAndNode() )
 				throw new IllegalArgumentException(
-						"Can't compare UUIDs generated at different nodes/clocks");
-			return Long.compare(o1.getUuid().getTime(), o2.getUuid().getTime());
+						"Can't compare UUIDs generated at different nodes/clocks" );
+			return Long.compare( o1.getUuid().getTime(),
+					o2.getUuid().getTime() );
 		}
 	};
 
 	/**
-	 * {@link Publisher} wraps a {@link Subject} for {@link Contextualized}
-	 * {@link Throwable}s via static {@link #toPublished(Throwable)} and
-	 * {@link #asObservable()} methods.
+	 * {@link ThrowablePublisher} wraps a {@link Subject} for
+	 * {@link Contextualized} {@link Throwable}s via static
+	 * {@link #toPublished(Throwable)} and {@link #asObservable()} methods.
 	 * 
 	 * @date $Date$
 	 * @version $Id$
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
-	class Publisher<T extends Throwable & Contextualized>
+	class ThrowablePublisher<T extends Throwable & Contextualized>
 	{
 
 		/** */
-		// private final Scheduler scheduler =
-		// Schedulers.newThread();
-
-		/** */
-		private final Subject<T, T> subject = PublishSubject.create();
-
-		/**
-		 * {@link ExceptionFactory} zero-arg singleton constructor
-		 */
-		private Publisher()
-		{
-		}
-
-		/** */
-		private static Publisher<?> INSTANCE = null;
+		private static volatile ThrowablePublisher<?> INSTANCE = null;
 
 		/**
 		 * @return the singleton instance
 		 */
-		@SuppressWarnings("unchecked")
-		public static <T extends Throwable & Contextualized> Publisher<T> getInstance()
+		@SuppressWarnings( "unchecked" )
+		public static <T extends Throwable & Contextualized>
+			ThrowablePublisher<T> getInstance()
 		{
-			if (INSTANCE == null)
-				INSTANCE = new Publisher<T>();
-			return (Publisher<T>) INSTANCE;
+			if( INSTANCE == null ) INSTANCE = new ThrowablePublisher<T>();
+			return (ThrowablePublisher<T>) INSTANCE;
 		}
 
 		/**
@@ -155,17 +143,10 @@ public interface Contextualized extends Comparable<Contextualized>
 		 * @param e the {@link Contextualized} {@link Throwable} to publish
 		 * @return the same {@link Contextualized} to allow chaining
 		 */
-		public static <T extends Throwable & Contextualized> T toPublished(
-				final T e)
+		public static <T extends Throwable & Contextualized> T
+			toPublished( final T e )
 		{
-			// getInstance().scheduler.createWorker().schedule(new Action0()
-			// {
-			// @Override
-			// public void call()
-			// {
-			getInstance().subject.onNext(e);
-			// }
-			// });
+			getInstance().subject.onNext( e );
 			return e;
 		}
 
@@ -173,10 +154,28 @@ public interface Contextualized extends Comparable<Contextualized>
 		 * @return an {@link Observable} of {@link Contextualized}
 		 *         {@link Throwable}s
 		 */
-		@SuppressWarnings("unchecked")
-		public static <T extends Throwable & Contextualized> Observable<T> asObservable()
+		public static Observable<? extends Throwable> asObservable()
 		{
-			return (Observable<T>) getInstance().subject.asObservable();
+			return getInstance().subject.asObservable();
+		}
+
+		/** */
+		private final Subject<T, T> subject = PublishSubject.create();
+
+		/**
+		 * {@link ThrowablePublisher} singleton constructor
+		 */
+		private ThrowablePublisher()
+		{
+			Runtime.getRuntime().addShutdownHook( new Thread()
+			{
+				@Override
+				public void run()
+				{
+					setName( ThrowablePublisher.class.getSimpleName() );
+					subject.onCompleted();
+				}
+			} );
 		}
 
 	}

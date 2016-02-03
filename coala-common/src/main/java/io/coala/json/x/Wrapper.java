@@ -1,7 +1,4 @@
 /* $Id$
- * $URL$
- * 
- * Part of the EU project Inertia, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.json.x;
 
@@ -26,6 +21,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -35,6 +31,9 @@ import javax.inject.Provider;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -61,10 +60,12 @@ import io.coala.util.TypeUtil;
  * @version $Id$
  * @author Rick van Krevelen
  */
-// @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include =
-// JsonTypeInfo.As.PROPERTY, property = "@class")
-// @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include =
-// JsonTypeInfo.As.WRAPPER_OBJECT, defaultImpl = Wrapper.Simple.class)
+@JsonInclude( Include.NON_NULL )
+@JsonTypeInfo(
+// include = JsonTypeInfo.As.WRAPPER_OBJECT, 
+// defaultImpl = Wrapper.Simple.class
+	use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+	property = "@class" )
 public interface Wrapper<T>
 {
 
@@ -80,7 +81,7 @@ public interface Wrapper<T>
 
 	/**
 	 * {@linkplain Polymorphic} indicates that a certain {@linkplain Wrapper}
-	 * -subtype can be deserialized (using alternate subtypes of the default
+	 * sub-type can be deserialized (using alternate sub-types of the default
 	 * wrapped value type, applying respective {@linkplain JsonSerializer}s and
 	 * {@linkplain JsonDeserializer}s) from various JSON value types (number,
 	 * string, object, or boolean).
@@ -288,9 +289,17 @@ public interface Wrapper<T>
 				{
 					Class<?> clz = handledType();
 					if( clz == null ) clz = value.getClass();
-					typeSer.writeTypePrefixForScalar( this, jgen, clz );
-					serialize( value, jgen, serializers );
-					typeSer.writeTypeSuffixForScalar( this, jgen );
+//					if( value.unwrap() instanceof String )
+					serializers
+							.findValueSerializer( value.unwrap().getClass(),
+									null )
+							.serialize( value.unwrap(), jgen, serializers );
+//					else
+//					{
+//						typeSer.writeTypePrefixForScalar( this, jgen, clz );
+//						serialize( value, jgen, serializers );
+//						typeSer.writeTypeSuffixForScalar( this, jgen );
+//					}
 				}
 			};
 		}
@@ -376,7 +385,7 @@ public interface Wrapper<T>
 			 * "Problem determining return type for this method", e) .build(); }
 			 */
 
-			// FIXME use Jackson to determine concrete @class
+			// FIXME use Jackson to determine actual concrete @class
 			return (T) JsonUtil.valueOf( json,
 					new TypeReference<Wrapper.Simple<String>>()
 					{
@@ -455,6 +464,29 @@ public interface Wrapper<T>
 		{
 			result.wrap( value );
 			return result;
+		}
+
+		/**
+		 * In this implementation, {@code null} comes before non-{@code null},
+		 * otherwise same as {@link Comparator#compare(Object, Object)}
+		 * 
+		 * @param o1 the one
+		 * @param o2 the other
+		 * @return the order direction (<0, 0, or >0)
+		 * @see Comparator#compare(Object, Object)
+		 */
+		@SuppressWarnings( { "rawtypes", "unchecked" } )
+		public static int compare( final Comparable o1, final Comparable o2 )
+		{
+			if( o1 == null ) return o2 == null ? 0 : -1;
+			if( o2 == null ) return 1;
+			if( !(o1 instanceof Wrapper) ) return o2 instanceof Wrapper
+					? compare( o1, (Comparable) ((Wrapper) o2).unwrap() )
+					: o1.compareTo( o2 );
+			if( !(o2 instanceof Wrapper) )
+				return compare( (Comparable) ((Wrapper) o1).unwrap(), o2 );
+			return compare( (Comparable) ((Wrapper) o1).unwrap(),
+					(Comparable) ((Wrapper) o2).unwrap() );
 		}
 
 		/**

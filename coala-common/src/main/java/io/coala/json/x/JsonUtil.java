@@ -53,7 +53,7 @@ public class JsonUtil
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(JsonUtil.class);
+	private static final Logger LOG = LogUtil.getLogger( JsonUtil.class );
 
 	/** */
 	private static final ObjectMapper JOM = new ObjectMapper();
@@ -62,8 +62,8 @@ public class JsonUtil
 	private JsonUtil()
 	{
 		// singleton design pattern
-		LOG.trace("Using jackson v: " + JOM.version());
-		JOM.registerModule(new JodaModule());
+		LOG.trace( "Using jackson v: " + JOM.version() );
+		JOM.registerModule( new JodaModule() );
 	}
 
 	/** */
@@ -76,16 +76,19 @@ public class JsonUtil
 	 * @param object the object to serialize/marshal
 	 * @return the (minimal) JSON representation
 	 */
-	public static String stringify(final Object object)
+	public static String stringify( final Object object )
 	{
 		final ObjectMapper om = getJOM();
 		try
 		{
-			checkRegistered(om, object.getClass());
-			return om.writer().writeValueAsString(object);
-		} catch (final JsonProcessingException e)
+			checkRegistered( om, object.getClass() );
+			return om.writer().writeValueAsString( object );
+		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionBuilder.unchecked("Problem JSONifying", e).build();
+			throw ExceptionBuilder
+					.unchecked( e, "Problem JSONifying rawtype: %s",
+							object == null ? null : object.getClass() )
+					.build();
 		}
 	}
 
@@ -93,26 +96,26 @@ public class JsonUtil
 	 * @param object the object to serialize/marshal
 	 * @return the (pretty) JSON representation
 	 */
-	public static String toJSON(final Object object)
+	public static String toJSON( final Object object )
 	{
-		return toJSON(getJOM(), object);
+		return toJSON( getJOM(), object );
 	}
 
 	/**
 	 * @param object the object to serialize/marshal as (pretty) JSON
 	 * @return the (pretty) JSON representation
 	 */
-	public static String toJSON(final ObjectMapper om, final Object object)
+	public static String toJSON( final ObjectMapper om, final Object object )
 	{
 		try
 		{
 			return om
 					// .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 					.writer().withDefaultPrettyPrinter()
-					.writeValueAsString(object);
-		} catch (final JsonProcessingException e)
+					.writeValueAsString( object );
+		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionBuilder.unchecked("Problem JSONifying", e).build();
+			throw ExceptionBuilder.unchecked( "Problem JSONifying", e ).build();
 		}
 	}
 
@@ -120,18 +123,20 @@ public class JsonUtil
 	 * @param profile
 	 * @return
 	 */
-	public static JsonNode toTree(final Object object)
+	public static JsonNode toTree( final Object object )
 	{
 		final ObjectMapper om = getJOM();
 		try
 		{
 			// checkRegistered(om, object.getClass());
 			// return om.valueToTree(object);
-			return om.readTree(stringify(object));
-		} catch (final Exception e)
+			return om.readTree( stringify( object ) );
+		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked(e,
-					"Problem serializing " + object.getClass().getSimpleName())
+			throw ExceptionBuilder
+					.unchecked( e,
+							"Problem serializing "
+									+ object.getClass().getSimpleName() )
 					.build();
 		}
 	}
@@ -141,14 +146,14 @@ public class JsonUtil
 	 * @return the parsed/deserialized/unmarshalled {@link JsonNode} tree
 	 * @see ObjectMapper#readTree(InputStream)
 	 */
-	public static JsonNode toTree(final InputStream json)
+	public static JsonNode toTree( final InputStream json )
 	{
 		try
 		{
-			return json == null ? null : getJOM().readTree(json);
-		} catch (final Exception e)
+			return json == null ? null : getJOM().readTree( json );
+		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked("Problem unmarshalling", e)
+			throw ExceptionBuilder.unchecked( "Problem unmarshalling", e )
 					.build();
 		}
 	}
@@ -158,16 +163,17 @@ public class JsonUtil
 	 * @return the parsed/deserialized/unmarshalled {@link JsonNode} tree
 	 * @see ObjectMapper#readTree(String)
 	 */
-	public static JsonNode toTree(final String json)
+	public static JsonNode toTree( final String json )
 	{
 		try
 		{
-			return json == null || json.isEmpty() ? null : getJOM().readTree(
-					json);
-		} catch (final Exception e)
+			return json == null || json.isEmpty() ? null
+					: getJOM().readTree( json );
+		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked(
-					"Problem unmarshalling JSON: " + json, e).build();
+			throw ExceptionBuilder
+					.unchecked( "Problem unmarshalling JSON: " + json, e )
+					.build();
 		}
 	}
 
@@ -176,19 +182,19 @@ public class JsonUtil
 	 * @param resultType the type of result {@link Object}
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
-	public static <T> T valueOf(final InputStream json,
-			final Class<T> resultType, final Properties... imports)
+	public static <T> T valueOf( final InputStream json,
+		final Class<T> resultType, final Properties... imports )
 	{
 		try
 		{
 			final ObjectMapper om = getJOM();
-			return json == null ? null : (T) om.readValue(json,
-					checkRegistered(om, resultType, imports));
-		} catch (final Exception e)
+			return json == null ? null
+					: (T) om.readValue( json,
+							checkRegistered( om, resultType, imports ) );
+		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked(
-					"Problem unmarshalling " + resultType.getName()
-							+ " from JSON stream", e).build();
+			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
+					+ resultType.getName() + " from JSON stream", e ).build();
 		}
 	}
 
@@ -198,10 +204,10 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
-	public static <T> T valueOf(final String json, final Class<T> resultType,
-			final Properties... imports)
+	public static <T> T valueOf( final String json, final Class<T> resultType,
+		final Properties... imports )
 	{
-		return valueOf(getJOM(), json, resultType, imports);
+		return valueOf( getJOM(), json, resultType, imports );
 	}
 
 	/**
@@ -211,18 +217,18 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
-	public static <T> T valueOf(final ObjectMapper om, final String json,
-			final Class<T> resultType, final Properties... imports)
+	public static <T> T valueOf( final ObjectMapper om, final String json,
+		final Class<T> resultType, final Properties... imports )
 	{
 		try
 		{
-			return json == null || json.isEmpty() ? null : (T) om.readValue(
-					json, checkRegistered(om, resultType, imports));
-		} catch (final Exception e)
+			return json == null || json.isEmpty() ? null
+					: (T) om.readValue( json,
+							checkRegistered( om, resultType, imports ) );
+		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked(
-					"Problem unmarshalling " + resultType.getName()
-							+ " from JSON: " + json, e).build();
+			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
+					+ resultType.getName() + " from JSON: " + json, e ).build();
 		}
 	}
 
@@ -232,10 +238,10 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
-	public static <T> T valueOf(final TreeNode tree, final Class<T> resultType,
-			final Properties... imports)
+	public static <T> T valueOf( final TreeNode tree, final Class<T> resultType,
+		final Properties... imports )
 	{
-		return valueOf(getJOM(), tree, resultType, imports);
+		return valueOf( getJOM(), tree, resultType, imports );
 	}
 
 	/**
@@ -245,18 +251,18 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
-	public static <T> T valueOf(final ObjectMapper om, final TreeNode tree,
-			final Class<T> resultType, final Properties... imports)
+	public static <T> T valueOf( final ObjectMapper om, final TreeNode tree,
+		final Class<T> resultType, final Properties... imports )
 	{
 		try
 		{
-			return tree == null ? null : (T) om.treeToValue(tree,
-					checkRegistered(om, resultType, imports));
-		} catch (final Exception e)
+			return tree == null ? null
+					: (T) om.treeToValue( tree,
+							checkRegistered( om, resultType, imports ) );
+		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked(
-					"Problem unmarshalling " + resultType.getName()
-							+ " from JSON: " + tree, e).build();
+			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
+					+ resultType.getName() + " from JSON: " + tree, e ).build();
 		}
 	}
 
@@ -266,10 +272,10 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
-	public static <T> T valueOf(final String json,
-			final TypeReference<T> typeReference, final Properties... imports)
+	public static <T> T valueOf( final String json,
+		final TypeReference<T> typeReference, final Properties... imports )
 	{
-		return valueOf(getJOM(), json, typeReference, imports);
+		return valueOf( getJOM(), json, typeReference, imports );
 	}
 
 	/**
@@ -279,22 +285,22 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T valueOf(final ObjectMapper om, final String json,
-			final TypeReference<T> typeReference, final Properties... imports)
+	@SuppressWarnings( "unchecked" )
+	public static <T> T valueOf( final ObjectMapper om, final String json,
+		final TypeReference<T> typeReference, final Properties... imports )
 	{
 		try
 		{
 			final Class<?> rawType = om.getTypeFactory()
-					.constructType(typeReference).getRawClass();
-			checkRegistered(om, rawType, imports);
-			return json == null ? null : (T) om.readValue(json, typeReference);
+					.constructType( typeReference ).getRawClass();
+			checkRegistered( om, rawType, imports );
+			return json == null ? null
+					: (T) om.readValue( json, typeReference );
 
-		} catch (final Exception e)
+		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked(
-					"Problem unmarshalling " + typeReference + " from JSON: "
-							+ json, e).build();
+			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
+					+ typeReference + " from JSON: " + json, e ).build();
 		}
 	}
 
@@ -303,26 +309,28 @@ public class JsonUtil
 		/** */
 		private Class<E> type;
 
-		@SuppressWarnings({ "unchecked" })
+		@SuppressWarnings( { "unchecked" } )
 		private JsonPropertyEditor()
 		{
-			this.type = (Class<E>) TypeUtil.getTypeArguments(
-					JsonPropertyEditor.class, getClass()).get(0);
+			this.type = (Class<E>) TypeUtil
+					.getTypeArguments( JsonPropertyEditor.class, getClass() )
+					.get( 0 );
 		}
 
 		@Override
-		public void setAsText(final String json)
-				throws IllegalArgumentException
+		public void setAsText( final String json )
+			throws IllegalArgumentException
 		{
 			try
 			{
-				setValue(JsonUtil.valueOf(json, this.type));
-			} catch (final Throwable e)
+				setValue( JsonUtil.valueOf( json, this.type ) );
+			} catch( final Throwable e )
 			{
 				throw new IllegalArgumentException(
 						"Problem editing property of type: "
 								+ this.type.getName() + " from JSON value: "
-								+ json, e);
+								+ json,
+						e );
 			}
 		}
 	}
@@ -339,47 +347,47 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> Class<T> checkRegistered(final ObjectMapper om,
-			final Class<T> type, final Properties... imports)
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	public static <T> Class<T> checkRegistered( final ObjectMapper om,
+		final Class<T> type, final Properties... imports )
 	{
-		synchronized (JSON_REGISTRATION_CACHE)
+		synchronized( JSON_REGISTRATION_CACHE )
 		{
-			Set<Class<?>> cache = JSON_REGISTRATION_CACHE.get(om);
-			if (cache == null)
+			Set<Class<?>> cache = JSON_REGISTRATION_CACHE.get( om );
+			if( cache == null )
 			{
 				cache = new HashSet<>();
-				JSON_REGISTRATION_CACHE.put(om, cache);
+				JSON_REGISTRATION_CACHE.put( om, cache );
 			}
-			if (cache.contains(type))
-				return type;
+			if( cache.contains( type ) ) return type;
 
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
-			if (type.isAnnotationPresent(BeanWrapper.class))
+			if( type.isAnnotationPresent( BeanWrapper.class ) )
 			{
-				DynaBean.registerType(om, type, imports);
+				DynaBean.registerType( om, type, imports );
 
-				for (Method method : type.getDeclaredMethods())
-					if (method.getReturnType() != Void.TYPE
+				for( Method method : type.getDeclaredMethods() )
+					if( method.getReturnType() != Void.TYPE
 							&& method.getReturnType() != type
-							&& !cache.contains(type))
+							&& !cache.contains( type ) )
 					{
-						checkRegistered(om, method.getReturnType(), imports);
-						cache.add(method.getReturnType());
+						checkRegistered( om, method.getReturnType(), imports );
+						cache.add( method.getReturnType() );
 					}
 
 				// LOG.trace("Registered Dynabean de/serializer for: " + type);
-			} else if (Wrapper.class.isAssignableFrom(type))
+			} else if( Wrapper.class.isAssignableFrom( type ) )
 				// {
-				Wrapper.Util.registerType(om, (Class<? extends Wrapper>) type);
+				Wrapper.Util.registerType( om,
+						(Class<? extends Wrapper>) type );
 
 			// LOG.trace("Registered Wrapper de/serializer for: " + type);
 			// } else
 			// LOG.trace("Assume default de/serializer for: " + type);
 
-			cache.add(type);
+			cache.add( type );
 
 			return type;
 		}
