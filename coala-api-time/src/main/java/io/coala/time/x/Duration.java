@@ -38,7 +38,7 @@ import io.coala.json.x.Wrapper;
 
 /**
  * {@linkplain Duration} wraps an {@linkplain TimeSpan} that is
- * {@linkplain Polymorphic} and provides a {@link #valueOf(String)} method for
+ * {@linkplain Polymorph} and provides a {@link #valueOf(String)} method for
  * loading as configured value {@link Converters#CLASS_WITH_VALUE_OF_METHOD}
  * <p>
  * We considered various temporal measure implementations, including

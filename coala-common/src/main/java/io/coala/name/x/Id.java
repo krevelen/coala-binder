@@ -83,12 +83,7 @@ public class Id<T> implements Wrapper<T>
 	@Override
 	public boolean equals( final Object that )
 	{
-		if( that == null || !getClass().equals( that.getClass() ) )
-			return false;
-		@SuppressWarnings( "unchecked" )
-		final Id<T> other = getClass().cast( that );
-		return unwrap() == null ? other.unwrap() == null
-				: unwrap().equals( other.unwrap() );
+		return Util.equals( this, that );
 	}
 
 	/**

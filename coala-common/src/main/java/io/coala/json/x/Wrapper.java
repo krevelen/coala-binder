@@ -80,14 +80,14 @@ public interface Wrapper<T>
 	void wrap( T value );
 
 	/**
-	 * {@linkplain Polymorphic} indicates that a certain {@linkplain Wrapper}
+	 * {@linkplain Polymorph} indicates that a certain {@linkplain Wrapper}
 	 * sub-type can be deserialized (using alternate sub-types of the default
 	 * wrapped value type, applying respective {@linkplain JsonSerializer}s and
 	 * {@linkplain JsonDeserializer}s) from various JSON value types (number,
 	 * string, object, or boolean).
 	 * <p>
 	 * For instance, a {@code MyJsonWrapper} wraps a {@link Number} for its
-	 * values, and is annotated as {@linkplain #objectType()
+	 * values, and is annotated as {@linkplain #objectAs()
 	 * JsonPolymorphic(objectType=MyNumber.class)} to indicate JSON object type
 	 * values must be deserialized as custom defined {@code MyNumber} instances
 	 * (which also extend the default {@link Number} value type)
@@ -98,41 +98,40 @@ public interface Wrapper<T>
 	@Documented
 	@Retention( RetentionPolicy.RUNTIME )
 	@Target( ElementType.TYPE )
-	@interface Polymorphic
+	@interface Polymorph
 	{
 		/**
-		 * @return the value subtype to parse in case of a
+		 * @return the value sub-type to parse in case of a
 		 *         {@link JsonNodeType#NUMBER} or
 		 *         {@link JsonToken#VALUE_NUMBER_INT} or
 		 *         {@link JsonToken#VALUE_NUMBER_FLOAT}
 		 */
-		Class<?> numberType() default Empty.class;
+		Class<?> numberAs() default Empty.class;
 
 		/**
-		 * @return the value subtype to parse in case of a
+		 * @return the value sub-type to parse in case of a
 		 *         {@link JsonNodeType#STRING} or {@link JsonToken#VALUE_STRING}
 		 */
-		Class<?> stringType() default Empty.class;
+		Class<?> stringAs() default Empty.class;
 
 		/**
-		 * @return the value subtype to parse in case of a
+		 * @return the value sub-type to parse in case of a
 		 *         {@link JsonNodeType#OBJECT} or {@link JsonToken#START_OBJECT}
 		 */
-		Class<?> objectType() default Empty.class;
+		Class<?> objectAs() default Empty.class;
 
 		/**
-		 * @return the value subtype to parse in case of a
+		 * @return the value sub-type to parse in case of a
 		 *         {@link JsonNodeType#BOOLEAN} or {@link JsonToken#VALUE_TRUE}
 		 *         or {@link JsonToken#VALUE_FALSE}
 		 */
-		Class<?> booleanType() default Empty.class;
+		Class<?> booleanAs() default Empty.class;
 
 		/**
 		 * {@link Empty}
 		 * 
-		 * @date $Date$
 		 * @version $Id$
-		 * @author <a href="mailto:rick@almende.org">Rick</a>
+		 * @author Rick van Krevelen
 		 */
 		class Empty
 		{
@@ -210,7 +209,7 @@ public interface Wrapper<T>
 	}
 
 	/**
-	 * {@link Util}
+	 * {@link Util} provides global utility functions
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
@@ -329,8 +328,8 @@ public interface Wrapper<T>
 
 					// LOG.trace("parsing " + jp.getText() + " as "
 					// + type.getName());
-					final Polymorphic annot = type
-							.getAnnotation( Polymorphic.class );
+					final Polymorph annot = type
+							.getAnnotation( Polymorph.class );
 
 					final S value; // = jp.readValueAs(valueType)
 
@@ -430,8 +429,8 @@ public interface Wrapper<T>
 								Wrapper.Util.WRAPPER_TYPE_ARGUMENT_CACHE )
 						.get( 0 );
 
-				final Polymorphic annot = result.getClass()
-						.getAnnotation( Polymorphic.class );
+				final Polymorph annot = result.getClass()
+						.getAnnotation( Polymorph.class );
 
 				final S value;
 
@@ -455,9 +454,9 @@ public interface Wrapper<T>
 		}
 
 		/**
-		 * @param json the JSON representation {@link String}
-		 * @param result a {@link Wrapper} to (re)use
-		 * @return the deserialized {@link Wrapper} sub-type
+		 * @param value the wrapped value
+		 * @param result the {@link Wrapper} object to (re)use
+		 * @return the updated {@link Wrapper} object
 		 */
 		public static <S, T extends Wrapper<S>> T valueOf( final S value,
 			final T result )
@@ -470,33 +469,53 @@ public interface Wrapper<T>
 		 * In this implementation, {@code null} comes before non-{@code null},
 		 * otherwise same as {@link Comparator#compare(Object, Object)}
 		 * 
-		 * @param o1 the one
-		 * @param o2 the other
-		 * @return the order direction (<0, 0, or >0)
+		 * @param self the self
+		 * @param other the other
+		 * @return the order of the other compared to self (<0, 0, or >0)
 		 * @see Comparator#compare(Object, Object)
 		 */
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
-		public static int compare( final Comparable o1, final Comparable o2 )
+		public static int compare( final Comparable self,
+			final Comparable other )
 		{
-			if( o1 == null ) return o2 == null ? 0 : -1;
-			if( o2 == null ) return 1;
-			if( !(o1 instanceof Wrapper) ) return o2 instanceof Wrapper
-					? compare( o1, (Comparable) ((Wrapper) o2).unwrap() )
-					: o1.compareTo( o2 );
-			if( !(o2 instanceof Wrapper) )
-				return compare( (Comparable) ((Wrapper) o1).unwrap(), o2 );
-			return compare( (Comparable) ((Wrapper) o1).unwrap(),
-					(Comparable) ((Wrapper) o2).unwrap() );
+			if( self == null ) return other == null ? 0 : -1;
+			if( other == null ) return 1;
+			if( !(self instanceof Wrapper) )
+				return other instanceof Wrapper
+						? compare( self,
+								(Comparable) ((Wrapper) other).unwrap() )
+						: self.compareTo( other );
+			if( !(other instanceof Wrapper) )
+				return compare( (Comparable) ((Wrapper) self).unwrap(), other );
+			return compare( (Comparable) ((Wrapper) self).unwrap(),
+					(Comparable) ((Wrapper) other).unwrap() );
 		}
 
 		/**
-		 * @param annot the {@link Polymorphic} annotated values
+		 * @param self the visited {@link Wrapper} object
+		 * @param obj the other {@link Object} to test equality
+		 * @return {@code true} iff equal in both runtime type (
+		 *         {@link #getClass()}) and wrapped value ({@link #equals()})
+		 */
+		public static <T> boolean equals( final Wrapper<T> self,
+			final Object obj )
+		{
+			if( obj == null || !self.getClass().equals( obj.getClass() ) )
+				return false;
+			@SuppressWarnings( "unchecked" )
+			final Wrapper<T> other = self.getClass().cast( obj );
+			return self.unwrap() == null ? other.unwrap() == null
+					: other.unwrap().equals( other.unwrap() );
+		}
+
+		/**
+		 * @param annot the {@link Polymorph} annotated values
 		 * @param valueType the wrapped type
 		 * @param jsonToken the {@link JsonToken} being parsed
 		 * @return the corresponding {@link Wrapper} sub-type to generate
 		 */
 		public static <S, T extends Wrapper<S>> Class<? extends S>
-			resolveAnnotType( final Polymorphic annot, final Class<S> valueType,
+			resolveAnnotType( final Polymorph annot, final Class<S> valueType,
 				final JsonToken jsonToken )
 		{
 			final Class<?> result;
@@ -504,29 +523,29 @@ public interface Wrapper<T>
 			{
 			case VALUE_TRUE:
 			case VALUE_FALSE:
-				result = annot.booleanType();
+				result = annot.booleanAs();
 				break;
 			case VALUE_NUMBER_INT:
 			case VALUE_NUMBER_FLOAT:
-				result = annot.numberType();
+				result = annot.numberAs();
 				break;
 			case START_OBJECT:
 			case VALUE_EMBEDDED_OBJECT:
-				result = annot.objectType();
+				result = annot.objectAs();
 				break;
 			case VALUE_STRING:
-				result = annot.stringType();
+				result = annot.stringAs();
 				break;
 			default:
 				return valueType;
 			}
 
-			if( result == null || result == Polymorphic.Empty.class )
+			if( result == null || result == Polymorph.Empty.class )
 				return valueType;
 
 			if( !valueType.isAssignableFrom( result ) )
 			{
-				LOG.warn( Polymorphic.class.getSimpleName()
+				LOG.warn( Polymorph.class.getSimpleName()
 						+ " annotation contains illegal value: "
 						+ result.getName() + " does not extend/implement "
 						+ valueType.getName() );
@@ -537,43 +556,43 @@ public interface Wrapper<T>
 		}
 
 		/**
-		 * @param annot the {@link Polymorphic} annotated values
+		 * @param annot the {@link Polymorph} annotated values
 		 * @param valueType the wrapped type
 		 * @param jsonNodeType the {@link JsonNodeType} being parsed
 		 * @return the corresponding {@link Wrapper} sub-type to generate
 		 */
 		public static <S, T extends Wrapper<S>> Class<? extends S>
-			resolveAnnotType( final Polymorphic annot, final Class<S> valueType,
+			resolveAnnotType( final Polymorph annot, final Class<S> valueType,
 				final JsonNodeType jsonNodeType )
 		{
 			final Class<?> result;
 			switch( jsonNodeType )
 			{
 			case BOOLEAN:
-				result = annot.booleanType();
+				result = annot.booleanAs();
 				break;
 			case NUMBER:
-				result = annot.numberType();
+				result = annot.numberAs();
 				break;
 			case OBJECT:
-				result = annot.objectType();
+				result = annot.objectAs();
 				break;
 			case POJO:
-				result = annot.objectType();
+				result = annot.objectAs();
 				break;
 			case STRING:
-				result = annot.stringType();
+				result = annot.stringAs();
 				break;
 			default:
 				return valueType;
 			}
 
-			if( result == null || result == Polymorphic.Empty.class )
+			if( result == null || result == Polymorph.Empty.class )
 				return valueType;
 
 			if( !valueType.isAssignableFrom( result ) )
 			{
-				LOG.warn( Polymorphic.class.getSimpleName()
+				LOG.warn( Polymorph.class.getSimpleName()
 						+ " annotation contains illegal value: "
 						+ result.getName() + " does not extend/implement "
 						+ valueType.getName() );

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: eb6a364d24f76f7d2f863fcf9320a5ed8ebb00b6 $
  * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/nl/tudelft/simulation/logger/Logger.java $
  * 
  * @(#) Logger.java Aug 27, 2003 Copyright (c) 2002-2005 Delft University of
@@ -448,7 +448,6 @@ public class Logger
      * @param arg4 the message
      * @param arg5 the parameter
      */
-    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4, final Object arg5)
@@ -468,7 +467,6 @@ public class Logger
      * @param arg4 the message
      * @param arg5 the parameters
      */
-    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4, final Object[] arg5)
@@ -488,7 +486,6 @@ public class Logger
      * @param arg4 the message
      * @param arg5 the parameters
      */
-    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4, final Throwable arg5)
@@ -506,7 +503,6 @@ public class Logger
      * @param arg3 the resource bundle
      * @param arg4 the message
      */
-    @SuppressWarnings("deprecation")
 	public static void logrb(final Object caller, final Level arg0,
             final String arg1, final String arg2, final String arg3,
             final String arg4)
