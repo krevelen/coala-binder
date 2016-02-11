@@ -3,6 +3,7 @@ package io.coala.json.x;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
@@ -16,33 +17,32 @@ import org.junit.Test;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 
-import io.coala.json.x.Wrapper.Polymorph;
+import io.coala.json.x.Wrapper.JavaPolymorph;
 import io.coala.log.LogUtil;
 
 /**
- * {@link JsonTest} tests the {@link DynaBean} used by {@link Wrapper}
+ * {@link WrapperTest} tests various {@link Wrapper} usagess
  * 
- * @date $Date$
  * @version $Id$
- * @author <a href="mailto:rick@almende.org">rick</a>
+ * @author Rick van Krevelen
  */
-public class JsonTest
+public class WrapperTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger( JsonTest.class );
+	private static final Logger LOG = LogUtil.getLogger( WrapperTest.class );
 
 	/**
-	 * {@link MyWrapper} decorates any {@link Object}
+	 * {@link MySimpleWrapper} decorates any {@link Object}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	public static class MyWrapper extends Wrapper.Simple<Object>
+	public static class MySimpleWrapper extends Wrapper.Simple<Object>
 	{
-		public static MyWrapper valueOf( final Object value )
+		public static MySimpleWrapper valueOf( final Object value )
 		{
-			final MyWrapper result = new MyWrapper();
+			final MySimpleWrapper result = new MySimpleWrapper();
 			result.wrap( value );
 			return result;
 		}
@@ -54,9 +54,21 @@ public class JsonTest
 		}
 	}
 
-	public static class MyWrappedWrapper extends Wrapper.Simple<MyWrapper>
+	@SuppressWarnings( "rawtypes" )
+	public static class MySimpleOrdinalWrapper
+		extends Wrapper.SimpleOrdinal<Comparable>
 	{
-		public static MyWrappedWrapper valueOf( final MyWrapper value )
+		public static MySimpleOrdinalWrapper valueOf( final Comparable value )
+		{
+			final MySimpleOrdinalWrapper result = new MySimpleOrdinalWrapper();
+			result.wrap( value );
+			return result;
+		}
+	}
+
+	public static class MyWrappedWrapper extends Wrapper.Simple<MySimpleWrapper>
+	{
+		public static MyWrappedWrapper valueOf( final MySimpleWrapper value )
 		{
 			final MyWrappedWrapper result = new MyWrappedWrapper();
 			result.wrap( value );
@@ -76,7 +88,7 @@ public class JsonTest
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	@Polymorph( stringAs = MyImaginaryNumber.class,
+	@JavaPolymorph( stringAs = MyImaginaryNumber.class,
 		objectAs = MyImaginaryNumber.class )
 	public static class MyPolymorphNumberWrapper extends Wrapper.Simple<Number>
 	{
@@ -190,101 +202,165 @@ public class JsonTest
 	}
 
 	@Test
+	public void equalsTest()
+	{
+		LOG.trace( "Testing equals() on " + Wrapper.Util.class  );
+		final Object valueObject = "myValue";
+		final MySimpleWrapper valueWrap = MySimpleWrapper
+				.valueOf( valueObject );
+		final MySimpleWrapper sameWrap = MySimpleWrapper.valueOf( valueObject );
+		final MySimpleOrdinalWrapper ordinalWrap = MySimpleOrdinalWrapper
+				.valueOf( valueObject.toString() );
+		final MyWrappedWrapper wrappedWrap = MyWrappedWrapper
+				.valueOf( sameWrap );
+		assertThat(
+				"Wrapper#equals() must defer to #equals() of wrapped Object",
+				valueWrap, equalTo( sameWrap ) );
+		assertThat( "Wrapper#equals() must return false for different types",
+				valueWrap, not( equalTo( (Object) ordinalWrap ) ) );
+		assertThat( "Wrapper#equals() must return false for different types",
+				valueWrap, not( equalTo( (Object) wrappedWrap ) ) );
+		assertThat( "Wrapper#equals() must return false for different types",
+				ordinalWrap, not( equalTo( (Object) wrappedWrap ) ) );
+	}
+
+	@Test
+	public void compareToTest()
+	{
+		LOG.trace( "Testing compareTo() on " + Wrapper.Util.class );
+//		final Object valueObject = "myValue";
+//		final MySimpleWrapper valueWrap = MySimpleWrapper
+//				.valueOf( valueObject );
+//		final MySimpleOrdinalWrapper ordinalWrap = MySimpleOrdinalWrapper
+//				.valueOf( valueObject.toString() );
+//		final MyWrappedWrapper wrappedWrap = MyWrappedWrapper
+//				.valueOf( valueWrap );
+//		assertThat(
+//				"Wrapper#equals() must defer to #equals() of wrapped Object",
+//				valueWrap, equalTo( sameWrap ) );
+//		assertThat( "Wrapper#equals() must return false for different types",
+//				valueWrap, not( equalTo( (Object) similarWrap ) ) );
+
+//		final String value1String = "myValue1";
+//		final String value2String = "myValue2";
+//		final MyOrdinal value1Wrap = MyOrdinal.valueOf( value1String );
+//		final MyOrdinal value2Wrap = MyOrdinal.valueOf( value2String );
+//		assertEquals( "Ordinal should defer to compareTo() of wrapped object",
+//				value1String.compareTo( value2String ),
+//				value1Wrap.compareTo( value2Wrap ) );
+//		assertEquals( "Ordinal should allow comparison with plain objects",
+//				value1String.compareTo( value2String ),
+//				value1Wrap.compareTo( value2String ) );
+//		assertTrue( value1Wrap.compareTo( value2Wrap ) < 0 );
+//		assertTrue( value1Wrap.compareTo( value2Wrap ) < 0 );
+	}
+
+	@Test
+	public void hashCodeTest()
+	{
+		LOG.trace( "Testing hashCode() on " + Wrapper.Util.class );
+//		final Object valueObject = "myValue";
+//		final MyId valueWrap = MyId.valueOf( valueObject );
+//		final MyOrdinal similarWrap = MyOrdinal
+//				.valueOf( valueObject.toString() );
+//
+//		assertNotEquals(
+//				"Id#hashCode() must return different #hashCode() than wrapped Object",
+//				valueObject.hashCode(), valueWrap.hashCode() );
+//		assertNotEquals(
+//				"Id#hashCode() must return different for different types",
+//				similarWrap.hashCode(), valueWrap.hashCode() );
+	}
+
+	@Test
 	public void jsonConversionTest()
 	{
 		LOG.trace( "Testing JSON de/serialization of " + Wrapper.class + "<"
 				+ Object.class.getSimpleName() + ">" );
 		// TODO test wrapped wrapper
 		final Object valueObject = "myValue";
-		final MyWrapper valueWrap = MyWrapper.valueOf( valueObject );
+		final MySimpleWrapper valueWrap = MySimpleWrapper
+				.valueOf( valueObject );
 		final String valueJSON = JsonUtil.toJSON( valueObject ); // "natural"
 		assertEquals(
-				MyWrapper.class.getSimpleName() + "<"
+				MySimpleWrapper.class.getSimpleName() + "<"
 						+ valueObject.getClass().getSimpleName() + "<"
 						+ valueJSON + ">> must stringify as " + valueJSON + "",
 				valueJSON, JsonUtil.stringify( valueWrap ) );
 		assertEquals(
 				"JSON " + valueJSON + " must parse as "
-						+ MyWrapper.class.getSimpleName() + "<"
+						+ MySimpleWrapper.class.getSimpleName() + "<"
 						+ valueObject.getClass().getSimpleName() + "<"
 						+ valueJSON + ">>",
-				valueWrap, Wrapper.Util.valueOf( valueJSON, MyWrapper.class ) );
+				valueWrap,
+				Wrapper.Util.valueOf( valueJSON, MySimpleWrapper.class ) );
 
 		LOG.trace( "Testing JSON de/serialization of " + Wrapper.class + "<"
 				+ Float.class.getSimpleName() + ">" );
 		JsonUtil.getJOM()
 				.disable( DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS );
 		final Float floatValue = 0.1f;
-		final MyWrapper floatWrap = MyWrapper.valueOf( floatValue );
+		final MySimpleWrapper floatWrap = MySimpleWrapper.valueOf( floatValue );
 		final String floatJSON = JsonUtil.toJSON( floatValue );
 		assertEquals(
-				MyWrapper.class.getSimpleName() + "<"
+				MySimpleWrapper.class.getSimpleName() + "<"
 						+ floatValue.getClass().getSimpleName() + "<"
 						+ floatJSON + ">> must stringify as " + floatJSON,
 				floatValue.toString(), JsonUtil.stringify( floatWrap ) );
 		assertEquals(
 				"JSON " + floatJSON + " must parse as "
-						+ MyWrapper.class.getSimpleName() + "<"
+						+ MySimpleWrapper.class.getSimpleName() + "<"
 						+ floatValue.getClass().getSimpleName() + "<"
 						+ floatJSON + ">>",
-				floatWrap, Wrapper.Util.valueOf( floatJSON, MyWrapper.class ) );
+				floatWrap,
+				Wrapper.Util.valueOf( floatJSON, MySimpleWrapper.class ) );
 
 		LOG.trace( "Testing JSON de/serialization of " + Wrapper.class + "<"
 				+ Double.class.getSimpleName() + ">" );
 		JsonUtil.getJOM()
 				.disable( DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS );
 		final Double doubleValue = 1.2;
-		final MyWrapper doubleWrap = MyWrapper.valueOf( doubleValue );
+		final MySimpleWrapper doubleWrap = MySimpleWrapper
+				.valueOf( doubleValue );
 		final String doubleJSON = JsonUtil.toJSON( doubleValue );
 		assertEquals(
-				MyWrapper.class.getSimpleName() + "<"
+				MySimpleWrapper.class.getSimpleName() + "<"
 						+ doubleValue.getClass().getSimpleName() + "<"
 						+ doubleJSON + ">> must stringify as " + doubleJSON,
 				doubleValue.toString(), JsonUtil.stringify( doubleWrap ) );
 		assertEquals(
 				"JSON " + doubleJSON + " must parse as "
-						+ MyWrapper.class.getSimpleName() + "<"
+						+ MySimpleWrapper.class.getSimpleName() + "<"
 						+ doubleValue.getClass().getSimpleName() + "<"
 						+ doubleJSON + ">>",
 				doubleWrap,
-				Wrapper.Util.valueOf( doubleJSON, MyWrapper.class ) );
+				Wrapper.Util.valueOf( doubleJSON, MySimpleWrapper.class ) );
 
 		LOG.trace( "Testing JSON de/serialization of " + Wrapper.class + "<"
 				+ BigDecimal.class.getSimpleName() + ">" );
 		JsonUtil.getJOM()
 				.enable( DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS );
 		final BigDecimal decimalValue = BigDecimal.valueOf( 0.1 );
-		final MyWrapper decimalWrap = MyWrapper.valueOf( decimalValue );
+		final MySimpleWrapper decimalWrap = MySimpleWrapper
+				.valueOf( decimalValue );
 		final String decimalJSON = JsonUtil.toJSON( decimalValue );
 		assertEquals(
-				MyWrapper.class.getSimpleName() + "<"
+				MySimpleWrapper.class.getSimpleName() + "<"
 						+ decimalValue.getClass().getSimpleName() + "<"
 						+ decimalJSON + ">> must stringify as " + decimalJSON,
 				decimalValue.toString(), JsonUtil.stringify( decimalWrap ) );
 		assertEquals(
 				"JSON " + decimalJSON + " must parse as "
-						+ MyWrapper.class.getSimpleName() + "<"
+						+ MySimpleWrapper.class.getSimpleName() + "<"
 						+ decimalValue.getClass().getSimpleName() + "<"
 						+ decimalJSON + ">>",
 				decimalWrap,
-				Wrapper.Util.valueOf( decimalJSON, MyWrapper.class ) );
+				Wrapper.Util.valueOf( decimalJSON, MySimpleWrapper.class ) );
 	}
 
 	@Ignore // FIXME
 	@Test
-	public void equalsTest()
-	{
-	}
-
-	@Ignore // FIXME
-	@Test
-	public void compareTest()
-	{
-	}
-
-	@Ignore // FIXME
-	@Test
-	public void polymorphicTest()
+	public void jsonPolymorphTest()
 	{
 		final Number v0 = 3;
 		final String s0 = v0.toString();

@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/random/RandomDistribution.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: db6006ab8e27aa02a2170042676f988536c5f4eb $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.random;
 
@@ -43,12 +38,8 @@ public interface RandomDistribution<T> extends Serializable
 	 * 
 	 * FIXME prefer Long over Integer for discrete dists, same as DSOL?
 	 * 
-	 * TODO add follwoing distribution types from DSOL? Bernoulli, Erlang,
+	 * TODO add following distribution types from DSOL? Bernoulli, Erlang,
 	 * Pearson5, Pearson6, NegativeBionomial
-	 * 
-	 * @version $Revision: 332 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	interface Factory
 	{

@@ -80,7 +80,7 @@ public interface Wrapper<T>
 	void wrap( T value );
 
 	/**
-	 * {@linkplain Polymorph} indicates that a certain {@linkplain Wrapper}
+	 * {@linkplain JavaPolymorph} indicates that a certain {@linkplain Wrapper}
 	 * sub-type can be deserialized (using alternate sub-types of the default
 	 * wrapped value type, applying respective {@linkplain JsonSerializer}s and
 	 * {@linkplain JsonDeserializer}s) from various JSON value types (number,
@@ -98,7 +98,7 @@ public interface Wrapper<T>
 	@Documented
 	@Retention( RetentionPolicy.RUNTIME )
 	@Target( ElementType.TYPE )
-	@interface Polymorph
+	@interface JavaPolymorph
 	{
 		/**
 		 * @return the value sub-type to parse in case of a
@@ -171,40 +171,39 @@ public interface Wrapper<T>
 		@Override
 		public int hashCode()
 		{
-			return unwrap().hashCode();
+			return Util.hashCode( this );
 		}
 
 		@Override
 		public boolean equals( final Object that )
 		{
-			return unwrap() == null ? that == null : unwrap().equals( that );
+			return Util.equals( this, that );
 		}
 
 		@Override
 		public String toString()
 		{
-			return unwrap().toString();
+			return Util.toString( this );
 		}
 	}
 
 	/**
-	 * {@link SimpleComparable} extends the {@link Simple} implementation with
+	 * {@link SimpleOrdinal} extends the {@link Simple} implementation with
 	 * redirection for wrapped {@link Comparable} object's
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @param <THIS> the concrete type of {@link SimpleComparable} wrapper
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	class SimpleComparable<T extends Comparable> extends Simple<T>
-		implements Comparable<SimpleComparable<T>>
+	@SuppressWarnings( { "rawtypes" } )
+	class SimpleOrdinal<T extends Comparable> extends Simple<T>
+		implements Comparable<Comparable>
 	{
 		@Override
-		public int compareTo( final SimpleComparable o )
+		public int compareTo( final Comparable that )
 		{
-			return unwrap().compareTo( (T) o.unwrap() );
+			return Util.compare( this, that );
 		}
 	}
 
@@ -328,8 +327,8 @@ public interface Wrapper<T>
 
 					// LOG.trace("parsing " + jp.getText() + " as "
 					// + type.getName());
-					final Polymorph annot = type
-							.getAnnotation( Polymorph.class );
+					final JavaPolymorph annot = type
+							.getAnnotation( JavaPolymorph.class );
 
 					final S value; // = jp.readValueAs(valueType)
 
@@ -429,8 +428,8 @@ public interface Wrapper<T>
 								Wrapper.Util.WRAPPER_TYPE_ARGUMENT_CACHE )
 						.get( 0 );
 
-				final Polymorph annot = result.getClass()
-						.getAnnotation( Polymorph.class );
+				final JavaPolymorph annot = result.getClass()
+						.getAnnotation( JavaPolymorph.class );
 
 				final S value;
 
@@ -466,6 +465,31 @@ public interface Wrapper<T>
 		}
 
 		/**
+		 * @param self the {@link Wrapper} object to provide the {@link String}
+		 *            representation of
+		 * @return the {@code #toString()} value of wrapped object or
+		 *         {@code null} if unavailable
+		 */
+		@SuppressWarnings( "rawtypes" )
+		public static String toString( final Wrapper self )
+		{
+			return self == null || self.unwrap() == null ? null
+					: self.unwrap().toString();
+		}
+
+		/**
+		 * @param self the {@link Wrapper} object to determine a hash code for
+		 * @return the hash code of wrapped object and {@link Wrapper} type
+		 */
+		@SuppressWarnings( "rawtypes" )
+		public static int hashCode( final Wrapper self )
+		{
+			return self == null ? 0
+					: self.getClass().hashCode() + (self.unwrap() == null ? 0
+							: self.unwrap().hashCode() * 31);
+		}
+
+		/**
 		 * In this implementation, {@code null} comes before non-{@code null},
 		 * otherwise same as {@link Comparator#compare(Object, Object)}
 		 * 
@@ -497,26 +521,25 @@ public interface Wrapper<T>
 		 * @return {@code true} iff equal in both runtime type (
 		 *         {@link #getClass()}) and wrapped value ({@link #equals()})
 		 */
-		public static <T> boolean equals( final Wrapper<T> self,
-			final Object obj )
+		@SuppressWarnings( "rawtypes" )
+		public static <T> boolean equals( final Wrapper self, final Object obj )
 		{
 			if( obj == null || !self.getClass().equals( obj.getClass() ) )
 				return false;
-			@SuppressWarnings( "unchecked" )
-			final Wrapper<T> other = self.getClass().cast( obj );
+			final Wrapper other = self.getClass().cast( obj );
 			return self.unwrap() == null ? other.unwrap() == null
 					: other.unwrap().equals( other.unwrap() );
 		}
 
 		/**
-		 * @param annot the {@link Polymorph} annotated values
+		 * @param annot the {@link JavaPolymorph} annotated values
 		 * @param valueType the wrapped type
 		 * @param jsonToken the {@link JsonToken} being parsed
 		 * @return the corresponding {@link Wrapper} sub-type to generate
 		 */
 		public static <S, T extends Wrapper<S>> Class<? extends S>
-			resolveAnnotType( final Polymorph annot, final Class<S> valueType,
-				final JsonToken jsonToken )
+			resolveAnnotType( final JavaPolymorph annot,
+				final Class<S> valueType, final JsonToken jsonToken )
 		{
 			final Class<?> result;
 			switch( jsonToken )
@@ -540,12 +563,12 @@ public interface Wrapper<T>
 				return valueType;
 			}
 
-			if( result == null || result == Polymorph.Empty.class )
+			if( result == null || result == JavaPolymorph.Empty.class )
 				return valueType;
 
 			if( !valueType.isAssignableFrom( result ) )
 			{
-				LOG.warn( Polymorph.class.getSimpleName()
+				LOG.warn( JavaPolymorph.class.getSimpleName()
 						+ " annotation contains illegal value: "
 						+ result.getName() + " does not extend/implement "
 						+ valueType.getName() );
@@ -556,14 +579,14 @@ public interface Wrapper<T>
 		}
 
 		/**
-		 * @param annot the {@link Polymorph} annotated values
+		 * @param annot the {@link JavaPolymorph} annotated values
 		 * @param valueType the wrapped type
 		 * @param jsonNodeType the {@link JsonNodeType} being parsed
 		 * @return the corresponding {@link Wrapper} sub-type to generate
 		 */
 		public static <S, T extends Wrapper<S>> Class<? extends S>
-			resolveAnnotType( final Polymorph annot, final Class<S> valueType,
-				final JsonNodeType jsonNodeType )
+			resolveAnnotType( final JavaPolymorph annot,
+				final Class<S> valueType, final JsonNodeType jsonNodeType )
 		{
 			final Class<?> result;
 			switch( jsonNodeType )
@@ -587,12 +610,12 @@ public interface Wrapper<T>
 				return valueType;
 			}
 
-			if( result == null || result == Polymorph.Empty.class )
+			if( result == null || result == JavaPolymorph.Empty.class )
 				return valueType;
 
 			if( !valueType.isAssignableFrom( result ) )
 			{
-				LOG.warn( Polymorph.class.getSimpleName()
+				LOG.warn( JavaPolymorph.class.getSimpleName()
 						+ " annotation contains illegal value: "
 						+ result.getName() + " does not extend/implement "
 						+ valueType.getName() );

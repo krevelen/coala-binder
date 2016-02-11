@@ -45,46 +45,13 @@ import io.coala.name.Identifier;
 @JsonInclude( Include.NON_NULL )
 @JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
 	property = "@class" )
-public class Id<T> implements Wrapper<T>
+public class Id<T> extends Wrapper.Simple<T>
 {
+	
+	// FIXME override compareTo() to support Child sub-types
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Identifier.class );
-
-	/** remove this private field, in favor of DynaBean? */
-	private T value = null;
-
-	/**
-	 * @param value the new reference value
-	 */
-	public void wrap( final T value )
-	{
-		this.value = value;
-	}
-
-	/** @return the reference value */
-	public T unwrap()
-	{
-		return this.value;
-	}
-
-	@Override
-	public String toString()
-	{
-		return unwrap().toString();
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return unwrap().hashCode() * 31 + getClass().hashCode();
-	}
-
-	@Override
-	public boolean equals( final Object that )
-	{
-		return Util.equals( this, that );
-	}
 
 	/**
 	 * @param json the JSON {@link String}
@@ -132,6 +99,8 @@ public class Id<T> implements Wrapper<T>
 		@Override
 		public int compareTo( final Comparable other )
 		{
+			
+			// FIXME override compareTo() to support Child sub-types
 			return Wrapper.Util.compare( this, other );
 		}
 	}
@@ -266,8 +235,10 @@ public class Id<T> implements Wrapper<T>
 		@SuppressWarnings( "unchecked" )
 		public int compareTo( final Comparable other )
 		{
-			if( other == null || !(other instanceof OrdinalChild) ) return 1;
-			final int parentCompare = Wrapper.Util.compare( this.getParent(),
+			if( other == null ) return 1;
+			if( !(other instanceof OrdinalChild) )
+				return Util.compare( this, other );
+			final int parentCompare = Util.compare( this.getParent(),
 					((OrdinalChild<T, P>) other).getParent() );
 			if( parentCompare != 0 ) return parentCompare;
 			return Wrapper.Util.compare( this, other );

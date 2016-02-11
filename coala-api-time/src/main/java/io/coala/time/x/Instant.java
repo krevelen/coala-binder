@@ -39,7 +39,7 @@ import io.coala.json.x.Wrapper;
 
 /**
  * {@linkplain Instant} wraps a {@linkplain TimeSpan} that is
- * {@linkplain Polymorph} (measuring the duration since the EPOCH,
+ * {@linkplain JavaPolymorph} (measuring the duration since the EPOCH,
  * 1970-01-01T00:00:00Z) and provides a {@link #valueOf(String)} method for
  * loading as configured value {@link Converters#CLASS_WITH_VALUE_OF_METHOD}
  * <p>
@@ -78,7 +78,7 @@ import io.coala.json.x.Wrapper;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
-@Wrapper.Polymorph
+@Wrapper.JavaPolymorph
 public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 {
 

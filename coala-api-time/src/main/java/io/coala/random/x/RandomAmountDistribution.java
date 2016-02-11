@@ -1,4 +1,4 @@
-/* $Id: 4763c79154f4747b77a03998edfad358223c04b3 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -13,22 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.coala.random;
+package io.coala.random.x;
+
+import javax.measure.quantity.Quantity;
+
+import org.jscience.physics.amount.Amount;
+
+import io.coala.random.RandomDistribution;
 
 /**
- * {@link RandomNumberDistribution}
+ * {@link RandomAmountDistribution}
  * 
- * @param <T>
+ * @param
+ * 			<Q>the concrete type of {@link Quantity} for produced
+ *            {@link Amount}s
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface RandomNumberDistribution<T extends Number> extends
-		RandomDistribution<T>
+public interface RandomAmountDistribution<Q extends Quantity>
+	extends RandomDistribution<Amount<Q>>
 {
 
 	/**
 	 * @return the next pseudo-random value
 	 */
-	T draw();
+	Amount<Q> draw();
 
 }

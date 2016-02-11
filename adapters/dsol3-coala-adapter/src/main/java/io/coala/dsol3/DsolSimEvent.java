@@ -39,7 +39,7 @@ import nl.tudelft.simulation.dsol.simtime.SimTime;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class DsolSimEvent extends Wrapper.SimpleComparable<DsolSimEvent.ID>
+public class DsolSimEvent extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
 	implements SimEventInterface<DsolTime>
 {
 	public static class ID extends Id.Ordinal<UUID>

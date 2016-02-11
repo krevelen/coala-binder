@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/random/impl/RandomNumberStreamFactoryMersenne.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 330dbddef8cb039f3950162c937de930c4198964 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.random.impl;
 
@@ -27,29 +22,28 @@ import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
 
 /**
- * {@link RandomNumberStreamFactoryMersenne} for {@link RandomNumberStream}s
+ * {@link RandomNumberStreamFactoryMersenne}for {@link RandomNumberStream}s
  * wrapping the {@link MersenneTwister} implementation of a
  * {@link RandomGenerator}
  * 
- * @version $Revision: 324 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-public class RandomNumberStreamFactoryMersenne implements
-		RandomNumberStream.Factory
+public class RandomNumberStreamFactoryMersenne
+	implements RandomNumberStream.Factory
 {
 
 	@Override
-	public RandomNumberStream create(final String id, final Number seed)
+	public RandomNumberStream create( final String id, final Number seed )
 	{
-		return create(new RandomNumberStreamID(id), seed);
+		return create( new RandomNumberStreamID( id ), seed );
 	}
 
 	@Override
-	public RandomNumberStream create(final RandomNumberStreamID id,
-			final Number seed)
+	public RandomNumberStream create( final RandomNumberStreamID id,
+		final Number seed )
 	{
-		final RandomGenerator rng = new MersenneTwister(seed.longValue());
-		return RandomNumberStream.Util.asStream(id, rng);
+		final RandomGenerator rng = new MersenneTwister( seed.longValue() );
+		return RandomNumberStream.Util.asStream( id, rng );
 	}
 }

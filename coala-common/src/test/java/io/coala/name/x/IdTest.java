@@ -19,9 +19,12 @@
  */
 package io.coala.name.x;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.hamcrest.number.OrderingComparison.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.apache.log4j.Logger;
 import org.junit.BeforeClass;
@@ -71,7 +74,8 @@ public class IdTest
 		}
 	}
 
-	public static class MyChild extends Id.OrdinalChild<String, String>
+	@SuppressWarnings( "rawtypes" )
+	public static class MyChild extends Id.OrdinalChild<String, Comparable>
 	{
 		public static MyChild valueOf( final String value )
 		{
@@ -80,17 +84,11 @@ public class IdTest
 			return result;
 		}
 
-		public MyChild withParent( final String value )
+		public MyChild withParent( final Comparable value )
 		{
 			setParent( value );
 			return this;
 		}
-	}
-
-	public static class MyRecurrentChild
-		extends Id.OrdinalChild<String, MyRecurrentChild>
-	{
-
 	}
 
 	/** {@link String#toString()} */
@@ -123,8 +121,29 @@ public class IdTest
 				} );
 	}
 
+	@Ignore // FIXME
 	@Test
-	public void idTest()
+	public void equalsTest()
+	{
+		LOG.trace( "Testing " + Id.class + "<" + Id.class.getSimpleName() + "<"
+				+ Object.class.getSimpleName() + ">>" );
+		final Object valueObject = "myValue";
+		final MyId valueWrap = MyId.valueOf( valueObject );
+		final MyId sameWrap = MyId.valueOf( valueObject );
+		final MyWrappedId wrappedWrap = MyWrappedId.valueOf( sameWrap );
+		final MyOrdinal similarWrap = MyOrdinal
+				.valueOf( valueObject.toString() );
+
+		assertEquals( "Id#equals() must return #equals() of wrapped Object",
+				valueWrap, sameWrap );
+		assertNotEquals( "Id#equals() must return false for different types",
+				valueWrap, similarWrap );
+		assertNotEquals( "Id#equals() must return false for different types",
+				valueWrap, wrappedWrap );
+	}
+
+	@Test
+	public void toStringTest()
 	{
 		LOG.trace( "Testing " + Id.class + "<" + Object.class.getSimpleName()
 				+ ">" );
@@ -133,25 +152,20 @@ public class IdTest
 		final MyId sameWrap = MyId.valueOf( valueObject );
 		final MyOrdinal similarWrap = MyOrdinal
 				.valueOf( valueObject.toString() );
+		final MyWrappedId wrappedWrap = MyWrappedId.valueOf( sameWrap );
 
 		assertEquals( "Id#toString() must return #toString() of wrapped Object",
 				valueObject.toString(), valueWrap.toString() );
 		assertEquals( "Id#toString() must return same for same values",
 				similarWrap.toString(), valueWrap.toString() );
-		assertNotEquals(
-				"Id#hashCode() must return different #hashCode() than wrapped Object",
-				valueObject.hashCode(), valueWrap.hashCode() );
-		assertNotEquals(
-				"Id#hashCode() must return different for different types",
-				similarWrap.hashCode(), valueWrap.hashCode() );
-		assertEquals( "Id#equals() must return #equals() of wrapped Object",
-				valueWrap, sameWrap );
-		assertNotEquals( "Id#equals() must return false for different types",
-				valueWrap, similarWrap );
+		assertEquals( "Id#toString() must return #toString() of wrapped Object",
+				valueObject.toString(), wrappedWrap.toString() );
+		assertEquals( "Id#toString() must return same for same values",
+				sameWrap.toString(), wrappedWrap.toString() );
 	}
 
 	@Test
-	public void idWrappedTest()
+	public void hashCodeTest()
 	{
 		LOG.trace( "Testing " + Id.class + "<" + Id.class.getSimpleName() + "<"
 				+ Object.class.getSimpleName() + ">>" );
@@ -159,58 +173,58 @@ public class IdTest
 		final MyId valueWrap = MyId.valueOf( valueObject );
 		final MyId sameWrap = MyId.valueOf( valueObject );
 		final MyWrappedId wrappedWrap = MyWrappedId.valueOf( sameWrap );
+		final MyOrdinal similarWrap = MyOrdinal
+				.valueOf( valueObject.toString() );
 
-		assertEquals( "Id#toString() must return #toString() of wrapped Object",
-				valueObject.toString(), wrappedWrap.toString() );
-		assertEquals( "Id#toString() must return same for same values",
-				sameWrap.toString(), wrappedWrap.toString() );
+		assertNotEquals(
+				"Id#hashCode() must return different #hashCode() than wrapped Object",
+				valueObject.hashCode(), valueWrap.hashCode() );
+		assertNotEquals(
+				"Id#hashCode() must return different for different types",
+				similarWrap.hashCode(), valueWrap.hashCode() );
 		assertNotEquals(
 				"Id#hashCode() must return different #hashCode() than wrapped Object",
 				valueObject.hashCode(), wrappedWrap.hashCode() );
 		assertNotEquals(
 				"Id#hashCode() must return different for different types",
 				valueWrap.hashCode(), wrappedWrap.hashCode() );
-// FIXME
-//		assertEquals( "Id#equals() must return #equals() of wrapped Object",
-//				valueWrap, wrappedWrap );
-		assertNotEquals( "Id#equals() must return false for different types",
-				valueWrap, wrappedWrap );
 	}
 
 	@Test
-	public void idOrdinalTest()
+	public void compareToTest()
 	{
 		LOG.trace( "Testing " + Id.Ordinal.class );
 		final String value1String = "myValue1";
 		final String value2String = "myValue2";
 		final MyOrdinal value1Wrap = MyOrdinal.valueOf( value1String );
 		final MyOrdinal value2Wrap = MyOrdinal.valueOf( value2String );
-		assertEquals( "Ordinal should defer to compareTo() of wrapped object",
+		final MyChild value2Orphan = MyChild.valueOf( value2String );
+		final MyChild value2Child = MyChild.valueOf( value2String )
+				.withParent( value1String );
+		final MyChild value2Recur = MyChild.valueOf( value1String )
+				.withParent( value2Orphan );
+		assertThat( "Ordinal should defer to compareTo() of wrapped object",
 				value1String.compareTo( value2String ),
-				value1Wrap.compareTo( value2Wrap ) );
-		assertEquals( "Ordinal should allow comparison with plain objects",
+				equalTo( value1Wrap.compareTo( value2Wrap ) ) );
+		assertThat( "Ordinal should allow comparison with plain objects",
 				value1String.compareTo( value2String ),
-				value1Wrap.compareTo( value2String ) );
-		assertTrue( value1Wrap.compareTo( value2Wrap ) < 0 );
-		assertTrue( value1Wrap.compareTo( value2Wrap ) < 0 );
-	}
-
-	@Ignore // FIXME
-	@Test
-	public void idOrdinalChildTest()
-	{
-		LOG.trace( "Testing " + Id.class );
-//		final Object valueObject = "myValue";
-//		final MyId valueWrap = MyId.valueOf( valueObject );
-	}
-
-	@Ignore // FIXME
-	@Test
-	public void idOrdinalChildRecurrencyTest()
-	{
-		LOG.trace( "Testing " + Id.class );
-//		final Object valueObject = "myValue";
-//		final MyId valueWrap = MyId.valueOf( valueObject );
+				equalTo( value1Wrap.compareTo( value2String ) ) );
+		assertThat( "orphan(2) <> wrap(2)",
+				value2Orphan.compareTo( value2Wrap ), equalTo( 0 ) );
+		assertThat( "wrap(2) <> orphan(2)",
+				value2Wrap.compareTo( value2Orphan ), equalTo( 0 ) );
+		assertThat( "wrap(1) < orphan(2)", value1Wrap.compareTo( value2Orphan ),
+				lessThan( 0 ) );
+		assertThat( "orphan(2) > wrap(1)", value2Orphan.compareTo( value1Wrap ),
+				greaterThan( 0 ) );
+		assertThat( "wrap(2) < child(2 of 1)",
+				value2Wrap.compareTo( value2Child ), lessThan( 0 ) );
+		assertThat( "child(2 of 1) > wrap(2)",
+				value2Child.compareTo( value2Wrap ), greaterThan( 0 ) );
+		assertThat( "wrap(1) < child(1 of wrap(2))",
+				value1Wrap.compareTo( value2Recur ), lessThan( 0 ) );
+		assertThat( "child(1 of wrap(2)) > wrap(1)",
+				value2Recur.compareTo( value1Wrap ), greaterThan( 0 ) );
 	}
 
 }

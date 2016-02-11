@@ -20,8 +20,9 @@ import java.math.BigDecimal;
 
 import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
-import javax.measure.quantity.Dimensionless;
+import javax.measure.quantity.Frequency;
 import javax.measure.quantity.Quantity;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -43,7 +44,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  */
 @JsonSerialize( using = Rate.JsonSerializer.class )
 @JsonDeserialize( using = Rate.JsonDeserializer.class )
-public class Rate extends DecimalMeasure<Dimensionless>
+public class Rate extends DecimalMeasure<Frequency>
 {
 
 	/** */
@@ -73,7 +74,7 @@ public class Rate extends DecimalMeasure<Dimensionless>
 	 */
 	public Rate( final double rate )
 	{
-		this( BigDecimal.valueOf( rate ), Unit.ONE );
+		this( BigDecimal.valueOf( rate ), SI.HERTZ );
 	}
 
 	/**
@@ -84,7 +85,7 @@ public class Rate extends DecimalMeasure<Dimensionless>
 	 */
 	public Rate( final int rate )
 	{
-		this( BigDecimal.valueOf( rate ), Unit.ONE );
+		this( BigDecimal.valueOf( rate ), SI.HERTZ );
 	}
 
 	/**
@@ -94,7 +95,7 @@ public class Rate extends DecimalMeasure<Dimensionless>
 	 */
 	public Rate( final Measure<BigDecimal, ?> measure )
 	{
-		this( measure.getValue(), measure.getUnit().asType( Dimensionless.class ) );
+		this( measure.getValue(), measure.getUnit().asType( Frequency.class ) );
 	}
 
 	/**
@@ -103,7 +104,7 @@ public class Rate extends DecimalMeasure<Dimensionless>
 	 * @param value
 	 * @param unit
 	 */
-	public Rate( final BigDecimal value, final Unit<Dimensionless> unit )
+	public Rate( final BigDecimal value, final Unit<Frequency> unit )
 	{
 		super( value, unit );
 	}
@@ -115,7 +116,7 @@ public class Rate extends DecimalMeasure<Dimensionless>
 	 */
 	public static Rate valueOf( final BigDecimal value )
 	{
-		return new Rate( value, Unit.ONE );
+		return new Rate( value, SI.HERTZ );
 	}
 
 	/**
@@ -136,7 +137,7 @@ public class Rate extends DecimalMeasure<Dimensionless>
 	public static <V extends Number, Q extends Quantity> Rate valueOf( final Measure<V, Q> measure )
 	{
 		return new Rate( BigDecimal.valueOf( measure.getValue().doubleValue() ),
-				measure.getUnit().asType( Dimensionless.class ) );
+				measure.getUnit().asType( Frequency.class ) );
 	}
 
 	/**
