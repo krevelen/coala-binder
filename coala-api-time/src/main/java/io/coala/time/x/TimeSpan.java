@@ -266,7 +266,7 @@ public class TimeSpan extends DecimalMeasure
 	 * 
 	 * @param value
 	 */
-	public static TimeSpan valueOf( final Amount<Duration> value )
+	public static TimeSpan valueOf( final Amount value )
 	{
 		return new TimeSpan( BigDecimal.valueOf( value.getEstimatedValue() ),
 				value.getUnit() );
@@ -310,10 +310,10 @@ public class TimeSpan extends DecimalMeasure
 	 * 
 	 * @param decimal the measurement value.
 	 * @param unit the measurement unit.
+	 * @see DecimalMeasure#valueOf(Number, Unit)
 	 */
-	@SuppressWarnings( "unchecked" )
-	public static <Q extends Quantity> DecimalMeasure<Q>
-		valueOf( final BigDecimal decimal, final Unit<Q> unit )
+	public static <Q extends Quantity> TimeSpan valueOf( final Number decimal,
+		final Unit<Q> unit )
 	{
 		return new TimeSpan( decimal, unit );
 	}

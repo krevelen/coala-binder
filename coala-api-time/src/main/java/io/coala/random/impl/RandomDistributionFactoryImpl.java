@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/random/impl/RandomDistributionFactoryImpl.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: d2aa0ffb71e06dcaa7fa7a232e0d266a15ac5718 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.random.impl;
 
@@ -59,9 +54,8 @@ import org.apache.commons.math3.util.Pair;
  * {@link RandomDistributionFactoryImpl} creates {@link RandomDistribution}s
  * implemented by Apache's commons-math3
  * 
- * @version $Revision: 332 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 @SuppressWarnings("serial")
 public class RandomDistributionFactoryImpl implements

@@ -197,8 +197,24 @@ public interface Wrapper<T>
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
+	interface Ordinal<T extends Comparable>
+		extends Wrapper<T>, Comparable<Comparable>
+	{
+
+	}
+
+	/**
+	 * {@link SimpleOrdinal} extends the {@link Simple} implementation with
+	 * redirection for wrapped {@link Comparable} object's
+	 * {@link #compareTo(Object)} method
+	 *
+	 * @param <T> the concrete {@link Comparable} type of wrapped objects
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@SuppressWarnings( { "rawtypes" } )
 	class SimpleOrdinal<T extends Comparable> extends Simple<T>
-		implements Comparable<Comparable>
+		implements Ordinal<T>
 	{
 		@Override
 		public int compareTo( final Comparable that )

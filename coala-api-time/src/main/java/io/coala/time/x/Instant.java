@@ -1,7 +1,4 @@
 /* $Id$
- * $URL$
- * 
- * Part of the EU project Inertia, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.time.x;
 
@@ -28,6 +23,7 @@ import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.unit.SI;
 
+import org.aeonbits.owner.Converter;
 import org.joda.time.Period;
 import org.joda.time.ReadableInstant;
 import org.jscience.physics.amount.Amount;
@@ -38,10 +34,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.coala.json.x.Wrapper;
 
 /**
- * {@linkplain Instant} wraps a {@linkplain TimeSpan} that is
- * {@linkplain JavaPolymorph} (measuring the duration since the EPOCH,
- * 1970-01-01T00:00:00Z) and provides a {@link #valueOf(String)} method for
- * loading as configured value {@link Converters#CLASS_WITH_VALUE_OF_METHOD}
+ * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
+ * measuring a duration since the EPOCH (1970-01-01T00:00:00Z) that provides a
+ * {@link #valueOf(String)} method to allow loading as {@link Converter
+ * configuration} value, as per
+ * {@link org.aeonbits.owner.Converters#CLASS_WITH_VALUE_OF_METHOD}
  * <p>
  * We considered various temporal measure implementations, including
  * <dl>
@@ -57,7 +54,7 @@ import io.coala.json.x.Wrapper;
  * <dt>The JSR-310 {@code javax.time} Java8 extension back-port from
  * <a href="http://www.threeten.org/">threeten.org</a>:</dt>
  * <dd>
- * <li>supports nanosecond precision,</li>
+ * <li>supports nanosecond precision,</li>s
  * <li>{@linkplain org.threeten.bp.Instant} parses strictly ISO8601 format
  * (millis/nanos) only</li>
  * <dt>Joda's time API from <a href="http://www.joda.org/">joda.org</a></dt>
@@ -78,7 +75,7 @@ import io.coala.json.x.Wrapper;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
-@Wrapper.JavaPolymorph
+//@Wrapper.JavaPolymorph
 public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 {
 
@@ -234,6 +231,18 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 										.get( ChronoField.INSTANT_SECONDS ) )
 								.multiply( BigDecimal.TEN.pow( 9 ) ) ),
 				TimeSpan.NANOS ) ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value the {@link Amount} (of
+	 *            {@link javax.measure.quantity.Duration Duration} or
+	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
+	 */
+	public static Instant valueOf( final Amount value )
+	{
+		return valueOf( TimeSpan.valueOf( value ) );
 	}
 
 	/**

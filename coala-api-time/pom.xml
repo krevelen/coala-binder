@@ -20,7 +20,7 @@
 	</description>
 
 	<properties>
-		<commons-math3.version>3.3</commons-math3.version>
+		<commons-math3.version>3.6</commons-math3.version>
 		<jscience.version>4.3.1</jscience.version>
 		<google-rfc-2445.version>20110304</google-rfc-2445.version>
 		<quartz.version>2.2.1</quartz.version>

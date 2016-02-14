@@ -15,11 +15,17 @@
  */
 package io.coala.random.x;
 
+import java.util.List;
+
 import javax.measure.quantity.Quantity;
+import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
+import io.coala.random.ProbabilityMass;
 import io.coala.random.RandomDistribution;
+import io.coala.random.RandomNumberDistribution;
+import io.coala.random.RandomNumberStream;
 
 /**
  * {@link RandomAmountDistribution}
@@ -30,13 +36,262 @@ import io.coala.random.RandomDistribution;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface RandomAmountDistribution<Q extends Quantity>
-	extends RandomDistribution<Amount<Q>>
+@SuppressWarnings( "serial" )
+public abstract class RandomAmountDistribution<Q extends Quantity>
+	implements RandomDistribution<Amount<Q>>
 {
 
+	public static <Q extends Quantity> RandomAmountDistribution<Q>
+		of( final RandomNumberDistribution<?> dist, final Unit<Q> unit )
+	{
+		return new RandomAmountDistribution<Q>()
+		{
+			@Override
+			public Amount<Q> draw()
+			{
+				final Number value = dist.draw();
+				return value instanceof Long || value instanceof Integer
+						// TODO check BigDecimal and primitive types int/long ?
+						? Amount.valueOf( value.longValue(), unit )
+						: Amount.valueOf( value.doubleValue(), unit );
+			}
+		};
+	}
+
 	/**
-	 * @return the next pseudo-random value
+	 * {@link Factory}
+	 * 
+	 * FIXME prefer Long over Integer for discrete dists, same as DSOL?
+	 * 
+	 * TODO add following distribution types from DSOL? Bernoulli, Erlang,
+	 * Pearson5, Pearson6, NegativeBionomial
 	 */
-	Amount<Q> draw();
+	interface Factory
+	{
+
+		/**
+		 * @param constant the constant to be returned on each draw
+		 * @return the {@link RandomDistribution}
+		 */
+		<Q extends Quantity> RandomAmountDistribution<Q>
+			getConstant( Amount<Q> constant );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param trials number
+		 * @param p probability
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		<Q extends Quantity> RandomAmountDistribution<Q>
+			getBinomial( RandomNumberStream rng, Amount<Q> trials, Number p );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param probabilities the probability mass function enumerated for
+		 *            each value
+		 * @return the {@link RandomDistribution}
+		 */
+		<T> RandomDistribution<T> getEnumerated( RandomNumberStream rng,
+			List<ProbabilityMass<T, Number>> probabilities );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param probabilities the probability mass function enumerated for
+		 *            each value
+		 * @return the {@link RandomDistribution}
+		 */
+		<N extends Number> RandomNumberDistribution<N> getEnumeratedNumber(
+			RandomNumberStream rng,
+			List<ProbabilityMass<N, Number>> probabilities );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param p
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Integer> getGeometric( RandomNumberStream rng,
+			Number p );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param populationSize
+		 * @param numberOfSuccesses
+		 * @param sampleSize
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Integer> getHypergeometric(
+			RandomNumberStream rng, Number populationSize,
+			final Number numberOfSuccesses, final Number sampleSize );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param r
+		 * @param p
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Integer> getPascal( RandomNumberStream rng,
+			Number r, Number p );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param alpha
+		 * @param beta
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Integer> getPoisson( RandomNumberStream rng,
+			Number alpha, Number beta );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param lower
+		 * @param upper
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Integer> getUniformInteger(
+			RandomNumberStream rng, Number lower, Number upper );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param alpha
+		 * @param beta
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Integer> getZipf( RandomNumberStream rng,
+			Number numberOfElements, Number exponent );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param alpha
+		 * @param beta
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getBeta( RandomNumberStream rng,
+			Number alpha, Number beta );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param median
+		 * @param scale
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getCauchy( RandomNumberStream rng,
+			Number median, Number scale );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param degreesOfFreedom
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getChiSquared( RandomNumberStream rng,
+			Number degreesOfFreedom );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param mean
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getExponential( RandomNumberStream rng,
+			Number mean );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param numeratorDegreesOfFreedom
+		 * @param denominatorDegreesOfFreedom
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getF( RandomNumberStream rng,
+			Number numeratorDegreesOfFreedom,
+			Number denominatorDegreesOfFreedom );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param shape
+		 * @param scale
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getGamma( RandomNumberStream rng,
+			Number shape, Number scale );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param mu
+		 * @param c
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getLevy( RandomNumberStream rng,
+			Number mu, Number c );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param scale
+		 * @param shape
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getLogNormal( RandomNumberStream rng,
+			Number scale, Number shape );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param mean
+		 * @param sd the standard deviation
+		 * @return the Gaussian / Normal {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getNormal( RandomNumberStream rng,
+			Number mean, Number sd );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param scale
+		 * @param shape
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getPareto( RandomNumberStream rng,
+			Number scale, Number shape );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param denominatorDegreesOfFreedom
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getT( RandomNumberStream rng,
+			Number denominatorDegreesOfFreedom );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param a
+		 * @param b
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getTriangular( RandomNumberStream rng,
+			Number a, Number b, Number c );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param lower
+		 * @param upper
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getUniformReal( RandomNumberStream rng,
+			Number lower, Number upper );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param alpha
+		 * @param beta
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomNumberDistribution<Double> getWeibull( RandomNumberStream rng,
+			Number alpha, Number beta );
+
+		// TODO scrap or wrap (double <-> Number) using closures?
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param means
+		 * @param covariances
+		 * @return the {@link RandomNumberDistribution}
+		 */
+		RandomDistribution<double[]> getMultivariateNormal(
+			RandomNumberStream rng, double[] means, double[][] covariances );
+	}
 
 }
