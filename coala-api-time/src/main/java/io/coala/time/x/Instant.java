@@ -22,6 +22,7 @@ import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import org.aeonbits.owner.Converter;
 import org.joda.time.DateTime;
@@ -80,10 +81,10 @@ import io.coala.json.x.Wrapper;
 public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 {
 
-	/** a {@link Instant} constant of ZERO */
+	/** the ZERO */
 	public static final Instant ZERO = of( TimeSpan.ZERO );
 
-	/** a {@link Instant} constant of ONE */
+	/** the ONE */
 	public static final Instant ONE = of( TimeSpan.ONE );
 
 	/** the wrapped {@link TimeSpan} value */
@@ -117,6 +118,66 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	public int compareTo( final Instant that )
 	{
 		return unwrap().compareTo( that.unwrap() );
+	}
+
+	public DecimalMeasure divide( final TimeSpan augend )
+	{
+		return unwrap().divide( augend );
+	}
+
+	public DecimalMeasure divide( final Measure augend )
+	{
+		return unwrap().divide( augend );
+	}
+
+	public Amount divide( final Amount augend )
+	{
+		return unwrap().divide( augend );
+	}
+
+	public Instant divide( final long augend )
+	{
+		return of( unwrap().divide( augend ) );
+	}
+
+	public Instant divide( final Number augend )
+	{
+		return of( unwrap().divide( augend ) );
+	}
+
+	public Instant divide( final BigDecimal augend )
+	{
+		return of( unwrap().divide( augend ) );
+	}
+
+	public Instant add( final TimeSpan augend )
+	{
+		return of( unwrap().add( augend ) );
+	}
+
+	public Instant add( final Measure augend )
+	{
+		return of( unwrap().add( augend ) );
+	}
+
+	public Instant add( final Amount augend )
+	{
+		return of( unwrap().add( augend ) );
+	}
+
+	public Instant add( final long augend )
+	{
+		return of( unwrap().add( augend ) );
+	}
+
+	public Instant add( final Number augend )
+	{
+		return of( unwrap().add( augend ) );
+	}
+
+	public Instant add( final BigDecimal augend )
+	{
+		return of( unwrap().add( augend ) );
 	}
 
 	@JsonIgnore
@@ -168,7 +229,8 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	@JsonIgnore
 	public Amount toAmount()
 	{
-		return Amount.valueOf( unwrap().toString() ).to( unwrap().getUnit() );
+		return Amount.valueOf( unwrap().getValue().doubleValue(),
+				unwrap().getUnit() );
 	}
 
 	/**

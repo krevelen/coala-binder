@@ -75,10 +75,10 @@ public class TimeSpan extends DecimalMeasure
 	public static final Unit<Duration> NANOS = SI.NANO( SI.SECOND );
 
 	/** the ZERO */
-	public static final TimeSpan ZERO = of( 0L );
+	public static final TimeSpan ZERO = of( 0, Unit.ONE );
 
-	/** the ZERO */
-	public static final TimeSpan ONE = of( 1L );
+	/** the ONE */
+	public static final TimeSpan ONE = of( 1, Unit.ONE );
 
 	/**
 	 * Parse duration as {@link DecimalMeasure JSR-275} measure (e.g.
@@ -201,7 +201,19 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * {@link TimeSpan} main constructor
+	 * {@link TimeSpan} main constructor for exact values
+	 * 
+	 * @param value
+	 * @param unit
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan( final long value, final Unit unit )
+	{
+		super( BigDecimal.valueOf( value ), unit );
+	}
+
+	/**
+	 * {@link TimeSpan} main constructor for (inexact) {@link Number}s
 	 * 
 	 * @param value
 	 * @param unit
@@ -209,23 +221,23 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan( final Number value, final Unit unit )
 	{
+		super( BigDecimal.valueOf( value.doubleValue() ), unit );
+	}
+
+	/**
+	 * {@link TimeSpan} main constructor for {@link BigDecimal} values
+	 * 
+	 * @param value
+	 * @param unit
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan( final BigDecimal value, final Unit unit )
+	{
 		super( value instanceof BigDecimal ? (BigDecimal) value
 				: BigDecimal.valueOf( value.doubleValue() ), unit );
 		// FIXME also test or long/Long and int/Integer values so as 
 		// to rather invoke (more exact) BigDecimal.valueOf(long) constructor?
 	}
-
-	/**
-	 * added for erasure-compatibility with
-	 * {@link DecimalMeasure#valueOf(CharSequence)}
-	 * 
-	 * @see Converters.CLASS_WITH_VALUE_OF_METHOD
-	 */
-	// @SuppressWarnings("unchecked")
-	// public static MeasurableDuration valueOf(final CharSequence value)
-	// {
-	// return valueOf(value.toString());
-	// }
 
 	/**
 	 * for "natural" Config value conversion for a {@link Duration} (i.e.
@@ -372,6 +384,109 @@ public class TimeSpan extends DecimalMeasure
 			// p.getText(), result);
 			return result;
 		}
+	}
+
+	/**
+	 * @param augend the {@link Measure}, e.g. another {@link TimeSpan}
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan add( final Measure augend )
+	{
+		return augend.getValue() instanceof BigDecimal
+				? add( (BigDecimal) augend.to( getUnit() ).getValue() )
+				: add( augend.doubleValue( getUnit() ) );
+	}
+
+	/**
+	 * @param augend
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan add( final Amount augend )
+	{
+		return augend.isExact() ? add( augend.longValue( getUnit() ) )
+				: add( augend.doubleValue( getUnit() ) );
+	}
+
+	/**
+	 * @param augend
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan add( final Number augend )
+	{
+		return add( BigDecimal.valueOf( augend.doubleValue() ) );
+	}
+
+	/**
+	 * @param augend
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan add( final long augend )
+	{
+		return add( BigDecimal.valueOf( augend ) );
+	}
+
+	/**
+	 * @param augend the {@link BigDecimal} value to add
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan add( final BigDecimal augend )
+	{
+		return of( getValue().add( augend ), getUnit() );
+	}
+
+	/**
+	 * @param augend the {@link Measure}, e.g. another {@link TimeSpan}
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public DecimalMeasure divide( final Measure<BigDecimal, ?> divisor )
+	{
+		// FIXME broaden type arguments to any Number measure <?,?>
+		return DecimalMeasure.valueOf(
+				getValue().divide( divisor.to( getUnit() ).getValue() ),
+				Unit.ONE );
+	}
+
+	/**
+	 * @param augend
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public Amount divide( final Amount divisor )
+	{
+		return divisor.to( getUnit() ).inverse()
+				.times( getValue().doubleValue() );
+	}
+
+	/**
+	 * @param augend
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan divide( final Number divisor )
+	{
+		return divide( BigDecimal.valueOf( divisor.doubleValue() ) );
+	}
+
+	/**
+	 * @param augend
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan divide( final long divisor )
+	{
+		return divide( BigDecimal.valueOf( divisor ) );
+	}
+
+	/**
+	 * @param augend the {@link BigDecimal} value to add
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan divide( final BigDecimal divisor )
+	{
+		return of( getValue().divide( divisor ), getUnit() );
 	}
 
 }
