@@ -236,7 +236,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 */
 	public static Duration valueOf( final ReadableDuration value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return valueOf( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -246,7 +246,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 */
 	public static Duration valueOf( final Measure value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return valueOf( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -256,7 +256,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 */
 	public static Duration valueOf( final Amount value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return valueOf( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -266,7 +266,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 */
 	public static Duration valueOf( final Number value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return valueOf( TimeSpan.of( value ) );
 	}
 
 	/**

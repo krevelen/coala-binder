@@ -95,7 +95,7 @@ public class TriggerPattern
 					Date current = trigger.getStartTime();
 					while (current != null)
 					{
-						sub.onNext(Instant.valueOf(current.getTime()));
+						sub.onNext(Instant.of(current.getTime()));
 						current = trigger.getFireTimeAfter(current);
 					}
 				}
@@ -127,7 +127,7 @@ public class TriggerPattern
 							@Override
 							public Instant call(final DateTime dt)
 							{
-								return Instant.valueOf(dt);
+								return Instant.of(dt);
 							}
 						});
 			} catch (final Exception e1)
@@ -156,7 +156,7 @@ public class TriggerPattern
 	 */
 	public TriggerPattern(final double absoluteInstantMS)
 	{
-		this(Instant.valueOf(absoluteInstantMS));
+		this(Instant.of(absoluteInstantMS));
 	}
 
 	/**
@@ -167,7 +167,7 @@ public class TriggerPattern
 	 */
 	public TriggerPattern(final int absoluteInstantMS)
 	{
-		this(Instant.valueOf(absoluteInstantMS));
+		this(Instant.of(absoluteInstantMS));
 	}
 
 	/**

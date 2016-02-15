@@ -112,7 +112,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	{
 		try
 		{
-			return valueOf( TimeSpan.valueOf( (Number) time.get() ) );
+			return valueOf( TimeSpan.of( (Number) time.get() ) );
 		} catch( final Throwable t )
 		{
 			throw ExceptionBuilder
@@ -179,7 +179,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	public Instant toInstant()
 	{
 		// FIXME convert to millis from which time unit?
-		return Instant.valueOf( unwrap() );
+		return Instant.of( unwrap() );
 	}
 
 	/**

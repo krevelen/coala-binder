@@ -1,7 +1,4 @@
 /* $Id$
- * $URL$
- * 
- * Part of the EU project Inertia, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.time.x;
 
@@ -24,8 +19,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 
 import javax.measure.DecimalMeasure;
-import javax.measure.Measurable;
 import javax.measure.Measure;
+import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Duration;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
@@ -52,15 +47,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * Assumes {@linkplain Double#NaN} as value for illegal/empty value types
  * 
  * TODO consider using more complex JScience {@link Amount} as super type rather
- * than {@link DecimalMeasure}, providing more (exact) operations by default,
- * e.g. {@link Amount#plus(Amount)}, a la
+ * than {@link DecimalMeasure}, providing (exact) arithmetic operations by
+ * default, e.g. {@link Amount#plus(Amount)}, a la
  * <a href="https://www.jcp.org/en/jsr/detail?id=363">JSR 363</a> (see
  * <a href="https://github.com/unitsofmeasurement/uom-se">Java8 reference
  * implementation</a>)
  * 
- * @date $Date$
  * @version $Id$
- * @author <a href="mailto:rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
 @JsonSerialize( using = TimeSpan.JsonSerializer.class )
@@ -79,6 +73,12 @@ public class TimeSpan extends DecimalMeasure
 
 	/** */
 	public static final Unit<Duration> NANOS = SI.NANO( SI.SECOND );
+
+	/** the ZERO */
+	public static final TimeSpan ZERO = of( 0L );
+
+	/** the ZERO */
+	public static final TimeSpan ONE = of( 1L );
 
 	/**
 	 * Parse duration as {@link DecimalMeasure JSR-275} measure (e.g.
@@ -201,7 +201,7 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * {@link TimeSpan} constructor
+	 * {@link TimeSpan} main constructor
 	 * 
 	 * @param value
 	 * @param unit
@@ -211,6 +211,8 @@ public class TimeSpan extends DecimalMeasure
 	{
 		super( value instanceof BigDecimal ? (BigDecimal) value
 				: BigDecimal.valueOf( value.doubleValue() ), unit );
+		// FIXME also test or long/Long and int/Integer values so as 
+		// to rather invoke (more exact) BigDecimal.valueOf(long) constructor?
 	}
 
 	/**
@@ -224,53 +226,6 @@ public class TimeSpan extends DecimalMeasure
 	// {
 	// return valueOf(value.toString());
 	// }
-
-	/**
-	 * {@link TimeSpan} static factory method
-	 * 
-	 * @param temporal
-	 */
-	public static Measurable valueOf( final TemporalAmount temporal )
-	{
-		return new TimeSpan(
-				BigDecimal.valueOf( temporal.get( ChronoUnit.NANOS ) )
-						.add( BigDecimal
-								.valueOf( temporal.get( ChronoUnit.MILLIS ) )
-								.multiply( BigDecimal.TEN.pow( 6 ) ) ),
-				NANOS );
-	}
-
-	/**
-	 * {@link TimeSpan} static factory method
-	 * 
-	 * @param value
-	 */
-	public static TimeSpan valueOf( final ReadableDuration value )
-	{
-		return new TimeSpan( BigDecimal.valueOf( value.getMillis() ), MILLIS );
-	}
-
-	/**
-	 * {@link TimeSpan} static factory method
-	 * 
-	 * @param value
-	 */
-	public static TimeSpan
-		valueOf( final Measure<? extends Number, Duration> value )
-	{
-		return new TimeSpan( value );
-	}
-
-	/**
-	 * {@link TimeSpan} static factory method
-	 * 
-	 * @param value
-	 */
-	public static TimeSpan valueOf( final Amount value )
-	{
-		return new TimeSpan( BigDecimal.valueOf( value.getEstimatedValue() ),
-				value.getUnit() );
-	}
 
 	/**
 	 * for "natural" Config value conversion for a {@link Duration} (i.e.
@@ -305,6 +260,55 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
+	 * {@link TimeSpan} static factory method
+	 * 
+	 * @param temporal a {@link TemporalAmount}
+	 */
+	public static TimeSpan of( final TemporalAmount temporal )
+	{
+		return new TimeSpan(
+				BigDecimal.valueOf( temporal.get( ChronoUnit.NANOS ) )
+						.add( BigDecimal
+								.valueOf( temporal.get( ChronoUnit.MILLIS ) )
+								.multiply( BigDecimal.TEN.pow( 6 ) ) ),
+				NANOS );
+	}
+
+	/**
+	 * {@link TimeSpan} static factory method
+	 * 
+	 * @param value a {@link ReadableDuration}, e.g.
+	 *            {@link org.joda.time.Duration}
+	 */
+	public static TimeSpan of( final ReadableDuration value )
+	{
+		return new TimeSpan( BigDecimal.valueOf( value.getMillis() ), MILLIS );
+	}
+
+	/**
+	 * {@link TimeSpan} static factory method
+	 * 
+	 * @param value a {@link Measure} of {@link Duration} or
+	 *            {@link Dimensionless} units
+	 */
+	public static TimeSpan of( final Measure<? extends Number, ?> value )
+	{
+		return new TimeSpan( value );
+	}
+
+	/**
+	 * {@link TimeSpan} static factory method
+	 * 
+	 * @param value an {@link Amount} of {@link Duration} or
+	 *            {@link Dimensionless} units
+	 */
+	public static TimeSpan of( final Amount value )
+	{
+		return new TimeSpan( BigDecimal.valueOf( value.getEstimatedValue() ),
+				value.getUnit() );
+	}
+
+	/**
 	 * Returns the decimal measure for the specified number stated in the
 	 * specified unit.
 	 * 
@@ -312,7 +316,7 @@ public class TimeSpan extends DecimalMeasure
 	 * @param unit the measurement unit.
 	 * @see DecimalMeasure#valueOf(Number, Unit)
 	 */
-	public static <Q extends Quantity> TimeSpan valueOf( final Number decimal,
+	public static <Q extends Quantity> TimeSpan of( final Number decimal,
 		final Unit<Q> unit )
 	{
 		return new TimeSpan( decimal, unit );
@@ -322,7 +326,7 @@ public class TimeSpan extends DecimalMeasure
 	 * @param units the amount of time units
 	 * @return a {@link TimeSpan}
 	 */
-	public static TimeSpan valueOf( final Number units )
+	public static TimeSpan of( final Number units )
 	{
 		return new TimeSpan( units, Unit.ONE );
 	}
@@ -362,7 +366,7 @@ public class TimeSpan extends DecimalMeasure
 				throws IOException, JsonProcessingException
 		{
 			final TimeSpan result = p.getCurrentToken().isNumeric()
-					? TimeSpan.valueOf( p.getNumberValue() )
+					? TimeSpan.of( p.getNumberValue() )
 					: TimeSpan.valueOf( p.getText() );
 			// LOG.trace("Deserialized {} {} to: {}", p.getCurrentToken(),
 			// p.getText(), result);

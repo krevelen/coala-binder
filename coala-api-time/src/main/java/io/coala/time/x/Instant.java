@@ -24,6 +24,7 @@ import javax.measure.Measure;
 import javax.measure.unit.SI;
 
 import org.aeonbits.owner.Converter;
+import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.ReadableInstant;
 import org.jscience.physics.amount.Amount;
@@ -79,6 +80,13 @@ import io.coala.json.x.Wrapper;
 public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 {
 
+	/** a {@link Instant} constant of ZERO */
+	public static final Instant ZERO = of( TimeSpan.ZERO );
+
+	/** a {@link Instant} constant of ONE */
+	public static final Instant ONE = of( TimeSpan.ONE );
+
+	/** the wrapped {@link TimeSpan} value */
 	private TimeSpan value;
 
 	@Override
@@ -148,7 +156,7 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 
 	/** @return the JSR-275 {@link Measurable} implementation of an instant */
 	@JsonIgnore
-	public Measurable toMeasure()
+	public TimeSpan toMeasure()
 	{
 		return unwrap();
 	}
@@ -204,7 +212,17 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 */
 	public static Instant valueOf( final String value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return of( TimeSpan.valueOf( value ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value a{@link ReadableInstant} instant, e.g. {@link DateTime}
+	 */
+	public static Instant of( final ReadableInstant joda )
+	{
+		return of( joda.getMillis() );
 	}
 
 	/**
@@ -212,19 +230,9 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 * 
 	 * @param value
 	 */
-	public static Instant valueOf( final ReadableInstant joda )
+	public static Instant of( final org.threeten.bp.Instant value )
 	{
-		return valueOf( joda.getMillis() );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value
-	 */
-	public static Instant valueOf( final org.threeten.bp.Instant value )
-	{
-		return valueOf( TimeSpan.valueOf( DecimalMeasure.valueOf(
+		return of( TimeSpan.of( DecimalMeasure.valueOf(
 				BigDecimal.valueOf( value.get( ChronoField.NANO_OF_SECOND ) )
 						.add( BigDecimal
 								.valueOf( value
@@ -240,9 +248,9 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 *            {@link javax.measure.quantity.Duration Duration} or
 	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
 	 */
-	public static Instant valueOf( final Amount value )
+	public static Instant of( final Amount value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return of( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -252,9 +260,9 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 *            {@link javax.measure.quantity.Duration Duration} or
 	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
 	 */
-	public static Instant valueOf( final Measure value )
+	public static Instant of( final Measure value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return of( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -262,9 +270,9 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 * 
 	 * @param units the amount of time units
 	 */
-	public static Instant valueOf( final Number units )
+	public static Instant of( final Number units )
 	{
-		return valueOf( TimeSpan.valueOf( units ) );
+		return of( TimeSpan.of( units ) );
 	}
 
 	/**
@@ -272,7 +280,7 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 * 
 	 * @param value the {@link TimeSpan}
 	 */
-	public static Instant valueOf( final TimeSpan value )
+	public static Instant of( final TimeSpan value )
 	{
 		return new Instant()
 		{

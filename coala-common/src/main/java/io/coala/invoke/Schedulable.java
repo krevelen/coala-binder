@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 19590127859130f7d2914a6f5b7653f442154397 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/Schedulable.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,9 +20,6 @@
  */
 package io.coala.invoke;
 
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -35,6 +32,8 @@ import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.databind.util.ClassUtil;
 
+import io.coala.exception.CoalaExceptionFactory;
+
 /**
  * {@link Schedulable}
  * 
@@ -44,8 +43,8 @@ import com.fasterxml.jackson.databind.util.ClassUtil;
  * 
  */
 @Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Retention( RetentionPolicy.RUNTIME )
+@Target( ElementType.METHOD )
 public @interface Schedulable
 {
 
@@ -62,6 +61,7 @@ public @interface Schedulable
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 * 
 	 */
+	@SuppressWarnings( "rawtypes" )
 	class Util
 	{
 		/** */
@@ -74,15 +74,15 @@ public @interface Schedulable
 		 * @param arguments the arguments to call the method with
 		 * @return the {@link Callable} object
 		 */
-		public static Callable<Object> toCallable(final String reference,
-				final Object target, final Object... arguments)
+		public static Callable<Object> toCallable( final String reference,
+			final Object target, final Object... arguments )
 		{
 			return new Callable<Object>()
 			{
 				@Override
 				public Object call() throws Exception
 				{
-					return Util.call(reference, target, arguments);
+					return Util.call( reference, target, arguments );
 				}
 			};
 		}
@@ -92,15 +92,15 @@ public @interface Schedulable
 		 * @param target the object implementing the {@link Schedulable} method
 		 * @param arguments the arguments to call the method with
 		 */
-		public static Callable<Object> toCallable(final String reference,
-				final Object target, final List<Object> arguments)
+		public static Callable<Object> toCallable( final String reference,
+			final Object target, final List arguments )
 		{
 			return new Callable<Object>()
 			{
 				@Override
 				public Object call() throws Exception
 				{
-					return Util.call(reference, target, arguments);
+					return Util.call( reference, target, arguments );
 				}
 			};
 		}
@@ -109,65 +109,65 @@ public @interface Schedulable
 		 * @param reference the method's annotated {@link Schedulable} value
 		 * @param target the object implementing the {@link Schedulable} method
 		 * @param arguments the arguments to call the method with (or none or
-		 *        {@code null})
-		 * @throws CoalaException
+		 *            {@code null})
+		 * @throws Exception
 		 */
-		public static Object call(final String reference, final Object target,
-				final Object... arguments) throws Exception
+		public static Object call( final String reference, final Object target,
+			final Object... arguments ) throws Exception
 		{
 			// convert args to list
-			final List<Object> args;
-			if (arguments == null || arguments.length == 0)
+			final List args;
+			if( arguments == null || arguments.length == 0 )
 				args = null;// Collections.emptyList();
 			else
-				args = Arrays.asList(arguments);
+				args = Arrays.asList( arguments );
 
-			return call(reference, target, args);
+			return call( reference, target, args );
 		}
 
 		/**
 		 * @param reference the method's annotated {@link Schedulable} value
 		 * @param target the object implementing the {@link Schedulable} method
 		 * @param arguments the arguments to call the method with (or
-		 *        {@code null})
-		 * @throws CoalaException
+		 *            {@code null})
+		 * @throws Exception
 		 */
-		public static Object call(final String reference, final Object target,
-				final List<Object> arguments) throws Exception
+		@SuppressWarnings( "unchecked" )
+		public static Object call( final String reference, final Object target,
+			final List arguments ) throws Exception
 		{
-			Method method = findSchedulableMethod(target.getClass(), reference);
-			
-			// search super types/interfaces
-			if (method == null)
-				for (Class<?> superType : ClassUtil.findSuperTypes(
-						target.getClass(), Object.class))
-					if ((method = findSchedulableMethod(superType, reference)) != null)
-						break;
-			
-			if (method == null)
-				throw CoalaExceptionFactory.ANNOTATION_NOT_FOUND.createRuntime(
-						Schedulable.class, target, reference);
+			Method method = findSchedulableMethod( target.getClass(),
+					reference );
 
-			method.setAccessible(true);
-			return method.invoke(
-					target,
-					arguments == null ? null : arguments
-							.toArray(new Object[arguments.size()]));
+			// search super types/interfaces
+			if( method == null ) for( Class<?> superType : ClassUtil
+					.findSuperTypes( target.getClass(), Object.class ) )
+				if( (method = findSchedulableMethod( superType,
+						reference )) != null )
+					break;
+
+			if( method == null )
+				throw CoalaExceptionFactory.ANNOTATION_NOT_FOUND
+						.createRuntime( Schedulable.class, target, reference );
+
+			method.setAccessible( true );
+			return method.invoke( target, arguments == null ? null
+					: arguments.toArray( new Object[arguments.size()] ) );
 		}
 
-		private static Method findSchedulableMethod(final Class<?> superType,
-				final String reference)
+		private static Method findSchedulableMethod( final Class<?> superType,
+			final String reference )
 		{
-			for (Method method : superType.getDeclaredMethods())
+			for( Method method : superType.getDeclaredMethods() )
 			{
 				// TODO ignore static methods?
 
 				final Schedulable annot = method
-						.getAnnotation(Schedulable.class);
+						.getAnnotation( Schedulable.class );
 
 				// TODO add duck-typing?
 
-				if (annot != null && annot.value().equals(reference))
+				if( annot != null && annot.value().equals( reference ) )
 					return method;
 			}
 			return null;
