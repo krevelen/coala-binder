@@ -6,6 +6,7 @@
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
 		<version>0.2.0-SNAPSHOT</version>
+		<relativePath>../..</relativePath>
 	</parent>
 
 	<artifactId>dsol3-coala-adapter</artifactId>

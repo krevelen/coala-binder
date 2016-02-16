@@ -7,7 +7,7 @@
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
 		<version>0.2.0-SNAPSHOT</version>
-		<relativePath>../..</relativePath>
+		<relativePath>..</relativePath>
 	</parent>
 
 	<artifactId>coala-api-enterprise</artifactId>
@@ -15,7 +15,7 @@
 	<name>${project.artifactId}</name>
 	<description>
 		Utility and demonstration code for a DEMO ontology API
-		$Id$
+		$Id: 1786ad8cf110def4ef73c623f813e83f5132fd1a $
 	</description>
 	<url>https://demo.nl/</url>
 

@@ -436,7 +436,6 @@ public class TimeSpan extends DecimalMeasure
 		return of( getValue().add( augend ), getUnit() );
 	}
 
-
 	/**
 	 * @param subtrahend the {@link Measure}, e.g. another {@link TimeSpan}
 	 * @return a new {@link TimeSpan}
@@ -456,7 +455,8 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan subtract( final Amount subtrahend )
 	{
-		return subtrahend.isExact() ? subtract( subtrahend.longValue( getUnit() ) )
+		return subtrahend.isExact()
+				? subtract( subtrahend.longValue( getUnit() ) )
 				: subtract( subtrahend.doubleValue( getUnit() ) );
 	}
 
@@ -487,17 +487,20 @@ public class TimeSpan extends DecimalMeasure
 	{
 		return of( getValue().subtract( subtrahend ), getUnit() );
 	}
-	
+
 	/**
 	 * @param divisor the {@link Measure}, e.g. another {@link TimeSpan}
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public DecimalMeasure divide( final Measure<BigDecimal, ?> divisor )
+	public DecimalMeasure divide( final Measure<? extends Number, ?> divisor )
 	{
-		// FIXME broaden type arguments to any Number measure <?,?>
+		// FIXME generate more exact Measure for discrete divisor values?
 		return DecimalMeasure.valueOf(
-				getValue().divide( divisor.to( getUnit() ).getValue() ),
+				getValue().divide( divisor.getValue() instanceof BigDecimal
+						? (BigDecimal) divisor.to( getUnit() ).getValue()
+						: BigDecimal.valueOf( divisor.to( getUnit() ).getValue()
+								.doubleValue() ) ),
 				Unit.ONE );
 	}
 
@@ -508,7 +511,7 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public Amount divide( final Amount divisor )
 	{
-		// FIXME generate more exact Amount for long values of this TimeSpan?
+		// FIXME generate more exact Amount for discrete TimeSpan values?
 		return divisor.inverse()
 				.times( Amount.valueOf( doubleValue( getUnit() ), getUnit() ) );
 	}
