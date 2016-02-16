@@ -15,7 +15,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for Guice3 dependency injection
-		$Id$
+		$Id: 169b9e0e619470656e40ad823e34ddd21d5261c2 $
 	</description>
 	<url>https://code.google.com/p/google-guice/</url>
 
@@ -52,6 +52,7 @@
 			<groupId>com.google.inject.extensions</groupId>
 			<artifactId>guice-assistedinject</artifactId>
 			<version>${guice.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>

@@ -15,14 +15,17 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for the Eve3 agent platform
-		$Id$
+		$Id: e9c975bcfa2a3aef793ada2decb7216adb333042 $
 	</description>
 	<url>https://eve.almende.com/</url>
 
 	<properties>
-		<!-- <eve.version>3.2.0-SNAPSHOT</eve.version> atomic scheduler/messaging not released -->
+		<!-- <eve.version>3.2.0-SNAPSHOT</eve.version> atomic scheduler/messaging 
+			not released -->
 		<eve.version>3.1.1</eve.version>
-		<!-- <jetty.version>9.3.3.v20150827</jetty.version> causes java.lang.UnsupportedClassVersionError: org/eclipse/jetty/jndi/InitialContextFactory : Unsupported major.minor version 52.0 -->
+		<!-- <jetty.version>9.3.3.v20150827</jetty.version> causes java.lang.UnsupportedClassVersionError: 
+			org/eclipse/jetty/jndi/InitialContextFactory : Unsupported major.minor version 
+			52.0 -->
 		<jetty.version>9.2.10.v20150310</jetty.version>
 		<jackson.version>2.4.0</jackson.version>
 		<javax.servlet-api.version>3.1.0</javax.servlet-api.version>
@@ -67,6 +70,7 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-joda</artifactId>
 			<version>${jackson.version}</version>
+			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<groupId>joda-time</groupId>
@@ -80,18 +84,21 @@
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
 			<version>${jackson.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>javax-websocket-server-impl</artifactId>
 			<version>${jetty.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-transport-http-jetty</artifactId>
 			<version>${eve.version}</version>
+			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<groupId>org.eclipse.jetty</groupId>
@@ -119,11 +126,13 @@
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-scheduling-persistent</artifactId>
 			<version>${eve.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-deploy</artifactId>
 			<version>${eve.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>

@@ -59,6 +59,7 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>${commons-math3.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- Quartz implementation of CRON-like scheduler -->
@@ -66,6 +67,7 @@
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
 			<version>${quartz.version}</version>
+			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -79,6 +81,7 @@
 			<groupId>org.scala-saddle</groupId>
 			<artifactId>google-rfc-2445</artifactId>
 			<version>${google-rfc-2445.version}</version>
+			<scope>provided</scope>
 			<exclusions>
 				<!-- use a more recent implementation of joda-time -->
 				<exclusion>
@@ -113,6 +116,7 @@
 			<groupId>org.threeten</groupId>
 			<artifactId>threeten-extra</artifactId>
 			<version>${threeten-extra.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -123,12 +127,8 @@
 		</dependency>
 
 		<!-- Reference implementation of JSR-363 for JDK 8. -->
-		<dependency>
-			<groupId>tec.uom</groupId>
-			<artifactId>uom-se</artifactId>
-			<version>0.7</version>
-			<scope>test</scope>
-		</dependency>
+		<!-- <dependency> <groupId>tec.uom</groupId> <artifactId>uom-se</artifactId> 
+			<version>0.7</version> <scope>test</scope> </dependency> -->
 
 	</dependencies>
 </project>

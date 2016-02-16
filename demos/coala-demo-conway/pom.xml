@@ -15,10 +15,11 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Example code to produce Conway's Game of Life
-		$Id$
+		$Id: 0285e9e5a6e1bf5c2563d264d3f62606405d06b1 $
 	</description>
 
 	<properties>
+		<guice.version>3.0</guice.version>
 	</properties>
 
 	<repositories>
@@ -47,6 +48,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-assistedinject</artifactId>
+			<version>${guice.version}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>eve3-coala-adapter</artifactId>
 			<version>${project.version}</version>
@@ -57,7 +64,7 @@
 			<artifactId>dsol2-coala-adapter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
