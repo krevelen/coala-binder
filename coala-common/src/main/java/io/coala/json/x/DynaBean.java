@@ -1,7 +1,4 @@
 /* $Id$
- * $URL$
- * 
- * Part of the EU project Inertia, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.json.x;
 
@@ -50,7 +45,7 @@ import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Mutable;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -600,8 +595,9 @@ public class DynaBean implements Cloneable
 								"BeanWrapper should extend "
 										+ Accessible.class.getName()
 										+ " required for serialization: "
-										+ Arrays.asList( handler.type
-												.getInterfaces() ) );
+										+ Arrays.asList(
+												handler.type.getInterfaces() ),
+								jgen );
 
 					// BeanWrappers that do not extend OWNER API's Config
 					serializers
@@ -624,14 +620,17 @@ public class DynaBean implements Cloneable
 				}
 
 				if( Config.class.isInstance( value ) )
-					throw new JsonGenerationException( "Config should extend "
-							+ Accessible.class.getName()
-							+ " required for serialization: " + Arrays.asList(
-									value.getClass().getInterfaces() ) );
+					throw new JsonGenerationException(
+							"Config should extend " + Accessible.class.getName()
+									+ " required for serialization: "
+									+ Arrays.asList(
+											value.getClass().getInterfaces() ),
+							jgen );
 
 				throw new JsonGenerationException(
 						"No serializer found for proxy of: " + Arrays
-								.asList( value.getClass().getInterfaces() ) );
+								.asList( value.getClass().getInterfaces() ),
+						jgen );
 			}
 		};
 	}

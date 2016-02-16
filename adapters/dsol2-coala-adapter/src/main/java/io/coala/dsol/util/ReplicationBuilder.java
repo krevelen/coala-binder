@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/io/coala/dsol/util/ReplicationBuilder.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: f48a01d4e370494501065e39d20eb1ffb9f7c070 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,13 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.dsol.util;
-
-import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
 
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -30,6 +22,14 @@ import java.util.Map;
 import javax.naming.Context;
 import javax.naming.NamingException;
 
+import org.apache.logging.log4j.Logger;
+
+import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
 import nl.tudelft.simulation.dsol.experiment.Replication;
@@ -37,36 +37,29 @@ import nl.tudelft.simulation.dsol.experiment.Treatment;
 import nl.tudelft.simulation.jstats.streams.MersenneTwister;
 import nl.tudelft.simulation.jstats.streams.StreamInterface;
 
-import org.apache.log4j.Logger;
-
-import com.eaio.uuid.UUID;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 /**
  * {@link ReplicationBuilder}
  * 
- * @date $Date: 2014-05-07 11:59:26 +0200 (Wed, 07 May 2014) $
- * @version $Revision: 258 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-@SuppressWarnings("serial")
+@SuppressWarnings( "serial" )
 public class ReplicationBuilder extends Replication
 {
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(ReplicationBuilder.class);
+			.getLogger( ReplicationBuilder.class );
 
 	/** */
 	private static final String REPLICATION_CONTEXT_PREFIX = "/repl=";
 
 	/** */
-	public static Context getReplicationContext(final Experiment experiment,
-			final String name) throws NamingException
+	public static Context getReplicationContext( final Experiment experiment,
+		final String name ) throws NamingException
 	{
-		return experiment.getContext().createSubcontext(
-				REPLICATION_CONTEXT_PREFIX + name);
+		return experiment.getContext()
+				.createSubcontext( REPLICATION_CONTEXT_PREFIX + name );
 	}
 
 	/**
@@ -75,9 +68,10 @@ public class ReplicationBuilder extends Replication
 	 * @param treatment
 	 * @throws NamingException
 	 */
-	public ReplicationBuilder(final Treatment treatment) throws NamingException
+	public ReplicationBuilder( final Treatment treatment )
+		throws NamingException
 	{
-		this(treatment, new UUID().toString());
+		this( treatment, new UUID().toString() );
 	}
 
 	/**
@@ -87,44 +81,44 @@ public class ReplicationBuilder extends Replication
 	 * @param name the object's name in the RMI context
 	 * @throws NamingException
 	 */
-	public ReplicationBuilder(final Treatment treatment, final String name)
-			throws NamingException
+	public ReplicationBuilder( final Treatment treatment, final String name )
+		throws NamingException
 	{
-		super(getReplicationContext(treatment.getExperiment(), name), treatment
-				.getExperiment());
-		setDescription(name);
-		setStreams(new HashMap<String, StreamInterface>());
+		super( getReplicationContext( treatment.getExperiment(), name ),
+				treatment.getExperiment() );
+		setDescription( name );
+		setStreams( new HashMap<String, StreamInterface>() );
 	}
 
-	public ReplicationBuilder withDescription(final String description)
+	public ReplicationBuilder withDescription( final String description )
 	{
-		setDescription(description);
+		setDescription( description );
 		return this;
 	}
 
 	public ReplicationBuilder withStream()
 	{
-		return withStream(System.currentTimeMillis());
+		return withStream( System.currentTimeMillis() );
 	}
 
-	public ReplicationBuilder withStream(final long seed)
+	public ReplicationBuilder withStream( final long seed )
 	{
-		return withStream(DsolModelComponent.RNG_ID, seed);
+		return withStream( DsolModelComponent.RNG_ID, seed );
 	}
 
-	public ReplicationBuilder withStream(final String name, final long seed)
+	public ReplicationBuilder withStream( final String name, final long seed )
 	{
-		return withStream(name, new MersenneTwister(seed));
+		return withStream( name, new MersenneTwister( seed ) );
 	}
 
-	public ReplicationBuilder withStream(final String name,
-			final StreamInterface rng)
+	public ReplicationBuilder withStream( final String name,
+		final StreamInterface rng )
 	{
 		final Map<String, StreamInterface> streams = getStreams();
-		if (streams == null)
-			throw new NullPointerException("RNG stream map not initialized");
-		else if (streams.put(name, rng) != null)
-			LOG.info("Replaced stream " + name);
+		if( streams == null )
+			throw new NullPointerException( "RNG stream map not initialized" );
+		else if( streams.put( name, rng ) != null )
+			LOG.info( "Replaced stream " + name );
 		return this;
 	}
 
@@ -155,14 +149,14 @@ public class ReplicationBuilder extends Replication
 		{
 			// final JsonNode node = JsonUtil.getJOM().valueToTree(this);
 			return JsonUtil.getJOM().writerWithDefaultPrettyPrinter()
-					.writeValueAsString(this);
-		} catch (final JsonProcessingException e)
+					.writeValueAsString( this );
+		} catch( final JsonProcessingException e )
 		{
-			LOG.warn("Problem marshalling " + getClass().getName(), e);
+			LOG.warn( "Problem marshalling " + getClass().getName(), e );
 			try
 			{
 				return getContext().getNameInNamespace();
-			} catch (final NamingException e1)
+			} catch( final NamingException e1 )
 			{
 				return super.toString();
 			}
@@ -173,12 +167,12 @@ public class ReplicationBuilder extends Replication
 	{
 		try
 		{
-			getExperiment().getSimulator().initialize(this,
-					getTreatment().getReplicationMode());
-		} catch (final RemoteException e)
+			getExperiment().getSimulator().initialize( this,
+					getTreatment().getReplicationMode() );
+		} catch( final RemoteException e )
 		{
-			LOG.fatal("Problem initializing DSOL replication", e);
-			throw new NullPointerException("Replication uninitializable");
+			LOG.fatal( "Problem initializing DSOL replication", e );
+			throw new NullPointerException( "Replication uninitializable" );
 		}
 		return this;
 	}
@@ -188,10 +182,10 @@ public class ReplicationBuilder extends Replication
 		try
 		{
 			getExperiment().getSimulator().start();
-		} catch (final RemoteException e)
+		} catch( final RemoteException e )
 		{
-			LOG.fatal("Problem initializing DSOL replication", e);
-			throw new NullPointerException("Replication uninitializable");
+			LOG.fatal( "Problem initializing DSOL replication", e );
+			throw new NullPointerException( "Replication uninitializable" );
 		}
 		return this;
 	}

@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/io/coala/dsol/util/ExperimentBuilder.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: ea1fecd44155e86870f80ea479f506f6e091d7b9 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,13 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.dsol.util;
-
-import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +22,14 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
+import org.apache.logging.log4j.Logger;
+
+import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
 import nl.tudelft.simulation.dsol.experiment.Replication;
@@ -37,27 +37,21 @@ import nl.tudelft.simulation.dsol.experiment.Treatment;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventType;
 
-import org.apache.log4j.Logger;
-
-import com.eaio.uuid.UUID;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 /**
  * {@link ExperimentBuilder}
  * 
- * @date $Date: 2014-05-07 11:59:26 +0200 (Wed, 07 May 2014) $
- * @version $Revision: 258 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-@SuppressWarnings("serial")
+@SuppressWarnings( "serial" )
 public class ExperimentBuilder extends Experiment
 {
 	/** */
 	private static final String EXPERIMENT_CONTEXT_PREFIX = "/exp=";
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(ExperimentBuilder.class);
+	private static final Logger LOG = LogUtil
+			.getLogger( ExperimentBuilder.class );
 
 	/**
 	 * {@link ExperimentBuilder} constructor
@@ -66,7 +60,7 @@ public class ExperimentBuilder extends Experiment
 	 */
 	public ExperimentBuilder() throws NamingException
 	{
-		this(new UUID().toString());
+		this( new UUID().toString() );
 	}
 
 	/**
@@ -75,10 +69,10 @@ public class ExperimentBuilder extends Experiment
 	 * @param context
 	 * @throws NamingException
 	 */
-	public ExperimentBuilder(final String context) throws NamingException
+	public ExperimentBuilder( final String context ) throws NamingException
 	{
-		super(new InitialContext().createSubcontext(EXPERIMENT_CONTEXT_PREFIX
-				+ context));
+		super( new InitialContext()
+				.createSubcontext( EXPERIMENT_CONTEXT_PREFIX + context ) );
 	}
 
 	@Override
@@ -88,21 +82,21 @@ public class ExperimentBuilder extends Experiment
 		return super.getContext();
 	}
 
-	public ExperimentBuilder withAnalyst(final String analyst)
+	public ExperimentBuilder withAnalyst( final String analyst )
 	{
-		setAnalyst(analyst);
+		setAnalyst( analyst );
 		return this;
 	}
 
-	public ExperimentBuilder withDescription(final String description)
+	public ExperimentBuilder withDescription( final String description )
 	{
-		setDescription(description);
+		setDescription( description );
 		return this;
 	}
 
-	public ExperimentBuilder withModel(final ModelInterface model)
+	public ExperimentBuilder withModel( final ModelInterface model )
 	{
-		setModel(model);
+		setModel( model );
 		return this;
 	}
 
@@ -113,9 +107,9 @@ public class ExperimentBuilder extends Experiment
 		return super.getModel();
 	}
 
-	public ExperimentBuilder withSimulator(final SimulatorInterface simulator)
+	public ExperimentBuilder withSimulator( final SimulatorInterface simulator )
 	{
-		setSimulator(simulator);
+		setSimulator( simulator );
 		return this;
 	}
 
@@ -127,19 +121,21 @@ public class ExperimentBuilder extends Experiment
 	}
 
 	/** @param result */
-	public ExperimentBuilder withReplications(final Replication... replications)
+	public ExperimentBuilder
+		withReplications( final Replication... replications )
 	{
 		List<Replication> list = getReplications();
-		if (list == null)
+		if( list == null )
 		{
 			list = new ArrayList<Replication>();
-			setReplications(list);
+			setReplications( list );
 		}
-		if (replications == null || replications.length == 0)
-			LOG.warn("No replications to add", new IllegalArgumentException());
+		if( replications == null || replications.length == 0 )
+			LOG.warn( "No replications to add",
+					new IllegalArgumentException() );
 		else
-			for (Replication replication : replications)
-				list.add(replication);
+			for( Replication replication : replications )
+				list.add( replication );
 		return this;
 	}
 
@@ -157,12 +153,12 @@ public class ExperimentBuilder extends Experiment
 		return super.getEventTypes();
 	}
 
-	protected ExperimentBuilder withTreatment(final Treatment treatment)
+	protected ExperimentBuilder withTreatment( final Treatment treatment )
 	{
-		if (treatment.getExperiment() != null)
-			LOG.warn("Replacing treatment's current experiment: "
-					+ treatment.getExperiment().getContext());
-		setTreatment(treatment);
+		if( treatment.getExperiment() != null )
+			LOG.warn( "Replacing treatment's current experiment: "
+					+ treatment.getExperiment().getContext() );
+		setTreatment( treatment );
 		// treatment.setExperiment(this); // redundant
 		return this;
 	}
@@ -176,7 +172,7 @@ public class ExperimentBuilder extends Experiment
 
 	public TreatmentBuilder newTreatment()
 	{
-		return withTreatment(new TreatmentBuilder(this)).getTreatment();
+		return withTreatment( new TreatmentBuilder( this ) ).getTreatment();
 	}
 
 	@Override
@@ -186,14 +182,14 @@ public class ExperimentBuilder extends Experiment
 		{
 			// final JsonNode node = JsonUtil.getJOM().valueToTree(this);
 			return JsonUtil.getJOM().writerWithDefaultPrettyPrinter()
-					.writeValueAsString(this);
-		} catch (final JsonProcessingException e)
+					.writeValueAsString( this );
+		} catch( final JsonProcessingException e )
 		{
-			LOG.warn("Problem marshalling " + getClass().getName(), e);
+			LOG.warn( "Problem marshalling " + getClass().getName(), e );
 			try
 			{
 				return getContext().getNameInNamespace();
-			} catch (final NamingException e1)
+			} catch( final NamingException e1 )
 			{
 				return super.toString();
 			}

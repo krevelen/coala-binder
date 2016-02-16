@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 317b601e8609c43c599d4e07f3175f2c63f4db55 $
  * $URL: https://dev.almende.com/svn/abms/coala-examples/src/test/java/io/coala/example/pacing/PacerTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -21,20 +21,21 @@
 package io.coala.experimental.grant;
 
 import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.aeonbits.owner.ConfigFactory;
+import org.apache.logging.log4j.Logger;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import io.coala.agent.AgentStatusObserver;
 import io.coala.agent.AgentStatusUpdate;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.capability.admin.CreatingCapability;
 import io.coala.log.LogUtil;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.aeonbits.owner.ConfigFactory;
-import org.apache.log4j.Logger;
-import org.junit.Ignore;
-import org.junit.Test;
 
 /**
  * {@link PacerTest}
@@ -48,7 +49,7 @@ public class PacerTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(PacerTest.class);
+	private static final Logger LOG = LogUtil.getLogger( PacerTest.class );
 
 	/** */
 	private static final String CONFIG_FILE = "pacer.properties";
@@ -56,40 +57,40 @@ public class PacerTest
 	@Test
 	public void testPacing() throws Exception
 	{
-		LOG.trace("Start pacing test");
+		LOG.trace( "Start pacing test" );
 
-		ConfigFactory.setProperty("modelName",
-				"testModel" + System.currentTimeMillis());
-		final Binder binder = BinderFactory.Builder.fromFile(CONFIG_FILE)
-				.build().create("_unittest_");
+		ConfigFactory.setProperty( "modelName",
+				"testModel" + System.currentTimeMillis() );
+		final Binder binder = BinderFactory.Builder.fromFile( CONFIG_FILE )
+				.build().create( "_unittest_" );
 
 		final CreatingCapability booterSvc = binder
-				.inject(CreatingCapability.class);
+				.inject( CreatingCapability.class );
 
 		final String[] actorNames = { "actor1", "actor2", "actor3" };
 
-		final CountDownLatch latch = new CountDownLatch(actorNames.length);
+		final CountDownLatch latch = new CountDownLatch( actorNames.length );
 
-		for (String actorName : actorNames)
+		for( String actorName : actorNames )
 		{
 			final String myName = actorName;
-			booterSvc.createAgent(myName, PacedActor.class).subscribe(
-					new AgentStatusObserver()
+			booterSvc.createAgent( myName, PacedActor.class )
+					.subscribe( new AgentStatusObserver()
 					{
 
 						@Override
-						public void onNext(final AgentStatusUpdate update)
+						public void onNext( final AgentStatusUpdate update )
 						{
-							LOG.trace("Observed: " + update);
+							LOG.trace( "Observed: " + update );
 							// System.err.println("Observed: " + update);
 
-							if (update.getStatus().isFailedStatus()
-									|| update.getStatus().isFinishedStatus())
+							if( update.getStatus().isFailedStatus()
+									|| update.getStatus().isFinishedStatus() )
 								latch.countDown();
 						}
 
 						@Override
-						public void onError(final Throwable e)
+						public void onError( final Throwable e )
 						{
 							e.printStackTrace();
 						}
@@ -97,13 +98,14 @@ public class PacerTest
 						@Override
 						public void onCompleted()
 						{
-							LOG.trace(myName + " has COMPLETED");
+							LOG.trace( myName + " has COMPLETED" );
 						}
-					});
+					} );
 		}
 
-		latch.await(5, TimeUnit.SECONDS);
-		assertTrue("Agent(s) did not all finish or fail", latch.getCount() == 0);
-		LOG.trace("Pacing test done!");
+		latch.await( 5, TimeUnit.SECONDS );
+		assertTrue( "Agent(s) did not all finish or fail",
+				latch.getCount() == 0 );
+		LOG.trace( "Pacing test done!" );
 	}
 }

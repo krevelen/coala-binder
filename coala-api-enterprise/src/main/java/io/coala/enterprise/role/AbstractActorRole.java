@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 7519a7e560a9b77cfbde387bd232886325404fff $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.role;
 
@@ -24,7 +22,7 @@ import javax.inject.Inject;
 //import javax.inject.Named;
 import javax.inject.Named;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -69,13 +67,12 @@ import rx.subjects.Subject;
 /**
  * {@link AbstractActorRole}
  * 
+ * @param <F> the concrete {@link CoordinationFact} type being handled
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <F> the {@link CoordinationFact} type being handled
+ * @author Rick van Krevelen
  */
 public abstract class AbstractActorRole<F extends CoordinationFact>
-		extends AbstractCapability<CapabilityID>implements ActorRole<F>
+	extends AbstractCapability<CapabilityID> implements ActorRole<F>
 {
 
 	/** */
@@ -86,9 +83,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	private Logger LOG;
 
 	/** */
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings( "rawtypes" )
 	@Inject
-	@Named(Binder.AGENT_TYPE)
+	@Named( Binder.AGENT_TYPE )
 	private Class ownerType;
 
 	/** the type of {@link CoordinationFact} */
@@ -104,30 +101,30 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	 * 
 	 * @param binder the {@link Binder}
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Inject
-	protected AbstractActorRole(final Binder binder)
+	protected AbstractActorRole( final Binder binder )
 	{
-		super(null, binder);
-		setID(new ActorRoleID(binder.getID(), getClass()));
+		super( null, binder );
+		setID( new ActorRoleID( binder.getID(), getClass() ) );
 
 		final List<Class<?>> typeArgs = ClassUtil
-				.getTypeArguments(AbstractActorRole.class, getClass());
-		this.factType = (Class<F>) typeArgs.get(0);
+				.getTypeArguments( AbstractActorRole.class, getClass() );
+		this.factType = (Class<F>) typeArgs.get( 0 );
 		// LOG.trace("Listening for messages of type: " +
 		// this.factType.getName());
-		this.facts = getReceiver().getIncoming().ofType(this.factType);
-		this.facts.subscribe(new Observer<F>()
+		this.facts = getReceiver().getIncoming().ofType( this.factType );
+		this.facts.subscribe( new Observer<F>()
 		{
 			@Override
-			public void onNext(final F fact)
+			public void onNext( final F fact )
 			{
 				final SimTime now = getTime();
 				// LOG.trace("SCHEDULING FACT: " + fact + " AT " + now);
 				getSimulator().schedule(
-						ProcedureCall.create(AbstractActorRole.this,
-								AbstractActorRole.this, FACT_HANDLER, fact),
-						Trigger.createAbsolute(now));
+						ProcedureCall.create( AbstractActorRole.this,
+								AbstractActorRole.this, FACT_HANDLER, fact ),
+						Trigger.createAbsolute( now ) );
 				// LOG.trace("SCHEDULED FACT: " + fact + " AT " + now);
 			}
 
@@ -138,30 +135,30 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 			}
 
 			@Override
-			public void onError(final Throwable e)
+			public void onError( final Throwable e )
 			{
 				e.printStackTrace();
 			}
-		});
+		} );
 	}
 
 	/**
 	 * @param fact the ignored {@link CoordinationFact} to log
 	 */
-	protected void logIgnore(final F fact, final boolean expired)
+	protected void logIgnore( final F fact, final boolean expired )
 	{
 		final CoordinationFactType factType = fact.getID().getType();
 		final ActorRoleType roleType = expired ? factType.originatorRoleType()
 				: factType.responderRoleType();
 		final CoordinationFactType proceedType = factType
-				.getDefaultResponse(roleType, true).outcome();
+				.getDefaultResponse( roleType, true ).outcome();
 		final CoordinationFactType receedType = factType
-				.getDefaultResponse(roleType, false).outcome();
-		LOG.trace(String.format(
+				.getDefaultResponse( roleType, false ).outcome();
+		LOG.trace( String.format(
 				"%s ignoring %s (%s), default response type: "
 						+ "%s to proceed or %s otherwise",
 				roleType, (expired ? "expiration of " : "") + factType,
-				fact.getClass().getSimpleName(), proceedType, receedType));
+				fact.getClass().getSimpleName(), proceedType, receedType ) );
 	}
 
 	@Override
@@ -182,131 +179,117 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	/**
 	 * @return the type of this {@link ActorRole}'s owner {@link Organization}
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	public Class<? extends Organization> getOwnerType()
 	{
 		return (Class<? extends Organization>) this.ownerType;
 	}
 
-	/*	private class FactHandler implements Observer<F>
-		{
-			*//**
-				 * @see Observer#onError(Throwable)
-				 */
 	/*
-	@Override
-	public void onError(final Throwable t)
-	{
-	t.printStackTrace();
-	}
-	
-	*//**
+	 * private class FactHandler implements Observer<F> {
+	 *//**
+		 * @see Observer#onError(Throwable)
+		 */
+	/*
+	 * @Override public void onError(final Throwable t) { t.printStackTrace(); }
+	 * 
+	 *//**
 		 * @see Observer#onNext(Object)
 		 */
 
 	/*
-	@Override
-	public void onNext(final F fact)
-	{
-	// don't handle immediately, may still be constructing the role!
-	final SimTime now = getTime();
-	LOG.info("SCHEDULING FACT:" + fact + " AT " + now);
-	getSimulator().schedule(
-	ProcedureCall.create(AbstractActorRole.this,
-	AbstractActorRole.this, FACT_HANDLER, fact),
-	Trigger.createAbsolute(now));
-	};
-	
-	*//**
+	 * @Override public void onNext(final F fact) { // don't handle immediately,
+	 * may still be constructing the role! final SimTime now = getTime();
+	 * LOG.info("SCHEDULING FACT:" + fact + " AT " + now);
+	 * getSimulator().schedule( ProcedureCall.create(AbstractActorRole.this,
+	 * AbstractActorRole.this, FACT_HANDLER, fact),
+	 * Trigger.createAbsolute(now)); };
+	 * 
+	 *//**
 		 * @see Observer#onCompleted()
 		 */
 	/*
-	@Override
-	public void onCompleted()
-	{
-	// empty
-	}
-	}
-	*/
+	 * @Override public void onCompleted() { // empty } }
+	 */
 	private static final String FACT_HANDLER = "factHandler";
 
-	@Schedulable(FACT_HANDLER)
-	public void handleFact(F fact)
+	@Schedulable( FACT_HANDLER )
+	public void handleFact( F fact )
 	{
 		// System.err.println("HANDLING FACT:" + fact);
 		try
 		{
-			switch (fact.getID().getType())
+			switch( fact.getID().getType() )
 			{
 			case ACCEPTED:
-				asExecutor().onAccepted(fact);
+				asExecutor().onAccepted( fact );
 				break;
 			case QUIT:
-				asExecutor().onQuit(fact);
+				asExecutor().onQuit( fact );
 				break;
 			case REJECTED:
-				asExecutor().onRejected(fact);
+				asExecutor().onRejected( fact );
 				break;
 			case REQUESTED:
-				asExecutor().onRequested(fact);
+				asExecutor().onRequested( fact );
 				break;
 			case STOPPED:
-				asExecutor().onStopped(fact);
+				asExecutor().onStopped( fact );
 				break;
 			case _ALLOWED_PROMISE_CANCELLATION:
-				asExecutor().onAllowedPromiseCancellation(fact);
+				asExecutor().onAllowedPromiseCancellation( fact );
 				break;
 			case _ALLOWED_STATE_CANCELLATION:
-				asExecutor().onAllowedStateCancellation(fact);
+				asExecutor().onAllowedStateCancellation( fact );
 				break;
 			case _CANCELLED_ACCEPT:
-				asExecutor().onCancelledAccept(fact);
+				asExecutor().onCancelledAccept( fact );
 				break;
 			case _CANCELLED_REQUEST:
-				asExecutor().onCancelledRequest(fact);
+				asExecutor().onCancelledRequest( fact );
 				break;
 			case _REFUSED_PROMISE_CANCELLATION:
-				asExecutor().onRefusedPromiseCancellation(fact);
+				asExecutor().onRefusedPromiseCancellation( fact );
 				break;
 			case _REFUSED_STATE_CANCELLATION:
-				asExecutor().onRefusedStateCancellation(fact);
+				asExecutor().onRefusedStateCancellation( fact );
 				break;
 
 			case DECLINED:
-				asInitiator().onDeclined(fact);
+				asInitiator().onDeclined( fact );
 				break;
 			case PROMISED:
-				asInitiator().onPromised(fact);
+				asInitiator().onPromised( fact );
 				break;
 			case STATED:
-				asInitiator().onStated(fact);
+				asInitiator().onStated( fact );
 				break;
 			case _ALLOWED_ACCEPT_CANCELLATION:
-				asInitiator().onAllowedAcceptCancellation(fact);
+				asInitiator().onAllowedAcceptCancellation( fact );
 				break;
 			case _ALLOWED_REQUEST_CANCELLATION:
-				asInitiator().onAllowedRequestCancellation(fact);
+				asInitiator().onAllowedRequestCancellation( fact );
 				break;
 			case _CANCELLED_PROMISE:
-				asInitiator().onCancelledPromise(fact);
+				asInitiator().onCancelledPromise( fact );
 				break;
 			case _CANCELLED_STATE:
-				asInitiator().onCancelledState(fact);
+				asInitiator().onCancelledState( fact );
 				break;
 			case _REFUSED_ACCEPT_CANCELLATION:
-				asInitiator().onRefusedAcceptCancellation(fact);
+				asInitiator().onRefusedAcceptCancellation( fact );
 				break;
 			case _REFUSED_REQUEST_CANCELLATION:
-				asInitiator().onRefusedRequestCancellation(fact);
+				asInitiator().onRefusedRequestCancellation( fact );
 				break;
 
 			default:
 				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED
-						.createRuntime("factType", fact.getID().getType());
+						.createRuntime( "factType", fact.getID().getType() );
 			}
-		} catch (final Throwable t)
+		} catch( final Throwable t )
 		{
-			onError(t);
+			onError( t );
 		}
 	}
 
@@ -314,10 +297,10 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	 * @param value
 	 * @return
 	 */
-	protected AgentID newAgentID(final String value)
+	protected AgentID newAgentID( final String value )
 	{
-		return getBinder().inject(ModelComponentIDFactory.class)
-				.createAgentID(value);
+		return getBinder().inject( ModelComponentIDFactory.class )
+				.createAgentID( value );
 	}
 
 	/**
@@ -325,7 +308,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	 */
 	protected RandomDistribution.Factory newDist()
 	{
-		return getBinder().inject(RandomDistribution.Factory.class);
+		return getBinder().inject( RandomDistribution.Factory.class );
 	}
 
 	/**
@@ -333,9 +316,10 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	 * @param unit
 	 * @return
 	 */
-	protected SimTime newTime(final Number value, final TimeUnit unit)
+	protected SimTime newTime( final Number value, final TimeUnit unit )
 	{
-		return getBinder().inject(SimTime.Factory.class).create(value, unit);
+		return getBinder().inject( SimTime.Factory.class ).create( value,
+				unit );
 	}
 
 	/**
@@ -360,10 +344,10 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	{
 
 		// @InjectLogger doesn't work on injected (abstract) super types
-		if (LOG == null)
+		if( LOG == null )
 		{
-			LOG = LogUtil.getLogger(AbstractActorRole.class, this);
-			LOG.info("Logger NOT INJECTED");
+			LOG = LogUtil.getLogger( AbstractActorRole.class, this );
+			LOG.info( "Logger NOT INJECTED" );
 		}
 		return LOG;
 	}
@@ -371,17 +355,17 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	/**
 	 * @see ActorRole#onStopped(CoordinationFact)
 	 */
-	protected void onStopped(final F fact)
+	protected void onStopped( final F fact )
 	{
-		LOG().warn("Ignoring " + fact.getID().getType() + ": " + fact);
+		LOG().warn( "Ignoring " + fact.getID().getType() + ": " + fact );
 	}
 
 	/**
 	 * @see ActorRole#onQuit(CoordinationFact)
 	 */
-	protected void onQuit(final F fact)
+	protected void onQuit( final F fact )
 	{
-		LOG().warn("Ignoring " + fact.getID().getType() + ": " + fact);
+		LOG().warn( "Ignoring " + fact.getID().getType() + ": " + fact );
 	}
 
 	private AbstractInitiator<F> asInitiator()
@@ -396,39 +380,40 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 
 	private static final String ADD_PROCESS_MANAGER_AGENT = "addProcessManagerAgent";
 
-	@Schedulable(ADD_PROCESS_MANAGER_AGENT)
+	@Schedulable( ADD_PROCESS_MANAGER_AGENT )
 	protected synchronized Observable<AgentStatusUpdate> bootAgent(
-			final AgentID agentID, final Class<? extends Agent> agentType,
-			// final BasicAgentStatus blockSimUntilState,
-			final Job<?> next) throws Exception
+		final AgentID agentID, final Class<? extends Agent> agentType,
+		// final BasicAgentStatus blockSimUntilState,
+		final Job<?> next ) throws Exception
 	{
-		if (next == null) // no need to sleep sim, nothing to schedule next
-			return getBooter().createAgent(agentID, agentType);
+		if( next == null ) // no need to sleep sim, nothing to schedule next
+			return getBooter().createAgent( agentID, agentType );
 
-		final CountDownLatch latch = new CountDownLatch(1);
+		final CountDownLatch latch = new CountDownLatch( 1 );
 		final Subject<AgentStatusUpdate, AgentStatusUpdate> status = ReplaySubject
 				.create();
-		status.subscribe(new Observer<AgentStatusUpdate>()
+		status.subscribe( new Observer<AgentStatusUpdate>()
 		{
 			/** */
 			private boolean success = false;
 
 			@Override
-			public void onNext(final AgentStatusUpdate update)
+			public void onNext( final AgentStatusUpdate update )
 			{
-				LOG().trace("Got child agent update: " + update);
-				if (update.getStatus().isFailedStatus())
+				LOG().trace( "Got child agent update: " + update );
+				if( update.getStatus().isFailedStatus() )
 				{
-					LOG().warn("Child agent failed: " + update.getAgentID());
+					LOG().warn( "Child agent failed: " + update.getAgentID() );
 					latch.countDown();
-				} else if (update.getStatus().isInitializedStatus()// .equals(blockSimUntilState)
+				} else if( update.getStatus().isInitializedStatus()// .equals(blockSimUntilState)
 				)
 				{
-					LOG().info("Child agent " + agentID
-							+ " reached unblock status: " + update.getStatus());
+					LOG().info( "Child agent " + agentID
+							+ " reached unblock status: "
+							+ update.getStatus() );
 					// first schedule/block, then countdown/yield
-					getSimulator().schedule(next,
-							Trigger.createAbsolute(getTime()));
+					getSimulator().schedule( next,
+							Trigger.createAbsolute( getTime() ) );
 					success = true;
 					latch.countDown(); // yield
 				}
@@ -437,39 +422,40 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 			@Override
 			public void onCompleted()
 			{
-				if (success)
-					return;
-				LOG().warn("Child agent died but never reached blockable status"
-						+ ", scheduling next job now");
-				getSimulator().schedule(next,
-						Trigger.createAbsolute(getTime()));
+				if( success ) return;
+				LOG().warn(
+						"Child agent died but never reached blockable status"
+								+ ", scheduling next job now" );
+				getSimulator().schedule( next,
+						Trigger.createAbsolute( getTime() ) );
 				latch.countDown();
 			}
 
 			@Override
-			public void onError(final Throwable e)
+			public void onError( final Throwable e )
 			{
 				e.printStackTrace();
 			}
-		});
+		} );
 
-		getSimulator().schedule(ProcedureCall.create(this, this,
-				AWAIT_METHOD_ID, latch, agentID),
-				Trigger.createAbsolute(getTime()));
+		getSimulator()
+				.schedule(
+						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
+								latch, agentID ),
+				Trigger.createAbsolute( getTime() ) );
 
-		getBooter().createAgent(agentID, agentType).subscribe(status);
+		getBooter().createAgent( agentID, agentType ).subscribe( status );
 
 		return status.asObservable();
 	}
 
 	private static final String AWAIT_METHOD_ID = "holdSimUntilAgentInitializes";
 
-	@Schedulable(AWAIT_METHOD_ID)
-	protected void holdSimUntilLatchCompletes(final CountDownLatch latch,
-			final AgentID agentID)
+	@Schedulable( AWAIT_METHOD_ID )
+	protected void holdSimUntilLatchCompletes( final CountDownLatch latch,
+		final AgentID agentID )
 	{
-		if (latch.getCount() == 0)
-			return;
+		if( latch.getCount() == 0 ) return;
 
 		// wait for other thread to make scheduling
 		// attempt and block until this thread
@@ -478,15 +464,17 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 		{
 			LOG().trace(
 					"Sleeping simulator thread until the other agent/thread "
-							+ "attempts to schedule too, then yield");
-			Thread.sleep(10);
-		} catch (final InterruptedException ignore)
+							+ "attempts to schedule too, then yield" );
+			Thread.sleep( 10 );
+		} catch( final InterruptedException ignore )
 		{
 		}
 		Thread.yield();
-		getSimulator().schedule(ProcedureCall.create(this, this,
-				AWAIT_METHOD_ID, latch, agentID),
-				Trigger.createAbsolute(getTime()));
+		getSimulator()
+				.schedule(
+						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
+								latch, agentID ),
+				Trigger.createAbsolute( getTime() ) );
 	}
 
 	/**
@@ -500,30 +488,30 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	/**
 	 * @see ActorRole#send(CoordinationFact)
 	 */
-	protected <M extends Message<?>> M send(final M fact) throws Exception
+	protected <M extends Message<?>> M send( final M fact ) throws Exception
 	{
-		return send(0, fact);
+		return send( 0, fact );
 	}
 
 	/**
 	 * @see ActorRole#send(CoordinationFact)
 	 */
-	protected <M extends Message<?>> M send(final Number delay, final M fact)
-			throws Exception
+	protected <M extends Message<?>> M send( final Number delay, final M fact )
+		throws Exception
 	{
-		return send(newTime(delay, getTime().getUnit()), fact);
+		return send( newTime( delay, getTime().getUnit() ), fact );
 	}
 
 	/**
 	 * @see ActorRole#send(CoordinationFact)
 	 */
-	protected <M extends Message<?>> M send(final SimTime delay, final M fact)
-			throws Exception
+	protected <M extends Message<?>> M send( final SimTime delay, final M fact )
+		throws Exception
 	{
 		// LOG.trace("Sending fact: " + fact);
 		getSimulator().schedule(
-				ProcedureCall.create(this, this, SEND_METHOD_ID, fact),
-				Trigger.createAbsolute(getTime().plus(delay)));
+				ProcedureCall.create( this, this, SEND_METHOD_ID, fact ),
+				Trigger.createAbsolute( getTime().plus( delay ) ) );
 		return fact;
 	}
 
@@ -532,10 +520,10 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	/**
 	 * @see ActorRole#send(CoordinationFact)
 	 */
-	@Schedulable(SEND_METHOD_ID)
-	private <M extends Message<?>> M doSend(final M fact) throws Exception
+	@Schedulable( SEND_METHOD_ID )
+	private <M extends Message<?>> M doSend( final M fact ) throws Exception
 	{
-		getMessenger().send(fact);
+		getMessenger().send( fact );
 		return fact;
 	}
 
@@ -545,7 +533,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	@JsonIgnore
 	protected CreatingCapability getBooter()
 	{
-		return getBinder().inject(CreatingCapability.class);
+		return getBinder().inject( CreatingCapability.class );
 	}
 
 	/**
@@ -563,7 +551,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	@JsonIgnore
 	protected ReplicatingCapability getSimulator()
 	{
-		return getBinder().inject(ReplicatingCapability.class);
+		return getBinder().inject( ReplicatingCapability.class );
 	}
 
 	/**
@@ -572,7 +560,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	@JsonIgnore
 	protected SendingCapability getMessenger()
 	{
-		return getBinder().inject(SendingCapability.class);
+		return getBinder().inject( SendingCapability.class );
 	}
 
 	/**
@@ -581,7 +569,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	@JsonIgnore
 	protected ReceivingCapability getReceiver()
 	{
-		return getBinder().inject(ReceivingCapability.class);
+		return getBinder().inject( ReceivingCapability.class );
 	}
 
 	/**
@@ -589,9 +577,10 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	 * @return the {@link PropertyGetter} from agent's local
 	 *         {@link ConfigurerService}
 	 */
-	protected PropertyGetter getProperty(final String key)
+	protected PropertyGetter getProperty( final String key )
 	{
-		return getBinder().inject(ConfiguringCapability.class).getProperty(key);
+		return getBinder().inject( ConfiguringCapability.class )
+				.getProperty( key );
 	}
 
 	/**
@@ -600,13 +589,13 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	@JsonIgnore
 	protected ReasoningCapability getReasoner()
 	{
-		return getBinder().inject(ReasoningCapability.class);
+		return getBinder().inject( ReasoningCapability.class );
 	}
 
 	@JsonIgnore
 	protected DestroyingCapability getFinalizer()
 	{
-		return getBinder().inject(DestroyingCapability.class);
+		return getBinder().inject( DestroyingCapability.class );
 	}
 
 	/**

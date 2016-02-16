@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/config/CoalaPropertyMap.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: dfe9a5440f537e5090b6ec67a6b94af6ea19d277 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.config;
 
@@ -25,7 +20,7 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.log.LogUtil;
 import io.coala.resource.FileUtil;
@@ -33,11 +28,8 @@ import io.coala.resource.FileUtil;
 /**
  * {@link CoalaPropertyMap} extends {@link Properties} with some utility methods
  * 
- * FIXME should extend {@link Configuration} instead ?
- * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class CoalaPropertyMap extends Properties
 {
@@ -46,7 +38,8 @@ public class CoalaPropertyMap extends Properties
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(CoalaPropertyMap.class);
+	private static final Logger LOG = LogUtil
+			.getLogger( CoalaPropertyMap.class );
 
 	/** the singleton {@link CoalaProperty} instance */
 	private static CoalaPropertyMap INSTANCE = null;
@@ -54,8 +47,7 @@ public class CoalaPropertyMap extends Properties
 	/** @return the singleton {@link CoalaProperty} instance */
 	public synchronized static CoalaPropertyMap getInstance()
 	{
-		if (INSTANCE == null)
-			return getInstance(true);
+		if( INSTANCE == null ) return getInstance( true );
 		return INSTANCE;
 	}
 
@@ -63,14 +55,14 @@ public class CoalaPropertyMap extends Properties
 	 * @param loadFromDefaultPath whether to load from default path
 	 * @return the singleton {@link CoalaProperty} instance
 	 */
-	public synchronized static CoalaPropertyMap getInstance(
-			final boolean loadFromDefaultPath)
+	public synchronized static CoalaPropertyMap
+		getInstance( final boolean loadFromDefaultPath )
 	{
-		if (INSTANCE == null)
+		if( INSTANCE == null )
 		{
 			INSTANCE = new CoalaPropertyMap();
-			if (loadFromDefaultPath)
-				INSTANCE.load(ConfigUtil.PROPERTIES_FILE);
+			if( loadFromDefaultPath )
+				INSTANCE.load( ConfigUtil.PROPERTIES_FILE );
 		}
 		// else if (!loadFromDefaultPath && !INSTANCE.loadedPaths.isEmpty())
 		// LOG.warn("Already imported BAAL config from path(s): "
@@ -93,32 +85,34 @@ public class CoalaPropertyMap extends Properties
 	 * 
 	 * @param fileName
 	 */
-	public synchronized CoalaPropertyMap load(final String fileName)
+	public synchronized CoalaPropertyMap load( final String fileName )
 	{
 
 		final String loadPath = fileName == null ? ConfigUtil.PROPERTIES_FILE
 				: fileName;
 
-		if (this.loadedPaths.contains(loadPath))
+		if( this.loadedPaths.contains( loadPath ) )
 		{
 			// LOG.info("Skipping config already imported from path: " +
 			// fileName);
 			return this;
-		} else if (!this.loadedPaths.isEmpty())
-			LOG.warn("Overriding config imported previously from path(s): "
-					+ this.loadedPaths + " with config from path: " + loadPath);
+		} else if( !this.loadedPaths.isEmpty() )
+			LOG.warn( "Overriding config imported previously from path(s): "
+					+ this.loadedPaths + " with config from path: "
+					+ loadPath );
 
 		try
 		{
 			final InputStream inStream = FileUtil
-					.getFileAsInputStream(loadPath);
-			load(inStream);
-			this.loadedPaths.add(loadPath);
-			LOG.trace("Imported config from path: " + loadPath);
-		} catch (final Throwable e)
+					.getFileAsInputStream( loadPath );
+			load( inStream );
+			this.loadedPaths.add( loadPath );
+			LOG.trace( "Imported config from path: " + loadPath );
+		} catch( final Throwable e )
 		{
-			if (fileName != null)
-				LOG.error("Problem importing config from path: " + loadPath, e);
+			if( fileName != null )
+				LOG.error( "Problem importing config from path: " + loadPath,
+						e );
 		}
 		return this;
 	}

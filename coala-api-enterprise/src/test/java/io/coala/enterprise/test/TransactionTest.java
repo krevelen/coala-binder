@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 33e6fa13ac48b26daf53a04ba5edf989bba274bb $
  * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/test/java/io/coala/enterprise/test/TransactionTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,6 +20,11 @@
  */
 package io.coala.enterprise.test;
 
+import java.util.concurrent.CountDownLatch;
+
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
+
 import io.coala.agent.AgentStatusObserver;
 import io.coala.agent.AgentStatusUpdate;
 import io.coala.bind.Binder;
@@ -32,12 +37,6 @@ import io.coala.dsol.DsolSimulatorStatus;
 import io.coala.enterprise.test.impl.TestExecutorOrganizationImpl;
 import io.coala.enterprise.test.impl.TestInitiatorOrganizationImpl;
 import io.coala.log.LogUtil;
-
-import java.util.concurrent.CountDownLatch;
-
-import org.apache.log4j.Logger;
-import org.junit.Test;
-
 import rx.Observer;
 
 /**
@@ -52,91 +51,90 @@ public class TransactionTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(TransactionTest.class);
+	private static final Logger LOG = LogUtil
+			.getLogger( TransactionTest.class );
 
 	@Test
 	public void testTransaction() throws Exception
 	{
-		LOG.trace("Transaction test started!");
+		LOG.trace( "Transaction test started!" );
 
-		final Binder binder = BinderFactory.Builder
-				.fromFile()
-				.withProperty(ReplicationConfig.class,
+		final Binder binder = BinderFactory.Builder.fromFile()
+				.withProperty( ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY,
-						"testModel" + System.currentTimeMillis()).build()
-				.create("_unittestboot_");
+						"testModel" + System.currentTimeMillis() )
+				.build().create( "_unittestboot_" );
 
-		final CountDownLatch initLatch = new CountDownLatch(2);
+		final CountDownLatch initLatch = new CountDownLatch( 2 );
 
-		final CountDownLatch doneLatch = new CountDownLatch(1);
+		final CountDownLatch doneLatch = new CountDownLatch( 1 );
 
 		final AgentStatusObserver obs = new AgentStatusObserver()
 		{
 
 			@Override
-			public void onNext(final AgentStatusUpdate update)
+			public void onNext( final AgentStatusUpdate update )
 			{
-				LOG.trace("Observed: " + update);
+				LOG.trace( "Observed: " + update );
 				// System.err.println("Observed: " + update);
 
-				if (update.getStatus().isInitializedStatus())
+				if( update.getStatus().isInitializedStatus() )
 				{
 					initLatch.countDown();
-					LOG.trace("Agent initialized, remaining: "
-							+ initLatch.getCount());
+					LOG.trace( "Agent initialized, remaining: "
+							+ initLatch.getCount() );
 				}
 			}
 
 			@Override
-			public void onError(final Throwable e)
+			public void onError( final Throwable e )
 			{
-				LOG.error("Problem while observing agent status", e);
+				LOG.error( "Problem while observing agent status", e );
 			}
 
 			@Override
 			public void onCompleted()
 			{
-				LOG.trace("Agent status updates COMPLETED");
+				LOG.trace( "Agent status updates COMPLETED" );
 			}
 		};
 
 		final CreatingCapability booterSvc = binder
-				.inject(CreatingCapability.class);
+				.inject( CreatingCapability.class );
 
-		booterSvc
-				.createAgent("executorOrg", TestExecutorOrganizationImpl.class)
-				.subscribe(obs);
+		booterSvc.createAgent( "executorOrg",
+				TestExecutorOrganizationImpl.class ).subscribe( obs );
 
 		// FIXME boot initiator after executor initialized
-		booterSvc.createAgent("initiatorOrg",
-				TestInitiatorOrganizationImpl.class).subscribe(obs);
+		booterSvc.createAgent( "initiatorOrg",
+				TestInitiatorOrganizationImpl.class ).subscribe( obs );
 
-		LOG.trace("Waiting for all organizations to initialize...");
+		LOG.trace( "Waiting for all organizations to initialize..." );
 		initLatch.await();
 
 		final ReplicatingCapability sim = binder
-				.inject(ReplicatingCapability.class);
-		sim.getStatusUpdates().subscribe(new Observer<ClockStatusUpdate>()
+				.inject( ReplicatingCapability.class );
+		sim.getStatusUpdates().subscribe( new Observer<ClockStatusUpdate>()
 		{
 
 			@Override
 			public void onCompleted()
 			{
-				System.err.println("DSOL sim completed!");
+				System.err.println( "DSOL sim completed!" );
 			}
 
 			@Override
-			public void onError(final Throwable e)
+			public void onError( final Throwable e )
 			{
 				e.printStackTrace();
 			}
 
 			@Override
-			public void onNext(final ClockStatusUpdate update)
+			public void onNext( final ClockStatusUpdate update )
 			{
-				System.err.println("[t=" + sim.getTime() + "] DSOL status: "
-						+ update);
-				switch ((DsolSimulatorStatus) update.getStatus())
+				System.err.println(
+						"[t=" + sim.getTime() + "] DSOL status: " + update );
+				switch( (DsolSimulatorStatus) update.getStatus() )
 				{
 				case FAILED:
 				case FINISHED:
@@ -145,11 +143,11 @@ public class TransactionTest
 				default:
 				}
 			}
-		});
+		} );
 
-		LOG.trace("Waiting for simulation to complete (or fail)...");
+		LOG.trace( "Waiting for simulation to complete (or fail)..." );
 		doneLatch.await();
 
-		LOG.trace("Transaction test complete!");
+		LOG.trace( "Transaction test complete!" );
 	}
 }

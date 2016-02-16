@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 1e2e26abdf040be22deabc3da194ff27e13b2984 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.random.impl;
 
@@ -23,7 +21,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
@@ -37,10 +35,10 @@ import io.coala.random.RandomNumberStreamID;
  * {@link RandomizingCapabilityImpl}
  * 
  * @version $Id$
- * @author <a href="mailto:rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class RandomizingCapabilityImpl extends BasicCapability
-		implements RandomizingCapability
+	implements RandomizingCapability
 {
 
 	/** */
@@ -49,7 +47,7 @@ public class RandomizingCapabilityImpl extends BasicCapability
 	/** */
 	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
 			.synchronizedMap(
-					new HashMap<RandomNumberStreamID, RandomNumberStream>());
+					new HashMap<RandomNumberStreamID, RandomNumberStream>() );
 
 	@InjectLogger
 	private Logger LOG;
@@ -60,32 +58,32 @@ public class RandomizingCapabilityImpl extends BasicCapability
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected RandomizingCapabilityImpl(final Binder binder)
+	protected RandomizingCapabilityImpl( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
 	public RandomNumberStream getRNG()
 	{
-		return getRNG(MAIN_RNG_ID);
+		return getRNG( MAIN_RNG_ID );
 	}
 
 	@Override
-	public RandomNumberStream getRNG(RandomNumberStreamID rngID)
+	public RandomNumberStream getRNG( RandomNumberStreamID rngID )
 	{
-		if (!this.rng.containsKey(rngID))
-			this.rng.put(rngID, newRNG(rngID));
-		return this.rng.get(rngID);
+		if( !this.rng.containsKey( rngID ) )
+			this.rng.put( rngID, newRNG( rngID ) );
+		return this.rng.get( rngID );
 	}
 
-	private RandomNumberStream newRNG(final RandomNumberStreamID streamID)
+	private RandomNumberStream newRNG( final RandomNumberStreamID streamID )
 	{
 		// add owner ID hash code for reproducible seeding variance across
 		// owner agents
-		return getBinder().inject(RandomNumberStream.Factory.class)
-				.create(streamID, CoalaProperty.randomSeed.value().getLong()
-						+ getID().getOwnerID().hashCode());
+		return getBinder().inject( RandomNumberStream.Factory.class )
+				.create( streamID, CoalaProperty.randomSeed.value().getLong()
+						+ getID().getOwnerID().hashCode() );
 	}
 
 }

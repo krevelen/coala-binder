@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ba555ab74cd6a6550ae31203be9154de657dab60 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve3;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.agent.BasicAgent;
@@ -36,9 +34,9 @@ import rx.Observer;
  * {@link CleanupTestAgent}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
-@SuppressWarnings("serial")
+@SuppressWarnings( "serial" )
 public class CleanupTestAgent extends BasicAgent
 {
 
@@ -47,10 +45,10 @@ public class CleanupTestAgent extends BasicAgent
 		/** */
 		private static long count = 0L;
 
-		public Harakiri(final AgentID ownerID)
+		public Harakiri( final AgentID ownerID )
 		{
-			super(MessageID.of(ownerID.getModelID(), count++, NanoInstant.ZERO),
-					ownerID, ownerID, ownerID);
+			super( MessageID.of( ownerID.getModelID(), count++,
+					NanoInstant.ZERO ), ownerID, ownerID, ownerID );
 		}
 	}
 
@@ -63,57 +61,57 @@ public class CleanupTestAgent extends BasicAgent
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	public CleanupTestAgent(final Binder binder)
+	public CleanupTestAgent( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 
-		getBinder().inject(ReceivingCapability.class).getIncoming()
-				.ofType(Harakiri.class)// .observeOn(Schedulers.trampoline())
-				.subscribe(new Observer<Harakiri>()
+		getBinder().inject( ReceivingCapability.class ).getIncoming()
+				.ofType( Harakiri.class )// .observeOn(Schedulers.trampoline())
+				.subscribe( new Observer<Harakiri>()
 				{
 					@Override
 					public void onCompleted()
 					{
 						LOG.trace(
-								"Completed receiving messages, agent destroyed?");
+								"Completed receiving messages, agent destroyed?" );
 					}
 
 					@Override
-					public void onError(final Throwable e)
+					public void onError( final Throwable e )
 					{
-						LOG.error("Error", e);
+						LOG.error( "Error", e );
 						e.printStackTrace();
 					}
 
 					@Override
-					public void onNext(final Harakiri kill)
+					public void onNext( final Harakiri kill )
 					{
 						System.err.println(
-								"Received message for Harakiri, destroying now...");
+								"Received message for Harakiri, destroying now..." );
 
 						try
 						{
-							getBinder().inject(DestroyingCapability.class)
+							getBinder().inject( DestroyingCapability.class )
 									.destroy();
-						} catch (final Exception e)
+						} catch( final Exception e )
 						{
-							LOG.error("Problem committing Hara Kiri", e);
+							LOG.error( "Problem committing Hara Kiri", e );
 							e.printStackTrace();
 						}
 					}
-				});
+				} );
 	}
 
 	@Override
 	public void initialize()
 	{
-		LOG.trace(getID() + " is initialized");
+		LOG.trace( getID() + " is initialized" );
 	}
 
 	@Override
 	public void finish()
 	{
-		LOG.trace(getID() + " is done");
+		LOG.trace( getID() + " is done" );
 	}
 
 }

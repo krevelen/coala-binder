@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: c6193005f82167b49b0e64702adb758bc67bcc6b $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/test/java/io/coala/WeightedProductComparatorTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,18 +20,14 @@
  */
 package io.coala.optimize;
 
-import io.coala.log.LogUtil;
-import io.coala.optimize.WeightedComparable;
-import io.coala.optimize.WeightedCriterion;
-import io.coala.optimize.WeightedNavigableMap;
-import io.coala.optimize.WeightedSkipListMap;
-
 import java.util.EnumMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import io.coala.log.LogUtil;
 
 public class WeightedProductComparatorTest
 {

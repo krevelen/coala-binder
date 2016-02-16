@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/xml/XmlUtil.java $
- * 
- * Part of the EU project INERTIA, see http://www.inertia-project.eu/
+/* $Id: 074fe5d1f4b319e9b1612bf966f0d6f7fbdf75d9 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,16 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.xml;
-
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.log.LogUtil;
-import io.coala.resource.ResourceStream;
-import io.coala.resource.ResourceStreamer;
-import io.coala.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,12 +46,17 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 
+import io.coala.exception.CoalaExceptionFactory;
+import io.coala.log.LogUtil;
+import io.coala.resource.ResourceStream;
+import io.coala.resource.ResourceStreamer;
+import io.coala.util.Util;
 import rx.Observable;
 import rx.Observable.OnSubscribe;
 import rx.Subscriber;
@@ -81,7 +75,7 @@ public class XmlUtil implements Util
 	public static String SUN_NAMESPACE_PREFIX_MAPPER = "com.sun.xml.bind.namespacePrefixMapper";
 
 	/** */
-	// private static final Logger LOG = LogUtil.getLogger(XmlUtil.class);
+	private static final Logger LOG = LogUtil.getLogger(XmlUtil.class);
 
 	/** */
 	private static DocumentBuilderFactory domFactory = null;
@@ -256,9 +250,6 @@ public class XmlUtil implements Util
 				XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
 		inputFactory.setProperty(XMLInputFactory.IS_COALESCING, Boolean.FALSE);
 	}
-
-	/** */
-	private static final Logger LOG = LogUtil.getLogger(XmlUtil.class);
 
 	/**
 	 * See also XSLT streaming transformation (STX), e.g. with <a

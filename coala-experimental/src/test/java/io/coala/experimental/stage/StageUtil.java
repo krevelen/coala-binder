@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/MachineUtil.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: fcd9899e8f98dfcdbbb9151ec7258d849123519b $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,15 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.experimental.stage;
-
-import io.coala.factory.ClassUtil;
-import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
-import io.coala.util.Util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,8 +35,12 @@ import java.util.TreeSet;
 
 import javax.inject.Provider;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
+import io.coala.factory.ClassUtil;
+import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
+import io.coala.util.Util;
 import rx.Observer;
 
 /**
@@ -54,13 +48,13 @@ import rx.Observer;
  * object's life cycle
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class StageUtil implements Util
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(StageUtil.class);
+	private static final Logger LOG = LogUtil.getLogger( StageUtil.class );
 
 	/** */
 	private static final Map<Class<?>, Map<StageEvent, SortedMap<Method, Staged>>> stageEventHandlerCache = new HashMap<>();
@@ -84,85 +78,81 @@ public class StageUtil implements Util
 	{
 
 		@Override
-		public int compare(final Method o1, final Method o2)
+		public int compare( final Method o1, final Method o2 )
 		{
-			if (o1 == o2)
-				return 0;
+			if( o1 == o2 ) return 0;
 
 			// compare priority
 			int result = Integer.compare(
-					o1.getAnnotation(Staged.class).priority(),
-					o2.getAnnotation(Staged.class).priority());
-			if (result != 0)
-				return result;
+					o1.getAnnotation( Staged.class ).priority(),
+					o2.getAnnotation( Staged.class ).priority() );
+			if( result != 0 ) return result;
 
 			// same priority; compare class hierarchy
-/*			result = o1.getDeclaringClass().getName()
-					.compareTo(o2.getDeclaringClass().getName());
-			if (result != 0)
-				return result;
-*/
+/*
+ * result = o1.getDeclaringClass().getName()
+ * .compareTo(o2.getDeclaringClass().getName()); if (result != 0) return result;
+ */
 
 			// same priority and class; compare method name
-			result = o1.getName().compareTo(o2.getName());
-			if (result != 0)
-				return result;
+			result = o1.getName().compareTo( o2.getName() );
+			if( result != 0 ) return result;
 
 			// same priority, class, and name; compare method name
-			return toSignatureString(o1).compareTo(toSignatureString(o2));
+			return toSignatureString( o1 ).compareTo( toSignatureString( o2 ) );
 		}
 	};
 
 	/**
 	 * @param type
 	 */
-	private static synchronized void findHandlers(final Class<?> type)
+	private static synchronized void findHandlers( final Class<?> type )
 	{
-		LOG.trace("Caching handlers for " + type.getName());
+		LOG.trace( "Caching handlers for " + type.getName() );
 		final Map<StageEvent, SortedMap<Method, Staged>> handlersByEvent = type
 				.getSuperclass() == Object.class || type.getSuperclass() == null
 						? new EnumMap<StageEvent, SortedMap<Method, Staged>>(
-								StageEvent.class)
-						: findEventHandlers(type.getSuperclass());
-		stageEventHandlerCache.put(type, handlersByEvent);
+								StageEvent.class )
+						: findEventHandlers( type.getSuperclass() );
+		stageEventHandlerCache.put( type, handlersByEvent );
 		final Map<String, SortedMap<Method, Staged>> handlersByStage = type
 				.getSuperclass() == Object.class || type.getSuperclass() == null
 						? new HashMap<String, SortedMap<Method, Staged>>()
-						: findStageHandlers(type.getSuperclass());
-		customStageHandlerCache.put(type, handlersByStage);
+						: findStageHandlers( type.getSuperclass() );
+		customStageHandlerCache.put( type, handlersByStage );
 
-		for (Class<?> iface : type.getInterfaces())
+		for( Class<?> iface : type.getInterfaces() )
 		{
-			handlersByEvent.putAll(findEventHandlers(iface));
-			handlersByStage.putAll(findStageHandlers(iface));
+			handlersByEvent.putAll( findEventHandlers( iface ) );
+			handlersByStage.putAll( findStageHandlers( iface ) );
 		}
 
-		for (Method method : type.getDeclaredMethods())
+		for( Method method : type.getDeclaredMethods() )
 		{
-			final Staged ann = method.getAnnotation(Staged.class);
-			if (ann == null)
-				continue;
+			final Staged ann = method.getAnnotation( Staged.class );
+			if( ann == null ) continue;
 
-			for (StageEvent on : ann.on())
+			for( StageEvent on : ann.on() )
 			{
-				SortedMap<Method, Staged> handlers = handlersByEvent.get(on);
-				if (handlers == null)
+				SortedMap<Method, Staged> handlers = handlersByEvent.get( on );
+				if( handlers == null )
 				{
-					handlers = new TreeMap<>(METHOD_COMPARATOR);
-					handlersByEvent.put(on, handlers);
+					handlers = new TreeMap<>( METHOD_COMPARATOR );
+					handlersByEvent.put( on, handlers );
 				}
-				handlers.put(method, ann);
+				handlers.put( method, ann );
 			}
 
-			for (String stage : ann.onCustom())
+			for( String stage : ann.onCustom() )
 			{
-				SortedMap<Method, Staged> handlers = handlersByStage.get(stage);
-				if (handlers == null)
+				SortedMap<Method, Staged> handlers = handlersByStage
+						.get( stage );
+				if( handlers == null )
 				{
-					handlers = new TreeMap<>(METHOD_COMPARATOR);
-					handlersByStage.put(stage, handlers);
+					handlers = new TreeMap<>( METHOD_COMPARATOR );
+					handlersByStage.put( stage, handlers );
 				}
-				handlers.put(method, ann);
+				handlers.put( method, ann );
 			}
 		}
 		// if (handlersByEvent.isEmpty() && handlersByStage.isEmpty())
@@ -175,16 +165,16 @@ public class StageUtil implements Util
 	 * @param event
 	 * @return
 	 */
-	public static synchronized Map<StageEvent, SortedMap<Method, Staged>> findEventHandlers(
-			final Class<?> type)
+	public static synchronized Map<StageEvent, SortedMap<Method, Staged>>
+		findEventHandlers( final Class<?> type )
 	{
 		Map<StageEvent, SortedMap<Method, Staged>> result = stageEventHandlerCache
-				.get(type);
+				.get( type );
 
-		if (result == null)
+		if( result == null )
 		{
-			findHandlers(type);
-			result = stageEventHandlerCache.get(type);
+			findHandlers( type );
+			result = stageEventHandlerCache.get( type );
 		}
 		return result;
 	}
@@ -194,12 +184,12 @@ public class StageUtil implements Util
 	 * @param event
 	 * @return
 	 */
-	public static Map<Method, Staged> findEventHandlers(final Class<?> type,
-			final StageEvent event)
+	public static Map<Method, Staged> findEventHandlers( final Class<?> type,
+		final StageEvent event )
 	{
-		final Map<Method, Staged> result = findEventHandlers(type).get(event);
-		if (result == null)
-			return Collections.emptyMap();
+		final Map<Method, Staged> result = findEventHandlers( type )
+				.get( event );
+		if( result == null ) return Collections.emptyMap();
 		return result;
 	}
 
@@ -208,16 +198,16 @@ public class StageUtil implements Util
 	 * @param stage
 	 * @return
 	 */
-	public static synchronized Map<String, SortedMap<Method, Staged>> findStageHandlers(
-			final Class<?> type)
+	public static synchronized Map<String, SortedMap<Method, Staged>>
+		findStageHandlers( final Class<?> type )
 	{
 		Map<String, SortedMap<Method, Staged>> result = customStageHandlerCache
-				.get(type);
+				.get( type );
 
-		if (result == null)
+		if( result == null )
 		{
-			findHandlers(type);
-			result = customStageHandlerCache.get(type);
+			findHandlers( type );
+			result = customStageHandlerCache.get( type );
 		}
 		return result;
 	}
@@ -227,12 +217,12 @@ public class StageUtil implements Util
 	 * @param stage
 	 * @return
 	 */
-	public static Map<Method, Staged> findStageHandlers(final Class<?> type,
-			final String stage)
+	public static Map<Method, Staged> findStageHandlers( final Class<?> type,
+		final String stage )
 	{
-		final Map<Method, Staged> result = findStageHandlers(type).get(stage);
-		if (result == null)
-			return Collections.emptyMap();
+		final Map<Method, Staged> result = findStageHandlers( type )
+				.get( stage );
+		if( result == null ) return Collections.emptyMap();
 		return result;
 	}
 
@@ -240,28 +230,27 @@ public class StageUtil implements Util
 	 * @param type
 	 * @return
 	 */
-	public synchronized static SortedSet<String> findStages(final Class<?> type,
-			final InjectStaged.StageSelector selector)
+	public synchronized static SortedSet<String> findStages(
+		final Class<?> type, final InjectStaged.StageSelector selector )
 	{
-		LOG.trace("Caching " + selector + " stages for " + type.getName());
-		SortedSet<String> result = selector.getCache().get(type);
-		if (result != null)
-			return result;
+		LOG.trace( "Caching " + selector + " stages for " + type.getName() );
+		SortedSet<String> result = selector.getCache().get( type );
+		if( result != null ) return result;
 
 		result = new TreeSet<>();
-		selector.getCache().put(type, result);
+		selector.getCache().put( type, result );
 
-		InjectStaged staging = type.getAnnotation(InjectStaged.class);
-		if (staging != null)
-			for (String stage : selector.selectStages(staging))
-				result.add(stage);
+		InjectStaged staging = type.getAnnotation( InjectStaged.class );
+		if( staging != null )
+			for( String stage : selector.selectStages( staging ) )
+			result.add( stage );
 
-		for (Class<?> iface : type.getInterfaces())
-			result.addAll(findStages(iface, selector));
+		for( Class<?> iface : type.getInterfaces() )
+			result.addAll( findStages( iface, selector ) );
 
-		if (type.getSuperclass() != Object.class
-				&& type.getSuperclass() != null)
-			result.addAll(findStages(type.getSuperclass(), selector));
+		if( type.getSuperclass() != Object.class
+				&& type.getSuperclass() != null )
+			result.addAll( findStages( type.getSuperclass(), selector ) );
 
 		return result;
 	}
@@ -273,25 +262,25 @@ public class StageUtil implements Util
 	 * @param type
 	 * @return
 	 */
-	public synchronized static Set<Class<? extends Throwable>> findAbsorptionLevels(
-			final Class<?> type)
+	public synchronized static Set<Class<? extends Throwable>>
+		findAbsorptionLevels( final Class<?> type )
 	{
-		LOG.trace("Caching absorption levels for " + type.getName());
-		Set<Class<? extends Throwable>> result = absorptionLevelCache.get(type);
-		if (result != null)
-			return result;
+		LOG.trace( "Caching absorption levels for " + type.getName() );
+		Set<Class<? extends Throwable>> result = absorptionLevelCache
+				.get( type );
+		if( result != null ) return result;
 
-		absorptionLevelCache.put(type, result);
+		absorptionLevelCache.put( type, result );
 
 		Class<?> stagingType = type;
-		InjectStaged staging = stagingType.getAnnotation(InjectStaged.class);
-		while (staging == null && stagingType.getSuperclass() != Object.class)
+		InjectStaged staging = stagingType.getAnnotation( InjectStaged.class );
+		while( staging == null && stagingType.getSuperclass() != Object.class )
 		{
 			stagingType = stagingType.getSuperclass();
-			staging = stagingType.getAnnotation(InjectStaged.class);
+			staging = stagingType.getAnnotation( InjectStaged.class );
 		}
-		if (staging != null)
-			result = subsume(type.getName(), staging.ignore());
+		if( staging != null )
+			result = subsume( type.getName(), staging.ignore() );
 		// else
 		// LOG.warn("(Super)type missing @"
 		// + InjectStaged.class.getSimpleName() + ": "
@@ -303,20 +292,20 @@ public class StageUtil implements Util
 	 * @param type
 	 * @return
 	 */
-	public static Set<Class<? extends Throwable>> findAbsorptionLevels(
-			final Class<?> type, final Method method)
+	public static Set<Class<? extends Throwable>>
+		findAbsorptionLevels( final Class<?> type, final Method method )
 	{
 		final Set<Class<? extends Throwable>> result;
-		final Staged staged = method.getAnnotation(Staged.class);
+		final Staged staged = method.getAnnotation( Staged.class );
 
 		// override class-level annotation by method-level annotation
-		if (staged == null)
-			result = findAbsorptionLevels(type);
+		if( staged == null )
+			result = findAbsorptionLevels( type );
 		else
-			result = subsume(toSignatureString(method), staged.ignore());
+			result = subsume( toSignatureString( method ), staged.ignore() );
 
-		LOG.trace(
-				"Absorption for " + toSignatureString(method) + ": " + result);
+		LOG.trace( "Absorption for " + toSignatureString( method ) + ": "
+				+ result );
 		return result;
 	}
 
@@ -326,32 +315,32 @@ public class StageUtil implements Util
 	 * @return
 	 */
 	@SafeVarargs
-	public static Set<Class<? extends Throwable>> subsume(final String source,
-			final Class<? extends Throwable>... ignore)
+	public static Set<Class<? extends Throwable>> subsume( final String source,
+		final Class<? extends Throwable>... ignore )
 	{
 		final Set<Class<? extends Throwable>> result = new HashSet<>();
-		if (ignore != null && ignore.length != 0)
-			outer: for (Class<? extends Throwable> cls : ignore)
+		if( ignore != null && ignore.length != 0 )
+			outer: for( Class<? extends Throwable> cls : ignore )
+		{
+			for( Class<? extends Throwable> old : result )
 			{
-				for (Class<? extends Throwable> old : result)
+				if( old.isAssignableFrom( cls ) )
 				{
-					if (old.isAssignableFrom(cls))
-					{
-						LOG.info("ignore() level '" + old.getName()
-								+ "' subsumes '" + cls.getName()
-								+ "' annotated in " + source);
-						continue outer;
-					}
-					if (cls.isAssignableFrom(old))
-					{
-						LOG.info("ignore() level '" + cls.getName()
-								+ "' annotated in " + source + " subsumes '"
-								+ old.getName() + "'");
-						result.remove(old);
-					}
+					LOG.info( "ignore() level '" + old.getName()
+							+ "' subsumes '" + cls.getName() + "' annotated in "
+							+ source );
+					continue outer;
 				}
-				result.add(cls);
+				if( cls.isAssignableFrom( old ) )
+				{
+					LOG.info( "ignore() level '" + cls.getName()
+							+ "' annotated in " + source + " subsumes '"
+							+ old.getName() + "'" );
+					result.remove( old );
+				}
 			}
+			result.add( cls );
+		}
 		return result;
 	}
 
@@ -362,9 +351,9 @@ public class StageUtil implements Util
 	 * @return
 	 * @throws Throwable
 	 */
-	public static <T> T inject(final Provider<T> provider) throws Throwable
+	public static <T> T inject( final Provider<T> provider ) throws Throwable
 	{
-		return inject(provider, null);
+		return inject( provider, null );
 	}
 
 	/**
@@ -373,99 +362,96 @@ public class StageUtil implements Util
 	 * @return
 	 * @throws Throwable
 	 */
-	public static <T> T inject(final Provider<T> provider,
-			final Observer<StageChange> stageObserver) throws Throwable
+	public static <T> T inject( final Provider<T> provider,
+		final Observer<StageChange> stageObserver ) throws Throwable
 	{
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings( "unchecked" )
 		final Class<T> type = (Class<T>) ClassUtil
-				.getTypeArguments(Provider.class, provider.getClass()).get(0);
+				.getTypeArguments( Provider.class, provider.getClass() )
+				.get( 0 );
 
 		boolean success = true;
 
-		if (stageObserver != null)
-			stageObserver.onNext(
-					new StageChangeImpl(type, null, Stage.PREPARING, null));
+		if( stageObserver != null ) stageObserver.onNext(
+				new StageChangeImpl( type, null, Stage.PREPARING, null ) );
 
-		success &= invokeEventHandlers(stageObserver, type, null, null,
-				StageEvent.BEFORE_PROVIDE);
+		success &= invokeEventHandlers( stageObserver, type, null, null,
+				StageEvent.BEFORE_PROVIDE );
 
-		success &= invokeStages(stageObserver, type, null,
-				findStages(type, InjectStaged.BEFORE_PROVIDE_SELECTOR));
+		success &= invokeStages( stageObserver, type, null,
+				findStages( type, InjectStaged.BEFORE_PROVIDE_SELECTOR ) );
 
-		if (stageObserver != null)
-			stageObserver.onNext(
-					new StageChangeImpl(type, null, Stage.PROVIDING, null));
+		if( stageObserver != null ) stageObserver.onNext(
+				new StageChangeImpl( type, null, Stage.PROVIDING, null ) );
 
 		final FinalizeDecorator<T> subject = FinalizeDecorator
-				.from(stageObserver, type, provider.get());
+				.from( stageObserver, type, provider.get() );
 
-		if (stageObserver != null)
-			stageObserver.onNext(new StageChangeImpl(type, subject.getTarget(),
-					Stage.PROVIDED, null));
-		success &= invokeEventHandlers(stageObserver, type, subject.getTarget(),
-				null, StageEvent.AFTER_PROVIDE);
+		if( stageObserver != null )
+			stageObserver.onNext( new StageChangeImpl( type,
+					subject.getTarget(), Stage.PROVIDED, null ) );
+		success &= invokeEventHandlers( stageObserver, type,
+				subject.getTarget(), null, StageEvent.AFTER_PROVIDE );
 
-		success &= invokeStages(stageObserver, type, subject.getTarget(),
-				findStages(type, InjectStaged.AFTER_PROVIDE_SELECTOR));
+		success &= invokeStages( stageObserver, type, subject.getTarget(),
+				findStages( type, InjectStaged.AFTER_PROVIDE_SELECTOR ) );
 
-		if (stageObserver != null && success)
-			stageObserver.onNext(new StageChangeImpl(type, subject.getTarget(),
-					Stage.STOPPED, null));
+		if( stageObserver != null && success )
+			stageObserver.onNext( new StageChangeImpl( type,
+					subject.getTarget(), Stage.STOPPED, null ) );
 		return subject.getTarget();
 	}
 
 	public static <T> boolean invokeStages(
-			final Observer<StageChange> stageObserver, final Class<T> type,
-			final T target, final Collection<String> stages) throws Throwable
+		final Observer<StageChange> stageObserver, final Class<T> type,
+		final T target, final Collection<String> stages ) throws Throwable
 	{
-		if (stages == null || stages.isEmpty())
-			return true;
+		if( stages == null || stages.isEmpty() ) return true;
 
 		boolean success = true;
-		for (String stage : stages)
+		for( String stage : stages )
 		{
-			if (stageObserver != null)
-				stageObserver.onNext(new StageChangeImpl(type, target,
-						Stage.STARTING, stage));
-			success &= invokeEventHandlers(stageObserver, type, target, stage,
-					StageEvent.BEFORE_STAGE);
+			if( stageObserver != null )
+				stageObserver.onNext( new StageChangeImpl( type, target,
+						Stage.STARTING, stage ) );
+			success &= invokeEventHandlers( stageObserver, type, target, stage,
+					StageEvent.BEFORE_STAGE );
 
-			if (stageObserver != null)
-				stageObserver.onNext(new StageChangeImpl(type, target,
-						Stage.STARTED, stage));
-			final List<String> nextStages = invokeStageHandlers(stageObserver,
-					type, target, stage);
+			if( stageObserver != null ) stageObserver.onNext(
+					new StageChangeImpl( type, target, Stage.STARTED, stage ) );
+			final List<String> nextStages = invokeStageHandlers( stageObserver,
+					type, target, stage );
 			success &= nextStages != null;
 
-			if (stageObserver != null)
-				stageObserver.onNext(new StageChangeImpl(type, target,
-						Stage.STOPPING, stage));
-			success &= invokeEventHandlers(stageObserver, type, target, stage,
-					StageEvent.AFTER_STAGE);
+			if( stageObserver != null )
+				stageObserver.onNext( new StageChangeImpl( type, target,
+						Stage.STOPPING, stage ) );
+			success &= invokeEventHandlers( stageObserver, type, target, stage,
+					StageEvent.AFTER_STAGE );
 
-			if (nextStages != null && !nextStages.isEmpty())
+			if( nextStages != null && !nextStages.isEmpty() )
 			{
-				LOG.trace("Starting *nested* stage: " + nextStages);
-				invokeStages(stageObserver, type, target, nextStages);
+				LOG.trace( "Starting *nested* stage: " + nextStages );
+				invokeStages( stageObserver, type, target, nextStages );
 			}
 		}
 		return success;
 	}
 
 	public static <T> boolean invokeEventHandlers(
-			final Observer<StageChange> stageObserver, final Class<T> type,
-			final T target, final String currentStage, final StageEvent event)
-					throws Throwable
+		final Observer<StageChange> stageObserver, final Class<T> type,
+		final T target, final String currentStage, final StageEvent event )
+			throws Throwable
 	{
 		Object result;
 		boolean failed = false;
-		for (Map.Entry<Method, Staged> entry : findEventHandlers(type, event)
-				.entrySet())
+		for( Map.Entry<Method, Staged> entry : findEventHandlers( type, event )
+				.entrySet() )
 		{
-			LOG.trace("Calling 'on=" + event.name() + "' handler method: "
-					+ toSignatureString(entry.getKey()));
-			result = invoke(stageObserver, currentStage, type, target,
-					entry.getKey());
+			LOG.trace( "Calling 'on=" + event.name() + "' handler method: "
+					+ toSignatureString( entry.getKey() ) );
+			result = invoke( stageObserver, currentStage, type, target,
+					entry.getKey() );
 			failed |= result instanceof Throwable;
 		}
 		return !failed;
@@ -480,30 +466,31 @@ public class StageUtil implements Util
 	 * @throws Throwable
 	 */
 	public static <T> List<String> invokeStageHandlers(
-			final Observer<StageChange> stageObserver, final Class<T> type,
-			final T target, final String currentStage) throws Throwable
+		final Observer<StageChange> stageObserver, final Class<T> type,
+		final T target, final String currentStage ) throws Throwable
 	{
 		Object result;
 		boolean failed = false;
 		final List<String> nextStages = new ArrayList<>();
-		for (Map.Entry<Method, Staged> entry : findStageHandlers(type,
-				currentStage).entrySet())
+		for( Map.Entry<Method, Staged> entry : findStageHandlers( type,
+				currentStage ).entrySet() )
 		{
-			LOG.trace("Calling 'onCustom=" + currentStage + "' handler method: "
-					+ toSignatureString(entry.getKey()));
-			result = invoke(stageObserver, currentStage, type, target,
-					entry.getKey());
-			if (result instanceof Throwable)
+			LOG.trace(
+					"Calling 'onCustom=" + currentStage + "' handler method: "
+							+ toSignatureString( entry.getKey() ) );
+			result = invoke( stageObserver, currentStage, type, target,
+					entry.getKey() );
+			if( result instanceof Throwable )
 				failed = true;
-			else if (entry.getValue().returnsNextStage())
+			else if( entry.getValue().returnsNextStage() )
 			{
 				final String nextStage = result == null ? null
 						: result.toString();
-				if (nextStage == null)
-					LOG.error("Illegal (void or null) next stage returned by "
-							+ toSignatureString(entry.getKey()));
+				if( nextStage == null )
+					LOG.error( "Illegal (void or null) next stage returned by "
+							+ toSignatureString( entry.getKey() ) );
 				else
-					nextStages.add(nextStage);
+					nextStages.add( nextStage );
 			}
 			failed |= result instanceof Throwable;
 		}
@@ -520,68 +507,66 @@ public class StageUtil implements Util
 	 * @return
 	 * @throws Throwable
 	 */
-	public static <T> Object invoke(final Observer<StageChange> stageObserver,
-			final String currentStage, final Class<T> type, final T target,
-			final Method method, final Object... args) throws Throwable
+	public static <T> Object invoke( final Observer<StageChange> stageObserver,
+		final String currentStage, final Class<T> type, final T target,
+		final Method method, final Object... args ) throws Throwable
 	{
 		try
 		{
-			return method.invoke(target, args);
-		} catch (Throwable t)
+			return method.invoke( target, args );
+		} catch( Throwable t )
 		{
-			if (stageObserver != null)
-				stageObserver.onNext(new StageChangeImpl(target.getClass(),
-						target, Stage.FAILING, currentStage));
-			if (t instanceof InvocationTargetException)
-				t = t.getCause();
-			for (Map.Entry<Method, Staged> entry : findEventHandlers(type,
-					StageEvent.BEFORE_FAIL).entrySet())
+			if( stageObserver != null )
+				stageObserver.onNext( new StageChangeImpl( target.getClass(),
+						target, Stage.FAILING, currentStage ) );
+			if( t instanceof InvocationTargetException ) t = t.getCause();
+			for( Map.Entry<Method, Staged> entry : findEventHandlers( type,
+					StageEvent.BEFORE_FAIL ).entrySet() )
 			{
-				if (target == null
-						&& !Modifier.isStatic(entry.getKey().getModifiers()))
+				if( target == null
+						&& !Modifier.isStatic( entry.getKey().getModifiers() ) )
 				{
-					LOG.warn("Can't invoke non-static 'on="
+					LOG.warn( "Can't invoke non-static 'on="
 							+ StageEvent.BEFORE_FAIL + "' method: "
-							+ toSignatureString(entry.getKey()), t);
+							+ toSignatureString( entry.getKey() ), t );
 					continue;
 				}
-				LOG.trace("Calling 'on=" + StageEvent.BEFORE_FAIL + "' method: "
-						+ toSignatureString(method));
+				LOG.trace( "Calling 'on=" + StageEvent.BEFORE_FAIL
+						+ "' method: " + toSignatureString( method ) );
 				try
 				{
-					if (entry.getKey().getParameterTypes().length == 0)
-						entry.getKey().invoke(target);
-					else if (entry.getKey().getParameterTypes()[0]
-							.isAssignableFrom(t.getClass()))
-						entry.getKey().invoke(target, t);
+					if( entry.getKey().getParameterTypes().length == 0 )
+						entry.getKey().invoke( target );
+					else if( entry.getKey().getParameterTypes()[0]
+							.isAssignableFrom( t.getClass() ) )
+						entry.getKey().invoke( target, t );
 					else
-						LOG.error("Signature of 'on=" + StageEvent.BEFORE_FAIL
+						LOG.error( "Signature of 'on=" + StageEvent.BEFORE_FAIL
 								+ "' method: "
-								+ toSignatureString(entry.getKey())
+								+ toSignatureString( entry.getKey() )
 								+ " does not match parameter: "
-								+ t.getClass().getName());
-				} catch (Throwable t2)
+								+ t.getClass().getName() );
+				} catch( Throwable t2 )
 				{
-					if (t2 instanceof InvocationTargetException)
+					if( t2 instanceof InvocationTargetException )
 						t2 = t2.getCause();
-					LOG.error("Uncaught errors for 'on="
+					LOG.error( "Uncaught errors for 'on="
 							+ StageEvent.BEFORE_FAIL + "' method: "
-							+ toSignatureString(entry.getKey()), t2);
+							+ toSignatureString( entry.getKey() ), t2 );
 				}
 			}
-			if (stageObserver != null)
+			if( stageObserver != null )
 			{
-				stageObserver.onNext(new StageChangeImpl(target.getClass(),
-						target, Stage.FAILED, currentStage));
-				if (stageObserver != null)
-					stageObserver.onError(t);
+				stageObserver.onNext( new StageChangeImpl( target.getClass(),
+						target, Stage.FAILED, currentStage ) );
+				if( stageObserver != null ) stageObserver.onError( t );
 			}
-			for (Class<? extends Throwable> sup : findAbsorptionLevels(
-					target.getClass(), method))
-				if (sup.isAssignableFrom(t.getClass()))
+			for( Class<? extends Throwable> sup : findAbsorptionLevels(
+					target.getClass(), method ) )
+				if( sup.isAssignableFrom( t.getClass() ) )
 				{
-					LOG.trace("Absorbed " + t.getClass().getSimpleName() + ": "
-							+ t.getMessage());
+					LOG.trace( "Absorbed " + t.getClass().getSimpleName() + ": "
+							+ t.getMessage() );
 					return t;
 				}
 			throw t;
@@ -592,28 +577,28 @@ public class StageUtil implements Util
 	 * @param method
 	 * @return
 	 */
-	public static String toSignatureString(final Method method)
+	public static String toSignatureString( final Method method )
 	{
 		final StringBuilder result = new StringBuilder(
-				method.getDeclaringClass().getSimpleName()).append('#')
-						.append(method.getName()).append('(');
+				method.getDeclaringClass().getSimpleName() ).append( '#' )
+						.append( method.getName() ).append( '(' );
 		boolean first = true;
-		for (Class<?> type : method.getParameterTypes())
+		for( Class<?> type : method.getParameterTypes() )
 		{
-			if (first)
+			if( first )
 				first = false;
 			else
-				result.append(", ");
-			result.append(type.getSimpleName());
+				result.append( ", " );
+			result.append( type.getSimpleName() );
 		}
-		return result.append(')').toString();
+		return result.append( ')' ).toString();
 	}
 
 	/**
 	 * {@link StageChangeImpl}
 	 * 
 	 * @date $Date$
-	 * @version $Id$
+	 * @version $Id: fcd9899e8f98dfcdbbb9151ec7258d849123519b $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	private static class StageChangeImpl implements StageChange
@@ -637,18 +622,17 @@ public class StageUtil implements Util
 		 * @param stage
 		 * @param custom
 		 */
-		private StageChangeImpl(final Class<?> type, final Object target,
-				final Stage stage, final String custom)
+		private StageChangeImpl( final Class<?> type, final Object target,
+			final Stage stage, final String custom )
 		{
 			int hashCode = -1;
-			if (target != null)
-				try
-				{
-					hashCode = target.hashCode();
-				} catch (final Throwable t)
-				{
-					LOG.warn("hashCode() failed for " + type.getName(), t);
-				}
+			if( target != null ) try
+			{
+				hashCode = target.hashCode();
+			} catch( final Throwable t )
+			{
+				LOG.warn( "hashCode() failed for " + type.getName(), t );
+			}
 			this.type = type;
 			this.hash = hashCode;
 			this.stage = stage;
@@ -682,7 +666,7 @@ public class StageUtil implements Util
 		@Override
 		public String toString()
 		{
-			return JsonUtil.toString(this);
+			return JsonUtil.toString( this );
 		}
 	}
 
@@ -690,7 +674,7 @@ public class StageUtil implements Util
 	 * {@link FinalizeDecorator}
 	 * 
 	 * @date $Date$
-	 * @version $Id$
+	 * @version $Id: fcd9899e8f98dfcdbbb9151ec7258d849123519b $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 *
 	 * @param <T>
@@ -713,8 +697,8 @@ public class StageUtil implements Util
 		 * @param obs
 		 * @param type
 		 */
-		private FinalizeDecorator(final Observer<StageChange> obs,
-				final Class<T> type, final T target)
+		private FinalizeDecorator( final Observer<StageChange> obs,
+			final Class<T> type, final T target )
 		{
 			this.stageObserver = obs;
 			this.type = type;
@@ -746,32 +730,31 @@ public class StageUtil implements Util
 		public void finalize()
 		{
 			// LOG.trace("FinalizeDecorator called!");
-			if (this.stageObserver != null)
-				this.stageObserver
-						.onNext(new StageChangeImpl(getTarget().getClass(),
-								getTarget(), Stage.RECYCLING, null));
+			if( this.stageObserver != null ) this.stageObserver
+					.onNext( new StageChangeImpl( getTarget().getClass(),
+							getTarget(), Stage.RECYCLING, null ) );
 
-			for (Map.Entry<Method, Staged> entry : findEventHandlers(getType(),
-					StageEvent.BEFORE_RECYCLE).entrySet())
+			for( Map.Entry<Method, Staged> entry : findEventHandlers( getType(),
+					StageEvent.BEFORE_RECYCLE ).entrySet() )
 			{
-				LOG.trace("Calling 'on=" + StageEvent.BEFORE_RECYCLE
-						+ "' method: " + toSignatureString(entry.getKey()));
+				LOG.trace( "Calling 'on=" + StageEvent.BEFORE_RECYCLE
+						+ "' method: " + toSignatureString( entry.getKey() ) );
 				try
 				{
-					invoke(this.stageObserver, null, getType(), getTarget(),
-							entry.getKey());
-				} catch (final Throwable e)
+					invoke( this.stageObserver, null, getType(), getTarget(),
+							entry.getKey() );
+				} catch( final Throwable e )
 				{
-					LOG.warn("Errors unhandled for 'on="
+					LOG.warn( "Errors unhandled for 'on="
 							+ StageEvent.BEFORE_RECYCLE + "' method: "
-							+ toSignatureString(entry.getKey()), e);
+							+ toSignatureString( entry.getKey() ), e );
 				}
 			}
-			if (this.stageObserver != null)
+			if( this.stageObserver != null )
 			{
 				this.stageObserver
-						.onNext(new StageChangeImpl(getTarget().getClass(),
-								getTarget(), Stage.RECYCLED, null));
+						.onNext( new StageChangeImpl( getTarget().getClass(),
+								getTarget(), Stage.RECYCLED, null ) );
 				this.stageObserver.onCompleted();
 			}
 		}
@@ -783,10 +766,10 @@ public class StageUtil implements Util
 		 * @return
 		 */
 		public static <T> FinalizeDecorator<T> from(
-				final Observer<StageChange> stageObserver, final Class<T> type,
-				final T target)
+			final Observer<StageChange> stageObserver, final Class<T> type,
+			final T target )
 		{
-			return new FinalizeDecorator<T>(stageObserver, type, target);
+			return new FinalizeDecorator<T>( stageObserver, type, target );
 		}
 	}
 }

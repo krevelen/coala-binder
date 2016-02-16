@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/BasicSimulatorService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 1ee4f9f2772011ecafeb298bd441b74ba9072e41 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.capability.replicate;
 
@@ -33,7 +28,7 @@ import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
@@ -58,12 +53,11 @@ import rx.subjects.Subject;
 /**
  * {@link BasicReplicatingCapability}
  * 
- * @version $Revision: 324 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class BasicReplicatingCapability extends BasicCapability
-		implements ReplicatingCapability
+	implements ReplicatingCapability
 {
 
 	/** */
@@ -81,7 +75,7 @@ public class BasicReplicatingCapability extends BasicCapability
 	/** */
 	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
 			.synchronizedMap(
-					new HashMap<RandomNumberStreamID, RandomNumberStream>());
+					new HashMap<RandomNumberStreamID, RandomNumberStream>() );
 
 	/** */
 	private final ClockID clockID;
@@ -95,7 +89,7 @@ public class BasicReplicatingCapability extends BasicCapability
 	/**
 	 * {@link ClockStatusEnum}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 1ee4f9f2772011ecafeb298bd441b74ba9072e41 $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	private enum ClockStatusEnum implements ClockStatus
@@ -131,32 +125,32 @@ public class BasicReplicatingCapability extends BasicCapability
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected BasicReplicatingCapability(final Binder binder)
+	protected BasicReplicatingCapability( final Binder binder )
 	{
-		super(binder);
-		final ReplicationConfig cfg = binder.inject(ReplicationConfig.class);
+		super( binder );
+		final ReplicationConfig cfg = binder.inject( ReplicationConfig.class );
 		this.clockID = cfg.getClockID();
 		this.timeUnit = cfg.getBaseTimeUnit();
 		this.timeUpdates = BehaviorSubject
-				.create(binder.inject(SimTime.Factory.class).create(Double.NaN,
-						this.timeUnit));
+				.create( binder.inject( SimTime.Factory.class )
+						.create( Double.NaN, this.timeUnit ) );
 		final ClockStatusUpdate initStatus = new ClockStatusUpdateImpl(
-				this.clockID, ClockStatusEnum.CREATED);
-		this.statusUpdates = BehaviorSubject.create(initStatus);
+				this.clockID, ClockStatusEnum.CREATED );
+		this.statusUpdates = BehaviorSubject.create( initStatus );
 	}
 
 	@Override
 	public void pause()
 	{
 		// TODO suspend all clock executors, update status
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 	@Override
 	public void start()
 	{
 		// TODO resume all clock executors, update status
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 	public static class Clock extends AbstractIdentifiable<ClockID>
@@ -171,16 +165,16 @@ public class BasicReplicatingCapability extends BasicCapability
 
 		private final SimTime offset;
 
-		protected Clock(final ClockID id, final Date offset)
+		protected Clock( final ClockID id, final Date offset )
 		{
-			super(id);
-			this.offset = new SimTime(id, offset.getTime(), TimeUnit.MILLIS,
-					offset);
+			super( id );
+			this.offset = new SimTime( id, offset.getTime(), TimeUnit.MILLIS,
+					offset );
 		}
 
-		public void schedule(final Job<?> job, final Trigger<?> trigger)
+		public void schedule( final Job<?> job, final Trigger<?> trigger )
 		{
-			trigger.getInstants().subscribe(new Observer<Instant<?>>()
+			trigger.getInstants().subscribe( new Observer<Instant<?>>()
 			{
 				@Override
 				public void onCompleted()
@@ -189,39 +183,39 @@ public class BasicReplicatingCapability extends BasicCapability
 				}
 
 				@Override
-				public void onError(final Throwable e)
+				public void onError( final Throwable e )
 				{
 					e.printStackTrace();
 				}
 
 				@Override
-				public void onNext(final Instant<?> instant)
+				public void onNext( final Instant<?> instant )
 				{
-					schedule(job, instant);
+					schedule( job, instant );
 				}
-			});
+			} );
 		}
 
-		public void schedule(final Job<?> job, final Instant<?> time)
+		public void schedule( final Job<?> job, final Instant<?> time )
 		{
-			synchronized (pending)
+			synchronized( pending )
 			{
-				if (!this.pending.containsKey(time))
-					this.pending.put(time, new HashSet<Job<?>>());
+				if( !this.pending.containsKey( time ) )
+					this.pending.put( time, new HashSet<Job<?>>() );
 
-				this.pending.get(time).add(job);
+				this.pending.get( time ).add( job );
 
-				this.executor.execute(new Runnable()
+				this.executor.execute( new Runnable()
 				{
 					@Override
 					public void run()
 					{
-						synchronized (pending)
+						synchronized( pending )
 						{
-							pending.get(time).remove(job);
+							pending.get( time ).remove( job );
 						}
 					}
-				});
+				} );
 			}
 		}
 
@@ -244,32 +238,32 @@ public class BasicReplicatingCapability extends BasicCapability
 	@Override
 	public SimTime getTime()
 	{
-		return getBinder().inject(SimTime.Factory.class).create(0,
-				this.timeUnit);
+		return getBinder().inject( SimTime.Factory.class ).create( 0,
+				this.timeUnit );
 	}
 
 	protected synchronized Clock getClock()
 	{
-		LOG.info("Obtaining clock with id: " + getClockID().getValue()
+		LOG.info( "Obtaining clock with id: " + getClockID().getValue()
 				+ " from " + CLOCK_CACHE + " :: RESULT : "
-				+ CLOCK_CACHE.get(getClockID()));
+				+ CLOCK_CACHE.get( getClockID() ) );
 
-		if (!CLOCK_CACHE.containsKey(getClockID()))
-			CLOCK_CACHE.put(getClockID(), new Clock(getClockID(), new Date()));
+		if( !CLOCK_CACHE.containsKey( getClockID() ) ) CLOCK_CACHE
+				.put( getClockID(), new Clock( getClockID(), new Date() ) );
 
-		return CLOCK_CACHE.get(getClockID());
+		return CLOCK_CACHE.get( getClockID() );
 	}
 
 	@Override
-	public void schedule(final Job<?> job, final Trigger<?> trigger)
+	public void schedule( final Job<?> job, final Trigger<?> trigger )
 	{
-		getClock().schedule(job, trigger);
+		getClock().schedule( job, trigger );
 	}
 
 	@Override
-	public boolean unschedule(final Job<?> job)
+	public boolean unschedule( final Job<?> job )
 	{
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 	@Override
@@ -291,19 +285,20 @@ public class BasicReplicatingCapability extends BasicCapability
 	}
 
 	@Override
-	public SimTime toActualTime(final SimTime virtualTime)
+	public SimTime toActualTime( final SimTime virtualTime )
 	{
 		return getClock().getActualOffset()
-				.plus(virtualTime.min(getClock().getVirtualOffset())
-						.dividedBy(getClock().getApproximateSpeedFactor()));
+				.plus( virtualTime.min( getClock().getVirtualOffset() )
+						.dividedBy( getClock().getApproximateSpeedFactor() ) );
 	}
 
 	@Override
-	public SimTime toVirtualTime(final SimTime actualTime)
+	public SimTime toVirtualTime( final SimTime actualTime )
 	{
 		return getClock().getVirtualOffset()
-				.plus(actualTime.min(getClock().getActualOffset())
-						.multipliedBy(getClock().getApproximateSpeedFactor()));
+				.plus( actualTime.min( getClock().getActualOffset() )
+						.multipliedBy(
+								getClock().getApproximateSpeedFactor() ) );
 	}
 
 	@Override
@@ -315,34 +310,34 @@ public class BasicReplicatingCapability extends BasicCapability
 	@Override
 	public boolean isRunning()
 	{
-		return !CLOCK_CACHE.get(getClockID()).executor.isShutdown();
+		return !CLOCK_CACHE.get( getClockID() ).executor.isShutdown();
 	}
 
 	@Override
 	public boolean isComplete()
 	{
-		return CLOCK_CACHE.get(getClockID()).executor.isShutdown();
+		return CLOCK_CACHE.get( getClockID() ).executor.isShutdown();
 	}
 
 	@Override
 	public RandomNumberStream getRNG()
 	{
-		return getRNG(MAIN_RNG_ID);
+		return getRNG( MAIN_RNG_ID );
 	}
 
 	@Override
-	public synchronized RandomNumberStream getRNG(
-			final RandomNumberStreamID rngID)
+	public synchronized RandomNumberStream
+		getRNG( final RandomNumberStreamID rngID )
 	{
-		if (!this.rng.containsKey(rngID))
-			this.rng.put(rngID, newRNG(rngID));
-		return this.rng.get(rngID);
+		if( !this.rng.containsKey( rngID ) )
+			this.rng.put( rngID, newRNG( rngID ) );
+		return this.rng.get( rngID );
 	}
 
-	private RandomNumberStream newRNG(final RandomNumberStreamID streamID)
+	private RandomNumberStream newRNG( final RandomNumberStreamID streamID )
 	{
-		return getBinder().inject(RandomNumberStream.Factory.class)
-				.create(streamID, System.currentTimeMillis());
+		return getBinder().inject( RandomNumberStream.Factory.class )
+				.create( streamID, System.currentTimeMillis() );
 	}
 
 	@Override

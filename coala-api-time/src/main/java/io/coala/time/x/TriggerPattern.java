@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.ReadableDateTime;
@@ -50,22 +50,22 @@ import rx.functions.Func1;
  * @version $Id$
  * @author Rick van Krevelen
  */
-@JsonSerialize(using = TriggerPattern.JsonSerializer.class)
-@JsonDeserialize(using = TriggerPattern.JsonDeserializer.class)
+@JsonSerialize( using = TriggerPattern.JsonSerializer.class )
+@JsonDeserialize( using = TriggerPattern.JsonDeserializer.class )
 public class TriggerPattern
 {
 
 	/** */
 	private static final Logger LOG = LogManager
-			.getLogger(TriggerPattern.class);
+			.getLogger( TriggerPattern.class );
 
 	/** */
 	private static final Pattern dtStartTimePattern = Pattern
-			.compile("DTSTART[.]*:(.*)");
+			.compile( "DTSTART[.]*:(.*)" );
 
 	/** */
 	private static final Pattern dtStartZonePattern = Pattern
-			.compile("TZID=([^:;]*)");
+			.compile( "TZID=([^:;]*)" );
 
 	/** */
 	private Object value;
@@ -78,29 +78,29 @@ public class TriggerPattern
 	 * @see DateTimeIteratorFactory#createDateTimeIterable(String,
 	 *      ReadableDateTime, DateTimeZone, boolean)
 	 */
-	public static final Observable<Instant> parseInstantOrIntervalOrRule(
-			final String json)
+	public static final Observable<Instant>
+		parseInstantOrIntervalOrRule( final String json )
 	{
 		try
 		{
 			// example: "0/20 * * * * ?"
 			final CronTrigger trigger = TriggerBuilder.newTrigger()
-					.withSchedule(CronScheduleBuilder.cronSchedule(json))
+					.withSchedule( CronScheduleBuilder.cronSchedule( json ) )
 					.build();
-			return Observable.create(new Observable.OnSubscribe<Instant>()
+			return Observable.create( new Observable.OnSubscribe<Instant>()
 			{
 				@Override
-				public void call(final Subscriber<? super Instant> sub)
+				public void call( final Subscriber<? super Instant> sub )
 				{
 					Date current = trigger.getStartTime();
-					while (current != null)
+					while( current != null )
 					{
-						sub.onNext(Instant.of(current.getTime()));
-						current = trigger.getFireTimeAfter(current);
+						sub.onNext( Instant.of( current.getTime() ) );
+						current = trigger.getFireTimeAfter( current );
 					}
 				}
-			});
-		} catch (final Exception e)
+			} );
+		} catch( final Exception e )
 		{
 			try
 			{
@@ -113,27 +113,27 @@ public class TriggerPattern
 
 				// FIXME parse DTSTART (see
 				// http://www.kanzaki.com/docs/ical/rrule.html)
-				final DateTimeZone zone = DateTimeZone.forID(dtStartZonePattern
-						.matcher(json).group());
-				final DateTime start = DateTime.parse(
-						dtStartTimePattern.matcher(json).group())
-						.withZone(zone);
+				final DateTimeZone zone = DateTimeZone
+						.forID( dtStartZonePattern.matcher( json ).group() );
+				final DateTime start = DateTime
+						.parse( dtStartTimePattern.matcher( json ).group() )
+						.withZone( zone );
 
 				// convert DateTime to Instant
-				return Observable.from(
-						DateTimeIteratorFactory.createDateTimeIterable(json,
-								start, zone, strict)).map(
-						new Func1<DateTime, Instant>()
+				return Observable
+						.from( DateTimeIteratorFactory.createDateTimeIterable(
+								json, start, zone, strict ) )
+						.map( new Func1<DateTime, Instant>()
 						{
 							@Override
-							public Instant call(final DateTime dt)
+							public Instant call( final DateTime dt )
 							{
-								return Instant.of(dt);
+								return Instant.of( dt );
 							}
-						});
-			} catch (final Exception e1)
+						} );
+			} catch( final Exception e1 )
 			{
-				return Observable.just(Instant.valueOf(json));
+				return Observable.just( Instant.valueOf( json ) );
 			}
 		}
 	}
@@ -144,9 +144,9 @@ public class TriggerPattern
 	 * 
 	 * @see com.fasterxml.jackson.databind.deser.BeanDeserializer
 	 */
-	public TriggerPattern(final String json)
+	public TriggerPattern( final String json )
 	{
-		this((Object) json);
+		this( (Object) json );
 	}
 
 	/**
@@ -155,9 +155,9 @@ public class TriggerPattern
 	 * 
 	 * @see com.fasterxml.jackson.databind.deser.BeanDeserializer
 	 */
-	public TriggerPattern(final double absoluteInstantMS)
+	public TriggerPattern( final double absoluteInstantMS )
 	{
-		this(Instant.of(absoluteInstantMS));
+		this( Instant.of( absoluteInstantMS ) );
 	}
 
 	/**
@@ -166,9 +166,9 @@ public class TriggerPattern
 	 * 
 	 * @see com.fasterxml.jackson.databind.deser.BeanDeserializer
 	 */
-	public TriggerPattern(final int absoluteInstantMS)
+	public TriggerPattern( final int absoluteInstantMS )
 	{
-		this(Instant.of(absoluteInstantMS));
+		this( Instant.of( absoluteInstantMS ) );
 	}
 
 	/**
@@ -177,7 +177,7 @@ public class TriggerPattern
 	 * @param values
 	 * @param type
 	 */
-	public TriggerPattern(final Object value)
+	public TriggerPattern( final Object value )
 	{
 		this.value = value;
 	}
@@ -205,99 +205,81 @@ public class TriggerPattern
 	@JsonIgnore
 	public Observable<Instant> asObservable()
 	{
-		if (getValue() instanceof Instant)
-			return Observable.just((Instant) getValue());
+		if( getValue() instanceof Instant )
+			return Observable.just( (Instant) getValue() );
 
-		if (getValue() instanceof String)
-			return parseInstantOrIntervalOrRule((String) getValue());
+		if( getValue() instanceof String )
+			return parseInstantOrIntervalOrRule( (String) getValue() );
 
-		throw new IllegalArgumentException("Can't convert "
-				+ getValue().getClass().getName());
+		throw new IllegalArgumentException(
+				"Can't convert " + getValue().getClass().getName() );
 	}
 
-	/*public static Iterable<Instant> createIterableInstant(
-			final CronTrigger trigger)
-	{
-		return new Iterable<Instant>()
-		{
-			@Override
-			public Iterator<Instant> iterator()
-			{
-				return new Iterator<Instant>()
-				{
-					*//** *//*
-					private Date current = trigger.getStartTime();
+	/*
+	 * public static Iterable<Instant> createIterableInstant( final CronTrigger
+	 * trigger) { return new Iterable<Instant>() {
+	 * 
+	 * @Override public Iterator<Instant> iterator() { return new
+	 * Iterator<Instant>() {
+	 *//** *//*
+			 * private Date current = trigger.getStartTime();
+			 * 
+			 * @Override public boolean hasNext() { return this.current != null;
+			 * }
+			 * 
+			 * @Override public Instant next() { final Date result =
+			 * this.current; this.current =
+			 * trigger.getFireTimeAfter(this.current); return
+			 * Instant.valueOf(result.getTime()); }
+			 * 
+			 * @Override public void remove() { throw
+			 * ExceptionBuilder.unchecked("NOT SUPPORTED") .build(); } }; } }; }
+			 */
 
-					@Override
-					public boolean hasNext()
-					{
-						return this.current != null;
-					}
-
-					@Override
-					public Instant next()
-					{
-						final Date result = this.current;
-						this.current = trigger.getFireTimeAfter(this.current);
-						return Instant.valueOf(result.getTime());
-					}
-
-					@Override
-					public void remove()
-					{
-						throw ExceptionBuilder.unchecked("NOT SUPPORTED")
-								.build();
-					}
-				};
-			}
-		};
-	}
-*/
-	
 	/**
 	 * @param jsonRecurrence
 	 * @return
 	 */
-	public static TriggerPattern valueOf(final String json)
+	public static TriggerPattern valueOf( final String json )
 	{
-		return JsonUtil.valueOf(json, TriggerPattern.class);
+		return JsonUtil.valueOf( json, TriggerPattern.class );
 	}
 
-	public static class JsonSerializer extends
-			com.fasterxml.jackson.databind.JsonSerializer<TriggerPattern>
+	public static class JsonSerializer
+		extends com.fasterxml.jackson.databind.JsonSerializer<TriggerPattern>
 	{
 		public JsonSerializer()
 		{
-			LOG.trace("Created " + getClass().getName());
+			LOG.trace( "Created " + getClass().getName() );
 		}
 
 		@Override
-		public void serialize(final TriggerPattern value,
-				final JsonGenerator gen, final SerializerProvider serializers)
+		public void serialize( final TriggerPattern value,
+			final JsonGenerator gen, final SerializerProvider serializers )
 				throws IOException, JsonProcessingException
 		{
 			// LOG.trace("Serializing " + value);
-			gen.writeString(value.toString());
+			gen.writeString( value.toString() );
 		}
 	}
 
-	public static class JsonDeserializer extends
-			com.fasterxml.jackson.databind.JsonDeserializer<TriggerPattern>
+	public static class JsonDeserializer
+		extends com.fasterxml.jackson.databind.JsonDeserializer<TriggerPattern>
 	{
 		public JsonDeserializer()
 		{
-			LOG.trace("Created " + getClass().getName());
+			LOG.trace( "Created " + getClass().getName() );
 		}
 
 		@Override
-		public TriggerPattern deserialize(final JsonParser p,
-				final DeserializationContext ctxt) throws IOException,
-				JsonProcessingException
+		public TriggerPattern deserialize( final JsonParser p,
+			final DeserializationContext ctxt )
+				throws IOException, JsonProcessingException
 		{
 			// LOG.trace("Deserializing " + p.getText());
-			return p.getCurrentToken().isNumeric() ? new TriggerPattern(p
-					.getNumberValue().doubleValue()) : new TriggerPattern(
-					p.getText());
+			return p.getCurrentToken().isNumeric()
+					? new TriggerPattern( p.getNumberValue().doubleValue() )
+					: new TriggerPattern( p.getText() );
 		}
 	}
 

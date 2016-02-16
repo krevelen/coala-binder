@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 3edfe701010f475578d44f9dce5df004f146e4af $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentStatusObserver;
 import io.coala.agent.AgentStatusUpdate;
@@ -34,14 +32,13 @@ import io.coala.log.LogUtil;
 /**
  * {@link AbstractCapability}
  * 
- * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  * @param <ID> the type of {@link CapabilityID}
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public abstract class AbstractCapability<ID extends CapabilityID>
-		extends AbstractLifeCycle<ID, BasicCapabilityStatus>implements
-		Capability<BasicCapabilityStatus>, AgentStatusObserver, LifeCycleHooks
+	extends AbstractLifeCycle<ID, BasicCapabilityStatus> implements
+	Capability<BasicCapabilityStatus>, AgentStatusObserver, LifeCycleHooks
 {
 
 	/** */
@@ -60,9 +57,9 @@ public abstract class AbstractCapability<ID extends CapabilityID>
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected AbstractCapability(final ID id, final Binder binder)
+	protected AbstractCapability( final ID id, final Binder binder )
 	{
-		super(id);
+		super( id );
 		this.binder = binder;
 	}
 
@@ -84,10 +81,10 @@ public abstract class AbstractCapability<ID extends CapabilityID>
 	private boolean finalized = false;
 
 	@Override
-	protected void forceStatus(final BasicCapabilityStatus status)
+	protected void forceStatus( final BasicCapabilityStatus status )
 	{
-		MachineUtil.setStatus(this, status,
-				status.isFinishedStatus() || status.isFailedStatus());
+		MachineUtil.setStatus( this, status,
+				status.isFinishedStatus() || status.isFailedStatus() );
 	}
 
 	@Override
@@ -97,159 +94,157 @@ public abstract class AbstractCapability<ID extends CapabilityID>
 	}
 
 	@Override
-	public synchronized final void onNext(final AgentStatusUpdate update)
+	public synchronized final void onNext( final AgentStatusUpdate update )
 	{
-		if (LOG == null)
-			LOG = LogUtil.getLogger(AbstractCapability.class.getName(), this);
+		if( LOG == null )
+			LOG = LogUtil.getLogger( AbstractCapability.class.getName(), this );
 
-		if (this.complete && !update.getStatus().isFinishedStatus()
-				&& !update.getStatus().isFailedStatus())
+		if( this.complete && !update.getStatus().isFinishedStatus()
+				&& !update.getStatus().isFailedStatus() )
 		{
 			LOG.warn(
 					getID() + " already complete, ignoring owner status update: "
-							+ update.getStatus());
+							+ update.getStatus() );
 			return;
 		}
 
-		if (this.finalized)
+		if( this.finalized )
 		{
 			LOG.warn(
 					getID() + " already finalized, ignoring owner status update: "
-							+ update.getStatus());
+							+ update.getStatus() );
 			return;
 		}
 
 		try
 		{
-			LOG.trace("Got owner update: " + update.getStatus());
-			if (update.getStatus().isCreatedStatus())
+			LOG.trace( "Got owner update: " + update.getStatus() );
+			if( update.getStatus().isCreatedStatus() )
 			{
-				if (!initialized)
+				if( !initialized )
 				{
 					initialize();
 					this.initialized = true;
-					forceStatus(BasicCapabilityStatus.INITIALIZED);
+					forceStatus( BasicCapabilityStatus.INITIALIZED );
 				}
 				// else
 				// LOG.warn("already initialized!");
-			} else if (update.getStatus().isInitializedStatus()
-					|| update.getStatus().isActiveStatus())
+			} else if( update.getStatus().isInitializedStatus()
+					|| update.getStatus().isActiveStatus() )
 			{
-				LOG.trace("initialized or activated");
-				if (!initialized)
+				LOG.trace( "initialized or activated" );
+				if( !initialized )
 				{
 					// LOG.warn(getID() + " should already be initialized!");
 					initialize();
 					this.initialized = true;
-					forceStatus(BasicCapabilityStatus.INITIALIZED);
+					forceStatus( BasicCapabilityStatus.INITIALIZED );
 				}
-				if (getActivationType() == ActivationType.ACTIVATE_NEVER)
+				if( getActivationType() == ActivationType.ACTIVATE_NEVER )
 					return;
-				LOG.trace("activating...");
+				LOG.trace( "activating..." );
 				this.active = true;
-				forceStatus(BasicCapabilityStatus.STARTED);
+				forceStatus( BasicCapabilityStatus.STARTED );
 				activate();
-			} else if (update.getStatus().isPassiveStatus())
+			} else if( update.getStatus().isPassiveStatus() )
 			{
-				if (!initialized)
+				if( !initialized )
 				{
 					// LOG.warn(getID() + " should already be initialized!");
 					initialize();
 					this.initialized = true;
-					forceStatus(BasicCapabilityStatus.INITIALIZED);
-					if (getActivationType() != ActivationType.ACTIVATE_NEVER)
+					forceStatus( BasicCapabilityStatus.INITIALIZED );
+					if( getActivationType() != ActivationType.ACTIVATE_NEVER )
 					{
 						this.active = true;
-						forceStatus(BasicCapabilityStatus.STARTED);
+						forceStatus( BasicCapabilityStatus.STARTED );
 						activate();
 					}
 				}
-				if (getActivationType() == ActivationType.ACTIVATE_NEVER)
+				if( getActivationType() == ActivationType.ACTIVATE_NEVER )
 					return;
-				if (this.active)
+				if( this.active )
 				{
 					this.active = false;
 					deactivate();
-					forceStatus(BasicCapabilityStatus.PAUSED);
+					forceStatus( BasicCapabilityStatus.PAUSED );
 				}
-				if (getActivationType() == ActivationType.ACTIVATE_AND_FINISH)
+				if( getActivationType() == ActivationType.ACTIVATE_AND_FINISH )
 				{
 					this.complete = true;
-					forceStatus(BasicCapabilityStatus.COMPLETE);
+					forceStatus( BasicCapabilityStatus.COMPLETE );
 					finish();
-					forceStatus(BasicCapabilityStatus.FINISHED);
+					forceStatus( BasicCapabilityStatus.FINISHED );
 				}
-			} else if (update.getStatus().isCompleteStatus()
+			} else if( update.getStatus().isCompleteStatus()
 					|| update.getStatus().isFinishedStatus()
-					|| update.getStatus().isFailedStatus())
+					|| update.getStatus().isFailedStatus() )
 			{
-				if (this.active)
+				if( this.active )
 				{
-					LOG.warn(getID() + " should no longer be active!");
+					LOG.warn( getID() + " should no longer be active!" );
 					this.active = false;
 					deactivate();
-					forceStatus(BasicCapabilityStatus.PAUSED);
+					forceStatus( BasicCapabilityStatus.PAUSED );
 				}
-				if (!this.complete)
+				if( !this.complete )
 				{
-					forceStatus(BasicCapabilityStatus.COMPLETE);
+					forceStatus( BasicCapabilityStatus.COMPLETE );
 					this.complete = true;
 				}
-				if (!this.finalized)
+				if( !this.finalized )
 				{
 					finish();
-					forceStatus(BasicCapabilityStatus.FINISHED);
+					forceStatus( BasicCapabilityStatus.FINISHED );
 					this.finalized = true;
 				}
 			}
 			return;
-		} catch (final Throwable t)
+		} catch( final Throwable t )
 		{
-			forceStatus(BasicCapabilityStatus.FAILED);
+			forceStatus( BasicCapabilityStatus.FAILED );
 			this.finalized = true;
-			onError(t);
+			onError( t );
 			// LOG.error("Problem executing " + getID(), t);
 		}
-		CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime("status",
-				update.getStatus(), "unexpected");
+		CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime( "status",
+				update.getStatus(), "unexpected" );
 	}
 
 	@Override
-	public final void onError(final Throwable t)
+	public final void onError( final Throwable t )
 	{
-		if (LOG == null)
-			LOG = LogUtil.getLogger(AbstractCapability.class.getName(), this);
+		if( LOG == null )
+			LOG = LogUtil.getLogger( AbstractCapability.class.getName(), this );
 
-		LOG.error("Problem with owner agent", t);
+		LOG.error( "Problem with owner agent", t );
 	}
 
 	@Override
 	public final void onCompleted()
 	{
-		if (LOG == null)
-			LOG = LogUtil.getLogger(AbstractCapability.class.getName(), this);
+		if( LOG == null )
+			LOG = LogUtil.getLogger( AbstractCapability.class.getName(), this );
 
-		LOG.trace("Owner finished, cleaning up " + getID() + "...");
-		if (this.finalized)
-			return;
-		if (this.initialized)
-			try
+		LOG.trace( "Owner finished, cleaning up " + getID() + "..." );
+		if( this.finalized ) return;
+		if( this.initialized ) try
+		{
+			if( this.active )
 			{
-				if (this.active)
-				{
-					deactivate();
-					this.complete = false;
-				}
-				if (!this.complete)
-				{
-					finish();
-					this.finalized = true;
-				}
-			} catch (final Exception e)
-			{
-				onError(e);
+				deactivate();
+				this.complete = false;
 			}
-		LOG.trace("Done cleaning up " + getID() + "!");
+			if( !this.complete )
+			{
+				finish();
+				this.finalized = true;
+			}
+		} catch( final Exception e )
+		{
+			onError( e );
+		}
+		LOG.trace( "Done cleaning up " + getID() + "!" );
 	}
 
 	@Override

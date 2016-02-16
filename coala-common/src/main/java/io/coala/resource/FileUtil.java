@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/util/FileUtil.java $
- *  
- * Part of the EU project All4Green, see http://www.all4green-project.eu/
+/* $Id: d95577594b67928a11bbdcdd739c45d656c0b92a $
  *  
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,15 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *
- * Copyright © 2010-2013 Almende B.V.
  */
 package io.coala.resource;
-
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.log.LogUtil;
-import io.coala.util.Util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +26,12 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+
+import io.coala.exception.CoalaException;
+import io.coala.exception.CoalaExceptionFactory;
+import io.coala.log.LogUtil;
+import io.coala.util.Util;
 
 /**
  * {@link FileUtil} provides some file related utilities
@@ -49,7 +44,7 @@ public class FileUtil implements Util
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(FileUtil.class);
+	private static final Logger LOG = LogUtil.getLogger( FileUtil.class );
 
 	/**
 	 * {@link FileUtil} constructor
@@ -64,10 +59,10 @@ public class FileUtil implements Util
 	 * @return
 	 * @throws A4GException
 	 */
-	public static InputStream getFileAsInputStream(final File path)
-			throws CoalaException
+	public static InputStream getFileAsInputStream( final File path )
+		throws CoalaException
 	{
-		return getFileAsInputStream(path.getPath());
+		return getFileAsInputStream( path.getPath() );
 	}
 
 	/**
@@ -75,19 +70,19 @@ public class FileUtil implements Util
 	 * @return
 	 * @throws A4GException
 	 */
-	public static InputStream getFileAsInputStream(final URI path)
-			throws CoalaException
+	public static InputStream getFileAsInputStream( final URI path )
+		throws CoalaException
 	{
 		try
 		{
-			return getFileAsInputStream(path.toURL());
-		} catch (final CoalaException e)
+			return getFileAsInputStream( path.toURL() );
+		} catch( final CoalaException e )
 		{
 			throw e;
-		} catch (final Exception e)
+		} catch( final Exception e )
 		{
-			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create(e, "path",
-					path.toASCIIString());
+			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create( e, "path",
+					path.toASCIIString() );
 		}
 	}
 
@@ -96,10 +91,10 @@ public class FileUtil implements Util
 	 * @return
 	 * @throws A4GException
 	 */
-	public static InputStream getFileAsInputStream(final URL path)
-			throws CoalaException
+	public static InputStream getFileAsInputStream( final URL path )
+		throws CoalaException
 	{
-		return getFileAsInputStream(path.toExternalForm());
+		return getFileAsInputStream( path.toExternalForm() );
 	}
 
 	/**
@@ -109,93 +104,90 @@ public class FileUtil implements Util
 	 * @return an {@link InputStream} for the specified {@code path}
 	 * @throws A4GException e.g. if the file was not found
 	 */
-	public static InputStream getFileAsInputStream(final String path)
-			throws CoalaException
+	public static InputStream getFileAsInputStream( final String path )
+		throws CoalaException
 	{
-		if (path == null)
-			throw CoalaExceptionFactory.VALUE_NOT_SET.createRuntime("path");
+		if( path == null )
+			throw CoalaExceptionFactory.VALUE_NOT_SET.createRuntime( "path" );
 
-		final File file = new File(path);
-		if (file.exists())
+		final File file = new File( path );
+		if( file.exists() )
 		{
-			LOG.debug("Found '" + path + "' at location: "
-					+ file.getAbsolutePath());
+			LOG.debug( "Found '" + path + "' at location: "
+					+ file.getAbsolutePath() );
 			try
 			{
 				// if (path.exists() && path.isFile())
-				return new FileInputStream(file);
+				return new FileInputStream( file );
 
-			} catch (final FileNotFoundException e)
+			} catch( final FileNotFoundException e )
 			{
-				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create(e,
+				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create( e,
 						"path (not found or inaccessible)",
-						file.getAbsolutePath());
+						file.getAbsolutePath() );
 			}
 		}
 
 		try
 		{
-			final URL url = new URL(path);
-			LOG.trace("Downloading '" + path + "'");
+			final URL url = new URL( path );
+			LOG.trace( "Downloading '" + path + "'" );
 			return url.openStream();
-		} catch (final MalformedURLException e)
+		} catch( final MalformedURLException e )
 		{
 			// ignore
-		} catch (final IOException e)
+		} catch( final IOException e )
 		{
-			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create(e, "path",
-					path);
+			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create( e, "path",
+					path );
 		}
 
 		final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		// FileUtil.class.getClassLoader()
-		final URL resourcePath = cl.getResource(path);
-		if (resourcePath == null)
-		{
-			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create("path", path,
-					"File not found, looked in " + file.getAbsolutePath()
-							+ " and classpath");
-		}
-		LOG.trace("Found '" + path + "' in classpath: " + resourcePath);
-		return cl.getResourceAsStream(path);
+		final URL resourcePath = cl.getResource( path );
+		if( resourcePath == null ) { throw CoalaExceptionFactory.VALUE_NOT_ALLOWED
+				.create( "path", path, "File not found, looked in "
+						+ file.getAbsolutePath() + " and classpath" ); }
+		LOG.trace( "Found '" + path + "' in classpath: " + resourcePath );
+		return cl.getResourceAsStream( path );
 	}
 
 	/**
 	 * @param path
 	 * @return
 	 */
-	public static OutputStream getFileAsOutputStream(final String path)
-			throws CoalaException
+	public static OutputStream getFileAsOutputStream( final String path )
+		throws CoalaException
 	{
-		if (path == null)
-			throw CoalaExceptionFactory.VALUE_NOT_SET.createRuntime("path");
+		if( path == null )
+			throw CoalaExceptionFactory.VALUE_NOT_SET.createRuntime( "path" );
 
-		return getFileAsOutputStream(new File(path), true);
+		return getFileAsOutputStream( new File( path ), true );
 	}
 
 	/**
 	 * @param path
 	 * @return
 	 */
-	public static OutputStream getFileAsOutputStream(final File file,
-			final boolean append) throws CoalaException
+	public static OutputStream getFileAsOutputStream( final File file,
+		final boolean append ) throws CoalaException
 	{
-		if (file == null)
-			throw CoalaExceptionFactory.VALUE_NOT_SET.createRuntime("file");
+		if( file == null )
+			throw CoalaExceptionFactory.VALUE_NOT_SET.createRuntime( "file" );
 
 		try
 		{
-			if (file.createNewFile())
-				LOG.info("Created '" + file.getName() + "' at location: "
-						+ file.getAbsolutePath());
+			if( file.createNewFile() )
+				LOG.info( "Created '" + file.getName() + "' at location: "
+						+ file.getAbsolutePath() );
 			else
-				LOG.debug("Found '" + file.getName() + "' at location: "
-						+ file.getAbsolutePath());
-			return new FileOutputStream(file, append);
-		} catch (final IOException e)
+				LOG.debug( "Found '" + file.getName() + "' at location: "
+						+ file.getAbsolutePath() );
+			return new FileOutputStream( file, append );
+		} catch( final IOException e )
 		{
-			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create(e, "file",
-					file);
+			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create( e, "file",
+					file );
 		}
 	}
 

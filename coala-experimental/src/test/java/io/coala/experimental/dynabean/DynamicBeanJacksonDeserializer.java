@@ -1,10 +1,8 @@
 package io.coala.experimental.dynabean;
 
-import io.coala.log.LogUtil;
-
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,57 +14,58 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class DynamicBeanJacksonDeserializer extends
-		StdDeserializer<DynamicBean>
+import io.coala.log.LogUtil;
+
+public class DynamicBeanJacksonDeserializer extends StdDeserializer<DynamicBean>
 {
 	/** */
 	private static final long serialVersionUID = 1L;
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(DynamicBeanJacksonDeserializer.class);
-	
+			.getLogger( DynamicBeanJacksonDeserializer.class );
+
 	public DynamicBeanJacksonDeserializer()
 	{
-		super(DynamicBean.class);
+		super( DynamicBean.class );
 	}
 
 	@Override
-	public DynamicBean deserialize(JsonParser jp, DeserializationContext ctxt)
-			throws IOException, JsonProcessingException
+	public DynamicBean deserialize( JsonParser jp, DeserializationContext ctxt )
+		throws IOException, JsonProcessingException
 	{
 		throw new IllegalStateException(
-				"Dynamic bean deserialization should have been handled by deserializeWithType() and not passed to this method.");
+				"Dynamic bean deserialization should have been handled by deserializeWithType() and not passed to this method." );
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings( "deprecation" )
 	@Override
-	public DynamicBean deserializeWithType(JsonParser jp,
-			DeserializationContext ctxt, TypeDeserializer typeDeserializer)
+	public DynamicBean deserializeWithType( JsonParser jp,
+		DeserializationContext ctxt, TypeDeserializer typeDeserializer )
 			throws IOException, JsonProcessingException
 	{
 		ObjectMapper tMapper = (ObjectMapper) jp.getCodec();
-		JsonNode tJsonRootNode = tMapper.readTree(jp);
+		JsonNode tJsonRootNode = tMapper.readTree( jp );
 		ObjectNode tRootNode = null;
 
-		if (tJsonRootNode.isObject())
+		if( tJsonRootNode.isObject() )
 		{
 			tRootNode = (ObjectNode) tJsonRootNode;
 		} else
 		{
 			tRootNode = tMapper.createObjectNode();
-			tRootNode.put("value", tJsonRootNode);
+			tRootNode.put( "value", tJsonRootNode );
 		}
 
-		JsonNode tDynamicBeanClassNameNode = tRootNode.get(typeDeserializer
-				.getPropertyName());
+		JsonNode tDynamicBeanClassNameNode = tRootNode
+				.get( typeDeserializer.getPropertyName() );
 
 		String tDynamicBeanClassName = ((AsPropertyTypeDeserializer) typeDeserializer)
 				.baseTypeName();
-		if (tDynamicBeanClassNameNode != null)
+		if( tDynamicBeanClassNameNode != null )
 		{
-			tDynamicBeanClassName = tRootNode.get(
-					typeDeserializer.getPropertyName()).asText();
+			tDynamicBeanClassName = tRootNode
+					.get( typeDeserializer.getPropertyName() ).asText();
 		}
 
 		try
@@ -74,22 +73,23 @@ public class DynamicBeanJacksonDeserializer extends
 			ClassLoader tCurrentThreadLoader = Thread.currentThread()
 					.getContextClassLoader();
 
-			@SuppressWarnings("unchecked")
+			@SuppressWarnings( "unchecked" )
 			Class<? extends DynamicBean> tDynamicBeanClass = (Class<? extends DynamicBean>) Class
-					.forName(tDynamicBeanClassName, true, tCurrentThreadLoader);
+					.forName( tDynamicBeanClassName, true,
+							tCurrentThreadLoader );
 
 			DynamicBean tDeserializerDynamicBean = DynamicBeanFactory
-					.parseJSONNode(tRootNode, tDynamicBeanClass);
+					.parseJSONNode( tRootNode, tDynamicBeanClass );
 
 			// clean up the @class field
-			tDeserializerDynamicBean.deleteField(DealField
-					.useCustomField(typeDeserializer.getPropertyName()));
+			tDeserializerDynamicBean.deleteField( DealField
+					.useCustomField( typeDeserializer.getPropertyName() ) );
 
 			return tDeserializerDynamicBean;
-		} catch (ClassNotFoundException ex)
+		} catch( ClassNotFoundException ex )
 		{
-			LOG.warn("Cannot parse Dynamic Bean class " + tDynamicBeanClassName
-					+ ", returning null.", ex);
+			LOG.warn( "Cannot parse Dynamic Bean class " + tDynamicBeanClassName
+					+ ", returning null.", ex );
 			return getNullValue();
 		}
 	}

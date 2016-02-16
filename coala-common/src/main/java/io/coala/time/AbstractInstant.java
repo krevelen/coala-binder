@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 16ecfcebf8e55977087be44cbacae6e34687e7f5 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.time;
 
@@ -22,7 +20,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -37,7 +35,7 @@ import io.coala.log.InjectLogger;
 /**
  * {@link AbstractInstant}
  * 
- * @version $Id$
+ * @version $Id: 16ecfcebf8e55977087be44cbacae6e34687e7f5 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <THIS> the concrete {@link AbstractInstant} type

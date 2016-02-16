@@ -1,7 +1,4 @@
-/* $Id$
- * $URL$
- * 
- * Part of the EU project Inertia, see http://www.inertia-project.eu/
+/* $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,25 +12,19 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.eve3;
 
 import static org.aeonbits.owner.util.Collections.entry;
 import static org.aeonbits.owner.util.Collections.map;
-import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.exception.CoalaException;
-import io.coala.json.JsonUtil;
-import io.coala.resource.FileUtil;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Map;
 
 import org.aeonbits.owner.Converter;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.almende.eve.agent.Agent;
 import com.almende.eve.agent.AgentConfig;
@@ -48,12 +39,16 @@ import com.almende.eve.transport.http.HttpTransportBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.coala.capability.replicate.ReplicationConfig;
+import io.coala.exception.CoalaException;
+import io.coala.json.JsonUtil;
+import io.coala.resource.FileUtil;
+
 /**
  * {@link EveAgentConfig}
  * 
- * @date $Date$
  * @version $Id$
- * @author <a href="mailto:rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public interface EveAgentConfig extends ReplicationConfig
 {
@@ -130,100 +125,100 @@ public interface EveAgentConfig extends ReplicationConfig
 	/**
 	 * Maps default values that are not String constants, e.g. class names
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	Map<String, String> DEFAULT_VALUES = map(
-			entry(AGENT_CLASS_KEY, AGENT_CLASS_DEFAULT.getName()),
-			entry(STATE_BUILDER_KEY, STATE_BUILDER_DEFAULT.getName()),
-			entry(SCHEDULER_BUILDER_KEY, SCHEDULER_BUILDER_DEFAULT.getName()),
-			entry(HTTP_TRANSPORT_BUILDER_KEY,
-					HTTP_TRANSPORT_BUILDER_DEFAULT.getName()));
+			entry( AGENT_CLASS_KEY, AGENT_CLASS_DEFAULT.getName() ),
+			entry( STATE_BUILDER_KEY, STATE_BUILDER_DEFAULT.getName() ),
+			entry( SCHEDULER_BUILDER_KEY, SCHEDULER_BUILDER_DEFAULT.getName() ),
+			entry( HTTP_TRANSPORT_BUILDER_KEY,
+					HTTP_TRANSPORT_BUILDER_DEFAULT.getName() ) );
 
-	@Key(AGENT_ID_KEY)
-	@DefaultValue(AGENT_ID_DEFAULT)
-	String agentName();
+	@Key( AGENT_ID_KEY )
+	@DefaultValue( AGENT_ID_DEFAULT )
+		String agentName();
 
-	@Key(AGENT_CONFIG_FILE_KEY)
-	@DefaultValue(AGENT_CONFIG_FILE_DEFAULT)
-	String agentConfigUri();
+	@Key( AGENT_CONFIG_FILE_KEY )
+	@DefaultValue( AGENT_CONFIG_FILE_DEFAULT )
+		String agentConfigUri();
 
-	@DefaultValue("${" + AGENT_CONFIG_FILE_KEY + "}")
-	@ConverterClass(InputStreamConverter.class)
-	InputStream agentConfigStream();
+	@DefaultValue( "${" + AGENT_CONFIG_FILE_KEY + "}" )
+	@ConverterClass( InputStreamConverter.class )
+		InputStream agentConfigStream();
 
-	@Key(AGENT_CLASS_KEY)
-	Class<? extends Agent> agentClass();
+	@Key( AGENT_CLASS_KEY )
+		Class<? extends Agent> agentClass();
 
-	@Key(SCHEDULER_BUILDER_KEY)
-	Class<? extends Scheduler> schedulerBuilder();
+	@Key( SCHEDULER_BUILDER_KEY )
+		Class<? extends Scheduler> schedulerBuilder();
 
-	@Key(SCHEDULER_CONFIG_KEY)
-	@DefaultValue("{\"class\":\"${" + SCHEDULER_BUILDER_KEY + "}\"}")
-	JsonNode schedulerConfig();
+	@Key( SCHEDULER_CONFIG_KEY )
+	@DefaultValue( "{\"class\":\"${" + SCHEDULER_BUILDER_KEY + "}\"}" )
+		JsonNode schedulerConfig();
 
-	@Key(STATE_BUILDER_KEY)
-	Class<? extends State> stateBuilder();
+	@Key( STATE_BUILDER_KEY )
+		Class<? extends State> stateBuilder();
 
-	@Key(STATE_CONFIG_KEY)
-	@DefaultValue("{\"class\":\"${" + STATE_BUILDER_KEY + "}\"}")
-	JsonNode stateConfig();
+	@Key( STATE_CONFIG_KEY )
+	@DefaultValue( "{\"class\":\"${" + STATE_BUILDER_KEY + "}\"}" )
+		JsonNode stateConfig();
 
-	@Key(HTTP_TRANSPORT_BUILDER_KEY)
-	Class<? extends Transport> httpBuilder();
+	@Key( HTTP_TRANSPORT_BUILDER_KEY )
+		Class<? extends Transport> httpBuilder();
 
-	@Key(JSONRPC_PROTOCOL_BUILDER_KEY)
-	Class<? extends Protocol> jsonrpcBuilder();
+	@Key( JSONRPC_PROTOCOL_BUILDER_KEY )
+		Class<? extends Protocol> jsonrpcBuilder();
 
-	@Key(HTTP_TRANSPORT_SERVLET_URL_KEY)
-	@DefaultValue(HTTP_TRANSPORT_SERVLET_URL_DEFAULT)
-	String transportServletUrl();
+	@Key( HTTP_TRANSPORT_SERVLET_URL_KEY )
+	@DefaultValue( HTTP_TRANSPORT_SERVLET_URL_DEFAULT )
+		String transportServletUrl();
 
-	@Key(HTTP_TRANSPORT_AUTHENTICATE_KEY)
-	@DefaultValue("" + HTTP_TRANSPORT_AUTHENTICATE_DEFAULT)
-	boolean transportAuthenticate();
+	@Key( HTTP_TRANSPORT_AUTHENTICATE_KEY )
+	@DefaultValue( "" + HTTP_TRANSPORT_AUTHENTICATE_DEFAULT )
+		boolean transportAuthenticate();
 
-	@Key(HTTP_TRANSPORT_CONFIG_KEY)
-	@DefaultValue("{\"class\":\"${" + HTTP_TRANSPORT_BUILDER_KEY
+	@Key( HTTP_TRANSPORT_CONFIG_KEY )
+	@DefaultValue( "{\"class\":\"${" + HTTP_TRANSPORT_BUILDER_KEY
 			+ "}\",\"servletUrl\":\"${" + HTTP_TRANSPORT_SERVLET_URL_KEY
 			+ "}\",\"doAuthentication\":${" + HTTP_TRANSPORT_AUTHENTICATE_KEY
 			+ "},\"doShortcut\":true,"
 			+ "\"servletLauncher\":\"JettyLauncher\","
 			// \"initParams\":[{\"key\":\"servletUrl\",\"value\":\"${" +
 			// TRANSPORT_SERVLET_URL_KEY + "}\"}],"
-			+ "\"servletClass\":\"com.almende.eve.transport.http.DebugServlet\"}")
-	@ConverterClass(JsonNodeConverter.class)
-	JsonNode httpTransportConfig();
+			+ "\"servletClass\":\"com.almende.eve.transport.http.DebugServlet\"}" )
+	@ConverterClass( JsonNodeConverter.class )
+		JsonNode httpTransportConfig();
 
-	@Key(JSONRPC_PROTOCOL_CONFIG_KEY)
-	@DefaultValue("{\"class\":\"${" + JSONRPC_PROTOCOL_BUILDER_KEY
-			+ "}\",rpcTimeout:1}")
-	@ConverterClass(JsonNodeConverter.class)
-	JsonNode jsonrpcProtocolConfig();
+	@Key( JSONRPC_PROTOCOL_CONFIG_KEY )
+	@DefaultValue( "{\"class\":\"${" + JSONRPC_PROTOCOL_BUILDER_KEY
+			+ "}\",rpcTimeout:1}" )
+	@ConverterClass( JsonNodeConverter.class )
+		JsonNode jsonrpcProtocolConfig();
 
 	// protocols:
 	// - class: com.almende.eve.protocol.jsonrpc.JSONRpcProtocolBuilder
 	// rpcTimeout: 1
 
-	@ConverterClass(AgentConfigConverter.class)
-	@DefaultValue("{\"id\":\"${" + AGENT_ID_KEY + "}\",\"class\":\"${"
+	@ConverterClass( AgentConfigConverter.class )
+	@DefaultValue( "{\"id\":\"${" + AGENT_ID_KEY + "}\",\"class\":\"${"
 			+ AGENT_CLASS_KEY + "}\",\"state\":${" + STATE_CONFIG_KEY
 			+ "},\"scheduler\":${" + SCHEDULER_CONFIG_KEY
 			+ "},\"transports\":[${" + HTTP_TRANSPORT_CONFIG_KEY
-			+ "}],\"protocols\":[${" + HTTP_TRANSPORT_CONFIG_KEY + "}]}")
-	AgentConfig agentConfig();
+			+ "}],\"protocols\":[${" + HTTP_TRANSPORT_CONFIG_KEY + "}]}" )
+		AgentConfig agentConfig();
 
 	/**
 	 * {@link JsonNodeConverter}
 	 *
 	 * @date $Date$
-	 * @version $Id$
+	 * @version $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class JsonNodeConverter implements Converter<JsonNode>
 	{
 		@Override
-		public JsonNode convert(final Method method, final String input)
+		public JsonNode convert( final Method method, final String input )
 		{
-			return JsonUtil.toTree(input);
+			return JsonUtil.toTree( input );
 		}
 	}
 
@@ -231,15 +226,15 @@ public interface EveAgentConfig extends ReplicationConfig
 	 * {@link AgentConfigConverter}
 	 *
 	 * @date $Date$
-	 * @version $Id$
+	 * @version $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class AgentConfigConverter implements Converter<AgentConfig>
 	{
 		@Override
-		public AgentConfig convert(final Method method, final String input)
+		public AgentConfig convert( final Method method, final String input )
 		{
-			return new AgentConfig((ObjectNode) JsonUtil.toTree(input));
+			return new AgentConfig( (ObjectNode) JsonUtil.toTree( input ) );
 		}
 	}
 
@@ -247,24 +242,24 @@ public interface EveAgentConfig extends ReplicationConfig
 	 * {@link AgentConfigConverter}
 	 * 
 	 * @date $Date$
-	 * @version $Id$
+	 * @version $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class InputStreamConverter implements Converter<InputStream>
 	{
 		/** */
 		private static final Logger LOG = LogManager
-				.getLogger(EveAgentConfig.InputStreamConverter.class);
+				.getLogger( EveAgentConfig.InputStreamConverter.class );
 
 		@Override
-		public InputStream convert(final Method method, final String input)
+		public InputStream convert( final Method method, final String input )
 		{
 			try
 			{
-				return FileUtil.getFileAsInputStream(input);
-			} catch (final CoalaException e)
+				return FileUtil.getFileAsInputStream( input );
+			} catch( final CoalaException e )
 			{
-				LOG.warn(e.getMessage());
+				LOG.warn( e.getMessage() );
 				return null;
 			}
 		}

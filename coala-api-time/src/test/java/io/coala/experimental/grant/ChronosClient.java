@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.capability.replicate.ReplicationConfig;
@@ -20,13 +20,13 @@ public class ChronosClient
 
 		boolean doEmptyInbox();
 
-		void doExecuteUntilGrant(SimTime timeMS);
+		void doExecuteUntilGrant( SimTime timeMS );
 
 		// void die();
 	}
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(ChronosClient.class);
+	private static final Logger LOG = LogUtil.getLogger( ChronosClient.class );
 
 	private final ChronosService chronos;
 
@@ -39,7 +39,7 @@ public class ChronosClient
 	private SimTime lastGrant = null; // min
 
 	private final SortedSet<SimTime> futureGrantRequests = Collections
-			.synchronizedSortedSet(new TreeSet<SimTime>());
+			.synchronizedSortedSet( new TreeSet<SimTime>() );
 
 	private SimTime requestTime = null; // max
 
@@ -47,14 +47,15 @@ public class ChronosClient
 
 	// private boolean dead = false;
 
-	public ChronosClient(final SimTime.Factory timeFact,
-			final ReplicationConfig config, final PacedAgent clientAgent)
+	public ChronosClient( final SimTime.Factory timeFact,
+		final ReplicationConfig config, final PacedAgent clientAgent )
 	{
-		this.chronos = ChronosService.getInstance(timeFact, config);
+		this.chronos = ChronosService.getInstance( timeFact, config );
 		this.clientAgent = clientAgent;
-		this.lastGrant = timeFact.create(Double.NaN, config.getBaseTimeUnit());
-		this.maxValue = timeFact.create(Double.MAX_VALUE,
-				config.getBaseTimeUnit());
+		this.lastGrant = timeFact.create( Double.NaN,
+				config.getBaseTimeUnit() );
+		this.maxValue = timeFact.create( Double.MAX_VALUE,
+				config.getBaseTimeUnit() );
 		this.requestTime = this.maxValue;
 	}
 
@@ -69,7 +70,7 @@ public class ChronosClient
 	/**
 	 * @param lastGrant the lastGrant to set
 	 */
-	public void setLastGrant(SimTime lastGrant)
+	public void setLastGrant( SimTime lastGrant )
 	{
 		this.lastGrant = lastGrant;
 	}
@@ -80,7 +81,7 @@ public class ChronosClient
 
 		private final SimTime time;
 
-		public ClientGrantCallback(final PacedAgent owner, final SimTime time)
+		public ClientGrantCallback( final PacedAgent owner, final SimTime time )
 		{
 			this.owner = owner;
 			this.time = time;
@@ -95,28 +96,30 @@ public class ChronosClient
 		@Override
 		public boolean emptyInbox()
 		{
-			LOG.info(this.owner.getAID() + " is ordered to empty its inbox.");
+			LOG.info( this.owner.getAID() + " is ordered to empty its inbox." );
 			return this.owner.doEmptyInbox();
 		}
 
 		@Override
-		public void granted(final SimTime time)
+		public void granted( final SimTime time )
 		{
-			if (time.isAfter(this.time))
+			if( time.isAfter( this.time ) )
 			{
 				LOG.info(
 						"Grant was further in future than expected " + getTime()
-								+ " for " + time + " " + this.owner.getAID());
+								+ " for " + time + " " + this.owner.getAID() );
 				ChronosClient.this.lastGrant = time;
 			} else
 			{
-				LOG.info(this.owner.getAID() + " receives grant for: " + time);
+				LOG.info(
+						this.owner.getAID() + " receives grant for: " + time );
 				ChronosClient.this.lastGrant = getTime();
 			}
-			SimTime newRequest = popNextGrantTime(ChronosClient.this.lastGrant);
-			this.owner.doExecuteUntilGrant(ChronosClient.this.lastGrant);
-			if (ChronosClient.this.lastGrant.isBefore(newRequest))
-				addGrantRequest(newRequest);
+			SimTime newRequest = popNextGrantTime(
+					ChronosClient.this.lastGrant );
+			this.owner.doExecuteUntilGrant( ChronosClient.this.lastGrant );
+			if( ChronosClient.this.lastGrant.isBefore( newRequest ) )
+				addGrantRequest( newRequest );
 		}
 
 		// @Override
@@ -129,15 +132,15 @@ public class ChronosClient
 		// }
 	};
 
-	private SimTime popNextGrantTime(final SimTime time)
+	private SimTime popNextGrantTime( final SimTime time )
 	{
-		if (!futureGrantRequests.isEmpty())
+		if( !futureGrantRequests.isEmpty() )
 		{
 			SimTime found = futureGrantRequests.first();
-			if (found.compareTo(time) > 0)
+			if( found.compareTo( time ) > 0 )
 			{
-				LOG.info("CANDIDATE:" + found);
-				futureGrantRequests.remove(found);
+				LOG.info( "CANDIDATE:" + found );
+				futureGrantRequests.remove( found );
 				return found;
 			}
 		}
@@ -146,32 +149,33 @@ public class ChronosClient
 
 	public void pause()
 	{
-		this.chronos.setGranting(false);
+		this.chronos.setGranting( false );
 	}
 
 	public void play()
 	{
-		this.chronos.setGranting(true);
+		this.chronos.setGranting( true );
 	}
 
-	public synchronized void addGrantRequest(final SimTime millis)
+	public synchronized void addGrantRequest( final SimTime millis )
 	{
 		// keep the earliest time to request a grant for
-		SimTime t = this.lastGrant.max(this.requestTime).min(millis);
-		if (t.isBefore(millis) && millis.isAfter(this.lastGrant))
+		SimTime t = this.lastGrant.max( this.requestTime ).min( millis );
+		if( t.isBefore( millis ) && millis.isAfter( this.lastGrant ) )
 		{
-			LOG.info(this.clientAgent.getAID() + " kept original earlier grant "
-					+ t + " and queued later grant request for: " + millis);
-			this.futureGrantRequests.add(millis);
-		} else if (t.isAfter(this.lastGrant))
+			LOG.info( this.clientAgent.getAID()
+					+ " kept original earlier grant " + t
+					+ " and queued later grant request for: " + millis );
+			this.futureGrantRequests.add( millis );
+		} else if( t.isAfter( this.lastGrant ) )
 		{
-			LOG.info(this.clientAgent.getAID()
-					+ " adding grant request for time: " + t);
+			LOG.info( this.clientAgent.getAID()
+					+ " adding grant request for time: " + t );
 			this.requestTime = t;
 		} else
 		{
-			LOG.info(this.clientAgent.getAID()
-					+ " ignoring grant request for time: " + t);
+			LOG.info( this.clientAgent.getAID()
+					+ " ignoring grant request for time: " + t );
 		}
 	}
 
@@ -179,49 +183,49 @@ public class ChronosClient
 	{
 		// if (this.dead)
 		// return;
-		if (this.requestedGrant)
+		if( this.requestedGrant )
 		{
-			LOG.info(this.clientAgent.getAID()
-					+ " ignore grant request: emptying inbox");
+			LOG.info( this.clientAgent.getAID()
+					+ " ignore grant request: emptying inbox" );
 			// return;
 		}
-		if (this.requestTime.isOnOrBefore(this.lastGrant))
-			this.requestTime = popNextGrantTime(this.lastGrant);
-		if (this.requestTime.equals(this.maxValue))
+		if( this.requestTime.isOnOrBefore( this.lastGrant ) )
+			this.requestTime = popNextGrantTime( this.lastGrant );
+		if( this.requestTime.equals( this.maxValue ) )
 		{
-			LOG.info(this.clientAgent.getAID()
-					+ " ignore grant request: not required");
+			LOG.info( this.clientAgent.getAID()
+					+ " ignore grant request: not required" );
 			return;
 		}
-		this.agentCallback = new ClientGrantCallback(this.clientAgent,
-				this.requestTime);
-		LOG.info(this.clientAgent.getAID() + " requests grant for time: "
-				+ this.requestTime);
+		this.agentCallback = new ClientGrantCallback( this.clientAgent,
+				this.requestTime );
+		LOG.info( this.clientAgent.getAID() + " requests grant for time: "
+				+ this.requestTime );
 		this.requestedGrant = true;
-		this.chronos.requestGrant(this.clientAgent.getAID(),
-				this.agentCallback);
+		this.chronos.requestGrant( this.clientAgent.getAID(),
+				this.agentCallback );
 		this.requestTime = this.maxValue;
 	}
 
 	public void disconnect()
 	{
-		LOG.info(this.clientAgent.getAID()
-				+ " removes itself from the federation.");
-		this.chronos.removeFromFederation(this.clientAgent.getAID());
+		LOG.info( this.clientAgent.getAID()
+				+ " removes itself from the federation." );
+		this.chronos.removeFromFederation( this.clientAgent.getAID() );
 	}
 
 	public synchronized void notifyInboxIsEmpty()
 	{
-		if (this.requestedGrant)
+		if( this.requestedGrant )
 		{
-			LOG.info(this.clientAgent.getAID()
-					+ " notifies chronos that it's inbox is empty.");
+			LOG.info( this.clientAgent.getAID()
+					+ " notifies chronos that it's inbox is empty." );
 			this.requestedGrant = false;
-			chronos.inboxEmptied(this.clientAgent.getAID());
+			chronos.inboxEmptied( this.clientAgent.getAID() );
 		} else
 		{
-			LOG.warn(this.clientAgent.getAID()
-					+ " ignoring notify for chronos that it's inbox is empty.");
+			LOG.warn( this.clientAgent.getAID()
+					+ " ignoring notify for chronos that it's inbox is empty." );
 		}
 	}
 

@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/resource/ResourceType.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 166e1d88ddeb15ad8d5f64701033c4796a8dca9a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,21 +12,18 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.resource;
 
+import org.apache.logging.log4j.Logger;
+
 import io.coala.log.LogUtil;
 
-import org.apache.log4j.Logger;
-
 /**
- * {@link ResourceType} TOTO use some common library for MIMETypes
+ * {@link ResourceType} TODO use some common library for MIMETypes
  * 
- * @version $Revision: 355 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public enum ResourceType
 {

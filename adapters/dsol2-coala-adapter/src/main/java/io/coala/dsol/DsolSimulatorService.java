@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: d52d9a2ad41007363840e06a6d843dfb493c9b7a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c)  Almende B.V. 
  */
 package io.coala.dsol;
 
@@ -28,7 +26,7 @@ import java.util.concurrent.Callable;
 import javax.inject.Inject;
 import javax.naming.NamingException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.bind.Binder;
@@ -75,11 +73,11 @@ import rx.subjects.Subject;
  * {@link DsolSimulatorService}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class DsolSimulatorService extends BasicCapability
-		implements ReplicatingCapability, ModelComponent<CapabilityID>// ,
-																		// MessengerService
+	implements ReplicatingCapability, ModelComponent<CapabilityID>// ,
+// MessengerService
 {
 
 	/** */
@@ -87,11 +85,11 @@ public class DsolSimulatorService extends BasicCapability
 
 	/** */
 	private static final Map<ClockID, ReplicationBuilder> SIMULATORS = Collections
-			.synchronizedMap(new HashMap<ClockID, ReplicationBuilder>());
+			.synchronizedMap( new HashMap<ClockID, ReplicationBuilder>() );
 
 	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
 			.synchronizedMap(
-					new HashMap<RandomNumberStreamID, RandomNumberStream>());
+					new HashMap<RandomNumberStreamID, RandomNumberStream>() );
 
 	/** */
 	@InjectLogger // not useful if logging occurs during construction
@@ -142,12 +140,12 @@ public class DsolSimulatorService extends BasicCapability
 	 * @throws NamingException
 	 * @throws SimRuntimeException
 	 */
-	protected static ReplicationBuilder getReplication(final ClockID clockID,
-			final ReplicationConfig config)
+	protected static ReplicationBuilder getReplication( final ClockID clockID,
+		final ReplicationConfig config )
 	{
-		synchronized (SIMULATORS)
+		synchronized( SIMULATORS )
 		{
-			if (!SIMULATORS.containsKey(clockID))
+			if( !SIMULATORS.containsKey( clockID ) )
 			{
 				final DEVSSimulatorInterface simulator = new DEVSSimulator();
 
@@ -155,24 +153,24 @@ public class DsolSimulatorService extends BasicCapability
 				ReplicationBuilder repl;
 				try
 				{
-					repl = new ExperimentBuilder().withSimulator(simulator)
-							.withModel(model).newTreatment()
-							.withTimeUnit(config.getBaseTimeUnit())
-							.withRunInterval(config.getInterval())
+					repl = new ExperimentBuilder().withSimulator( simulator )
+							.withModel( model ).newTreatment()
+							.withTimeUnit( config.getBaseTimeUnit() )
+							.withRunInterval( config.getInterval() )
 							.newReplication(
-									config.getReplicationID().getValue())
-							.withStream(config.getSeed());
-				} catch (final Exception e)
+									config.getReplicationID().getValue() )
+							.withStream( config.getSeed() );
+				} catch( final Exception e )
 				{
 					throw CoalaExceptionFactory.INVOCATION_FAILED
-							.createRuntime(e, "initialize", simulator);
+							.createRuntime( e, "initialize", simulator );
 				}
 
-				System.err.println("Built clock: " + clockID);
-				SIMULATORS.put(clockID, repl);
+				System.err.println( "Built clock: " + clockID );
+				SIMULATORS.put( clockID, repl );
 			}
 
-			return SIMULATORS.get(clockID);
+			return SIMULATORS.get( clockID );
 		}
 	}
 
@@ -184,21 +182,21 @@ public class DsolSimulatorService extends BasicCapability
 
 		/** */
 		private static final Logger LOG = LogUtil
-				.getLogger(DsolSimulatorService.ModelWrapper.class);
+				.getLogger( DsolSimulatorService.ModelWrapper.class );
 
 		/** */
 		private SimulatorInterface simulator = null;
 
 		@Override
-		public void constructModel(final SimulatorInterface simulator)
+		public void constructModel( final SimulatorInterface simulator )
 		{
 			this.simulator = simulator;
 			try
 			{
-				LOG.trace("[" + Thread.currentThread().getName()
+				LOG.trace( "[" + Thread.currentThread().getName()
 						+ "] CONSTRUCTED model " + simulator.getReplication()
-								.getContext().getNameInNamespace());
-			} catch (final Exception e)
+								.getContext().getNameInNamespace() );
+			} catch( final Exception e )
 			{
 				e.printStackTrace();
 			}
@@ -218,9 +216,9 @@ public class DsolSimulatorService extends BasicCapability
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected DsolSimulatorService(final Binder binder)
+	protected DsolSimulatorService( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
@@ -229,53 +227,52 @@ public class DsolSimulatorService extends BasicCapability
 		super.initialize();
 
 		/*
-		final long seed = 123;
-		final DateTime start = new DateTime(getBinder().inject(DateTime.class));
-		final ClockID clockID = getBinder().inject(ClockID.class);
-		final TimeUnit baseTimeUnit = getBinder().inject(TimeUnit.class);
-		final Interval interval = new Interval(start, start.plus(getBinder()
-				.inject(Period.class)));
-		final SimTimeFactory newTime = getBinder().inject(SimTimeFactory.class);
-		*/
-		this.config = getBinder().inject(ReplicationConfig.class);
+		 * final long seed = 123; final DateTime start = new
+		 * DateTime(getBinder().inject(DateTime.class)); final ClockID clockID =
+		 * getBinder().inject(ClockID.class); final TimeUnit baseTimeUnit =
+		 * getBinder().inject(TimeUnit.class); final Interval interval = new
+		 * Interval(start, start.plus(getBinder() .inject(Period.class))); final
+		 * SimTimeFactory newTime = getBinder().inject(SimTimeFactory.class);
+		 */
+		this.config = getBinder().inject( ReplicationConfig.class );
 		this.clockID = this.config.getClockID();
 		this.baseTimeUnit = this.config.getBaseTimeUnit();
 		this.newTime = this.config.newTime();
 		this.statusUpdates = BehaviorSubject.create(
-				(ClockStatusUpdate) new ClockStatusUpdateImpl(getClockID(),
-						DsolSimulatorStatus.CREATED));
+				(ClockStatusUpdate) new ClockStatusUpdateImpl( getClockID(),
+						DsolSimulatorStatus.CREATED ) );
 		this.timeUpdates = BehaviorSubject
-				.create(this.newTime.create(Double.NaN, this.baseTimeUnit));
+				.create( this.newTime.create( Double.NaN, this.baseTimeUnit ) );
 
-		synchronized (SIMULATORS)
+		synchronized( SIMULATORS )
 		{
-			final ReplicationBuilder repl = getReplication(getClockID(),
-					this.config);
+			final ReplicationBuilder repl = getReplication( getClockID(),
+					this.config );
 			final DEVSSimulatorInterface simulator = (DEVSSimulatorInterface) repl
 					.getExperiment().getSimulator();
 
 			// subscribe to (time-less) simulator events
-			for (EventType type : new EventType[] {
+			for( EventType type : new EventType[] {
 					SimulatorInterface.START_REPLICATION_EVENT,
 					SimulatorInterface.WARMUP_EVENT,
 					SimulatorInterface.START_EVENT,
 					SimulatorInterface.STEP_EVENT,
 					SimulatorInterface.STOP_EVENT,
-					SimulatorInterface.END_OF_REPLICATION_EVENT })
+					SimulatorInterface.END_OF_REPLICATION_EVENT } )
 				try
 				{
-					simulator.addListener(new EventListenerInterface()
+					simulator.addListener( new EventListenerInterface()
 					{
 						@Override
-						public void notify(final EventInterface event)
+						public void notify( final EventInterface event )
 						{
 							final DsolSimulatorStatus status = DsolSimulatorStatus
-									.of(event.getType());
-							statusUpdates.onNext(new ClockStatusUpdateImpl(
-									getClockID(), status));
+									.of( event.getType() );
+							statusUpdates.onNext( new ClockStatusUpdateImpl(
+									getClockID(), status ) );
 						}
-					}, type);
-				} catch (final RemoteException e)
+					}, type );
+				} catch( final RemoteException e )
 				{
 					e.printStackTrace();
 				}
@@ -283,53 +280,53 @@ public class DsolSimulatorService extends BasicCapability
 			// subscribe to simulator time change events
 			try
 			{
-				simulator.addListener(new EventListenerInterface()
+				simulator.addListener( new EventListenerInterface()
 				{
 					@Override
-					public void notify(final EventInterface event)
+					public void notify( final EventInterface event )
 					{
-						if (Thread.currentThread().getName().startsWith(
-								ModelInterface.class.getPackage().getName()))
+						if( Thread.currentThread().getName().startsWith(
+								ModelInterface.class.getPackage().getName() ) )
 						{
-							System.err.println("Resetting thread name: "
-									+ Thread.currentThread().getName());
+							System.err.println( "Resetting thread name: "
+									+ Thread.currentThread().getName() );
 							Thread.currentThread()
-									.setName(getClockID().getValue());
+									.setName( getClockID().getValue() );
 						}
-						setTime((Double) event.getContent());
+						setTime( (Double) event.getContent() );
 					}
-				}, SimulatorInterface.TIME_CHANGED_EVENT);
-			} catch (final RemoteException e)
+				}, SimulatorInterface.TIME_CHANGED_EVENT );
+			} catch( final RemoteException e )
 			{
 				e.printStackTrace();
 			}
 			try
 			{
-				simulator.addListener(new EventListenerInterface()
+				simulator.addListener( new EventListenerInterface()
 				{
 					@Override
-					public void notify(final EventInterface event)
+					public void notify( final EventInterface event )
 					{
 						setComplete();
 					}
-				}, SimulatorInterface.END_OF_REPLICATION_EVENT);
-			} catch (final RemoteException e)
+				}, SimulatorInterface.END_OF_REPLICATION_EVENT );
+			} catch( final RemoteException e )
 			{
 				e.printStackTrace();
 			}
 
-			if (!simulator.isRunning())
+			if( !simulator.isRunning() )
 			{
 				repl.initialize();
-				LOG.info("[t=0] INITIALIZED replication " + getClockID());
+				LOG.info( "[t=0] INITIALIZED replication " + getClockID() );
 				// simulator.start(); // needed to initialize time to 0
 				// simulator.stop();
-				setTime(new Double(0));
+				setTime( new Double( 0 ) );
 			} else
 			{
-				setTime(simulator.getSimulatorTime());
-				LOG.info("JOINED [t=" + getTime().getValue() + "] replication "
-						+ getClockID());
+				setTime( simulator.getSimulatorTime() );
+				LOG.info( "JOINED [t=" + getTime().getValue() + "] replication "
+						+ getClockID() );
 			}
 		}
 	}
@@ -339,15 +336,15 @@ public class DsolSimulatorService extends BasicCapability
 	{
 		try
 		{
-			if (getSimulator().isRunning())
+			if( getSimulator().isRunning() )
 			{
 				getSimulator().stop();
-				LOG.warn("Simulator " + getClockID() + " stopped");
+				LOG.warn( "Simulator " + getClockID() + " stopped" );
 			} else
-				LOG.warn("Simulator " + getClockID() + " already stopped");
-		} catch (final Exception e)
+				LOG.warn( "Simulator " + getClockID() + " already stopped" );
+		} catch( final Exception e )
 		{
-			LOG.error("Problem stopping simulator " + getClockID(), e);
+			LOG.error( "Problem stopping simulator " + getClockID(), e );
 			e.printStackTrace();
 		}
 	}
@@ -357,15 +354,15 @@ public class DsolSimulatorService extends BasicCapability
 	{
 		try
 		{
-			if (!getSimulator().isRunning())
+			if( !getSimulator().isRunning() )
 			{
-				getReplication(getClockID(), this.config).start();
-				LOG.warn("Simulator " + getClockID() + " running");
+				getReplication( getClockID(), this.config ).start();
+				LOG.warn( "Simulator " + getClockID() + " running" );
 			} else
-				LOG.warn("Simulator " + getClockID() + " already running");
-		} catch (final Exception e)
+				LOG.warn( "Simulator " + getClockID() + " already running" );
+		} catch( final Exception e )
 		{
-			LOG.error("Problem starting simulator " + getClockID(), e);
+			LOG.error( "Problem starting simulator " + getClockID(), e );
 			e.printStackTrace();
 		}
 	}
@@ -375,15 +372,14 @@ public class DsolSimulatorService extends BasicCapability
 		this.complete = true;
 	}
 
-	protected synchronized void setTime(final Double value)
+	protected synchronized void setTime( final Double value )
 	{
-		if (this.time != null && value == this.time.doubleValue())
-			return;
+		if( this.time != null && value == this.time.doubleValue() ) return;
 
 		// System.err.println("SETTING TIME: " + value);
-		final SimTime time = this.newTime.create(value, this.baseTimeUnit);
+		final SimTime time = this.newTime.create( value, this.baseTimeUnit );
 		this.time = time;
-		this.timeUpdates.onNext(time);
+		this.timeUpdates.onNext( time );
 		// notifyAll();
 	}
 
@@ -412,8 +408,8 @@ public class DsolSimulatorService extends BasicCapability
 
 	protected DEVSSimulatorInterface getSimulator()
 	{
-		return (DEVSSimulatorInterface) getReplication(getClockID(),
-				this.config).getExperiment().getSimulator();
+		return (DEVSSimulatorInterface) getReplication( getClockID(),
+				this.config ).getExperiment().getSimulator();
 	}
 
 	private Map<Identifier<?, ?>, List<SimEvent>> pendingEvents = new HashMap<>();
@@ -421,11 +417,11 @@ public class DsolSimulatorService extends BasicCapability
 	/**
 	 * {@link CallableSimEvent} wraps a {@link SimEvent} as {@link Callable}
 	 * 
-	 * @version $Id$
+	 * @version $Id: d52d9a2ad41007363840e06a6d843dfb493c9b7a $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class CallableSimEvent extends SimEvent
-			implements Callable<Void>
+		implements Callable<Void>
 	{
 
 		/** */
@@ -438,11 +434,11 @@ public class DsolSimulatorService extends BasicCapability
 		 * @param job
 		 * @throws CoalaException
 		 */
-		public CallableSimEvent(final TimeUnit baseTimeUnit,
-				final Instant<?> absTime, final Callable<Void> job)
+		public CallableSimEvent( final TimeUnit baseTimeUnit,
+			final Instant<?> absTime, final Callable<Void> job )
 		{
-			super(baseTimeUnit.convertFrom(absTime).doubleValue(),
-					SimEventInterface.MIN_PRIORITY, job, job, "call", null);
+			super( baseTimeUnit.convertFrom( absTime ).doubleValue(),
+					SimEventInterface.MIN_PRIORITY, job, job, "call", null );
 		}
 
 		@Override
@@ -454,10 +450,10 @@ public class DsolSimulatorService extends BasicCapability
 				// this.method);
 				call();
 				// System.err.println("Executed sim event for: " + this.method);
-			} catch (final Exception e)
+			} catch( final Exception e )
 			{
 				new SimRuntimeException(
-						"Problem executing call to " + this.method, e)
+						"Problem executing call to " + this.method, e )
 								.printStackTrace();
 			}
 		}
@@ -474,26 +470,25 @@ public class DsolSimulatorService extends BasicCapability
 	}
 
 	@Override
-	public void schedule(final Job<?> job, final Trigger<?> trigger)
+	public void schedule( final Job<?> job, final Trigger<?> trigger )
 	{
-		if (isComplete())
-			throw new IllegalStateException(
-					"Can't schedule, already complete!");
+		if( isComplete() ) throw new IllegalStateException(
+				"Can't schedule, already complete!" );
 		final DEVSSimulatorInterface simulator = getSimulator();
 		final List<SimEvent> simEvents = new ArrayList<>();
-		final List<SimEvent> oldEvents = this.pendingEvents.put(job.getID(),
-				simEvents);
-		if (oldEvents != null)
+		final List<SimEvent> oldEvents = this.pendingEvents.put( job.getID(),
+				simEvents );
+		if( oldEvents != null )
 		{
 			LOG.warn(
 					"Already scheduled this job: " + job.getID()
 							+ ", pending events: " + oldEvents.size()
 							+ ", originator stack: " + job.getStackTrace(),
 					new IllegalStateException(
-							"Already scheduled " + job.getID()));
-			simEvents.addAll(oldEvents);
+							"Already scheduled " + job.getID() ) );
+			simEvents.addAll( oldEvents );
 		}
-		if (job instanceof Callable)
+		if( job instanceof Callable )
 		{
 			// final CountDownLatch latch = new CountDownLatch(1);
 			// Schedulers.computation().createWorker().schedule(new Action0()
@@ -501,11 +496,11 @@ public class DsolSimulatorService extends BasicCapability
 			// @Override
 			// public void call()
 			// {
-			trigger.getInstants().all(new Func1<Instant<?>, Boolean>()
+			trigger.getInstants().all( new Func1<Instant<?>, Boolean>()
 			{
-				@SuppressWarnings("unchecked")
+				@SuppressWarnings( "unchecked" )
 				@Override
-				public Boolean call(final Instant<?> time)
+				public Boolean call( final Instant<?> time )
 				{
 					// TODO extend SimEvent to await any local prior
 					// grant from
@@ -513,26 +508,27 @@ public class DsolSimulatorService extends BasicCapability
 
 					try
 					{
-						LOG.trace("Scheduling " + job.getID() + " @ " + time);
+						LOG.trace( "Scheduling " + job.getID() + " @ " + time );
 						// System.err.println(-1);
 						final SimEvent event = new CallableSimEvent(
-								baseTimeUnit, time, (Callable<Void>) job);
+								baseTimeUnit, time, (Callable<Void>) job );
 						// System.err.println(0);
-						simulator.scheduleEvent(event);
+						simulator.scheduleEvent( event );
 						// System.err.println(1);
-						simEvents.add(event);
+						simEvents.add( event );
 						// System.err.println(2);
 						simulator.scheduleEvent(
-								new SimEvent(event.getAbsoluteExecutionTime(),
+								new SimEvent( event.getAbsoluteExecutionTime(),
 										SimEventInterface.MIN_PRIORITY, this,
 										this, "removeEvent",
-										new Object[] { job.getID(), event }));
+										new Object[]
+						{ job.getID(), event } ) );
 						// System.err.println(3);
 						return Boolean.TRUE;
-					} catch (final Throwable t)
+					} catch( final Throwable t )
 					{
-						LOG.error("Problem scheduling " + job + " @ " + time,
-								t);
+						LOG.error( "Problem scheduling " + job + " @ " + time,
+								t );
 						return Boolean.FALSE;
 					}
 				}
@@ -544,33 +540,30 @@ public class DsolSimulatorService extends BasicCapability
 				 * @param jobID
 				 * @param event
 				 */
-				@SuppressWarnings("unused")
-				public void removeEvent(final Identifier<?, ?> jobID,
-						final SimEvent event)
+				@SuppressWarnings( "unused" )
+				public void removeEvent( final Identifier<?, ?> jobID,
+					final SimEvent event )
 				{
 					final List<SimEvent> jobEvents = pendingEvents
-							.get(job.getID());
+							.get( job.getID() );
 
-					if (jobEvents == null)
-						return;
+					if( jobEvents == null ) return;
 
-					jobEvents.remove(event);
+					jobEvents.remove( event );
 
-					if (jobEvents.isEmpty())
-						pendingEvents.remove(jobID);
+					if( jobEvents.isEmpty() ) pendingEvents.remove( jobID );
 				}
-			}).subscribe(new Action1<Boolean>()
+			} ).subscribe( new Action1<Boolean>()
 			{
 				@Override
-				public void call(final Boolean success)
+				public void call( final Boolean success )
 				{
-					if (!success)
-						LOG.error(
-								"Not all trigger events were scheduled for job: "
-										+ job.getID());
+					if( !success ) LOG
+							.error( "Not all trigger events were scheduled for job: "
+									+ job.getID() );
 					// latch.countDown();
 				}
-			});
+			} );
 
 			// }
 			// });
@@ -584,26 +577,25 @@ public class DsolSimulatorService extends BasicCapability
 			// // LOG.error("Problem scheduling next job/event", e);
 			// }
 		} else
-			LOG.error("Unable to schedule non-Callable job type: "
-					+ job.getClass().getName());
+			LOG.error( "Unable to schedule non-Callable job type: "
+					+ job.getClass().getName() );
 	}
 
 	@Override
-	public boolean unschedule(final Job<?> job)
+	public boolean unschedule( final Job<?> job )
 	{
-		final List<SimEvent> events = this.pendingEvents.remove(job.getID());
+		final List<SimEvent> events = this.pendingEvents.remove( job.getID() );
 
-		if (events == null)
-			return false;
+		if( events == null ) return false;
 
 		final DEVSSimulatorInterface simulator = getSimulator();
-		for (SimEvent event : events)
+		for( SimEvent event : events )
 			try
 			{
-				simulator.cancelEvent(event);
-			} catch (final RemoteException e)
+				simulator.cancelEvent( event );
+			} catch( final RemoteException e )
 			{
-				throw new IllegalStateException("UNEXPECTED", e);
+				throw new IllegalStateException( "UNEXPECTED", e );
 			}
 		return true;
 	}
@@ -614,9 +606,9 @@ public class DsolSimulatorService extends BasicCapability
 		try
 		{
 			return getSimulator().isRunning();
-		} catch (final RemoteException e)
+		} catch( final RemoteException e )
 		{
-			LOG.error("Problem reaching simulator", e);
+			LOG.error( "Problem reaching simulator", e );
 			return false;
 		}
 	}
@@ -630,22 +622,22 @@ public class DsolSimulatorService extends BasicCapability
 	@Override
 	public RandomNumberStream getRNG()
 	{
-		return getRNG(MAIN_RNG_ID);
+		return getRNG( MAIN_RNG_ID );
 	}
 
 	@Override
-	public synchronized RandomNumberStream getRNG(
-			final RandomNumberStreamID rngID)
+	public synchronized RandomNumberStream
+		getRNG( final RandomNumberStreamID rngID )
 	{
-		if (!this.rng.containsKey(rngID))
-			this.rng.put(rngID, newRNG(rngID));
-		return this.rng.get(rngID);
+		if( !this.rng.containsKey( rngID ) )
+			this.rng.put( rngID, newRNG( rngID ) );
+		return this.rng.get( rngID );
 	}
 
-	private RandomNumberStream newRNG(final RandomNumberStreamID streamID)
+	private RandomNumberStream newRNG( final RandomNumberStreamID streamID )
 	{
-		return getBinder().inject(RandomNumberStream.Factory.class)
-				.create(streamID, CoalaProperty.randomSeed.value().getLong());
+		return getBinder().inject( RandomNumberStream.Factory.class )
+				.create( streamID, CoalaProperty.randomSeed.value().getLong() );
 	}
 
 	@Override
@@ -670,35 +662,35 @@ public class DsolSimulatorService extends BasicCapability
 	public SimTime getVirtualOffset()
 	{
 		// TODO implement
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 	@Override
-	public SimTime toActualTime(final SimTime virtualTime)
+	public SimTime toActualTime( final SimTime virtualTime )
 	{
 		// TODO implement
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 	@Override
 	public SimTime getActualOffset()
 	{
 		// TODO implement
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 	@Override
-	public SimTime toVirtualTime(final SimTime actualTime)
+	public SimTime toVirtualTime( final SimTime actualTime )
 	{
 		// TODO implement
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 	@Override
 	public Number getApproximateSpeedFactor()
 	{
 		// TODO implement
-		throw new IllegalStateException("NOT IMPLEMENTED");
+		throw new IllegalStateException( "NOT IMPLEMENTED" );
 	}
 
 }

@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/guice-util/src/test/java/io/coala/guice/GuiceBinderTest.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: f2455b8f657bd25f152425be8d35fb4c1edc077d $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,12 +12,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.guice;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import com.google.inject.assistedinject.AssistedInjectBinding;
@@ -48,36 +43,37 @@ public class GuiceBinderTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(GuiceBinderTest.class);
+	private static final Logger LOG = LogUtil
+			.getLogger( GuiceBinderTest.class );
 
 	/**
 	 * {@link Visitor}
 	 * 
-	 * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
-	 * @version $Revision: 312 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	public static class Visitor
-			extends DefaultBindingTargetVisitor<Object, Void>
-			implements AssistedInjectTargetVisitor<Object, Void>
+		extends DefaultBindingTargetVisitor<Object, Void>
+		implements AssistedInjectTargetVisitor<Object, Void>
 	{
 
 		/**
 		 * @see AssistedInjectTargetVisitor#visit(AssistedInjectBinding)
 		 */
 		@Override
-		public Void visit(final AssistedInjectBinding<? extends Object> binding)
+		public Void
+			visit( final AssistedInjectBinding<? extends Object> binding )
 		{
 			// Loop over each method in the factory...
-			for (AssistedMethod method : binding.getAssistedMethods())
+			for( AssistedMethod method : binding.getAssistedMethods() )
 			{
-				LOG.trace("Non-assisted Dependencies: "
+				LOG.trace( "Non-assisted Dependencies: "
 						+ method.getDependencies() + ", Factory Method: "
 						+ method.getFactoryMethod()
 						+ ", Implementation Constructor: "
 						+ method.getImplementationConstructor()
 						+ ", Implementation Type: "
-						+ method.getImplementationType());
+						+ method.getImplementationType() );
 			}
 			return null;
 		}
@@ -87,32 +83,32 @@ public class GuiceBinderTest
 	public void injectTest() throws Exception
 	{
 		final BinderFactory factory = BinderFactory.Builder.fromFile()
-				.withProperty(ReplicationConfig.class,
+				.withProperty( ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY,
-						"testModel" + System.currentTimeMillis())
+						"testModel" + System.currentTimeMillis() )
 				.build();
 
-		final GuiceBinder binder = (GuiceBinder) factory.create("testAgent",
-				TestAgent.class);
+		final GuiceBinder binder = (GuiceBinder) factory.create( "testAgent",
+				TestAgent.class );
 
 		// test TestAgentFactory; log binding using a visitor
 
-		binder.getInjector().getBinding(AgentFactory.class)
-				.acceptTargetVisitor(new Visitor());
+		binder.getInjector().getBinding( AgentFactory.class )
+				.acceptTargetVisitor( new Visitor() );
 
-		final AgentFactory agentFactory = binder.inject(AgentFactory.class);
+		final AgentFactory agentFactory = binder.inject( AgentFactory.class );
 
 		final Agent testAgent = agentFactory.create();
-		LOG.trace("Assisted Injector created a " + testAgent.getClass());
+		LOG.trace( "Assisted Injector created a " + testAgent.getClass() );
 
 		// test SimTimeFactory; log binding using a visitor
 
-		binder.getInjector().getBinding(SimTime.Factory.class)
-				.acceptTargetVisitor(new Visitor());
+		binder.getInjector().getBinding( SimTime.Factory.class )
+				.acceptTargetVisitor( new Visitor() );
 
-		final SimTime testTime = (SimTime) binder.inject(SimTime.Factory.class)
-				.create(1, TimeUnit.TICKS);
-		LOG.trace("Assisted Injector created a time: " + testTime
+		final SimTime testTime = (SimTime) binder
+				.inject( SimTime.Factory.class ).create( 1, TimeUnit.TICKS );
+		LOG.trace( "Assisted Injector created a time: " + testTime
 		// + ", in base time units: " + testTime.toBaseUnit()
 		);
 	}

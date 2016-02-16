@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-examples/src/main/java/io/coala/example/conway/BasicCell.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 2d2c04a60793c333e2cd93381a1bfcb5179185db $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.example.conway;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
@@ -36,7 +31,7 @@ import rx.Observer;
  * {@link BasicCell}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class BasicCell extends BasicAgent implements Cell
 {
@@ -54,9 +49,9 @@ public class BasicCell extends BasicAgent implements Cell
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	private BasicCell(final Binder binder)
+	private BasicCell( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
@@ -66,8 +61,8 @@ public class BasicCell extends BasicAgent implements Cell
 
 		// link to inputs / observable percepts
 		final Observable<CellState> incoming = getBinder()
-				.inject(ReceivingCapability.class).getIncoming()
-				.ofType(CellState.class);
+				.inject( ReceivingCapability.class ).getIncoming()
+				.ofType( CellState.class );
 //		incoming.subscribe(new Observer<CellState>()
 //		{
 //
@@ -95,33 +90,33 @@ public class BasicCell extends BasicAgent implements Cell
 //			}
 //		});
 
-		getBinder().inject(CellWorld.class).myStates(incoming)
-				.subscribe(new Observer<CellState>()
+		getBinder().inject( CellWorld.class ).myStates( incoming )
+				.subscribe( new Observer<CellState>()
 				{
 					@Override
 					public void onCompleted()
 					{
-						LOG.trace("My world has ended, simulation done!");
+						LOG.trace( "My world has ended, simulation done!" );
 						die();
 					}
 
 					@Override
-					public void onError(final Throwable e)
+					public void onError( final Throwable e )
 					{
-						LOG.error("Problem in my state transition stream", e);
+						LOG.error( "Problem in my state transition stream", e );
 					}
 
 					@Override
-					public void onNext(final CellState t)
+					public void onNext( final CellState t )
 					{
 					}
-				});
+				} );
 	}
 
 	@Override
 	public SimTime getTime()
 	{
-		return getBinder().inject(CellWorld.class).getTime();
+		return getBinder().inject( CellWorld.class ).getTime();
 	}
 
 }

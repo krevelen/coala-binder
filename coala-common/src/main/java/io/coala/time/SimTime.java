@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: f3b958c50b9159c80e4f588bc60bd9242ee02b4f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.time;
 
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
 import io.coala.exception.CoalaRuntimeException;
@@ -30,7 +28,7 @@ import io.coala.log.LogUtil;
  * {@link SimTime} is an {@link Instant} with a particular base unit and
  * implementing {@link JSONConvertible}
  * 
- * @version $Id$
+ * @version $Id: f3b958c50b9159c80e4f588bc60bd9242ee02b4f $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class SimTime extends AbstractInstant<SimTime>
@@ -39,7 +37,7 @@ public class SimTime extends AbstractInstant<SimTime>
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id$
+	 * @version $Id: f3b958c50b9159c80e4f588bc60bd9242ee02b4f $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public interface Factory extends io.coala.factory.Factory
@@ -50,7 +48,7 @@ public class SimTime extends AbstractInstant<SimTime>
 		 * @param unit
 		 * @return the new {@link SimTime} object
 		 */
-		SimTime create(final Number value, final TimeUnit unit);
+		SimTime create( final Number value, final TimeUnit unit );
 
 	}
 
@@ -58,11 +56,11 @@ public class SimTime extends AbstractInstant<SimTime>
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(SimTime.class);
+	private static final Logger LOG = LogUtil.getLogger( SimTime.class );
 
 	/** */
-	public static final SimTime ZERO = new SimTime(null, 0, TimeUnit.MILLIS,
-			null);
+	public static final SimTime ZERO = new SimTime( null, 0, TimeUnit.MILLIS,
+			null );
 
 	/** */
 	// private TimeUnit baseUnit;
@@ -86,24 +84,23 @@ public class SimTime extends AbstractInstant<SimTime>
 	 * @param unit
 	 * @param offset
 	 */
-	public SimTime(final ClockID source, final Number value,
-			final TimeUnit unit, final Date offset)
+	public SimTime( final ClockID source, final Number value,
+		final TimeUnit unit, final Date offset )
 	{
 		// this.baseUnit = baseUnit;
-		setValue(value);
-		setUnit(unit);
-		setClockID(source);
+		setValue( value );
+		setUnit( unit );
+		setClockID( source );
 		Date isoDate = null;
-		if (offset != null)
-			try
-			{
-				isoDate = new Date(offset.getTime()
-						+ TimeUnit.MILLIS.convertFrom(value, unit).longValue());
-			} catch (final CoalaRuntimeException e)
-			{
-				// LOG.warn("Problem converting to ISO date", e);
-			}
-		setIsoTime(isoDate);
+		if( offset != null ) try
+		{
+			isoDate = new Date( offset.getTime()
+					+ TimeUnit.MILLIS.convertFrom( value, unit ).longValue() );
+		} catch( final CoalaRuntimeException e )
+		{
+			// LOG.warn("Problem converting to ISO date", e);
+		}
+		setIsoTime( isoDate );
 	}
 
 	/**
@@ -117,7 +114,7 @@ public class SimTime extends AbstractInstant<SimTime>
 	/**
 	 * @param isoTime the isoTime to set
 	 */
-	protected void setIsoTime(final Date isoTime)
+	protected void setIsoTime( final Date isoTime )
 	{
 		this.isoTime = isoTime;
 	}
@@ -128,16 +125,15 @@ public class SimTime extends AbstractInstant<SimTime>
 	@Override
 	public String toString()
 	{
-		final StringBuilder result = new StringBuilder(String.format("%1.4f%s",
-				getValue().doubleValue(), getUnit().toString()));
-		if (getClockID() != null && getClockID().getValue() != null
-				&& !getClockID().getValue().isEmpty())
-			result.append(" @").append(getClockID().getValue());
-		if (getIsoTime() != null)
-			result.append(" (")
-					.append(new DateTime(getIsoTime())
-							.toString(READABLE_DATETIME_SHORT_FORMAT))
-					.append(')');
+		final StringBuilder result = new StringBuilder( String.format(
+				"%1.4f%s", getValue().doubleValue(), getUnit().toString() ) );
+		if( getClockID() != null && getClockID().getValue() != null
+				&& !getClockID().getValue().isEmpty() )
+			result.append( " @" ).append( getClockID().getValue() );
+		if( getIsoTime() != null ) result.append( " (" )
+				.append( new DateTime( getIsoTime() )
+						.toString( READABLE_DATETIME_SHORT_FORMAT ) )
+				.append( ')' );
 		return result.toString();
 	}
 
@@ -150,44 +146,44 @@ public class SimTime extends AbstractInstant<SimTime>
 		try
 		{
 			// avoid using: getMillis() or toMilliseconds() or toUnit()
-			millis = TimeUnit.MILLIS.convertFrom(getValue(), getUnit())
+			millis = TimeUnit.MILLIS.convertFrom( getValue(), getUnit() )
 					.longValue();
-		} catch (final CoalaRuntimeException e)
+		} catch( final CoalaRuntimeException e )
 		{
 			// LOG.warn("Problem converting to " + TimeUnit.MILLIS, e);
 			millis = getValue().longValue();
 		}
 		return new Date(
-				getIsoTime() == null ? 0 : getIsoTime().getTime() - millis);
+				getIsoTime() == null ? 0 : getIsoTime().getTime() - millis );
 	}
 
 	@Override
-	public SimTime toUnit(final TimeUnit unit)
+	public SimTime toUnit( final TimeUnit unit )
 	{
 		Number toValue = null;
 		try
 		{
-			toValue = unit.convertFrom(getValue(), getUnit());
-		} catch (final CoalaRuntimeException e)
+			toValue = unit.convertFrom( getValue(), getUnit() );
+		} catch( final CoalaRuntimeException e )
 		{
-			LOG.warn("Problem converting " + toString() + " to " + unit.name(),
-					e);
+			LOG.warn( "Problem converting " + toString() + " to " + unit.name(),
+					e );
 			return this;
 		}
-		if (toValue == null)
-			LOG.warn("Problem converting " + toString() + " to " + unit.name());
+		if( toValue == null ) LOG.warn(
+				"Problem converting " + toString() + " to " + unit.name() );
 		return new SimTime(
 				// getBaseUnit(),
 				getClockID(), toValue == null ? getValue() : toValue, unit,
-				calcOffset());
+				calcOffset() );
 	}
 
 	@Override
-	public SimTime plus(final Number value)
+	public SimTime plus( final Number value )
 	{
 		return new SimTime(
 				// getBaseUnit(),
 				getClockID(), getValue().doubleValue() + value.doubleValue(),
-				getUnit(), calcOffset());
+				getUnit(), calcOffset() );
 	}
 }

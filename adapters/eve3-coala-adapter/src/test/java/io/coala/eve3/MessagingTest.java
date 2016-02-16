@@ -8,7 +8,7 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import com.almende.eve.agent.Agent;
@@ -46,15 +46,14 @@ import rx.subjects.Subject;
 /**
  * {@link MessagingTest}
  * 
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-// @Ignore
 public class MessagingTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(MessagingTest.class);
+	private static final Logger LOG = LogUtil.getLogger( MessagingTest.class );
 
 	/** */
 	public static AgentID senderAgentID = null;
@@ -65,55 +64,55 @@ public class MessagingTest
 	@Test
 	public void messagingTest() throws Exception
 	{
-		LOG.trace("Start eve messaging test");
+		LOG.trace( "Start eve messaging test" );
 
 		final Binder binder = BinderFactory.Builder.fromFile()
-				.withProperty(ReplicationConfig.class,
+				.withProperty( ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY,
-						"testModel" + System.currentTimeMillis())
-				.build().create("_unittest_");
+						"testModel" + System.currentTimeMillis() )
+				.build().create( "_unittest_" );
 
-		senderAgentID = binder.inject(ModelComponentIDFactory.class)
-				.createAgentID("senderAgent");
+		senderAgentID = binder.inject( ModelComponentIDFactory.class )
+				.createAgentID( "senderAgent" );
 
-		receiverAgentID = binder.inject(ModelComponentIDFactory.class)
-				.createAgentID("receiverAgent");
+		receiverAgentID = binder.inject( ModelComponentIDFactory.class )
+				.createAgentID( "receiverAgent" );
 
 		final CreatingCapability booterSvc = binder
-				.inject(CreatingCapability.class);
-		final CountDownLatch latch = new CountDownLatch(2);
+				.inject( CreatingCapability.class );
+		final CountDownLatch latch = new CountDownLatch( 2 );
 
-		booterSvc.createAgent(receiverAgentID, MessagingTestAgent.class)
-				.subscribe(new Action1<AgentStatusUpdate>()
+		booterSvc.createAgent( receiverAgentID, MessagingTestAgent.class )
+				.subscribe( new Action1<AgentStatusUpdate>()
 				{
 					@Override
-					public void call(final AgentStatusUpdate update)
+					public void call( final AgentStatusUpdate update )
 					{
-						LOG.trace("Observed status update: " + update);
+						LOG.trace( "Observed status update: " + update );
 
-						if (update.getStatus().isFinishedStatus()
-								|| update.getStatus().isFailedStatus())
+						if( update.getStatus().isFinishedStatus()
+								|| update.getStatus().isFailedStatus() )
 							latch.countDown();
 					}
-				});
+				} );
 
-		booterSvc.createAgent(senderAgentID, MessagingTestAgent.class)
-				.subscribe(new Action1<AgentStatusUpdate>()
+		booterSvc.createAgent( senderAgentID, MessagingTestAgent.class )
+				.subscribe( new Action1<AgentStatusUpdate>()
 				{
 					@Override
-					public void call(final AgentStatusUpdate update)
+					public void call( final AgentStatusUpdate update )
 					{
-						LOG.trace("Observed status update: " + update);
+						LOG.trace( "Observed status update: " + update );
 
-						if (update.getStatus().isFinishedStatus()
-								|| update.getStatus().isFailedStatus())
+						if( update.getStatus().isFinishedStatus()
+								|| update.getStatus().isFailedStatus() )
 							latch.countDown();
 					}
-				});
+				} );
 
-		latch.await(20, TimeUnit.SECONDS);
-		assertTrue("Agent(s) did not all finish or fail",
-				latch.getCount() == 0);
+		latch.await( 20, TimeUnit.SECONDS );
+		assertTrue( "Agent(s) did not all finish or fail",
+				latch.getCount() == 0 );
 	}
 
 	public interface EveAgent
@@ -127,12 +126,12 @@ public class MessagingTest
 
 		String SEND_METHOD_NAME = "doSend";
 
-		@Access(AccessType.PUBLIC)
-		void doReceive(@Name(PAYLOAD_FIELD_NAME) JsonNode payload);
+		@Access( AccessType.PUBLIC )
+			void doReceive( @Name( PAYLOAD_FIELD_NAME ) JsonNode payload);
 
-		@Access(AccessType.SELF)
-		void doSend(@Name(PAYLOAD_FIELD_NAME) JsonNode payload,
-				@Name(ADDRESS_FIELD_NAME) URI receiverURI) throws IOException;
+		@Access( AccessType.SELF )
+			void doSend( @Name( PAYLOAD_FIELD_NAME ) JsonNode payload,
+				@Name( ADDRESS_FIELD_NAME ) URI receiverURI) throws IOException;
 
 		Observable<JsonNode> receiveStream();
 
@@ -144,9 +143,9 @@ public class MessagingTest
 				.create();
 
 		@Override
-		public void doReceive(final JsonNode payload)
+		public void doReceive( final JsonNode payload )
 		{
-			this.incoming.onNext(payload);
+			this.incoming.onNext( payload );
 		}
 
 		@Override
@@ -155,16 +154,16 @@ public class MessagingTest
 			return this.incoming.asObservable();
 		}
 
-		protected void scheduleSend(final JsonNode payload,
-				final URI receiverURI)
+		protected void scheduleSend( final JsonNode payload,
+			final URI receiverURI )
 		{
-			final JSONRequest req = new JSONRequest(EveAgent.SEND_METHOD_NAME,
+			final JSONRequest req = new JSONRequest( EveAgent.SEND_METHOD_NAME,
 					(ObjectNode) JsonUtil.getJOM().createObjectNode()
-							.put(EveAgent.ADDRESS_FIELD_NAME,
-									receiverURI.toASCIIString())
-							.set(EveAgent.PAYLOAD_FIELD_NAME, payload));
-			final String res = getScheduler().schedule(req, 0);
-			LOG.info("Scheduled " + req + ": " + res);
+							.put( EveAgent.ADDRESS_FIELD_NAME,
+									receiverURI.toASCIIString() )
+							.set( EveAgent.PAYLOAD_FIELD_NAME, payload ) );
+			final String res = getScheduler().schedule( req, 0 );
+			LOG.info( "Scheduled " + req + ": " + res );
 		}
 
 		@Override
@@ -175,31 +174,31 @@ public class MessagingTest
 		}
 
 		@Override
-		public final void doSend(final JsonNode payload, final URI receiverURI)
-				throws IOException
+		public final void doSend( final JsonNode payload,
+			final URI receiverURI ) throws IOException
 		{
 			final ObjectNode params = JsonUtil.getJOM().createObjectNode();
-			params.set(PAYLOAD_FIELD_NAME,
-					JsonUtil.getJOM().valueToTree(payload));
-			LOG.info(getId() + " calling " + receiverURI + ": " + params);
-			call(receiverURI, RECEIVE_METHOD_NAME, params,
+			params.set( PAYLOAD_FIELD_NAME,
+					JsonUtil.getJOM().valueToTree( payload ) );
+			LOG.info( getId() + " calling " + receiverURI + ": " + params );
+			call( receiverURI, RECEIVE_METHOD_NAME, params,
 					new AsyncCallback<Void>()
 					{
 						@Override
-						public void onFailure(final Exception e)
+						public void onFailure( final Exception e )
 						{
-							LOG.error(getId() + " failed calling " + receiverURI
-									+ ": " + params, e);
+							LOG.error( getId() + " failed calling "
+									+ receiverURI + ": " + params, e );
 						}
 
 						@Override
-						public void onSuccess(final Void result)
+						public void onSuccess( final Void result )
 						{
-							LOG.info(getId() + " successfully called "
+							LOG.info( getId() + " successfully called "
 									+ receiverURI + "#" + RECEIVE_METHOD_NAME
-									+ params + "=" + result);
+									+ params + "=" + result );
 						}
-					});
+					} );
 		}
 	}
 
@@ -208,65 +207,65 @@ public class MessagingTest
 	{
 		final ObjectNode eveCfg = (ObjectNode) JOM.createObjectNode().set(
 				"instantiationServices",
-				JOM.createArrayNode().add(JOM.createObjectNode()
-						.put("class",
-								InstantiationServiceBuilder.class.getName())
-						.set("state",
+				JOM.createArrayNode().add( JOM.createObjectNode()
+						.put( "class",
+								InstantiationServiceBuilder.class.getName() )
+						.set( "state",
 								JOM.createObjectNode()
-										.put("class",
+										.put( "class",
 												FileStateBuilder.class
-														.getName())
-										.put("path", ".wakeservices")
-										.put("id", "testWakeService"))));
+														.getName() )
+										.put( "path", ".wakeservices" )
+										.put( "id", "testWakeService" ) ) ) );
 
-		final ObjectNode agCfg = JOM.createObjectNode().put("id", "my-agent")
-				.put("class", MyEveAgent.class.getName());
-		agCfg.set("state", JOM.createObjectNode().put("class",
-				MemoryStateBuilder.class.getName()));
-		agCfg.set("scheduler", JOM.createObjectNode().put("class",
-				SimpleSchedulerBuilder.class.getName()));
-		agCfg.set("transports",
-				JOM.createArrayNode().add(JOM.createObjectNode()
-						.put("class", HttpTransportBuilder.class.getName())
-						.put("servletUrl", "http://127.0.0.1:8080/agents/")
-						.put("doAuthentication", "false")
-						.put("doShortcut", "true")
-						.put("servletLauncher", "JettyLauncher")));
+		final ObjectNode agCfg = JOM.createObjectNode().put( "id", "my-agent" )
+				.put( "class", MyEveAgent.class.getName() );
+		agCfg.set( "state", JOM.createObjectNode().put( "class",
+				MemoryStateBuilder.class.getName() ) );
+		agCfg.set( "scheduler", JOM.createObjectNode().put( "class",
+				SimpleSchedulerBuilder.class.getName() ) );
+		agCfg.set( "transports",
+				JOM.createArrayNode().add( JOM.createObjectNode()
+						.put( "class", HttpTransportBuilder.class.getName() )
+						.put( "servletUrl", "http://127.0.0.1:8080/agents/" )
+						.put( "doAuthentication", "false" )
+						.put( "doShortcut", "true" )
+						.put( "servletLauncher", "JettyLauncher" ) ) );
 
-		Boot.boot(eveCfg);
+		Boot.boot( eveCfg );
 
-		final MyEveAgent ag = (MyEveAgent) new AgentBuilder().with(agCfg)
+		final MyEveAgent ag = (MyEveAgent) new AgentBuilder().with( agCfg )
 				.build();
-		LOG.info("Built agent with config: " + ag.getConfig());
+		LOG.info( "Built agent with config: " + ag.getConfig() );
 
-		final CountDownLatch latch = new CountDownLatch(1);
-		ag.receiveStream().subscribe(new Observer<JsonNode>()
+		final CountDownLatch latch = new CountDownLatch( 1 );
+		ag.receiveStream().subscribe( new Observer<JsonNode>()
 		{
 			@Override
 			public void onCompleted()
 			{
-				LOG.info(ag.getId() + " receive stream complete");
+				LOG.info( ag.getId() + " receive stream complete" );
 			}
 
 			@Override
-			public void onError(final Throwable e)
+			public void onError( final Throwable e )
 			{
-				LOG.error(ag.getId() + " receive stream fails", e);
+				LOG.error( ag.getId() + " receive stream fails", e );
 			}
 
 			@Override
-			public void onNext(final JsonNode payload)
+			public void onNext( final JsonNode payload )
 			{
-				LOG.info(ag.getId() + " received: " + payload);
+				LOG.info( ag.getId() + " received: " + payload );
 				latch.countDown();
 			}
-		});
+		} );
 
-		ag.scheduleSend(JOM.getInstance().valueToTree("myPayload"),
-				ag.getUrls().get(0));
+		ag.scheduleSend( JOM.getInstance().valueToTree( "myPayload" ),
+				ag.getUrls().get( 0 ) );
 
-		latch.await(3, TimeUnit.SECONDS);
-		assertEquals("Not all messages received", latch.getCount(), 0);
-		LOG.info("All messages received");
+		latch.await( 3, TimeUnit.SECONDS );
+		assertEquals( "Not all messages received", latch.getCount(), 0 );
+		LOG.info( "All messages received" );
 	}
 }

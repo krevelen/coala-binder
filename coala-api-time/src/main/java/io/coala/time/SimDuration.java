@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: e8c61e1583154eddc4b550836c10dd09ffeb6e53 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,12 +12,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.time;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.CoalaRuntimeException;
 import io.coala.log.LogUtil;
@@ -26,7 +24,7 @@ import io.coala.log.LogUtil;
  * {@link SimDuration}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class SimDuration extends AbstractInstant<SimDuration>
 {
@@ -35,10 +33,10 @@ public class SimDuration extends AbstractInstant<SimDuration>
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(SimDuration.class);
+	private static final Logger LOG = LogUtil.getLogger( SimDuration.class );
 
 	/** */
-	public static SimDuration ZERO = new SimDuration(0, TimeUnit.MILLIS);
+	public static SimDuration ZERO = new SimDuration( 0, TimeUnit.MILLIS );
 
 	/** */
 	// private static final TimeUnit baseUnit = TimeUnit.MILLIS;
@@ -57,33 +55,33 @@ public class SimDuration extends AbstractInstant<SimDuration>
 	 * @param value
 	 * @param unit
 	 */
-	public SimDuration(final Number value, final TimeUnit unit)
+	public SimDuration( final Number value, final TimeUnit unit )
 	{
-		setValue(value);
-		setUnit(unit);
+		setValue( value );
+		setUnit( unit );
 	}
 
 	@Override
-	public SimDuration plus(final Number value)
+	public SimDuration plus( final Number value )
 	{
-		return new SimDuration(getValue().doubleValue() + value.doubleValue(),
-				getUnit());
+		return new SimDuration( getValue().doubleValue() + value.doubleValue(),
+				getUnit() );
 	}
 
 	@Override
-	public SimDuration toUnit(final TimeUnit unit)
+	public SimDuration toUnit( final TimeUnit unit )
 	{
 		Number toValue = null;
 		try
 		{
-			toValue = unit.convertFrom(getValue(), getUnit());
-		} catch (final CoalaRuntimeException e)
+			toValue = unit.convertFrom( getValue(), getUnit() );
+		} catch( final CoalaRuntimeException e )
 		{
-			LOG.warn("Problem converting " + toString() + " to " + unit.name()
-					+ ": " + e.getMessage());
+			LOG.warn( "Problem converting " + toString() + " to " + unit.name()
+					+ ": " + e.getMessage() );
 			return this;
 		}
-		return new SimDuration(toValue == null ? getValue() : toValue, unit);
+		return new SimDuration( toValue == null ? getValue() : toValue, unit );
 	}
 
 }

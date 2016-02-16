@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/resource/ResourceStreamer.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: ac91e86f5824cc4af8a3b0f2281ab9e5a326ed48 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,18 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.resource;
-
-import io.coala.exception.CoalaException;
-import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
-import io.coala.rx.RxUtil;
-import io.coala.rx.RxUtil.ThrowingFunc1;
-import io.coala.xml.XmlContext;
-import io.coala.xml.XmlUtil;
 
 import java.io.File;
 import java.io.InputStream;
@@ -42,16 +29,23 @@ import java.util.concurrent.CountDownLatch;
 import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Node;
-
-import rx.Observable;
-import rx.Observer;
-import rx.functions.Func1;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.coala.exception.CoalaException;
+import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
+import io.coala.rx.RxUtil;
+import io.coala.rx.RxUtil.ThrowingFunc1;
+import io.coala.xml.XmlContext;
+import io.coala.xml.XmlUtil;
+import rx.Observable;
+import rx.Observer;
+import rx.functions.Func1;
 
 /**
  * {@link ResourceStreamer}
@@ -64,7 +58,8 @@ public class ResourceStreamer
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(ResourceStreamer.class);
+	private static final Logger LOG = LogUtil
+			.getLogger( ResourceStreamer.class );
 
 	/** */
 	@JsonIgnore
@@ -76,7 +71,7 @@ public class ResourceStreamer
 	 * @param type
 	 * @param streams
 	 */
-	protected ResourceStreamer(final Observable<ResourceStream> streams)
+	protected ResourceStreamer( final Observable<ResourceStream> streams )
 	{
 		this.streams = streams;
 	}
@@ -97,15 +92,15 @@ public class ResourceStreamer
 	 */
 	public ResourceStream first()
 	{
-		return RxUtil.awaitFirst(getStreams());
+		return RxUtil.awaitFirst( getStreams() );
 	}
 
 	/**
 	 * @return the first {@code num} emitted {@link ResourceStream}s
 	 */
-	public List<ResourceStream> first(final int num)
+	public List<ResourceStream> first( final int num )
 	{
-		return RxUtil.awaitAll(getStreams().take(num));
+		return RxUtil.awaitAll( getStreams().take( num ) );
 	}
 
 	/**
@@ -113,15 +108,15 @@ public class ResourceStreamer
 	 */
 	public ResourceStream last()
 	{
-		return RxUtil.awaitFirst(getStreams().last());
+		return RxUtil.awaitFirst( getStreams().last() );
 	}
 
 	/**
 	 * @return the first {@code num} emitted {@link ResourceStream}s
 	 */
-	public List<ResourceStream> last(final int num)
+	public List<ResourceStream> last( final int num )
 	{
-		return RxUtil.awaitAll(getStreams().takeLast(num));
+		return RxUtil.awaitAll( getStreams().takeLast( num ) );
 	}
 
 	/**
@@ -129,7 +124,7 @@ public class ResourceStreamer
 	 */
 	public List<ResourceStream> all()
 	{
-		return RxUtil.awaitAll(getStreams());
+		return RxUtil.awaitAll( getStreams() );
 	}
 
 	private static final String SEP = ", ";
@@ -138,8 +133,8 @@ public class ResourceStreamer
 	public String toString()
 	{
 		final StringBuilder result = new StringBuilder();
-		final CountDownLatch latch = new CountDownLatch(1);
-		getStreams().subscribe(new Observer<ResourceStream>()
+		final CountDownLatch latch = new CountDownLatch( 1 );
+		getStreams().subscribe( new Observer<ResourceStream>()
 		{
 			@Override
 			public void onCompleted()
@@ -148,86 +143,55 @@ public class ResourceStreamer
 			}
 
 			@Override
-			public void onError(final Throwable e)
+			public void onError( final Throwable e )
 			{
-				LOG.warn("Problem while observing streams", e);
-				if (result.length() > 0)
-					result.append(SEP);
-				result.append(e.getMessage());
+				LOG.warn( "Problem while observing streams", e );
+				if( result.length() > 0 ) result.append( SEP );
+				result.append( e.getMessage() );
 				latch.countDown();
 			}
 
 			@Override
-			public void onNext(final ResourceStream t)
+			public void onNext( final ResourceStream t )
 			{
-				if (result.length() > 0)
-					result.append(SEP);
-				result.append(t.toString());
+				if( result.length() > 0 ) result.append( SEP );
+				result.append( t.toString() );
 			}
-		});
-		return String.format("%s <<< %s", getClass().getSimpleName(),
-				result.length() == 0 ? "<empty>" : result);
+		} );
+		return String.format( "%s <<< %s", getClass().getSimpleName(),
+				result.length() == 0 ? "<empty>" : result );
 	}
 
-	/*	
-		public void copySync(final OutputStream output) throws Throwable
-		{
-			final InputStream input = getSync();
-			copy(input, output);
-			input.close();
-		}
-	
-		public void copySync(final Writer output) throws Throwable
-		{
-			final InputStream input = getSync();
-			write(input, output);
-			input.close();
-		}
-	
-		public static void write(final InputStream input, final Writer output)
-				throws IOException
-		{
-			final byte[] buffer = new byte[1024]; // Adjust if you want
-			int bytesRead;
-			while ((bytesRead = input.read(buffer)) != -1)
-				output.append(new String(buffer, 0, bytesRead));
-		}
-	
-		public static void copy(final InputStream input, final OutputStream output)
-				throws IOException
-		{
-			final byte[] buffer = new byte[1024]; // Adjust if you want
-			int bytesRead;
-			while ((bytesRead = input.read(buffer)) != -1)
-				output.write(buffer, 0, bytesRead);
-		}
-		
-		public static void copy(final OutputStream input, final InputStream output)
-				throws IOException
-		{
-			// final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			// copy();
-			// final byte[] buffer = new byte[1024]; // Adjust if you want
-			// input.input.write(buffer);
-			// int bytesRead;
-			// while ((bytesRead = input.write(buffer)) != -1)
-			// output.write(buffer, 0, bytesRead);
-			throw new IOException("NOT IMPLEMENTED");
-		}
-	
-		public String toString(final InputStream is)
-		{
-			try
-			{
-				final StringWriter writer = new StringWriter();
-				copySync(writer);
-				return writer.toString();
-			} catch (final Throwable e)
-			{
-				throw new RuntimeException("Problem while copying " + getType(), e);
-			}
-		}
-	*/
+	/*
+	 * public void copySync(final OutputStream output) throws Throwable { final
+	 * InputStream input = getSync(); copy(input, output); input.close(); }
+	 * 
+	 * public void copySync(final Writer output) throws Throwable { final
+	 * InputStream input = getSync(); write(input, output); input.close(); }
+	 * 
+	 * public static void write(final InputStream input, final Writer output)
+	 * throws IOException { final byte[] buffer = new byte[1024]; // Adjust if
+	 * you want int bytesRead; while ((bytesRead = input.read(buffer)) != -1)
+	 * output.append(new String(buffer, 0, bytesRead)); }
+	 * 
+	 * public static void copy(final InputStream input, final OutputStream
+	 * output) throws IOException { final byte[] buffer = new byte[1024]; //
+	 * Adjust if you want int bytesRead; while ((bytesRead = input.read(buffer))
+	 * != -1) output.write(buffer, 0, bytesRead); }
+	 * 
+	 * public static void copy(final OutputStream input, final InputStream
+	 * output) throws IOException { // final ByteArrayOutputStream baos = new
+	 * ByteArrayOutputStream(); // copy(); // final byte[] buffer = new
+	 * byte[1024]; // Adjust if you want // input.input.write(buffer); // int
+	 * bytesRead; // while ((bytesRead = input.write(buffer)) != -1) //
+	 * output.write(buffer, 0, bytesRead); throw new IOException(
+	 * "NOT IMPLEMENTED"); }
+	 * 
+	 * public String toString(final InputStream is) { try { final StringWriter
+	 * writer = new StringWriter(); copySync(writer); return writer.toString();
+	 * } catch (final Throwable e) { throw new RuntimeException(
+	 * "Problem while copying " + getType(), e); } }
+	 */
 
 	/**
 	 * @return an {@link Observable} of the {@link InputStream}s written to
@@ -235,32 +199,32 @@ public class ResourceStreamer
 	 */
 	public Observable<String> toStrings()
 	{
-		return RxUtil.map(getStreams(),
+		return RxUtil.map( getStreams(),
 				new ThrowingFunc1<ResourceStream, String>()
 				{
 					@Override
-					public String call(final ResourceStream stream)
-							throws Throwable
+					public String call( final ResourceStream stream )
+						throws Throwable
 					{
-						return IOUtils.toString(stream.getStream());
+						return IOUtils.toString( stream.getStream() );
 					}
-				});
+				} );
 	}
 
 	/**
 	 * @return an {@link Observable} of the {@link InputStream}s unmarshalled
 	 *         into objects of the specified {@code resultType}
 	 */
-	public <T> Observable<T> toJSON(final Class<T> resultType)
+	public <T> Observable<T> toJSON( final Class<T> resultType )
 	{
-		return RxUtil.map(getStreams(), new ThrowingFunc1<ResourceStream, T>()
+		return RxUtil.map( getStreams(), new ThrowingFunc1<ResourceStream, T>()
 		{
 			@Override
-			public T call(final ResourceStream stream) throws Throwable
+			public T call( final ResourceStream stream ) throws Throwable
 			{
-				return stream.toJSON(resultType);
+				return stream.toJSON( resultType );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -268,17 +232,17 @@ public class ResourceStreamer
 	 *         using the specified {@link XmlContext} ito objects of the
 	 *         specified {@code resultType}
 	 */
-	public <T> Observable<T> toXML(final XmlContext<?> context,
-			final Class<T> resultType)
+	public <T> Observable<T> toXML( final XmlContext<?> context,
+		final Class<T> resultType )
 	{
-		return RxUtil.map(getStreams(), new ThrowingFunc1<ResourceStream, T>()
+		return RxUtil.map( getStreams(), new ThrowingFunc1<ResourceStream, T>()
 		{
 			@Override
-			public T call(final ResourceStream stream) throws Throwable
+			public T call( final ResourceStream stream ) throws Throwable
 			{
-				return stream.toXML(context, resultType);
+				return stream.toXML( context, resultType );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -288,7 +252,7 @@ public class ResourceStreamer
 	public static ResourceStreamer empty()
 	{
 		final Observable<ResourceStream> obs = Observable.empty();
-		return from(obs);
+		return from( obs );
 	}
 
 	/**
@@ -297,10 +261,10 @@ public class ResourceStreamer
 	 * @return the {@link ResourceStreamer} that emits/calls
 	 *         {@link Observer#onError()}
 	 */
-	public static ResourceStreamer error(final Throwable t)
+	public static ResourceStreamer error( final Throwable t )
 	{
-		final Observable<ResourceStream> obs = Observable.error(t);
-		return from(obs);
+		final Observable<ResourceStream> obs = Observable.error( t );
+		return from( obs );
 	}
 
 	/**
@@ -309,9 +273,9 @@ public class ResourceStreamer
 	 * @param stream
 	 * @return
 	 */
-	public static ResourceStreamer from(final Observable<ResourceStream> obs)
+	public static ResourceStreamer from( final Observable<ResourceStream> obs )
 	{
-		return new ResourceStreamer(obs);
+		return new ResourceStreamer( obs );
 	}
 
 	/**
@@ -320,10 +284,10 @@ public class ResourceStreamer
 	 * @param is
 	 * @return
 	 */
-	public static ResourceStreamer from(final ResourceType type,
-			final InputStream is, final String path)
+	public static ResourceStreamer from( final ResourceType type,
+		final InputStream is, final String path )
 	{
-		return from(Observable.just(ResourceStream.of(is, type, path)));
+		return from( Observable.just( ResourceStream.of( is, type, path ) ) );
 	}
 
 	/**
@@ -332,10 +296,11 @@ public class ResourceStreamer
 	 * @param content
 	 * @return
 	 */
-	public static ResourceStreamer from(final ResourceType type,
-			final byte[] content, final String path)
+	public static ResourceStreamer from( final ResourceType type,
+		final byte[] content, final String path )
 	{
-		return from(Observable.just(ResourceStream.of(content, type, path)));
+		return from(
+				Observable.just( ResourceStream.of( content, type, path ) ) );
 	}
 
 	/**
@@ -344,10 +309,11 @@ public class ResourceStreamer
 	 * @param content
 	 * @return
 	 */
-	public static ResourceStreamer from(final ResourceType type,
-			final String content, final String path)
+	public static ResourceStreamer from( final ResourceType type,
+		final String content, final String path )
 	{
-		return from(Observable.just(ResourceStream.of(content, type, path)));
+		return from(
+				Observable.just( ResourceStream.of( content, type, path ) ) );
 	}
 
 	/**
@@ -355,30 +321,29 @@ public class ResourceStreamer
 	 * @param content
 	 * @return
 	 */
-	public static ResourceStreamer from(final ResourceType type,
-			final String... content)
+	public static ResourceStreamer from( final ResourceType type,
+		final String... content )
 	{
-		if (content == null || content.length == 0)
-			return empty();
+		if( content == null || content.length == 0 ) return empty();
 
-		return from(Observable.from(Arrays.asList(content))
-				.map(new Func1<String, ResourceStream>()
+		return from( Observable.from( Arrays.asList( content ) )
+				.map( new Func1<String, ResourceStream>()
 				{
 					@Override
-					public ResourceStream call(final String s)
+					public ResourceStream call( final String s )
 					{
-						return ResourceStream.of(s, type);
+						return ResourceStream.of( s, type );
 					}
-				}));
+				} ) );
 	}
 
 	/**
 	 * @param content
 	 * @return
 	 */
-	public static ResourceStreamer from(final String... content)
+	public static ResourceStreamer from( final String... content )
 	{
-		return from(null, content);
+		return from( null, content );
 	}
 
 	/**
@@ -386,65 +351,33 @@ public class ResourceStreamer
 	 * @param contentPath
 	 * @return
 	 */
-	public static ResourceStreamer from(final ResourceType type,
-			final URL... contentPath)
+	public static ResourceStreamer from( final ResourceType type,
+		final URL... contentPath )
 	{
-		if (contentPath == null || contentPath.length == 0)
-			return empty();
+		if( contentPath == null || contentPath.length == 0 ) return empty();
 
-		return from(RxUtil.map(Observable.from(Arrays.asList(contentPath)),
-				new RxUtil.ThrowingFunc1<URL, ResourceStream>()
-				{
-					@Override
-					public ResourceStream call(final URL p) throws Throwable
-					{
-						return ResourceStream.of(
-								FileUtil.getFileAsInputStream(p), type,
-								p.toExternalForm());
-					}
-				}));
+		return from(
+				RxUtil.map( Observable.from( Arrays.asList( contentPath ) ),
+						new RxUtil.ThrowingFunc1<URL, ResourceStream>()
+						{
+							@Override
+							public ResourceStream call( final URL p )
+								throws Throwable
+							{
+								return ResourceStream.of(
+										FileUtil.getFileAsInputStream( p ),
+										type, p.toExternalForm() );
+							}
+						} ) );
 	}
 
 	/**
 	 * @param contentPath
 	 * @return
 	 */
-	public static ResourceStreamer from(final URL... contentPath)
+	public static ResourceStreamer from( final URL... contentPath )
 	{
-		return from(null, contentPath);
-	}
-
-	/**
-	 * @param contentPath
-	 * @param type
-	 * @return
-	 */
-	public static ResourceStreamer from(final ResourceType type,
-			final URI... contentPath)
-	{
-		if (contentPath == null || contentPath.length == 0)
-			return empty();
-
-		return from(RxUtil.map(Observable.from(Arrays.asList(contentPath)),
-				new RxUtil.ThrowingFunc1<URI, ResourceStream>()
-				{
-					@Override
-					public ResourceStream call(final URI p) throws Throwable
-					{
-						return ResourceStream.of(
-								FileUtil.getFileAsInputStream(p), type,
-								p.toASCIIString());
-					}
-				}));
-	}
-
-	/**
-	 * @param type
-	 * @return
-	 */
-	public static ResourceStreamer from(final URI... contentPath)
-	{
-		return from(null, contentPath);
+		return from( null, contentPath );
 	}
 
 	/**
@@ -452,32 +385,67 @@ public class ResourceStreamer
 	 * @param type
 	 * @return
 	 */
-	public static ResourceStreamer from(final ResourceType type,
-			final File... contentPath)
+	public static ResourceStreamer from( final ResourceType type,
+		final URI... contentPath )
 	{
-		if (contentPath == null || contentPath.length == 0)
-			return empty();
+		if( contentPath == null || contentPath.length == 0 ) return empty();
 
-		return from(RxUtil.map(Observable.from(Arrays.asList(contentPath)),
-				new RxUtil.ThrowingFunc1<File, ResourceStream>()
-				{
-					@Override
-					public ResourceStream call(final File p) throws Throwable
-					{
-						return ResourceStream.of(
-								FileUtil.getFileAsInputStream(p), type,
-								p.getPath());
-					}
-				}));
+		return from(
+				RxUtil.map( Observable.from( Arrays.asList( contentPath ) ),
+						new RxUtil.ThrowingFunc1<URI, ResourceStream>()
+						{
+							@Override
+							public ResourceStream call( final URI p )
+								throws Throwable
+							{
+								return ResourceStream.of(
+										FileUtil.getFileAsInputStream( p ),
+										type, p.toASCIIString() );
+							}
+						} ) );
+	}
+
+	/**
+	 * @param type
+	 * @return
+	 */
+	public static ResourceStreamer from( final URI... contentPath )
+	{
+		return from( null, contentPath );
+	}
+
+	/**
+	 * @param contentPath
+	 * @param type
+	 * @return
+	 */
+	public static ResourceStreamer from( final ResourceType type,
+		final File... contentPath )
+	{
+		if( contentPath == null || contentPath.length == 0 ) return empty();
+
+		return from(
+				RxUtil.map( Observable.from( Arrays.asList( contentPath ) ),
+						new RxUtil.ThrowingFunc1<File, ResourceStream>()
+						{
+							@Override
+							public ResourceStream call( final File p )
+								throws Throwable
+							{
+								return ResourceStream.of(
+										FileUtil.getFileAsInputStream( p ),
+										type, p.getPath() );
+							}
+						} ) );
 	}
 
 	/**
 	 * @param contentPath
 	 * @return
 	 */
-	public static ResourceStreamer from(final File... contentPath)
+	public static ResourceStreamer from( final File... contentPath )
 	{
-		return from(null, contentPath);
+		return from( null, contentPath );
 	}
 
 	/**
@@ -485,31 +453,33 @@ public class ResourceStreamer
 	 * @param type
 	 * @return
 	 */
-	public static ResourceStreamer fromPath(final ResourceType type,
-			final String... contentPath)
+	public static ResourceStreamer fromPath( final ResourceType type,
+		final String... contentPath )
 	{
-		if (contentPath == null || contentPath.length == 0)
-			return empty();
+		if( contentPath == null || contentPath.length == 0 ) return empty();
 
-		return from(RxUtil.map(Observable.from(Arrays.asList(contentPath)),
-				new RxUtil.ThrowingFunc1<String, ResourceStream>()
-				{
-					@Override
-					public ResourceStream call(final String p) throws Throwable
-					{
-						return ResourceStream
-								.of(FileUtil.getFileAsInputStream(p), type, p);
-					}
-				}));
+		return from(
+				RxUtil.map( Observable.from( Arrays.asList( contentPath ) ),
+						new RxUtil.ThrowingFunc1<String, ResourceStream>()
+						{
+							@Override
+							public ResourceStream call( final String p )
+								throws Throwable
+							{
+								return ResourceStream.of(
+										FileUtil.getFileAsInputStream( p ),
+										type, p );
+							}
+						} ) );
 	}
 
 	/**
 	 * @param path
 	 * @return
 	 */
-	public static ResourceStreamer fromPath(final String... path)
+	public static ResourceStreamer fromPath( final String... path )
 	{
-		return fromPath(null, path);
+		return fromPath( null, path );
 	}
 
 	/**
@@ -521,10 +491,10 @@ public class ResourceStreamer
 	 *         and (SQL) {@code query}
 	 * @throws CoalaException
 	 */
-	public static ResourceStreamer fromJDBC(final Class<?> jdbcDriver,
-			final URI dbURL, final String... query)
+	public static ResourceStreamer fromJDBC( final Class<?> jdbcDriver,
+		final URI dbURL, final String... query )
 	{
-		return fromJDBC(null, jdbcDriver, dbURL, query);
+		return fromJDBC( null, jdbcDriver, dbURL, query );
 	}
 
 	/**
@@ -537,10 +507,10 @@ public class ResourceStreamer
 	 *         and (SQL) {@code query}
 	 * @throws CoalaException
 	 */
-	public static ResourceStreamer fromJDBC(final ResourceType type,
-			final Class<?> jdbcDriver, final URI dbURL, final String... query)
+	public static ResourceStreamer fromJDBC( final ResourceType type,
+		final Class<?> jdbcDriver, final URI dbURL, final String... query )
 	{
-		return error(new IllegalStateException("NOT IMPLEMENTED"));
+		return error( new IllegalStateException( "NOT IMPLEMENTED" ) );
 	}
 
 	/**
@@ -549,23 +519,22 @@ public class ResourceStreamer
 	 *         {@link String} to read the {@link ResourceStreamer}'s new
 	 *         {@link InputStream} from
 	 */
-	public static ResourceStreamer fromJSON(final JsonNode... trees)
+	public static ResourceStreamer fromJSON( final JsonNode... trees )
 	{
-		if (trees == null || trees.length == 0)
-			return empty();
+		if( trees == null || trees.length == 0 ) return empty();
 
-		return from(RxUtil.map(Observable.from(Arrays.asList(trees)),
+		return from( RxUtil.map( Observable.from( Arrays.asList( trees ) ),
 				new RxUtil.ThrowingFunc1<JsonNode, ResourceStream>()
 				{
 					@Override
-					public ResourceStream call(final JsonNode tree)
-							throws Throwable
+					public ResourceStream call( final JsonNode tree )
+						throws Throwable
 					{
-						LOG.trace("Streaming << " + tree);
-						return ResourceStream.of(tree.toString(),
-								ResourceType.JSON);
+						LOG.trace( "Streaming << " + tree );
+						return ResourceStream.of( tree.toString(),
+								ResourceType.JSON );
 					}
-				}));
+				} ) );
 	}
 
 	/**
@@ -574,22 +543,21 @@ public class ResourceStreamer
 	 *         {@link String} to read the {@link ResourceStreamer}'s new
 	 *         {@link InputStream} from
 	 */
-	public static ResourceStreamer fromObjectAsJSON(final Object... objects)
+	public static ResourceStreamer fromObjectAsJSON( final Object... objects )
 	{
-		if (objects == null || objects.length == 0)
-			return empty();
+		if( objects == null || objects.length == 0 ) return empty();
 
-		return from(RxUtil.map(Observable.from(Arrays.asList(objects)),
+		return from( RxUtil.map( Observable.from( Arrays.asList( objects ) ),
 				new RxUtil.ThrowingFunc1<Object, ResourceStream>()
 				{
 					@Override
-					public ResourceStream call(final Object obj)
-							throws Throwable
+					public ResourceStream call( final Object obj )
+						throws Throwable
 					{
-						return ResourceStream.of(obj, ResourceType.JSON,
-								JsonUtil.toString(obj));
+						return ResourceStream.of( obj, ResourceType.JSON,
+								JsonUtil.toString( obj ) );
 					}
-				}));
+				} ) );
 	}
 
 	/**
@@ -600,24 +568,23 @@ public class ResourceStreamer
 	 *         {@link InputStream} from
 	 */
 	@SafeVarargs
-	public static <T> ResourceStreamer fromObjectAsXML(
-			final XmlContext<?> context, final T... elements)
+	public static <T> ResourceStreamer
+		fromObjectAsXML( final XmlContext<?> context, final T... elements )
 	{
-		if (elements == null || elements.length == 0)
-			return empty();
+		if( elements == null || elements.length == 0 ) return empty();
 
-		return from(RxUtil.map(Observable.from(Arrays.asList(elements)),
+		return from( RxUtil.map( Observable.from( Arrays.asList( elements ) ),
 				new RxUtil.ThrowingFunc1<T, ResourceStream>()
 				{
 					@Override
-					public ResourceStream call(final T elem) throws Throwable
+					public ResourceStream call( final T elem ) throws Throwable
 					{
 						final StringWriter sw = new StringWriter();
-						context.getMarshaller().marshal(elem, sw);
-						return ResourceStream.of(elem, ResourceType.XML,
-								sw.toString());
+						context.getMarshaller().marshal( elem, sw );
+						return ResourceStream.of( elem, ResourceType.XML,
+								sw.toString() );
 					}
-				}));
+				} ) );
 	}
 
 	/**
@@ -626,9 +593,9 @@ public class ResourceStreamer
 	 * @param elemNames
 	 * @return
 	 */
-	public <T> Observable<T> toXMLStream(final XmlContext<?> context,
-			final Class<T> jaxbElementType, final String... elemNames)
+	public <T> Observable<T> toXMLStream( final XmlContext<?> context,
+		final Class<T> jaxbElementType, final String... elemNames )
 	{
-		return XmlUtil.getStream(this, context, jaxbElementType, elemNames);
+		return XmlUtil.getStream( this, context, jaxbElementType, elemNames );
 	}
 }

@@ -2,7 +2,7 @@ package io.coala.eve3;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
@@ -19,10 +19,10 @@ import rx.schedulers.Schedulers;
  * {@link EveDestroyingCapability}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class EveDestroyingCapability extends BasicCapability
-		implements DestroyingCapability
+	implements DestroyingCapability
 {
 
 	/** */
@@ -38,41 +38,41 @@ public class EveDestroyingCapability extends BasicCapability
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	private EveDestroyingCapability(final Binder binder)
+	private EveDestroyingCapability( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
 	public AgentID destroy()
 	{
-		return destroy(getID().getOwnerID());
+		return destroy( getID().getOwnerID() );
 	}
 
 	@Override
-	public AgentID destroy(final AgentID agentID)
+	public AgentID destroy( final AgentID agentID )
 	{
-		final Agent agent = EveAgentManager.getInstance().getAgent(agentID,
-				false);
+		final Agent agent = EveAgentManager.getInstance().getAgent( agentID,
+				false );
 
-		if (agent == null)
+		if( agent == null )
 		{
 			// TODO try other/distributed/connected VMs?
-			LOG.warn("Could not kill agent, not available in this VM");
+			LOG.warn( "Could not kill agent, not available in this VM" );
 			return agentID;
 		}
 
-		Schedulers.trampoline().createWorker().schedule(new Action0()
+		Schedulers.trampoline().createWorker().schedule( new Action0()
 		{
 			@Override
 			public void call()
 			{
 				final BasicAgentStatus status = BasicAgentStatus
-						.determineKillStatus(agent);
-				LOG.info("Going for the kill: " + status);
-				MachineUtil.setStatus(agent, status, true);
+						.determineKillStatus( agent );
+				LOG.info( "Going for the kill: " + status );
+				MachineUtil.setStatus( agent, status, true );
 			}
-		});
+		} );
 
 		return agentID;
 	}

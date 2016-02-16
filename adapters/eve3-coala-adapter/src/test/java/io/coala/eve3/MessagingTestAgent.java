@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 9d41ffa79af7926dd0abf293729d3c47fb597919 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve3;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.agent.BasicAgent;
@@ -39,7 +37,7 @@ import rx.Observer;
  * {@link MessagingTestAgent}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class MessagingTestAgent extends BasicAgent
 {
@@ -48,7 +46,7 @@ public class MessagingTestAgent extends BasicAgent
 	 * {@link MyMessageID}
 	 * 
 	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @author Rick van Krevelen
 	 */
 	public static class MyMessageID extends MessageID<Long, SimTime>
 	{
@@ -72,9 +70,9 @@ public class MessagingTestAgent extends BasicAgent
 		 * @param modelID the {@link ModelID}
 		 * @param instant the {@link SimTime}
 		 */
-		public MyMessageID(final ModelID modelID, final SimTime instant)
+		public MyMessageID( final ModelID modelID, final SimTime instant )
 		{
-			super(modelID, msgID++, instant);
+			super( modelID, msgID++, instant );
 		}
 
 	}
@@ -82,7 +80,7 @@ public class MessagingTestAgent extends BasicAgent
 	/**
 	 * {@link MyMessage}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 9d41ffa79af7926dd0abf293729d3c47fb597919 $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class MyMessage extends AbstractMessage<MyMessageID>
@@ -109,11 +107,11 @@ public class MessagingTestAgent extends BasicAgent
 		 * @param receiverID
 		 * @param content
 		 */
-		public MyMessage(final SimTime time, final AgentID senderID,
-				final AgentID receiverID, final String content)
+		public MyMessage( final SimTime time, final AgentID senderID,
+			final AgentID receiverID, final String content )
 		{
-			super(new MyMessageID(senderID.getModelID(), time),
-					senderID.getModelID(), senderID, receiverID);
+			super( new MyMessageID( senderID.getModelID(), time ),
+					senderID.getModelID(), senderID, receiverID );
 			this.content = content;
 		}
 
@@ -131,9 +129,9 @@ public class MessagingTestAgent extends BasicAgent
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	public MessagingTestAgent(final Binder binder)
+	public MessagingTestAgent( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	/**
@@ -143,18 +141,18 @@ public class MessagingTestAgent extends BasicAgent
 	public void initialize()
 	{
 		// subscribe message handler
-		getBinder().inject(ReceivingCapability.class).getIncoming()
-				.ofType(MyMessage.class).subscribe(new Observer<MyMessage>()
+		getBinder().inject( ReceivingCapability.class ).getIncoming()
+				.ofType( MyMessage.class ).subscribe( new Observer<MyMessage>()
 				{
 					@Override
-					public void onNext(final MyMessage msg)
+					public void onNext( final MyMessage msg )
 					{
 						try
 						{
-							handle(msg);
-						} catch (Exception e)
+							handle( msg );
+						} catch( Exception e )
 						{
-							onError(e);
+							onError( e );
 						}
 					}
 
@@ -165,21 +163,21 @@ public class MessagingTestAgent extends BasicAgent
 					}
 
 					@Override
-					public void onError(final Throwable t)
+					public void onError( final Throwable t )
 					{
 						t.printStackTrace();
 					}
-				});
+				} );
 
-		if (getID().equals(MessagingTest.senderAgentID))
+		if( getID().equals( MessagingTest.senderAgentID ) )
 		{
 			try
 			{
-				LOG.info("About to ping...");
+				LOG.info( "About to ping..." );
 				ping();
-			} catch (final Exception e)
+			} catch( final Exception e )
 			{
-				LOG.error("No ping today!", e);
+				LOG.error( "No ping today!", e );
 			}
 		}
 	}
@@ -188,10 +186,10 @@ public class MessagingTestAgent extends BasicAgent
 	 * @param t
 	 * @return
 	 */
-	protected SimTime createTick(int t)
+	protected SimTime createTick( int t )
 	{
-		return getBinder().inject(SimTime.Factory.class).create(t,
-				TimeUnit.TICKS);
+		return getBinder().inject( SimTime.Factory.class ).create( t,
+				TimeUnit.TICKS );
 	}
 
 	/**
@@ -199,10 +197,10 @@ public class MessagingTestAgent extends BasicAgent
 	 */
 	public void ping() throws Exception
 	{
-		final MyMessage msg = new MyMessage(createTick(0), getID(),
-				MessagingTest.receiverAgentID, "ping");
-		LOG.trace("About to send ping: " + msg);
-		getBinder().inject(SendingCapability.class).send(msg);
+		final MyMessage msg = new MyMessage( createTick( 0 ), getID(),
+				MessagingTest.receiverAgentID, "ping" );
+		LOG.trace( "About to send ping: " + msg );
+		getBinder().inject( SendingCapability.class ).send( msg );
 	}
 
 	/**
@@ -210,33 +208,34 @@ public class MessagingTestAgent extends BasicAgent
 	 */
 	public void pong() throws Exception
 	{
-		final MyMessage msg = new MyMessage(createTick(1), getID(),
-				MessagingTest.senderAgentID, "pong");
+		final MyMessage msg = new MyMessage( createTick( 1 ), getID(),
+				MessagingTest.senderAgentID, "pong" );
 
-		LOG.trace("About to send pong: " + msg);
-		getBinder().inject(SendingCapability.class).send(msg);
+		LOG.trace( "About to send pong: " + msg );
+		getBinder().inject( SendingCapability.class ).send( msg );
 	}
 
 	@Override
 	public void finish()
 	{
-		LOG.trace(getID() + " is done");
+		LOG.trace( getID() + " is done" );
 	}
 
 	/**
 	 * @param message
 	 * @throws Exception
 	 */
-	public void handle(final MyMessage message) throws Exception
+	public void handle( final MyMessage message ) throws Exception
 	{
-		LOG.trace(getID().getValue() + " handling " + message.content + "...");
-		if (getID().equals(MessagingTest.receiverAgentID))
+		LOG.trace(
+				getID().getValue() + " handling " + message.content + "..." );
+		if( getID().equals( MessagingTest.receiverAgentID ) )
 		{
 			pong();
-			forceStatus(BasicAgentStatus.COMPLETE);
-		} else if (getID().equals(MessagingTest.senderAgentID))
+			forceStatus( BasicAgentStatus.COMPLETE );
+		} else if( getID().equals( MessagingTest.senderAgentID ) )
 		{
-			forceStatus(BasicAgentStatus.COMPLETE);
+			forceStatus( BasicAgentStatus.COMPLETE );
 		}
 	}
 

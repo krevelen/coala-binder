@@ -1,7 +1,4 @@
 /* $Id: 19590127859130f7d2914a6f5b7653f442154397 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/Schedulable.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.invoke;
 
@@ -37,10 +32,8 @@ import io.coala.exception.CoalaExceptionFactory;
 /**
  * {@link Schedulable}
  * 
- * @date $Date: 2014-06-17 15:03:44 +0200 (Tue, 17 Jun 2014) $
- * @version $Revision: 302 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
@@ -140,8 +133,9 @@ public @interface Schedulable
 					reference );
 
 			// search super types/interfaces
-			if( method == null ) for( Class<?> superType : ClassUtil
-					.findSuperTypes( target.getClass(), Object.class ) )
+			if( method == null )
+				for( Class<?> superType : ClassUtil.findRawSuperTypes(
+						target.getClass(), Object.class, false ) )
 				if( (method = findSchedulableMethod( superType,
 						reference )) != null )
 					break;

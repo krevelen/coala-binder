@@ -1,7 +1,5 @@
 /* $Id$
  * 
- * Part of ZonMW project no. 50-53000-98-156
- * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy
@@ -14,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
 package io.coala.dsol3;
 
@@ -27,7 +23,7 @@ import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import javax.naming.NamingException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.x.ExceptionBuilder;
 import io.coala.json.x.Wrapper;

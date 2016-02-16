@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 8caa0ac879ae09d8e95adbc7bb97d01a036fc4b7 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,10 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.experimental.grant;
+
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.agent.BasicAgent;
@@ -29,15 +31,11 @@ import io.coala.process.Job;
 import io.coala.time.SimTime;
 import io.coala.time.Trigger;
 
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
-
 /**
  * {@link PacedActor}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 {
@@ -54,14 +52,14 @@ public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected PacedActor(final Binder binder)
+	protected PacedActor( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	protected ReplicatingCapability getSimulator()
 	{
-		return getBinder().inject(ReplicatingCapability.class);
+		return getBinder().inject( ReplicatingCapability.class );
 	}
 
 	@Override
@@ -73,41 +71,41 @@ public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 	@Override
 	public void initialize()
 	{
-		LOG.trace("Initializing");
+		LOG.trace( "Initializing" );
 
-		final Job<?> job = ProcedureCall.create(this, this, testMethodID);
-		final Trigger<?> trigger = Trigger.createAbsolute(getTime());
-		getSimulator().schedule(job, trigger);
+		final Job<?> job = ProcedureCall.create( this, this, testMethodID );
+		final Trigger<?> trigger = Trigger.createAbsolute( getTime() );
+		getSimulator().schedule( job, trigger );
 		die();
 	}
 
 	private static final String testMethodID = "";
 
-	@Schedulable(testMethodID)
-	protected void scheduleTestMethod(final SimTime time)
+	@Schedulable( testMethodID )
+	protected void scheduleTestMethod( final SimTime time )
 	{
-		if (time.equals(getTime()))
-			LOG.info("Method executed ON TIME");
+		if( time.equals( getTime() ) )
+			LOG.info( "Method executed ON TIME" );
 		else
-			LOG.info("Method executed BUT NOT as scheduled");
+			LOG.info( "Method executed BUT NOT as scheduled" );
 	}
 
 	@Override
 	public void activate()
 	{
-		LOG.trace("Activating");
+		LOG.trace( "Activating" );
 	}
 
 	@Override
 	public void deactivate()
 	{
-		LOG.trace("Deactivating");
+		LOG.trace( "Deactivating" );
 	}
 
 	@Override
 	public void finish()
 	{
-		LOG.trace("Finishing");
+		LOG.trace( "Finishing" );
 	}
 
 	@Override

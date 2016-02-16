@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/util/ClassUtil.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: ffe63957b325aff2fe441b72a8f6bac7625b923c $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,15 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.factory;
-
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.log.LogUtil;
-import io.coala.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -45,15 +35,18 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+
+import io.coala.exception.CoalaException;
+import io.coala.exception.CoalaExceptionFactory;
+import io.coala.log.LogUtil;
+import io.coala.util.Util;
 
 /**
  * {@link ClassUtil}
  * 
- * @date $Date: 2014-08-04 14:19:04 +0200 (Mon, 04 Aug 2014) $
- * @version $Revision: 336 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class ClassUtil implements Util
 {

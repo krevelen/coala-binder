@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: a95a474f727b0f3e0003640546864abd5fedb848 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/test/java/io/coala/ResourceTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,15 +20,15 @@
  */
 package io.coala.resource;
 
-import io.coala.log.LogUtil;
-
 import java.io.File;
 import java.net.URI;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import io.coala.log.LogUtil;
 
 /**
  * {@link ResourceTest}
@@ -41,44 +41,41 @@ public class ResourceTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(ResourceTest.class);
+	private static final Logger LOG = LogUtil.getLogger( ResourceTest.class );
 
 	@BeforeClass
 	public static void logStart()
 	{
-		LOG.trace("Starting Resource tests!");
+		LOG.trace( "Starting Resource tests!" );
 	}
 
 	@AfterClass
 	public static void logEnd()
 	{
-		LOG.trace("Completed Resource tests!");
+		LOG.trace( "Completed Resource tests!" );
 	}
 
 	@Test
 	public void testResource() throws Exception
 	{
-		final ResourceStreamer r1 = ResourceStreamer.from("testcontent",
-				"testcontent2");
-		LOG.trace("r1: " + r1);
+		final ResourceStreamer r1 = ResourceStreamer.from( "testcontent",
+				"testcontent2" );
+		LOG.trace( "r1: " + r1 );
 
-		final ResourceStreamer r2 = ResourceStreamer
-				.from(Thread
-						.currentThread()
-						.getContextClassLoader()
-						.getResource(
-								getClass().getName().replace(".", "/")
-										+ ".class"));
-		LOG.trace("r2: " + r2);
+		final ResourceStreamer r2 = ResourceStreamer.from(
+				Thread.currentThread().getContextClassLoader().getResource(
+						getClass().getName().replace( ".", "/" ) + ".class" ) );
+		LOG.trace( "r2: " + r2 );
 
-		final ResourceStreamer r3 = ResourceStreamer.from(new File("pom.xml"));
-		LOG.trace("r3: " + r3);
+		final ResourceStreamer r3 = ResourceStreamer
+				.from( new File( "pom.xml" ) );
+		LOG.trace( "r3: " + r3 );
 
 		final ResourceStreamer r4 = ResourceStreamer.from(
-				URI.create("http://www.google.nl/"),
-				URI.create("http://www.google.nl/"),
-				URI.create("http://www.google.nl/"),
-				URI.create("http://www.google.nl/"));
-		LOG.trace("r4: " + r4);
+				URI.create( "http://www.google.nl/" ),
+				URI.create( "http://www.google.nl/" ),
+				URI.create( "http://www.google.nl/" ),
+				URI.create( "http://www.google.nl/" ) );
+		LOG.trace( "r4: " + r4 );
 	}
 }

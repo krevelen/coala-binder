@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: c742f12531e4bb3b9cdd39d256ca03abd5e6d5dc $
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/log/InjectLoggerTypeListener.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,16 +20,16 @@
  */
 package io.coala.guice.log;
 
-import io.coala.log.InjectLogger;
-import io.coala.log.LogUtil;
-
 import java.lang.reflect.Field;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
+
+import io.coala.log.InjectLogger;
+import io.coala.log.LogUtil;
 
 /**
  * {@link InjectLoggerTypeListener}
@@ -42,26 +42,25 @@ public class InjectLoggerTypeListener implements TypeListener
 {
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(InjectLoggerTypeListener.class);
+			.getLogger( InjectLoggerTypeListener.class );
 
 	@Override
-	public <T> void hear(final TypeLiteral<T> typeLiteral,
-			final TypeEncounter<T> typeEncounter)
+	public <T> void hear( final TypeLiteral<T> typeLiteral,
+		final TypeEncounter<T> typeEncounter )
 	{
-		for (Field field : typeLiteral.getRawType().getDeclaredFields())
+		for( Field field : typeLiteral.getRawType().getDeclaredFields() )
 		{
-			if (!field.isAnnotationPresent(InjectLogger.class))
-				continue;
+			if( !field.isAnnotationPresent( InjectLogger.class ) ) continue;
 
-			if (field.getType() == org.apache.log4j.Logger.class)
-				typeEncounter.register(new Log4JMembersInjector<T>(field));
-			else if (field.getType() == org.slf4j.Logger.class)
-				typeEncounter.register(new SLF4JMembersInjector<T>(field));
-			else if (field.getType() == java.util.logging.Logger.class)
-				typeEncounter.register(new JULMembersInjector<T>(field));
+			if( field.getType() == org.apache.logging.log4j.Logger.class )
+				typeEncounter.register( new Log4JMembersInjector<T>( field ) );
+			else if( field.getType() == org.slf4j.Logger.class )
+				typeEncounter.register( new SLF4JMembersInjector<T>( field ) );
+			else if( field.getType() == java.util.logging.Logger.class )
+				typeEncounter.register( new JULMembersInjector<T>( field ) );
 			else
-				LOG.warn("@" + InjectLogger.class.getSimpleName()
-						+ " annotated unknown logger type " + field.getType());
+				LOG.warn( "@" + InjectLogger.class.getSimpleName()
+						+ " annotated unknown logger type " + field.getType() );
 
 			// TODO add/inject other logger type implementations
 		}

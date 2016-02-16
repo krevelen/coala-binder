@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/util/SingletonMap.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: f6296378c28a4da42ade3fde1f9d72102dda2e7f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,39 +12,34 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.experimental.singleton;
-
-import io.coala.log.LogUtil;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+
+import io.coala.log.LogUtil;
 
 /**
  * {@link SingletonMap}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class SingletonMap
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(SingletonMap.class);
+	private static final Logger LOG = LogUtil.getLogger( SingletonMap.class );
 
 	/**
 	 * {@link Singleton}
 	 * 
-	 * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
-	 * @version $Revision: 296 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	public interface Singleton
 	{
@@ -62,26 +54,26 @@ public class SingletonMap
 	 * @param singleton the {@link Singleton} to maintain in this JVM
 	 * @return the {@link Singleton} again
 	 */
-	@SuppressWarnings("unchecked")
-	public synchronized static <T extends Singleton> T set(final T singleton)
+	@SuppressWarnings( "unchecked" )
+	public synchronized static <T extends Singleton> T set( final T singleton )
 	{
-		if (!SINGLETONS.containsKey(singleton.getKey()))
+		if( !SINGLETONS.containsKey( singleton.getKey() ) )
 		{
-			LOG.info("Adding singleton set for key: " + singleton.getKey());
-			SINGLETONS.put(singleton.getKey(),
-					new HashMap<Class<? extends Singleton>, Singleton>());
+			LOG.info( "Adding singleton set for key: " + singleton.getKey() );
+			SINGLETONS.put( singleton.getKey(),
+					new HashMap<Class<? extends Singleton>, Singleton>() );
 		}
 
-		final Singleton oldVersion = SINGLETONS.get(singleton.getKey()).put(
-				singleton.getClass(), singleton);
-		if (oldVersion != null)
-			LOG.warn("Replaced singleton key: " + oldVersion.getKey()
+		final Singleton oldVersion = SINGLETONS.get( singleton.getKey() )
+				.put( singleton.getClass(), singleton );
+		if( oldVersion != null )
+			LOG.warn( "Replaced singleton key: " + oldVersion.getKey()
 					+ " with type: " + singleton.getClass() + " for key: "
-					+ singleton.getKey());
+					+ singleton.getKey() );
 		else
-			LOG.info("Added singleton type: " + singleton.getClass()
-					+ " for key: " + singleton.getKey());
-		return (T) get(singleton.getKey(), singleton.getClass());
+			LOG.info( "Added singleton type: " + singleton.getClass()
+					+ " for key: " + singleton.getKey() );
+		return (T) get( singleton.getKey(), singleton.getClass() );
 	}
 
 	/**
@@ -89,11 +81,11 @@ public class SingletonMap
 	 * @param type the {@link Singleton} subclass
 	 * @return {@code true} if exists, {@code false} otherwise
 	 */
-	public synchronized static boolean has(final Serializable key,
-			final Class<? extends Singleton> type)
+	public synchronized static boolean has( final Serializable key,
+		final Class<? extends Singleton> type )
 	{
-		return SINGLETONS.containsKey(key)
-				&& SINGLETONS.get(key).containsKey(type);
+		return SINGLETONS.containsKey( key )
+				&& SINGLETONS.get( key ).containsKey( type );
 	}
 
 	/**
@@ -101,15 +93,15 @@ public class SingletonMap
 	 * @param type the {@link Singleton} subclass
 	 * @return the {@link Singleton} for specified {@code key}
 	 */
-	@SuppressWarnings("unchecked")
-	public synchronized static <T extends Singleton> T get(
-			final Serializable key, final Class<T> type)
+	@SuppressWarnings( "unchecked" )
+	public synchronized static <T extends Singleton> T
+		get( final Serializable key, final Class<T> type )
 	{
-		if (!SINGLETONS.containsKey(key))
+		if( !SINGLETONS.containsKey( key ) )
 		{
 			// LOG.warn("No singletons cached for key: " + key);
 			return null;
 		}
-		return (T) SINGLETONS.get(key).get(type);
+		return (T) SINGLETONS.get( key ).get( type );
 	}
 }

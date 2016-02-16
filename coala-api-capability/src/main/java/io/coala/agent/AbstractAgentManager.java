@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/agent/AbstractAgentManager.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 1add29f6d7d2e74c3a00fc6147db8e731017a41b $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.agent;
 
@@ -30,7 +25,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
@@ -52,21 +47,19 @@ import rx.subjects.Subject;
  * {@link AbstractAgentManager} manages the {@link LifeCycle}s of the deployed
  * {@link Agent}s
  * 
- * @date $Date: 2014-08-08 16:20:51 +0200 (Fri, 08 Aug 2014) $
- * @version $Revision: 353 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public abstract class AbstractAgentManager implements AgentManager
 {
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(AbstractAgentManager.class);
+			.getLogger( AbstractAgentManager.class );
 
 	/** */
 	private final SortedMap<AgentID, Agent> agents = Collections
-			.synchronizedSortedMap(new TreeMap<AgentID, Agent>());
+			.synchronizedSortedMap( new TreeMap<AgentID, Agent>() );
 
 	/** */
 	private final BinderFactory binderFactory;
@@ -82,13 +75,13 @@ public abstract class AbstractAgentManager implements AgentManager
 	/**
 	 * @param status
 	 */
-	private void updateAgentStatus(final Agent agent,
-			final BasicAgentStatus status)
+	private void updateAgentStatus( final Agent agent,
+		final BasicAgentStatus status )
 	{
 		// try
 		// {
-		MachineUtil.setStatus(agent, status,
-				status.isFinishedStatus() || status.isFailedStatus());
+		MachineUtil.setStatus( agent, status,
+				status.isFinishedStatus() || status.isFailedStatus() );
 		// } catch (final Throwable t)
 		// {
 		// LOG.error(String.format(
@@ -101,7 +94,7 @@ public abstract class AbstractAgentManager implements AgentManager
 	private final Map<AgentID, Observable<AgentStatusUpdate>> agentStates = new HashMap<>();
 
 	private final Set<AgentID> activatedOnce = Collections
-			.synchronizedSet(new HashSet<AgentID>());
+			.synchronizedSet( new HashSet<AgentID>() );
 
 	/**
 	 * {@link AbstractAgentManager} constructor
@@ -109,13 +102,13 @@ public abstract class AbstractAgentManager implements AgentManager
 	 * @throws CoalaException
 	 */
 	protected AbstractAgentManager(
-			final BinderFactory.Builder binderFactoryBuilder)
+		final BinderFactory.Builder binderFactoryBuilder )
 	{
 		this.binderFactory = binderFactoryBuilder
-				.withAgentStatusSource(this.agentStatusUpdates.asObservable())
+				.withAgentStatusSource( this.agentStatusUpdates.asObservable() )
 				.build();
-		this.wrapperStatusUpdates.subscribe(new AgentStarter());
-		this.agentStatusUpdates.subscribe(new AgentFinisher());
+		this.wrapperStatusUpdates.subscribe( new AgentStarter() );
+		this.agentStatusUpdates.subscribe( new AgentFinisher() );
 	}
 
 	/**
@@ -123,14 +116,14 @@ public abstract class AbstractAgentManager implements AgentManager
 	 * 
 	 * @throws CoalaException
 	 */
-	protected AbstractAgentManager(final Binder binder)
+	protected AbstractAgentManager( final Binder binder )
 	{
 		this.binderFactory = BinderFactory.Builder
-				.fromConfig(binder.inject(BinderFactoryConfig.class))
-				.withAgentStatusSource(this.agentStatusUpdates.asObservable())
+				.fromConfig( binder.inject( BinderFactoryConfig.class ) )
+				.withAgentStatusSource( this.agentStatusUpdates.asObservable() )
 				.build();
-		this.wrapperStatusUpdates.subscribe(new AgentStarter());
-		this.agentStatusUpdates.subscribe(new AgentFinisher());
+		this.wrapperStatusUpdates.subscribe( new AgentStarter() );
+		this.agentStatusUpdates.subscribe( new AgentFinisher() );
 	}
 
 	/**
@@ -145,132 +138,133 @@ public abstract class AbstractAgentManager implements AgentManager
 		@Override
 		public void onCompleted()
 		{
-			LOG.trace("COMPLETED AgentStarter");
+			LOG.trace( "COMPLETED AgentStarter" );
 		}
 
 		@Override
-		public void onError(final Throwable t)
+		public void onError( final Throwable t )
 		{
 			// t.printStackTrace();
 		}
 
 		@Override
-		public synchronized void onNext(final AgentStatusUpdate wrapperUpdate)
+		public synchronized void onNext( final AgentStatusUpdate wrapperUpdate )
 		{
 			// System.err.println("Got wrapper update: "+wrapperUpdate);
 			final AgentID agentID = wrapperUpdate.getAgentID();
-			final Agent agent = get(agentID, false);
+			final Agent agent = get( agentID, false );
 			final LifeCycleHooks hooks = (LifeCycleHooks) agent;
-			if (agent == null)
+			if( agent == null )
 			{
 				// onError(new NullPointerException("Agent not found: " +
 				// agentID));
 				return;
 			}
-			if (wrapperUpdate.getStatus().isInitializedStatus())
+			if( wrapperUpdate.getStatus().isInitializedStatus() )
 			{
 				try
 				{
 					hooks.initialize();
-					if (agent.getStatus() == null)
+					if( agent.getStatus() == null )
 					{
-						LOG.warn("Agent has no status value: " + agentID);
+						LOG.warn( "Agent has no status value: " + agentID );
 						// updateAgentStatus(agent, BasicAgentStatus.CREATED);
 					}
-					if (agent.getStatus() == null
-							|| agent.getStatus().isCreatedStatus())
-						updateAgentStatus(agent, BasicAgentStatus.INITIALIZED);
-				} catch (final Throwable e)
+					if( agent.getStatus() == null
+							|| agent.getStatus().isCreatedStatus() )
+						updateAgentStatus( agent,
+								BasicAgentStatus.INITIALIZED );
+				} catch( final Throwable e )
 				{
-					LOG.error("Problem initializing agent: " + agentID, e);
+					LOG.error( "Problem initializing agent: " + agentID, e );
 					// onError(e);
-					updateAgentStatus(agent, BasicAgentStatus.FAILED);
+					updateAgentStatus( agent, BasicAgentStatus.FAILED );
 				}
-			} else if (wrapperUpdate.getStatus().isPassiveStatus())
+			} else if( wrapperUpdate.getStatus().isPassiveStatus() )
 			{
 				final ActivationType activationType = ((LifeCycleHooks) agent)
 						.getActivationType();
-				switch (activationType)
+				switch( activationType )
 				{
 				case ACTIVATE_NEVER:
 					// do nothing, remain paused until agent notifies
 					// complete
-					if (agent.getStatus().isInitializedStatus())
+					if( agent.getStatus().isInitializedStatus() )
 					{
-						updateAgentStatus(agent, BasicAgentStatus.PASSIVE);
+						updateAgentStatus( agent, BasicAgentStatus.PASSIVE );
 					}
 					break;
 
 				case ACTIVATE_ONCE:
-					if (activatedOnce.contains(agentID))
-						return;
+					if( activatedOnce.contains( agentID ) ) return;
 
-					activatedOnce.add(agentID);
+					activatedOnce.add( agentID );
 
 				case ACTIVATE_MANY:
 					try
 					{
-						updateAgentStatus(agent, BasicAgentStatus.ACTIVE);
+						updateAgentStatus( agent, BasicAgentStatus.ACTIVE );
 						hooks.activate();
-						if (agent.getStatus().isActiveStatus())
+						if( agent.getStatus().isActiveStatus() )
 						{
-							updateAgentStatus(agent, BasicAgentStatus.PASSIVE);
+							updateAgentStatus( agent,
+									BasicAgentStatus.PASSIVE );
 							hooks.deactivate();
 						}
-					} catch (final Throwable t)
+					} catch( final Throwable t )
 					{
-						LOG.trace(String.format(
+						LOG.trace( String.format(
 								"Wrapper could not "
 										+ "activate/complete agent %s",
-								agentID), t);
+								agentID ), t );
 						// onError(t);
-						updateAgentStatus(agent, BasicAgentStatus.FAILED);
+						updateAgentStatus( agent, BasicAgentStatus.FAILED );
 					}
 					break;
 
 				case ACTIVATE_AND_FINISH:
 					try
 					{
-						updateAgentStatus(agent, BasicAgentStatus.ACTIVE);
+						updateAgentStatus( agent, BasicAgentStatus.ACTIVE );
 						hooks.activate();
-						if (agent.getStatus().isActiveStatus())
+						if( agent.getStatus().isActiveStatus() )
 						{
-							updateAgentStatus(agent, BasicAgentStatus.PASSIVE);
+							updateAgentStatus( agent,
+									BasicAgentStatus.PASSIVE );
 							hooks.deactivate();
-							if (agent.getStatus().isPassiveStatus())
-								updateAgentStatus(agent,
-										BasicAgentStatus.COMPLETE);
+							if( agent.getStatus().isPassiveStatus() )
+								updateAgentStatus( agent,
+										BasicAgentStatus.COMPLETE );
 						}
-					} catch (final Throwable t)
+					} catch( final Throwable t )
 					{
-						LOG.trace(String.format(
+						LOG.trace( String.format(
 								"Wrapper could not "
 										+ "activate/complete agent %s",
-								agentID), t);
+								agentID ), t );
 						// onError(t);
-						updateAgentStatus(agent, BasicAgentStatus.FAILED);
+						updateAgentStatus( agent, BasicAgentStatus.FAILED );
 					}
 					break;
 
 				default:
-					LOG.warn("What to do? Assuming complete after pause"
-							+ " for activation type: " + activationType);
-					updateAgentStatus(agent, BasicAgentStatus.COMPLETE);
+					LOG.warn( "What to do? Assuming complete after pause"
+							+ " for activation type: " + activationType );
+					updateAgentStatus( agent, BasicAgentStatus.COMPLETE );
 					break;
 
 				}
-			} else if (wrapperUpdate.getStatus().isFinishedStatus()
-					|| wrapperUpdate.getStatus().isFailedStatus())
+			} else if( wrapperUpdate.getStatus().isFinishedStatus()
+					|| wrapperUpdate.getStatus().isFailedStatus() )
 			{
 				try
 				{
-					if (!delete(agentID))
-						LOG.warn("Failed to remove agent from cache: "
-								+ agentID);
-				} catch (final Throwable t)
+					if( !delete( agentID ) ) LOG.warn(
+							"Failed to remove agent from cache: " + agentID );
+				} catch( final Throwable t )
 				{
-					LOG.trace(String.format("Problem destroying agent: %s",
-							agentID), t);
+					LOG.trace( String.format( "Problem destroying agent: %s",
+							agentID ), t );
 					// onError(t);
 				}
 			}
@@ -289,82 +283,81 @@ public abstract class AbstractAgentManager implements AgentManager
 		@Override
 		public void onCompleted()
 		{
-			LOG.trace("COMPLETED AgentFinisher");
+			LOG.trace( "COMPLETED AgentFinisher" );
 		}
 
 		@Override
-		public void onError(final Throwable t)
+		public void onError( final Throwable t )
 		{
 			// t.printStackTrace();
 		}
 
 		@Override
-		public void onNext(final AgentStatusUpdate update)
+		public void onNext( final AgentStatusUpdate update )
 		{
 			final AgentID agentID = update.getAgentID();
-			final Agent agent = get(agentID, false);
-			if (agent == null)
+			final Agent agent = get( agentID, false );
+			if( agent == null )
 			{
 				LOG.warn(
 						"Agent already deleted, ignoring state update: "
 								+ update.getStatus(),
 						CoalaExceptionFactory.AGENT_NOT_ALLOWED
-								.create(agentID));
+								.create( agentID ) );
 				return;
 			}
-			if (update.getStatus().isCompleteStatus())
+			if( update.getStatus().isCompleteStatus() )
 			{
 				try
 				{
 					((LifeCycleHooks) agent).finish();
-					updateAgentStatus(agent, BasicAgentStatus.FINISHED);
+					updateAgentStatus( agent, BasicAgentStatus.FINISHED );
 
 					// wait for wrapper to close before deleting wrapped
 					// agent from cache
-				} catch (final Throwable e)
+				} catch( final Throwable e )
 				{
-					LOG.trace(String
-							.format("Problem while wrapper was finishing for "
-									+ "agent: %s", agentID),
-							e);
+					LOG.trace( String
+							.format( "Problem while wrapper was finishing for "
+									+ "agent: %s", agentID ),
+							e );
 					// onError(e);
-					updateAgentStatus(agent, BasicAgentStatus.FAILED);
+					updateAgentStatus( agent, BasicAgentStatus.FAILED );
 				}
 			}
 		}
 	}
 
 	@Override
-	public Observable<AgentID> getChildIDs(final AgentID parentID,
-			final boolean currentOnly)
+	public Observable<AgentID> getChildIDs( final AgentID parentID,
+		final boolean currentOnly )
 	{
-		if (!currentOnly)
-			return this.agentStatusUpdates
-					.filter(new Func1<AgentStatusUpdate, Boolean>()
+		if( !currentOnly ) return this.agentStatusUpdates
+				.filter( new Func1<AgentStatusUpdate, Boolean>()
+				{
+					@Override
+					public Boolean call( final AgentStatusUpdate update )
 					{
-						@Override
-						public Boolean call(final AgentStatusUpdate update)
-						{
-							return parentID
-									.equals(update.getAgentID().getParentID())
-									&& update.getStatus().isCreatedStatus();
-						}
-					}).map(new Func1<AgentStatusUpdate, AgentID>()
+						return parentID
+								.equals( update.getAgentID().getParentID() )
+								&& update.getStatus().isCreatedStatus();
+					}
+				} ).map( new Func1<AgentStatusUpdate, AgentID>()
+				{
+					@Override
+					public AgentID call( final AgentStatusUpdate update )
 					{
-						@Override
-						public AgentID call(final AgentStatusUpdate update)
-						{
-							return update.getAgentID();
-						}
-					});
+						return update.getAgentID();
+					}
+				} );
 
-		synchronized (this.agents)
+		synchronized( this.agents )
 		{
 			final SortedSet<AgentID> childIDs = new TreeSet<>();
-			for (AgentID candidate : this.agents.keySet())
-				if (parentID.equals(candidate.getParentID()))
-					childIDs.add(candidate);
-			return Observable.from(childIDs);
+			for( AgentID candidate : this.agents.keySet() )
+				if( parentID.equals( candidate.getParentID() ) )
+					childIDs.add( candidate );
+			return Observable.from( childIDs );
 		}
 	}
 
@@ -383,13 +376,14 @@ public abstract class AbstractAgentManager implements AgentManager
 	 */
 	protected void bootAgents()
 	{
-		for (AgentID agentID : this.binderFactory.getConfig().getBootAgentIDs())
+		for( AgentID agentID : this.binderFactory.getConfig()
+				.getBootAgentIDs() )
 			try
 			{
-				boot(agentID, null);
-			} catch (final Exception e)
+				boot( agentID, null );
+			} catch( final Exception e )
 			{
-				LOG.error("Problem creating agent: " + agentID, e);
+				LOG.error( "Problem creating agent: " + agentID, e );
 			}
 	}
 
@@ -398,9 +392,9 @@ public abstract class AbstractAgentManager implements AgentManager
 	 * @return {@code true} if specified agent was already created,
 	 *         {@code false} otherwise
 	 */
-	protected boolean isCreated(final AgentID agentID)
+	protected boolean isCreated( final AgentID agentID )
 	{
-		return this.agents.containsKey(agentID);
+		return this.agents.containsKey( agentID );
 	}
 
 	/** */
@@ -410,19 +404,19 @@ public abstract class AbstractAgentManager implements AgentManager
 	/**
 	 * @param agentID
 	 */
-	protected void updateWrapperAgentStatus(final AgentID agentID,
-			final AgentStatus<?> status)
+	protected void updateWrapperAgentStatus( final AgentID agentID,
+		final AgentStatus<?> status )
 	{
-		if (agentID == null)
+		if( agentID == null )
 		{
-			LOG.warn("Ignoring status update",
-					CoalaExceptionFactory.VALUE_NOT_SET.create("agentID"));
+			LOG.warn( "Ignoring status update",
+					CoalaExceptionFactory.VALUE_NOT_SET.create( "agentID" ) );
 			return;
 		}
 
-		if (!isCreated(agentID))
-			LOG.warn("Missing agent: " + agentID + ", wrapper status: "
-					+ status);
+		if( !isCreated( agentID ) )
+			LOG.warn( "Missing agent: " + agentID + ", wrapper status: "
+					+ status );
 		else
 			// Schedulers.trampoline().createWorker().schedule(new Action0()
 			// {
@@ -430,7 +424,7 @@ public abstract class AbstractAgentManager implements AgentManager
 			// public void call()
 			// {
 			this.wrapperStatusUpdates
-					.onNext(new BasicAgentStatusUpdate(agentID, status));
+					.onNext( new BasicAgentStatusUpdate( agentID, status ) );
 		// }
 		// });
 	}
@@ -450,38 +444,38 @@ public abstract class AbstractAgentManager implements AgentManager
 	 *         (wrapped) {@link Agent}s
 	 */
 	@Override
-	public Observable<AgentStatusUpdate> getAgentStatus(final AgentID agentID)
+	public Observable<AgentStatusUpdate> getAgentStatus( final AgentID agentID )
 	{
-		return this.agentStates.get(agentID);
+		return this.agentStates.get( agentID );
 	}
 
-	protected Agent get(final AgentID agentID, final boolean block)
+	protected Agent get( final AgentID agentID, final boolean block )
 	{
-		Agent result = this.agents.get(agentID);
+		Agent result = this.agents.get( agentID );
 
-		while (block && result == null)
+		while( block && result == null )
 		{
-			synchronized (this.agents)
+			synchronized( this.agents )
 			{
-				LOG.trace("Waiting for agent " + agentID);
+				LOG.trace( "Waiting for agent " + agentID );
 				try
 				{
-					this.agents.wait(1000);
-				} catch (final InterruptedException ignore)
+					this.agents.wait( 1000 );
+				} catch( final InterruptedException ignore )
 				{
 				}
-				result = this.agents.get(agentID);
+				result = this.agents.get( agentID );
 			}
 		}
 		return result;
 	}
 
-	protected boolean put(final Agent agent)
+	protected boolean put( final Agent agent )
 	{
-		synchronized (this.agents)
+		synchronized( this.agents )
 		{
-			if (!isCreated(agent.getID())
-					&& this.agents.put(agent.getID(), agent) == null)
+			if( !isCreated( agent.getID() )
+					&& this.agents.put( agent.getID(), agent ) == null )
 			{
 				this.agents.notify();
 				return true;
@@ -490,25 +484,24 @@ public abstract class AbstractAgentManager implements AgentManager
 		}
 	}
 
-	protected boolean delete(final AgentID agent)
+	protected boolean delete( final AgentID agent )
 	{
-		this.activatedOnce.remove(agent);
-		this.agentStates.remove(agent);
-		if (this.agents.remove(agent) == null)
-			return false;
+		this.activatedOnce.remove( agent );
+		this.agentStates.remove( agent );
+		if( this.agents.remove( agent ) == null ) return false;
 
-		getBinderFactory().remove(agent);
+		getBinderFactory().remove( agent );
 
-		if (size() == 0)
+		if( size() == 0 )
 		{
-			LOG.info("Last one out closes the door: Shutting down "
-					+ getClass().getSimpleName());
+			LOG.info( "Last one out closes the door: Shutting down "
+					+ getClass().getSimpleName() );
 			shutdown();
 			this.agentStatusUpdates.onCompleted();
 			this.wrapperStatusUpdates.onCompleted();
 		} else
 		{
-			LOG.trace(size() + " agent(s) remaining (within wrappers)..");
+			LOG.trace( size() + " agent(s) remaining (within wrappers).." );
 		}
 		return true;
 	}
@@ -519,57 +512,57 @@ public abstract class AbstractAgentManager implements AgentManager
 	}
 
 	@Override
-	public Observable<AgentStatusUpdate> boot(final String agentName)
+	public Observable<AgentStatusUpdate> boot( final String agentName )
 	{
-		return boot(agentName, null);
+		return boot( agentName, null );
 	}
 
 	@Override
-	public Observable<AgentStatusUpdate> boot(final String agentName,
-			final Class<? extends Agent> agentType)
+	public Observable<AgentStatusUpdate> boot( final String agentName,
+		final Class<? extends Agent> agentType )
 	{
 		try
 		{
 			final AgentID agentID = this.binderFactory.getConfig()
-					.getReplicationConfig().newID().createAgentID(agentName);
-			return boot(agentID, agentType);
-		} catch (final Exception e)
+					.getReplicationConfig().newID().createAgentID( agentName );
+			return boot( agentID, agentType );
+		} catch( final Exception e )
 		{
-			return Observable.error(e);
+			return Observable.error( e );
 		}
 	}
 
 	@Override
-	public Observable<AgentStatusUpdate> boot(final AgentID agentID)
+	public Observable<AgentStatusUpdate> boot( final AgentID agentID )
 	{
-		return boot(agentID, null);
+		return boot( agentID, null );
 	}
 
 	// private static final ExecutorService WORKERS = Executors
 	// .newCachedThreadPool();
 
 	@Override
-	public synchronized Observable<AgentStatusUpdate> boot(
-			final AgentID agentID, final Class<? extends Agent> agentType)
+	public synchronized Observable<AgentStatusUpdate>
+		boot( final AgentID agentID, final Class<? extends Agent> agentType )
 	{
-		if (agentID == null || agentID.getValue().isEmpty())
-			return Observable.error(CoalaExceptionFactory.VALUE_NOT_SET.create(
-					"agentID", "Must specify the agentID when booting"));
+		if( agentID == null || agentID.getValue().isEmpty() )
+			return Observable.error( CoalaExceptionFactory.VALUE_NOT_SET.create(
+					"agentID", "Must specify the agentID when booting" ) );
 
-		if (isCreated(agentID))
+		if( isCreated( agentID ) )
 		{
-			LOG.info("Agent already exists, skipping boot for: " + agentID);
-			return this.agentStates.get(agentID);
+			LOG.info( "Agent already exists, skipping boot for: " + agentID );
+			return this.agentStates.get( agentID );
 		}
 
 		final Subject<AgentStatusUpdate, AgentStatusUpdate> statusSubject = PublishSubject
 				.create();
 		final Observable<AgentStatusUpdate> result = statusSubject
 				.asObservable();
-		this.agentStates.put(agentID, result);
+		this.agentStates.put( agentID, result );
 		// this.agents.put(agentID, null);
 
-		result.subscribe(this.agentStatusUpdates);
+		result.subscribe( this.agentStatusUpdates );
 
 		// WORKERS.submit(new Runnable()
 		// {
@@ -581,30 +574,31 @@ public abstract class AbstractAgentManager implements AgentManager
 		final Agent agent;
 		try
 		{
-			final Binder binder = getBinderFactory().create(agentID, agentType);
-			agentFactory = binder.inject(AgentFactory.class);
+			final Binder binder = getBinderFactory().create( agentID,
+					agentType );
+			agentFactory = binder.inject( AgentFactory.class );
 			agent = agentFactory.create();
-		} catch (final Throwable t)
+		} catch( final Throwable t )
 		{
-			return Observable.error(t);
+			return Observable.error( t );
 		}
 
 		try
 		{
-			put(agent);
-			agent.getStatusHistory().subscribe(new Observer<BasicAgentStatus>()
+			put( agent );
+			agent.getStatusHistory().subscribe( new Observer<BasicAgentStatus>()
 			{
 				@Override
-				public void onError(final Throwable e)
+				public void onError( final Throwable e )
 				{
 					// e.printStackTrace();
 				}
 
 				@Override
-				public void onNext(final BasicAgentStatus status)
+				public void onNext( final BasicAgentStatus status )
 				{
 					statusSubject.onNext(
-							new BasicAgentStatusUpdate(agentID, status));
+							new BasicAgentStatusUpdate( agentID, status ) );
 				}
 
 				@Override
@@ -613,19 +607,19 @@ public abstract class AbstractAgentManager implements AgentManager
 					// System.err.println("STATUS HISTORY COMPLETED");
 					statusSubject.onCompleted();
 				}
-			});
+			} );
 
-			updateAgentStatus(agent, BasicAgentStatus.CREATED);
+			updateAgentStatus( agent, BasicAgentStatus.CREATED );
 
-			LOG.trace("Used " + agentFactory.getClass().getName()
-					+ " to create " + agent.getClass().getName());
+			LOG.trace( "Used " + agentFactory.getClass().getName()
+					+ " to create " + agent.getClass().getName() );
 
-			boot(agent);
-		} catch (final Throwable e)
+			boot( agent );
+		} catch( final Throwable e )
 		{
-			statusSubject.onError(e);
+			statusSubject.onError( e );
 
-			updateAgentStatus(agent, BasicAgentStatus.FAILED);
+			updateAgentStatus( agent, BasicAgentStatus.FAILED );
 		}
 		// }
 		// });
@@ -637,7 +631,7 @@ public abstract class AbstractAgentManager implements AgentManager
 	 * @return the agent's {@link AgentID}
 	 * @throws CoalaException if agent wrapping failed
 	 */
-	protected abstract AgentID boot(Agent agent) throws CoalaException;
+	protected abstract AgentID boot( Agent agent ) throws CoalaException;
 
 	protected abstract void shutdown();
 

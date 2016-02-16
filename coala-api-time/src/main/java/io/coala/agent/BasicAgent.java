@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/agent/BasicAgent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 210b81cbbec5bdef3be9ada8446ba6a23966e9f5 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,10 +12,14 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.agent;
+
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.bind.Binder;
 import io.coala.capability.admin.CreatingCapability;
@@ -38,23 +39,14 @@ import io.coala.lifecycle.LifeCycle;
 import io.coala.lifecycle.LifeCycleHooks;
 import io.coala.log.InjectLogger;
 
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * {@link BasicAgent}
  * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <THIS> the concrete type of {@link BasicAgent} to inject, compare etc.
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
-		implements Agent, LifeCycle<BasicAgentStatus>, LifeCycleHooks
+	implements Agent, LifeCycle<BasicAgentStatus>, LifeCycleHooks
 {
 
 	/** */
@@ -73,9 +65,9 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	 * @param binder
 	 */
 	@Inject
-	protected BasicAgent(final Binder binder)
+	protected BasicAgent( final Binder binder )
 	{
-		super(binder.getID());
+		super( binder.getID() );
 		this.binder = binder;
 	}
 
@@ -84,7 +76,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	 */
 	protected void die()
 	{
-		forceStatus(BasicAgentStatus.COMPLETE);
+		forceStatus( BasicAgentStatus.COMPLETE );
 	}
 
 	/**
@@ -93,9 +85,10 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	 * @param key
 	 * @return
 	 */
-	protected PropertyGetter getProperty(final String key)
+	protected PropertyGetter getProperty( final String key )
 	{
-		return getBinder().inject(ConfiguringCapability.class).getProperty(key);
+		return getBinder().inject( ConfiguringCapability.class )
+				.getProperty( key );
 	}
 
 	/**
@@ -104,7 +97,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@JsonIgnore
 	protected CreatingCapability getBooter()
 	{
-		return getBinder().inject(CreatingCapability.class);
+		return getBinder().inject( CreatingCapability.class );
 	}
 
 	/**
@@ -122,7 +115,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@JsonIgnore
 	protected ReplicatingCapability getSimulator()
 	{
-		return getBinder().inject(ReplicatingCapability.class);
+		return getBinder().inject( ReplicatingCapability.class );
 	}
 
 	/**
@@ -131,7 +124,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@JsonIgnore
 	protected SendingCapability getMessenger()
 	{
-		return getBinder().inject(SendingCapability.class);
+		return getBinder().inject( SendingCapability.class );
 	}
 
 	/**
@@ -140,7 +133,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@JsonIgnore
 	protected ReceivingCapability getReceiver()
 	{
-		return getBinder().inject(ReceivingCapability.class);
+		return getBinder().inject( ReceivingCapability.class );
 	}
 
 	/**
@@ -149,13 +142,13 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@JsonIgnore
 	protected ReasoningCapability getReasoner()
 	{
-		return getBinder().inject(ReasoningCapability.class);
+		return getBinder().inject( ReasoningCapability.class );
 	}
 
 	@JsonIgnore
 	protected DestroyingCapability getFinalizer()
 	{
-		return getBinder().inject(DestroyingCapability.class);
+		return getBinder().inject( DestroyingCapability.class );
 	}
 
 	/**
@@ -173,7 +166,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@JsonIgnore
 	protected GroundingCapability getWorld()
 	{
-		return getBinder().inject(GroundingCapability.class);
+		return getBinder().inject( GroundingCapability.class );
 	}
 
 	/**
@@ -188,7 +181,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@Override
 	public String toString()
 	{
-		return String.format("%s[%s]", getClass().getSimpleName(), getID());
+		return String.format( "%s[%s]", getClass().getSimpleName(), getID() );
 	}
 
 	/** */
@@ -200,9 +193,8 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@Override
 	public void initialize() throws Exception
 	{
-		if (this.initialized)
-			throw new IllegalStateException(
-					"Agent already initialized: " + getID());
+		if( this.initialized ) throw new IllegalStateException(
+				"Agent already initialized: " + getID() );
 
 		this.initialized = true;
 	}

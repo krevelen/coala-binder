@@ -1,7 +1,4 @@
-/* $Id$
- * $URL$
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 9d52d00092ced6f5e14a670344a8fc66b98ed080 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve3;
 
@@ -26,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.almende.eve.protocol.jsonrpc.annotation.Access;
 import com.almende.eve.protocol.jsonrpc.annotation.AccessType;
@@ -53,10 +48,8 @@ import rx.Observer;
 /**
  * {@link EveWrapperAgent}
  * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		implements Observer<AgentStatusUpdate>, EveSenderAgent,
@@ -182,7 +175,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	public String getType()
 	{
 		return EveAgentManager.getInstance().getAgent(getAgentID(), true)
-				.getClass().getSimpleName() + " $Id$";
+				.getClass().getSimpleName() + " $Id: 9d52d00092ced6f5e14a670344a8fc66b98ed080 $";
 	}
 
 	@Override

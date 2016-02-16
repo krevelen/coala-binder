@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 79a68792095c1ae453e4f86411f96219ccd6fbe5 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,10 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.test.impl;
+
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.Binder;
 import io.coala.enterprise.role.AbstractExecutor;
@@ -27,18 +29,14 @@ import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import io.coala.time.Trigger;
 
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
-
 /**
- * {@link MyTestFactInitiatorRole}
+ * {@link MyTestFactExecutorRole}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class MyTestFactExecutorRole extends AbstractExecutor<TestFact.Request>
-		implements TestFact.Executor
+	implements TestFact.Executor
 {
 
 	/** */
@@ -54,28 +52,27 @@ public class MyTestFactExecutorRole extends AbstractExecutor<TestFact.Request>
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected MyTestFactExecutorRole(final Binder binder)
+	protected MyTestFactExecutorRole( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
-	public void onRequested(final TestFact.Request request)
+	public void onRequested( final TestFact.Request request )
 	{
-		LOG.trace("Owner type: " + getOwnerType().getName());
-		final SimTime then = getTime().plus(1, TimeUnit.HOURS);
-		LOG.trace("Sending response @ " + then + " for request " + request);
-		getSimulator()
-				.schedule(
-						ProcedureCall.create(this, this, DO_RESPONSE_METHOD_ID,
-								request), Trigger.createAbsolute(then));
+		LOG.trace( "Owner type: " + getOwnerType().getName() );
+		final SimTime then = getTime().plus( 1, TimeUnit.HOURS );
+		LOG.trace( "Sending response @ " + then + " for request " + request );
+		getSimulator().schedule( ProcedureCall.create( this, this,
+				DO_RESPONSE_METHOD_ID, request ),
+				Trigger.createAbsolute( then ) );
 	}
 
 	private static final String DO_RESPONSE_METHOD_ID = "doResponse/1";
 
-	@Schedulable(DO_RESPONSE_METHOD_ID)
-	protected void doResponse(final TestFact.Request request) throws Exception
+	@Schedulable( DO_RESPONSE_METHOD_ID )
+	protected void doResponse( final TestFact.Request request ) throws Exception
 	{
-		send(TestFact.Response.Builder.forProducer(this, request).build());
+		send( TestFact.Response.Builder.forProducer( this, request ).build() );
 	}
 }

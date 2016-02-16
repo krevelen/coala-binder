@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/EveWrapperAgentTest.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 6880b2f7b7c65dbe256fa5709b520368502fd84d $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve3;
 
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.agent.AgentStatusUpdate;
@@ -32,11 +27,9 @@ import rx.Observer;
 /**
  * {@link CleanupTest}
  * 
- * @date $Date: 2014-06-19 12:25:20 +0200 (Thu, 19 Jun 2014) $
- * @version $Revision: 306 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-// @Ignore
 public class CleanupTest
 {
 

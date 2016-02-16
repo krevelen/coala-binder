@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/dsol-util/src/test/java/io/coala/dsol/DsolTestAgent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: ce9a194b8adfea10624c63033140d29d53bdb648 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.dsol;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.agent.BasicAgent;
@@ -41,12 +36,10 @@ import io.coala.time.Trigger;
 /**
  * {@link DsolTestAgent}
  * 
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-public class DsolTestAgent extends BasicAgent implements
-		ModelComponent<AgentID>
+public class DsolTestAgent extends BasicAgent implements ModelComponent<AgentID>
 {
 
 	/** */
@@ -62,15 +55,15 @@ public class DsolTestAgent extends BasicAgent implements
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected DsolTestAgent(final Binder binder)
+	protected DsolTestAgent( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
 	public void initialize()
 	{
-		LOG.trace("initializing...");
+		LOG.trace( "initializing..." );
 	}
 
 	public ActivationType getActivationType()
@@ -80,45 +73,47 @@ public class DsolTestAgent extends BasicAgent implements
 
 	protected DsolSimulatorService getSimulator()
 	{
-		return (DsolSimulatorService) getBinder().inject(ReplicatingCapability.class);
+		return (DsolSimulatorService) getBinder()
+				.inject( ReplicatingCapability.class );
 	}
 
 	protected SimTime.Factory newSimTime()
 	{
-		return getBinder().inject(SimTime.Factory.class);
+		return getBinder().inject( SimTime.Factory.class );
 	}
 
 	private static final String schedulableMethodID = "testMethodID";
 
-	@Schedulable(schedulableMethodID)
-	protected void testSchedulableMethod(int repeats)
+	@Schedulable( schedulableMethodID )
+	protected void testSchedulableMethod( int repeats )
 	{
 		final SimTime now = getSimulator().getTime();
-		LOG.trace("Scheduled call, iteration " + repeats + ", at t=" + now);
-		if (repeats <= 0)
+		LOG.trace( "Scheduled call, iteration " + repeats + ", at t=" + now );
+		if( repeats <= 0 )
 			die();
 		else
 			getSimulator().schedule(
-					ProcedureCall.create(this, this, schedulableMethodID,
-							repeats - 1),
-					Trigger.createDelay(now,
-							newSimTime().create(1, TimeUnit.HOURS)));
+					ProcedureCall.create( this, this, schedulableMethodID,
+							repeats - 1 ),
+					Trigger.createDelay( now,
+							newSimTime().create( 1, TimeUnit.HOURS ) ) );
 	}
 
 	@Override
 	public void activate()
 	{
-		LOG.trace("activating, t=" + getSimulator().getTime());
+		LOG.trace( "activating, t=" + getSimulator().getTime() );
 		getSimulator().schedule(
-				ProcedureCall.create(this, this, schedulableMethodID, 100),
-				Trigger.createAbsolute(newSimTime().create(1, TimeUnit.DAYS)));
-		LOG.trace("done!");
+				ProcedureCall.create( this, this, schedulableMethodID, 100 ),
+				Trigger.createAbsolute(
+						newSimTime().create( 1, TimeUnit.DAYS ) ) );
+		LOG.trace( "done!" );
 	}
 
 	@Override
 	public void deactivate()
 	{
-		LOG.trace("deactivating...");
+		LOG.trace( "deactivating..." );
 		// try
 		// {
 		// getSimulator().getReplication().start();
@@ -131,7 +126,7 @@ public class DsolTestAgent extends BasicAgent implements
 	@Override
 	public void finish()
 	{
-		LOG.trace("finishing...");
+		LOG.trace( "finishing..." );
 	}
 
 	/** @see ModelComponent#getOwnerID() */

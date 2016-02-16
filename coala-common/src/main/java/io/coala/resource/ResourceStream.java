@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/resource/ResourceStream.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 0f8761392b7e9922e374c219a9b2936d94552f41 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,15 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.resource;
-
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
-import io.coala.xml.XmlContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -34,22 +24,26 @@ import javax.xml.bind.JAXBIntrospector;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import io.coala.exception.CoalaExceptionFactory;
+import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
+import io.coala.xml.XmlContext;
 
 /**
  * {@link ResourceStream}
  * 
- * @version $Revision: 362 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class ResourceStream
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(ResourceStream.class);
+	private static final Logger LOG = LogUtil.getLogger( ResourceStream.class );
 
 	/** */
 	private final InputStream stream;
@@ -67,8 +61,8 @@ public class ResourceStream
 	 * @param type
 	 * @param path
 	 */
-	private ResourceStream(final InputStream stream, final ResourceType type,
-			final String path)
+	private ResourceStream( final InputStream stream, final ResourceType type,
+		final String path )
 	{
 		this.stream = stream;
 		this.type = type;
@@ -114,23 +108,22 @@ public class ResourceStream
 		try
 		{
 			stream = getStream();
-			return String.format("[source: %s%s >>> %s]", getPath(),
+			return String.format( "[source: %s%s >>> %s]", getPath(),
 					getType() == null ? "" : ", type: " + getType(),
-					IOUtils.toString(stream));
-		} catch (final Throwable e)
+					IOUtils.toString( stream ) );
+		} catch( final Throwable e )
 		{
-			LOG.error("Problem while streaming from " + getPath(), e);
+			LOG.error( "Problem while streaming from " + getPath(), e );
 			return e.getMessage();
 		} finally
 		{
-			if (stream != null)
-				try
-				{
-					stream.close();
-				} catch (final IOException e)
-				{
-					LOG.error("Problem with stream cleanup", e);
-				}
+			if( stream != null ) try
+			{
+				stream.close();
+			} catch( final IOException e )
+			{
+				LOG.error( "Problem with stream cleanup", e );
+			}
 		}
 	}
 
@@ -141,11 +134,11 @@ public class ResourceStream
 	{
 		try
 		{
-			return JsonUtil.toTree(IOUtils.toString(getStream()));
-		} catch (final IOException e)
+			return JsonUtil.toTree( IOUtils.toString( getStream() ) );
+		} catch( final IOException e )
 		{
-			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e,
-					"<stream>", JsonNode.class);
+			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime( e,
+					"<stream>", JsonNode.class );
 		}
 	}
 
@@ -155,16 +148,17 @@ public class ResourceStream
 	 * @return the {@link InputStream} unmarshalled into an object of the
 	 *         specified {@code resultType}
 	 */
-	public <T> T toJSON(final Class<T> resultType)
+	public <T> T toJSON( final Class<T> resultType )
 	{
 		try
 		{
-			return JsonUtil.valueOf(IOUtils.toString(getStream()), resultType);
+			return JsonUtil.valueOf( IOUtils.toString( getStream() ),
+					resultType );
 			// valueOf(getStream(), resultType);
-		} catch (final IOException e)
+		} catch( final IOException e )
 		{
-			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e,
-					"<stream>", resultType);
+			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime( e,
+					"<stream>", resultType );
 		}
 	}
 
@@ -176,17 +170,17 @@ public class ResourceStream
 	 *         {@code resultType}
 	 * @throws JAXBException
 	 */
-	@SuppressWarnings("unchecked")
-	public <T> T toXML(final XmlContext<?> context, final Class<T> resultType)
+	@SuppressWarnings( "unchecked" )
+	public <T> T toXML( final XmlContext<?> context, final Class<T> resultType )
 	{
 		try
 		{
-			return (T) JAXBIntrospector.getValue(context.getUnmarshaller()
-					.unmarshal(new StreamSource(getStream()), resultType));
-		} catch (final JAXBException e)
+			return (T) JAXBIntrospector.getValue( context.getUnmarshaller()
+					.unmarshal( new StreamSource( getStream() ), resultType ) );
+		} catch( final JAXBException e )
 		{
-			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime(e,
-					"<stream>", resultType);
+			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime( e,
+					"<stream>", resultType );
 		}
 	}
 
@@ -194,10 +188,10 @@ public class ResourceStream
 	 * @param obj
 	 * @return the default {@link Object#toString()} result
 	 */
-	private static String toHashString(final Object obj)
+	private static String toHashString( final Object obj )
 	{
 		return obj.getClass().getName() + "@"
-				+ Integer.toHexString(obj.hashCode());
+				+ Integer.toHexString( obj.hashCode() );
 	}
 
 	/**
@@ -206,10 +200,10 @@ public class ResourceStream
 	 * @param path
 	 * @return
 	 */
-	public static ResourceStream of(final InputStream is,
-			final ResourceType type, final String path)
+	public static ResourceStream of( final InputStream is,
+		final ResourceType type, final String path )
 	{
-		return new ResourceStream(is, type, path);
+		return new ResourceStream( is, type, path );
 	}
 
 	/**
@@ -217,9 +211,11 @@ public class ResourceStream
 	 * @param type
 	 * @return
 	 */
-	public static ResourceStream of(final byte[] bytes, final ResourceType type)
+	public static ResourceStream of( final byte[] bytes,
+		final ResourceType type )
 	{
-		return of(new ByteArrayInputStream(bytes), type, toHashString(bytes));
+		return of( new ByteArrayInputStream( bytes ), type,
+				toHashString( bytes ) );
 	}
 
 	/**
@@ -227,10 +223,10 @@ public class ResourceStream
 	 * @param type
 	 * @return
 	 */
-	public static ResourceStream of(final String string,
-			final ResourceType type)
+	public static ResourceStream of( final String string,
+		final ResourceType type )
 	{
-		return of(string, type, string);
+		return of( string, type, string );
 	}
 
 	/**
@@ -239,10 +235,10 @@ public class ResourceStream
 	 * @param stringRepr
 	 * @return
 	 */
-	public static ResourceStream of(final Object source,
-			final ResourceType type, final String stringRepr)
+	public static ResourceStream of( final Object source,
+		final ResourceType type, final String stringRepr )
 	{
-		return of(new ByteArrayInputStream(stringRepr.getBytes()), type,
-				toHashString(source));
+		return of( new ByteArrayInputStream( stringRepr.getBytes() ), type,
+				toHashString( source ) );
 	}
 }

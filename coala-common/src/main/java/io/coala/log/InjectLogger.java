@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/log/InjectLogger.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: e856ae6d739cc16866dff9ec8eebf8eb406ca24a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.log;
 
@@ -27,18 +22,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * {@link InjectLogger} does not work on abstract supertypes, perhaps a solution
- * may be distilled from <a href=
+ * {@link InjectLogger} does not work on abstract super-types, perhaps a
+ * solution may be distilled from <a href=
  * "https://bitbucket.org/noctarius/guiceidentityinjection/src/014f6cb8fcc0/src/main/java/com/google/inject/identityinjection/IdentityProviderFactory.java"
  * >here</a>
  * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 @Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Retention( RetentionPolicy.RUNTIME )
+@Target( ElementType.FIELD )
 public @interface InjectLogger
 {
 

@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/GuiceBinder.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 1f25b5630ce072e2951962887166500429e57826 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.guice;
 
@@ -30,7 +25,7 @@ import java.util.Set;
 
 import javax.inject.Provider;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Injector;
@@ -66,20 +61,18 @@ import rx.Observable;
 /**
  * {@link GuiceBinder}
  * 
- * @date $Date: 2014-08-09 08:14:14 +0200 (Sat, 09 Aug 2014) $
- * @version $Revision: 354 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-@SuppressWarnings("deprecation")
-public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
+@SuppressWarnings( "deprecation" )
+public class GuiceBinder extends AbstractIdentifiable<AgentID> implements Binder
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(GuiceBinder.class);
+	private static final Logger LOG = LogUtil.getLogger( GuiceBinder.class );
 
 	/** */
 	@JsonIgnore
@@ -100,14 +93,13 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 	 * @param config
 	 * @param clientType
 	 */
-	public GuiceBinder(final BinderFactoryConfig config,
-			final String clientName, final Class<? extends Agent> clientType,
-			final Observable<AgentStatusUpdate> ownerStatus,
-			final Module... modules)
+	public GuiceBinder( final BinderFactoryConfig config,
+		final String clientName, final Class<? extends Agent> clientType,
+		final Observable<AgentStatusUpdate> ownerStatus,
+		final Module... modules )
 	{
-		this(config,
-				config.getReplicationConfig().newID().createAgentID(clientName),
-				clientType, ownerStatus, modules);
+		this( config, config.getReplicationConfig().newID().createAgentID(
+				clientName ), clientType, ownerStatus, modules );
 	}
 
 	/**
@@ -116,60 +108,60 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 	 * @param config
 	 * @param clientType
 	 */
-	@SuppressWarnings("rawtypes")
-	public GuiceBinder(final BinderFactoryConfig config, final AgentID clientID,
-			final Class<? extends Agent> clientType,
-			final Observable<AgentStatusUpdate> ownerStatus,
-			final Module... modules)
+	@SuppressWarnings( "rawtypes" )
+	public GuiceBinder( final BinderFactoryConfig config,
+		final AgentID clientID, final Class<? extends Agent> clientType,
+		final Observable<AgentStatusUpdate> ownerStatus,
+		final Module... modules )
 	{
-		super(clientID);
+		super( clientID );
 
 		this.ownerStatus = ownerStatus;
 
 		final Class<? extends Agent> agentType = clientType != null ? clientType
-				: config.getCustomAgentTypes().containsKey(getID())
-						? config.getCustomAgentTypes().get(getID())
+				: config.getCustomAgentTypes().containsKey( getID() )
+						? config.getCustomAgentTypes().get( getID() )
 						: config.getDefaultAgentType();
-		LOG.trace("Agent type for: " + getID() + " = " + agentType
-				+ ", configured: " + config.getCustomAgentTypes());
+		LOG.trace( "Agent type for: " + getID() + " = " + agentType
+				+ ", configured: " + config.getCustomAgentTypes() );
 
 		final List<Module> moduleList = new ArrayList<Module>();
 
 		// this.configModule = new ConfigModule(ConfigUtil.getMainConfig());
 		// moduleList.add(this.configModule);
 
-		this.lazyInstaller = new GuiceLazyBinderModule(this)
+		this.lazyInstaller = new GuiceLazyBinderModule( this)
 		{
 			@Override
 			protected void configure()
 			{
 				// bind @InjectLogger injection annotation
-				bindListener(Matchers.any(), new InjectLoggerTypeListener());
+				bindListener( Matchers.any(), new InjectLoggerTypeListener() );
 
-				bind(Binder.class).toInstance(GuiceBinder.this);
+				bind( Binder.class ).toInstance( GuiceBinder.this );
 
 				// bind(BinderFactory.class).toInstance(instance);
 
-				bind(BinderFactoryConfig.class).toInstance(config);
+				bind( BinderFactoryConfig.class ).toInstance( config );
 
-				bind(ModelID.class).toInstance(clientID.getModelID());
+				bind( ModelID.class ).toInstance( clientID.getModelID() );
 
-				bind(ModelComponentIDFactory.class)
-						.toInstance(config.getReplicationConfig().newID());
+				bind( ModelComponentIDFactory.class )
+						.toInstance( config.getReplicationConfig().newID() );
 
-				bind(ReplicationConfig.class)
-						.toInstance(config.getReplicationConfig());
-
-				// FIXME replace by binder config
-				bind(RandomDistribution.Factory.class)
-						.to(RandomDistributionFactoryImpl.class);
+				bind( ReplicationConfig.class )
+						.toInstance( config.getReplicationConfig() );
 
 				// FIXME replace by binder config
-				bind(RandomNumberStream.Factory.class)
-						.to(RandomNumberStreamFactoryWell19937c.class);
+				bind( RandomDistribution.Factory.class )
+						.to( RandomDistributionFactoryImpl.class );
 
-				LOG.trace("Bound " + Binder.class.getName() + " to "
-						+ GuiceBinder.this + " for client: " + getID());
+				// FIXME replace by binder config
+				bind( RandomNumberStream.Factory.class )
+						.to( RandomNumberStreamFactoryWell19937c.class );
+
+				LOG.trace( "Bound " + Binder.class.getName() + " to "
+						+ GuiceBinder.this + " for client: " + getID() );
 
 				// bind(AgentID.class).toInstance(clientID);
 
@@ -177,36 +169,38 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 				// http://beust.com/weblog/2013/07/12/flexible-configuration-with-guice/
 				// and OWNER API at http://owner.aeonbits.org/
 
-				bindConstant().annotatedWith(Names.named(AGENT_TYPE))
-						.to(agentType == null ? Void.class : agentType);
+				bindConstant().annotatedWith( Names.named( AGENT_TYPE ) )
+						.to( agentType == null ? Void.class : agentType );
 
-				for (Entry<Class<? extends CapabilityFactory>, Class<? extends Capability>> entry : config
-						.getSingletonServiceTypes().entrySet())
+				for( Entry<Class<? extends CapabilityFactory>, Class<? extends Capability>> entry : config
+						.getSingletonServiceTypes().entrySet() )
 					lazyInstall(
-							entry.getKey().asSubclass(CapabilityFactory.class),
-							entry.getValue());
+							entry.getKey()
+									.asSubclass( CapabilityFactory.class ),
+							entry.getValue() );
 
-				for (Entry<Class<? extends Capability>, Class<? extends Capability>> entry : config
-						.getInstantServiceTypes().entrySet())
-					bindService(entry.getKey(), entry.getValue());
+				for( Entry<Class<? extends Capability>, Class<? extends Capability>> entry : config
+						.getInstantServiceTypes().entrySet() )
+					bindService( entry.getKey(), entry.getValue() );
 
-				install(new FactoryModuleBuilder()
-						.implement(SimTime.class, GuiceSimTime.class)
-						.build(SimTimeFactory.class));
-				install(new FactoryModuleBuilder()
-						.implement(SimTime.class, GuiceSimTime.class)
-						.build(SimTime.Factory.class));
+				install( new FactoryModuleBuilder()
+						.implement( SimTime.class, GuiceSimTime.class )
+						.build( SimTimeFactory.class ) );
+				install( new FactoryModuleBuilder()
+						.implement( SimTime.class, GuiceSimTime.class )
+						.build( SimTime.Factory.class ) );
 
-				install(new FactoryModuleBuilder()
-						.implement(Agent.class, agentType == null
-								? BasicAgent.class : agentType)
-						.build(AgentFactory.class));
+				install( new FactoryModuleBuilder()
+						.implement( Agent.class,
+								agentType == null ? BasicAgent.class
+										: agentType )
+						.build( AgentFactory.class ) );
 
 			}
 		};
-		moduleList.add(this.lazyInstaller);
-		moduleList.addAll(Arrays.asList(modules));
-		this.injector = GuiceUtil.getInstance(getID(), moduleList)
+		moduleList.add( this.lazyInstaller );
+		moduleList.addAll( Arrays.asList( modules ) );
+		this.injector = GuiceUtil.getInstance( getID(), moduleList )
 				.getInjector();
 	}
 
@@ -227,9 +221,9 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 	}
 
 	@Override
-	public <T> T inject(final Class<T> type)
+	public <T> T inject( final Class<T> type )
 	{
-		return getInjector().getInstance(type);
+		return getInjector().getInstance( type );
 	}
 
 	// protected Map<Class<?>,Object> bindings = new HashMap<>();
@@ -238,35 +232,35 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 	public Set<Class<?>> getBindings()
 	{
 		final Set<Class<?>> result = new HashSet<>(
-				this.lazyInstaller.available.keySet());
-		if (getInjector() != null)
-			for (Key<?> key : getInjector().getBindings().keySet())
-				result.add(key.getTypeLiteral().getRawType());
-		return Collections.unmodifiableSet(result);
+				this.lazyInstaller.available.keySet() );
+		if( getInjector() != null )
+			for( Key<?> key : getInjector().getBindings().keySet() )
+			result.add( key.getTypeLiteral().getRawType() );
+		return Collections.unmodifiableSet( result );
 	}
 
 	@Override
-	public <T> Provider<T> rebind(final Class<T> type, final T instance)
+	public <T> Provider<T> rebind( final Class<T> type, final T instance )
 	{
-		return rebind(type, new Provider<T>()
+		return rebind( type, new Provider<T>()
 		{
 			@Override
 			public T get()
 			{
 				return instance;
 			}
-		});
+		} );
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Override
-	public <T> Provider<T> rebind(final Class<T> type,
-			final Provider<T> provider)
+	public <T> Provider<T> rebind( final Class<T> type,
+		final Provider<T> provider )
 	{
-		final T old = (T) this.lazyInstaller.lazyInstances.remove(type);
-		LOG.trace("Rebinding " + type.getName() + ", removed lazy instance: "
-				+ old);
-		return (Provider<T>) this.lazyInstaller.available.put(type,
+		final T old = (T) this.lazyInstaller.lazyInstances.remove( type );
+		LOG.trace( "Rebinding " + type.getName() + ", removed lazy instance: "
+				+ old );
+		return (Provider<T>) this.lazyInstaller.available.put( type,
 				new com.google.inject.Provider<T>()
 				{
 					@Override
@@ -274,7 +268,7 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID>implements Binder
 					{
 						return provider.get();
 					}
-				});
+				} );
 	}
 
 }

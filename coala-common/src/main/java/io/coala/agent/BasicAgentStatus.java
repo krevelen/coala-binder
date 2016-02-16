@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/agent/BasicAgentStatus.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: e1d448ba9e62cc550b2c3654fdec90b44b67d5d7 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,10 +12,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.agent;
+
+import org.apache.logging.log4j.Logger;
 
 import io.coala.lifecycle.ActivationType;
 import io.coala.lifecycle.LifeCycleHooks;
@@ -26,8 +23,12 @@ import io.coala.lifecycle.LifeCycleStatus;
 import io.coala.lifecycle.MachineStatus;
 import io.coala.log.LogUtil;
 
-import org.apache.log4j.Logger;
-
+/**
+ * {@link BasicAgentStatus}
+ * 
+ * @version $Id$
+ * @author Rick van Krevelen
+ */
 public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 {
 	/** constructed */
@@ -57,18 +58,18 @@ public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 	 * @see MachineStatus#permitsTransitionFrom(MachineStatus)
 	 */
 	@Override
-	public boolean permitsTransitionFrom(final BasicAgentStatus status)
+	public boolean permitsTransitionFrom( final BasicAgentStatus status )
 	{
-		return status.permitsTransitionTo(this);
+		return status.permitsTransitionTo( this );
 	}
 
 	/**
 	 * @see MachineStatus#permitsTransitionTo(MachineStatus)
 	 */
 	@Override
-	public boolean permitsTransitionTo(final BasicAgentStatus status)
+	public boolean permitsTransitionTo( final BasicAgentStatus status )
 	{
-		switch (status)
+		switch( status )
 		{
 
 		case FAILED:
@@ -159,7 +160,8 @@ public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 		return this == FAILED;
 	}
 
-	private static final Logger LOG = LogUtil.getLogger(BasicAgentStatus.class);
+	private static final Logger LOG = LogUtil
+			.getLogger( BasicAgentStatus.class );
 
 	/**
 	 * @param agent the {@link Agent} to examine
@@ -167,18 +169,19 @@ public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 	 *         termination, or {@link BasicAgentStatus#FINISHED FINISHED} for
 	 *         abnormal termination (already completed/failed/finished)
 	 */
-	public static BasicAgentStatus determineKillStatus(final Agent agent)
+	public static BasicAgentStatus determineKillStatus( final Agent agent )
 	{
 		final BasicAgentStatus currentStatus = agent.getStatus();
 		final ActivationType activationType = ((LifeCycleHooks) agent)
 				.getActivationType();
-		switch (currentStatus)
+		switch( currentStatus )
 		{
 		case COMPLETE:
 		case FAILED:
 		case FINISHED: // done
-			LOG.warn("Race condition? Agent " + agent.getID() + " is "
-					+ currentStatus + " and should already have been finished");
+			LOG.warn( "Race condition? Agent " + agent.getID() + " is "
+					+ currentStatus
+					+ " and should already have been finished" );
 			return FINISHED;
 
 		case CREATED:
@@ -186,11 +189,12 @@ public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 			return COMPLETE;
 
 		case ACTIVE:
-			switch (activationType)
+			switch( activationType )
 			{
 			case ACTIVATE_NEVER:
-				LOG.warn("Strange! Agent " + agent.getID() + " was "
-						+ currentStatus + " when it should never be activated");
+				LOG.warn( "Strange! Agent " + agent.getID() + " was "
+						+ currentStatus
+						+ " when it should never be activated" );
 			case ACTIVATE_AND_FINISH:
 			case ACTIVATE_ONCE:
 			case ACTIVATE_MANY:
@@ -203,9 +207,9 @@ public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 
 		default:
 			// should never happen
-			LOG.warn("Assuming " + COMPLETE
+			LOG.warn( "Assuming " + COMPLETE
 					+ " to kill agent from current status: " + currentStatus
-					+ " for activation type: " + activationType);
+					+ " for activation type: " + activationType );
 			return COMPLETE;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: da91316713520a079a90fd54438e6181880cf41a $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/config/AbstractPropertyGetter.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,6 +20,17 @@
  */
 package io.coala.config;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+
+import org.apache.logging.log4j.Logger;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
+
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.exception.CoalaRuntimeException;
@@ -27,23 +38,11 @@ import io.coala.factory.ClassUtil;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-
-import org.apache.log4j.Logger;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
-
 /**
  * {@link AbstractPropertyGetter}
  * 
- * @date $Date: 2014-08-04 14:19:04 +0200 (Mon, 04 Aug 2014) $
- * @version $Revision: 336 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public abstract class AbstractPropertyGetter implements PropertyGetter
 {

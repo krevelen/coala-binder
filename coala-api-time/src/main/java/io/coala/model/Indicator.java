@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/model/Indicator.java $
- * 
- * Part of the EU project INERTIA, see http://www.inertia-project.eu/
+/* $Id: 7f6743eb409ca6c0404e87cd141995ebeba63a7f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,10 +12,14 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.model;
+
+import java.rmi.RemoteException;
+
+import org.apache.logging.log4j.Logger;
+
+import com.eaio.uuid.UUID;
 
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
@@ -28,37 +29,29 @@ import io.coala.log.LogUtil;
 import io.coala.model.Indicator.ValueChangedEvent;
 import io.coala.time.Instant;
 
-import java.rmi.RemoteException;
-
-import org.apache.log4j.Logger;
-
-import com.eaio.uuid.UUID;
-
 /**
  * {@link Indicator}
  * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <S> the type of {@link SimulatorInterface}
- * @param <M> the type of {@link DsolModel}
- * @param <THIS> the final type of {@link Indicator}
+ * @param <A> the type of {@link Agent}
+ * @param <I> he type of {@link Instant}
+ * @param <THIS> the concrete type of {@link Indicator}
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class Indicator<A extends Agent, I extends Instant<I>, THIS extends Indicator<A, I, THIS>>
-		extends
-		AbstractModelComponent<BasicModelComponentID, A, ValueChangedEvent<I>>
+	extends
+	AbstractModelComponent<BasicModelComponentID, A, ValueChangedEvent<I>>
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(Indicator.class);
+	private static final Logger LOG = LogUtil.getLogger( Indicator.class );
 
 	/** */
-	public static class ValueChangedEvent<I extends Instant<I>> extends
-			AbstractTimedEvent<TimedEventID<UUID, I>>
+	public static class ValueChangedEvent<I extends Instant<I>>
+		extends AbstractTimedEvent<TimedEventID<UUID, I>>
 	{
 
 		/** */
@@ -81,11 +74,12 @@ public class Indicator<A extends Agent, I extends Instant<I>, THIS extends Indic
 		 * @param oldValue
 		 * @param newValue
 		 */
-		public ValueChangedEvent(final Indicator<?, I, ?> source,
-				final I simTime, final Number oldValue, final Number newValue)
+		public ValueChangedEvent( final Indicator<?, I, ?> source,
+			final I simTime, final Number oldValue, final Number newValue )
 		{
-			super(new TimedEventID<UUID, I>(source.getID().getModelID(),
-					new UUID(), simTime), source.getOwnerID(), source.getID());
+			super( new TimedEventID<UUID, I>( source.getID().getModelID(),
+					new UUID(), simTime ), source.getOwnerID(),
+					source.getID() );
 			this.ownerID = source.getOwnerID();
 			this.oldValue = oldValue;
 			this.newValue = newValue;
@@ -146,10 +140,10 @@ public class Indicator<A extends Agent, I extends Instant<I>, THIS extends Indic
 	 * @param owner
 	 * @param name
 	 */
-	public Indicator(final A owner, final String name)
+	public Indicator( final A owner, final String name )
 	{
-		super(new BasicModelComponentID(owner.getID().getModelID(), name),
-				owner);
+		super( new BasicModelComponentID( owner.getID().getModelID(), name ),
+				owner );
 	}
 
 	/**
@@ -163,49 +157,50 @@ public class Indicator<A extends Agent, I extends Instant<I>, THIS extends Indic
 	 * @throws SimRuntimeException
 	 * @throws RemoteException
 	 */
-	public Indicator(final A owner, final String name, final String title,
-			final String unitName, final Number initialValue)
+	public Indicator( final A owner, final String name, final String title,
+		final String unitName, final Number initialValue )
 	{
-		super(new BasicModelComponentID(owner.getID().getModelID(), name),
-				owner);
-		withValueTitle(title);
-		withValueUnitName(unitName);
+		super( new BasicModelComponentID( owner.getID().getModelID(), name ),
+				owner );
+		withValueTitle( title );
+		withValueUnitName( unitName );
 		this.value = initialValue; // don't use the setter to prevent premature
 									// event firing
 
-		/* FIXME
-		getSimulator().schedule(new Job(){}, trigger);
-		getSimulator().schedule(0, this, this, SET_VALUE_METHOD_ID,
-				new Object[] { initialValue });
-				*/
+		/*
+		 * FIXME getSimulator().schedule(new Job(){}, trigger);
+		 * getSimulator().schedule(0, this, this, SET_VALUE_METHOD_ID, new
+		 * Object[] { initialValue });
+		 */
 	}
 
-	@SuppressWarnings("unchecked")
-	public synchronized THIS withValue(final Number value)
+	@SuppressWarnings( "unchecked" )
+	public synchronized THIS withValue( final Number value )
 	{
-		setValue(value);
+		setValue( value );
 		return (THIS) this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public synchronized THIS withValueRange(final Number min, final Number max)
+	@SuppressWarnings( "unchecked" )
+	public synchronized THIS withValueRange( final Number min,
+		final Number max )
 	{
 		this.valueMin = min;
 		this.valueMax = max;
 		return (THIS) this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public THIS withValueUnitName(final String unit)
+	@SuppressWarnings( "unchecked" )
+	public THIS withValueUnitName( final String unit )
 	{
-		setValueUnitName(unit);
+		setValueUnitName( unit );
 		return (THIS) this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public THIS withValueTitle(final String title)
+	@SuppressWarnings( "unchecked" )
+	public THIS withValueTitle( final String title )
 	{
-		setTitle(title);
+		setTitle( title );
 		return (THIS) this;
 	}
 
@@ -235,62 +230,62 @@ public class Indicator<A extends Agent, I extends Instant<I>, THIS extends Indic
 	}
 
 	/** @param delta the difference to add to the current value */
-	public synchronized void addValue(final Number delta)
+	public synchronized void addValue( final Number delta )
 	{
-		setValue(this.value == null ? delta : this.value.doubleValue()
-				+ delta.doubleValue());
+		setValue( this.value == null ? delta
+				: this.value.doubleValue() + delta.doubleValue() );
 	}
 
 	/** used for scheduling the initial value */
 	public static final String SET_VALUE_METHOD_ID = "setValue";
 
 	/** @param value the new value to set for this {@link Indicator} */
-	@SuppressWarnings("unchecked")
-	public synchronized void setValue(final Number value)
+	@SuppressWarnings( "unchecked" )
+	public synchronized void setValue( final Number value )
 	{
-		final double currentValue = this.value == null ? 0 : this.value
-				.doubleValue();
-		if (this.valueMin != null
-				&& value.doubleValue() < this.valueMin.doubleValue())
+		final double currentValue = this.value == null ? 0
+				: this.value.doubleValue();
+		if( this.valueMin != null
+				&& value.doubleValue() < this.valueMin.doubleValue() )
 		{
-			LOG.trace("Cropping [" + getID() + "] " + getValueTitle()
-					+ " value " + value + " to minimum: " + this.valueMin);
+			LOG.trace( "Cropping [" + getID() + "] " + getValueTitle()
+					+ " value " + value + " to minimum: " + this.valueMin );
 			this.value = this.valueMin;
-		} else if (this.valueMax != null
-				&& value.doubleValue() > this.valueMax.doubleValue())
+		} else if( this.valueMax != null
+				&& value.doubleValue() > this.valueMax.doubleValue() )
 		{
-			LOG.trace("Cropping [" + getID() + "] " + getValueTitle()
-					+ " value " + value + " to maximum: " + this.valueMax);
+			LOG.trace( "Cropping [" + getID() + "] " + getValueTitle()
+					+ " value " + value + " to maximum: " + this.valueMax );
 			this.value = this.valueMax;
 		} else
 		{
 			this.value = value;
 		}
-		if (currentValue != value.doubleValue())
-			fireEvent(new ValueChangedEvent<I>(this, (I) getTime(),
-					currentValue, value.doubleValue()));
+		if( currentValue != value.doubleValue() )
+			fireEvent( new ValueChangedEvent<I>( this, (I) getTime(),
+					currentValue, value.doubleValue() ) );
 	}
 
 	/** @param valueTitle the new title to set for this {@link Indicator} */
-	public void setValueUnitName(final String unit)
+	public void setValueUnitName( final String unit )
 	{
 		this.valueUnitName = unit;
 	}
 
 	/** @param title the new title to set for this {@link Indicator} */
-	public void setTitle(final String title)
+	public void setTitle( final String title )
 	{
 		this.valueTitle = title;
 	}
 
 	/** @param minimum the minimum value to set for this {@link Indicator} */
-	public synchronized void setValueMinimum(final Number minimum)
+	public synchronized void setValueMinimum( final Number minimum )
 	{
 		this.valueMin = minimum;
 	}
 
 	/** @param maximum the maximum value to set for this {@link Indicator} */
-	public synchronized void setValueMaximum(final Number maximum)
+	public synchronized void setValueMaximum( final Number maximum )
 	{
 		this.valueMax = maximum;
 	}

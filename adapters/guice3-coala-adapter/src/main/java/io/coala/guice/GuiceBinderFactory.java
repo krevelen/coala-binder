@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/GuiceBinderFactory.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 1589ec426dae118d0740adf4985b6ae3f21c5a53 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.guice;
 
@@ -24,7 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
@@ -45,20 +40,19 @@ import rx.subjects.Subject;
 /**
  * {@link GuiceBinderFactory}
  * 
- * @date $Date: 2014-06-11 13:21:10 +0200 (Wed, 11 Jun 2014) $
- * @version $Revision: 299 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class GuiceBinderFactory implements BinderFactory
 {
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(GuiceBinderFactory.class);
+			.getLogger( GuiceBinderFactory.class );
 
 	/** */
 	private final Map<AgentID, GuiceBinder> binderCache = Collections
-			.synchronizedMap(new HashMap<AgentID, GuiceBinder>());
+			.synchronizedMap( new HashMap<AgentID, GuiceBinder>() );
 
 	/** */
 	private BinderFactoryConfig config = null;
@@ -80,13 +74,13 @@ public class GuiceBinderFactory implements BinderFactory
 	 * @see BinderFactory#initialize(BinderFactoryConfig, Observable)
 	 */
 	@Override
-	public BinderFactory initialize(final BinderFactoryConfig config,
-			final Observable<AgentStatusUpdate> ownerStatus)
+	public BinderFactory initialize( final BinderFactoryConfig config,
+		final Observable<AgentStatusUpdate> ownerStatus )
 	{
 		this.config = config;
 		// System.err.println("Initialized binder factory for model: "
 		// + config.getModelID());
-		ownerStatus.subscribe(this.statusUpdates);
+		ownerStatus.subscribe( this.statusUpdates );
 		return this;
 	}
 
@@ -103,47 +97,44 @@ public class GuiceBinderFactory implements BinderFactory
 	 * @see BinderFactory#create(AgentID)
 	 */
 	@Override
-	public synchronized GuiceBinder create(final String agentName)
+	public synchronized GuiceBinder create( final String agentName )
 
 	{
-		return create(getConfig().getReplicationConfig().newID()
-				.createAgentID(agentName));
+		return create( getConfig().getReplicationConfig().newID()
+				.createAgentID( agentName ) );
 	}
 
 	/**
 	 * @see BinderFactory#create(AgentID)
 	 */
 	@Override
-	public synchronized GuiceBinder create(final String agentName,
-			final Class<? extends Agent> agentType)
+	public synchronized GuiceBinder create( final String agentName,
+		final Class<? extends Agent> agentType )
 	{
-		return create(getConfig().getReplicationConfig().newID()
-				.createAgentID(agentName), agentType);
+		return create( getConfig().getReplicationConfig().newID()
+				.createAgentID( agentName ), agentType );
 	}
 
 	@Override
-	public synchronized GuiceBinder create(final AgentID agentID)
+	public synchronized GuiceBinder create( final AgentID agentID )
 	{
-		return create(agentID, null);
+		return create( agentID, null );
 	}
 
 	@Override
-	public synchronized GuiceBinder create(final AgentID agentID,
-			final Class<? extends Agent> agentType) // throws CoalaException
+	public synchronized GuiceBinder create( final AgentID agentID,
+		final Class<? extends Agent> agentType ) // throws CoalaException
 	{
-		final GuiceBinder cached = this.binderCache.get(agentID);
-		if (cached != null)
+		final GuiceBinder cached = this.binderCache.get( agentID );
+		if( cached != null )
 		{
-			if (!agentID.isOrphan())
-				LOG.warn("UNEXPECTED: re-using binder for: " + agentID);
+			if( !agentID.isOrphan() )
+				LOG.warn( "UNEXPECTED: re-using binder for: " + agentID );
 			return cached;
 		}
-		if (getConfig() == null)
-		{
-			throw CoalaExceptionFactory.VALUE_NOT_CONFIGURED.createRuntime(
-					"config",
-					"use BinderFactory#initialize(BinderFactoryConfig)");
-		}
+		if( getConfig() == null ) { throw CoalaExceptionFactory.VALUE_NOT_CONFIGURED
+				.createRuntime( "config",
+						"use BinderFactory#initialize(BinderFactoryConfig)" ); }
 
 		final AgentStatusUpdate defaultValue = new AgentStatusUpdate()
 		{
@@ -163,27 +154,27 @@ public class GuiceBinderFactory implements BinderFactory
 			@Override
 			public String toString()
 			{
-				return JsonUtil.toString(this);
+				return JsonUtil.toString( this );
 			}
 		};
 
 		final Subject<AgentStatusUpdate, AgentStatusUpdate> behaviorSubject = BehaviorSubject
-				.create(defaultValue);
+				.create( defaultValue );
 
-		this.statusUpdates.filter(new Func1<AgentStatusUpdate, Boolean>()
+		this.statusUpdates.filter( new Func1<AgentStatusUpdate, Boolean>()
 		{
 			@Override
-			public Boolean call(final AgentStatusUpdate update)
+			public Boolean call( final AgentStatusUpdate update )
 			{
-				return update.getAgentID().equals(agentID);
+				return update.getAgentID().equals( agentID );
 			}
-		}).subscribe(behaviorSubject);
+		} ).subscribe( behaviorSubject );
 
-		final GuiceBinder result = new GuiceBinder(getConfig(), agentID,
-				agentType, behaviorSubject.asObservable());
+		final GuiceBinder result = new GuiceBinder( getConfig(), agentID,
+				agentType, behaviorSubject.asObservable() );
 
-		this.binderCache.put(agentID, result);
-		LOG.trace("Cached new binder for agent: " + agentID);
+		this.binderCache.put( agentID, result );
+		LOG.trace( "Cached new binder for agent: " + agentID );
 
 		return result;
 	}
@@ -192,9 +183,9 @@ public class GuiceBinderFactory implements BinderFactory
 	 * @see BinderFactory#remove(AgentID)
 	 */
 	@Override
-	public GuiceBinder remove(final AgentID agentID)
+	public GuiceBinder remove( final AgentID agentID )
 	{
-		return this.binderCache.remove(agentID);
+		return this.binderCache.remove( agentID );
 	}
 
 }

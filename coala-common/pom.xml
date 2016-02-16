@@ -20,17 +20,15 @@
 	</description>
 
 	<properties>
-		<!-- TODO <log4j2.version>2.3</log4j2.version> -->
-		<slf4j.version>1.7.7</slf4j.version>
-		<joda-time.version>2.7</joda-time.version>
-		<uuid.version>3.4</uuid.version>
-		<jackson.version>2.6.3</jackson.version>
-		<rxjava.version>1.0.14</rxjava.version>
+		<joda-time.version>2.9.2</joda-time.version>
+		<uuid.version>3.4.0</uuid.version>
+		<jackson.version>2.7.1</jackson.version>
+		<rxjava.version>1.1.1</rxjava.version>
 		<commons-codec.version>1.9</commons-codec.version>
 		<commons-io.version>2.4</commons-io.version>
-		<commons-configuration.version>1.10</commons-configuration.version>
-		<owner.version>1.0.6</owner.version>
+		<owner.version>1.0.9</owner.version>
 		<hamcrest.version>1.3</hamcrest.version>
+		<log4j2.version>2.5</log4j2.version>
 	</properties>
 
 	<repositories>
@@ -48,70 +46,33 @@
 				<updatePolicy>never</updatePolicy>
 			</snapshots>
 		</repository>
-
-		<!-- eaio: UUID repository -->
-		<repository>
-			<name>EAIO Repository</name>
-			<id>eaio.com</id>
-			<url>http://eaio.com/maven2</url>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-
-		<!-- javax.inject-api repository -->
-		<repository>
-			<name>JBoss Repository</name>
-			<id>jboss.com</id>
-			<url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
-			<releases>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
 	</repositories>
 
 	<dependencies>
+		<!-- Extension API for dependency injection / aspect oriented programming -->
 		<dependency>
-			<!-- Java Extension API for dependency injection (and/or aspect oriented 
-				programming) -->
 			<groupId>javax.inject</groupId>
 			<artifactId>javax.inject</artifactId>
 		</dependency>
-
-		<!-- logging via SL4J -->
+		
+		<!-- Apache Log4j2 logging -->
 		<dependency>
-			<!-- bind SLF4J onto log4j -->
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>${slf4j.version}</version>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>${log4j2.version}</version>
 		</dependency>
+		<!-- Apache Log4j2 sink for SLF4J bridge -->
 		<dependency>
-			<!-- redirect commons-logging (used e.g. in Spring) to SLF4J -->
-			<groupId>org.slf4j</groupId>
-			<artifactId>jcl-over-slf4j</artifactId>
-			<version>${slf4j.version}</version>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${log4j2.version}</version>
 		</dependency>
+		<!-- Apache Log4j2 bridge for JUL (java.util.logging) -->
 		<dependency>
-			<!-- redirect java.util.logging to SLF4J -->
-			<groupId>org.slf4j</groupId>
-			<artifactId>jul-to-slf4j</artifactId>
-			<version>${slf4j.version}</version>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-jul</artifactId>
+			<version>${log4j2.version}</version>
 		</dependency>
-
-		<!-- TODO <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-slf4j-impl</artifactId> 
-			<version>${log4j2.version}</version> </dependency> -->
-		<!-- TODO <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-jul</artifactId> 
-			<version>${log4j2.version}</version> </dependency> -->
-		<!-- TODO <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-core</artifactId> 
-			<version>${log4j2.version}</version> </dependency> -->
 
 		<dependency>
 			<!-- used for deserialization by ClassUtil, ConfigUtil -->
@@ -134,66 +95,57 @@
 			<version>${owner.version}</version>
 		</dependency>
 
+		<!-- UUID (re)implementation that uses MAC-address uniqueness -->
 		<dependency>
-			<!-- UUID (re)implementation that uses MAC-address -->
-			<groupId>com.eaio.uuid</groupId>
+			<groupId>com.github.stephenc.eaio-uuid</groupId>
 			<artifactId>uuid</artifactId>
 			<version>${uuid.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-			</exclusions>
+			<!-- <exclusions> <exclusion> <groupId>org.slf4j</groupId> <artifactId>slf4j-api</artifactId> 
+				</exclusion> </exclusions> -->
 		</dependency>
 
-		<!-- Observable pattern (re)implementation -->
+		<!-- rxJava push/pull Observable patterns -->
 		<dependency>
 			<groupId>io.reactivex</groupId>
 			<artifactId>rxjava</artifactId>
 			<version>${rxjava.version}</version>
 		</dependency>
 
+		<!-- Joda DateTime, Interval, Duration etc. standard implementations -->
 		<dependency>
-			<!-- DateTime, Interval, Duration etc. standard implementations -->
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
 			<version>${joda-time.version}</version>
 		</dependency>
 
+		<!-- Jackson JSON <-> Java object mapping -->
 		<dependency>
-			<!-- JSON <-> Java object mapping -->
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
-
+		<!-- Jackson JSON <-> Java object mapping for Joda-time objects -->
 		<dependency>
-			<!-- JSON <-> Java object mapping for Joda time objects -->
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-joda</artifactId>
 			<version>${jackson.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>joda-time</groupId>
-					<artifactId>joda-time</artifactId>
-				</exclusion>
-			</exclusions>
+			<!-- <exclusions> <exclusion> <groupId>joda-time</groupId> <artifactId>joda-time</artifactId> 
+				</exclusion> </exclusions> -->
 		</dependency>
-
+		<!-- Jackson JSON <-> Java object mapping for YAML formats -->
 		<dependency>
-			<!-- JSON <-> Java object mapping for YAML formats -->
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
 
+		<!-- Unit testing framework for test-driven development -->
 		<dependency>
-			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- matcher framework for test-driven development -->
 		<dependency>
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest-all</artifactId>

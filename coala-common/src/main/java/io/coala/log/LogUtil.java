@@ -24,13 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.Properties;
-//import java.util.logging.Level;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.spi.DefaultRepositorySelector;
-import org.apache.log4j.spi.RootLogger;
-import org.slf4j.bridge.SLF4JBridgeHandler;
+import org.apache.logging.log4j.LogManager;
 
 import io.coala.resource.FileUtil;
 import io.coala.util.Util;
@@ -47,10 +42,10 @@ public class LogUtil implements Util
 {
 
 	/** */
-	private static final String CONFIG_PROPERTY_KEY = "log4j.configuration";
+//	private static final String CONFIG_PROPERTY_KEY = "log4j.configuration";
 
 	/** */
-	private static final String CONFIG_PROPERTY_DEFAULT = "log4j.properties";
+//	private static final String CONFIG_PROPERTY_DEFAULT = "log4j.properties";
 
 	/** */
 	private static final String LOCALE_PROPERTY_KEY = "locale";
@@ -63,27 +58,23 @@ public class LogUtil implements Util
 		// FIXME allow override from COALA config
 		Locale.setDefault( Locale.forLanguageTag( System.getProperty(
 				LOCALE_PROPERTY_KEY, LOCALE_PROPERTY_DEFAULT ) ) );
-
-		// divert java.util.logging.Logger LogRecords to SLF4J
-		SLF4JBridgeHandler.removeHandlersForRootLogger();
-		SLF4JBridgeHandler.install();
-
-		// load log4j properties using #getFile() from file system or class path
-		// PropertyConfigurator.configure(loadProperties(System.getProperty(
-		// CONFIG_PROPERTY_KEY, CONFIG_PROPERTY_DEFAULT)));
-
-		LogManager
-				.setRepositorySelector(
-						new DefaultRepositorySelector( new CoalaLog4jHierarchy(
-								new RootLogger( Level.INFO ) ) ),
-				LogUtil.class );
-
-		// FIXME allow override from COALA config
-		new CoalaLog4jPropertyConfigurator().doConfigure(
-				loadProperties( System.getProperty( CONFIG_PROPERTY_KEY,
-						CONFIG_PROPERTY_DEFAULT ) ),
-				LogManager.getLoggerRepository() );
-	}
+/*
+ * // divert java.util.logging.Logger LogRecords to SLF4J
+ * SLF4JBridgeHandler.removeHandlersForRootLogger();
+ * SLF4JBridgeHandler.install();
+ * 
+ * // load log4j properties using #getFile() from file system or class path //
+ * PropertyConfigurator.configure(loadProperties(System.getProperty( //
+ * CONFIG_PROPERTY_KEY, CONFIG_PROPERTY_DEFAULT)));
+ * 
+ * LogManager .setRepositorySelector( new DefaultRepositorySelector( new
+ * CoalaLog4jHierarchy( new RootLogger( Level.INFO ) ) ), LogUtil.class );
+ * 
+ * // FIXME allow override from COALA config new
+ * CoalaLog4jPropertyConfigurator().doConfigure( loadProperties(
+ * System.getProperty( CONFIG_PROPERTY_KEY, CONFIG_PROPERTY_DEFAULT ) ),
+ * LogManager.getLoggerRepository() );
+ */ }
 
 	/**
 	 * @param file the properties file location in the classpath
@@ -121,20 +112,21 @@ public class LogUtil implements Util
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.log4j.Logger} instance for specified
-	 *         {@code clazz}
+	 * @return the {@link org.apache.logging.log4j.Logger} instance for
+	 *         specified {@code clazz}
 	 */
-	public static org.apache.log4j.Logger getLogger( final Class<?> clz )
+	public static org.apache.logging.log4j.Logger
+		getLogger( final Class<?> clz )
 	{
 		return getLogger( clz, clz );
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.log4j.Logger} instance for specified
-	 *         {@code clazz}
+	 * @return the {@link org.apache.logging.log4j.Logger} instance for
+	 *         specified {@code clazz}
 	 */
-	public static org.apache.log4j.Logger getLogger( final Class<?> clz,
+	public static org.apache.logging.log4j.Logger getLogger( final Class<?> clz,
 		final Object source )
 	{
 		return getLogger( clz.getName(), source );
@@ -142,35 +134,35 @@ public class LogUtil implements Util
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.log4j.Logger} instance for specified
-	 *         {@code clazz}
+	 * @return the {@link org.apache.logging.log4j.Logger} instance for
+	 *         specified {@code FQCN}
 	 */
-	public static org.apache.log4j.Logger getLogger( final String name,
+	public static org.apache.logging.log4j.Logger getLogger( final String fqcn,
 		final Object source )
 	{
-		// TODO use wrapper: intercept #forceLog() calls to add stack trace info
-
 		if( source == null )
 		{
-			new NullPointerException( "Using root logger" ).printStackTrace();
-			return org.apache.log4j.Logger.getRootLogger();
+			new NullPointerException( "Omitting logger for null object" )
+					.printStackTrace();
+			return getLogger( fqcn );
 		}
 
-		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
-				.getLogger( name, source );
+		return LogManager//((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
+				.getLogger( fqcn );
+		/* TODO add time/id from source to message */
 	}
 
 	/**
-	 * this method is preferred over {@link org.apache.log4j.Logger#getLogger}
-	 * so as to initialize the Log$j system correctly via this {@link LogUtil}
-	 * class
+	 * this method is preferred over
+	 * {@link org.apache.logging.log4j.Logger#getLogger} so as to initialize the
+	 * Log4j2 system correctly via this {@link LogUtil} class
 	 * 
 	 * @param name
 	 * @return
 	 */
-	public static org.apache.log4j.Logger getLogger( final String name )
+	public static org.apache.logging.log4j.Logger getLogger( final String name )
 	{
-		return ((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
+		return LogManager//((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
 				.getLogger( name );
 	}
 

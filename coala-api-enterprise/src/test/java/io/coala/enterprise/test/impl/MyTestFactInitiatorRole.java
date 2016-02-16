@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 37607607e7785710afdeb08d4bfcf9fa1e8e59a5 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,10 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.test.impl;
+
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.bind.Binder;
@@ -27,18 +29,14 @@ import io.coala.enterprise.test.TestFact;
 import io.coala.enterprise.test.TestFact.Request;
 import io.coala.log.InjectLogger;
 
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
-
 /**
  * {@link MyTestFactInitiatorRole}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
-public class MyTestFactInitiatorRole extends
-		AbstractInitiator<TestFact.Response> implements TestFact.Initiator
+public class MyTestFactInitiatorRole
+	extends AbstractInitiator<TestFact.Response> implements TestFact.Initiator
 {
 
 	/** */
@@ -54,28 +52,28 @@ public class MyTestFactInitiatorRole extends
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected MyTestFactInitiatorRole(final Binder binder)
+	protected MyTestFactInitiatorRole( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	/** @see TestFact.InitiatorRole#initiate(AgentID) */
 	@Override
-	public Request initiate(final AgentID executorID) throws Exception
+	public Request initiate( final AgentID executorID ) throws Exception
 	{
-		LOG.info("Initiating " + TestFact.class.getSimpleName()
-				+ " for owner type: " + getOwnerType().getSimpleName());
-		final Request result = Request.Builder.forProducer(this)
-				.withReceiverID(executorID).build();
-		getBinder().inject(SendingCapability.class).send(result);
+		LOG.info( "Initiating " + TestFact.class.getSimpleName()
+				+ " for owner type: " + getOwnerType().getSimpleName() );
+		final Request result = Request.Builder.forProducer( this )
+				.withReceiverID( executorID ).build();
+		getBinder().inject( SendingCapability.class ).send( result );
 		return result;
 	}
 
 	/** @see Initiator#onStated(CoordinationFact) */
 	@Override
-	public void onStated(final TestFact.Response result)
+	public void onStated( final TestFact.Response result )
 	{
-		LOG.trace("Got result: " + result);
+		LOG.trace( "Got result: " + result );
 	}
 
 }

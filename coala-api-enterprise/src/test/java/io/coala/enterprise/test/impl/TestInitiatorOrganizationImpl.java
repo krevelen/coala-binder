@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: de990f7d8630e4dbbb2239f6524bd1b45d58431f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,10 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.test.impl;
+
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.bind.Binder;
@@ -31,18 +33,14 @@ import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import io.coala.time.Trigger;
 
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
-
 /**
  * {@link TestInitiatorOrganizationImpl}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class TestInitiatorOrganizationImpl extends AbstractOrganization
-		implements TestInitiatorOrganization
+	implements TestInitiatorOrganization
 {
 
 	/** */
@@ -58,15 +56,15 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected TestInitiatorOrganizationImpl(final Binder binder)
+	protected TestInitiatorOrganizationImpl( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
 	public TestFact.Initiator getTestFactInitiator()
 	{
-		return getBinder().inject(TestFact.Initiator.class);
+		return getBinder().inject( TestFact.Initiator.class );
 	}
 
 	@Override
@@ -74,11 +72,11 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 	{
 		super.initialize();
 
-		LOG.trace("Initializing organization...");
+		LOG.trace( "Initializing organization..." );
 		getSimulator().schedule(
-				ProcedureCall.create(this, this, DO_REQUEST_METHOD_ID, 0),
-				Trigger.createAbsolute(getTime()));
-		LOG.trace("Initialized!");
+				ProcedureCall.create( this, this, DO_REQUEST_METHOD_ID, 0 ),
+				Trigger.createAbsolute( getTime() ) );
+		LOG.trace( "Initialized!" );
 
 		getSimulator().start();
 	}
@@ -88,42 +86,42 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 
 	protected ConfiguringCapability getConfig()
 	{
-		return getBinder().inject(ConfiguringCapability.class);
+		return getBinder().inject( ConfiguringCapability.class );
 	}
 
-	protected AgentID newAgentID(final String value)
+	protected AgentID newAgentID( final String value )
 	{
-		return getBinder().inject(ModelComponentIDFactory.class)
-				.createAgentID(value);
+		return getBinder().inject( ModelComponentIDFactory.class )
+				.createAgentID( value );
 	}
 
 	/**
 	 * @param number
 	 * @throws Exception
 	 */
-	@Schedulable(DO_REQUEST_METHOD_ID)
-	protected void newRequest(final long number) throws Exception
+	@Schedulable( DO_REQUEST_METHOD_ID )
+	protected void newRequest( final long number ) throws Exception
 	{
-		LOG.trace("Initiating request " + number);
-		final TestFact.Request req = getTestFactInitiator()
-				.initiate(newAgentID(getConfig().getProperty(EXECUTOR_NAME_KEY)
-						.get(EXECUTOR_NAME_DEFAULT)));
+		LOG.trace( "Initiating request " + number );
+		final TestFact.Request req = getTestFactInitiator().initiate(
+				newAgentID( getConfig().getProperty( EXECUTOR_NAME_KEY )
+						.get( EXECUTOR_NAME_DEFAULT ) ) );
 
-		if (number >= 2)
+		if( number >= 2 )
 		{
-			LOG.trace("Initiated request " + number + ": " + req.getID()
-					+ ", dying...");
+			LOG.trace( "Initiated request " + number + ": " + req.getID()
+					+ ", dying..." );
 			// die();
 			return;
 		}
 
-		final SimTime then = getTime().plus(1, TimeUnit.DAYS);
+		final SimTime then = getTime().plus( 1, TimeUnit.DAYS );
 		final long next = number + 1;
-		LOG.trace("Repeating initiation @ " + then);
+		LOG.trace( "Repeating initiation @ " + then );
 
 		getSimulator().schedule(
-				ProcedureCall.create(this, this, DO_REQUEST_METHOD_ID, next),
-				Trigger.createAbsolute(then));
+				ProcedureCall.create( this, this, DO_REQUEST_METHOD_ID, next ),
+				Trigger.createAbsolute( then ) );
 	}
 
 }

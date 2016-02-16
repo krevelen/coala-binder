@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: b228bb2e5dd829df64c518fcaa05e3c3339e02b6 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.guice;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
@@ -28,8 +26,8 @@ import io.coala.log.InjectLogger;
 /**
  * {@link TestAgent}
  * 
- * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id: b228bb2e5dd829df64c518fcaa05e3c3339e02b6 $
+ * @author Rick van Krevelen
  */
 public class TestAgent extends BasicAgent
 {
@@ -47,15 +45,15 @@ public class TestAgent extends BasicAgent
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	public TestAgent(final Binder host)
+	public TestAgent( final Binder host )
 	{
-		super(host);
+		super( host );
 	}
 
 	@Override
 	public void activate()
 	{
-		LOG.info("Executed");
+		LOG.info( "Executed" );
 	}
 
 }

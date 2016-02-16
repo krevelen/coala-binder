@@ -4,7 +4,7 @@ import java.net.URI;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.Duration;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,7 +22,7 @@ import rx.Observer;
  * {@link EveSendingCapability}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public class EveSendingCapability extends BasicCapability
 		implements SendingCapability
