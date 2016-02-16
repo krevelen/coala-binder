@@ -46,12 +46,13 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * <p>
  * Assumes {@linkplain Double#NaN} as value for illegal/empty value types
  * 
- * TODO consider using more complex JScience {@link Amount} as super type rather
+ * Considered but rejected usingJScience {@link Amount} as super type rather
  * than {@link DecimalMeasure}, providing (exact) arithmetic operations by
  * default, e.g. {@link Amount#plus(Amount)}, a la
  * <a href="https://www.jcp.org/en/jsr/detail?id=363">JSR 363</a> (see
  * <a href="https://github.com/unitsofmeasurement/uom-se">Java8 reference
- * implementation</a>)
+ * implementation</a>) due to {@link Amount}s incompatibility with
+ * {@link BigDecimal} values
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -235,8 +236,6 @@ public class TimeSpan extends DecimalMeasure
 	{
 		super( value instanceof BigDecimal ? (BigDecimal) value
 				: BigDecimal.valueOf( value.doubleValue() ), unit );
-		// FIXME also test or long/Long and int/Integer values so as 
-		// to rather invoke (more exact) BigDecimal.valueOf(long) constructor?
 	}
 
 	/**
@@ -437,8 +436,60 @@ public class TimeSpan extends DecimalMeasure
 		return of( getValue().add( augend ), getUnit() );
 	}
 
+
 	/**
-	 * @param augend the {@link Measure}, e.g. another {@link TimeSpan}
+	 * @param subtrahend the {@link Measure}, e.g. another {@link TimeSpan}
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan subtract( final Measure subtrahend )
+	{
+		return subtrahend.getValue() instanceof BigDecimal
+				? subtract( (BigDecimal) subtrahend.to( getUnit() ).getValue() )
+				: subtract( subtrahend.doubleValue( getUnit() ) );
+	}
+
+	/**
+	 * @param subtrahend
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan subtract( final Amount subtrahend )
+	{
+		return subtrahend.isExact() ? subtract( subtrahend.longValue( getUnit() ) )
+				: subtract( subtrahend.doubleValue( getUnit() ) );
+	}
+
+	/**
+	 * @param subtrahend
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan subtract( final Number subtrahend )
+	{
+		return subtract( BigDecimal.valueOf( subtrahend.doubleValue() ) );
+	}
+
+	/**
+	 * @param subtrahend
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan subtract( final long subtrahend )
+	{
+		return subtract( BigDecimal.valueOf( subtrahend ) );
+	}
+
+	/**
+	 * @param subtrahend the {@link BigDecimal} value to add
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan subtract( final BigDecimal subtrahend )
+	{
+		return of( getValue().subtract( subtrahend ), getUnit() );
+	}
+	
+	/**
+	 * @param divisor the {@link Measure}, e.g. another {@link TimeSpan}
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
@@ -451,18 +502,19 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * @param augend
+	 * @param divisor
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
 	public Amount divide( final Amount divisor )
 	{
-		return divisor.to( getUnit() ).inverse()
-				.times( getValue().doubleValue() );
+		// FIXME generate more exact Amount for long values of this TimeSpan?
+		return divisor.inverse()
+				.times( Amount.valueOf( doubleValue( getUnit() ), getUnit() ) );
 	}
 
 	/**
-	 * @param augend
+	 * @param divisor
 	 * @return a new {@link TimeSpan}
 	 */
 	public TimeSpan divide( final Number divisor )
@@ -471,7 +523,7 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * @param augend
+	 * @param divisor
 	 * @return a new {@link TimeSpan}
 	 */
 	public TimeSpan divide( final long divisor )
@@ -480,13 +532,69 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * @param augend the {@link BigDecimal} value to add
+	 * @param divisor the {@link BigDecimal} value to add
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan divide( final BigDecimal divisor )
 	{
 		return of( getValue().divide( divisor ), getUnit() );
+	}
+
+	/**
+	 * @param multiplier the {@link Dimensionless} multiplier {@link Measure}
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public DecimalMeasure multiply( final Measure<?, Dimensionless> multiplier )
+	{
+		return DecimalMeasure
+				.valueOf(
+						getValue().multiply(
+								multiplier.getValue() instanceof BigDecimal
+										? (BigDecimal) multiplier.getValue()
+										: BigDecimal.valueOf( multiplier
+												.doubleValue( Unit.ONE ) ) ),
+						getUnit() );
+	}
+
+	/**
+	 * @param multiplicand
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public Amount multiply( final Amount<Dimensionless> multiplicand )
+	{
+		return multiplicand
+				.times( Amount.valueOf( getValue().doubleValue(), getUnit() ) );
+	}
+
+	/**
+	 * @param multiplicand
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan multiply( final Number multiplicand )
+	{
+		return multiply( BigDecimal.valueOf( multiplicand.doubleValue() ) );
+	}
+
+	/**
+	 * @param multiplicand
+	 * @return a new {@link TimeSpan}
+	 */
+	public TimeSpan multiply( final long multiplicand )
+	{
+		return multiply( BigDecimal.valueOf( multiplicand ) );
+	}
+
+	/**
+	 * @param multiplicand the {@link BigDecimal} value to multiply with
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public TimeSpan multiply( final BigDecimal multiplicand )
+	{
+		return of( getValue().multiply( multiplicand ), getUnit() );
 	}
 
 }

@@ -544,7 +544,7 @@ public interface Wrapper<T>
 				return false;
 			final Wrapper other = self.getClass().cast( obj );
 			return self.unwrap() == null ? other.unwrap() == null
-					: other.unwrap().equals( other.unwrap() );
+					: self.unwrap().equals( other.unwrap() );
 		}
 
 		/**

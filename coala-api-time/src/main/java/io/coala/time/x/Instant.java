@@ -21,8 +21,8 @@ import java.util.Date;
 import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
+import javax.measure.quantity.Dimensionless;
 import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 
 import org.aeonbits.owner.Converter;
 import org.joda.time.DateTime;
@@ -105,54 +105,76 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	@Override
 	public String toString()
 	{
-		return unwrap().toString();
+		return Util.toString( this );
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return unwrap().hashCode();
+		return Util.hashCode( this );
 	}
 
 	@Override
 	public int compareTo( final Instant that )
 	{
-		return unwrap().compareTo( that.unwrap() );
+		return Util.compare( this, that );
 	}
 
-	public DecimalMeasure divide( final TimeSpan augend )
+	@Override
+	public boolean equals( final Object that )
 	{
-		return unwrap().divide( augend );
+		return Util.equals( this, that );
 	}
 
-	public DecimalMeasure divide( final Measure augend )
+	public DecimalMeasure
+		multiply( final Measure<?, Dimensionless> multiplicand )
 	{
-		return unwrap().divide( augend );
+		return unwrap().multiply( multiplicand );
 	}
 
-	public Amount divide( final Amount augend )
+	public Amount multiply( final Amount<Dimensionless> multiplicand )
 	{
-		return unwrap().divide( augend );
+		return unwrap().multiply( multiplicand );
 	}
 
-	public Instant divide( final long augend )
+	public Instant multiply( final long multiplicand )
 	{
-		return of( unwrap().divide( augend ) );
+		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	public Instant divide( final Number augend )
+	public Instant multiply( final Number multiplicand )
 	{
-		return of( unwrap().divide( augend ) );
+		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	public Instant divide( final BigDecimal augend )
+	public Instant multiply( final BigDecimal multiplicand )
 	{
-		return of( unwrap().divide( augend ) );
+		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	public Instant add( final TimeSpan augend )
+	public DecimalMeasure divide( final Measure divisor )
 	{
-		return of( unwrap().add( augend ) );
+		return unwrap().divide( divisor );
+	}
+
+	public Amount divide( final Amount divisor )
+	{
+		return unwrap().divide( divisor );
+	}
+
+	public Instant divide( final long divisor )
+	{
+		return of( unwrap().divide( divisor ) );
+	}
+
+	public Instant divide( final Number divisor )
+	{
+		return of( unwrap().divide( divisor ) );
+	}
+
+	public Instant divide( final BigDecimal divisor )
+	{
+		return of( unwrap().divide( divisor ) );
 	}
 
 	public Instant add( final Measure augend )
@@ -178,6 +200,31 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	public Instant add( final BigDecimal augend )
 	{
 		return of( unwrap().add( augend ) );
+	}
+
+	public Instant subtract( final Measure subtrahend )
+	{
+		return of( unwrap().subtract( subtrahend ) );
+	}
+
+	public Instant subtract( final Amount subtrahend )
+	{
+		return of( unwrap().subtract( subtrahend ) );
+	}
+
+	public Instant subtract( final long subtrahend )
+	{
+		return of( unwrap().subtract( subtrahend ) );
+	}
+
+	public Instant subtract( final Number subtrahend )
+	{
+		return of( unwrap().subtract( subtrahend ) );
+	}
+
+	public Instant subtract( final BigDecimal subtrahend )
+	{
+		return of( unwrap().subtract( subtrahend ) );
 	}
 
 	@JsonIgnore
@@ -344,12 +391,7 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 */
 	public static Instant of( final TimeSpan value )
 	{
-		return new Instant()
-		{
-			{
-				wrap( value );
-			}
-		};
+		return Util.valueOf( value, new Instant() );
 	}
 
 }

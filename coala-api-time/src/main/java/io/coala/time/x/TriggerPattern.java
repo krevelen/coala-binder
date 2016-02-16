@@ -106,7 +106,8 @@ public class TriggerPattern
 			{
 				final boolean strict = false;
 				// String ical =
-				// "DTSTART;TZID=US-Eastern:19970902T090000\r\n"+"RRULE:FREQ=DAILY;"
+				// "DTSTART;TZID=US-Eastern:19970902T090000\r\n"
+				// + "RRULE:FREQ=DAILY;"
 				// + "UNTIL=20130430T083000Z;"
 				// + "INTERVAL=1;";
 
