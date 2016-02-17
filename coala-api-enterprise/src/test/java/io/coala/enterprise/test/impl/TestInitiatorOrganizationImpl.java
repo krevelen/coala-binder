@@ -73,7 +73,7 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 		super.initialize();
 
 		LOG.trace( "Initializing organization..." );
-		getSimulator().schedule(
+		getScheduler().schedule(
 				ProcedureCall.create( this, this, DO_REQUEST_METHOD_ID, 0 ),
 				Trigger.createAbsolute( getTime() ) );
 		LOG.trace( "Initialized!" );
@@ -119,7 +119,7 @@ public class TestInitiatorOrganizationImpl extends AbstractOrganization
 		final long next = number + 1;
 		LOG.trace( "Repeating initiation @ " + then );
 
-		getSimulator().schedule(
+		getScheduler().schedule(
 				ProcedureCall.create( this, this, DO_REQUEST_METHOD_ID, next ),
 				Trigger.createAbsolute( then ) );
 	}

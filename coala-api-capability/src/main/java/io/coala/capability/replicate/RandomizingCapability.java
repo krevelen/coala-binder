@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: eaa1674d063ff8cc4a81bbe89e6d831c5f6d4d05 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/randomizer/RandomizerService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -24,7 +24,6 @@ import io.coala.capability.BasicCapabilityStatus;
 import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
 import io.coala.random.RandomNumberStream;
-import io.coala.random.RandomNumberStreamID;
 
 /**
  * {@link RandomizingCapability} provides random number generators or streams
@@ -52,8 +51,8 @@ public interface RandomizingCapability extends Capability<BasicCapabilityStatus>
 	}
 
 	/** identifier for the simulation model's main {@link RandomNumberStream} */
-	RandomNumberStreamID MAIN_RNG_ID = new RandomNumberStreamID("MAIN_RNG");
-	
+	RandomNumberStream.ID MAIN_RNG_ID = new RandomNumberStream.ID( "MAIN_RNG" );
+
 	/**
 	 * @return the main {@link RandomNumberStream}
 	 * @see {@link #MAIN_RNG_ID}
@@ -64,6 +63,6 @@ public interface RandomizingCapability extends Capability<BasicCapabilityStatus>
 	 * @param rngID the {@link RandomNumberStreamID} of the returnable RNG
 	 * @return the main {@link RandomNumberStream}
 	 */
-	RandomNumberStream getRNG(RandomNumberStreamID rngID);
+	RandomNumberStream getRNG( RandomNumberStream.ID rngID );
 
 }

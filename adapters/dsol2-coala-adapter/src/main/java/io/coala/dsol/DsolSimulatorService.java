@@ -28,12 +28,12 @@ import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.agent.AgentID;
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
-import io.coala.capability.CapabilityID;
 import io.coala.capability.plan.ClockStatusUpdate;
 import io.coala.capability.plan.ClockStatusUpdateImpl;
+import io.coala.capability.plan.SchedulingCapability;
+import io.coala.capability.replicate.RandomizingCapability;
 import io.coala.capability.replicate.ReplicatingCapability;
 import io.coala.capability.replicate.ReplicationConfig;
 import io.coala.config.CoalaProperty;
@@ -43,11 +43,9 @@ import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
-import io.coala.model.ModelComponent;
 import io.coala.name.Identifier;
 import io.coala.process.Job;
 import io.coala.random.RandomNumberStream;
-import io.coala.random.RandomNumberStreamID;
 import io.coala.time.ClockID;
 import io.coala.time.Instant;
 import io.coala.time.SimTime;
@@ -70,14 +68,13 @@ import rx.subjects.BehaviorSubject;
 import rx.subjects.Subject;
 
 /**
- * {@link DsolSimulatorService}
+ * {@link DsolSimulatorService} combines a {@link SchedulingCapability} and 
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class DsolSimulatorService extends BasicCapability
-	implements ReplicatingCapability, ModelComponent<CapabilityID>// ,
-// MessengerService
+public class DsolSimulatorService extends BasicCapability implements
+	ReplicatingCapability, SchedulingCapability<SimTime>, RandomizingCapability
 {
 
 	/** */
@@ -87,9 +84,9 @@ public class DsolSimulatorService extends BasicCapability
 	private static final Map<ClockID, ReplicationBuilder> SIMULATORS = Collections
 			.synchronizedMap( new HashMap<ClockID, ReplicationBuilder>() );
 
-	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
+	private final Map<RandomNumberStream.ID, RandomNumberStream> rng = Collections
 			.synchronizedMap(
-					new HashMap<RandomNumberStreamID, RandomNumberStream>() );
+					new HashMap<RandomNumberStream.ID, RandomNumberStream>() );
 
 	/** */
 	@InjectLogger // not useful if logging occurs during construction
@@ -627,14 +624,14 @@ public class DsolSimulatorService extends BasicCapability
 
 	@Override
 	public synchronized RandomNumberStream
-		getRNG( final RandomNumberStreamID rngID )
+		getRNG( final RandomNumberStream.ID rngID )
 	{
 		if( !this.rng.containsKey( rngID ) )
 			this.rng.put( rngID, newRNG( rngID ) );
 		return this.rng.get( rngID );
 	}
 
-	private RandomNumberStream newRNG( final RandomNumberStreamID streamID )
+	private RandomNumberStream newRNG( final RandomNumberStream.ID streamID )
 	{
 		return getBinder().inject( RandomNumberStream.Factory.class )
 				.create( streamID, CoalaProperty.randomSeed.value().getLong() );
@@ -650,12 +647,6 @@ public class DsolSimulatorService extends BasicCapability
 	public Observable<SimTime> getTimeUpdates()
 	{
 		return this.timeUpdates.asObservable();
-	}
-
-	@Override
-	public AgentID getOwnerID()
-	{
-		return getBinder().getID();
 	}
 
 	@Override

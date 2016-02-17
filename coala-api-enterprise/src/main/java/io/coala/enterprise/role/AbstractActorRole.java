@@ -121,7 +121,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 			{
 				final SimTime now = getTime();
 				// LOG.trace("SCHEDULING FACT: " + fact + " AT " + now);
-				getSimulator().schedule(
+				getScheduler().schedule(
 						ProcedureCall.create( AbstractActorRole.this,
 								AbstractActorRole.this, FACT_HANDLER, fact ),
 						Trigger.createAbsolute( now ) );
@@ -328,7 +328,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	@Override
 	public SimTime getTime()
 	{
-		return getSimulator().getTime();
+		return getScheduler().getTime();
 	}
 
 	/**
@@ -412,7 +412,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 							+ " reached unblock status: "
 							+ update.getStatus() );
 					// first schedule/block, then countdown/yield
-					getSimulator().schedule( next,
+					getScheduler().schedule( next,
 							Trigger.createAbsolute( getTime() ) );
 					success = true;
 					latch.countDown(); // yield
@@ -426,7 +426,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 				LOG().warn(
 						"Child agent died but never reached blockable status"
 								+ ", scheduling next job now" );
-				getSimulator().schedule( next,
+				getScheduler().schedule( next,
 						Trigger.createAbsolute( getTime() ) );
 				latch.countDown();
 			}
@@ -438,7 +438,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 			}
 		} );
 
-		getSimulator()
+		getScheduler()
 				.schedule(
 						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
 								latch, agentID ),
@@ -470,7 +470,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 		{
 		}
 		Thread.yield();
-		getSimulator()
+		getScheduler()
 				.schedule(
 						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
 								latch, agentID ),
@@ -509,7 +509,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 		throws Exception
 	{
 		// LOG.trace("Sending fact: " + fact);
-		getSimulator().schedule(
+		getScheduler().schedule(
 				ProcedureCall.create( this, this, SEND_METHOD_ID, fact ),
 				Trigger.createAbsolute( getTime().plus( delay ) ) );
 		return fact;
@@ -528,7 +528,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	}
 
 	/**
-	 * @return the agent's local {@link BooterService}
+	 * @return the agent's local {@link CreatingCapability}
 	 */
 	@JsonIgnore
 	protected CreatingCapability getBooter()
@@ -537,16 +537,17 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	}
 
 	/**
-	 * @return the agent's local {@link SimulatorService}
+	 * @return the agent's local {@link SchedulingCapability}
 	 */
+	@SuppressWarnings( "unchecked" )
 	@JsonIgnore
 	protected SchedulingCapability<SimTime> getScheduler()
 	{
-		return getSimulator();
+		return getBinder().inject( SchedulingCapability.class );
 	}
 
 	/**
-	 * @return the agent's local {@link SimulatorService}
+	 * @return the agent's local {@link ReplicatingCapability}
 	 */
 	@JsonIgnore
 	protected ReplicatingCapability getSimulator()
@@ -555,7 +556,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	}
 
 	/**
-	 * @return the agent's local {@link MessengerService}
+	 * @return the agent's local {@link SendingCapability}
 	 */
 	@JsonIgnore
 	protected SendingCapability getMessenger()
@@ -564,7 +565,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	}
 
 	/**
-	 * @return the agent's local {@link ReceiverService}
+	 * @return the agent's local {@link ReceivingCapability}
 	 */
 	@JsonIgnore
 	protected ReceivingCapability getReceiver()
@@ -599,12 +600,12 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	}
 
 	/**
-	 * @return the agent's local {@link RandomizerService}
+	 * @return the agent's local {@link RandomizingCapability}
 	 */
 	@JsonIgnore
 	protected RandomizingCapability getRandomizer()
 	{
-		return getSimulator();// getBinder().bind(RandomizerService.class);
+		return getBinder().inject( RandomizingCapability.class );
 	}
 
 	// /** @return the agent's local {@link EmbodierService} */

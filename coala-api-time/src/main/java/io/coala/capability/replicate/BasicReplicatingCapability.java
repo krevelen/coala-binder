@@ -35,11 +35,11 @@ import io.coala.capability.BasicCapability;
 import io.coala.capability.plan.ClockStatus;
 import io.coala.capability.plan.ClockStatusUpdate;
 import io.coala.capability.plan.ClockStatusUpdateImpl;
+import io.coala.capability.plan.SchedulingCapability;
 import io.coala.log.InjectLogger;
 import io.coala.name.AbstractIdentifiable;
 import io.coala.process.Job;
 import io.coala.random.RandomNumberStream;
-import io.coala.random.RandomNumberStreamID;
 import io.coala.time.ClockID;
 import io.coala.time.Instant;
 import io.coala.time.SimTime;
@@ -56,8 +56,8 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class BasicReplicatingCapability extends BasicCapability
-	implements ReplicatingCapability
+public class BasicReplicatingCapability extends BasicCapability implements
+	ReplicatingCapability, RandomizingCapability, SchedulingCapability<SimTime>
 {
 
 	/** */
@@ -73,9 +73,9 @@ public class BasicReplicatingCapability extends BasicCapability
 	private final transient Subject<ClockStatusUpdate, ClockStatusUpdate> statusUpdates;
 
 	/** */
-	private final Map<RandomNumberStreamID, RandomNumberStream> rng = Collections
+	private final Map<RandomNumberStream.ID, RandomNumberStream> rng = Collections
 			.synchronizedMap(
-					new HashMap<RandomNumberStreamID, RandomNumberStream>() );
+					new HashMap<RandomNumberStream.ID, RandomNumberStream>() );
 
 	/** */
 	private final ClockID clockID;
@@ -327,14 +327,14 @@ public class BasicReplicatingCapability extends BasicCapability
 
 	@Override
 	public synchronized RandomNumberStream
-		getRNG( final RandomNumberStreamID rngID )
+		getRNG( final RandomNumberStream.ID rngID )
 	{
 		if( !this.rng.containsKey( rngID ) )
 			this.rng.put( rngID, newRNG( rngID ) );
 		return this.rng.get( rngID );
 	}
 
-	private RandomNumberStream newRNG( final RandomNumberStreamID streamID )
+	private RandomNumberStream newRNG( final RandomNumberStream.ID streamID )
 	{
 		return getBinder().inject( RandomNumberStream.Factory.class )
 				.create( streamID, System.currentTimeMillis() );

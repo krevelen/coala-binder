@@ -20,8 +20,6 @@
 	</description>
 
 	<properties>
-		<commons-math3.version>3.6</commons-math3.version>
-		<jscience.version>4.3.1</jscience.version>
 		<google-rfc-2445.version>20110304</google-rfc-2445.version>
 		<quartz.version>2.2.1</quartz.version>
 		<joda-time.version>2.7</joda-time.version>
@@ -52,14 +50,6 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-api-capability</artifactId>
 			<version>${project.version}</version>
-		</dependency>
-
-		<dependency>
-			<!-- used for the probability distributions -->
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-math3</artifactId>
-			<version>${commons-math3.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<!-- Quartz implementation of CRON-like scheduler -->
@@ -96,13 +86,6 @@
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
 			<version>${joda-time.version}</version>
-		</dependency>
-
-		<!-- reference implementation of javax.measurement JSR-275 -->
-		<dependency>
-			<groupId>org.jscience</groupId>
-			<artifactId>jscience</artifactId>
-			<version>${jscience.version}</version>
 		</dependency>
 
 		<!-- Backport of JSR-310 from JDK 8 to JDK 7 and JDK 6. NOT an implementation 

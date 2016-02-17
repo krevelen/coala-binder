@@ -50,10 +50,6 @@ import io.coala.log.LogUtil;
 import io.coala.model.ModelComponentIDFactory;
 import io.coala.model.ModelID;
 import io.coala.name.AbstractIdentifiable;
-import io.coala.random.RandomDistribution;
-import io.coala.random.RandomNumberStream;
-import io.coala.random.impl.RandomDistributionFactoryImpl;
-import io.coala.random.impl.RandomNumberStreamFactoryWell19937c;
 import io.coala.time.SimTime;
 import io.coala.time.SimTimeFactory;
 import rx.Observable;
@@ -151,14 +147,6 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements Binder
 
 				bind( ReplicationConfig.class )
 						.toInstance( config.getReplicationConfig() );
-
-				// FIXME replace by binder config
-				bind( RandomDistribution.Factory.class )
-						.to( RandomDistributionFactoryImpl.class );
-
-				// FIXME replace by binder config
-				bind( RandomNumberStream.Factory.class )
-						.to( RandomNumberStreamFactoryWell19937c.class );
 
 				LOG.trace( "Bound " + Binder.class.getName() + " to "
 						+ GuiceBinder.this + " for client: " + getID() );

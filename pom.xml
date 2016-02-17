@@ -43,6 +43,9 @@
 		<!-- Eve 3 adapter of the relevant core APIs -->
 		<module>adapters/eve3-coala-adapter</module>
 
+		<!-- commons-math3 adapter of the relevant core APIs -->
+		<module>adapters/math3-coala-adapter</module>
+
 		<!-- DSOL2 adapter of the relevant core APIs -->
 		<module>adapters/dsol2-coala-adapter</module>
 
@@ -54,6 +57,7 @@
 
 		<!-- Conway's game of life -->
 		<module>demos/coala-demo-conway</module>
+		<module>math3-coala-adapter</module>
 	</modules>
 
 	<properties>

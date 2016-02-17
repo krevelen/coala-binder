@@ -1,7 +1,4 @@
 /* $Id: cf21c9c9cd4ab73588c022edc57859672280f1b9 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/test/java/io/coala/DistributionTest.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,53 +12,36 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
-package io.coala.random;
+package io.coala.math3;
 
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
-import io.coala.random.impl.RandomDistributionFactoryImpl;
-import io.coala.random.impl.RandomNumberStreamFactoryWell19937c;
+import io.coala.random.RandomDistribution;
+import io.coala.random.RandomNumberStream;
 
 /**
- * {@link DistributionTest}
+ * {@link Math3RandomDistributionTest}
  * 
- * @version $Revision: 324 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-public class DistributionTest
+public class Math3RandomDistributionTest
 {
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger( DistributionTest.class );
-
-	@BeforeClass
-	public static void logStart()
-	{
-		LOG.trace( "Starting Distribution tests!" );
-	}
-
-	@AfterClass
-	public static void logEnd()
-	{
-		LOG.trace( "Completed Distribution tests!" );
-	}
+			.getLogger( Math3RandomDistributionTest.class );
 
 	@Test
 	public void testDist()
 	{
-		final RandomNumberStream rng = new RandomNumberStreamFactoryWell19937c()
+		final RandomNumberStream rng = new Math3RandomNumberStream.Well19937cFactory()
 				.create( "rng", 0L );
 
-		final RandomNumberDistribution<?> dist = new RandomDistributionFactoryImpl()
+		final RandomDistribution<Double> dist = new Math3RandomDistribution.Factory()
 				.getUniformReal( rng, 1.1, 2.1 );
 
 		for( int i = 0; i < 100; i++ )

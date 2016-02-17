@@ -31,12 +31,13 @@ import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.capability.admin.CreatingCapability;
 import io.coala.capability.plan.ClockStatusUpdate;
-import io.coala.capability.replicate.ReplicatingCapability;
+import io.coala.capability.plan.SchedulingCapability;
 import io.coala.capability.replicate.ReplicationConfig;
 import io.coala.dsol.DsolSimulatorStatus;
 import io.coala.enterprise.test.impl.TestExecutorOrganizationImpl;
 import io.coala.enterprise.test.impl.TestInitiatorOrganizationImpl;
 import io.coala.log.LogUtil;
+import io.coala.time.SimTime;
 import rx.Observer;
 
 /**
@@ -112,8 +113,10 @@ public class TransactionTest
 		LOG.trace( "Waiting for all organizations to initialize..." );
 		initLatch.await();
 
-		final ReplicatingCapability sim = binder
-				.inject( ReplicatingCapability.class );
+		@SuppressWarnings( "unchecked" )
+		final SchedulingCapability<SimTime> sim = binder
+				.inject( SchedulingCapability.class );
+
 		sim.getStatusUpdates().subscribe( new Observer<ClockStatusUpdate>()
 		{
 

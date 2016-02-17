@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 9e0f4719a3e738065e9b9b304ef65d98f3f3bb6c $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/SimulatorService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -21,26 +21,21 @@
 package io.coala.capability.replicate;
 
 import io.coala.capability.CapabilityFactory;
-import io.coala.capability.plan.SchedulingCapability;
-import io.coala.time.SimTime;
 
 /**
- * {@link ReplicatingCapability} binds the {@link ReplicatingCapability} to the
- * {@link SimTime} instant type
+ * {@link ReplicatingCapability}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-public interface ReplicatingCapability extends SchedulingCapability<SimTime>,
-		RandomizingCapability
+public interface ReplicatingCapability
 {
 
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Revision: 296 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	interface Factory extends CapabilityFactory<ReplicatingCapability>
 	{

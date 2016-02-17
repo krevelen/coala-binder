@@ -1,31 +1,28 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
 	<modelVersion>4.0.0</modelVersion>
-
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
 		<version>0.2.0-SNAPSHOT</version>
-		<relativePath>..</relativePath>
+		<relativePath>../..</relativePath>
 	</parent>
-
-	<artifactId>coala-api</artifactId>
+	<artifactId>math3-coala-adapter</artifactId>
 
 	<name>${project.artifactId} ${project.version}</name>
 	<url>http://coala.io/</url>
 	<description>
-		COALA binder API
-		$Id: f5571cbee34f3c205e18b271e804aef66b2d1aa0 $
+		COALA adapter for Apache Commons Math3
+		$Id: 2e14b774445d3ba23947420cf52fb17840587f2c $
 	</description>
 
 	<properties>
-		<uuid.version>3.4</uuid.version>
-		<easymock.version>3.2</easymock.version>
-		<jscience.version>4.3.1</jscience.version>
+		<commons-math3.version>3.6</commons-math3.version>
+		<hamcrest.version>1.3</hamcrest.version>
 	</properties>
 
 	<repositories>
+		<!-- COALA public Maven repository -->
 		<repository>
 			<name>COALA Public Maven Repository</name>
 			<id>coala-public</id>
@@ -39,37 +36,35 @@
 				<updatePolicy>never</updatePolicy>
 			</snapshots>
 		</repository>
-		<repository>
-			<name>UUID Repository</name>
-			<id>eaio.com</id>
-			<url>http://eaio.com/maven2</url>
-		</repository>
 	</repositories>
 
 	<dependencies>
-			
+
 		<dependency>
 			<groupId>io.coala</groupId>
-			<artifactId>coala-common</artifactId>
+			<artifactId>coala-api-capability</artifactId>
 		</dependency>
 
-		<!-- reference implementation of javax.measurement JSR-275 -->
 		<dependency>
-			<groupId>org.jscience</groupId>
-			<artifactId>jscience</artifactId>
-			<version>${jscience.version}</version>
+			<!-- used for the probability distributions -->
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>${commons-math3.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
-		<!-- used in unit testing to create mock dependency instances -->
-		<!-- <dependency> <groupId>org.easymock</groupId> <artifactId>easymock</artifactId> 
-			<version>${easymock.version}</version> <scope>test</scope> </dependency> -->
-			
+		<!-- Unit testing framework for test-driven development -->
 		<dependency>
-			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-
+		<!-- matcher framework for test-driven development -->
+		<dependency>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-all</artifactId>
+			<version>${hamcrest.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

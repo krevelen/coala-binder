@@ -38,6 +38,7 @@ import io.coala.lifecycle.ActivationType;
 import io.coala.lifecycle.LifeCycle;
 import io.coala.lifecycle.LifeCycleHooks;
 import io.coala.log.InjectLogger;
+import io.coala.time.SimTime;
 
 /**
  * {@link BasicAgent}
@@ -103,10 +104,11 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	/**
 	 * @return the agent's local {@link SchedulingCapability}
 	 */
+	@SuppressWarnings( "unchecked" )
 	@JsonIgnore
-	protected SchedulingCapability<?> getScheduler()
+	protected SchedulingCapability<SimTime> getScheduler()
 	{
-		return getSimulator();
+		return getBinder().inject( SchedulingCapability.class );
 	}
 
 	/**
@@ -157,7 +159,7 @@ public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	@JsonIgnore
 	protected RandomizingCapability getRandomizer()
 	{
-		return getSimulator();// getBinder().bind(RandomizerService.class);
+		return getBinder().inject( RandomizingCapability.class );
 	}
 
 	/**

@@ -63,7 +63,7 @@ public class MyTestFactExecutorRole extends AbstractExecutor<TestFact.Request>
 		LOG.trace( "Owner type: " + getOwnerType().getName() );
 		final SimTime then = getTime().plus( 1, TimeUnit.HOURS );
 		LOG.trace( "Sending response @ " + then + " for request " + request );
-		getSimulator().schedule( ProcedureCall.create( this, this,
+		getScheduler().schedule( ProcedureCall.create( this, this,
 				DO_RESPONSE_METHOD_ID, request ),
 				Trigger.createAbsolute( then ) );
 	}

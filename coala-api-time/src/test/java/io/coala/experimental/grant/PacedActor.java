@@ -65,7 +65,7 @@ public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 	@Override
 	public SimTime getTime()
 	{
-		return getSimulator().getTime();
+		return getScheduler().getTime();
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class PacedActor extends BasicAgent implements ModelComponent<AgentID>
 
 		final Job<?> job = ProcedureCall.create( this, this, testMethodID );
 		final Trigger<?> trigger = Trigger.createAbsolute( getTime() );
-		getSimulator().schedule( job, trigger );
+		getScheduler().schedule( job, trigger );
 		die();
 	}
 

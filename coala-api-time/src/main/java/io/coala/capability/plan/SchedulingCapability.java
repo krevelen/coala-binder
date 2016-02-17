@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/SchedulerService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 27e940e0160b46f6d87ab5e5ee2ccbcdf3f4391a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability.plan;
 
@@ -26,13 +21,11 @@ import io.coala.time.Instant;
 import io.coala.time.Trigger;
 
 /**
- * {@link SchedulingCapability} provides the time
+ * {@link SchedulingCapability}
  * 
- * @date $Date: 2014-07-21 11:20:27 +0200 (Mon, 21 Jul 2014) $
- * @version $Revision: 332 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <I> the type of {@link Instant} to provide
+ * @param <I>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public interface SchedulingCapability<I extends Instant<I>> extends TimingCapability<I>
 {
@@ -40,40 +33,14 @@ public interface SchedulingCapability<I extends Instant<I>> extends TimingCapabi
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Revision: 332 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings("rawtypes")
 	interface Factory extends CapabilityFactory<SchedulingCapability>
 	{
 		// empty
 	}
-
-	/**
-	 * {@link EventBuilder} useful to build scheduling commands
-	 * 
-	 * @version $Revision: 332 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
-	 */
-	// interface EventBuilder
-	// {
-	// EventBuilder call(Job job);
-	//
-	// EventBuilder at(I absoluteTime);
-	//
-	// EventBuilder after(I delay);
-	// }
-	//
-	// EventBuilder call(Job job);
-	//
-	// EventBuilder at(I absoluteTime);
-	//
-	// EventBuilder after(I delay);
-
-	/** @return */
-	// @JsonIgnore
-	// Observable<Job<?>> getJobsFired();
 
 	/** */
 	void schedule(Job<?> job, Trigger<?> trigger);

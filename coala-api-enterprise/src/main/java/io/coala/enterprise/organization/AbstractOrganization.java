@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: b1a5b41ed657c5d8e7eccbd7dddcd2c5418b845f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -28,7 +28,7 @@ import io.coala.time.SimTime;
 /**
  * {@link AbstractOrganization}
  * 
- * @version $Id$
+ * @version $Id: b1a5b41ed657c5d8e7eccbd7dddcd2c5418b845f $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public abstract class AbstractOrganization extends BasicAgent implements
@@ -65,7 +65,7 @@ public abstract class AbstractOrganization extends BasicAgent implements
 	@Override
 	public SimTime getTime()
 	{
-		return getSimulator().getTime();
+		return getScheduler().getTime();
 	}
 
 }
