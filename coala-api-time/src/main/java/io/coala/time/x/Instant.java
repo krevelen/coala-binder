@@ -177,6 +177,11 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 		return of( unwrap().divide( divisor ) );
 	}
 
+	public Instant add( final Duration augend )
+	{
+		return of( unwrap().add( augend.unwrap() ) );
+	}
+
 	public Instant add( final Measure augend )
 	{
 		return of( unwrap().add( augend ) );
@@ -202,9 +207,14 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 		return of( unwrap().add( augend ) );
 	}
 
-	public Instant subtract( final Measure subtrahend )
+	public Instant subtract( final Duration subtrahend )
 	{
-		return of( unwrap().subtract( subtrahend ) );
+		return of( unwrap().subtract( subtrahend.unwrap() ) );
+	}
+
+	public Duration subtract( final Instant subtrahend )
+	{
+		return Duration.of( unwrap().subtract( subtrahend.unwrap() ) );
 	}
 
 	public Instant subtract( final Amount subtrahend )
@@ -287,7 +297,7 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 */
 	public Duration toDuration( final Instant offset )
 	{
-		return Duration.valueOf( offset == null ? unwrap().getValue()
+		return Duration.of( offset == null ? unwrap().getValue()
 				: unwrap().getValue().subtract(
 						offset.unwrap().to( unwrap().getUnit() ).getValue() ) );
 	}
@@ -391,7 +401,7 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 */
 	public static Instant of( final TimeSpan value )
 	{
-		return Util.valueOf( value, new Instant() );
+		return Util.of( value, new Instant() );
 	}
 
 }

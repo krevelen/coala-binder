@@ -499,8 +499,8 @@ public class TimeSpan extends DecimalMeasure
 		return DecimalMeasure.valueOf(
 				getValue().divide( divisor.getValue() instanceof BigDecimal
 						? (BigDecimal) divisor.to( getUnit() ).getValue()
-						: BigDecimal.valueOf( divisor.to( getUnit() ).getValue()
-								.doubleValue() ) ),
+						: BigDecimal
+								.valueOf( divisor.doubleValue( getUnit() ) ) ),
 				Unit.ONE );
 	}
 

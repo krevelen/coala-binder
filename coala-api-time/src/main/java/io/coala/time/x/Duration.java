@@ -135,7 +135,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 */
 	public Duration to( final Unit unit )
 	{
-		return valueOf( unwrap().to( unit ) );
+		return of( unwrap().to( unit ) );
 	}
 
 	@JsonIgnore
@@ -146,7 +146,9 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 			return unwrap().longValue( unit );
 		} catch( final Throwable t )
 		{
-			throw ExceptionBuilder.unchecked( "Could not convert " + unwrap().getUnit().getClass() + " to " + unit, t )
+			throw ExceptionBuilder
+					.unchecked( "Could not convert "
+							+ unwrap().getUnit().getClass() + " to " + unit, t )
 					.build();
 		}
 	}
@@ -187,7 +189,8 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	@JsonIgnore
 	public Amount toAmount()
 	{
-		return Amount.valueOf( unwrap().toString() ).to( unwrap().getUnit() );
+		return Amount.valueOf( unwrap().doubleValue( unwrap().getUnit() ),
+				unwrap().getUnit() );
 	}
 
 	/** @return the JSR-275 {@link Measurable} implementation of a time span */
@@ -226,7 +229,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 */
 	public static Duration valueOf( final String value )
 	{
-		return valueOf( TimeSpan.valueOf( value ) );
+		return of( TimeSpan.valueOf( value ) );
 	}
 
 	/**
@@ -234,9 +237,9 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 * 
 	 * @param value
 	 */
-	public static Duration valueOf( final ReadableDuration value )
+	public static Duration of( final ReadableDuration value )
 	{
-		return valueOf( TimeSpan.of( value ) );
+		return of( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -244,9 +247,9 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 * 
 	 * @param value
 	 */
-	public static Duration valueOf( final Measure value )
+	public static Duration of( final Measure value )
 	{
-		return valueOf( TimeSpan.of( value ) );
+		return of( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -254,9 +257,9 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 * 
 	 * @param value
 	 */
-	public static Duration valueOf( final Amount value )
+	public static Duration of( final Amount value )
 	{
-		return valueOf( TimeSpan.of( value ) );
+		return of( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -264,9 +267,9 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 * 
 	 * @param value the number of milliseconds
 	 */
-	public static Duration valueOf( final Number value )
+	public static Duration of( final Number value )
 	{
-		return valueOf( TimeSpan.of( value ) );
+		return of( TimeSpan.of( value ) );
 	}
 
 	/**
@@ -274,13 +277,18 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 * 
 	 * @param value the {@link TimeSpan}
 	 */
-	public static Duration valueOf( final TimeSpan value )
+	public static Duration of( final TimeSpan value )
 	{
-		return new Duration()
-		{
-			{
-				wrap( value );
-			}
-		};
+		return Util.of( value, new Duration() );
+	}
+
+	/**
+	 * @param i1
+	 * @param i2
+	 * @return the absolute distance/duration between two {@link Instant}s
+	 */
+	public static Duration between( final Instant i1, final Instant i2 )
+	{
+		return i1.compareTo( i2 ) > 0 ? i1.subtract( i2 ) : i2.subtract( i1 );
 	}
 }

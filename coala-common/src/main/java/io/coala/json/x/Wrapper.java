@@ -459,7 +459,7 @@ public interface Wrapper<T>
 							annot, valueType, tree.getNodeType() );
 					value = JsonUtil.valueOf( json, annotType );
 				}
-				return valueOf( value, result );
+				return of( value, result );
 			} catch( final Throwable e )
 			{
 				throw ExceptionBuilder
@@ -473,7 +473,7 @@ public interface Wrapper<T>
 		 * @param result the {@link Wrapper} object to (re)use
 		 * @return the updated {@link Wrapper} object
 		 */
-		public static <S, T extends Wrapper<S>> T valueOf( final S value,
+		public static <S, T extends Wrapper<S>> T of( final S value,
 			final T result )
 		{
 			result.wrap( value );
