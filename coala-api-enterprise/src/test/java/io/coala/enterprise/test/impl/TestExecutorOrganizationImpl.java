@@ -1,4 +1,4 @@
-/* $Id: 0484c1a881ffaad2eda282954d12c783c7b4534f $
+/* $Id: 9669d11506b37cc446254fa8731732089cd8eb91 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -28,7 +28,7 @@ import io.coala.log.InjectLogger;
 /**
  * {@link TestExecutorOrganizationImpl}
  * 
- * @version $Id$
+ * @version $Id: 9669d11506b37cc446254fa8731732089cd8eb91 $
  * @author Rick van Krevelen
  */
 public class TestExecutorOrganizationImpl extends AbstractOrganization

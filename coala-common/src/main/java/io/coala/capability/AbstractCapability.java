@@ -1,4 +1,4 @@
-/* $Id: 3edfe701010f475578d44f9dce5df004f146e4af $
+/* $Id: d734db94d6d1556589a997095245ec215a4b4459 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,7 +33,7 @@ import io.coala.log.LogUtil;
  * {@link AbstractCapability}
  * 
  * @param <ID> the type of {@link CapabilityID}
- * @version $Id$
+ * @version $Id: d734db94d6d1556589a997095245ec215a4b4459 $
  * @author Rick van Krevelen
  */
 public abstract class AbstractCapability<ID extends CapabilityID>

@@ -1,4 +1,4 @@
-/* $Id: 8fe68e9395e5d5be7cd23c3751b3889b7d86e187 $
+/* $Id: ea08c5561c228e73b61d6868506fcd5150e897c0 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/log/LogUtil.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

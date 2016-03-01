@@ -1,4 +1,4 @@
-/* $Id: c742f12531e4bb3b9cdd39d256ca03abd5e6d5dc $
+/* $Id: f190f0b00e0bcc4f38c5508f628f54fa11af51c6 $
  * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/log/InjectLoggerTypeListener.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

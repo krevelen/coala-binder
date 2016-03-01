@@ -1,4 +1,4 @@
-/* $Id: 1ee4f9f2772011ecafeb298bd441b74ba9072e41 $
+/* $Id: b17619a6b4279adbd4286009d1dbc48c3f69d4bc $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -53,7 +53,7 @@ import rx.subjects.Subject;
 /**
  * {@link BasicReplicatingCapability}
  * 
- * @version $Id$
+ * @version $Id: b17619a6b4279adbd4286009d1dbc48c3f69d4bc $
  * @author Rick van Krevelen
  */
 public class BasicReplicatingCapability extends BasicCapability implements
@@ -89,7 +89,7 @@ public class BasicReplicatingCapability extends BasicCapability implements
 	/**
 	 * {@link ClockStatusEnum}
 	 * 
-	 * @version $Id: 1ee4f9f2772011ecafeb298bd441b74ba9072e41 $
+	 * @version $Id: b17619a6b4279adbd4286009d1dbc48c3f69d4bc $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	private enum ClockStatusEnum implements ClockStatus

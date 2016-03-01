@@ -1,4 +1,4 @@
-/* $Id: c6193005f82167b49b0e64702adb758bc67bcc6b $
+/* $Id: 1de92762f6b7fa1576b680ebac1d734f9d591c3a $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/test/java/io/coala/WeightedProductComparatorTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

@@ -1,4 +1,4 @@
-/* $Id: 37607607e7785710afdeb08d4bfcf9fa1e8e59a5 $
+/* $Id: ab999c34cf71781b83fca79971ba0bb3a50748b8 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -32,7 +32,7 @@ import io.coala.log.InjectLogger;
 /**
  * {@link MyTestFactInitiatorRole}
  * 
- * @version $Id$
+ * @version $Id: ab999c34cf71781b83fca79971ba0bb3a50748b8 $
  * @author Rick van Krevelen
  */
 public class MyTestFactInitiatorRole

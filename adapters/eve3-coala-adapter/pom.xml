@@ -15,7 +15,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for the Eve3 agent platform
-		$Id: e9c975bcfa2a3aef793ada2decb7216adb333042 $
+		$Id: f549a0bbf2d7d0922b91436920459833dc8a5257 $
 	</description>
 	<url>https://eve.almende.com/</url>
 

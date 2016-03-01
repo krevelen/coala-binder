@@ -1,4 +1,4 @@
-/* $Id: 7f6743eb409ca6c0404e87cd141995ebeba63a7f $
+/* $Id: d0df7259248826794fc863291937b4a44ab48345 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -35,7 +35,7 @@ import io.coala.time.Instant;
  * @param <A> the type of {@link Agent}
  * @param <I> he type of {@link Instant}
  * @param <THIS> the concrete type of {@link Indicator}
- * @version $Id$
+ * @version $Id: d0df7259248826794fc863291937b4a44ab48345 $
  * @author Rick van Krevelen
  */
 public class Indicator<A extends Agent, I extends Instant<I>, THIS extends Indicator<A, I, THIS>>

@@ -1,4 +1,4 @@
-/* $Id: e1d448ba9e62cc550b2c3654fdec90b44b67d5d7 $
+/* $Id: b82e5b2a4df66af46d627c6b303ac414bc6bad47 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -26,7 +26,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link BasicAgentStatus}
  * 
- * @version $Id$
+ * @version $Id: b82e5b2a4df66af46d627c6b303ac414bc6bad47 $
  * @author Rick van Krevelen
  */
 public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>

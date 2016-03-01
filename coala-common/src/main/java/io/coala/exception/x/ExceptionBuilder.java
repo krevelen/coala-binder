@@ -1,4 +1,4 @@
-/* $Id: cccb3d9313ff65e159321e3a8283c101ef6a24b3 $
+/* $Id: 159ef9e618c1d99cb8ef0ad10548596a3f3afff6 $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
@@ -31,7 +31,7 @@ import io.coala.exception.x.UncheckedException.Builder;
  * TODO add createError(...) methods?
  * 
  * @date $Date$
- * @version $Id$
+ * @version $Id: 159ef9e618c1d99cb8ef0ad10548596a3f3afff6 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>

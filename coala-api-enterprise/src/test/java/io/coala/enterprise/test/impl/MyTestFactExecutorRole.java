@@ -1,4 +1,4 @@
-/* $Id: 79a68792095c1ae453e4f86411f96219ccd6fbe5 $
+/* $Id: 5a704e04fd924d19e011eab45894e26480db953e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -32,7 +32,7 @@ import io.coala.time.Trigger;
 /**
  * {@link MyTestFactExecutorRole}
  * 
- * @version $Id$
+ * @version $Id: 5a704e04fd924d19e011eab45894e26480db953e $
  * @author Rick van Krevelen
  */
 public class MyTestFactExecutorRole extends AbstractExecutor<TestFact.Request>

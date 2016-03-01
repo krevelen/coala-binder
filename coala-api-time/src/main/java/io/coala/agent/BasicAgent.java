@@ -1,4 +1,4 @@
-/* $Id: 210b81cbbec5bdef3be9ada8446ba6a23966e9f5 $
+/* $Id: ca3bac33935db68b7ba8a3ad62bb0df17fa248fb $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -43,7 +43,7 @@ import io.coala.time.SimTime;
 /**
  * {@link BasicAgent}
  * 
- * @version $Id$
+ * @version $Id: ca3bac33935db68b7ba8a3ad62bb0df17fa248fb $
  * @author Rick van Krevelen
  */
 public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>

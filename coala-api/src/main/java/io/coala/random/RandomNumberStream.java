@@ -1,4 +1,4 @@
-/* $Id: 8b9d9fe183b232dd2059419030b815bfed544b9e $
+/* $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/random/RandomNumberStream.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -32,7 +32,7 @@ import io.coala.name.Identifiable;
  * an API similar to the standard Java {@link Random} generator (which is
  * wrapped accordingly in the {@link RandomStream} decorator)
  * 
- * @version $Id$
+ * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
  * @author Rick van Krevelen
  */
 public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
@@ -69,7 +69,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	/**
 	 * {@link RandomNumberStreamID}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
 	public static class ID extends AbstractIdentifier<String>
@@ -124,7 +124,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	 * 
 	 * TODO deprecate using {@link Wrapper}s
 	 * 
-	 * @version $Id$
+	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "serial" )
@@ -149,7 +149,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	 * {@link RandomStream} decorates a standard Java {@link Random} generator
 	 * as {@link RandomNumberStream}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "serial" )
@@ -229,7 +229,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	/**
 	 * {@link RandomFactory} creates {@link RandomStream} instances
 	 * 
-	 * @version $Id$
+	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
 	class RandomFactory implements Factory

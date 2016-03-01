@@ -1,4 +1,4 @@
-/* $Id: 2d2c04a60793c333e2cd93381a1bfcb5179185db $
+/* $Id: 6906eff0d90d13e4805e609859895520fb71412a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -30,7 +30,7 @@ import rx.Observer;
 /**
  * {@link BasicCell}
  * 
- * @version $Id$
+ * @version $Id: 6906eff0d90d13e4805e609859895520fb71412a $
  * @author Rick van Krevelen
  */
 public class BasicCell extends BasicAgent implements Cell

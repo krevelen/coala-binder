@@ -1,4 +1,4 @@
-/* $Id: 9e0f4719a3e738065e9b9b304ef65d98f3f3bb6c $
+/* $Id: 9cbe509be2b6e1935de97413653e098ff7ddaa96 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/SimulatorService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -25,7 +25,7 @@ import io.coala.capability.CapabilityFactory;
 /**
  * {@link ReplicatingCapability}
  * 
- * @version $Id$
+ * @version $Id: 9cbe509be2b6e1935de97413653e098ff7ddaa96 $
  * @author Rick van Krevelen
  */
 public interface ReplicatingCapability
@@ -34,7 +34,7 @@ public interface ReplicatingCapability
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 9cbe509be2b6e1935de97413653e098ff7ddaa96 $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory extends CapabilityFactory<ReplicatingCapability>

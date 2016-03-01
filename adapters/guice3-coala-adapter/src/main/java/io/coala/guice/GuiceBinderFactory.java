@@ -1,4 +1,4 @@
-/* $Id: 1589ec426dae118d0740adf4985b6ae3f21c5a53 $
+/* $Id: e4b0c8b2f193027454030f4c994a666b6713110c $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -40,7 +40,7 @@ import rx.subjects.Subject;
 /**
  * {@link GuiceBinderFactory}
  * 
- * @version $Id$
+ * @version $Id: e4b0c8b2f193027454030f4c994a666b6713110c $
  * @author Rick van Krevelen
  */
 public class GuiceBinderFactory implements BinderFactory

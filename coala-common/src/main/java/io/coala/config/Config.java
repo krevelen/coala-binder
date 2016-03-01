@@ -12,7 +12,7 @@ import org.aeonbits.owner.Mutable;
  * {@link Config}
  * 
  * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Id: adce96e86c6e67797a03adca3a122fb864a37141 $
+ * @version $Id: 60907217eef5350279876f1d64002469ef2132f1 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @LoadPolicy( LoadType.MERGE )

@@ -1,4 +1,4 @@
-/* $Id: cccb3d9313ff65e159321e3a8283c101ef6a24b3 $
+/* $Id: 9a68e7e3b4196e0ec0aead8bcad855d27c75dedf $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -41,7 +41,7 @@ import io.coala.util.TypeUtil;
 /**
  * {@link JsonUtil}
  * 
- * @version $Id$
+ * @version $Id: 9a68e7e3b4196e0ec0aead8bcad855d27c75dedf $
  * @author Rick van Krevelen
  */
 public class JsonUtil

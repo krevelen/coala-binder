@@ -1,4 +1,4 @@
-/* $Id: da91316713520a079a90fd54438e6181880cf41a $
+/* $Id: 477f095b595d0f93e71a36218aa6e217cb8e6daa $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/config/AbstractPropertyGetter.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -41,7 +41,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link AbstractPropertyGetter}
  * 
- * @version $Id$
+ * @version $Id: 477f095b595d0f93e71a36218aa6e217cb8e6daa $
  * @author Rick van Krevelen
  */
 public abstract class AbstractPropertyGetter implements PropertyGetter

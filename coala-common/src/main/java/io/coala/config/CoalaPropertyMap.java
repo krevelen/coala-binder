@@ -1,4 +1,4 @@
-/* $Id: dfe9a5440f537e5090b6ec67a6b94af6ea19d277 $
+/* $Id: 0b49c65c3b8335ee2c3a3a7442b8b3ffec8d595f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -28,7 +28,7 @@ import io.coala.resource.FileUtil;
 /**
  * {@link CoalaPropertyMap} extends {@link Properties} with some utility methods
  * 
- * @version $Id$
+ * @version $Id: 0b49c65c3b8335ee2c3a3a7442b8b3ffec8d595f $
  * @author Rick van Krevelen
  */
 public class CoalaPropertyMap extends Properties

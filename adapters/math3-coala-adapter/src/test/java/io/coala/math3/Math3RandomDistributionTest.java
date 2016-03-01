@@ -1,4 +1,4 @@
-/* $Id: cf21c9c9cd4ab73588c022edc57859672280f1b9 $
+/* $Id: bfadf655bd8008aafea9b9abf73eab34d7701718 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -25,7 +25,7 @@ import io.coala.random.RandomNumberStream;
 /**
  * {@link Math3RandomDistributionTest}
  * 
- * @version $Id$
+ * @version $Id: bfadf655bd8008aafea9b9abf73eab34d7701718 $
  * @author Rick van Krevelen
  */
 public class Math3RandomDistributionTest

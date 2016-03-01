@@ -1,4 +1,4 @@
-/* $Id: b228bb2e5dd829df64c518fcaa05e3c3339e02b6 $
+/* $Id: 66032c0baba05deb597677d08ca80e4552402ac9 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -26,7 +26,7 @@ import io.coala.log.InjectLogger;
 /**
  * {@link TestAgent}
  * 
- * @version $Id: b228bb2e5dd829df64c518fcaa05e3c3339e02b6 $
+ * @version $Id: 66032c0baba05deb597677d08ca80e4552402ac9 $
  * @author Rick van Krevelen
  */
 public class TestAgent extends BasicAgent

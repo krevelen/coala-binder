@@ -1,4 +1,4 @@
-/* $Id: 771ddaf5c5f2e4041dc0856ee087d3ed19fc3636 $
+/* $Id: 120c5197e02b88b84a7e00635af67656539fc770 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,7 @@ import io.coala.log.LogUtil;
  * {@link WeightedProductComparator}
  * 
  * @param <C>
- * @version $Id$
+ * @version $Id: 120c5197e02b88b84a7e00635af67656539fc770 $
  * @author Rick van Krevelen
  */
 public class WeightedProductComparator<C extends WeightedCriterion>

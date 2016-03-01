@@ -1,4 +1,4 @@
-/* $Id: 27e940e0160b46f6d87ab5e5ee2ccbcdf3f4391a $
+/* $Id: 3910462899309fbce4d82fb12041417f0f755501 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -24,7 +24,7 @@ import io.coala.time.Trigger;
  * {@link SchedulingCapability}
  * 
  * @param <I>
- * @version $Id$
+ * @version $Id: 3910462899309fbce4d82fb12041417f0f755501 $
  * @author Rick van Krevelen
  */
 public interface SchedulingCapability<I extends Instant<I>> extends TimingCapability<I>
@@ -33,7 +33,7 @@ public interface SchedulingCapability<I extends Instant<I>> extends TimingCapabi
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 3910462899309fbce4d82fb12041417f0f755501 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings("rawtypes")

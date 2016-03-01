@@ -1,4 +1,4 @@
-/* $Id: b1a5b41ed657c5d8e7eccbd7dddcd2c5418b845f $
+/* $Id: 4ddff9cc3ae108cbe8b5ba3c85790dc08454e64a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -28,7 +28,7 @@ import io.coala.time.SimTime;
 /**
  * {@link AbstractOrganization}
  * 
- * @version $Id: b1a5b41ed657c5d8e7eccbd7dddcd2c5418b845f $
+ * @version $Id: 4ddff9cc3ae108cbe8b5ba3c85790dc08454e64a $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public abstract class AbstractOrganization extends BasicAgent implements

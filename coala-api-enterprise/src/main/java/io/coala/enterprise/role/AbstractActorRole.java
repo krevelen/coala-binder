@@ -1,4 +1,4 @@
-/* $Id: 7519a7e560a9b77cfbde387bd232886325404fff $
+/* $Id: 9d35c3a08c36d3cbbec8c503f95caff69836e379 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -68,7 +68,7 @@ import rx.subjects.Subject;
  * {@link AbstractActorRole}
  * 
  * @param <F> the concrete {@link CoordinationFact} type being handled
- * @version $Id$
+ * @version $Id: 9d35c3a08c36d3cbbec8c503f95caff69836e379 $
  * @author Rick van Krevelen
  */
 public abstract class AbstractActorRole<F extends CoordinationFact>

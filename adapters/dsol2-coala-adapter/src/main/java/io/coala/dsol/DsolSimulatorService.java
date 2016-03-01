@@ -1,4 +1,4 @@
-/* $Id: d52d9a2ad41007363840e06a6d843dfb493c9b7a $
+/* $Id: 89cfd12ede2065a2f68cdd22f6b145efd8a4b4e4 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -70,7 +70,7 @@ import rx.subjects.Subject;
 /**
  * {@link DsolSimulatorService} combines a {@link SchedulingCapability} and 
  * 
- * @version $Id$
+ * @version $Id: 89cfd12ede2065a2f68cdd22f6b145efd8a4b4e4 $
  * @author Rick van Krevelen
  */
 public class DsolSimulatorService extends BasicCapability implements
@@ -414,7 +414,7 @@ public class DsolSimulatorService extends BasicCapability implements
 	/**
 	 * {@link CallableSimEvent} wraps a {@link SimEvent} as {@link Callable}
 	 * 
-	 * @version $Id: d52d9a2ad41007363840e06a6d843dfb493c9b7a $
+	 * @version $Id: 89cfd12ede2065a2f68cdd22f6b145efd8a4b4e4 $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class CallableSimEvent extends SimEvent

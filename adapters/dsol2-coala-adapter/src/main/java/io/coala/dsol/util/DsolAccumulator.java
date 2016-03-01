@@ -1,4 +1,4 @@
-/* $Id: b235e29c86ec0ed48727dcfff407f40369734796 $
+/* $Id: fe2cda04d439908999cbaa9af3ac5a60db3433fc $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import nl.tudelft.simulation.event.TimedEvent;
  * @param <S> the type of {@link SimulatorInterface}
  * @param <M> the type of {@link DsolModel}
  * @param <THIS> the final type of {@link DsolAccumulator}
- * @version $Id$
+ * @version $Id: fe2cda04d439908999cbaa9af3ac5a60db3433fc $
  * @author Rick van Krevelen
  */
 public class DsolAccumulator<S extends DEVSSimulatorInterface, M extends DsolModel<S, M>, THIS extends DsolAccumulator<S, M, THIS>>

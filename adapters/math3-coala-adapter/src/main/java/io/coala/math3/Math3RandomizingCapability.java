@@ -1,4 +1,4 @@
-/* $Id: 1e2e26abdf040be22deabc3da194ff27e13b2984 $
+/* $Id: 07298364b836980a619bb4ac47f836e573dd3796 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.random.RandomNumberStream;
  * {@link Math3RandomizingCapability} implements {@link RandomizingCapability}
  * using APache's commons-math3 toolkit
  * 
- * @version $Id$
+ * @version $Id: 07298364b836980a619bb4ac47f836e573dd3796 $
  * @author Rick van Krevelen
  */
 public class Math3RandomizingCapability extends BasicCapability

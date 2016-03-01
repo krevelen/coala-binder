@@ -1,4 +1,4 @@
-/* $Id: f2455b8f657bd25f152425be8d35fb4c1edc077d $
+/* $Id: cb0d884977af928fd3936149d5145de78a2dc3b8 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -49,7 +49,7 @@ public class GuiceBinderTest
 	/**
 	 * {@link Visitor}
 	 * 
-	 * @version $Id$
+	 * @version $Id: cb0d884977af928fd3936149d5145de78a2dc3b8 $
 	 * @author Rick van Krevelen
 	 */
 	public static class Visitor

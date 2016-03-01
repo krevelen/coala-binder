@@ -1,4 +1,4 @@
-/* $Id: 9d52d00092ced6f5e14a670344a8fc66b98ed080 $
+/* $Id: ecf6f2e95f2cde727b947aa35aa3708c1fa2adaf $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -48,7 +48,7 @@ import rx.Observer;
 /**
  * {@link EveWrapperAgent}
  * 
- * @version $Id$
+ * @version $Id: ecf6f2e95f2cde727b947aa35aa3708c1fa2adaf $
  * @author Rick van Krevelen
  */
 public class EveWrapperAgent extends com.almende.eve.agent.Agent
@@ -175,7 +175,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	public String getType()
 	{
 		return EveAgentManager.getInstance().getAgent(getAgentID(), true)
-				.getClass().getSimpleName() + " $Id: 9d52d00092ced6f5e14a670344a8fc66b98ed080 $";
+				.getClass().getSimpleName() + " $Id: ecf6f2e95f2cde727b947aa35aa3708c1fa2adaf $";
 	}
 
 	@Override

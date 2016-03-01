@@ -1,4 +1,4 @@
-/* $Id: 075c20f507c2e30717e7b41881794c424f05c691 $
+/* $Id: 50bd7f4b3ac22839bfca867cec8e97edd1e904da $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.util.Util;
 /**
  * {@link GuiceUtil}
  * 
- * @version $Id$
+ * @version $Id: 50bd7f4b3ac22839bfca867cec8e97edd1e904da $
  * @author Rick van Krevelen
  */
 public class GuiceUtil implements Util

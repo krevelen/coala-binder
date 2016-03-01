@@ -1,4 +1,4 @@
-/* $Id: 317b601e8609c43c599d4e07f3175f2c63f4db55 $
+/* $Id: 5de23ba343a23c304dd3c5d78c7c56393ef39a34 $
  * $URL: https://dev.almende.com/svn/abms/coala-examples/src/test/java/io/coala/example/pacing/PacerTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

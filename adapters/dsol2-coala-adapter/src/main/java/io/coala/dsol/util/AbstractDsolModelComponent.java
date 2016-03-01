@@ -1,4 +1,4 @@
-/* $Id: a8acba7dfe16a3e5eb9d3c01780987a795abef5d $
+/* $Id: ef2f5743ead6eb81e64b6a19925cad9b9418bb1d $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -37,7 +37,7 @@ import nl.tudelft.simulation.jstats.streams.StreamInterface;
  * 
  * @param <S> the type of {@link SimulatorInterface}
  * @param <M> the type of {@link DsolModel}
- * @version $Id$
+ * @version $Id: ef2f5743ead6eb81e64b6a19925cad9b9418bb1d $
  * @author Rick van Krevelen
  */
 public class AbstractDsolModelComponent<S extends SimulatorInterface, M extends DsolModel<S, M>>

@@ -1,4 +1,4 @@
-/* $Id: 684077c2d93610b1cea2bda30de2204441315375 $
+/* $Id: 08e62b4916057f901eb3f264de25cde4f98f1553 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 /**
  * {@link DsolUtil}
  * 
- * @version $Id$
+ * @version $Id: 08e62b4916057f901eb3f264de25cde4f98f1553 $
  * @author Rick van Krevelen
  */
 public class DsolUtil

@@ -1,4 +1,4 @@
-/* $Id: 8caa0ac879ae09d8e95adbc7bb97d01a036fc4b7 $
+/* $Id: 1566b85bfea340fc753861e6a6413629269ecf14 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.time.Trigger;
 /**
  * {@link PacedActor}
  * 
- * @version $Id$
+ * @version $Id: 1566b85bfea340fc753861e6a6413629269ecf14 $
  * @author Rick van Krevelen
  */
 public class PacedActor extends BasicAgent implements ModelComponent<AgentID>

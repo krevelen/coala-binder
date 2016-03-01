@@ -1,4 +1,4 @@
-/* $Id: 8d658a57db9308ad045378be1e35163d0cc4bccd $
+/* $Id: 85b207559b6ab0b4d41c917dc7a95ab18deab35e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,7 +33,7 @@ import io.coala.time.TimeUnit;
 /**
  * {@link CoalaProperty}
  * 
- * @version $Id$
+ * @version $Id: 85b207559b6ab0b4d41c917dc7a95ab18deab35e $
  * @author Rick van Krevelen
  */
 public enum CoalaProperty

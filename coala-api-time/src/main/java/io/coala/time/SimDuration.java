@@ -1,4 +1,4 @@
-/* $Id: e8c61e1583154eddc4b550836c10dd09ffeb6e53 $
+/* $Id: 70708e323cf08416282a4f6d2dbcfa9120d2f43e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -23,7 +23,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link SimDuration}
  * 
- * @version $Id$
+ * @version $Id: 70708e323cf08416282a4f6d2dbcfa9120d2f43e $
  * @author Rick van Krevelen
  */
 public class SimDuration extends AbstractInstant<SimDuration>

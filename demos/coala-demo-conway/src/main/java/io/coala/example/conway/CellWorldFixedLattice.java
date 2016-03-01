@@ -1,4 +1,4 @@
-/* $Id: 88a4a9ab1c04e02b2ed488b9382bb4f834cc95e1 $
+/* $Id: 63676befb954be9786f5fef1d1afd34c82facfc7 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -46,7 +46,7 @@ import rx.subjects.Subject;
 /**
  * {@link CellWorldFixedLattice}
  * 
- * @version $Id: 88a4a9ab1c04e02b2ed488b9382bb4f834cc95e1 $
+ * @version $Id: 63676befb954be9786f5fef1d1afd34c82facfc7 $
  * @author Rick van Krevelen
  */
 public class CellWorldFixedLattice extends BasicCapability implements CellWorld

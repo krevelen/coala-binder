@@ -1,4 +1,4 @@
-/* $Id: 9d41ffa79af7926dd0abf293729d3c47fb597919 $
+/* $Id: cf7d93a458ffe55cb49bd3c639155e7d1a793abd $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -36,7 +36,7 @@ import rx.Observer;
 /**
  * {@link MessagingTestAgent}
  * 
- * @version $Id$
+ * @version $Id: cf7d93a458ffe55cb49bd3c639155e7d1a793abd $
  * @author Rick van Krevelen
  */
 public class MessagingTestAgent extends BasicAgent
@@ -45,7 +45,7 @@ public class MessagingTestAgent extends BasicAgent
 	/**
 	 * {@link MyMessageID}
 	 * 
-	 * @version $Id$
+	 * @version $Id: cf7d93a458ffe55cb49bd3c639155e7d1a793abd $
 	 * @author Rick van Krevelen
 	 */
 	public static class MyMessageID extends MessageID<Long, SimTime>
@@ -80,7 +80,7 @@ public class MessagingTestAgent extends BasicAgent
 	/**
 	 * {@link MyMessage}
 	 * 
-	 * @version $Id: 9d41ffa79af7926dd0abf293729d3c47fb597919 $
+	 * @version $Id: cf7d93a458ffe55cb49bd3c639155e7d1a793abd $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class MyMessage extends AbstractMessage<MyMessageID>

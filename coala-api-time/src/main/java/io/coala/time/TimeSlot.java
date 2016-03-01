@@ -1,4 +1,4 @@
-/* $Id: 40e7574ca4da8a43278f33f7abcf86437c87d84d $
+/* $Id: b122c1e76281696485d6945bfdeff0a35d12db1e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -35,7 +35,7 @@ import io.coala.log.LogUtil;
 /**
  * A {@link TimeSlot} is compared by its {@link Interval)'s start and end times
  * 
- * @version $Id$
+ * @version $Id: b122c1e76281696485d6945bfdeff0a35d12db1e $
  * @author Rick van Krevelen
  */
 public class TimeSlot implements Serializable, Comparable<TimeSlot>

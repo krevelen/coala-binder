@@ -1,4 +1,4 @@
-/* $Id: d2aa0ffb71e06dcaa7fa7a232e0d266a15ac5718 $
+/* $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -52,7 +52,7 @@ import io.coala.random.RandomNumberStream;
  * {@link Math3RandomDistribution} creates {@link RandomDistribution}s
  * implemented by Apache's commons-math3
  * 
- * @version $Id$
+ * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
@@ -126,7 +126,7 @@ public abstract class Math3RandomDistribution<S>
 	 * {@link Factory} creates {@link RandomDistribution}s implemented by
 	 * Apache's commons-math3 toolkit
 	 * 
-	 * @version $Id$
+	 * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
 	 * @author Rick van Krevelen
 	 */
 	public static class Factory implements RandomDistribution.Factory

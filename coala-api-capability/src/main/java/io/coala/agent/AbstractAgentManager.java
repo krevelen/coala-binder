@@ -1,4 +1,4 @@
-/* $Id: 1add29f6d7d2e74c3a00fc6147db8e731017a41b $
+/* $Id: b91c041718d534ddb7ce5f43c5a6878fa50389a0 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -47,7 +47,7 @@ import rx.subjects.Subject;
  * {@link AbstractAgentManager} manages the {@link LifeCycle}s of the deployed
  * {@link Agent}s
  * 
- * @version $Id$
+ * @version $Id: b91c041718d534ddb7ce5f43c5a6878fa50389a0 $
  * @author Rick van Krevelen
  */
 public abstract class AbstractAgentManager implements AgentManager

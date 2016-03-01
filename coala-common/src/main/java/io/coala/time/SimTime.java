@@ -1,4 +1,4 @@
-/* $Id: f3b958c50b9159c80e4f588bc60bd9242ee02b4f $
+/* $Id: 705ca0d273e0582c7ee098f61066703449a55692 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -28,7 +28,7 @@ import io.coala.log.LogUtil;
  * {@link SimTime} is an {@link Instant} with a particular base unit and
  * implementing {@link JSONConvertible}
  * 
- * @version $Id: f3b958c50b9159c80e4f588bc60bd9242ee02b4f $
+ * @version $Id: 705ca0d273e0582c7ee098f61066703449a55692 $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class SimTime extends AbstractInstant<SimTime>
@@ -37,7 +37,7 @@ public class SimTime extends AbstractInstant<SimTime>
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id: f3b958c50b9159c80e4f588bc60bd9242ee02b4f $
+	 * @version $Id: 705ca0d273e0582c7ee098f61066703449a55692 $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public interface Factory extends io.coala.factory.Factory

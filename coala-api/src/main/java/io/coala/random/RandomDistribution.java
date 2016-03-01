@@ -1,4 +1,4 @@
-/* $Id: db6006ab8e27aa02a2170042676f988536c5f4eb $
+/* $Id: a7842c5dc1c8963fe6c9721cdcda6c3b21980bb0 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -44,7 +44,7 @@ public interface RandomDistribution<T> extends Serializable
 	 * 
 	 * @param <V> the concrete type of random value to draw
 	 * @param <M> the concrete type of probability mass {@link Number}
-	 * @version $Id$
+	 * @version $Id: a7842c5dc1c8963fe6c9721cdcda6c3b21980bb0 $
 	 * @author Rick van Krevelen
 	 */
 	class ProbabilityMass<V, M extends Number> implements Serializable
@@ -117,7 +117,7 @@ public interface RandomDistribution<T> extends Serializable
 	 * {@link Util} provides static helper methods for
 	 * {@link RandomDistribution}s
 	 * 
-	 * @version $Id$
+	 * @version $Id: a7842c5dc1c8963fe6c9721cdcda6c3b21980bb0 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "serial" )

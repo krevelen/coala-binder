@@ -1,4 +1,4 @@
-/* $Id: 6880b2f7b7c65dbe256fa5709b520368502fd84d $
+/* $Id: e18ce506411a6728e42f316b48bc079101b4e237 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,7 @@ import rx.Observer;
 /**
  * {@link CleanupTest}
  * 
- * @version $Id$
+ * @version $Id: e18ce506411a6728e42f316b48bc079101b4e237 $
  * @author Rick van Krevelen
  */
 public class CleanupTest

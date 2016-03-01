@@ -1,4 +1,4 @@
-/* $Id: 130f32a1439ffa2dbf3d0838536fd0fa520a23e1 $
+/* $Id: 18a8742976643b1d4e4d04d3f07fa8f74364afe9 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,7 @@ import io.coala.log.LogUtil;
  * {@link Log4JMembersInjector}
  * 
  * @param <T>
- * @version $Id$
+ * @version $Id: 18a8742976643b1d4e4d04d3f07fa8f74364afe9 $
  * @author Rick van Krevelen
  */
 class Log4JMembersInjector<T> implements MembersInjector<T>

@@ -1,4 +1,4 @@
-/* $Id: 0f8761392b7e9922e374c219a9b2936d94552f41 $
+/* $Id: eaf4f804beb5113e463a5e5f6c5ea9962fdb2740 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -36,7 +36,7 @@ import io.coala.xml.XmlContext;
 /**
  * {@link ResourceStream}
  * 
- * @version $Id$
+ * @version $Id: eaf4f804beb5113e463a5e5f6c5ea9962fdb2740 $
  * @author Rick van Krevelen
  */
 public class ResourceStream

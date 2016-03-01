@@ -1,4 +1,4 @@
-/* $Id: e856ae6d739cc16866dff9ec8eebf8eb406ca24a $
+/* $Id: 78aec19c5642407975198ddbf792739c70842b11 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * "https://bitbucket.org/noctarius/guiceidentityinjection/src/014f6cb8fcc0/src/main/java/com/google/inject/identityinjection/IdentityProviderFactory.java"
  * >here</a>
  * 
- * @version $Id$
+ * @version $Id: 78aec19c5642407975198ddbf792739c70842b11 $
  * @author Rick van Krevelen
  */
 @Documented

@@ -1,4 +1,4 @@
-/* $Id: ffe63957b325aff2fe441b72a8f6bac7625b923c $
+/* $Id: 2070bb85b6ee8891e4612011dac89dfe69f9fa38 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -45,7 +45,7 @@ import io.coala.util.Util;
 /**
  * {@link ClassUtil}
  * 
- * @version $Id$
+ * @version $Id: 2070bb85b6ee8891e4612011dac89dfe69f9fa38 $
  * @author Rick van Krevelen
  */
 public class ClassUtil implements Util

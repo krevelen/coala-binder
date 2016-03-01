@@ -1,4 +1,4 @@
-/* $Id: 8ff21abe01667f533455da6dd60a8fd5934db7f5 $
+/* $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/random/impl/RandomNumberStreamFactoryJDK.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -31,7 +31,7 @@ import io.coala.random.RandomNumberStream;
  * {@link Math3RandomNumberStream} decorates several commons-math3
  * {@link RandomGenerator}s as {@link RandomNumberStream}
  * 
- * @version $Id$
+ * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
@@ -200,7 +200,7 @@ public class Math3RandomNumberStream
 	 * {@link MersenneFactory} of {@link Math3RandomNumberStream}s wrapping
 	 * Apache common-math3's {@link MersenneTwister} implementation
 	 * 
-	 * @version $Id$
+	 * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
 	 * @author Rick van Krevelen
 	 */
 	public static class MersenneFactory implements RandomNumberStream.Factory
@@ -224,7 +224,7 @@ public class Math3RandomNumberStream
 	 * {@link MersenneFactory} of {@link Math3RandomNumberStream}s wrapping
 	 * Apache common-math3's {@link Well19937c} implementation
 	 * 
-	 * @version $Id$
+	 * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
 	 * @author Rick van Krevelen
 	 */
 	public static class Well19937cFactory implements RandomNumberStream.Factory

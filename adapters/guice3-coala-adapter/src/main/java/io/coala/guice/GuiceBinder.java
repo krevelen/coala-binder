@@ -1,4 +1,4 @@
-/* $Id: 1f25b5630ce072e2951962887166500429e57826 $
+/* $Id: 7f473c54aaed5a41c52bb81912cf069e6565a2d4 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -57,7 +57,7 @@ import rx.Observable;
 /**
  * {@link GuiceBinder}
  * 
- * @version $Id$
+ * @version $Id: 7f473c54aaed5a41c52bb81912cf069e6565a2d4 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "deprecation" )

@@ -1,4 +1,4 @@
-/* $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
+/* $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -47,7 +47,7 @@ import io.coala.resource.FileUtil;
 /**
  * {@link EveAgentConfig}
  * 
- * @version $Id$
+ * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
  * @author Rick van Krevelen
  */
 public interface EveAgentConfig extends ReplicationConfig
@@ -210,7 +210,7 @@ public interface EveAgentConfig extends ReplicationConfig
 	 * {@link JsonNodeConverter}
 	 *
 	 * @date $Date$
-	 * @version $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
+	 * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class JsonNodeConverter implements Converter<JsonNode>
@@ -226,7 +226,7 @@ public interface EveAgentConfig extends ReplicationConfig
 	 * {@link AgentConfigConverter}
 	 *
 	 * @date $Date$
-	 * @version $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
+	 * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class AgentConfigConverter implements Converter<AgentConfig>
@@ -242,7 +242,7 @@ public interface EveAgentConfig extends ReplicationConfig
 	 * {@link AgentConfigConverter}
 	 * 
 	 * @date $Date$
-	 * @version $Id: 80282dda6aa47fd83cfcf520b70cad1feaf42934 $
+	 * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class InputStreamConverter implements Converter<InputStream>

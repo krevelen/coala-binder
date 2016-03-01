@@ -1,4 +1,4 @@
-/* $Id: 327e1cd3aec7a9356d77b8ee5e5b55ae9af2c045 $
+/* $Id: 16e93b291a86eb34cb5741299ec7df584b05abbf $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -38,7 +38,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link GuiceLazyBinderModule}
  * 
- * @version $Id$
+ * @version $Id: 16e93b291a86eb34cb5741299ec7df584b05abbf $
  * @author Rick van Krevelen
  */
 public abstract class GuiceLazyBinderModule extends AbstractModule

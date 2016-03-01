@@ -1,4 +1,4 @@
-/* $Id: a95a474f727b0f3e0003640546864abd5fedb848 $
+/* $Id: 12c773662ad31804aa1b8aab6d03381daec00fcb $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/test/java/io/coala/ResourceTest.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/

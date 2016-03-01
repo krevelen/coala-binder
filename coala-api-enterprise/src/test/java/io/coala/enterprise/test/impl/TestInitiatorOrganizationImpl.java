@@ -1,4 +1,4 @@
-/* $Id: de990f7d8630e4dbbb2239f6524bd1b45d58431f $
+/* $Id: 0d4b49b590a20e0127818cdc7e333b076b04d399 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -36,7 +36,7 @@ import io.coala.time.Trigger;
 /**
  * {@link TestInitiatorOrganizationImpl}
  * 
- * @version $Id$
+ * @version $Id: 0d4b49b590a20e0127818cdc7e333b076b04d399 $
  * @author Rick van Krevelen
  */
 public class TestInitiatorOrganizationImpl extends AbstractOrganization

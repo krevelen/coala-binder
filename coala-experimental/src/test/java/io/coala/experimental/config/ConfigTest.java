@@ -1,4 +1,4 @@
-/* $Id: 74856da80189ff06097650cdd88f72921ceca709 $
+/* $Id: 6371511646549eb9caf4b04d2646e0fdbb1274e0 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link ConfigTest}
  * 
- * @version $Id$
+ * @version $Id: 6371511646549eb9caf4b04d2646e0fdbb1274e0 $
  * @author Rick van Krevelen
  */
 public class ConfigTest
