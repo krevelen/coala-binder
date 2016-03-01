@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -39,7 +39,7 @@ import io.coala.name.Identifier;
  * Jackson Polymorphic Deserialization</a>
  * 
  * @param <T> the wrapped type of reference value
- * @version $Id$
+ * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
@@ -47,7 +47,7 @@ import io.coala.name.Identifier;
 	property = "@class" )
 public class Id<T> extends Wrapper.Simple<T>
 {
-	
+
 	// FIXME override compareTo() to support Child sub-types
 
 	/** */
@@ -68,7 +68,7 @@ public class Id<T> extends Wrapper.Simple<T>
 	/**
 	 * {@link IdConfig}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
 	 * @author Rick van Krevelen
 	 */
 	public static interface IdConfig extends Config
@@ -78,7 +78,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		/** */
 		@Key( ID_SEPARATOR_KEY )
 		@DefaultValue( "-" )
-			String separator();
+		String separator();
 
 		IdConfig INSTANCE = ConfigCache.getOrCreate( IdConfig.class );
 	}
@@ -89,7 +89,7 @@ public class Id<T> extends Wrapper.Simple<T>
 	 * implementation
 	 * 
 	 * @param <T> the concrete {@link Comparable} type of value
-	 * @version $Id$
+	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "rawtypes" )
@@ -99,9 +99,9 @@ public class Id<T> extends Wrapper.Simple<T>
 		@Override
 		public int compareTo( final Comparable other )
 		{
-			
-			// FIXME override compareTo() to support Child sub-types
-			return Wrapper.Util.compare( this, other );
+			return other instanceof OrdinalChild
+					&& ((OrdinalChild) other).getParent() != null ? -1
+							: Util.compare( this, other );
 		}
 	}
 
@@ -109,10 +109,8 @@ public class Id<T> extends Wrapper.Simple<T>
 	 * {@link OrdinalChild} is an {@link Id} with a parent {@link Id}
 	 * 
 	 * @param <T> the concrete {@link Comparable} type of value
-	 * @param
-	 * 			<P>
-	 *            the concrete {@link Comparable} type of parent
-	 * @version $Id$
+	 * @param <P> the concrete {@link Comparable} type of parent
+	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "rawtypes" )
@@ -237,11 +235,11 @@ public class Id<T> extends Wrapper.Simple<T>
 		{
 			if( other == null ) return 1;
 			if( !(other instanceof OrdinalChild) )
-				return Util.compare( this, other );
-			final int parentCompare = Util.compare( this.getParent(),
+				return getParent() == null ? Util.compare( this, other ) : 1;
+			final int parentCompare = Util.compare( getParent(),
 					((OrdinalChild<T, P>) other).getParent() );
 			if( parentCompare != 0 ) return parentCompare;
-			return Wrapper.Util.compare( this, other );
+			return Util.compare( this, other );
 		}
 
 	}

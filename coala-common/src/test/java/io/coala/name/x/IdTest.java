@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: e6295c63830424b277a9bdd125218a9c849801e8 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -38,7 +38,7 @@ import rx.Observer;
 /**
  * {@link IdTest}
  * 
- * @version $Id$
+ * @version $Id: e6295c63830424b277a9bdd125218a9c849801e8 $
  * @author Rick van Krevelen
  */
 public class IdTest
@@ -209,9 +209,9 @@ public class IdTest
 		assertThat( "Ordinal should allow comparison with plain objects",
 				value1String.compareTo( value2String ),
 				equalTo( value1Wrap.compareTo( value2String ) ) );
-		assertThat( "orphan(2) <> wrap(2)",
+		assertThat( "orphan(2) = wrap(2)",
 				value2Orphan.compareTo( value2Wrap ), equalTo( 0 ) );
-		assertThat( "wrap(2) <> orphan(2)",
+		assertThat( "wrap(2) = orphan(2)",
 				value2Wrap.compareTo( value2Orphan ), equalTo( 0 ) );
 		assertThat( "wrap(1) < orphan(2)", value1Wrap.compareTo( value2Orphan ),
 				lessThan( 0 ) );
