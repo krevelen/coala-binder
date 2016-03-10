@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 67f38cc7a8b7a6c4b7c7fc62ef53a3a464ef0d5e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -73,7 +73,7 @@ import io.coala.json.x.Wrapper;
  * </dl>
  * 
  * @date $Date$
- * @version $Id$
+ * @version $Id: 67f38cc7a8b7a6c4b7c7fc62ef53a3a464ef0d5e $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
@@ -332,6 +332,17 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	public static Instant valueOf( final String value )
 	{
 		return of( TimeSpan.valueOf( value ) );
+	}
+
+	/**
+	 * for "natural" Config value conversion for a {@link Duration} (i.e.
+	 * {@link TimeSpan}).
+	 * 
+	 * @see #valueOf(String)
+	 */
+	public static Instant of( final String value )
+	{
+		return valueOf( value );
 	}
 
 	/**
