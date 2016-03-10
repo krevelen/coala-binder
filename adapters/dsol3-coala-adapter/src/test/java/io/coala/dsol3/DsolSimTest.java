@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: db00600b42b2236dcc5f74a2e1c4d3a46c3dbb44 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -41,7 +41,7 @@ import rx.Observer;
 /**
  * {@link DsolSimTest}
  * 
- * @version $Id$
+ * @version $Id: db00600b42b2236dcc5f74a2e1c4d3a46c3dbb44 $
  * @author Rick van Krevelen
  */
 public class DsolSimTest
@@ -72,22 +72,6 @@ public class DsolSimTest
 			throws SimRuntimeException, RemoteException
 		{
 			this.scheduler = (DEVSSimulator<?, ?, DsolTime>) simulator;
-			this.scheduler.scheduleEventAbs( DsolTime.ZERO, new Executable()
-			{
-				@Override
-				public void execute()
-				{
-					try
-					{
-						Thread.currentThread()
-								.setName( simulator.getReplication()
-										.getContext().getNameInNamespace() );
-					} catch( final RemoteException | NamingException e )
-					{
-						LOG.error( "Problem getting replication context", e );
-					}
-				}
-			} );
 
 			LOG.trace( "Schedulable job count: " + this.jobCount );
 			for( int i = 0; i < this.jobCount; i++ )
@@ -130,7 +114,8 @@ public class DsolSimTest
 		final TestModel model = new TestModel().withJobCount( 10 );
 
 		LOG.trace( "Initialize sim" );
-		final DEVSSimulator sim = DsolTime.createDEVSSimulator( "rep1" );
+		final DEVSSimulator sim = DsolTime
+				.createDEVSSimulator( DEVSSimulator.class );
 		sim.initialize( DsolTime.createReplication( "rep1",
 				DsolTime.valueOf( 0.0 ), BigDecimal.valueOf( 0.0 ),
 				BigDecimal.valueOf( 100.0 ), model ),

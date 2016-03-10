@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -57,7 +57,7 @@ import io.coala.util.TypeUtil;
  * {@link Wrapper} is a tag for decorator types that are (or should be)
  * automatically un/wrapped upon JSON de/serialization
  * 
- * @version $Id$
+ * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
@@ -92,7 +92,7 @@ public interface Wrapper<T>
 	 * values must be deserialized as custom defined {@code MyNumber} instances
 	 * (which also extend the default {@link Number} value type)
 	 * 
-	 * @version $Id$
+	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
 	 * @author Rick van Krevelen
 	 */
 	@Documented
@@ -130,7 +130,7 @@ public interface Wrapper<T>
 		/**
 		 * {@link Empty}
 		 * 
-		 * @version $Id$
+		 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
 		 * @author Rick van Krevelen
 		 */
 		class Empty
@@ -145,7 +145,7 @@ public interface Wrapper<T>
 	 * {@link #equals(Object)}, and {@link #toString()} methods
 	 *
 	 * @param <T> the type of wrapped objects
-	 * @version $Id$
+	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
 	 * @author Rick van Krevelen
 	 */
 	class Simple<T> implements Wrapper<T>
@@ -193,7 +193,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id$
+	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -209,7 +209,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id$
+	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -226,7 +226,7 @@ public interface Wrapper<T>
 	/**
 	 * {@link Util} provides global utility functions
 	 * 
-	 * @version $Id$
+	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
 	 * @author Rick van Krevelen
 	 */
 	class Util
@@ -450,8 +450,10 @@ public interface Wrapper<T>
 				final S value;
 
 				if( annot == null )
+				{
 					value = valueType == String.class ? (S) json
 							: JsonUtil.valueOf( json, valueType );
+				}
 				else
 				{
 					final JsonNode tree = JsonUtil.toTree( json );
@@ -542,6 +544,7 @@ public interface Wrapper<T>
 		{
 			if( obj == null || !self.getClass().equals( obj.getClass() ) )
 				return false;
+
 			final Wrapper other = self.getClass().cast( obj );
 			return self.unwrap() == null ? other.unwrap() == null
 					: self.unwrap().equals( other.unwrap() );

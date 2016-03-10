@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 02eeac1c68425728db678e58488bef882bb4248b $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -26,16 +26,14 @@ import com.eaio.uuid.UUID;
 
 import io.coala.json.x.Wrapper;
 import io.coala.name.x.Id;
-import io.coala.time.x.Instant;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEventInterface;
-import nl.tudelft.simulation.dsol.simtime.SimTime;
 
 /**
  * {@link DsolSimEvent} wraps a {@link Callable} (with {@link Void} return
  * value) inside a DSOL {@link SimEventInterface}
  * 
- * @version $Id$
+ * @version $Id: 02eeac1c68425728db678e58488bef882bb4248b $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
@@ -103,62 +101,39 @@ public class DsolSimEvent extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
 		return NORMAL_PRIORITY;
 	}
 
-	/**
-	 * {@link Builder}
-	 * 
-	 * @param <THIS> the concrete sub-type
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	public static class Builder<THIS extends Builder<THIS>>
+	public static DsolSimEvent of( final DsolTime when,
+		final Callable<Void> call )
 	{
-		private DsolTime time;
-
-		private Callable<Void> call;
-
-		@SuppressWarnings( "rawtypes" )
-		public THIS withTime( final SimTime time )
-		{
-			return withTime( DsolTime.valueOf( time ) );
-		}
-
-		public THIS withTime( final Instant time )
-		{
-			return withTime( DsolTime.valueOf( time ) );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public THIS withTime( final DsolTime time )
-		{
-			this.time = time;
-			return (THIS) this;
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public THIS withCall( final Callable<Void> call )
-		{
-			this.call = call;
-			return (THIS) this;
-		}
-
-		public THIS withCall( final Object target, final Method method,
-			final Object... args )
-		{
-			return withCall( new Callable<Void>()
-			{
-				@Override
-				public Void call() throws Exception
-				{
-					method.setAccessible( true );
-					method.invoke( target, args );
-					return null;
-				}
-			} );
-		}
-
-		public DsolSimEvent build()
-		{
-			return new DsolSimEvent( this.time, this.call );
-		}
+		return new DsolSimEvent( when, call );
 	}
+
+	public static DsolSimEvent of( final DsolTime when,
+		final Runnable runnable )
+	{
+		return of( when, new Callable<Void>()
+		{
+			@Override
+			public Void call() throws Exception
+			{
+				runnable.run();
+				return null;
+			}
+		} );
+	}
+
+	public static DsolSimEvent of( final DsolTime when, final Object target,
+		final Method method, final Object... args )
+	{
+		return of( when, new Callable<Void>()
+		{
+			@Override
+			public Void call() throws Exception
+			{
+				method.setAccessible( true );
+				method.invoke( target, args );
+				return null;
+			}
+		} );
+	}
+
 }

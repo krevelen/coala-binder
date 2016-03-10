@@ -29,6 +29,7 @@
 		<jetty.version>9.2.10.v20150310</jetty.version>
 		<jackson.version>2.4.0</jackson.version>
 		<javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+		<guice.version>3.0</guice.version>
 	</properties>
 
 	<repositories>
@@ -139,6 +140,13 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>guice3-coala-adapter</artifactId>
 			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-assistedinject</artifactId>
+			<version>${guice.version}</version>
 			<scope>test</scope>
 		</dependency>
 

@@ -27,6 +27,7 @@ import io.coala.agent.Agent;
 import io.coala.agent.AgentFactory;
 import io.coala.bind.BinderFactory;
 import io.coala.capability.replicate.ReplicationConfig;
+import io.coala.config.ConfigUtil;
 import io.coala.log.LogUtil;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
@@ -82,6 +83,8 @@ public class GuiceBinderTest
 	@Test
 	public void injectTest() throws Exception
 	{
+		System.setProperty( ConfigUtil.FILE_NAME_PROPERTY,
+				ConfigUtil.FILE_NAME_DEFAULT );
 		final BinderFactory factory = BinderFactory.Builder.fromFile()
 				.withProperty( ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY,

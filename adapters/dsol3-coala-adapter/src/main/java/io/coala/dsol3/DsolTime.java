@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 671a7409b1683c5e4597c38bf9f6f4248800b94e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -18,6 +18,7 @@ package io.coala.dsol3;
 import java.math.BigDecimal;
 
 import javax.inject.Provider;
+import javax.measure.Measurable;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
@@ -25,7 +26,9 @@ import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
 
+import io.coala.exception.CoalaException;
 import io.coala.exception.x.ExceptionBuilder;
+import io.coala.factory.ClassUtil;
 import io.coala.json.x.Wrapper;
 import io.coala.log.LogUtil;
 import io.coala.time.x.Instant;
@@ -37,18 +40,19 @@ import nl.tudelft.simulation.dsol.experiment.Treatment;
 import nl.tudelft.simulation.dsol.simtime.SimTime;
 import nl.tudelft.simulation.dsol.simtime.TimeUnit;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
+import nl.tudelft.simulation.dsol.simulators.DEVSSimulatorInterface;
 
 /**
  * {@link DsolTime} extends a DSOL {@link SimTime} to become a {@link Wrapper}
  * of {@link BigDecimal} time values for maximal compatibility with COALA
  * {@link Instant} values
  * 
- * @version $Id$
+ * @version $Id: 671a7409b1683c5e4597c38bf9f6f4248800b94e $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
-	implements Wrapper<BigDecimal>
+public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
+	implements Wrapper<TimeSpan>
 {
 
 	/** */
@@ -65,13 +69,13 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	};
 
 	/** the ZERO constant */
-	public static final DsolTime ZERO = valueOf( 0d );
+//	public static final DsolTime ZERO = valueOf( 0d );
 
 	/** the DEFAULT_UNIT - TODO read from config */
-	public static final TimeUnit DEFAULT_UNIT = TimeUnit.DAY;
+//	public static final TimeUnit DEFAULT_UNIT = TimeUnit.DAY;
 
-	private static final Unit<?> DEFAULT_QUANTITY_UNIT = resolve(
-			DEFAULT_UNIT );
+//	private static final Unit<?> DEFAULT_QUANTITY_UNIT = resolve(
+//			DEFAULT_UNIT );
 
 	public static Unit<?> resolve( final TimeUnit unit )
 	{
@@ -104,7 +108,7 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	 * @return
 	 */
 	public static DsolTime
-		valueOf( @SuppressWarnings( "rawtypes" ) final SimTime time)
+		valueOf( @SuppressWarnings( "rawtypes" ) final SimTime time )
 	{
 		try
 		{
@@ -129,10 +133,9 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	 * @param absoluteTime the {@link TimeSpan}
 	 * @return the new {@link DsolTime}
 	 */
-	@SuppressWarnings( "unchecked" )
 	public static DsolTime valueOf( final TimeSpan absoluteTime )
 	{
-		return valueOf( absoluteTime.to( DEFAULT_QUANTITY_UNIT ).getValue() );
+		return Util.of( absoluteTime, new DsolTime() );
 	}
 
 	/**
@@ -160,21 +163,20 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	public static DsolTime valueOf( final BigDecimal absoluteTime )
 	{
 		final DsolTime result = DEFAULT_PROVIDER.get();
-		result.wrap( absoluteTime );
+		result.wrap( TimeSpan.of( absoluteTime ) );
 		return result;
 	}
 
 	/**
 	 * @return the zero constant as {@link DsolTime}
 	 */
-	public static DsolTime zero()
-	{
-		return ZERO;
-	}
+//	public static DsolTime zero()
+//	{
+//		return ZERO;
+//	}
 
 	public Instant toInstant()
 	{
-		// FIXME convert to millis from which time unit?
 		return Instant.of( unwrap() );
 	}
 
@@ -186,22 +188,22 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 		super( null ); // initialize empty
 	}
 
-	private BigDecimal value;
+	private TimeSpan value;
 
 	@Override
-	public BigDecimal unwrap()
+	public TimeSpan unwrap()
 	{
 		return this.value;
 	}
 
 	@Override
-	public void wrap( final BigDecimal absoluteTime )
+	public void wrap( final TimeSpan absoluteTime )
 	{
 		this.value = absoluteTime;
 	}
 
 	/**
-	 * @deprecated please use {@link #add(Number))}
+	 * @deprecated please use {@link #plus(Number))}
 	 */
 	@Deprecated
 	@Override
@@ -211,13 +213,15 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 		wrap( unwrap().add( relativeTime ) );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	public DsolTime plus( final DsolTime relativeTime )
 	{
-		return copy().plus( relativeTime.unwrap() );
+		return plus(
+				relativeTime.unwrap().to( unwrap().getUnit() ).getValue() );
 	}
 
 	/**
-	 * @deprecated please use {@link #subtract(BigDecimal))}
+	 * @deprecated please use {@link #minus(BigDecimal))}
 	 */
 	@Deprecated
 	@Override
@@ -227,15 +231,19 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 		wrap( unwrap().subtract( relativeTime ) );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	public DsolTime subtract( final DsolTime relativeTime )
 	{
-		return copy().minus( relativeTime.unwrap() );
+		return minus(
+				relativeTime.unwrap().to( unwrap().getUnit() ).getValue() );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public BigDecimal minus( final DsolTime absoluteTime )
 	{
-		return unwrap().subtract( absoluteTime.unwrap() );
+		return unwrap().getValue().subtract(
+				absoluteTime.unwrap().to( unwrap().getUnit() ).getValue() );
 	}
 
 	@Override
@@ -245,30 +253,40 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	}
 
 	@Override
-	public BigDecimal get()
+	public TimeSpan get()
 	{
 		return unwrap();
 	}
 
 	@Override
-	public void set( final BigDecimal absoluteTime )
+	public void set( final Measurable<?> absoluteTime )
 	{
-		wrap( absoluteTime );
+		wrap( (TimeSpan) absoluteTime );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public DsolTime setZero()
 	{
-		return zero();
+		return DsolTime
+				.valueOf( TimeSpan.of( BigDecimal.ZERO, unwrap().getUnit() ) );
 	}
 
 	/**
 	 * @return a {@link DEVSSimulator} scheduler for {@link DsolTime} amounts
 	 */
-	public static DEVSSimulator<BigDecimal, BigDecimal, DsolTime>
-		createDEVSSimulator( final String threadName )
+	@SuppressWarnings( "rawtypes" )
+	public static <T extends DEVSSimulatorInterface> T
+		createDEVSSimulator( final Class<T> simType )
 	{
-		return new DEVSSimulator<BigDecimal, BigDecimal, DsolTime>();
+		try
+		{
+			return ClassUtil.instantiate( simType );
+		} catch( final CoalaException e )
+		{
+			throw ExceptionBuilder.unchecked( e, "Problem creating simulator" )
+					.build();
+		}
 	}
 
 	/**
@@ -284,14 +302,30 @@ public class DsolTime extends SimTime<BigDecimal, BigDecimal, DsolTime>
 	 * @throws NamingException in case a context for the replication cannot be
 	 *             created
 	 */
-	public static Replication<BigDecimal, BigDecimal, DsolTime>
+	public static Replication<Measurable<?>, BigDecimal, DsolTime>
 		createReplication( final String id, final DsolTime startTime,
 			final BigDecimal warmupPeriod, final BigDecimal runLength,
-			final ModelInterface<BigDecimal, BigDecimal, DsolTime> model )
-				throws NamingException
+			final ModelInterface<Measurable<?>, BigDecimal, DsolTime> model )
+			throws NamingException
 	{
-		return new Replication<BigDecimal, BigDecimal, DsolTime>( id, startTime,
-				warmupPeriod, runLength, model );
+		return new Replication<Measurable<?>, BigDecimal, DsolTime>( id,
+				startTime, warmupPeriod, runLength, model );
+	}
+
+	/**
+	 * @param time the DSOL {@link SimTime}, e.g. a {@link DsolTime},
+	 *            {@code SimTime}<? extends {@link BigDecimal},?,?>, or
+	 *            {@code SimTime}<? extends {@link Number},?,?>
+	 * @return the {@link Instant} representation
+	 * @throws ClassCastException if concrete parameter type for absolute times
+	 *             does not extend {@link BigDecimal} or {@link Number}
+	 */
+	public static <T extends SimTime<?, ?, T>> Instant toInstant( final T time )
+	{
+		return time instanceof DsolTime ? ((DsolTime) time).toInstant()
+				: time.get() instanceof BigDecimal
+						? Instant.of( (BigDecimal) time.get() )
+						: Instant.of( Number.class.cast( time.get() ) );
 	}
 
 //	public static class DsolReplication

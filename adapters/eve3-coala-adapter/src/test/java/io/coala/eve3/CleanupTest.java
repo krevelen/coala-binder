@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.agent.AgentStatusUpdate;
+import io.coala.config.ConfigUtil;
 import io.coala.log.LogUtil;
 import rx.Observer;
 
@@ -40,6 +41,8 @@ public class CleanupTest
 	public void testConfig() throws Exception
 	{
 		LOG.trace("Starting EveAgentFactory...");
+		System.setProperty( ConfigUtil.FILE_NAME_PROPERTY,
+				ConfigUtil.FILE_NAME_DEFAULT );
 		final EveAgentManager eve = EveAgentManager.getInstance();
 
 		final int max = 100;
