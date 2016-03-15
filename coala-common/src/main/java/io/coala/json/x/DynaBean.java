@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -23,6 +23,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -76,7 +78,7 @@ import io.coala.util.TypeUtil;
  * {@link DynaBean} implements a dynamic bean, ready for JSON de/serialization
  * 
  * @date $Date$
- * @version $Id$
+ * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
  * @author <a href="mailto:rick@almende.org">Rick</a>
  */
 @JsonInclude( Include.NON_NULL )
@@ -88,7 +90,7 @@ public class DynaBean implements Cloneable
 	 * de/serialization and specify the property to use for {@link Comparable}s
 	 * 
 	 * @date $Date$
-	 * @version $Id$
+	 * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	@Documented
@@ -284,17 +286,18 @@ public class DynaBean implements Cloneable
 	/**
 	 * {@link ProxyProvider}
 	 * 
-	 * @date $Date$
-	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 * @param <T>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	static class ProxyProvider<T> implements Provider<T>
 	{
 
 		/** */
 		private final ObjectMapper om;
+
+		/** */
+		private final Class<T> proxyType;
 
 		/** */
 		private final DynaBean bean;
@@ -307,10 +310,11 @@ public class DynaBean implements Cloneable
 		 * 
 		 * @param type
 		 */
-		public ProxyProvider( final ObjectMapper om, final DynaBean bean,
-			final Properties... imports )
+		public ProxyProvider( final ObjectMapper om, final Class<T> proxyType,
+			final DynaBean bean, final Properties... imports )
 		{
 			this.om = om;
+			this.proxyType = proxyType;
 			this.bean = bean;
 			this.imports = imports;
 		}
@@ -324,18 +328,19 @@ public class DynaBean implements Cloneable
 			try
 			{
 				@SuppressWarnings( "unchecked" )
-				final Class<T> type = (Class<T>) TypeUtil
-						.getTypeArguments( ProxyProvider.class, getClass(),
-								BUILDER_TYPE_ARGUMENT_CACHE )
-						.get( 0 );
-				return DynaBean.valueOf( om, type, this.bean, this.imports );
+				final Class<T> proxyType = this.proxyType == null
+						? (Class<T>) TypeUtil.getTypeArguments(
+								ProxyProvider.class, getClass(),
+								BUILDER_TYPE_ARGUMENT_CACHE ).get( 0 )
+						: this.proxyType;
+				return DynaBean.valueOf( this.om, proxyType, this.bean,
+						this.imports );
 			} catch( final Throwable t )
 			{
-				throw ExceptionBuilder
-						.unchecked( "Problem providing "
-								+ DynaBean.class.getSimpleName()
-								+ " proxy using: " + getClass().getName(), t )
-						.build();
+				throw ExceptionBuilder.unchecked(
+						"Problem providing " + DynaBean.class.getSimpleName()
+								+ " proxy using: " + getClass().getName(),
+						t ).build();
 			}
 		}
 	}
@@ -348,7 +353,7 @@ public class DynaBean implements Cloneable
 	public static <T> Provider<T> createProvider( final ObjectMapper om,
 		final Class<T> beanType, final Properties... imports )
 	{
-		return new ProxyProvider<T>( om, new DynaBean(), imports );
+		return new ProxyProvider<T>( om, beanType, new DynaBean(), imports );
 	}
 
 	/**
@@ -380,7 +385,7 @@ public class DynaBean implements Cloneable
 	 * {@link ProxyInvocationHandler}
 	 * 
 	 * @date $Date$
-	 * @version $Id$
+	 * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
 	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	static class ProxyInvocationHandler implements InvocationHandler
@@ -388,6 +393,22 @@ public class DynaBean implements Cloneable
 		/** */
 		private static final Logger LOG = LogUtil
 				.getLogger( ProxyInvocationHandler.class );
+
+		private static Constructor<MethodHandles.Lookup> lookupConstructor;
+		{
+			try
+			{
+				lookupConstructor = MethodHandles.Lookup.class
+						.getDeclaredConstructor( Class.class, int.class );
+				if( !lookupConstructor.isAccessible() )
+				{
+					lookupConstructor.setAccessible( true );
+				}
+			} catch( final Exception e )
+			{
+
+			}
+		}
 
 		/** */
 		private final Class<?> type;
@@ -486,6 +507,15 @@ public class DynaBean implements Cloneable
 
 				if( !method.getReturnType().equals( Void.TYPE ) )
 				{
+					// see http://stackoverflow.com/a/23990827
+					// see https://rmannibucau.wordpress.com/2014/03/27/java-8-default-interface-methods-and-jdk-dynamic-proxies/#comment-1333
+					if( method.isDefault() ) return lookupConstructor
+							.newInstance( method.getDeclaringClass(),
+									MethodHandles.Lookup.PRIVATE )
+							.unreflectSpecial( method,
+									method.getDeclaringClass() )
+							.bindTo( proxy ).invokeWithArguments( args );
+
 					Object result = this.bean.any().get( beanProp );
 					if( result == null )
 					{
@@ -515,7 +545,7 @@ public class DynaBean implements Cloneable
 							(Comparable) this.bean, (Comparable) args[0] );
 
 				if( method.getReturnType().equals( Void.TYPE )
-						&& method.getName().startsWith( "set" )
+						//&& method.getName().startsWith( "set" )
 						&& method.getParameterTypes().length == 1
 						&& method.getParameterTypes()[0]
 								.isAssignableFrom( args[0].getClass() ) )
@@ -543,8 +573,10 @@ public class DynaBean implements Cloneable
 					.unchecked( DynaBean.class.getSimpleName() + " ("
 							+ (method.getReturnType().isPrimitive()
 									? "primitive" : "complex")
-					+ ") value not set: " + this.type.getSimpleName() + "#"
-					+ beanProp + "(" + Arrays.asList( args ) + ")" ).build();
+							+ ") value not set: " + this.type.getSimpleName()
+							+ "#" + beanProp + "(" + Arrays.asList( args )
+							+ ")" )
+					.build();
 		}
 	}
 
@@ -562,7 +594,7 @@ public class DynaBean implements Cloneable
 			@Override
 			public void serialize( final T value, final JsonGenerator jgen,
 				final SerializerProvider serializers )
-					throws IOException, JsonProcessingException
+				throws IOException, JsonProcessingException
 			{
 				// non-Proxy objects get default treatment
 				if( !Proxy.isProxyClass( value.getClass() ) )
@@ -650,7 +682,7 @@ public class DynaBean implements Cloneable
 			@Override
 			public T deserialize( final JsonParser jp,
 				final DeserializationContext ctxt )
-					throws IOException, JsonProcessingException
+				throws IOException, JsonProcessingException
 			{
 				if( jp.getCurrentToken() == JsonToken.VALUE_NULL ) return null;
 
@@ -658,8 +690,8 @@ public class DynaBean implements Cloneable
 				{
 					final Map<String, Object> entries = jp.readValueAs(
 							new TypeReference<Map<String, Object>>()
-					{
-					} );
+							{
+							} );
 
 					final Iterator<Entry<String, Object>> it = entries
 							.entrySet().iterator();
@@ -717,8 +749,9 @@ public class DynaBean implements Cloneable
 							bean.set( fieldName, tree.get( fieldName ) );
 					}
 				} else
-					throw ExceptionBuilder.unchecked(
-							"Expected " + resultType.getName() + " but parsed: "
+					throw ExceptionBuilder
+							.unchecked( "Expected " + resultType.getName()
+									+ " but parsed: "
 									+ tree.getClass().getSimpleName() )
 							.build();
 
@@ -808,16 +841,13 @@ public class DynaBean implements Cloneable
 	public static <T> T valueOf( final ObjectMapper om, final Class<T> type,
 		final DynaBean bean, final Properties... imports )
 	{
-		if( !type
-				.isAnnotationPresent(
-						BeanWrapper.class ) )
-			throw ExceptionBuilder.unchecked(
-					"Type is not a @" + BeanWrapper.class.getSimpleName() )
-					.build();
+		if( !type.isAnnotationPresent( BeanWrapper.class ) )
+			throw ExceptionBuilder.unchecked( "%s is not a @%s", type,
+					BeanWrapper.class.getSimpleName() ).build();
 
 		return (T) Proxy.newProxyInstance( type.getClassLoader(),
-				new Class[] { type },
-				new ProxyInvocationHandler( om, type, bean, imports ) );
+				new Class[]
+		{ type }, new ProxyInvocationHandler( om, type, bean, imports ) );
 	}
 
 	/**
@@ -825,7 +855,7 @@ public class DynaBean implements Cloneable
 	 * 
 	 * @param <T> the result type
 	 * @param <THIS> the builder type
-	 * @version $Id$
+	 * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
 	 * @author Rick van Krevelen
 	 */
 	public static class Builder<T, THIS extends Builder<T, THIS>>
@@ -860,7 +890,7 @@ public class DynaBean implements Cloneable
 		protected Builder( final ObjectMapper om, final DynaBean bean,
 			final Properties... imports )
 		{
-			super( om, bean, imports );
+			super( om, null, bean, imports );
 			this.bean = bean;
 		}
 

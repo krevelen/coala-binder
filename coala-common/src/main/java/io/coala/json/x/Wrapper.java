@@ -22,6 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -289,7 +290,7 @@ public interface Wrapper<T>
 				@Override
 				public void serialize( final T value, final JsonGenerator jgen,
 					final SerializerProvider serializers )
-						throws IOException, JsonProcessingException
+					throws IOException, JsonProcessingException
 				{
 					serializers.findValueSerializer( valueType, null )
 							.serialize( value.unwrap(), jgen, serializers );
@@ -335,7 +336,7 @@ public interface Wrapper<T>
 				@Override
 				public T deserialize( final JsonParser jp,
 					final DeserializationContext ctxt )
-						throws IOException, JsonProcessingException
+					throws IOException, JsonProcessingException
 				{
 					if( jp.getText() == null || jp.getText().length() == 0
 							|| jp.getText().equals( "null" ) )
@@ -406,6 +407,8 @@ public interface Wrapper<T>
 					} );
 		}
 
+		private static final Map<Class<?>, Provider<?>> DYNABEAN_PROVIDER_CACHE = new HashMap<>();
+
 		/**
 		 * @param json the JSON representation {@link String}
 		 * @param type the type of {@link Wrapper} to generate
@@ -414,6 +417,9 @@ public interface Wrapper<T>
 		public static <S, T extends Wrapper<S>> T valueOf( final String json,
 			final Class<T> type )
 		{
+			if( type.isInterface() )
+				return valueOf( json, DynaBean.getProvider( JsonUtil.getJOM(),
+						type, DYNABEAN_PROVIDER_CACHE ) );
 			return valueOf( json, TypeUtil.createBeanProvider( type ) );
 		}
 
@@ -453,8 +459,7 @@ public interface Wrapper<T>
 				{
 					value = valueType == String.class ? (S) json
 							: JsonUtil.valueOf( json, valueType );
-				}
-				else
+				} else
 				{
 					final JsonNode tree = JsonUtil.toTree( json );
 					final Class<? extends S> annotType = resolveAnnotType(

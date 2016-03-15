@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: a4d1db0cef5ed1fc88522da2c69aa49907d8de7d $
  * $URL$
  * 
  * Part of the EU project Inertia, see http://www.inertia-project.eu/
@@ -86,7 +86,7 @@ import io.coala.json.x.Wrapper;
  * </dl>
  * 
  * @date $Date$
- * @version $Id$
+ * @version $Id: a4d1db0cef5ed1fc88522da2c69aa49907d8de7d $
  * @author <a href="mailto:rick@almende.org">Rick</a>
  */
 @SuppressWarnings( { "rawtypes", "unchecked" } )
@@ -227,9 +227,14 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
 	 */
-	public static Duration valueOf( final String value )
+	public static Duration of( final String value )
 	{
 		return of( TimeSpan.valueOf( value ) );
+	}
+
+	public static Duration valueOf( final String value )
+	{
+		return of( value );
 	}
 
 	/**
