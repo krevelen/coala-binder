@@ -50,7 +50,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>${commons-math3.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<!-- Unit testing framework for test-driven development -->

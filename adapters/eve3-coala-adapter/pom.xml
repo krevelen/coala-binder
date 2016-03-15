@@ -71,7 +71,6 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-joda</artifactId>
 			<version>${jackson.version}</version>
-			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<groupId>joda-time</groupId>
@@ -85,21 +84,18 @@
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
 			<version>${jackson.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>javax-websocket-server-impl</artifactId>
 			<version>${jetty.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-transport-http-jetty</artifactId>
 			<version>${eve.version}</version>
-			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<groupId>org.eclipse.jetty</groupId>
@@ -127,13 +123,11 @@
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-scheduling-persistent</artifactId>
 			<version>${eve.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-deploy</artifactId>
 			<version>${eve.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
