@@ -209,7 +209,6 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	@Override
 	public void add( final BigDecimal relativeTime )
 	{
-		LOG.warn( "Please use thread-safe plus(..)" );
 		wrap( unwrap().add( relativeTime ) );
 	}
 

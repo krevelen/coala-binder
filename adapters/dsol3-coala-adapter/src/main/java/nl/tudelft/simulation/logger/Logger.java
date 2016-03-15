@@ -22,6 +22,7 @@ import nl.tudelft.simulation.event.util.EventProducingMap;
  * @version $Revision: 1.2 $ $Date: 2010/08/10 11:39:19 $
  * @since 1.5
  */
+@SuppressWarnings( "deprecation" )
 public class Logger
 {
     /** loggers are the currently available loggers. */
