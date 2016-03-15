@@ -493,6 +493,8 @@ public class DynaBean implements Cloneable
 			case 0:
 				if( beanProp.equals( "toString" ) )
 				{
+					if( Wrapper.class.isAssignableFrom( this.type ) )
+						return this.bean.get( "wrap" );
 					JsonUtil.checkRegistered( JsonUtil.getJOM(), this.type );
 					return this.bean.toString();
 				}
@@ -609,8 +611,16 @@ public class DynaBean implements Cloneable
 					final ProxyInvocationHandler handler = (ProxyInvocationHandler) Proxy
 							.getInvocationHandler( value );
 
-					// Config (Accessible) gets special treatment
-					if( Accessible.class.isAssignableFrom( handler.type ) )
+					// FIXME Wrapper extensions get special treatment
+					if( Wrapper.class.isAssignableFrom( handler.type ) )
+					{
+						final Object wrap = handler.bean.get( "wrap" );
+						serializers.findValueSerializer( wrap.getClass(), null )
+								.serialize( wrap, jgen, serializers );
+						return;
+					}
+					// Config (Accessible) extensions get special treatment
+					else if( Accessible.class.isAssignableFrom( handler.type ) )
 					{
 						final Map<String, Object> copy = new HashMap<>(
 								handler.bean.any() );
@@ -717,24 +727,22 @@ public class DynaBean implements Cloneable
 				final Set<String> attributes = new HashSet<>();
 				for( Method method : resultType.getMethods() )
 				{
-					if( !method.getReturnType().equals( Void.TYPE )
-							&& method.getParameterTypes().length == 0 )
-					{
-						final String attribute = method.getName();
-						if( attribute.equals( "toString" )
-								|| attribute.equals( "hashCode" ) )
-							continue;
+					if( method.getReturnType().equals( Void.TYPE )
+							|| method.getParameterTypes().length != 0 )
+						continue;
 
-						attributes.add( attribute );
-						final TreeNode value = tree.get( attribute );// bean.any().get(attributeName);
-						if( value == null ) continue;
+					final String attribute = method.getName();
+					if( attribute.equals( "toString" )
+							|| attribute.equals( "hashCode" ) )
+						continue;
 
-						bean.set( method.getName(),
-								om.treeToValue( value,
-										JsonUtil.checkRegistered( om,
-												method.getReturnType(),
-												imports ) ) );
-					}
+					attributes.add( attribute );
+					final TreeNode value = tree.get( attribute );// bean.any().get(attributeName);
+					if( value == null ) continue;
+
+					bean.set( method.getName(),
+							om.treeToValue( value, JsonUtil.checkRegistered( om,
+									method.getReturnType(), imports ) ) );
 				}
 				if( tree.isObject() )
 				{
