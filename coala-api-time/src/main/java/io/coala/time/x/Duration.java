@@ -20,9 +20,12 @@
  */
 package io.coala.time.x;
 
+import java.math.BigDecimal;
+
 import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
+import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -35,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.exception.x.ExceptionBuilder;
 import io.coala.json.x.Wrapper;
+import io.coala.random.RandomDistribution;
 
 /**
  * {@linkplain Duration} wraps an {@linkplain TimeSpan} that is
@@ -285,6 +289,29 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	public static Duration of( final TimeSpan value )
 	{
 		return Util.of( value, new Duration() );
+	}
+
+	@SuppressWarnings( "serial" )
+	public static <N extends Number, Q extends Quantity>
+		RandomDistribution<Duration>
+		of( final RandomDistribution<N> dist, final Unit<Q> unit )
+	{
+		return new RandomDistribution<Duration>()
+		{
+			@Override
+			public Duration draw()
+			{
+				final Number value = dist.draw();
+				return value instanceof BigDecimal
+						? of( DecimalMeasure.valueOf( (BigDecimal) value,
+								unit ) )
+						: value instanceof Long || value instanceof Integer
+								? of( DecimalMeasure.valueOf( value.longValue(),
+										unit ) )
+								: of( DecimalMeasure
+										.valueOf( value.doubleValue(), unit ) );
+			}
+		};
 	}
 
 	/**

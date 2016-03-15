@@ -77,21 +77,20 @@ import io.coala.util.TypeUtil;
 /**
  * {@link DynaBean} implements a dynamic bean, ready for JSON de/serialization
  * 
- * @date $Date$
- * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
- * @author <a href="mailto:rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
 public class DynaBean implements Cloneable
 {
 
 	/**
-	 * Tag annotation used to recognize {@link DynaBean} entities during
-	 * de/serialization and specify the property to use for {@link Comparable}s
+	 * {@link BeanWrapper} is a annotation used to recognize {@link DynaBean}
+	 * entities/tags during de/serialization and specify the property to use for
+	 * {@link Comparable}s
 	 * 
-	 * @date $Date$
-	 * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	@Documented
 	@Retention( RetentionPolicy.RUNTIME )
@@ -384,9 +383,8 @@ public class DynaBean implements Cloneable
 	/**
 	 * {@link ProxyInvocationHandler}
 	 * 
-	 * @date $Date$
-	 * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	static class ProxyInvocationHandler implements InvocationHandler
 	{

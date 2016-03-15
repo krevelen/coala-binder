@@ -152,23 +152,13 @@ public interface RandomDistribution<T> extends Serializable
 					final Number value = dist.draw();
 					return value instanceof Long || value instanceof Integer
 							|| (value instanceof BigDecimal
-									&& isExact( (BigDecimal) value ))
+									&& NumberUtil.isExact( (BigDecimal) value ))
 											? Amount.valueOf( value.longValue(),
 													unit )
 											: Amount.valueOf(
 													value.doubleValue(), unit );
 				}
 			};
-		}
-
-		/**
-		 * see <a href="http://stackoverflow.com/a/12748321">stackoverflow
-		 * discussion</a>
-		 */
-		private static boolean isExact( final BigDecimal bd )
-		{
-			return bd.signum() == 0 || bd.scale() <= 0
-					|| bd.stripTrailingZeros().scale() <= 0;
 		}
 	}
 
@@ -257,6 +247,15 @@ public interface RandomDistribution<T> extends Serializable
 		 */
 		RandomDistribution<Long> getUniformInteger( RandomNumberStream rng,
 			Number lower, Number upper );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param values
+		 * @return the {@link RandomDistribution}
+		 */
+		@SuppressWarnings( "unchecked" )
+		<T> RandomDistribution<T> getUniformEnum( RandomNumberStream rng,
+			T... values );
 
 		/**
 		 * @param rng the {@link RandomNumberStream}

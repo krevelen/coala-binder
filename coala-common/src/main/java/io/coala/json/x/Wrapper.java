@@ -22,7 +22,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -407,7 +406,7 @@ public interface Wrapper<T>
 					} );
 		}
 
-		private static final Map<Class<?>, Provider<?>> DYNABEAN_PROVIDER_CACHE = new HashMap<>();
+//		private static final Map<Class<?>, Provider<?>> DYNABEAN_PROVIDER_CACHE = new HashMap<>();
 
 		/**
 		 * @param json the JSON representation {@link String}
@@ -419,7 +418,7 @@ public interface Wrapper<T>
 		{
 			if( type.isInterface() )
 				return valueOf( json, DynaBean.getProvider( JsonUtil.getJOM(),
-						type, DYNABEAN_PROVIDER_CACHE ) );
+						type, null ) );
 			return valueOf( json, TypeUtil.createBeanProvider( type ) );
 		}
 

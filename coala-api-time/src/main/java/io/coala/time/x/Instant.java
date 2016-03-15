@@ -22,7 +22,9 @@ import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
+import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import org.aeonbits.owner.Converter;
 import org.joda.time.DateTime;
@@ -34,6 +36,7 @@ import org.threeten.bp.temporal.ChronoField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.x.Wrapper;
+import io.coala.random.RandomDistribution;
 
 /**
  * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
@@ -413,6 +416,29 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	public static Instant of( final TimeSpan value )
 	{
 		return Util.of( value, new Instant() );
+	}
+
+	@SuppressWarnings( "serial" )
+	public static <N extends Number, Q extends Quantity>
+		RandomDistribution<Instant>
+		of( final RandomDistribution<N> dist, final Unit<Q> unit )
+	{
+		return new RandomDistribution<Instant>()
+		{
+			@Override
+			public Instant draw()
+			{
+				final Number value = dist.draw();
+				return value instanceof BigDecimal
+						? of( DecimalMeasure.valueOf( (BigDecimal) value,
+								unit ) )
+						: value instanceof Long || value instanceof Integer
+								? of( DecimalMeasure.valueOf( value.longValue(),
+										unit ) )
+								: of( DecimalMeasure
+										.valueOf( value.doubleValue(), unit ) );
+			}
+		};
 	}
 
 }

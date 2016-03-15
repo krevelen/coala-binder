@@ -45,6 +45,7 @@ import org.apache.commons.math3.distribution.WeibullDistribution;
 import org.apache.commons.math3.distribution.ZipfDistribution;
 import org.apache.commons.math3.util.Pair;
 
+import io.coala.exception.x.ExceptionBuilder;
 import io.coala.random.RandomDistribution;
 import io.coala.random.RandomNumberStream;
 
@@ -116,9 +117,24 @@ public abstract class Math3RandomDistribution<S>
 		final List<ProbabilityMass<T, Number>> probabilities )
 	{
 		final List<Pair<T, Double>> pmf = new ArrayList<>();
-		if( probabilities != null )
-			for( ProbabilityMass<T, Number> p : probabilities )
+		if( probabilities == null || probabilities.isEmpty() )
+			throw ExceptionBuilder.unchecked( "Must have some value(s)" )
+					.build();
+		for( ProbabilityMass<T, Number> p : probabilities )
 			pmf.add( Pair.create( p.getValue(), p.getMass().doubleValue() ) );
+		return pmf;
+	}
+
+	@SuppressWarnings( "unchecked" )
+	public static <T> List<Pair<T, Double>>
+		toPropabilityMassFunction( final T... values )
+	{
+		final Double w = Double.valueOf( 1d );
+		final List<Pair<T, Double>> pmf = new ArrayList<>();
+		if( values == null || values.length == 0 ) throw ExceptionBuilder
+				.unchecked( "Must have some value(s)" ).build();
+		for( T value : values )
+			pmf.add( Pair.create( value, w ) );
 		return pmf;
 	}
 
@@ -202,6 +218,16 @@ public abstract class Math3RandomDistribution<S>
 			return wrap( new UniformIntegerDistribution(
 					Math3RandomNumberStream.unwrap( rng ), lower.intValue(),
 					upper.intValue() ) );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		@Override
+		public <T> RandomDistribution<T> getUniformEnum( RandomNumberStream rng,
+			T... values )
+		{
+			return wrap( new EnumeratedDistribution<T>(
+					Math3RandomNumberStream.unwrap( rng ),
+					toPropabilityMassFunction( values ) ) );
 		}
 
 		@Override
