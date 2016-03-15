@@ -46,6 +46,7 @@ import nl.tudelft.simulation.language.reflection.ClassUtil;
  * @author Rick van Krevelen
  * @version $Id: bccd29307a7da5a675847b6052f4889324f568da $
  */
+@SuppressWarnings( "deprecation" )
 public class Logger
 {
 
