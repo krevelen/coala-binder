@@ -32,7 +32,6 @@ import javax.measure.unit.Unit;
 import org.joda.time.Period;
 import org.joda.time.ReadableDuration;
 import org.jscience.physics.amount.Amount;
-import org.threeten.bp.temporal.TemporalAmount;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -179,15 +178,23 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	}
 
 	/**
-	 * @return a JSR-310 {@link TemporalAmount} implementation of a time span,
-	 *         either time-based ({@link org.threeten.bp.Duration}) or
-	 *         date-based ({@link org.threeten.bp.Period})
+	 * @return a JSR-310 back-port {@link org.threeten.bp.Duration}
+	 *         implementation of a time span
 	 */
 	@JsonIgnore
-	public <T extends TemporalAmount & Comparable<T>> T toJava8()
+	public org.threeten.bp.Duration toJSR310()
 	{
-		return (T) org.threeten.bp.Duration.ofNanos( toNanosLong() );
+		return org.threeten.bp.Duration.ofNanos( toNanosLong() );
 	}
+
+	/**
+	 * @return a JRE8 {@link java.time.Duration} implementation of a time span
+	 */
+//	@JsonIgnore
+//	public java.time.Duration toJava8()
+//	{
+//		return java.time.Duration.ofNanos( toNanosLong() );
+//	}
 
 	/** @return the JScience {@link Amount} implementation of a time span */
 	@JsonIgnore

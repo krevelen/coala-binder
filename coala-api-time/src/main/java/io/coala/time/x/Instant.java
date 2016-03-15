@@ -266,14 +266,23 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	}
 
 	/**
-	 * @return the JSR-310 {@link org.threeten.bp.Instant} implementation of an
-	 *         instant
+	 * @return the JSR-310 back-port {@link org.threeten.bp.Instant}
+	 *         implementation of an instant
 	 */
 	@JsonIgnore
-	public org.threeten.bp.Instant toJava8()
+	public org.threeten.bp.Instant toJSR310()
 	{
 		return org.threeten.bp.Instant.ofEpochMilli( toMillisLong() );
 	}
+
+	/**
+	 * @return the JRE8 {@link java.time.Instant} implementation of an instant
+	 */
+//	@JsonIgnore
+//	public java.time.Instant toJava8()
+//	{
+//		return java.time.Instant.ofEpochMilli( toMillisLong() );
+//	}
 
 	/** @return the JSR-275 {@link Measurable} implementation of an instant */
 	@JsonIgnore
