@@ -18,11 +18,15 @@ package io.coala.random;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
+
+import io.coala.exception.x.ExceptionBuilder;
 
 /**
  * {@link RandomDistribution}
@@ -159,6 +163,52 @@ public interface RandomDistribution<T> extends Serializable
 													value.doubleValue(), unit );
 				}
 			};
+		}
+
+		private static final Pattern distPattern = Pattern
+				.compile( "^(?<dist>[^\\(]+)\\((?<params>[^)]*)\\)$" );
+
+		public static <T> RandomDistribution<T> valueOf( final String dist,
+			final Class<T> valueType )
+		{
+			final Matcher m = distPattern.matcher( dist.trim() );
+			if( !m.find() ) throw ExceptionBuilder
+					.unchecked( "Problem parsing distribution: %s", dist )
+					.build();
+			final String name = m.group( "dist" ).toLowerCase();
+			switch( name )
+			{
+			case "const":
+			case "constant":
+				return Util.asConstant(
+						valueOf( valueType, m.group( "params" ) ) );
+			}
+			throw ExceptionBuilder.unchecked( "Unknown distribution symbol: %s",
+					m.group( "dist" ) ).build();
+		}
+
+		public static <T> T valueOf( final Class<T> paramType,
+			final String value )
+		{
+			try
+			{
+				return paramType
+						.cast( paramType.getMethod( "valueOf", String.class )
+								.invoke( paramType, value ) );
+			} catch( final Exception e )
+			{
+				try
+				{
+					return paramType.cast(
+							paramType.getMethod( "valueOf", CharSequence.class )
+									.invoke( paramType, value ) );
+				} catch( final Exception e1 )
+				{
+					throw ExceptionBuilder
+							.unchecked( e1, "Problem parsing value: %s", value )
+							.build();
+				}
+			}
 		}
 	}
 
