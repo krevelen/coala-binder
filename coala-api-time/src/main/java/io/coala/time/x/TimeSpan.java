@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 158a1548e0b5fd818f7644373f50c4a3e3b0a484 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -17,6 +17,7 @@ package io.coala.time.x;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.MathContext;
 
 import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
@@ -54,7 +55,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * implementation</a>) due to {@link Amount}s incompatibility with
  * {@link BigDecimal} values
  * 
- * @version $Id$
+ * @version $Id: 158a1548e0b5fd818f7644373f50c4a3e3b0a484 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
@@ -80,6 +81,9 @@ public class TimeSpan extends DecimalMeasure
 
 	/** the ONE */
 	public static final TimeSpan ONE = of( 1, Unit.ONE );
+
+	/** */
+	private static final MathContext decimal_expansion = MathContext.DECIMAL128;
 
 	/**
 	 * Parse duration as {@link DecimalMeasure JSR-275} measure (e.g.
@@ -135,8 +139,9 @@ public class TimeSpan extends DecimalMeasure
 										BigDecimal.valueOf( temp.getSeconds() )
 												.multiply( BigDecimal.TEN
 														.pow( 9 ) )
-								.add( BigDecimal.valueOf( temp.getNano() ) ),
-								NANOS );
+												.add( BigDecimal.valueOf(
+														temp.getNano() ) ),
+										NANOS );
 				// LOG.trace(
 				// "Parsed '{}' using JSR-310 to JSR-275 measure/unit: {}",
 				// measure, result);
@@ -353,7 +358,7 @@ public class TimeSpan extends DecimalMeasure
 		@Override
 		public void serialize( final TimeSpan value, final JsonGenerator gen,
 			final SerializerProvider serializers )
-				throws IOException, JsonProcessingException
+			throws IOException, JsonProcessingException
 		{
 			final String result = value.toString();
 			// if (value.getUnit().getClass() == ProductUnit.class)
@@ -374,7 +379,7 @@ public class TimeSpan extends DecimalMeasure
 		@Override
 		public TimeSpan deserialize( final JsonParser p,
 			final DeserializationContext ctxt )
-				throws IOException, JsonProcessingException
+			throws IOException, JsonProcessingException
 		{
 			final TimeSpan result = p.getCurrentToken().isNumeric()
 					? TimeSpan.of( p.getNumberValue() )
@@ -392,8 +397,9 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan add( final Measure augend )
 	{
-		return augend.getValue() instanceof BigDecimal
-				? add( (BigDecimal) augend.to( getUnit() ).getValue() )
+		return augend instanceof DecimalMeasure
+				? add( (BigDecimal) ((DecimalMeasure) augend)
+						.to( getUnit(), decimal_expansion ).getValue() )
 				: add( augend.doubleValue( getUnit() ) );
 	}
 
@@ -443,8 +449,9 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan subtract( final Measure subtrahend )
 	{
-		return subtrahend.getValue() instanceof BigDecimal
-				? subtract( (BigDecimal) subtrahend.to( getUnit() ).getValue() )
+		return subtrahend.getValue() instanceof DecimalMeasure
+				? subtract( (BigDecimal) ((DecimalMeasure) subtrahend)
+						.to( getUnit(), decimal_expansion ).getValue() )
 				: subtract( subtrahend.doubleValue( getUnit() ) );
 	}
 
@@ -496,12 +503,17 @@ public class TimeSpan extends DecimalMeasure
 	public DecimalMeasure divide( final Measure<? extends Number, ?> divisor )
 	{
 		// FIXME generate more exact Measure for discrete divisor values?
-		return DecimalMeasure.valueOf(
-				getValue().divide( divisor.getValue() instanceof BigDecimal
-						? (BigDecimal) divisor.to( getUnit() ).getValue()
-						: BigDecimal
-								.valueOf( divisor.doubleValue( getUnit() ) ) ),
-				Unit.ONE );
+		return DecimalMeasure
+				.valueOf(
+						getValue()
+								.divide( divisor instanceof DecimalMeasure
+										? ((DecimalMeasure) divisor)
+												.to( getUnit(),
+														decimal_expansion )
+												.getValue()
+										: BigDecimal.valueOf( divisor
+												.doubleValue( getUnit() ) ) ),
+						Unit.ONE );
 	}
 
 	/**
@@ -551,14 +563,12 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public DecimalMeasure multiply( final Measure<?, Dimensionless> multiplier )
 	{
-		return DecimalMeasure
-				.valueOf(
-						getValue().multiply(
-								multiplier.getValue() instanceof BigDecimal
-										? (BigDecimal) multiplier.getValue()
-										: BigDecimal.valueOf( multiplier
-												.doubleValue( Unit.ONE ) ) ),
-						getUnit() );
+		return DecimalMeasure.valueOf(
+				getValue().multiply( multiplier.getValue() instanceof BigDecimal
+						? (BigDecimal) multiplier.getValue()
+						: BigDecimal.valueOf(
+								multiplier.doubleValue( Unit.ONE ) ) ),
+				getUnit() );
 	}
 
 	/**
