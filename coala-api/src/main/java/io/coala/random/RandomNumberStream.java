@@ -227,12 +227,12 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	}
 
 	/**
-	 * {@link RandomFactory} creates {@link RandomStream} instances
+	 * {@link RandomStreamFactory} creates {@link RandomStream} instances
 	 * 
 	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
-	class RandomFactory implements Factory
+	class RandomStreamFactory implements Factory
 	{
 		@Override
 		public RandomStream create( final String id, final Number seed )

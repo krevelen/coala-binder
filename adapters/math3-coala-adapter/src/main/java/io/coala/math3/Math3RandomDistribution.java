@@ -114,13 +114,13 @@ public abstract class Math3RandomDistribution<S>
 	}
 
 	public static <T> List<Pair<T, Double>> toPropabilityMassFunction(
-		final List<ProbabilityMass<T, Number>> probabilities )
+		final List<ProbabilityMass<T, ?>> probabilities )
 	{
 		final List<Pair<T, Double>> pmf = new ArrayList<>();
 		if( probabilities == null || probabilities.isEmpty() )
 			throw ExceptionBuilder.unchecked( "Must have some value(s)" )
 					.build();
-		for( ProbabilityMass<T, Number> p : probabilities )
+		for( ProbabilityMass<T, ?> p : probabilities )
 			pmf.add( Pair.create( p.getValue(), p.getMass().doubleValue() ) );
 		return pmf;
 	}
@@ -165,7 +165,7 @@ public abstract class Math3RandomDistribution<S>
 		@Override
 		public <T> RandomDistribution<T> getEnumerated(
 			final RandomNumberStream rng,
-			final List<ProbabilityMass<T, Number>> probabilities )
+			final List<ProbabilityMass<T, ?>> probabilities )
 		{
 			return wrap( new EnumeratedDistribution<T>(
 					Math3RandomNumberStream.unwrap( rng ),
@@ -208,26 +208,6 @@ public abstract class Math3RandomDistribution<S>
 			return wrap( new BinomialDistribution(
 					Math3RandomNumberStream.unwrap( rng ), alpha.intValue(),
 					beta.doubleValue() ) );
-		}
-
-		@Override
-		public RandomDistribution<Long> getUniformInteger(
-			final RandomNumberStream rng, final Number lower,
-			final Number upper )
-		{
-			return wrap( new UniformIntegerDistribution(
-					Math3RandomNumberStream.unwrap( rng ), lower.intValue(),
-					upper.intValue() ) );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		@Override
-		public <T> RandomDistribution<T> getUniformEnum( RandomNumberStream rng,
-			T... values )
-		{
-			return wrap( new EnumeratedDistribution<T>(
-					Math3RandomNumberStream.unwrap( rng ),
-					toPropabilityMassFunction( values ) ) );
 		}
 
 		@Override
@@ -326,6 +306,16 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
+		public RandomDistribution<double[]> getMultivariateNormal(
+			final RandomNumberStream rng, final double[] means,
+			final double[][] covariances )
+		{
+			return wrap( new MultivariateNormalDistribution(
+					Math3RandomNumberStream.unwrap( rng ), means,
+					covariances ) );
+		}
+
+		@Override
 		public RandomDistribution<Double> getPareto(
 			final RandomNumberStream rng, final Number scale,
 			final Number shape )
@@ -375,13 +365,23 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<double[]> getMultivariateNormal(
-			final RandomNumberStream rng, final double[] means,
-			final double[][] covariances )
+		public RandomDistribution<Long> getUniformInteger(
+			final RandomNumberStream rng, final Number lower,
+			final Number upper )
 		{
-			return wrap( new MultivariateNormalDistribution(
-					Math3RandomNumberStream.unwrap( rng ), means,
-					covariances ) );
+			return wrap( new UniformIntegerDistribution(
+					Math3RandomNumberStream.unwrap( rng ), lower.intValue(),
+					upper.intValue() ) );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		@Override
+		public <T> RandomDistribution<T>
+			getUniformEnumerated( RandomNumberStream rng, T... values )
+		{
+			return wrap( new EnumeratedDistribution<T>(
+					Math3RandomNumberStream.unwrap( rng ),
+					toPropabilityMassFunction( values ) ) );
 		}
 	}
 }

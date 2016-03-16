@@ -16,8 +16,15 @@
 package io.coala.random;
 
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,11 +36,13 @@ import org.jscience.physics.amount.Amount;
 import io.coala.exception.x.ExceptionBuilder;
 
 /**
- * {@link RandomDistribution}
+ * {@link RandomDistribution} is similar to a {@link javax.inject.Provider} but
+ * rather a factory that generates values that vary according to some
+ * distribution
  * 
- * @version $Revision: 332 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * @param <T>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public interface RandomDistribution<T> extends Serializable
 {
@@ -168,48 +177,331 @@ public interface RandomDistribution<T> extends Serializable
 		private static final Pattern distPattern = Pattern
 				.compile( "^(?<dist>[^\\(]+)\\((?<params>[^)]*)\\)$" );
 
-		public static <T> RandomDistribution<T> valueOf( final String dist,
-			final Class<T> valueType )
+		public static <T, P> RandomDistribution<T> valueOf( final String dist,
+			final RandomNumberStream rng, final Parser parser,
+			final Class<P> argType )
 		{
 			final Matcher m = distPattern.matcher( dist.trim() );
 			if( !m.find() ) throw ExceptionBuilder
 					.unchecked( "Problem parsing distribution: %s", dist )
 					.build();
-			final String name = m.group( "dist" ).toLowerCase();
-			switch( name )
+			final List<ProbabilityMass<P, ?>> params = new ArrayList<>();
+			for( String valuePair : m.group( "params" ).split( "[;]" ) )
 			{
-			case "const":
-			case "constant":
-				return Util.asConstant(
-						valueOf( valueType, m.group( "params" ) ) );
+				if( valuePair.trim().isEmpty() ) continue; // empty parentheses
+				final String[] valueWeights = valuePair.split( "[:]" );
+				if( valueWeights.length == 1 )
+				{
+					params.add( ProbabilityMass
+							.of( valueOf( argType, valuePair ), 1 ) );
+				} else
+					params.add( ProbabilityMass.of(
+							valueOf( argType, valueWeights[0] ),
+							new BigDecimal( valueWeights[1] ) ) );
 			}
-			throw ExceptionBuilder.unchecked( "Unknown distribution symbol: %s",
-					m.group( "dist" ) ).build();
+			if( params.isEmpty() && argType.isEnum() )
+				for( P constant : argType.getEnumConstants() )
+				params.add( ProbabilityMass.of( constant, 1 ) );
+			return parser.parse( m.group( "dist" ), rng, params );
 		}
 
-		public static <T> T valueOf( final Class<T> paramType,
-			final String value )
+		interface Converter<T>
 		{
+			T valueOf( String value ) throws Exception;
+		}
+
+		public static <T> Converter<T> of( final Class<T> valueType,
+			final Method method )
+		{
+			return new Converter<T>()
+			{
+				@Override
+				public T valueOf( final String value ) throws Exception
+				{
+					return valueType.cast( method.invoke( valueType, value ) );
+				}
+			};
+		}
+
+		public static <T> Converter<T> of( final Class<T> valueType,
+			final Constructor<T> constructor )
+		{
+			return new Converter<T>()
+			{
+				@Override
+				public T valueOf( final String value ) throws Exception
+				{
+					return valueType.cast( constructor.newInstance( value ) );
+				}
+			};
+		}
+
+		private static final Map<Class<?>, Converter<?>> converterCache = new HashMap<>();
+
+		public static Method getMethod( final Class<?> valueType,
+			final String name, final Class<?>... argTypes ) throws Exception
+		{
+			final Method result = valueType.getMethod( name, argTypes );
+			if( !Modifier.isStatic( result.getModifiers() ) )
+				throw new IllegalAccessException( name + "("
+						+ Arrays.asList( argTypes ) + ") not static" );
+			if( !result.isAccessible() ) result.setAccessible( true );
+			return result;
+		}
+
+		public static <T> Constructor<T> getConstructor(
+			final Class<T> valueType, final Class<?>... argTypes )
+			throws Exception
+		{
+			final Constructor<T> result = valueType.getConstructor( argTypes );
+			if( !result.isAccessible() ) result.setAccessible( true );
+			return result;
+		}
+
+		public static <T> Converter<T> getConverter( final Class<T> valueType )
+		{
+			@SuppressWarnings( "unchecked" )
+			Converter<T> result = (Converter<T>) converterCache
+					.get( valueType );
+			if( result != null ) return result;
+
 			try
 			{
-				return paramType
-						.cast( paramType.getMethod( "valueOf", String.class )
-								.invoke( paramType, value ) );
+				result = of( valueType,
+						getMethod( valueType, "valueOf", String.class ) );
 			} catch( final Exception e )
 			{
 				try
 				{
-					return paramType.cast(
-							paramType.getMethod( "valueOf", CharSequence.class )
-									.invoke( paramType, value ) );
+					result = of( valueType, getMethod( valueType, "valueOf",
+							CharSequence.class ) );
 				} catch( final Exception e1 )
 				{
-					throw ExceptionBuilder
-							.unchecked( e1, "Problem parsing value: %s", value )
-							.build();
+					try
+					{
+						result = of( valueType,
+								getConstructor( valueType, String.class ) );
+					} catch( final Exception e2 )
+					{
+						try
+						{
+							result = of( valueType, getConstructor( valueType,
+									CharSequence.class ) );
+						} catch( final Exception e3 )
+						{
+							throw ExceptionBuilder.unchecked( e3,
+									"Problem parsing type: %s", valueType )
+									.build();
+						}
+					}
+				}
+			}
+			converterCache.put( valueType, result );
+			return result;
+		}
+
+		public static <T> T valueOf( final Class<T> valueType,
+			final String value )
+		{
+			final Converter<T> converter = getConverter( valueType );
+			try
+			{
+				return converter.valueOf( value );
+			} catch( final Exception e )
+			{
+				try
+				{
+					return converter.valueOf( value.trim() );
+				} catch( final Exception e1 )
+				{
+					throw ExceptionBuilder.unchecked( e1,
+							"Problem parsing type: %s from (trimmed) value: %s",
+							valueType, value ).build();
 				}
 			}
 		}
+	}
+
+	/**
+	 * {@link Parser} generates {@link RandomDistribution}s of specific shapes
+	 */
+	interface Parser
+	{
+		<T, V> RandomDistribution<T> parse( String name, RandomNumberStream rng,
+			List<ProbabilityMass<V, ?>> args );
+
+		/**
+		 * {@link ConstantDistributionParser}
+		 * 
+		 * @version $Id$
+		 * @author Rick van Krevelen
+		 */
+		class Simple implements Parser
+		{
+			private Factory factory = null;
+
+			/**
+			 * {@link Simple} constructor will generate a constant of the
+			 * distribution's first argument
+			 */
+			public Simple()
+			{
+
+			}
+
+			public Simple( final Factory factory )
+			{
+				this.factory = factory;
+			}
+
+			@SuppressWarnings( "unchecked" )
+			@Override
+			public <T, V> RandomDistribution<T> parse( final String label,
+				final RandomNumberStream rng,
+				final List<ProbabilityMass<V, ?>> args )
+			{
+				if( args.isEmpty() ) throw ExceptionBuilder.unchecked(
+						"Missing distribution parameters: %s", label ).build();
+
+				if( this.factory == null ) return (RandomDistribution<T>) Util
+						.asConstant( args.get( 0 ).getValue() );
+
+				switch( label.toLowerCase() )
+				{
+				case "const":
+				case "constant":
+					return (RandomDistribution<T>) this.factory
+							.getConstant( args.get( 0 ).getValue() );
+
+				case "enum":
+				case "enumerated":
+					return (RandomDistribution<T>) this.factory
+							.getEnumerated( rng, args );
+
+				case "geom":
+				case "geometric":
+					return (RandomDistribution<T>) this.factory.getGeometric(
+							rng, (Number) args.get( 0 ).getValue() );
+
+				case "hypergeom":
+				case "hypergeometric":
+					return (RandomDistribution<T>) this.factory
+							.getHypergeometric( rng,
+									(Number) args.get( 0 ).getValue(),
+									(Number) args.get( 1 ).getValue(),
+									(Number) args.get( 2 ).getValue() );
+
+				case "pascal":
+					return (RandomDistribution<T>) this.factory.getPascal( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "poisson":
+					return (RandomDistribution<T>) this.factory.getPoisson( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "zipf":
+					return (RandomDistribution<T>) this.factory.getZipf( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "beta":
+					return (RandomDistribution<T>) this.factory.getBeta( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "cauchy":
+					return (RandomDistribution<T>) this.factory.getCauchy( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "chi":
+				case "chisquared": // TODO = Pearson?
+					return (RandomDistribution<T>) this.factory.getChiSquared(
+							rng, (Number) args.get( 0 ).getValue() );
+
+				case "exp":
+				case "exponent":
+				case "exponential":
+					return (RandomDistribution<T>) this.factory.getExponential(
+							rng, (Number) args.get( 0 ).getValue() );
+
+				case "f":
+					return (RandomDistribution<T>) this.factory.getF( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "gamma":
+					return (RandomDistribution<T>) this.factory.getGamma( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "levy":
+					return (RandomDistribution<T>) this.factory.getLevy( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "lognormal":
+					return (RandomDistribution<T>) this.factory.getLogNormal(
+							rng, (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "normal":
+					return (RandomDistribution<T>) this.factory.getNormal( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "pareto":
+					return (RandomDistribution<T>) this.factory.getPareto( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "t":
+					return (RandomDistribution<T>) this.factory.getT( rng,
+							(Number) args.get( 0 ).getValue() );
+
+				case "tria":
+				case "triangular":
+					return (RandomDistribution<T>) this.factory.getTriangular(
+							rng, (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue(),
+							(Number) args.get( 2 ).getValue() );
+
+				case "uniformdiscrete":
+				case "uniforminteger":
+					return (RandomDistribution<T>) this.factory
+							.getUniformInteger( rng,
+									(Number) args.get( 0 ).getValue(),
+									(Number) args.get( 1 ).getValue() );
+
+				case "uniformreal":
+				case "uniformcontinuous":
+					return (RandomDistribution<T>) this.factory.getUniformReal(
+							rng, (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+
+				case "uniform":
+				case "uniformenum":
+				case "uniformenumerated":
+					final List<T> values = new ArrayList<>();
+					for( ProbabilityMass<V, ?> pair : args )
+						values.add( (T) pair.getValue() );
+					return (RandomDistribution<T>) this.factory
+							.getUniformEnumerated( rng, values.toArray() );
+
+				case "weibull":
+					return (RandomDistribution<T>) this.factory.getWeibull( rng,
+							(Number) args.get( 0 ).getValue(),
+							(Number) args.get( 1 ).getValue() );
+				}
+				throw ExceptionBuilder
+						.unchecked( "Unknown distribution symbol: %s", label )
+						.build();
+			}
+
+		}
+
 	}
 
 	/**
@@ -240,17 +532,7 @@ public interface RandomDistribution<T> extends Serializable
 		 * @return the {@link RandomDistribution}
 		 */
 		<T> RandomDistribution<T> getEnumerated( RandomNumberStream rng,
-			List<ProbabilityMass<T, Number>> probabilities );
-
-		/**
-		 * @param rng the {@link RandomNumberStream}
-		 * @param probabilities the probability mass function enumerated for
-		 *            each value
-		 * @return the {@link RandomDistribution}
-		 */
-//		<N extends Number> RandomDistribution<N> getEnumeratedNumber(
-//			RandomNumberStream rng,
-//			List<ProbabilityMass<N, Number>> probabilities );
+			List<ProbabilityMass<T, ?>> probabilities );
 
 		/**
 		 * @param rng the {@link RandomNumberStream}
@@ -268,8 +550,8 @@ public interface RandomDistribution<T> extends Serializable
 		 * @return the {@link RandomDistribution}
 		 */
 		RandomDistribution<Long> getHypergeometric( RandomNumberStream rng,
-			Number populationSize, final Number numberOfSuccesses,
-			final Number sampleSize );
+			Number populationSize, Number numberOfSuccesses,
+			Number sampleSize );
 
 		/**
 		 * @param rng the {@link RandomNumberStream}
@@ -288,24 +570,6 @@ public interface RandomDistribution<T> extends Serializable
 		 */
 		RandomDistribution<Long> getPoisson( RandomNumberStream rng,
 			Number alpha, Number beta );
-
-		/**
-		 * @param rng the {@link RandomNumberStream}
-		 * @param lower
-		 * @param upper
-		 * @return the {@link RandomDistribution}
-		 */
-		RandomDistribution<Long> getUniformInteger( RandomNumberStream rng,
-			Number lower, Number upper );
-
-		/**
-		 * @param rng the {@link RandomNumberStream}
-		 * @param values
-		 * @return the {@link RandomDistribution}
-		 */
-		@SuppressWarnings( "unchecked" )
-		<T> RandomDistribution<T> getUniformEnum( RandomNumberStream rng,
-			T... values );
 
 		/**
 		 * @param rng the {@link RandomNumberStream}
@@ -396,6 +660,16 @@ public interface RandomDistribution<T> extends Serializable
 		RandomDistribution<Double> getNormal( RandomNumberStream rng,
 			Number mean, Number sd );
 
+		// TODO scrap or wrap (double <-> Number) using closures?
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param means
+		 * @param covariances
+		 * @return the {@link RandomDistribution}
+		 */
+		RandomDistribution<double[]> getMultivariateNormal(
+			RandomNumberStream rng, double[] means, double[][] covariances );
+
 		/**
 		 * @param rng the {@link RandomNumberStream}
 		 * @param scale
@@ -428,8 +702,26 @@ public interface RandomDistribution<T> extends Serializable
 		 * @param upper
 		 * @return the {@link RandomDistribution}
 		 */
+		RandomDistribution<Long> getUniformInteger( RandomNumberStream rng,
+			Number lower, Number upper );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param lower
+		 * @param upper
+		 * @return the {@link RandomDistribution}
+		 */
 		RandomDistribution<Double> getUniformReal( RandomNumberStream rng,
 			Number lower, Number upper );
+
+		/**
+		 * @param rng the {@link RandomNumberStream}
+		 * @param values
+		 * @return the {@link RandomDistribution}
+		 */
+		@SuppressWarnings( "unchecked" )
+		<T> RandomDistribution<T> getUniformEnumerated( RandomNumberStream rng,
+			T... values );
 
 		/**
 		 * @param rng the {@link RandomNumberStream}
@@ -439,16 +731,6 @@ public interface RandomDistribution<T> extends Serializable
 		 */
 		RandomDistribution<Double> getWeibull( RandomNumberStream rng,
 			Number alpha, Number beta );
-
-		// TODO scrap or wrap (double <-> Number) using closures?
-		/**
-		 * @param rng the {@link RandomNumberStream}
-		 * @param means
-		 * @param covariances
-		 * @return the {@link RandomDistribution}
-		 */
-		RandomDistribution<double[]> getMultivariateNormal(
-			RandomNumberStream rng, double[] means, double[][] covariances );
 
 		// TODO RandomDistribution<Double> getBernoulli();
 
