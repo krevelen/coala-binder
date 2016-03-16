@@ -687,14 +687,21 @@ public class DynaBean implements Cloneable
 	{
 		return new JsonDeserializer<T>()
 		{
+			@SuppressWarnings( "unchecked" )
 			@Override
 			public T deserialize( final JsonParser jp,
 				final DeserializationContext ctxt )
 				throws IOException, JsonProcessingException
 			{
+				System.err.println(
+						"deser " + resultType + " from: " + jp.getText() );
 				if( jp.getCurrentToken() == JsonToken.VALUE_NULL ) return null;
 
-				if( Config.class.isAssignableFrom( resultType ) )
+				if( Wrapper.class.isAssignableFrom( resultType ) )
+				{
+					return resultType.cast( Wrapper.Util.valueOf( jp.getText(),
+							resultType.asSubclass( Wrapper.class ) ) );
+				} else if( Config.class.isAssignableFrom( resultType ) )
 				{
 					final Map<String, Object> entries = jp.readValueAs(
 							new TypeReference<Map<String, Object>>()

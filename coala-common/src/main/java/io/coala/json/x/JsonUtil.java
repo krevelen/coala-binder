@@ -362,6 +362,7 @@ public class JsonUtil
 			if( type.isAnnotationPresent( BeanWrapper.class ) )
 			{
 				DynaBean.registerType( om, type, imports );
+				System.err.println( "reged dynabeanwrapper " + type );
 
 				for( Method method : type.getDeclaredMethods() )
 					if( method.getReturnType() != Void.TYPE

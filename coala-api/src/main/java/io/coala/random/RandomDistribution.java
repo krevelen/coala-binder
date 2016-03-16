@@ -33,7 +33,10 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.coala.exception.x.ExceptionBuilder;
+import io.coala.json.x.JsonUtil;
 
 /**
  * {@link RandomDistribution} is similar to a {@link javax.inject.Provider} but
@@ -178,8 +181,7 @@ public interface RandomDistribution<T> extends Serializable
 				.compile( "^(?<dist>[^\\(]+)\\((?<params>[^)]*)\\)$" );
 
 		public static <T, P> RandomDistribution<T> valueOf( final String dist,
-			final RandomNumberStream rng, final Parser parser,
-			final Class<P> argType )
+			final Parser parser, final Class<P> argType )
 		{
 			final Matcher m = distPattern.matcher( dist.trim() );
 			if( !m.find() ) throw ExceptionBuilder
@@ -202,7 +204,7 @@ public interface RandomDistribution<T> extends Serializable
 			if( params.isEmpty() && argType.isEnum() )
 				for( P constant : argType.getEnumConstants() )
 				params.add( ProbabilityMass.of( constant, 1 ) );
-			return parser.parse( m.group( "dist" ), rng, params );
+			return parser.parse( m.group( "dist" ), params );
 		}
 
 		interface Converter<T>
@@ -232,6 +234,20 @@ public interface RandomDistribution<T> extends Serializable
 				public T valueOf( final String value ) throws Exception
 				{
 					return valueType.cast( constructor.newInstance( value ) );
+				}
+			};
+		}
+
+		public static <T> Converter<T> of( final Class<T> valueType,
+			final ObjectMapper om )
+		{
+			JsonUtil.checkRegistered( om, valueType );
+			return new Converter<T>()
+			{
+				@Override
+				public T valueOf( final String value ) throws Exception
+				{
+					return om.readValue( "\"" + value + "\"", valueType );
 				}
 			};
 		}
@@ -267,8 +283,11 @@ public interface RandomDistribution<T> extends Serializable
 
 			try
 			{
-				result = of( valueType,
-						getMethod( valueType, "valueOf", String.class ) );
+				if( valueType.isInterface() )
+					result = of( valueType, JsonUtil.getJOM() );
+				else
+					result = of( valueType,
+							getMethod( valueType, "valueOf", String.class ) );
 			} catch( final Exception e )
 			{
 				try
@@ -327,7 +346,11 @@ public interface RandomDistribution<T> extends Serializable
 	 */
 	interface Parser
 	{
-		<T, V> RandomDistribution<T> parse( String name, RandomNumberStream rng,
+		Factory getFactory();
+
+		RandomNumberStream getStream();
+
+		<T, V> RandomDistribution<T> parse( String name,
 			List<ProbabilityMass<V, ?>> args );
 
 		/**
@@ -338,147 +361,162 @@ public interface RandomDistribution<T> extends Serializable
 		 */
 		class Simple implements Parser
 		{
-			private Factory factory = null;
+			private final Factory factory;
+
+			private final RandomNumberStream stream;
 
 			/**
-			 * {@link Simple} constructor will generate a constant of the
-			 * distribution's first argument
+			 * {@link Simple} constructor will generate only constant
+			 * distributions of the first parsed argument
 			 */
 			public Simple()
 			{
-
+				this( null, null );
 			}
 
-			public Simple( final Factory factory )
+			public Simple( final Factory factory,
+				final RandomNumberStream stream )
 			{
 				this.factory = factory;
+				this.stream = stream;
+			}
+
+			@Override
+			public Factory getFactory()
+			{
+				return this.factory;
+			}
+
+			@Override
+			public RandomNumberStream getStream()
+			{
+				return this.stream;
 			}
 
 			@SuppressWarnings( "unchecked" )
 			@Override
 			public <T, V> RandomDistribution<T> parse( final String label,
-				final RandomNumberStream rng,
 				final List<ProbabilityMass<V, ?>> args )
 			{
 				if( args.isEmpty() ) throw ExceptionBuilder.unchecked(
 						"Missing distribution parameters: %s", label ).build();
 
-				if( this.factory == null ) return (RandomDistribution<T>) Util
+				if( getFactory() == null ) return (RandomDistribution<T>) Util
 						.asConstant( args.get( 0 ).getValue() );
 
 				switch( label.toLowerCase() )
 				{
 				case "const":
 				case "constant":
-					return (RandomDistribution<T>) this.factory
+					return (RandomDistribution<T>) getFactory()
 							.getConstant( args.get( 0 ).getValue() );
 
 				case "enum":
 				case "enumerated":
-					return (RandomDistribution<T>) this.factory
-							.getEnumerated( rng, args );
+					return (RandomDistribution<T>) getFactory()
+							.getEnumerated( getStream(), args );
 
 				case "geom":
 				case "geometric":
-					return (RandomDistribution<T>) this.factory.getGeometric(
-							rng, (Number) args.get( 0 ).getValue() );
+					return (RandomDistribution<T>) getFactory().getGeometric(
+							getStream(), (Number) args.get( 0 ).getValue() );
 
 				case "hypergeom":
 				case "hypergeometric":
-					return (RandomDistribution<T>) this.factory
-							.getHypergeometric( rng,
+					return (RandomDistribution<T>) getFactory()
+							.getHypergeometric( getStream(),
 									(Number) args.get( 0 ).getValue(),
 									(Number) args.get( 1 ).getValue(),
 									(Number) args.get( 2 ).getValue() );
 
 				case "pascal":
-					return (RandomDistribution<T>) this.factory.getPascal( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getPascal(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "poisson":
-					return (RandomDistribution<T>) this.factory.getPoisson( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getPoisson(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "zipf":
-					return (RandomDistribution<T>) this.factory.getZipf( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getZipf(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "beta":
-					return (RandomDistribution<T>) this.factory.getBeta( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getBeta(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "cauchy":
-					return (RandomDistribution<T>) this.factory.getCauchy( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getCauchy(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "chi":
 				case "chisquared": // TODO = Pearson?
-					return (RandomDistribution<T>) this.factory.getChiSquared(
-							rng, (Number) args.get( 0 ).getValue() );
+					return (RandomDistribution<T>) getFactory().getChiSquared(
+							getStream(), (Number) args.get( 0 ).getValue() );
 
 				case "exp":
 				case "exponent":
 				case "exponential":
-					return (RandomDistribution<T>) this.factory.getExponential(
-							rng, (Number) args.get( 0 ).getValue() );
+					return (RandomDistribution<T>) getFactory().getExponential(
+							getStream(), (Number) args.get( 0 ).getValue() );
 
 				case "f":
-					return (RandomDistribution<T>) this.factory.getF( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getF(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "gamma":
-					return (RandomDistribution<T>) this.factory.getGamma( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getGamma(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "levy":
-					return (RandomDistribution<T>) this.factory.getLevy( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getLevy(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "lognormal":
-					return (RandomDistribution<T>) this.factory.getLogNormal(
-							rng, (Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getLogNormal(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "normal":
-					return (RandomDistribution<T>) this.factory.getNormal( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getNormal(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "pareto":
-					return (RandomDistribution<T>) this.factory.getPareto( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getPareto(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "t":
-					return (RandomDistribution<T>) this.factory.getT( rng,
-							(Number) args.get( 0 ).getValue() );
+					return (RandomDistribution<T>) getFactory().getT(
+							getStream(), (Number) args.get( 0 ).getValue() );
 
 				case "tria":
 				case "triangular":
-					return (RandomDistribution<T>) this.factory.getTriangular(
-							rng, (Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getTriangular(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue(),
 							(Number) args.get( 2 ).getValue() );
 
 				case "uniformdiscrete":
 				case "uniforminteger":
-					return (RandomDistribution<T>) this.factory
-							.getUniformInteger( rng,
+					return (RandomDistribution<T>) getFactory()
+							.getUniformInteger( getStream(),
 									(Number) args.get( 0 ).getValue(),
 									(Number) args.get( 1 ).getValue() );
 
 				case "uniformreal":
 				case "uniformcontinuous":
-					return (RandomDistribution<T>) this.factory.getUniformReal(
-							rng, (Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getUniformReal(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "uniform":
@@ -487,21 +525,20 @@ public interface RandomDistribution<T> extends Serializable
 					final List<T> values = new ArrayList<>();
 					for( ProbabilityMass<V, ?> pair : args )
 						values.add( (T) pair.getValue() );
-					return (RandomDistribution<T>) this.factory
-							.getUniformEnumerated( rng, values.toArray() );
+					return (RandomDistribution<T>) getFactory()
+							.getUniformEnumerated( getStream(),
+									values.toArray() );
 
 				case "weibull":
-					return (RandomDistribution<T>) this.factory.getWeibull( rng,
-							(Number) args.get( 0 ).getValue(),
+					return (RandomDistribution<T>) getFactory().getWeibull(
+							getStream(), (Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 				}
 				throw ExceptionBuilder
 						.unchecked( "Unknown distribution symbol: %s", label )
 						.build();
 			}
-
 		}
-
 	}
 
 	/**

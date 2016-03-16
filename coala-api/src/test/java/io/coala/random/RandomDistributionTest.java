@@ -20,17 +20,15 @@ public class RandomDistributionTest
 	public void testValueOf()
 	{
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
-		final RandomNumberStream rng = new RandomNumberStream.RandomStreamFactory()
-				.create( "main", 1234L );
 		final RandomDistribution.Parser parser = new RandomDistribution.Parser.Simple();
 
 		final RandomDistribution<Amount> dist1 = RandomDistribution.Util
-				.valueOf( "uniform(2 ;3 )", rng, parser, Amount.class ); //± 1.1E-16
+				.valueOf( "uniform(2 ;3 )", parser, Amount.class ); //± 1.1E-16
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw amount {}: {}", i, dist1.draw() );
 
 		final RandomDistribution<DecimalMeasure> dist2 = RandomDistribution.Util
-				.valueOf( "const(2.01 day)", rng, parser, DecimalMeasure.class );
+				.valueOf( "const(2.01 day)", parser, DecimalMeasure.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw measure {}: {}", i, dist2.draw() );
 	}

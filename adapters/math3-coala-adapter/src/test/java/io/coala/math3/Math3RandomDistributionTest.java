@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import io.coala.log.LogUtil;
 import io.coala.random.RandomDistribution;
-import io.coala.random.RandomNumberStream;
 
 /**
  * {@link Math3RandomDistributionTest}
@@ -49,36 +48,34 @@ public class Math3RandomDistributionTest
 	@Test
 	public void testParser()
 	{
-		final RandomNumberStream rng = new Math3RandomNumberStream.MersenneFactory()
-				.create( "rng", 0L );
-		final RandomDistribution.Factory factory = new Math3RandomDistribution.Factory();
 		final RandomDistribution.Parser parser = new RandomDistribution.Parser.Simple(
-				factory );
+				new Math3RandomDistribution.Factory(),
+				new Math3RandomNumberStream.MersenneFactory().create( "rng",
+						0L ) );
 
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
 		final RandomDistribution<Amount> dist0 = RandomDistribution.Util
-				.valueOf( "uniform(2 ;3 )", rng, parser, Amount.class ); //± 1.1E-16
+				.valueOf( "uniform(2 ;3 )", parser, Amount.class ); //± 1.1E-16
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw amount {}: {}", i, dist0.draw() );
 
 		final RandomDistribution<BigDecimal> dist1 = RandomDistribution.Util
-				.valueOf( "uniform(5.1;6.2)", rng, parser, BigDecimal.class ); //± 1.1E-16
+				.valueOf( "uniform(5.1;6.2)", parser, BigDecimal.class ); //± 1.1E-16
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw decimal {}: {}", i, dist1.draw() );
 
 		final RandomDistribution<DecimalMeasure> dist2 = RandomDistribution.Util
-				.valueOf( "const(2.01 day)", rng, parser,
-						DecimalMeasure.class );
+				.valueOf( "const(2.01 day)", parser, DecimalMeasure.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw measure {}: {}", i, dist2.draw() );
 
 		final RandomDistribution<MyValue> dist3 = RandomDistribution.Util
-				.valueOf( "uniform()", rng, parser, MyValue.class );
+				.valueOf( "uniform()", parser, MyValue.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw enum {}: {}", i, dist3.draw() );
 
 		final RandomDistribution<MyValue> dist4 = RandomDistribution.Util
-				.valueOf( "uniform( v1; v3 )", rng, parser, MyValue.class );
+				.valueOf( "uniform( v1; v3 )", parser, MyValue.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw enum subset {}: {}", i, dist4.draw() );
 	}
