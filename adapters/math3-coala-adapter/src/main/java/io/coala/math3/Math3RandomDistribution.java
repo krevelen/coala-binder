@@ -43,6 +43,7 @@ import org.apache.commons.math3.distribution.UniformIntegerDistribution;
 import org.apache.commons.math3.distribution.UniformRealDistribution;
 import org.apache.commons.math3.distribution.WeibullDistribution;
 import org.apache.commons.math3.distribution.ZipfDistribution;
+import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.util.Pair;
 
 import io.coala.exception.x.ExceptionBuilder;
@@ -147,6 +148,28 @@ public abstract class Math3RandomDistribution<S>
 	 */
 	public static class Factory implements RandomDistribution.Factory
 	{
+
+		public static Factory of( final RandomNumberStream stream )
+		{
+			return new Factory( stream );
+		}
+
+		private final RandomNumberStream stream;
+
+		private final RandomGenerator rng;
+
+		public Factory( final RandomNumberStream stream )
+		{
+			this.stream = stream;
+			this.rng = Math3RandomNumberStream.toRandomGenerator( stream );
+		}
+
+		@Override
+		public RandomNumberStream getStream()
+		{
+			return this.stream;
+		}
+
 		@Override
 		public <T> RandomDistribution<T> getConstant( final T constant )
 		{
@@ -154,233 +177,197 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Long> getBinomial(
-			final RandomNumberStream rng, final Number trials, final Number p )
+		public RandomDistribution<Long> getBinomial( final Number trials,
+			final Number p )
 		{
-			return wrap( new BinomialDistribution(
-					Math3RandomNumberStream.unwrap( rng ), trials.intValue(),
+			return wrap( new BinomialDistribution( this.rng, trials.intValue(),
 					p.doubleValue() ) );
 		}
 
 		@Override
 		public <T> RandomDistribution<T> getEnumerated(
-			final RandomNumberStream rng,
+
 			final List<ProbabilityMass<T, ?>> probabilities )
 		{
-			return wrap( new EnumeratedDistribution<T>(
-					Math3RandomNumberStream.unwrap( rng ),
+			return wrap( new EnumeratedDistribution<T>( this.rng,
 					toPropabilityMassFunction( probabilities ) ) );
 		}
 
 		@Override
-		public RandomDistribution<Long>
-			getGeometric( final RandomNumberStream rng, final Number p )
+		public RandomDistribution<Long> getGeometric( final Number p )
 		{
-			return wrap( new GeometricDistribution(
-					Math3RandomNumberStream.unwrap( rng ), p.doubleValue() ) );
+			return wrap(
+					new GeometricDistribution( this.rng, p.doubleValue() ) );
 		}
 
 		@Override
 		public RandomDistribution<Long> getHypergeometric(
-			final RandomNumberStream rng, final Number populationSize,
-			final Number numberOfSuccesses, final Number sampleSize )
+			final Number populationSize, final Number numberOfSuccesses,
+			final Number sampleSize )
 		{
-			return wrap( new HypergeometricDistribution(
-					Math3RandomNumberStream.unwrap( rng ),
+			return wrap( new HypergeometricDistribution( this.rng,
 					populationSize.intValue(), numberOfSuccesses.intValue(),
 					sampleSize.intValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Long> getPascal( final RandomNumberStream rng,
-			final Number r, final Number p )
+		public RandomDistribution<Long> getPascal( final Number r,
+			final Number p )
 		{
-			return wrap( new PascalDistribution(
-					Math3RandomNumberStream.unwrap( rng ), r.intValue(),
+			return wrap( new PascalDistribution( this.rng, r.intValue(),
 					p.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Long> getPoisson(
-			final RandomNumberStream rng, final Number alpha,
+		public RandomDistribution<Long> getPoisson( final Number alpha,
 			final Number beta )
 		{
-			return wrap( new BinomialDistribution(
-					Math3RandomNumberStream.unwrap( rng ), alpha.intValue(),
+			return wrap( new BinomialDistribution( this.rng, alpha.intValue(),
 					beta.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Long> getZipf( final RandomNumberStream rng,
-			final Number numberOfElements, final Number exponent )
+		public RandomDistribution<Long> getZipf( final Number numberOfElements,
+			final Number exponent )
 		{
-			return wrap( new ZipfDistribution(
-					Math3RandomNumberStream.unwrap( rng ),
+			return wrap( new ZipfDistribution( this.rng,
 					numberOfElements.intValue(), exponent.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getBeta( final RandomNumberStream rng,
-			final Number alpha, final Number beta )
+		public RandomDistribution<Double> getBeta( final Number alpha,
+			final Number beta )
 		{
-			return wrap(
-					new BetaDistribution( Math3RandomNumberStream.unwrap( rng ),
-							alpha.doubleValue(), beta.doubleValue() ) );
+			return wrap( new BetaDistribution( this.rng, alpha.doubleValue(),
+					beta.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getCauchy(
-			final RandomNumberStream rng, final Number median,
+		public RandomDistribution<Double> getCauchy( final Number median,
 			final Number scale )
 		{
-			return wrap( new CauchyDistribution(
-					Math3RandomNumberStream.unwrap( rng ), median.doubleValue(),
+			return wrap( new CauchyDistribution( this.rng, median.doubleValue(),
 					scale.doubleValue() ) );
-		}
-
-		@Override
-		public RandomDistribution<Double> getChiSquared(
-			final RandomNumberStream rng, final Number degreesOfFreedom )
-		{
-			return wrap( new ChiSquaredDistribution(
-					Math3RandomNumberStream.unwrap( rng ),
-					degreesOfFreedom.doubleValue() ) );
 		}
 
 		@Override
 		public RandomDistribution<Double>
-			getExponential( final RandomNumberStream rng, final Number mean )
+			getChiSquared( final Number degreesOfFreedom )
 		{
-			return wrap( new ExponentialDistribution(
-					Math3RandomNumberStream.unwrap( rng ),
+			return wrap( new ChiSquaredDistribution( this.rng,
+					degreesOfFreedom.doubleValue() ) );
+		}
+
+		@Override
+		public RandomDistribution<Double> getExponential( final Number mean )
+		{
+			return wrap( new ExponentialDistribution( this.rng,
 					mean.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getF( final RandomNumberStream rng,
+		public RandomDistribution<Double> getF(
 			final Number numeratorDegreesOfFreedom,
 			final Number denominatorDegreesOfFreedom )
 		{
-			return wrap(
-					new FDistribution( Math3RandomNumberStream.unwrap( rng ),
-							numeratorDegreesOfFreedom.doubleValue(),
-							denominatorDegreesOfFreedom.doubleValue() ) );
+			return wrap( new FDistribution( this.rng,
+					numeratorDegreesOfFreedom.doubleValue(),
+					denominatorDegreesOfFreedom.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getGamma(
-			final RandomNumberStream rng, final Number shape,
+		public RandomDistribution<Double> getGamma( final Number shape,
 			final Number scale )
 		{
-			return wrap( new GammaDistribution(
-					Math3RandomNumberStream.unwrap( rng ), shape.doubleValue(),
+			return wrap( new GammaDistribution( this.rng, shape.doubleValue(),
 					scale.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getLevy( final RandomNumberStream rng,
-			final Number mu, final Number c )
+		public RandomDistribution<Double> getLevy( final Number mu,
+			final Number c )
 		{
-			return wrap(
-					new LevyDistribution( Math3RandomNumberStream.unwrap( rng ),
-							mu.doubleValue(), c.doubleValue() ) );
+			return wrap( new LevyDistribution( this.rng, mu.doubleValue(),
+					c.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getLogNormal(
-			final RandomNumberStream rng, final Number scale,
+		public RandomDistribution<Double> getLogNormal( final Number scale,
 			final Number shape )
 		{
-			return wrap( new LogNormalDistribution(
-					Math3RandomNumberStream.unwrap( rng ), scale.doubleValue(),
-					shape.doubleValue() ) );
+			return wrap( new LogNormalDistribution( this.rng,
+					scale.doubleValue(), shape.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getNormal(
-			final RandomNumberStream rng, final Number mean, final Number sd )
+		public RandomDistribution<Double> getNormal( final Number mean,
+			final Number sd )
 		{
-			return wrap( new NormalDistribution(
-					Math3RandomNumberStream.unwrap( rng ), mean.doubleValue(),
+			return wrap( new NormalDistribution( this.rng, mean.doubleValue(),
 					sd.doubleValue() ) );
 		}
 
 		@Override
 		public RandomDistribution<double[]> getMultivariateNormal(
-			final RandomNumberStream rng, final double[] means,
-			final double[][] covariances )
+			final double[] means, final double[][] covariances )
 		{
-			return wrap( new MultivariateNormalDistribution(
-					Math3RandomNumberStream.unwrap( rng ), means,
+			return wrap( new MultivariateNormalDistribution( this.rng, means,
 					covariances ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getPareto(
-			final RandomNumberStream rng, final Number scale,
+		public RandomDistribution<Double> getPareto( final Number scale,
 			final Number shape )
 		{
-			return wrap( new ParetoDistribution(
-					Math3RandomNumberStream.unwrap( rng ), scale.doubleValue(),
+			return wrap( new ParetoDistribution( this.rng, scale.doubleValue(),
 					shape.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getT( final RandomNumberStream rng,
-			final Number degreesOfFreedom )
+		public RandomDistribution<Double> getT( final Number degreesOfFreedom )
 		{
-			return wrap(
-					new TDistribution( Math3RandomNumberStream.unwrap( rng ),
-							degreesOfFreedom.doubleValue() ) );
+			return wrap( new TDistribution( this.rng,
+					degreesOfFreedom.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getTriangular(
-			final RandomNumberStream rng, final Number a, final Number b,
-			final Number c )
+		public RandomDistribution<Double> getTriangular( final Number a,
+			final Number b, final Number c )
 		{
-			return wrap( new TriangularDistribution(
-					Math3RandomNumberStream.unwrap( rng ), a.doubleValue(),
+			return wrap( new TriangularDistribution( this.rng, a.doubleValue(),
 					b.doubleValue(), c.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getUniformReal(
-			final RandomNumberStream rng, final Number lower,
+		public RandomDistribution<Double> getUniformReal( final Number lower,
 			final Number upper )
 		{
-			return wrap( new UniformRealDistribution(
-					Math3RandomNumberStream.unwrap( rng ), lower.doubleValue(),
-					upper.doubleValue() ) );
+			return wrap( new UniformRealDistribution( this.rng,
+					lower.doubleValue(), upper.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getWeibull(
-			final RandomNumberStream rng, final Number alpha,
+		public RandomDistribution<Double> getWeibull( final Number alpha,
 			final Number beta )
 		{
-			return wrap( new WeibullDistribution(
-					Math3RandomNumberStream.unwrap( rng ), alpha.doubleValue(),
+			return wrap( new WeibullDistribution( this.rng, alpha.doubleValue(),
 					beta.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Long> getUniformInteger(
-			final RandomNumberStream rng, final Number lower,
+		public RandomDistribution<Long> getUniformInteger( final Number lower,
 			final Number upper )
 		{
-			return wrap( new UniformIntegerDistribution(
-					Math3RandomNumberStream.unwrap( rng ), lower.intValue(),
-					upper.intValue() ) );
+			return wrap( new UniformIntegerDistribution( this.rng,
+					lower.intValue(), upper.intValue() ) );
 		}
 
 		@SuppressWarnings( "unchecked" )
 		@Override
 		public <T> RandomDistribution<T>
-			getUniformEnumerated( RandomNumberStream rng, T... values )
+			getUniformEnumerated( final T... values )
 		{
-			return wrap( new EnumeratedDistribution<T>(
-					Math3RandomNumberStream.unwrap( rng ),
+			return wrap( new EnumeratedDistribution<T>( this.rng,
 					toPropabilityMassFunction( values ) ) );
 		}
 	}

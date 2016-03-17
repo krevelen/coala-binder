@@ -21,7 +21,7 @@ import io.coala.json.x.Wrapper.JavaPolymorph;
 import io.coala.log.LogUtil;
 
 /**
- * {@link WrapperTest} tests various {@link Wrapper} usagess
+ * {@link WrapperTest} tests various {@link Wrapper} usages
  * 
  * @version $Id: 20a533399b4b4e3055bdb44d7a92137e63ea1c6f $
  * @author Rick van Krevelen

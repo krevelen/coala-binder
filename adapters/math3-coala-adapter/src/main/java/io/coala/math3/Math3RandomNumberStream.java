@@ -20,12 +20,22 @@
  */
 package io.coala.math3;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
+import org.apache.commons.math3.random.ISAACRandom;
+import org.apache.commons.math3.random.Well1024a;
+import org.apache.commons.math3.random.Well19937a;
+import org.apache.commons.math3.random.Well44497a;
+import org.apache.commons.math3.random.Well512a;
 
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.random.RandomNumberStream;
+import io.coala.random.RandomNumberStream.AbstractRandomNumberStream;
+import io.coala.util.Instantiator;
 
 /**
  * {@link Math3RandomNumberStream} decorates several commons-math3
@@ -35,8 +45,7 @@ import io.coala.random.RandomNumberStream;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class Math3RandomNumberStream
-	extends RandomNumberStream.AbstractRandomNumberStream
+public class Math3RandomNumberStream extends AbstractRandomNumberStream
 {
 
 	/**
@@ -44,7 +53,8 @@ public class Math3RandomNumberStream
 	 * @return the unwrapped {@link RandomGenerator} or otherwise a decorated
 	 *         {@link RandomNumberStream}
 	 */
-	public static RandomGenerator unwrap( final RandomNumberStream rng )
+	public static RandomGenerator
+		toRandomGenerator( final RandomNumberStream rng )
 	{
 		return rng instanceof Math3RandomNumberStream
 				? ((Math3RandomNumberStream) rng).unwrap()
@@ -121,12 +131,6 @@ public class Math3RandomNumberStream
 				};
 	}
 
-	public static Math3RandomNumberStream of( final RandomNumberStream.ID id,
-		final RandomGenerator rng )
-	{
-		return new Math3RandomNumberStream( id, rng );
-	}
-
 	private RandomGenerator rng;
 
 	/** {@link Abstract} zero-arg bean constructor */
@@ -197,50 +201,104 @@ public class Math3RandomNumberStream
 	}
 
 	/**
-	 * {@link MersenneFactory} of {@link Math3RandomNumberStream}s wrapping
-	 * Apache common-math3's {@link MersenneTwister} implementation
+	 * {@link Factory} of {@link Math3RandomNumberStream}s
 	 * 
 	 * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
 	 * @author Rick van Krevelen
 	 */
-	public static class MersenneFactory implements RandomNumberStream.Factory
+	public static class Factory<T extends RandomGenerator>
+		implements RandomNumberStream.Factory
 	{
+
+		/** the FACTORY_CACHE */
+		private static final Map<Class<?>, Factory<?>> FACTORY_CACHE = new HashMap<>();
+
+		/**
+		 * @return the cached (new) {@link Factory} instance generating
+		 *         {@link MersenneTwister} streams
+		 */
+		public static Factory<MersenneTwister> ofMersenneTwister()
+		{
+			return of( MersenneTwister.class );
+		}
+
+		/** @return a {@link Factory} of {@link ISAACRandom} streams */
+		public static Factory<ISAACRandom> ISAACRandom()
+		{
+			return of( ISAACRandom.class );
+		}
+
+		/** @return a {@link Factory} of {@link Well19937a} streams */
+		public static Factory<Well19937a> ofWell19937a()
+		{
+			return of( Well19937a.class );
+		}
+
+		/** @return a {@link Factory} of {@link Well19937c} streams */
+		public static Factory<Well19937c> ofWell19937c()
+		{
+			return of( Well19937c.class );
+		}
+
+		/** @return a {@link Factory} of {@link Well44497a} streams */
+		public static Factory<Well44497a> ofWell44497a()
+		{
+			return of( Well44497a.class );
+		}
+
+		/** @return a {@link Factory} of {@link Well512a} streams */
+		public static Factory<Well512a> ofWell512a()
+		{
+			return of( Well512a.class );
+		}
+
+		/** @return a {@link Factory} of {@link Well1024a} streams */
+		public static Factory<Well1024a> ofWell1024a()
+		{
+			return of( Well1024a.class );
+		}
+
+		/**
+		 * @param rngType the type of {@link RandomGenerator} to create
+		 * @return the cached (new) {@link Factory} instance
+		 */
+		public static <T extends RandomGenerator> Factory<T>
+			of( final Class<T> rngType )
+		{
+			synchronized( FACTORY_CACHE )
+			{
+				@SuppressWarnings( "unchecked" )
+				Factory<T> result = (Factory<T>) FACTORY_CACHE.get( rngType );
+				if( result == null )
+				{
+					result = new Factory<T>(
+							Instantiator.of( rngType, long.class ) );
+					FACTORY_CACHE.put( rngType, result );
+				}
+				return result;
+			}
+		}
+
+		private final Instantiator<T> instantiator;
+
+		public Factory( final Instantiator<T> instantiator )
+		{
+			this.instantiator = instantiator;
+		}
+
 		@Override
 		public Math3RandomNumberStream create( final String id,
 			final Number seed )
 		{
-			return create( new RandomNumberStream.ID( id ), seed );
+			return create( new ID( id ), seed );
 		}
 
 		@Override
-		public Math3RandomNumberStream create( final RandomNumberStream.ID id,
-			final Number seed )
+		public Math3RandomNumberStream create( final ID id, final Number seed )
 		{
-			return of( id, new MersenneTwister( seed.longValue() ) );
-		}
-	}
-
-	/**
-	 * {@link MersenneFactory} of {@link Math3RandomNumberStream}s wrapping
-	 * Apache common-math3's {@link Well19937c} implementation
-	 * 
-	 * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
-	 * @author Rick van Krevelen
-	 */
-	public static class Well19937cFactory implements RandomNumberStream.Factory
-	{
-		@Override
-		public Math3RandomNumberStream create( final String id,
-			final Number seed )
-		{
-			return create( new RandomNumberStream.ID( id ), seed );
+			return new Math3RandomNumberStream( id,
+					this.instantiator.instantiate( seed.longValue() ) );
 		}
 
-		@Override
-		public Math3RandomNumberStream create( final RandomNumberStream.ID id,
-			final Number seed )
-		{
-			return of( id, new Well19937c( seed.longValue() ) );
-		}
 	}
 }

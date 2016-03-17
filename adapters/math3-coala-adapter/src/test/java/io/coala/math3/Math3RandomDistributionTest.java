@@ -49,9 +49,9 @@ public class Math3RandomDistributionTest
 	public void testParser()
 	{
 		final RandomDistribution.Parser parser = new RandomDistribution.Parser.Simple(
-				new Math3RandomDistribution.Factory(),
-				new Math3RandomNumberStream.MersenneFactory().create( "rng",
-						0L ) );
+				Math3RandomDistribution.Factory
+						.of( Math3RandomNumberStream.Factory.ofMersenneTwister()
+								.create( "rng", 0L ) ) );
 
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
 		final RandomDistribution<Amount> dist0 = RandomDistribution.Util

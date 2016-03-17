@@ -30,7 +30,7 @@ import io.coala.name.Identifiable;
 /**
  * {@link RandomNumberStream} provides a stream of pseudo-random numbers, with
  * an API similar to the standard Java {@link Random} generator (which is
- * wrapped accordingly in the {@link RandomStream} decorator)
+ * wrapped accordingly in the {@link JURStream} decorator)
  * 
  * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
  * @author Rick van Krevelen
@@ -128,8 +128,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "serial" )
-	abstract class AbstractRandomNumberStream
-		extends AbstractIdentifiable<RandomNumberStream.ID>
+	abstract class AbstractRandomNumberStream extends AbstractIdentifiable<ID>
 		implements RandomNumberStream
 	{
 		/** {@link AbstractRandomNumberStream} zero-arg bean constructor */
@@ -139,39 +138,39 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 		}
 
 		/** {@link AbstractRandomNumberStream} constructor */
-		public AbstractRandomNumberStream( final RandomNumberStream.ID id )
+		public AbstractRandomNumberStream( final ID id )
 		{
 			super( id );
 		}
 	}
 
 	/**
-	 * {@link RandomStream} decorates a standard Java {@link Random} generator
-	 * as {@link RandomNumberStream}
+	 * {@link JURStream} decorates a standard Java {@link Random} generator as
+	 * {@link RandomNumberStream}
 	 * 
 	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "serial" )
-	class RandomStream extends AbstractRandomNumberStream
+	class JURStream extends AbstractRandomNumberStream
 	{
 		/** the {@link Random} generator */
 		private Random random;
 
 		/**
-		 * {@link RandomStream} zero-arg bean constructor
+		 * {@link JURStream} zero-arg bean constructor
 		 */
-		protected RandomStream()
+		protected JURStream()
 		{
 		}
 
 		/**
-		 * {@link RandomStream} constructor
+		 * {@link JURStream} constructor
 		 * 
 		 * @param id
 		 * @param seed
 		 */
-		public RandomStream( final ID id, final Number seed )
+		public JURStream( final ID id, final Number seed )
 		{
 			super( id );
 			this.random = new Random( seed.longValue() );
@@ -227,23 +226,23 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	}
 
 	/**
-	 * {@link RandomStreamFactory} creates {@link RandomStream} instances
+	 * {@link JURStreamFactory} creates {@link JURStream} instances
 	 * 
 	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
-	class RandomStreamFactory implements Factory
+	class JURStreamFactory implements Factory
 	{
 		@Override
-		public RandomStream create( final String id, final Number seed )
+		public JURStream create( final String id, final Number seed )
 		{
 			return create( new ID( id ), seed );
 		}
 
 		@Override
-		public RandomStream create( final ID id, final Number seed )
+		public JURStream create( final ID id, final Number seed )
 		{
-			return new RandomStream( id, seed );
+			return new JURStream( id, seed );
 		};
 	}
 }

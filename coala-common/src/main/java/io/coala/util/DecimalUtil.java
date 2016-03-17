@@ -1,21 +1,25 @@
-package io.coala.random;
+package io.coala.util;
 
 import java.math.BigDecimal;
-
-import io.coala.util.Util;
+import java.math.MathContext;
 
 /**
- * {@link NumberUtil}
+ * {@link DecimalUtil}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class NumberUtil implements Util
+public class DecimalUtil implements Util
 {
 
-	private NumberUtil()
+	/** TODO from config? */
+	public static final MathContext DECIMAL_PRECISION = MathContext.DECIMAL128;
+
+	/**
+	 * {@link DecimalUtil} inaccessible singleton constructor
+	 */
+	private DecimalUtil()
 	{
-		// inaccessible singleton constructor
 	}
 
 	/**

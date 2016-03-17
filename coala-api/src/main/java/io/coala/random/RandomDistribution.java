@@ -16,15 +16,9 @@
 package io.coala.random;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,10 +27,9 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.coala.exception.x.ExceptionBuilder;
-import io.coala.json.x.JsonUtil;
+import io.coala.util.DecimalUtil;
+import io.coala.util.InstanceParser;
 
 /**
  * {@link RandomDistribution} is similar to a {@link javax.inject.Provider} but
@@ -167,8 +160,8 @@ public interface RandomDistribution<T> extends Serializable
 				{
 					final Number value = dist.draw();
 					return value instanceof Long || value instanceof Integer
-							|| (value instanceof BigDecimal
-									&& NumberUtil.isExact( (BigDecimal) value ))
+							|| (value instanceof BigDecimal && DecimalUtil
+									.isExact( (BigDecimal) value ))
 											? Amount.valueOf( value.longValue(),
 													unit )
 											: Amount.valueOf(
@@ -194,150 +187,18 @@ public interface RandomDistribution<T> extends Serializable
 				final String[] valueWeights = valuePair.split( "[:]" );
 				if( valueWeights.length == 1 )
 				{
-					params.add( ProbabilityMass
-							.of( valueOf( argType, valuePair ), 1 ) );
+					params.add( ProbabilityMass.of( InstanceParser.of( argType )
+							.parseOrTrimmed( valuePair ), 1 ) );
 				} else
 					params.add( ProbabilityMass.of(
-							valueOf( argType, valueWeights[0] ),
+							InstanceParser.of( argType )
+									.parseOrTrimmed( valueWeights[0] ),
 							new BigDecimal( valueWeights[1] ) ) );
 			}
 			if( params.isEmpty() && argType.isEnum() )
 				for( P constant : argType.getEnumConstants() )
 				params.add( ProbabilityMass.of( constant, 1 ) );
 			return parser.parse( m.group( "dist" ), params );
-		}
-
-		interface Converter<T>
-		{
-			T valueOf( String value ) throws Exception;
-		}
-
-		public static <T> Converter<T> of( final Class<T> valueType,
-			final Method method )
-		{
-			return new Converter<T>()
-			{
-				@Override
-				public T valueOf( final String value ) throws Exception
-				{
-					return valueType.cast( method.invoke( valueType, value ) );
-				}
-			};
-		}
-
-		public static <T> Converter<T> of( final Class<T> valueType,
-			final Constructor<T> constructor )
-		{
-			return new Converter<T>()
-			{
-				@Override
-				public T valueOf( final String value ) throws Exception
-				{
-					return valueType.cast( constructor.newInstance( value ) );
-				}
-			};
-		}
-
-		public static <T> Converter<T> of( final Class<T> valueType,
-			final ObjectMapper om )
-		{
-			JsonUtil.checkRegistered( om, valueType );
-			return new Converter<T>()
-			{
-				@Override
-				public T valueOf( final String value ) throws Exception
-				{
-					return om.readValue( "\"" + value + "\"", valueType );
-				}
-			};
-		}
-
-		private static final Map<Class<?>, Converter<?>> converterCache = new HashMap<>();
-
-		public static Method getMethod( final Class<?> valueType,
-			final String name, final Class<?>... argTypes ) throws Exception
-		{
-			final Method result = valueType.getMethod( name, argTypes );
-			if( !Modifier.isStatic( result.getModifiers() ) )
-				throw new IllegalAccessException( name + "("
-						+ Arrays.asList( argTypes ) + ") not static" );
-			if( !result.isAccessible() ) result.setAccessible( true );
-			return result;
-		}
-
-		public static <T> Constructor<T> getConstructor(
-			final Class<T> valueType, final Class<?>... argTypes )
-			throws Exception
-		{
-			final Constructor<T> result = valueType.getConstructor( argTypes );
-			if( !result.isAccessible() ) result.setAccessible( true );
-			return result;
-		}
-
-		public static <T> Converter<T> getConverter( final Class<T> valueType )
-		{
-			@SuppressWarnings( "unchecked" )
-			Converter<T> result = (Converter<T>) converterCache
-					.get( valueType );
-			if( result != null ) return result;
-
-			try
-			{
-				if( valueType.isInterface() )
-					result = of( valueType, JsonUtil.getJOM() );
-				else
-					result = of( valueType,
-							getMethod( valueType, "valueOf", String.class ) );
-			} catch( final Exception e )
-			{
-				try
-				{
-					result = of( valueType, getMethod( valueType, "valueOf",
-							CharSequence.class ) );
-				} catch( final Exception e1 )
-				{
-					try
-					{
-						result = of( valueType,
-								getConstructor( valueType, String.class ) );
-					} catch( final Exception e2 )
-					{
-						try
-						{
-							result = of( valueType, getConstructor( valueType,
-									CharSequence.class ) );
-						} catch( final Exception e3 )
-						{
-							throw ExceptionBuilder.unchecked( e3,
-									"Problem parsing type: %s", valueType )
-									.build();
-						}
-					}
-				}
-			}
-			converterCache.put( valueType, result );
-			return result;
-		}
-
-		public static <T> T valueOf( final Class<T> valueType,
-			final String value )
-		{
-			final Converter<T> converter = getConverter( valueType );
-			try
-			{
-				return converter.valueOf( value );
-			} catch( final Exception e )
-			{
-				try
-				{
-					return converter.valueOf( value.trim() );
-				} catch( final Exception e1 )
-				{
-					throw ExceptionBuilder.unchecked( e1,
-							"Problem parsing type: %s from (trimmed) value: %s",
-							valueType, value ).build();
-				}
-			}
 		}
 	}
 
@@ -363,22 +224,18 @@ public interface RandomDistribution<T> extends Serializable
 		{
 			private final Factory factory;
 
-			private final RandomNumberStream stream;
-
 			/**
 			 * {@link Simple} constructor will generate only constant
 			 * distributions of the first parsed argument
 			 */
 			public Simple()
 			{
-				this( null, null );
+				this( null );
 			}
 
-			public Simple( final Factory factory,
-				final RandomNumberStream stream )
+			public Simple( final Factory factory )
 			{
 				this.factory = factory;
-				this.stream = stream;
 			}
 
 			@Override
@@ -390,7 +247,7 @@ public interface RandomDistribution<T> extends Serializable
 			@Override
 			public RandomNumberStream getStream()
 			{
-				return this.stream;
+				return getFactory().getStream();
 			}
 
 			@SuppressWarnings( "unchecked" )
@@ -414,109 +271,109 @@ public interface RandomDistribution<T> extends Serializable
 				case "enum":
 				case "enumerated":
 					return (RandomDistribution<T>) getFactory()
-							.getEnumerated( getStream(), args );
+							.getEnumerated( args );
 
 				case "geom":
 				case "geometric":
-					return (RandomDistribution<T>) getFactory().getGeometric(
-							getStream(), (Number) args.get( 0 ).getValue() );
+					return (RandomDistribution<T>) getFactory()
+							.getGeometric( (Number) args.get( 0 ).getValue() );
 
 				case "hypergeom":
 				case "hypergeometric":
 					return (RandomDistribution<T>) getFactory()
-							.getHypergeometric( getStream(),
+							.getHypergeometric(
 									(Number) args.get( 0 ).getValue(),
 									(Number) args.get( 1 ).getValue(),
 									(Number) args.get( 2 ).getValue() );
 
 				case "pascal":
 					return (RandomDistribution<T>) getFactory().getPascal(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "poisson":
 					return (RandomDistribution<T>) getFactory().getPoisson(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "zipf":
 					return (RandomDistribution<T>) getFactory().getZipf(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "beta":
 					return (RandomDistribution<T>) getFactory().getBeta(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "cauchy":
 					return (RandomDistribution<T>) getFactory().getCauchy(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "chi":
 				case "chisquared": // TODO = Pearson?
-					return (RandomDistribution<T>) getFactory().getChiSquared(
-							getStream(), (Number) args.get( 0 ).getValue() );
+					return (RandomDistribution<T>) getFactory()
+							.getChiSquared( (Number) args.get( 0 ).getValue() );
 
 				case "exp":
 				case "exponent":
 				case "exponential":
 					return (RandomDistribution<T>) getFactory().getExponential(
-							getStream(), (Number) args.get( 0 ).getValue() );
+							(Number) args.get( 0 ).getValue() );
 
 				case "f":
 					return (RandomDistribution<T>) getFactory().getF(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "gamma":
 					return (RandomDistribution<T>) getFactory().getGamma(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "levy":
 					return (RandomDistribution<T>) getFactory().getLevy(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "lognormal":
 					return (RandomDistribution<T>) getFactory().getLogNormal(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "normal":
 					return (RandomDistribution<T>) getFactory().getNormal(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "pareto":
 					return (RandomDistribution<T>) getFactory().getPareto(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "t":
-					return (RandomDistribution<T>) getFactory().getT(
-							getStream(), (Number) args.get( 0 ).getValue() );
+					return (RandomDistribution<T>) getFactory()
+							.getT( (Number) args.get( 0 ).getValue() );
 
 				case "tria":
 				case "triangular":
 					return (RandomDistribution<T>) getFactory().getTriangular(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue(),
 							(Number) args.get( 2 ).getValue() );
 
 				case "uniformdiscrete":
 				case "uniforminteger":
 					return (RandomDistribution<T>) getFactory()
-							.getUniformInteger( getStream(),
+							.getUniformInteger(
 									(Number) args.get( 0 ).getValue(),
 									(Number) args.get( 1 ).getValue() );
 
 				case "uniformreal":
 				case "uniformcontinuous":
 					return (RandomDistribution<T>) getFactory().getUniformReal(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 
 				case "uniform":
@@ -526,12 +383,11 @@ public interface RandomDistribution<T> extends Serializable
 					for( ProbabilityMass<V, ?> pair : args )
 						values.add( (T) pair.getValue() );
 					return (RandomDistribution<T>) getFactory()
-							.getUniformEnumerated( getStream(),
-									values.toArray() );
+							.getUniformEnumerated( values.toArray() );
 
 				case "weibull":
 					return (RandomDistribution<T>) getFactory().getWeibull(
-							getStream(), (Number) args.get( 0 ).getValue(),
+							(Number) args.get( 0 ).getValue(),
 							(Number) args.get( 1 ).getValue() );
 				}
 				throw ExceptionBuilder
@@ -548,226 +404,190 @@ public interface RandomDistribution<T> extends Serializable
 	{
 
 		/**
-		 * @param constant the constant to be returned on each draw
-		 * @return the {@link RandomDistribution}
+		 * @return the {@link RandomNumberStream} used in creating
+		 *         {@link RandomDistribution}s
 		 */
-		<T> RandomDistribution<T> getConstant( T constant );
+		RandomNumberStream getStream();
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
+		 * @param value the constant to be returned on each draw
+		 * @return the constant {@link RandomDistribution}
+		 */
+		<T> RandomDistribution<T> getConstant( T value );
+
+		/**
 		 * @param trials number of consecutive successes
 		 * @param p probability of a single success
-		 * @return the {@link RandomDistribution}
+		 * @return the binomial {@link RandomDistribution}
 		 */
-		RandomDistribution<Long> getBinomial( RandomNumberStream rng,
-			Number trials, Number p );
+		RandomDistribution<Long> getBinomial( Number trials, Number p );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
-		 * @param probabilities the probability mass function enumerated for
-		 *            each value
-		 * @return the {@link RandomDistribution}
+		 * @param probabilities the {@link ProbabilityMass} function enumerated
+		 *            for each value
+		 * @return the enumerated {@link RandomDistribution}
 		 */
-		<T> RandomDistribution<T> getEnumerated( RandomNumberStream rng,
-			List<ProbabilityMass<T, ?>> probabilities );
+		<T> RandomDistribution<T>
+			getEnumerated( List<ProbabilityMass<T, ?>> probabilities );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param p
-		 * @return the {@link RandomDistribution}
+		 * @return the geometric {@link RandomDistribution}
 		 */
-		RandomDistribution<Long> getGeometric( RandomNumberStream rng,
-			Number p );
+		RandomDistribution<Long> getGeometric( Number p );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param populationSize
 		 * @param numberOfSuccesses
 		 * @param sampleSize
-		 * @return the {@link RandomDistribution}
+		 * @return the hypergeometric {@link RandomDistribution}
 		 */
-		RandomDistribution<Long> getHypergeometric( RandomNumberStream rng,
-			Number populationSize, Number numberOfSuccesses,
-			Number sampleSize );
+		RandomDistribution<Long> getHypergeometric( Number populationSize,
+			Number numberOfSuccesses, Number sampleSize );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param r
 		 * @param p
-		 * @return the {@link RandomDistribution}
+		 * @return the Pascal {@link RandomDistribution}
 		 */
-		RandomDistribution<Long> getPascal( RandomNumberStream rng, Number r,
-			Number p );
+		RandomDistribution<Long> getPascal( Number r, Number p );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param alpha
 		 * @param beta
-		 * @return the {@link RandomDistribution}
+		 * @return the Poisson {@link RandomDistribution}
 		 */
-		RandomDistribution<Long> getPoisson( RandomNumberStream rng,
-			Number alpha, Number beta );
+		RandomDistribution<Long> getPoisson( Number alpha, Number beta );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param alpha
 		 * @param beta
-		 * @return the {@link RandomDistribution}
+		 * @return the Zipf {@link RandomDistribution}
 		 */
-		RandomDistribution<Long> getZipf( RandomNumberStream rng,
-			Number numberOfElements, Number exponent );
+		RandomDistribution<Long> getZipf( Number numberOfElements,
+			Number exponent );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param alpha
 		 * @param beta
-		 * @return the {@link RandomDistribution}
+		 * @return the &beta; {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getBeta( RandomNumberStream rng,
-			Number alpha, Number beta );
+		RandomDistribution<Double> getBeta( Number alpha, Number beta );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param median
 		 * @param scale
-		 * @return the {@link RandomDistribution}
+		 * @return the Cauchy {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getCauchy( RandomNumberStream rng,
-			Number median, Number scale );
+		RandomDistribution<Double> getCauchy( Number median, Number scale );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param degreesOfFreedom
-		 * @return the {@link RandomDistribution}
+		 * @return the &chi;<sup>2</sup> {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getChiSquared( RandomNumberStream rng,
-			Number degreesOfFreedom );
+		RandomDistribution<Double> getChiSquared( Number degreesOfFreedom );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param mean
-		 * @return the {@link RandomDistribution}
+		 * @return the exponential {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getExponential( RandomNumberStream rng,
-			Number mean );
+		RandomDistribution<Double> getExponential( Number mean );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param numeratorDegreesOfFreedom
 		 * @param denominatorDegreesOfFreedom
-		 * @return the {@link RandomDistribution}
+		 * @return the F {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getF( RandomNumberStream rng,
-			Number numeratorDegreesOfFreedom,
+		RandomDistribution<Double> getF( Number numeratorDegreesOfFreedom,
 			Number denominatorDegreesOfFreedom );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param shape
 		 * @param scale
-		 * @return the {@link RandomDistribution}
+		 * @return the &gamma; {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getGamma( RandomNumberStream rng,
-			Number shape, Number scale );
+		RandomDistribution<Double> getGamma( Number shape, Number scale );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param mu
 		 * @param c
-		 * @return the {@link RandomDistribution}
+		 * @return the Levy {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getLevy( RandomNumberStream rng, Number mu,
-			Number c );
+		RandomDistribution<Double> getLevy( Number mu, Number c );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param scale
 		 * @param shape
-		 * @return the {@link RandomDistribution}
+		 * @return the log Gaussian/Normal {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getLogNormal( RandomNumberStream rng,
-			Number scale, Number shape );
+		RandomDistribution<Double> getLogNormal( Number scale, Number shape );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param mean
 		 * @param sd the standard deviation
 		 * @return the Gaussian / Normal {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getNormal( RandomNumberStream rng,
-			Number mean, Number sd );
+		RandomDistribution<Double> getNormal( Number mean, Number sd );
 
 		// TODO scrap or wrap (double <-> Number) using closures?
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param means
 		 * @param covariances
 		 * @return the {@link RandomDistribution}
 		 */
-		RandomDistribution<double[]> getMultivariateNormal(
-			RandomNumberStream rng, double[] means, double[][] covariances );
+		RandomDistribution<double[]> getMultivariateNormal( double[] means,
+			double[][] covariances );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param scale
 		 * @param shape
-		 * @return the {@link RandomDistribution}
+		 * @return the Pareto {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getPareto( RandomNumberStream rng,
-			Number scale, Number shape );
+		RandomDistribution<Double> getPareto( Number scale, Number shape );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param denominatorDegreesOfFreedom
-		 * @return the {@link RandomDistribution}
+		 * @return the T {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getT( RandomNumberStream rng,
-			Number denominatorDegreesOfFreedom );
+		RandomDistribution<Double> getT( Number denominatorDegreesOfFreedom );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param a
 		 * @param b
-		 * @return the {@link RandomDistribution}
+		 * @param c
+		 * @return the triangular {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getTriangular( RandomNumberStream rng,
-			Number a, Number b, Number c );
+		RandomDistribution<Double> getTriangular( Number a, Number b,
+			Number c );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param lower
 		 * @param upper
-		 * @return the {@link RandomDistribution}
+		 * @return the uniform discrete/integer {@link RandomDistribution}
 		 */
-		RandomDistribution<Long> getUniformInteger( RandomNumberStream rng,
-			Number lower, Number upper );
+		RandomDistribution<Long> getUniformInteger( Number lower,
+			Number upper );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param lower
 		 * @param upper
-		 * @return the {@link RandomDistribution}
+		 * @return the uniform continuous/real {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getUniformReal( RandomNumberStream rng,
-			Number lower, Number upper );
+		RandomDistribution<Double> getUniformReal( Number lower, Number upper );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
-		 * @param values
-		 * @return the {@link RandomDistribution}
+		 * @param values the enumerated values
+		 * @return the uniform enumerated {@link RandomDistribution}
 		 */
 		@SuppressWarnings( "unchecked" )
-		<T> RandomDistribution<T> getUniformEnumerated( RandomNumberStream rng,
-			T... values );
+		<T> RandomDistribution<T> getUniformEnumerated( T... values );
 
 		/**
-		 * @param rng the {@link RandomNumberStream}
 		 * @param alpha
 		 * @param beta
 		 * @return the {@link RandomDistribution}
 		 */
-		RandomDistribution<Double> getWeibull( RandomNumberStream rng,
-			Number alpha, Number beta );
+		RandomDistribution<Double> getWeibull( Number alpha, Number beta );
 
 		// TODO RandomDistribution<Double> getBernoulli();
 

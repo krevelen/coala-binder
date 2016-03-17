@@ -20,9 +20,21 @@
  */
 package io.coala.capability.replicate;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import org.apache.logging.log4j.Logger;
+
+import io.coala.bind.Binder;
+import io.coala.capability.BasicCapability;
 import io.coala.capability.BasicCapabilityStatus;
 import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
+import io.coala.config.CoalaProperty;
+import io.coala.log.InjectLogger;
 import io.coala.random.RandomNumberStream;
 
 /**
@@ -65,4 +77,62 @@ public interface RandomizingCapability extends Capability<BasicCapabilityStatus>
 	 */
 	RandomNumberStream getRNG( RandomNumberStream.ID rngID );
 
+	/**
+	 * {@link Math3RandomizingCapability} implements
+	 * {@link RandomizingCapability} using APache's commons-math3 toolkit
+	 * 
+	 * @version $Id: 07298364b836980a619bb4ac47f836e573dd3796 $
+	 * @author Rick van Krevelen
+	 */
+	public class Simple extends BasicCapability implements RandomizingCapability
+	{
+
+		/** */
+		private static final long serialVersionUID = 1L;
+
+		/** */
+		private final Map<RandomNumberStream.ID, RandomNumberStream> rng = Collections
+				.synchronizedMap(
+						new HashMap<RandomNumberStream.ID, RandomNumberStream>() );
+
+		@InjectLogger
+		private Logger LOG;
+
+		/**
+		 * {@link Math3RandomizingCapability} CDI constructor
+		 * 
+		 * @param binder the {@link Binder}
+		 */
+		@Inject
+		protected Simple( final Binder binder )
+		{
+			super( binder );
+		}
+
+		@Override
+		public RandomNumberStream getRNG()
+		{
+			return getRNG( MAIN_RNG_ID );
+		}
+
+		@Override
+		public RandomNumberStream getRNG( RandomNumberStream.ID rngID )
+		{
+			if( !this.rng.containsKey( rngID ) )
+				this.rng.put( rngID, newRNG( rngID ) );
+			return this.rng.get( rngID );
+		}
+
+		private RandomNumberStream
+			newRNG( final RandomNumberStream.ID streamID )
+		{
+			// add owner ID hash code for reproducible seeding variance across
+			// owner agents
+			return getBinder().inject( RandomNumberStream.Factory.class )
+					.create( streamID,
+							CoalaProperty.randomSeed.value().getLong()
+									+ getID().getOwnerID().hashCode() );
+		}
+
+	}
 }

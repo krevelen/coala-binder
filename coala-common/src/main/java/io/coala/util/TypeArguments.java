@@ -26,9 +26,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
-
-import javax.inject.Provider;
 
 import org.apache.logging.log4j.Logger;
 
@@ -36,22 +33,22 @@ import io.coala.exception.x.ExceptionBuilder;
 import io.coala.log.LogUtil;
 
 /**
- * {@link TypeUtil}
+ * {@link TypeArguments}
  * 
  * @date $Date$
  * @version $Id: 99b983878b62652cfd2e2839ea9f800b6532499b $
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-public class TypeUtil
+public class TypeArguments
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger( TypeUtil.class );
+	private static final Logger LOG = LogUtil.getLogger( TypeArguments.class );
 
 	/**
-	 * {@link TypeUtil} singleton constructor
+	 * {@link TypeArguments} singleton constructor
 	 */
-	private TypeUtil()
+	private TypeArguments()
 	{
 		// empty
 	}
@@ -65,7 +62,7 @@ public class TypeUtil
 	 * @param type the type
 	 * @return the underlying class
 	 */
-	public static Class<?> getClass( final Type type )
+	private static Class<?> toClass( final Type type )
 	{
 		if( type instanceof Class )
 		{
@@ -76,7 +73,7 @@ public class TypeUtil
 		if( type instanceof ParameterizedType )
 		{
 			// LOG.trace("Type is a ParameterizedType: "+type);
-			return getClass( ((ParameterizedType) type).getRawType() );
+			return toClass( ((ParameterizedType) type).getRawType() );
 		}
 
 		if( type instanceof GenericArrayType )
@@ -84,7 +81,7 @@ public class TypeUtil
 			// LOG.trace("Type is a GenericArrayType: "+type);
 			final Type componentType = ((GenericArrayType) type)
 					.getGenericComponentType();
-			final Class<?> componentClass = getClass( componentType );
+			final Class<?> componentClass = toClass( componentType );
 			if( componentClass != null )
 				return Array.newInstance( componentClass, 0 ).getClass();
 		}
@@ -103,7 +100,7 @@ public class TypeUtil
 	 * @return a list of the raw classes for the actual type arguments.
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <T, S extends T> List<Class<?>> getTypeArguments(
+	public static <T, S extends T> List<Class<?>> of(
 		final Class<T> genericAncestorType,
 		final Class<S> concreteDescendantType )
 	{
@@ -115,7 +112,7 @@ public class TypeUtil
 
 		final Map<Type, Type> resolvedTypes = new HashMap<Type, Type>();
 		Type type = concreteDescendantType;
-		Class<S> typeClass = (Class<S>) getClass( type );
+		Class<S> typeClass = (Class<S>) toClass( type );
 
 		// start walking up the inheritance hierarchy until we hit parentClass
 		while( !genericAncestorType.equals( typeClass ) )
@@ -172,20 +169,20 @@ public class TypeUtil
 									+ Arrays.asList(
 											superClass.getTypeParameters() )
 									+ ", intf params: "
-									+ Arrays.asList( getClass( rawIntf )
+									+ Arrays.asList( toClass( rawIntf )
 											.getTypeParameters() )
 									+ ", actual args: "
 									+ Arrays.asList( parameterizedIntf
 											.getActualTypeArguments() ) );
 
 							if( superClass.getTypeParameters().length > 0 )
-								return getTypeArguments( superClass,
-										concreteDescendantType );
+								return of( superClass, concreteDescendantType );
 							// intfType=getClass(rawIntf);
-							type = intf;
+							type = parameterizedIntf;
 						}
 						superClass = (Class<? super S>) superClass
 								.getSuperclass();
+						if( superClass == null ) break;
 					}
 					// if (intfType == null)
 					// type = typeClass.getGenericSuperclass();
@@ -248,7 +245,7 @@ public class TypeUtil
 				// LOG.trace("Matched generic " + type + " to ancestor: "
 				// + genericAncestorType);
 			}
-			typeClass = (Class<S>) getClass( type );
+			typeClass = (Class<S>) toClass( type );
 			// LOG.trace("Trying generic " + typeClass + " from: "
 			// + Arrays.asList(typeClass.getGenericInterfaces()));
 		}
@@ -273,7 +270,7 @@ public class TypeUtil
 			while( resolvedTypes.containsKey( baseType ) )
 				baseType = resolvedTypes.get( baseType );
 
-			result.add( getClass( baseType ) );
+			result.add( toClass( baseType ) );
 		}
 		// LOG.trace(String.format(
 		// "Got child %s's type arguments for %s: %s",
@@ -288,8 +285,8 @@ public class TypeUtil
 	 * @param typeArgCache
 	 * @return a (cached) list of the raw classes for the actual type arguments.
 	 */
-	public static <T> List<Class<?>> getTypeArguments(
-		final Class<T> genericType, final Class<? extends T> type,
+	public static <T> List<Class<?>> of( final Class<T> genericType,
+		final Class<? extends T> type,
 		final Map<Class<?>, List<Class<?>>> typeArgCache )
 	{
 		synchronized( typeArgCache )
@@ -297,107 +294,10 @@ public class TypeUtil
 			List<Class<?>> result = typeArgCache.get( type );
 			if( result == null )
 			{
-				result = TypeUtil.getTypeArguments( genericType, type );
+				result = TypeArguments.of( genericType, type );
 				typeArgCache.put( type, result );
 			}
 			return result;
-		}
-	}
-
-	public static final Map<Class<?>, Provider<?>> BEAN_PROVIDER_CACHE = new WeakHashMap<>();
-
-	/**
-	 * @param beanType should be a non-abstract concrete {@link Class} that has
-	 *            a public zero-arg constructor
-	 * @return the new {@link Provider} instance
-	 */
-	@SuppressWarnings( "unchecked" )
-	public static <T, S extends T> Provider<T>
-		createBeanProvider( final Class<T> apiType, final Class<S> beanType )
-	{
-		return (Provider<T>) createBeanProvider( beanType,
-				BEAN_PROVIDER_CACHE );
-	}
-
-	/**
-	 * @param beanType should be a non-abstract concrete {@link Class} that has
-	 *            a public zero-arg constructor
-	 * @return the new {@link Provider} instance
-	 */
-	public static <T> Provider<T> createBeanProvider( final Class<T> beanType )
-	{
-		return createBeanProvider( beanType, BEAN_PROVIDER_CACHE );
-	}
-
-	/**
-	 * @param beanType should be a non-abstract concrete {@link Class} that has
-	 *            a public zero-arg constructor
-	 * @return the new {@link Provider} instance
-	 */
-	public static <T> Provider<T> createBeanProvider( final Class<T> beanType,
-		final Map<Class<?>, Provider<?>> cache )
-	{
-		synchronized( cache )
-		{
-			@SuppressWarnings( "unchecked" )
-			Provider<T> result = (Provider<T>) cache.get( beanType );
-			if( result == null )
-			{
-				result = new DefaultBeanProvider<T>( beanType );
-				cache.put( beanType, result );
-			}
-			return result;
-		}
-	}
-
-	/**
-	 * {@link DefaultBeanProvider}
-	 * 
-	 * @date $Date$
-	 * @version $Id: 99b983878b62652cfd2e2839ea9f800b6532499b $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
-	 * @param <T>
-	 */
-	public static class DefaultBeanProvider<T> implements Provider<T>
-	{
-		private final Class<T> type;
-
-		/**
-		 * {@link DefaultBeanProvider} constructor
-		 * 
-		 * @param type
-		 */
-		public DefaultBeanProvider( final Class<T> type )
-		{
-			this.type = type;
-			// test bean property of having an accessible public
-			// zero-arg constructor
-			try
-			{
-				this.type.getConstructor().setAccessible( true );
-			} catch( final Throwable t )
-			{
-				throw ExceptionBuilder.unchecked(
-						"No public zero-arg bean constructor found for type: "
-								+ this.type.getName(),
-						t ).build();
-			}
-		}
-
-		@Override
-		public T get()
-		{
-			try
-			{
-				return this.type.newInstance();
-			} catch( final Throwable t )
-			{
-				throw ExceptionBuilder
-						.unchecked( "Problem instantiating bean of type: "
-								+ this.type.getName(), t )
-						.build();
-			}
 		}
 	}
 

@@ -45,13 +45,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 import io.coala.exception.x.ExceptionBuilder;
 import io.coala.name.x.Id;
-import io.coala.util.TypeUtil;
+import io.coala.util.Instantiator;
+import io.coala.util.TypeArguments;
 
 /**
  * {@link Wrapper} is a tag for decorator types that are (or should be)
@@ -253,10 +255,10 @@ public interface Wrapper<T>
 		{
 			// LOG.trace("Resolving value type arg for: " + type.getName());
 			@SuppressWarnings( "unchecked" )
-			final Class<S> valueType = (Class<S>) TypeUtil
-					.getTypeArguments( Wrapper.class, type ).get( 0 );
+			final Class<S> valueType = (Class<S>) TypeArguments
+					.of( Wrapper.class, type ).get( 0 );
 			// LOG.trace("Resolved value type arg: " + valueType);
-			registerType( om, type, valueType );
+			registerValueType( om, type, valueType );
 		}
 
 		/**
@@ -264,7 +266,7 @@ public interface Wrapper<T>
 		 * @param type the {@link Wrapper} sub-type to register
 		 * @param valueType the wrapped type to de/serialize
 		 */
-		public static <S, T extends Wrapper<S>> void registerType(
+		public static <S, T extends Wrapper<S>> void registerValueType(
 			final ObjectMapper om, final Class<T> type,
 			final Class<S> valueType )
 		{
@@ -301,19 +303,13 @@ public interface Wrapper<T>
 					final SerializerProvider serializers,
 					final TypeSerializer typeSer ) throws IOException
 				{
-					Class<?> clz = handledType();
-					if( clz == null ) clz = value.getClass();
-//					if( value.unwrap() instanceof String )
-					serializers
-							.findValueSerializer( value.unwrap().getClass(),
-									null )
-							.serialize( value.unwrap(), jgen, serializers );
-//					else
-//					{
-//						typeSer.writeTypePrefixForScalar( this, jgen, clz );
-//						serialize( value, jgen, serializers );
-//						typeSer.writeTypeSuffixForScalar( this, jgen );
-//					}
+					if( value.unwrap() == null )
+						jgen.writeNull();
+					else
+						serializers
+								.findValueSerializer( value.unwrap().getClass(),
+										null )
+								.serialize( value.unwrap(), jgen, serializers );
 				}
 			};
 		}
@@ -329,8 +325,17 @@ public interface Wrapper<T>
 		{
 			return new JsonDeserializer<T>()
 			{
-				private final Provider<T> provider = TypeUtil
-						.createBeanProvider( type );
+				private final Instantiator<T> provider = Instantiator
+						.of( type );
+
+				@Override
+				public T deserializeWithType( final JsonParser jp,
+					final DeserializationContext ctxt,
+					final TypeDeserializer typeDeserializer )
+					throws IOException, JsonProcessingException
+				{
+					return deserialize( jp, ctxt );
+				}
 
 				@Override
 				public T deserialize( final JsonParser jp,
@@ -369,7 +374,7 @@ public interface Wrapper<T>
 						// valueSubtype);
 					}
 
-					final T result = this.provider.get();
+					final T result = this.provider.instantiate();
 					result.wrap( value );
 					return result;
 				}
@@ -417,9 +422,8 @@ public interface Wrapper<T>
 			final Class<T> type )
 		{
 			if( type.isInterface() )
-				return valueOf( json, DynaBean.getProvider( JsonUtil.getJOM(),
-						type, null ) );
-			return valueOf( json, TypeUtil.createBeanProvider( type ) );
+				return valueOf( json, DynaBeanProxyProvider.of( type ).get() );
+			return valueOf( json, Instantiator.of( type ) );
 		}
 
 		/**
@@ -428,9 +432,9 @@ public interface Wrapper<T>
 		 * @return the deserialized {@link Wrapper} sub-type
 		 */
 		public static <S, T extends Wrapper<S>> T valueOf( final String json,
-			final Provider<T> provider )
+			final Instantiator<T> provider )
 		{
-			return valueOf( json, provider.get() );
+			return valueOf( json, provider.instantiate() );
 		}
 
 		/**
@@ -444,8 +448,8 @@ public interface Wrapper<T>
 		{
 			try
 			{
-				final Class<S> valueType = (Class<S>) TypeUtil
-						.getTypeArguments( Wrapper.class, result.getClass(),
+				final Class<S> valueType = (Class<S>) TypeArguments
+						.of( Wrapper.class, result.getClass(),
 								Wrapper.Util.WRAPPER_TYPE_ARGUMENT_CACHE )
 						.get( 0 );
 

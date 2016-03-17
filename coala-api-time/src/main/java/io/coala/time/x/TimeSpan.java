@@ -17,7 +17,6 @@ package io.coala.time.x;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.MathContext;
 
 import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
@@ -40,6 +39,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import io.coala.util.DecimalUtil;
 
 /**
  * {@link TimeSpan} extends {@link DecimalMeasure} with {@link #valueOf(String)}
@@ -81,9 +82,6 @@ public class TimeSpan extends DecimalMeasure
 
 	/** the ONE */
 	public static final TimeSpan ONE = of( 1, Unit.ONE );
-
-	/** */
-	private static final MathContext decimal_expansion = MathContext.DECIMAL128;
 
 	/**
 	 * Parse duration as {@link DecimalMeasure JSR-275} measure (e.g.
@@ -399,7 +397,8 @@ public class TimeSpan extends DecimalMeasure
 	{
 		return augend instanceof DecimalMeasure
 				? add( (BigDecimal) ((DecimalMeasure) augend)
-						.to( getUnit(), decimal_expansion ).getValue() )
+						.to( getUnit(), DecimalUtil.DECIMAL_PRECISION )
+						.getValue() )
 				: add( augend.doubleValue( getUnit() ) );
 	}
 
@@ -451,7 +450,8 @@ public class TimeSpan extends DecimalMeasure
 	{
 		return subtrahend.getValue() instanceof DecimalMeasure
 				? subtract( (BigDecimal) ((DecimalMeasure) subtrahend)
-						.to( getUnit(), decimal_expansion ).getValue() )
+						.to( getUnit(), DecimalUtil.DECIMAL_PRECISION )
+						.getValue() )
 				: subtract( subtrahend.doubleValue( getUnit() ) );
 	}
 
@@ -505,14 +505,13 @@ public class TimeSpan extends DecimalMeasure
 		// FIXME generate more exact Measure for discrete divisor values?
 		return DecimalMeasure
 				.valueOf(
-						getValue()
-								.divide( divisor instanceof DecimalMeasure
-										? ((DecimalMeasure) divisor)
-												.to( getUnit(),
-														decimal_expansion )
-												.getValue()
-										: BigDecimal.valueOf( divisor
-												.doubleValue( getUnit() ) ) ),
+						getValue().divide( divisor instanceof DecimalMeasure
+								? ((DecimalMeasure) divisor)
+										.to( getUnit(),
+												DecimalUtil.DECIMAL_PRECISION )
+										.getValue()
+								: BigDecimal.valueOf(
+										divisor.doubleValue( getUnit() ) ) ),
 						Unit.ONE );
 	}
 

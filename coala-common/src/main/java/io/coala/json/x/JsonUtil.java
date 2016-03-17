@@ -34,9 +34,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import io.coala.exception.x.ExceptionBuilder;
-import io.coala.json.x.DynaBean.BeanWrapper;
+import io.coala.json.x.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
-import io.coala.util.TypeUtil;
+import io.coala.util.TypeArguments;
 
 /**
  * {@link JsonUtil}
@@ -307,8 +307,8 @@ public class JsonUtil
 		@SuppressWarnings( { "unchecked" } )
 		private JsonPropertyEditor()
 		{
-			this.type = (Class<E>) TypeUtil
-					.getTypeArguments( JsonPropertyEditor.class, getClass() )
+			this.type = (Class<E>) TypeArguments
+					.of( JsonPropertyEditor.class, getClass() )
 					.get( 0 );
 		}
 
@@ -359,10 +359,9 @@ public class JsonUtil
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
-			if( type.isAnnotationPresent( BeanWrapper.class ) )
+			if( type.isAnnotationPresent( BeanProxy.class ) )
 			{
 				DynaBean.registerType( om, type, imports );
-				System.err.println( "reged dynabeanwrapper " + type );
 
 				for( Method method : type.getDeclaredMethods() )
 					if( method.getReturnType() != Void.TYPE
