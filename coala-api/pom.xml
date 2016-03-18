@@ -1,0 +1,75 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>io.coala</groupId>
+		<artifactId>coala</artifactId>
+		<version>0.2.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<artifactId>coala-api</artifactId>
+
+	<name>${project.artifactId} ${project.version}</name>
+	<url>http://coala.io/</url>
+	<description>
+		COALA binder API
+		$Id: 1f6ff860cf0b8015486eaedf7bf8098b983e3d12 $
+	</description>
+
+	<properties>
+		<uuid.version>3.4</uuid.version>
+		<easymock.version>3.2</easymock.version>
+		<jscience.version>4.3.1</jscience.version>
+	</properties>
+
+	<repositories>
+		<repository>
+			<name>COALA Public Maven Repository</name>
+			<id>coala-public</id>
+			<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<name>UUID Repository</name>
+			<id>eaio.com</id>
+			<url>http://eaio.com/maven2</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+			
+		<dependency>
+			<groupId>io.coala</groupId>
+			<artifactId>coala-common</artifactId>
+		</dependency>
+
+		<!-- reference implementation of javax.measurement JSR-275 -->
+		<dependency>
+			<groupId>org.jscience</groupId>
+			<artifactId>jscience</artifactId>
+			<version>${jscience.version}</version>
+		</dependency>
+
+		<!-- used in unit testing to create mock dependency instances -->
+		<!-- <dependency> <groupId>org.easymock</groupId> <artifactId>easymock</artifactId> 
+			<version>${easymock.version}</version> <scope>test</scope> </dependency> -->
+			
+		<dependency>
+			<!-- Used as unit testing framework, supports test-driven development -->
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+</project>

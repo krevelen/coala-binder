@@ -25,29 +25,38 @@
 	</developers>
 
 	<modules>
+
+		<module>coala-common</module>
+		
 		<!-- Binder API and utilities -->
-		<module>apis/binder-api</module>
+		<module>coala-api</module>
 
 		<!-- Capability API and utilities requires Binder API -->
-		<module>apis/capability-api</module>
+		<module>coala-api-capability</module>
 
 		<!-- Time API and utilities requires Capability API -->
-		<module>apis/time-api</module>
+		<module>coala-api-time</module>
 
 		<!-- Guice 3 adapter of the relevant core APIs -->
-		<module>adapters/guice3-adapter</module>
+		<module>adapters/guice3-coala-adapter</module>
 
 		<!-- Eve 3 adapter of the relevant core APIs -->
-		<module>adapters/eve3-adapter</module>
+		<module>adapters/eve3-coala-adapter</module>
+
+		<!-- commons-math3 adapter of the relevant core APIs -->
+		<module>adapters/math3-coala-adapter</module>
 
 		<!-- DSOL2 adapter of the relevant core APIs -->
-		<module>adapters/dsol2-adapter</module>
+		<module>adapters/dsol2-coala-adapter</module>
+
+		<!-- DSOL3 adapter of the relevant core APIs -->
+		<module>adapters/dsol3-coala-adapter</module>
 
 		<!-- Enterprise Ontology API requires eve and dsol -->
-		<module>apis/enterprise-api</module>
+		<module>coala-api-enterprise</module>
 
 		<!-- Conway's game of life -->
-		<module>demos/conway</module>
+		<module>demos/coala-demo-conway</module>
 	</modules>
 
 	<properties>
@@ -117,19 +126,22 @@
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>coala-binder-api</artifactId>
+				<artifactId>coala-common</artifactId>
 				<version>${project.parent.version}</version>
 			</dependency>
-
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>coala-capability-api</artifactId>
+				<artifactId>coala-api</artifactId>
 				<version>${project.parent.version}</version>
 			</dependency>
-
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>coala-time-api</artifactId>
+				<artifactId>coala-api-capability</artifactId>
+				<version>${project.parent.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>coala-api-time</artifactId>
 				<version>${project.parent.version}</version>
 			</dependency>
 
@@ -139,15 +151,6 @@
 				<version>${junit.version}</version>
 			</dependency>
 
-			<!-- <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId> 
-				<version>${log4j.version}</version> </dependency> <dependency> <groupId>org.slf4j</groupId> 
-				<artifactId>slf4j-log4j12</artifactId> <version>${slf4j.version}</version> 
-				</dependency> <dependency> <groupId>org.slf4j</groupId> <artifactId>jcl-over-slf4j</artifactId> 
-				<version>${slf4j.version}</version> </dependency> <dependency> <groupId>org.slf4j</groupId> 
-				<artifactId>jul-to-slf4j</artifactId> <version>${slf4j.version}</version> 
-				</dependency> <dependency> <groupId>joda-time</groupId> <artifactId>joda-time</artifactId> 
-				<version>${joda-time.version}</version> </dependency> <dependency> <groupId>com.eaio.uuid</groupId> 
-				<artifactId>uuid</artifactId> <version>${uuid.version}</version> </dependency> -->
 			<dependency>
 				<groupId>javax</groupId>
 				<artifactId>javaee-api</artifactId>
