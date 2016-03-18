@@ -1,4 +1,4 @@
-package io.coala.json.x;
+package io.coala.json;
 
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -10,7 +10,7 @@ import javax.inject.Provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 import io.coala.util.TypeArguments;
 
 /**

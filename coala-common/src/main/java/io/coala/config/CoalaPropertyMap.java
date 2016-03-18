@@ -23,7 +23,7 @@ import java.util.Set;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.log.LogUtil;
-import io.coala.resource.FileUtil;
+import io.coala.util.FileUtil;
 
 /**
  * {@link CoalaPropertyMap} extends {@link Properties} with some utility methods
@@ -104,7 +104,7 @@ public class CoalaPropertyMap extends Properties
 		try
 		{
 			final InputStream inStream = FileUtil
-					.getFileAsInputStream( loadPath );
+					.toInputStream( loadPath );
 			load( inStream );
 			this.loadedPaths.add( loadPath );
 			LOG.trace( "Imported config from path: " + loadPath );

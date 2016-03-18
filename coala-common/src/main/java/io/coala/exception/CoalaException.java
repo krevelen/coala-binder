@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ab9a93a430885ae48fd321e43fca86cd35b8ef46 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/exception/CoalaException.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,15 +20,16 @@
  */
 package io.coala.exception;
 
+import org.apache.logging.log4j.message.StringFormattedMessage;
+
 /**
  * {@link CoalaException}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
+ * @deprecated
  */
-public class CoalaException extends Exception
+public class CoalaException extends ExceptionBuilder.CheckedException
 {
 
 	/** */
@@ -39,9 +40,9 @@ public class CoalaException extends Exception
 	 * 
 	 * @param message
 	 */
-	protected CoalaException(final String message)
+	protected CoalaException( final String message )
 	{
-		super(message);
+		super( null, new StringFormattedMessage( message ) );
 	}
 
 	/**
@@ -50,9 +51,9 @@ public class CoalaException extends Exception
 	 * @param message
 	 * @param cause
 	 */
-	protected CoalaException(final String message, final Throwable cause)
+	protected CoalaException( final String message, final Throwable cause )
 	{
-		super(message, cause);
+		super( null, new StringFormattedMessage( message ), cause );
 	}
 
 }

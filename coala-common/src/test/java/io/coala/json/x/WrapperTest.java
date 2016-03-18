@@ -17,7 +17,9 @@ import org.junit.Test;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 
-import io.coala.json.x.Wrapper.JavaPolymorph;
+import io.coala.json.JsonUtil;
+import io.coala.json.Wrapper;
+import io.coala.json.Wrapper.JavaPolymorph;
 import io.coala.log.LogUtil;
 
 /**

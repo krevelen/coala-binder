@@ -7,10 +7,10 @@ import java.util.WeakHashMap;
 
 import javax.inject.Provider;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
+import io.coala.json.DynaBean;
+import io.coala.json.DynaBeanProxyProvider;
 import io.coala.json.JsonUtil;
-import io.coala.json.x.DynaBean;
-import io.coala.json.x.DynaBeanProxyProvider;
 
 /**
  * {@link Instantiator}
@@ -23,7 +23,22 @@ public class Instantiator<T>
 {
 
 	/** the {@link Instantiator}s cached per type */
-	private static final Map<Class<?>, Instantiator<?>> BEAN_PROVIDER_CACHE = new WeakHashMap<>();
+	private static final Map<Class<?>, Instantiator<?>> INSTANTIATOR_CACHE = new WeakHashMap<>();
+
+	/**
+	 * @param valueType the type of the stored property value
+	 * @param args the arguments for construction
+	 * @return the property value's class instantiated
+	 */
+	public static <T> T instantiate( final Class<T> valueType,
+		final Object... args )
+	{
+		final Class<?>[] argTypes = new Class<?>[args.length];
+		for( int i = 0; i < args.length; i++ )
+			argTypes[i] = args[i] == null ? null : args[i].getClass();
+
+		return of( valueType, argTypes ).instantiate( args );
+	}
 
 	/**
 	 * @param type the {@link Class} to instantiate/proxy
@@ -32,7 +47,7 @@ public class Instantiator<T>
 	public static <T> Instantiator<T> of( final Class<T> type,
 		final Class<?>... argTypes )
 	{
-		return of( BEAN_PROVIDER_CACHE, type, argTypes );
+		return of( INSTANTIATOR_CACHE, type, argTypes );
 	}
 
 	/**
@@ -71,7 +86,7 @@ public class Instantiator<T>
 		this.type = type;
 		// test bean property of having an accessible public
 		// zero-arg constructor
-		this.constructor = ReflectUtil.isAbstract( type ) ? null
+		this.constructor = ClassUtil.isAbstract( type ) ? null
 				: ReflectUtil.getAccessibleConstructor( type, argTypes );
 	}
 
@@ -84,7 +99,7 @@ public class Instantiator<T>
 	{
 		try
 		{
-			if( ReflectUtil.isAbstract( this.type ) )
+			if( ClassUtil.isAbstract( this.type ) )
 			{
 				final Properties[] imports = args == null ? null
 						: new Properties[args.length];

@@ -35,7 +35,7 @@ import org.threeten.bp.temporal.ChronoField;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.coala.json.x.Wrapper;
+import io.coala.json.Wrapper;
 import io.coala.random.RandomDistribution;
 
 /**

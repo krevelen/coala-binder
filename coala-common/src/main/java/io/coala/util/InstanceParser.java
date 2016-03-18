@@ -7,8 +7,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.coala.exception.x.ExceptionBuilder;
-import io.coala.json.x.JsonUtil;
+import io.coala.exception.ExceptionBuilder;
+import io.coala.json.JsonUtil;
 
 /**
  * {@link InstanceParser}

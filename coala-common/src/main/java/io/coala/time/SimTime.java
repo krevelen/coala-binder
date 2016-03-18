@@ -96,7 +96,7 @@ public class SimTime extends AbstractInstant<SimTime>
 		{
 			isoDate = new Date( offset.getTime()
 					+ TimeUnit.MILLIS.convertFrom( value, unit ).longValue() );
-		} catch( final CoalaRuntimeException e )
+		} catch( final RuntimeException ignore )
 		{
 			// LOG.warn("Problem converting to ISO date", e);
 		}

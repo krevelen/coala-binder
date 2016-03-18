@@ -36,11 +36,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.coala.exception.CoalaException;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.rx.RxUtil;
 import io.coala.rx.RxUtil.ThrowingFunc1;
+import io.coala.util.FileUtil;
 import io.coala.xml.XmlContext;
 import io.coala.xml.XmlUtil;
 import rx.Observable;
@@ -365,8 +365,8 @@ public class ResourceStreamer
 								throws Throwable
 							{
 								return ResourceStream.of(
-										FileUtil.getFileAsInputStream( p ),
-										type, p.toExternalForm() );
+										FileUtil.toInputStream( p ), type,
+										p.toExternalForm() );
 							}
 						} ) );
 	}
@@ -399,8 +399,8 @@ public class ResourceStreamer
 								throws Throwable
 							{
 								return ResourceStream.of(
-										FileUtil.getFileAsInputStream( p ),
-										type, p.toASCIIString() );
+										FileUtil.toInputStream( p ), type,
+										p.toASCIIString() );
 							}
 						} ) );
 	}
@@ -433,8 +433,8 @@ public class ResourceStreamer
 								throws Throwable
 							{
 								return ResourceStream.of(
-										FileUtil.getFileAsInputStream( p ),
-										type, p.getPath() );
+										FileUtil.toInputStream( p ), type,
+										p.getPath() );
 							}
 						} ) );
 	}
@@ -467,8 +467,7 @@ public class ResourceStreamer
 								throws Throwable
 							{
 								return ResourceStream.of(
-										FileUtil.getFileAsInputStream( p ),
-										type, p );
+										FileUtil.toInputStream( p ), type, p );
 							}
 						} ) );
 	}
@@ -489,7 +488,6 @@ public class ResourceStreamer
 	 * @return an {@link Observable} of the {@link ResourceStreamer} for
 	 *         specified JDBC driver and {@link URI} (including user, pass, db)
 	 *         and (SQL) {@code query}
-	 * @throws CoalaException
 	 */
 	public static ResourceStreamer fromJDBC( final Class<?> jdbcDriver,
 		final URI dbURL, final String... query )
@@ -505,7 +503,6 @@ public class ResourceStreamer
 	 * @return an {@link Observable} of the {@link ResourceStreamer} for
 	 *         specified JDBC driver and {@link URI} (including user, pass, db)
 	 *         and (SQL) {@code query}
-	 * @throws CoalaException
 	 */
 	public static ResourceStreamer fromJDBC( final ResourceType type,
 		final Class<?> jdbcDriver, final URI dbURL, final String... query )
@@ -555,7 +552,7 @@ public class ResourceStreamer
 						throws Throwable
 					{
 						return ResourceStream.of( obj, ResourceType.JSON,
-								JsonUtil.toString( obj ) );
+								JsonUtil.toJSON( obj ) );
 					}
 				} ) );
 	}

@@ -27,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import io.coala.exception.CoalaRuntimeException;
 import io.coala.json.JSONConvertible;
 import io.coala.json.JsonUtil;
 import io.coala.log.InjectLogger;
@@ -324,15 +323,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	@Override
 	public THIS plus(final Number value, final TimeUnit unit)
 	{
-		Number delta = 0;
-		try
-		{
-			delta = getUnit().convertFrom(value, unit);
-		} catch (final CoalaRuntimeException e)
-		{
-			LOG.warn("Problem adding " + value + unit, e);
-		}
-		return plus(delta.doubleValue());
+		return plus(getUnit().convertFrom(value, unit).doubleValue());
 	}
 
 	@Override
@@ -498,7 +489,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	@Override
 	public String toJSON()
 	{
-		return JsonUtil.toString(this);
+		return JsonUtil.toJSON(this);
 	}
 
 	@SuppressWarnings("unchecked")

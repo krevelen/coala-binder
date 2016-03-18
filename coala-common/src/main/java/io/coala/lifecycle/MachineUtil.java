@@ -31,10 +31,10 @@ import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
-import io.coala.factory.ClassUtil;
 import io.coala.log.LogUtil;
 import io.coala.name.Identifiable;
 import io.coala.name.Identifier;
+import io.coala.util.ClassUtil;
 import io.coala.util.Util;
 import rx.Observer;
 import rx.Scheduler;

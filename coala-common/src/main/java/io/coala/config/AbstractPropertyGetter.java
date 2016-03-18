@@ -34,9 +34,9 @@ import com.fasterxml.jackson.databind.JavaType;
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
 import io.coala.exception.CoalaRuntimeException;
-import io.coala.factory.ClassUtil;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
+import io.coala.util.ClassUtil;
 
 /**
  * {@link AbstractPropertyGetter}

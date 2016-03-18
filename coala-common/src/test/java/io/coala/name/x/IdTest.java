@@ -31,7 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import io.coala.exception.x.Contextualized;
+import io.coala.exception.ExceptionStream;
 import io.coala.log.LogUtil;
 import rx.Observer;
 
@@ -97,7 +97,7 @@ public class IdTest
 	@BeforeClass
 	public static void listenExceptions()
 	{
-		Contextualized.ThrowablePublisher.asObservable()
+		ExceptionStream.asObservable()
 				.subscribe( new Observer<Throwable>()
 				{
 					@Override

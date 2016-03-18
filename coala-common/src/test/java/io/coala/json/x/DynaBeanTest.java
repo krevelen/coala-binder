@@ -8,7 +8,10 @@ import java.math.BigDecimal;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.json.x.DynaBean.BeanProxy;
+import io.coala.json.DynaBean;
+import io.coala.json.JsonUtil;
+import io.coala.json.Wrapper;
+import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
 

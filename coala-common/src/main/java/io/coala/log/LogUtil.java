@@ -27,7 +27,7 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 
-import io.coala.resource.FileUtil;
+import io.coala.util.FileUtil;
 import io.coala.util.Util;
 
 /**
@@ -88,7 +88,7 @@ public class LogUtil implements Util
 		InputStream is = null;
 		try
 		{
-			is = FileUtil.getFileAsInputStream( file );
+			is = FileUtil.toInputStream( file );
 			result.load( is );
 		} catch( final Exception e )
 		{

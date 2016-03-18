@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.coala.json.x;
+package io.coala.json;
 
 import java.io.IOException;
 import java.lang.annotation.Documented;
@@ -50,7 +50,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 import io.coala.name.x.Id;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;

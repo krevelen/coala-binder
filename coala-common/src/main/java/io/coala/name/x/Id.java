@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import io.coala.config.Config;
-import io.coala.json.x.Wrapper;
+import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
 import io.coala.name.Identifier;
 

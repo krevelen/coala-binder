@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 86b29591d7882848883604bf4871baced695fb20 $
  * $URL$
  * 
  * Part of the EU project Inertia, see http://www.inertia-project.eu/
@@ -18,13 +18,10 @@
  * 
  * Copyright (c) 2014 Almende B.V. 
  */
-package io.coala.exception.x;
+package io.coala.json;
 
 import java.util.Comparator;
-
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import java.util.Map;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -36,9 +33,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * e.g. UUIDs), <strike>context Thread or stack</strike>, time-stamps, number of
  * retries, time-outs, <strike>checked/unchecked</strike>, etc.
  * 
- * @date $Date$
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 @JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
 	property = "@class" )
@@ -71,14 +67,14 @@ public interface Contextualized extends Comparable<Contextualized>
 	/** @see Throwable#printStackTrace(PrintWriter) */
 	// void printStackTrace(PrintWriter s);
 
-	/** @return a JSON representation of this {@linkplain Contextualized} */
-	String toJSON();
-
-	/** @return the {@link ExceptionContext} */
-	ExceptionContext getContext();
+	/** @return the {@link Context} */
+	Context getContext();
 
 	/** @return the {@link UUID} used for ordering by timestamp */
 	UUID getUuid();
+
+	/** @return a JSON representation of this {@linkplain Contextualized} */
+//	String toJSON();
 
 	// context (application id, error code, ...)
 
@@ -87,15 +83,57 @@ public interface Contextualized extends Comparable<Contextualized>
 	// trace (handlers, retries, timeout start/duration, ...)
 
 	/**
+	 * {@link Context} exposes some protected methods inherited from
+	 * {@link DynaBean}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	public class Context extends DynaBean
+	{
+
+		/**
+		 * Provides access to protected method
+		 * 
+		 * @see DynaBean#any()
+		 */
+		@Override
+		public Map<String, Object> any()
+		{
+			return super.any();
+		}
+
+		/**
+		 * Provides access to protected method
+		 * 
+		 * @see DynaBean#set(String, Object)
+		 */
+		@Override
+		public Object set( final String name, final Object value )
+		{
+			return super.set( name, value );
+		}
+
+		/**
+		 * @see DynaBean#lock()
+		 */
+		public Context locked()
+		{
+			super.lock();
+			return this;
+		}
+
+	}
+
+	/**
 	 * This {@link Comparator} compares {@link Contextualized} objects based on
 	 * their {@link Contextualized#getUuid()} property's {@link UUID#getTime()}
 	 * values iff their respective {@link UUID#getClockSeqAndNode()} are equal,
 	 * otherwise {@link #compare(Contextualized, Contextualized)} throws an
 	 * {@link IllegalArgumentException}.
 	 * 
-	 * @date $Date$
 	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @author Rick van Krevelen
 	 */
 	Comparator<Contextualized> COMPARATOR = new Comparator<Contextualized>()
 	{
@@ -111,73 +149,22 @@ public interface Contextualized extends Comparable<Contextualized>
 		}
 	};
 
-	/**
-	 * {@link ThrowablePublisher} wraps a {@link Subject} for
-	 * {@link Contextualized} {@link Throwable}s via static
-	 * {@link #toPublished(Throwable)} and {@link #asObservable()} methods.
-	 * 
-	 * @date $Date$
-	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 */
-	class ThrowablePublisher<T extends Throwable & Contextualized>
+	class Util
 	{
-
-		/** */
-		private static volatile ThrowablePublisher<?> INSTANCE = null;
-
-		/**
-		 * @return the singleton instance
-		 */
-		@SuppressWarnings( "unchecked" )
-		public static <T extends Throwable & Contextualized>
-			ThrowablePublisher<T> getInstance()
+		public static int compare( final Contextualized o1,
+			final Contextualized o2 )
 		{
-			if( INSTANCE == null ) INSTANCE = new ThrowablePublisher<T>();
-			return (ThrowablePublisher<T>) INSTANCE;
+			return COMPARATOR.compare( o1, o2 );
 		}
 
-		/**
-		 * Helper-method
-		 * 
-		 * @param e the {@link Contextualized} {@link Throwable} to publish
-		 * @return the same {@link Contextualized} to allow chaining
-		 */
-		public static <T extends Throwable & Contextualized> T
-			toPublished( final T e )
+		public static String format( final Contextualized self,
+			final String message )
 		{
-			getInstance().subject.onNext( e );
-			return e;
-		}
-
-		/**
-		 * @return an {@link Observable} of {@link Contextualized}
-		 *         {@link Throwable}s
-		 */
-		public static Observable<? extends Throwable> asObservable()
-		{
-			return getInstance().subject.asObservable();
-		}
-
-		/** */
-		private final Subject<T, T> subject = PublishSubject.create();
-
-		/**
-		 * {@link ThrowablePublisher} singleton constructor
-		 */
-		private ThrowablePublisher()
-		{
-			Runtime.getRuntime().addShutdownHook( new Thread()
-			{
-				@Override
-				public void run()
-				{
-					setName( ThrowablePublisher.class.getSimpleName() );
-					subject.onCompleted();
-				}
-			} );
+			return self.getContext() == null
+					? String.format( "%s [%s] %s", message, self.getUuid() )
+					: String.format( "%s [%s] %s", message, self.getUuid(),
+							self.getContext() );
 		}
 
 	}
-
 }

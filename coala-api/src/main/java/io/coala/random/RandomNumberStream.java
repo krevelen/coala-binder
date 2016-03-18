@@ -22,7 +22,7 @@ package io.coala.random;
 
 import java.util.Random;
 
-import io.coala.json.x.Wrapper;
+import io.coala.json.Wrapper;
 import io.coala.name.AbstractIdentifiable;
 import io.coala.name.AbstractIdentifier;
 import io.coala.name.Identifiable;

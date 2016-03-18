@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.ical.compat.jodatime.DateTimeIteratorFactory;
 
-import io.coala.json.x.JsonUtil;
+import io.coala.json.JsonUtil;
 import rx.Observable;
 import rx.Subscriber;
 import rx.functions.Func1;
@@ -47,7 +47,7 @@ import rx.functions.Func1;
  * {@link TriggerPattern} wraps a pattern value and its resulting observable
  * instants
  * 
- * @version $Id$
+ * @version $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
  * @author Rick van Krevelen
  */
 @JsonSerialize( using = TriggerPattern.JsonSerializer.class )

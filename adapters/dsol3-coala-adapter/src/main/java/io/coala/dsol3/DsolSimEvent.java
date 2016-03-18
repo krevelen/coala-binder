@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.json.x.Wrapper;
+import io.coala.json.Wrapper;
 import io.coala.name.x.Id;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEventInterface;

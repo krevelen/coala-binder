@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.coala.json.x;
+package io.coala.json;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -68,7 +68,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 import io.coala.log.LogUtil;
 
 /**

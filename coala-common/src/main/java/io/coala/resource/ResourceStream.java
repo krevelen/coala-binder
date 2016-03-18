@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionBuilder;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.xml.XmlContext;
@@ -137,8 +137,9 @@ public class ResourceStream
 			return JsonUtil.toTree( IOUtils.toString( getStream() ) );
 		} catch( final IOException e )
 		{
-			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime( e,
-					"<stream>", JsonNode.class );
+			throw ExceptionBuilder.unchecked( e,
+					"Problem deserializing {} from {}", getType(), getPath() )
+					.build();
 		}
 	}
 
@@ -157,18 +158,17 @@ public class ResourceStream
 			// valueOf(getStream(), resultType);
 		} catch( final IOException e )
 		{
-			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime( e,
-					"<stream>", resultType );
+			throw ExceptionBuilder.unchecked( e,
+					"Problem deserializing {} from {}", resultType, getPath() )
+					.build();
 		}
 	}
 
 	/**
 	 * TODO verify {@link ResourceType}
 	 * 
-	 * @return the {@link InputStream} unmarshalled using the specified
-	 *         {@link XmlContext} into an object of the specified
-	 *         {@code resultType}
-	 * @throws JAXBException
+	 * @return the unmarshalled {@code resultType} instance using the specified
+	 *         {@link XmlContext}
 	 */
 	@SuppressWarnings( "unchecked" )
 	public <T> T toXML( final XmlContext<?> context, final Class<T> resultType )
@@ -179,8 +179,9 @@ public class ResourceStream
 					.unmarshal( new StreamSource( getStream() ), resultType ) );
 		} catch( final JAXBException e )
 		{
-			throw CoalaExceptionFactory.UNMARSHAL_FAILED.createRuntime( e,
-					"<stream>", resultType );
+			throw ExceptionBuilder.unchecked( e,
+					"Problem deserializing {} from {}", resultType, getPath() )
+					.build();
 		}
 	}
 

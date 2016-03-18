@@ -32,8 +32,8 @@ import io.coala.agent.AgentStatusObserver;
 import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
 import io.coala.exception.CoalaExceptionFactory;
-import io.coala.factory.ClassUtil;
 import io.coala.log.LogUtil;
+import io.coala.util.ClassUtil;
 
 /**
  * {@link GuiceLazyBinderModule}

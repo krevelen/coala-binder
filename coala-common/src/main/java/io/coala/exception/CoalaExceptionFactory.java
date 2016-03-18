@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: c05bb05ed449d4c799122d1140a614fbbbd4c9a4 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/exception/CoalaExceptionFactory.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -21,10 +21,10 @@
 package io.coala.exception;
 
 import io.coala.agent.AgentID;
-import io.coala.factory.ClassUtil;
 import io.coala.lifecycle.Machine;
 import io.coala.lifecycle.MachineStatus;
 import io.coala.name.Identifiable;
+import io.coala.util.ClassUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,10 +34,9 @@ import java.util.Collection;
  * 
  * TODO apply argument pattern matching as in SLF4J logging ?
  * 
- * @date $Date: 2014-08-09 08:14:14 +0200 (Sat, 09 Aug 2014) $
- * @version $Revision: 354 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
+ * @deprecated
  */
 public enum CoalaExceptionFactory
 {

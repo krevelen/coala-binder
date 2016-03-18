@@ -3,11 +3,10 @@ package io.coala.util;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 
 /**
  * {@link ReflectUtil}
@@ -36,6 +35,7 @@ public class ReflectUtil implements Util
 		return result;
 	}
 
+	@SuppressWarnings( "unchecked" )
 	public static <T> Constructor<T> getAccessibleConstructor(
 		final Class<T> valueType, final Class<?>... argTypes )
 	{
@@ -46,18 +46,32 @@ public class ReflectUtil implements Util
 			return result;
 		} catch( final Exception e )
 		{
+			constrLoop: for( Constructor<?> constructor : valueType
+					.getConstructors() )
+			{
+				final Class<?>[] paramTypes = constructor.getParameterTypes();
+				if( paramTypes.length != argTypes.length )
+				{
+					continue;
+				}
+
+				boolean match = true;
+				for( int i = 0; match && i < paramTypes.length; i++ )
+				{
+					if( !ClassUtil.isAssignableFrom( paramTypes[i],
+							argTypes[i] ) )
+						continue constrLoop;
+				}
+				if( !constructor.isAccessible() )
+					constructor.setAccessible( true );
+				return (Constructor<T>) constructor;
+			}
 			throw ExceptionBuilder.unchecked(
-					"No public zero-arg bean constructor found for %s%s",
-					valueType, argTypes == null ? Collections.emptyList()
+					"No matching public constructor found for {}{}", valueType,
+					argTypes == null ? Collections.emptyList()
 							: Arrays.asList( argTypes ) )
 					.build();
 		}
-	}
-
-	public static boolean isAbstract( final Class<?> type )
-	{
-		return Modifier.isAbstract( type.getModifiers() ) || type.isInterface()
-				|| Proxy.isProxyClass( type );
 	}
 
 }

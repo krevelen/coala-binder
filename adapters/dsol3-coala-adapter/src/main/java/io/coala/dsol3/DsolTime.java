@@ -27,12 +27,12 @@ import javax.naming.NamingException;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.CoalaException;
-import io.coala.exception.x.ExceptionBuilder;
-import io.coala.factory.ClassUtil;
-import io.coala.json.x.Wrapper;
+import io.coala.exception.ExceptionBuilder;
+import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
 import io.coala.time.x.Instant;
 import io.coala.time.x.TimeSpan;
+import io.coala.util.ClassUtil;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
 import nl.tudelft.simulation.dsol.experiment.Replication;

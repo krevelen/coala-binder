@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ce8c886bca9c714da6e4ca68f23aed05c49be5e5 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/bind/BinderFactory.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -30,8 +30,8 @@ import io.coala.config.CoalaProperty;
 import io.coala.config.CoalaPropertyMap;
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
-import io.coala.factory.ClassUtil;
 import io.coala.factory.Factory;
+import io.coala.util.ClassUtil;
 
 import org.aeonbits.owner.Mutable;
 

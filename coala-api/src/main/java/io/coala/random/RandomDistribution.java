@@ -27,7 +27,7 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 import io.coala.util.DecimalUtil;
 import io.coala.util.InstanceParser;
 

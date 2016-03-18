@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ce69ef0e4d5d608cd33e74ddbf22ff8ca8be7ec6 $
  * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/transaction/TransactionTypeID.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -23,7 +23,7 @@ package io.coala.enterprise.transaction;
 import io.coala.agent.AgentID;
 import io.coala.capability.CapabilityID;
 import io.coala.enterprise.fact.CoordinationFact;
-import io.coala.factory.ClassUtil;
+import io.coala.util.ClassUtil;
 
 import java.util.List;
 

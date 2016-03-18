@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 08d896029c3257392728d6e5555cce152c5775d5 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/xml/XmlContext.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -22,7 +22,7 @@ package io.coala.xml;
 
 import io.coala.exception.CoalaException;
 import io.coala.exception.CoalaExceptionFactory;
-import io.coala.factory.ClassUtil;
+import io.coala.util.ClassUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

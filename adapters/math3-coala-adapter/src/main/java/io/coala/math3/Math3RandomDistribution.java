@@ -46,7 +46,7 @@ import org.apache.commons.math3.distribution.ZipfDistribution;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.util.Pair;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 import io.coala.random.RandomDistribution;
 import io.coala.random.RandomNumberStream;
 

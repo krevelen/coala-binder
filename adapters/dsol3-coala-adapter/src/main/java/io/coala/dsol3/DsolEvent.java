@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: e42549e700538f16d8f674479730cfa47380bc5a $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -22,14 +22,14 @@ package io.coala.dsol3;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.coala.json.x.Wrapper;
+import io.coala.json.Wrapper;
 import nl.tudelft.simulation.event.EventInterface;
 import nl.tudelft.simulation.event.EventType;
 
 /**
  * {@link DsolEvent}
  * 
- * @version $Id$
+ * @version $Id: e42549e700538f16d8f674479730cfa47380bc5a $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )

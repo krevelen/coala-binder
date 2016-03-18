@@ -15,8 +15,6 @@
  */
 package io.coala.util;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -29,7 +27,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 import io.coala.log.LogUtil;
 
 /**
@@ -51,42 +49,6 @@ public class TypeArguments
 	private TypeArguments()
 	{
 		// empty
-	}
-
-	/**
-	 * Get the underlying class for a type, or null if the type is a variable
-	 * type. See
-	 * <a href="http://www.artima.com/weblogs/viewpost.jsp?thread=208860" >
-	 * description</a>
-	 * 
-	 * @param type the type
-	 * @return the underlying class
-	 */
-	private static Class<?> toClass( final Type type )
-	{
-		if( type instanceof Class )
-		{
-			// LOG.trace("Type is a class/interface: "+type);
-			return (Class<?>) type;
-		}
-
-		if( type instanceof ParameterizedType )
-		{
-			// LOG.trace("Type is a ParameterizedType: "+type);
-			return toClass( ((ParameterizedType) type).getRawType() );
-		}
-
-		if( type instanceof GenericArrayType )
-		{
-			// LOG.trace("Type is a GenericArrayType: "+type);
-			final Type componentType = ((GenericArrayType) type)
-					.getGenericComponentType();
-			final Class<?> componentClass = toClass( componentType );
-			if( componentClass != null )
-				return Array.newInstance( componentClass, 0 ).getClass();
-		}
-		LOG.trace( "Type is a variable type: " + type.toString() );
-		return null;
 	}
 
 	/**
@@ -112,7 +74,7 @@ public class TypeArguments
 
 		final Map<Type, Type> resolvedTypes = new HashMap<Type, Type>();
 		Type type = concreteDescendantType;
-		Class<S> typeClass = (Class<S>) toClass( type );
+		Class<S> typeClass = (Class<S>) ClassUtil.toClass( type );
 
 		// start walking up the inheritance hierarchy until we hit parentClass
 		while( !genericAncestorType.equals( typeClass ) )
@@ -165,15 +127,17 @@ public class TypeArguments
 							if( !genericAncestorType.equals( rawIntf ) )
 								continue;
 
-							LOG.trace( "supertype params: "
-									+ Arrays.asList(
-											superClass.getTypeParameters() )
-									+ ", intf params: "
-									+ Arrays.asList( toClass( rawIntf )
-											.getTypeParameters() )
-									+ ", actual args: "
-									+ Arrays.asList( parameterizedIntf
-											.getActualTypeArguments() ) );
+							LOG.trace(
+									"supertype params: "
+											+ Arrays.asList( superClass
+													.getTypeParameters() )
+											+ ", intf params: "
+											+ Arrays.asList( ClassUtil
+													.toClass( rawIntf )
+													.getTypeParameters() )
+											+ ", actual args: "
+											+ Arrays.asList( parameterizedIntf
+													.getActualTypeArguments() ) );
 
 							if( superClass.getTypeParameters().length > 0 )
 								return of( superClass, concreteDescendantType );
@@ -245,7 +209,7 @@ public class TypeArguments
 				// LOG.trace("Matched generic " + type + " to ancestor: "
 				// + genericAncestorType);
 			}
-			typeClass = (Class<S>) toClass( type );
+			typeClass = (Class<S>) ClassUtil.toClass( type );
 			// LOG.trace("Trying generic " + typeClass + " from: "
 			// + Arrays.asList(typeClass.getGenericInterfaces()));
 		}
@@ -270,7 +234,7 @@ public class TypeArguments
 			while( resolvedTypes.containsKey( baseType ) )
 				baseType = resolvedTypes.get( baseType );
 
-			result.add( toClass( baseType ) );
+			result.add( ClassUtil.toClass( baseType ) );
 		}
 		// LOG.trace(String.format(
 		// "Got child %s's type arguments for %s: %s",

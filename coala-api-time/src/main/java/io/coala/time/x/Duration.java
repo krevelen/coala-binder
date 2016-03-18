@@ -35,8 +35,8 @@ import org.jscience.physics.amount.Amount;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.coala.exception.x.ExceptionBuilder;
-import io.coala.json.x.Wrapper;
+import io.coala.exception.ExceptionBuilder;
+import io.coala.json.Wrapper;
 import io.coala.random.RandomDistribution;
 
 /**

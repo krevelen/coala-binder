@@ -18,6 +18,7 @@ package io.coala.eve3;
 import static org.aeonbits.owner.util.Collections.entry;
 import static org.aeonbits.owner.util.Collections.map;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -40,9 +41,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.coala.capability.replicate.ReplicationConfig;
-import io.coala.exception.CoalaException;
 import io.coala.json.JsonUtil;
-import io.coala.resource.FileUtil;
+import io.coala.util.FileUtil;
 
 /**
  * {@link EveAgentConfig}
@@ -135,46 +135,46 @@ public interface EveAgentConfig extends ReplicationConfig
 
 	@Key( AGENT_ID_KEY )
 	@DefaultValue( AGENT_ID_DEFAULT )
-		String agentName();
+	String agentName();
 
 	@Key( AGENT_CONFIG_FILE_KEY )
 	@DefaultValue( AGENT_CONFIG_FILE_DEFAULT )
-		String agentConfigUri();
+	String agentConfigUri();
 
 	@DefaultValue( "${" + AGENT_CONFIG_FILE_KEY + "}" )
 	@ConverterClass( InputStreamConverter.class )
-		InputStream agentConfigStream();
+	InputStream agentConfigStream();
 
 	@Key( AGENT_CLASS_KEY )
-		Class<? extends Agent> agentClass();
+	Class<? extends Agent> agentClass();
 
 	@Key( SCHEDULER_BUILDER_KEY )
-		Class<? extends Scheduler> schedulerBuilder();
+	Class<? extends Scheduler> schedulerBuilder();
 
 	@Key( SCHEDULER_CONFIG_KEY )
 	@DefaultValue( "{\"class\":\"${" + SCHEDULER_BUILDER_KEY + "}\"}" )
-		JsonNode schedulerConfig();
+	JsonNode schedulerConfig();
 
 	@Key( STATE_BUILDER_KEY )
-		Class<? extends State> stateBuilder();
+	Class<? extends State> stateBuilder();
 
 	@Key( STATE_CONFIG_KEY )
 	@DefaultValue( "{\"class\":\"${" + STATE_BUILDER_KEY + "}\"}" )
-		JsonNode stateConfig();
+	JsonNode stateConfig();
 
 	@Key( HTTP_TRANSPORT_BUILDER_KEY )
-		Class<? extends Transport> httpBuilder();
+	Class<? extends Transport> httpBuilder();
 
 	@Key( JSONRPC_PROTOCOL_BUILDER_KEY )
-		Class<? extends Protocol> jsonrpcBuilder();
+	Class<? extends Protocol> jsonrpcBuilder();
 
 	@Key( HTTP_TRANSPORT_SERVLET_URL_KEY )
 	@DefaultValue( HTTP_TRANSPORT_SERVLET_URL_DEFAULT )
-		String transportServletUrl();
+	String transportServletUrl();
 
 	@Key( HTTP_TRANSPORT_AUTHENTICATE_KEY )
 	@DefaultValue( "" + HTTP_TRANSPORT_AUTHENTICATE_DEFAULT )
-		boolean transportAuthenticate();
+	boolean transportAuthenticate();
 
 	@Key( HTTP_TRANSPORT_CONFIG_KEY )
 	@DefaultValue( "{\"class\":\"${" + HTTP_TRANSPORT_BUILDER_KEY
@@ -186,13 +186,13 @@ public interface EveAgentConfig extends ReplicationConfig
 			// TRANSPORT_SERVLET_URL_KEY + "}\"}],"
 			+ "\"servletClass\":\"com.almende.eve.transport.http.DebugServlet\"}" )
 	@ConverterClass( JsonNodeConverter.class )
-		JsonNode httpTransportConfig();
+	JsonNode httpTransportConfig();
 
 	@Key( JSONRPC_PROTOCOL_CONFIG_KEY )
 	@DefaultValue( "{\"class\":\"${" + JSONRPC_PROTOCOL_BUILDER_KEY
 			+ "}\",rpcTimeout:1}" )
 	@ConverterClass( JsonNodeConverter.class )
-		JsonNode jsonrpcProtocolConfig();
+	JsonNode jsonrpcProtocolConfig();
 
 	// protocols:
 	// - class: com.almende.eve.protocol.jsonrpc.JSONRpcProtocolBuilder
@@ -204,7 +204,7 @@ public interface EveAgentConfig extends ReplicationConfig
 			+ "},\"scheduler\":${" + SCHEDULER_CONFIG_KEY
 			+ "},\"transports\":[${" + HTTP_TRANSPORT_CONFIG_KEY
 			+ "}],\"protocols\":[${" + HTTP_TRANSPORT_CONFIG_KEY + "}]}" )
-		AgentConfig agentConfig();
+	AgentConfig agentConfig();
 
 	/**
 	 * {@link JsonNodeConverter}
@@ -256,8 +256,8 @@ public interface EveAgentConfig extends ReplicationConfig
 		{
 			try
 			{
-				return FileUtil.getFileAsInputStream( input );
-			} catch( final CoalaException e )
+				return FileUtil.toInputStream( input );
+			} catch( final IOException e )
 			{
 				LOG.warn( e.getMessage() );
 				return null;

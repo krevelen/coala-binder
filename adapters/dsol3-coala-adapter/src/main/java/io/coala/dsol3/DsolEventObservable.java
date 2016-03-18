@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: e1229e134cce702980c1bafb06b65a648d3778be $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.coala.exception.x.ExceptionBuilder;
+import io.coala.exception.ExceptionBuilder;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventInterface;
@@ -41,7 +41,7 @@ import rx.subjects.Subject;
 /**
  * {@link DsolEventObservable}
  * 
- * @version $Id$
+ * @version $Id: e1229e134cce702980c1bafb06b65a648d3778be $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
