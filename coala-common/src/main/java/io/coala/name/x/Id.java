@@ -85,8 +85,8 @@ public class Id<T> extends Wrapper.Simple<T>
 
 	/**
 	 * {@link Ordinal} is an {@link Id} with a {@link Comparable} value and
-	 * hence can be ordered according to its {@link #compareTo(Object)} method
-	 * implementation
+	 * hence can be ordered naturally according to its
+	 * {@link #compareTo(Object)} method implementation
 	 * 
 	 * @param <T> the concrete {@link Comparable} type of value
 	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $

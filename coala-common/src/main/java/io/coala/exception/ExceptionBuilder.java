@@ -38,10 +38,9 @@ import io.coala.json.Contextualized.Context;
 import io.coala.log.LogUtil;
 
 /**
- * {@link ExceptionBuilder} creates {@link CheckedException}s and
- * {@link UncheckedException}s and publishes via the {@link ExceptionStream}
- * them upon {@link #build()}
- * <p>
+ * {@link ExceptionBuilder} creates {@link CheckedException.Builder}s and
+ * {@link UncheckedException.Builder}s, each of which emit the Exceptions upon
+ * {@link #build()} via the {@link ExceptionStream}
  * 
  * @param <THIS>
  * @version $Id$
@@ -322,9 +321,12 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			public CheckedException build()
 			{
 				final CheckedException ex = this.cause == null
-						? new CheckedException( this.context, this.message )
-						: new CheckedException( this.context, this.message,
-								this.cause );
+						? new CheckedException(
+								this.context == null ? null : this.context,
+								this.message )
+						: new CheckedException(
+								this.context == null ? null : this.context,
+								this.message, this.cause );
 				return ExceptionStream.toPublished( ex );
 			}
 		}
@@ -437,9 +439,11 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			public UncheckedException build()
 			{
 				final UncheckedException ex = this.cause == null
-						? new UncheckedException( this.context.locked(),
-								this.message )
-						: new UncheckedException( this.context.locked(),
+						? new UncheckedException( this.context == null ? null
+								: this.context.locked(), this.message )
+						: new UncheckedException(
+								this.context == null ? null
+										: this.context.locked(),
 								this.message, this.cause );
 				return ExceptionStream.toPublished( ex );
 			}
@@ -482,7 +486,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/**
-	 * @return the new immutable {@link Contextualized} instance
+	 * @return the new immutable {@link Contextualized} {@link Exception}
 	 */
 	public abstract Contextualized build();
 
