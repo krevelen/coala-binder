@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import io.coala.util.FileUtil;
 import io.coala.util.Util;
@@ -164,6 +165,30 @@ public class LogUtil implements Util
 	{
 		return LogManager//((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
 				.getLogger( name );
+	}
+
+	public ParameterizedMessage messageOf( final String pattern,
+		final Object arg )
+	{
+		return new ParameterizedMessage( pattern, arg );
+	}
+
+	public ParameterizedMessage messageOf( final String pattern,
+		final Object... arg )
+	{
+		return new ParameterizedMessage( pattern, arg );
+	}
+
+	public ParameterizedMessage messageOf( final String pattern,
+		final Object arg1, Object arg2 )
+	{
+		return new ParameterizedMessage( pattern, arg1, arg2 );
+	}
+
+	public ParameterizedMessage messageOf( final Throwable throwable,
+		final String pattern, final Object... args )
+	{
+		return new ParameterizedMessage( pattern, args, throwable );
 	}
 
 //	public static org.apache.logging.log4j.Logger getLogger2(final Class<?> type)

@@ -318,8 +318,16 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 * for "natural" Config value conversion for a {@link Duration} (i.e.
 	 * {@link TimeSpan}).
 	 * 
-	 * @param value a duration as {@link DecimalMeasure JSR-275} measure (e.g.
-	 *            {@code "123 ms"}) or as ISO Period, parsed with
+	 * @see of(String)
+	 */
+	public static Instant valueOf( final String value )
+	{
+		return of( value );
+	}
+
+	/**
+	 * @param value a duration since the EPOCH as {@link DecimalMeasure JSR-275}
+	 *            measure (e.g. {@code "123 ms"}) or as ISO Period, parsed with
 	 *            {@link org.threeten.bp.Duration#parse(CharSequence) JSR-310}
 	 *            or {@link Period#parse(String) Joda}.
 	 * 
@@ -341,20 +349,9 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
 	 */
-	public static Instant valueOf( final String value )
-	{
-		return of( TimeSpan.valueOf( value ) );
-	}
-
-	/**
-	 * for "natural" Config value conversion for a {@link Duration} (i.e.
-	 * {@link TimeSpan}).
-	 * 
-	 * @see #valueOf(String)
-	 */
 	public static Instant of( final String value )
 	{
-		return valueOf( value );
+		return of( TimeSpan.valueOf( value ) );
 	}
 
 	/**
