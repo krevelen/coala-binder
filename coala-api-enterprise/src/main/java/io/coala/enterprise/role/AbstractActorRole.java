@@ -54,7 +54,7 @@ import io.coala.message.Message;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentIDFactory;
 import io.coala.process.Job;
-import io.coala.random.RandomDistribution;
+import io.coala.random.ProbabilityDistribution;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import io.coala.time.Trigger;
@@ -306,9 +306,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	/**
 	 * @return
 	 */
-	protected RandomDistribution.Factory newDist()
+	protected ProbabilityDistribution.Factory newDist()
 	{
-		return getBinder().inject( RandomDistribution.Factory.class );
+		return getBinder().inject( ProbabilityDistribution.Factory.class );
 	}
 
 	/**

@@ -24,7 +24,7 @@ import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
-import io.coala.random.RandomDistribution;
+import io.coala.random.ProbabilityDistribution;
 
 /**
  * {@link Math3RandomDistributionTest}
@@ -48,33 +48,33 @@ public class Math3RandomDistributionTest
 	@Test
 	public void testParser()
 	{
-		final RandomDistribution.Parser parser = new RandomDistribution.Parser.Simple(
-				Math3RandomDistribution.Factory
+		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser.Simple(
+				Math3ProbabilityDistribution.Factory
 						.of( Math3RandomNumberStream.Factory.ofMersenneTwister()
 								.create( "rng", 0L ) ) );
 
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
-		final RandomDistribution<Amount> dist0 = RandomDistribution.Util
+		final ProbabilityDistribution<Amount> dist0 = ProbabilityDistribution.Util
 				.valueOf( "uniform(2 ;3 )", parser, Amount.class ); //± 1.1E-16
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw amount {}: {}", i, dist0.draw() );
 
-		final RandomDistribution<BigDecimal> dist1 = RandomDistribution.Util
+		final ProbabilityDistribution<BigDecimal> dist1 = ProbabilityDistribution.Util
 				.valueOf( "uniform(5.1;6.2)", parser, BigDecimal.class ); //± 1.1E-16
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw decimal {}: {}", i, dist1.draw() );
 
-		final RandomDistribution<DecimalMeasure> dist2 = RandomDistribution.Util
+		final ProbabilityDistribution<DecimalMeasure> dist2 = ProbabilityDistribution.Util
 				.valueOf( "const(2.01 day)", parser, DecimalMeasure.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw measure {}: {}", i, dist2.draw() );
 
-		final RandomDistribution<MyValue> dist3 = RandomDistribution.Util
+		final ProbabilityDistribution<MyValue> dist3 = ProbabilityDistribution.Util
 				.valueOf( "uniform()", parser, MyValue.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw enum {}: {}", i, dist3.draw() );
 
-		final RandomDistribution<MyValue> dist4 = RandomDistribution.Util
+		final ProbabilityDistribution<MyValue> dist4 = ProbabilityDistribution.Util
 				.valueOf( "uniform( v1; v3 )", parser, MyValue.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw enum subset {}: {}", i, dist4.draw() );

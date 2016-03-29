@@ -36,7 +36,7 @@ import org.threeten.bp.temporal.ChronoField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.Wrapper;
-import io.coala.random.RandomDistribution;
+import io.coala.random.ProbabilityDistribution;
 
 /**
  * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
@@ -426,10 +426,10 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 
 	@SuppressWarnings( "serial" )
 	public static <N extends Number, Q extends Quantity>
-		RandomDistribution<Instant>
-		of( final RandomDistribution<N> dist, final Unit<Q> unit )
+		ProbabilityDistribution<Instant>
+		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
 	{
-		return new RandomDistribution<Instant>()
+		return new ProbabilityDistribution<Instant>()
 		{
 			@Override
 			public Instant draw()

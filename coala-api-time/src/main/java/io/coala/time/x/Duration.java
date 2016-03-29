@@ -37,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.exception.ExceptionBuilder;
 import io.coala.json.Wrapper;
-import io.coala.random.RandomDistribution;
+import io.coala.random.ProbabilityDistribution;
 
 /**
  * {@linkplain Duration} wraps an {@linkplain TimeSpan} that is
@@ -300,10 +300,10 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 
 	@SuppressWarnings( "serial" )
 	public static <N extends Number, Q extends Quantity>
-		RandomDistribution<Duration>
-		of( final RandomDistribution<N> dist, final Unit<Q> unit )
+		ProbabilityDistribution<Duration>
+		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
 	{
-		return new RandomDistribution<Duration>()
+		return new ProbabilityDistribution<Duration>()
 		{
 			@Override
 			public Duration draw()

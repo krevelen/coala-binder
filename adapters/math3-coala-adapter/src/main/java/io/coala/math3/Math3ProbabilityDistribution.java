@@ -36,6 +36,7 @@ import org.apache.commons.math3.distribution.MultivariateRealDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.ParetoDistribution;
 import org.apache.commons.math3.distribution.PascalDistribution;
+import org.apache.commons.math3.distribution.PoissonDistribution;
 import org.apache.commons.math3.distribution.RealDistribution;
 import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.distribution.TriangularDistribution;
@@ -47,25 +48,25 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.util.Pair;
 
 import io.coala.exception.ExceptionBuilder;
-import io.coala.random.RandomDistribution;
+import io.coala.random.ProbabilityDistribution;
 import io.coala.random.RandomNumberStream;
 
 /**
- * {@link Math3RandomDistribution} creates {@link RandomDistribution}s
+ * {@link Math3ProbabilityDistribution} creates {@link ProbabilityDistribution}s
  * implemented by Apache's commons-math3
  * 
  * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public abstract class Math3RandomDistribution<S>
-	implements RandomDistribution<S>
+public abstract class Math3ProbabilityDistribution<S>
+	implements ProbabilityDistribution<S>
 {
 
-	public static <T> Math3RandomDistribution<T>
+	public static <T> Math3ProbabilityDistribution<T>
 		wrap( final EnumeratedDistribution<T> dist )
 	{
-		return new Math3RandomDistribution<T>()
+		return new Math3ProbabilityDistribution<T>()
 		{
 			@Override
 			public T draw()
@@ -75,10 +76,10 @@ public abstract class Math3RandomDistribution<S>
 		};
 	}
 
-	public static Math3RandomDistribution<Long>
+	public static Math3ProbabilityDistribution<Long>
 		wrap( final IntegerDistribution dist )
 	{
-		return new Math3RandomDistribution<Long>()
+		return new Math3ProbabilityDistribution<Long>()
 		{
 			@Override
 			public Long draw()
@@ -88,10 +89,10 @@ public abstract class Math3RandomDistribution<S>
 		};
 	}
 
-	public static Math3RandomDistribution<Double>
+	public static Math3ProbabilityDistribution<Double>
 		wrap( final RealDistribution dist )
 	{
-		return new Math3RandomDistribution<Double>()
+		return new Math3ProbabilityDistribution<Double>()
 		{
 			@Override
 			public Double draw()
@@ -101,10 +102,10 @@ public abstract class Math3RandomDistribution<S>
 		};
 	}
 
-	public static Math3RandomDistribution<double[]>
+	public static Math3ProbabilityDistribution<double[]>
 		wrap( final MultivariateRealDistribution dist )
 	{
-		return new Math3RandomDistribution<double[]>()
+		return new Math3ProbabilityDistribution<double[]>()
 		{
 			@Override
 			public double[] draw()
@@ -140,13 +141,13 @@ public abstract class Math3RandomDistribution<S>
 	}
 
 	/**
-	 * {@link Factory} creates {@link RandomDistribution}s implemented by
+	 * {@link Factory} creates {@link ProbabilityDistribution}s implemented by
 	 * Apache's commons-math3 toolkit
 	 * 
 	 * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
 	 * @author Rick van Krevelen
 	 */
-	public static class Factory implements RandomDistribution.Factory
+	public static class Factory implements ProbabilityDistribution.Factory
 	{
 
 		public static Factory of( final RandomNumberStream stream )
@@ -171,13 +172,13 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public <T> RandomDistribution<T> getConstant( final T constant )
+		public <T> ProbabilityDistribution<T> getConstant( final T constant )
 		{
-			return RandomDistribution.Util.asConstant( constant );
+			return ProbabilityDistribution.Util.asConstant( constant );
 		}
 
 		@Override
-		public RandomDistribution<Long> getBinomial( final Number trials,
+		public ProbabilityDistribution<Long> getBinomial( final Number trials,
 			final Number p )
 		{
 			return wrap( new BinomialDistribution( this.rng, trials.intValue(),
@@ -185,7 +186,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public <T> RandomDistribution<T> getEnumerated(
+		public <T> ProbabilityDistribution<T> getCategorical(
 
 			final List<ProbabilityMass<T, ?>> probabilities )
 		{
@@ -194,14 +195,14 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Long> getGeometric( final Number p )
+		public ProbabilityDistribution<Long> getGeometric( final Number p )
 		{
 			return wrap(
 					new GeometricDistribution( this.rng, p.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Long> getHypergeometric(
+		public ProbabilityDistribution<Long> getHypergeometric(
 			final Number populationSize, final Number numberOfSuccesses,
 			final Number sampleSize )
 		{
@@ -211,7 +212,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Long> getPascal( final Number r,
+		public ProbabilityDistribution<Long> getPascal( final Number r,
 			final Number p )
 		{
 			return wrap( new PascalDistribution( this.rng, r.intValue(),
@@ -219,23 +220,23 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Long> getPoisson( final Number alpha,
-			final Number beta )
+		public ProbabilityDistribution<Long> getPoisson( final Number mean )
 		{
-			return wrap( new BinomialDistribution( this.rng, alpha.intValue(),
-					beta.doubleValue() ) );
+			return wrap( new PoissonDistribution( this.rng, mean.doubleValue(),
+					PoissonDistribution.DEFAULT_EPSILON,
+					PoissonDistribution.DEFAULT_MAX_ITERATIONS ) );
 		}
 
 		@Override
-		public RandomDistribution<Long> getZipf( final Number numberOfElements,
-			final Number exponent )
+		public ProbabilityDistribution<Long>
+			getZipf( final Number numberOfElements, final Number exponent )
 		{
 			return wrap( new ZipfDistribution( this.rng,
 					numberOfElements.intValue(), exponent.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getBeta( final Number alpha,
+		public ProbabilityDistribution<Double> getBeta( final Number alpha,
 			final Number beta )
 		{
 			return wrap( new BetaDistribution( this.rng, alpha.doubleValue(),
@@ -243,7 +244,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getCauchy( final Number median,
+		public ProbabilityDistribution<Double> getCauchy( final Number median,
 			final Number scale )
 		{
 			return wrap( new CauchyDistribution( this.rng, median.doubleValue(),
@@ -251,7 +252,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double>
+		public ProbabilityDistribution<Double>
 			getChiSquared( final Number degreesOfFreedom )
 		{
 			return wrap( new ChiSquaredDistribution( this.rng,
@@ -259,14 +260,15 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getExponential( final Number mean )
+		public ProbabilityDistribution<Double>
+			getExponential( final Number mean )
 		{
 			return wrap( new ExponentialDistribution( this.rng,
 					mean.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getF(
+		public ProbabilityDistribution<Double> getF(
 			final Number numeratorDegreesOfFreedom,
 			final Number denominatorDegreesOfFreedom )
 		{
@@ -276,7 +278,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getGamma( final Number shape,
+		public ProbabilityDistribution<Double> getGamma( final Number shape,
 			final Number scale )
 		{
 			return wrap( new GammaDistribution( this.rng, shape.doubleValue(),
@@ -284,7 +286,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getLevy( final Number mu,
+		public ProbabilityDistribution<Double> getLevy( final Number mu,
 			final Number c )
 		{
 			return wrap( new LevyDistribution( this.rng, mu.doubleValue(),
@@ -292,7 +294,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getLogNormal( final Number scale,
+		public ProbabilityDistribution<Double> getLogNormal( final Number scale,
 			final Number shape )
 		{
 			return wrap( new LogNormalDistribution( this.rng,
@@ -300,7 +302,7 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getNormal( final Number mean,
+		public ProbabilityDistribution<Double> getNormal( final Number mean,
 			final Number sd )
 		{
 			return wrap( new NormalDistribution( this.rng, mean.doubleValue(),
@@ -308,15 +310,15 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<double[]> getMultivariateNormal(
-			final double[] means, final double[][] covariances )
+		public ProbabilityDistribution<double[]>
+			getMultinormal( final double[] means, final double[][] covariances )
 		{
 			return wrap( new MultivariateNormalDistribution( this.rng, means,
 					covariances ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getPareto( final Number scale,
+		public ProbabilityDistribution<Double> getPareto( final Number scale,
 			final Number shape )
 		{
 			return wrap( new ParetoDistribution( this.rng, scale.doubleValue(),
@@ -324,14 +326,15 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getT( final Number degreesOfFreedom )
+		public ProbabilityDistribution<Double>
+			getT( final Number degreesOfFreedom )
 		{
 			return wrap( new TDistribution( this.rng,
 					degreesOfFreedom.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getTriangular( final Number a,
+		public ProbabilityDistribution<Double> getTriangular( final Number a,
 			final Number b, final Number c )
 		{
 			return wrap( new TriangularDistribution( this.rng, a.doubleValue(),
@@ -339,15 +342,15 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Double> getUniformReal( final Number lower,
-			final Number upper )
+		public ProbabilityDistribution<Double>
+			getUniformContinuous( final Number lower, final Number upper )
 		{
 			return wrap( new UniformRealDistribution( this.rng,
 					lower.doubleValue(), upper.doubleValue() ) );
 		}
 
 		@Override
-		public RandomDistribution<Double> getWeibull( final Number alpha,
+		public ProbabilityDistribution<Double> getWeibull( final Number alpha,
 			final Number beta )
 		{
 			return wrap( new WeibullDistribution( this.rng, alpha.doubleValue(),
@@ -355,8 +358,8 @@ public abstract class Math3RandomDistribution<S>
 		}
 
 		@Override
-		public RandomDistribution<Long> getUniformInteger( final Number lower,
-			final Number upper )
+		public ProbabilityDistribution<Long>
+			getUniformDiscrete( final Number lower, final Number upper )
 		{
 			return wrap( new UniformIntegerDistribution( this.rng,
 					lower.intValue(), upper.intValue() ) );
@@ -364,8 +367,8 @@ public abstract class Math3RandomDistribution<S>
 
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public <T> RandomDistribution<T>
-			getUniformEnumerated( final T... values )
+		public <T> ProbabilityDistribution<T>
+			getUniformCategorical( final T... values )
 		{
 			return wrap( new EnumeratedDistribution<T>( this.rng,
 					toPropabilityMassFunction( values ) ) );
