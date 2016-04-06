@@ -31,8 +31,8 @@ import org.jscience.physics.amount.Amount;
 import io.coala.exception.ExceptionBuilder;
 import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
+import io.coala.math.MeasureUtil;
 import io.coala.math.ValueWeight;
-import io.coala.util.DecimalUtil;
 import io.coala.util.InstanceParser;
 import io.coala.util.Instantiator;
 import rx.functions.Func1;
@@ -96,12 +96,14 @@ public interface ProbabilityDistribution<T> extends Serializable
 		 * @param parser the {@link Parser}
 		 * @param argType the concrete argument {@link Class}
 		 * @return a {@link ProbabilityDistribution} of {@link T} values
+		 * @throws Exception
 		 */
 		public static <T, P> ProbabilityDistribution<T> valueOf(
 			final String dist, final Parser parser, final Class<P> argType )
+			throws Exception
 		{
 			final Matcher m = Parser.DISTRIBUTION_FORMAT.matcher( dist.trim() );
-			if( !m.find() ) throw ExceptionFactory.createUnchecked(
+			if( !m.find() ) throw ExceptionFactory.createChecked(
 					"Problem parsing probability distribution: {}", dist );
 			final List<ValueWeight<P, ?>> params = new ArrayList<>();
 			for( String valuePair : m.group( Parser.PARAMS_GROUP )
@@ -213,11 +215,19 @@ public interface ProbabilityDistribution<T> extends Serializable
 		 *         measure {@link Amount}s from drawn {@link Number}s, with an
 		 *         attempt to maintain exactness
 		 */
-		public static <Q extends Quantity> Arithmetic<Q> toArithmetic(
+		public static <Q extends Quantity> Arithmetic<Q> toMeasure(
 			final ProbabilityDistribution<? extends Number> dist,
 			final Unit<Q> unit )
 		{
-			return Arithmetic.Simple.of( dist, unit );
+			return Arithmetic.Simple
+					.of( new ProbabilityDistribution<Amount<Q>>()
+					{
+						@Override
+						public Amount<Q> draw()
+						{
+							return MeasureUtil.toAmount( dist.draw(), unit );
+						}
+					} );
 		}
 	}
 
@@ -349,24 +359,6 @@ public interface ProbabilityDistribution<T> extends Serializable
 				of( final ProbabilityDistribution<Amount<Q>> dist )
 			{
 				return new Simple<Q>( dist );
-			}
-
-			public static <N extends Number, Q extends Quantity> Simple<Q>
-				of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
-			{
-				return of( new ProbabilityDistribution<Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> draw()
-					{
-						final Number value = dist.draw();
-						if( value instanceof Long || value instanceof Integer
-								|| (value instanceof BigDecimal && DecimalUtil
-										.isExact( (BigDecimal) value )) )
-							return Amount.valueOf( value.longValue(), unit );
-						return Amount.valueOf( value.doubleValue(), unit );
-					}
-				} );
 			}
 
 			private final ProbabilityDistribution<Amount<Q>> dist;
@@ -1215,6 +1207,13 @@ public interface ProbabilityDistribution<T> extends Serializable
 
 		<Q extends Quantity> Arithmetic<Q> fitNormal(
 			FrequencyDistribution.Interval<Q, ?> values, Unit<Q> unit );
+
+		// wavelets, e.g.https://github.com/cscheiblich/JWave  => pdf?
+
+//		signal / harmonic( Number initialAmplitude,
+//			Number initialAngularFrequency, Number initialPhase ) => pdf?
+
+//		polynomial regression ( Number... initialCoefficients ) => pdf?
 
 	}
 

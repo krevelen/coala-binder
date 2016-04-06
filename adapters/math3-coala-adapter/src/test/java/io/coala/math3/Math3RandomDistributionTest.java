@@ -46,7 +46,7 @@ public class Math3RandomDistributionTest
 
 	@SuppressWarnings( "rawtypes" )
 	@Test
-	public void testParser()
+	public void testParser() throws Exception
 	{
 		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser.Simple(
 				Math3ProbabilityDistribution.Factory

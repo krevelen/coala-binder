@@ -50,7 +50,7 @@ public abstract class ExceptionFactory
 	 *            {@code messageFormat}
 	 * @return a {@link CheckedException}
 	 */
-	public static CheckedException createChecked( final String messageFormat,
+	public static Exception createChecked( final String messageFormat,
 		final Object... args )
 	{
 		return ExceptionBuilder.checked( messageFormat, args ).build();
@@ -61,7 +61,7 @@ public abstract class ExceptionFactory
 	 * @param cause the cause of this {@link CheckedException}
 	 * @return a {@link CheckedException}
 	 */
-	public static CheckedException createChecked( final String message,
+	public static Exception createChecked( final String message,
 		final Throwable cause )
 	{
 		return ExceptionBuilder.checked( message, cause ).build();
@@ -72,7 +72,7 @@ public abstract class ExceptionFactory
 	 * @param message the message this {@link CheckedException}
 	 * @return a {@link CheckedException}
 	 */
-	public static CheckedException createChecked( final Throwable cause,
+	public static Exception createChecked( final Throwable cause,
 		final Object message )
 	{
 		return ExceptionBuilder.checked( cause, message ).build();
@@ -85,7 +85,7 @@ public abstract class ExceptionFactory
 	 *            {@code messageFormat}
 	 * @return a {@link CheckedException}
 	 */
-	public static CheckedException createChecked( final Throwable cause,
+	public static Exception createChecked( final Throwable cause,
 		final String messageFormat, final Object... args )
 	{
 		return ExceptionBuilder.checked( cause, messageFormat, args ).build();

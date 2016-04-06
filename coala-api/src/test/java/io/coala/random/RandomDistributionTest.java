@@ -17,7 +17,7 @@ public class RandomDistributionTest
 
 	@SuppressWarnings( "rawtypes" )
 	@Test
-	public void testValueOf()
+	public void testValueOf() throws Exception
 	{
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
 		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser.Simple();

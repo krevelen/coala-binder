@@ -171,13 +171,6 @@ public abstract class Math3ProbabilityDistribution<S>
 		return result;
 	}
 
-	// TODO wavelets, e.g.https://github.com/cscheiblich/JWave
-
-//	void fitHarmonic( Number initialAmplitude,
-//		Number initialAngularFrequency, Number initialPhase );
-//
-//	void fitPolynomial( Number... initialCoefficients );
-
 	/**
 	 * {@link Factory} creates {@link ProbabilityDistribution}s implemented by
 	 * Apache's commons-math3 toolkit
@@ -480,7 +473,7 @@ public abstract class Math3ProbabilityDistribution<S>
 					.fit( points.toList() );
 			LOG.trace( "Fitted Gaussian with parameters: [norm,mu,sd]={}",
 					Arrays.asList( params ) );
-			return Util.toArithmetic(
+			return Util.toMeasure(
 					getFactory().createNormal( params[1], params[2] ), unit )
 					.times( params[0] );
 		}

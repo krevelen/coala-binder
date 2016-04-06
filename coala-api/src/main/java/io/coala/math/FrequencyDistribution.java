@@ -35,9 +35,13 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 	Map<T, Long> getFrequencies();
 
+	Long frequencyOf( T phenomenon );
+
+	Double proportionOf( T phenomenon );
+
 	Iterable<T> uniqueValues();
 
-	Long frequencyOf( T phenomenon );
+	THIS add( T phenomenon, Long count );
 
 	THIS add( T phenomenon );
 
@@ -45,8 +49,6 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	THIS add( T... phenomena );
 
 	THIS add( Iterable<T> phenomena );
-
-	THIS add( T phenomenon, Long addendum );
 
 	THIS add( FrequencyDistribution<T, ?> phenomena );
 
@@ -74,7 +76,9 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		NavigableMap<T, Long> getCumulatives();
 
-		Long cumulativeOf( T phenomenon );
+		Long cumulativeFrequencyOf( T phenomenon );
+
+		Double cumulativeProportionOf( T phenomenon );
 
 	}
 
@@ -92,6 +96,8 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	interface Interval<Q extends Quantity, THIS extends Interval<Q, THIS>>
 		extends Ordinal<Amount<Q>, THIS>
 	{
+
+		NavigableMap<Amount<Q>, Bin<Q>> getBins();
 
 		Amount<Q> getMean();
 
@@ -220,15 +226,21 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public Iterable<T> uniqueValues()
-		{
-			return getFrequencies().keySet();
-		}
-
-		@Override
 		public Long frequencyOf( final T phenomenon )
 		{
 			return getFrequencies().get( phenomenon );
+		}
+
+		@Override
+		public Double proportionOf( final T phenomenon )
+		{
+			return frequencyOf( phenomenon ).doubleValue() / getSumFrequency();
+		}
+
+		@Override
+		public Iterable<T> uniqueValues()
+		{
+			return getFrequencies().keySet();
 		}
 
 		protected void updateMode( final T phenomenon, final Long frequency )
@@ -369,7 +381,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 				this.cumulatives.put( entry.getKey(), cumulative );
 			}
 
-			if( cumulative > 0L ) updateMedian();
+			if( cumulative > 0L ) this.median = calcMedian();
 
 			// FIXME in JRE1.8: Collections.unmodifiableNavigableMap( m )
 			this.unmodifiable = frequencies;
@@ -390,33 +402,34 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		protected void updateCumulatives( final NavigableMap<T, Long> tail,
 			final Long delta )
 		{
-			Long cumulative = cumulativeOf( tail.firstKey() )
+			Long cumulative = cumulativeFrequencyOf( tail.firstKey() )
 					- frequencyOf( tail.firstKey() );
+			this.cumulatives.clear();
 			for( Entry<T, Long> entry : tail.entrySet() )
-			{
-				cumulative += entry.getValue();
-				this.cumulatives.put( entry.getKey(), cumulative );
-			}
+				this.cumulatives.put( entry.getKey(),
+						cumulative += entry.getValue() );
 
 			final T last = getFrequencies().lastKey();
-			if( cumulativeOf( last ) != getSumFrequency() )
+			if( cumulativeFrequencyOf( last )
+					.compareTo( getSumFrequency() ) != 0 )
 				throw ExceptionFactory.createUnchecked(
 						"Cumulative frequency {} of last entry {} != sum {}",
-						cumulativeOf( last ), last, getSumFrequency() );
+						cumulativeFrequencyOf( last ), last,
+						getSumFrequency() );
 		}
 
-		protected void updateMedian()
+		protected T calcMedian()
 		{
-			final Long semi = getSumFrequency() / 2;
+			final Long semi = (getSumFrequency() + 1) / 2;
 			T median = getCumulatives().firstKey();
 			for( Entry<T, Long> entry : getCumulatives().entrySet() )
 			{
-				if( entry.getValue() <= semi )
+				if( entry.getValue() > semi )
+					return median;
+				else
 					median = entry.getKey();
-				else //if(hasMiddle)
-					break;
 			}
-			this.median = median;
+			return median;
 		}
 
 		@Override
@@ -428,7 +441,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 			updateRange( phenomenon );
 			updateCumulatives( getFrequencies().tailMap( phenomenon, true ),
 					delta );
-			updateMedian();
+			this.median = calcMedian();
 		}
 
 		@Override
@@ -456,16 +469,18 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public Long cumulativeOf( final T phenomenon )
+		public Long cumulativeFrequencyOf( final T phenomenon )
 		{
 			return getCumulatives().get( phenomenon );
 		}
-	}
 
-	// A,2
-	// B,4
-	// C,5
-	// D,10
+		@Override
+		public Double cumulativeProportionOf( final T phenomenon )
+		{
+			return cumulativeFrequencyOf( phenomenon ).doubleValue()
+					/ getSumFrequency();
+		}
+	}
 
 	/**
 	 * {@link SimpleInterval} implements an {@link Interval}-type
@@ -483,33 +498,72 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		private NavigableMap<Amount<Q>, Bin<Q>> bins;
 
+		private Amount<Q> median;
+
+		private Amount<Q> sum;
+
 		private Amount<Q> mean;
 
 		@Override
-		protected void updateMedian()
+		protected Amount<Q> calcMedian()
 		{
-			super.updateMedian();
-			// TODO interpolate if necessary (when getSumFrequencies()%2==0)
-			throw ExceptionFactory.createUnchecked( "not supported");
-		}
-
-		protected void updateMean()
-		{
-			throw ExceptionFactory.createUnchecked( "not supported");
+			final boolean interpolate = getSumFrequency() % 2 == 0;
+			final long halfFreq = (getSumFrequency() + 1) / 2;
+			Entry<Amount<Q>, Long> prev = getCumulatives().firstEntry();
+			for( Entry<Amount<Q>, Long> entry : getCumulatives()
+					.tailMap( prev.getKey(), false ).entrySet() )
+			{
+				if( entry.getValue() <= halfFreq )
+				{
+					prev = entry;
+					continue;
+				}
+				if( interpolate && prev != null && prev.getValue() == halfFreq )
+					return prev.getKey().plus( entry.getKey() ).divide( 2 );
+				return prev.getKey();
+			}
+			return prev.getKey();
 		}
 
 		protected Bin<Q> resolveBin( final Amount<Q> amount )
 		{
-			return this.bins.floorEntry( amount ).getValue();
+			// FIXME create and resolve bins, incl infinite extremes?
+
+			final Entry<?, Bin<Q>> floor = getBins().floorEntry( amount );
+//			Objects.requireNonNull( floor, "Amount out of range: " + amount );
+			if( floor != null ) return floor.getValue();
+//			final Entry<?, Bin<Q>> ceil = getBins().ceilingEntry( amount );
+//			if( ceil != null ) return ceil.getValue();
+			throw new IndexOutOfBoundsException(
+					"Amount " + amount + " out of range: " + getRange() );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		@Override
+		public synchronized THIS add( final Amount<Q> value, final Long count )
+		{
+			final Bin<Q> bin = resolveBin( value );
+			super.add( bin.getKernel(), count );
+			this.sum = this.sum.plus( value.times( count ) );
+			this.mean = this.sum.divide( getSumFrequency() );
+			return (THIS) this;
 		}
 
 		@Override
-		public synchronized THIS add( final Amount<Q> amount,
-			final Long addendum )
+		public Amount<Q> getMedian()
 		{
-			final Bin<Q> bin = resolveBin( amount );
-			updateMean();
-			return super.add( bin.getKernel(), addendum );
+			return this.median;
+		}
+
+		public Amount<Q> getSum()
+		{
+			return this.sum;
+		}
+
+		@Override
+		public NavigableMap<Amount<Q>, Bin<Q>> getBins()
+		{
+			return this.bins;
 		}
 
 		@Override
@@ -523,13 +577,6 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	class SimpleRatio<Q extends Quantity, THIS extends SimpleRatio<Q, THIS>>
 		extends SimpleInterval<Q, THIS> implements Ratio<Q, THIS>
 	{
-
-		@Override
-		public Amount<Q> getSum()
-		{
-			// TODO Auto-generated method stub
-			return null;
-		}
 
 	}
 }
