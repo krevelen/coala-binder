@@ -31,9 +31,9 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.coala.agent.AgentStatusObserver;
 import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
-import io.coala.util.ClassUtil;
+import io.coala.util.TypeArguments;
 
 /**
  * {@link GuiceLazyBinderModule}
@@ -79,8 +79,8 @@ public abstract class GuiceLazyBinderModule extends AbstractModule
 		final Class<? extends CapabilityFactory> factoryType,
 		final Class<T> serviceTypeImpl )
 	{
-		final List<Class<?>> typeArgs = ClassUtil
-				.getTypeArguments( CapabilityFactory.class, factoryType );
+		final List<Class<?>> typeArgs = TypeArguments
+				.of( CapabilityFactory.class, factoryType );
 		final Class<S> serviceType = (Class<S>) typeArgs.get( 0 );
 		lazyInstall( serviceType, (Class<F>) factoryType, serviceTypeImpl );
 	}
@@ -123,8 +123,8 @@ public abstract class GuiceLazyBinderModule extends AbstractModule
 			install( new FactoryModuleBuilder()
 					.implement( serviceType, serviceTypeImpl )
 					.build( factoryType ) );
-					// LOG.trace(String.format("Local singleton %s bound on demand to %s",
-					// serviceType.getSimpleName(), serviceTypeImpl.getSimpleName()));
+			// LOG.trace(String.format("Local singleton %s bound on demand to %s",
+			// serviceType.getSimpleName(), serviceTypeImpl.getSimpleName()));
 
 			// then bind the service type to a lazy provider that uses the
 			// factory
@@ -169,9 +169,9 @@ public abstract class GuiceLazyBinderModule extends AbstractModule
 								break;
 							}
 						if( !lazyInstances.containsKey( serviceType ) )
-							throw CoalaExceptionFactory.VALUE_NOT_SET
-									.createRuntime(
-											serviceType.getClass().getName() );
+							throw ExceptionFactory.createUnchecked(
+									"No implementation configured for {}",
+									serviceType.getClass() );
 					} else
 					{
 						final S service = owner.getInjector()

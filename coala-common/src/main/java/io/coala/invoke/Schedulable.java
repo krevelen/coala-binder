@@ -27,7 +27,7 @@ import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.databind.util.ClassUtil;
 
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 
 /**
  * {@link Schedulable}
@@ -136,13 +136,11 @@ public @interface Schedulable
 			if( method == null )
 				for( Class<?> superType : ClassUtil.findRawSuperTypes(
 						target.getClass(), Object.class, false ) )
-				if( (method = findSchedulableMethod( superType,
-						reference )) != null )
-					break;
+				if( (method = findSchedulableMethod( superType, reference )) != null ) break;
 
-			if( method == null )
-				throw CoalaExceptionFactory.ANNOTATION_NOT_FOUND
-						.createRuntime( Schedulable.class, target, reference );
+			if( method == null ) throw ExceptionFactory.createUnchecked(
+					"No annotation {} in {} with {}", Schedulable.class, target,
+					reference );
 
 			method.setAccessible( true );
 			return method.invoke( target, arguments == null ? null

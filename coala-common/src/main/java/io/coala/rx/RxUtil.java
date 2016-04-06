@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 import io.coala.util.Util;
 import rx.Observable;
@@ -34,9 +34,8 @@ import rx.functions.Function;
  * {@link RxUtil} provides some
  * <a href="https://github.com/Netflix/RxJava/wiki">RxJava</a>-related utilities
  * 
- * @date $Date: 2014-08-12 12:24:01 +0200 (Tue, 12 Aug 2014) $
- * @version $Revision: 359 $ $Author: krevelen $
- * @author <a href="mailto:rick@almende.org">Rick van Krevelen</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class RxUtil implements Util
 {
@@ -56,11 +55,10 @@ public class RxUtil implements Util
 	 * {@link ThrowingFunc1} TODO find a native way to map throwing functions in
 	 * rxJava
 	 * 
-	 * @version $Revision: 359 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 * @param <S> the source type
 	 * @param <T> the result type
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	public static interface ThrowingFunc1<S, T> extends Function
 	{
@@ -235,14 +233,13 @@ public class RxUtil implements Util
 		if( container[0] instanceof RuntimeException )
 			throw (RuntimeException) container[0];
 
-		if( container[0] instanceof Throwable )
-			throw CoalaExceptionFactory.OPERATION_FAILED
-					.createRuntime( (Throwable) container[0], "awaitAll" );
+		if( container[0] instanceof Throwable ) throw ExceptionFactory
+				.createUnchecked( (Throwable) container[0], "awaitAll" );
 
-		if( container[0] == null ) throw CoalaExceptionFactory.OPERATION_FAILED
-				.createRuntime( (Throwable) container[0], "awaitAll",
-						String.format( "Timeout occured at %.3fs",
-								(double) duration / 1000 ) );
+		if( container[0] == null )
+			throw ExceptionFactory.createUnchecked( (Throwable) container[0],
+					String.format( "Timeout occured at %.3fs",
+							(double) duration / 1000 ) );
 
 		return (List<T>) container[0];
 	}

@@ -20,7 +20,6 @@ import java.util.Date;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
-import io.coala.exception.CoalaRuntimeException;
 import io.coala.json.JSONConvertible;
 import io.coala.log.LogUtil;
 
@@ -28,8 +27,8 @@ import io.coala.log.LogUtil;
  * {@link SimTime} is an {@link Instant} with a particular base unit and
  * implementing {@link JSONConvertible}
  * 
- * @version $Id: 705ca0d273e0582c7ee098f61066703449a55692 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class SimTime extends AbstractInstant<SimTime>
 {
@@ -37,19 +36,17 @@ public class SimTime extends AbstractInstant<SimTime>
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id: 705ca0d273e0582c7ee098f61066703449a55692 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	public interface Factory extends io.coala.factory.Factory
 	{
-
 		/**
 		 * @param value
 		 * @param unit
 		 * @return the new {@link SimTime} object
 		 */
 		SimTime create( final Number value, final TimeUnit unit );
-
 	}
 
 	/** */
@@ -148,7 +145,7 @@ public class SimTime extends AbstractInstant<SimTime>
 			// avoid using: getMillis() or toMilliseconds() or toUnit()
 			millis = TimeUnit.MILLIS.convertFrom( getValue(), getUnit() )
 					.longValue();
-		} catch( final CoalaRuntimeException e )
+		} catch( final Exception e )
 		{
 			// LOG.warn("Problem converting to " + TimeUnit.MILLIS, e);
 			millis = getValue().longValue();
@@ -164,7 +161,7 @@ public class SimTime extends AbstractInstant<SimTime>
 		try
 		{
 			toValue = unit.convertFrom( getValue(), getUnit() );
-		} catch( final CoalaRuntimeException e )
+		} catch( final Exception e )
 		{
 			LOG.warn( "Problem converting " + toString() + " to " + unit.name(),
 					e );

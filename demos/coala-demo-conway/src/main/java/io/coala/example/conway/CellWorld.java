@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: b0d8c1e6c7ddf7236dca0e674a78a808499b2074 $
  * $URL: https://dev.almende.com/svn/abms/coala-examples/src/main/java/io/coala/example/conway/CellWorld.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -32,7 +32,6 @@ import io.coala.bind.Binder;
 import io.coala.capability.CapabilityFactory;
 import io.coala.capability.configure.ConfiguringCapability;
 import io.coala.capability.embody.GroundingCapability;
-import io.coala.exception.CoalaException;
 import io.coala.model.ModelID;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
@@ -44,15 +43,11 @@ import rx.Observable;
  * individual {@link Cell}'s environment
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @author Rick van Krevelen
  */
 public interface CellWorld extends GroundingCapability, Timed<SimTime>
 {
 
-	/**
-	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 */
 	interface Factory extends CapabilityFactory<CellWorld>
 	{
 		// empty
@@ -77,7 +72,7 @@ public interface CellWorld extends GroundingCapability, Timed<SimTime>
 	 * @param neighborStates the source stream of incoming neighbor states
 	 * @return a stream of outgoing local states
 	 */
-	Observable<CellState> myStates(Observable<CellState> neighborStates);
+	Observable<CellState> myStates( Observable<CellState> neighborStates );
 
 	/**
 	 * @return my {@link Timed} {@link CellState}, or {@code null} if not
@@ -103,22 +98,22 @@ public interface CellWorld extends GroundingCapability, Timed<SimTime>
 		 * @param binder
 		 * @param modelID
 		 * @return
-		 * @throws CoalaException
+		 * @throws Exception
 		 */
-		public static int[][] importInitialValues(final Binder binder)
-				throws CoalaException
+		public static int[][] importInitialValues( final Binder binder )
+			throws Exception
 		{
 			final int[][] result, tempStates;
 			final ModelID modelID = binder.getID().getModelID();
-			synchronized (INITIAL_STATE_CACHE)
+			synchronized( INITIAL_STATE_CACHE )
 			{
-				tempStates = INITIAL_STATE_CACHE.get(modelID);
-				if (tempStates == null)
+				tempStates = INITIAL_STATE_CACHE.get( modelID );
+				if( tempStates == null )
 				{
-					result = binder.inject(ConfiguringCapability.class)
-							.getProperty(INITIAL_STATES_CONFIG_KEY)
-							.getJSON(int[][].class);
-					INITIAL_STATE_CACHE.put(modelID, result);
+					result = binder.inject( ConfiguringCapability.class )
+							.getProperty( INITIAL_STATES_CONFIG_KEY )
+							.getJSON( int[][].class );
+					INITIAL_STATE_CACHE.put( modelID, result );
 				} else
 					result = tempStates;
 			}
@@ -128,18 +123,18 @@ public interface CellWorld extends GroundingCapability, Timed<SimTime>
 		/**
 		 * @param binder the local {@link Binder}
 		 * @return the initial {@link CellState}
-		 * @throws CoalaException if parsing failed
+		 * @throws Exception if parsing failed
 		 */
-		public static CellState parseInitialState(final Binder binder)
-				throws CoalaException
+		public static CellState parseInitialState( final Binder binder )
+			throws Exception
 		{
-			final int[][] values = importInitialValues(binder);
+			final int[][] values = importInitialValues( binder );
 			final CellID myID = (CellID) binder.getID();
 			final LifeStatus startState = values[myID.getRow()][myID
 					.getCol()] == 0 ? LifeStatus.DEAD : LifeStatus.ALIVE;
-			final SimTime startCycle = binder.inject(SimTime.Factory.class)
-					.create(0, TimeUnit.TICKS);
-			return new CellState(startCycle, myID, startState);
+			final SimTime startCycle = binder.inject( SimTime.Factory.class )
+					.create( 0, TimeUnit.TICKS );
+			return new CellState( startCycle, myID, startState );
 		}
 
 		/**
@@ -148,32 +143,31 @@ public interface CellWorld extends GroundingCapability, Timed<SimTime>
 		 * @param cols lattice width
 		 * @return a matrix (row-{@link List} containing column-{@link List}s)
 		 *         of respective {@link CellID}s
-		 * @throws CoalaException
+		 * @throws Exception
 		 */
-		public static List<List<CellID>> createLatticeLayout(
-				final Binder binder) throws CoalaException
+		public static List<List<CellID>>
+			createLatticeLayout( final Binder binder ) throws Exception
 		{
-			synchronized (CELL_ID_CACHE)
+			synchronized( CELL_ID_CACHE )
 			{
 				List<List<CellID>> result = CELL_ID_CACHE
-						.get(binder.getID().getModelID());
-				if (result != null)
-					return result;
+						.get( binder.getID().getModelID() );
+				if( result != null ) return result;
 
-				final int[][] values = importInitialValues(binder);
+				final int[][] values = importInitialValues( binder );
 				final int rows = values.length;
 				final int cols = values[0].length;
-				final List<List<CellID>> tempLayout = new ArrayList<>(rows);
-				result = Collections.unmodifiableList(tempLayout);
-				CELL_ID_CACHE.put(binder.getID().getModelID(), result);
+				final List<List<CellID>> tempLayout = new ArrayList<>( rows );
+				result = Collections.unmodifiableList( tempLayout );
+				CELL_ID_CACHE.put( binder.getID().getModelID(), result );
 
-				for (int row = 0; row < rows; row++)
+				for( int row = 0; row < rows; row++ )
 				{
-					final List<CellID> rowMap = new ArrayList<>(cols);
-					tempLayout.add(Collections.unmodifiableList(rowMap));
+					final List<CellID> rowMap = new ArrayList<>( cols );
+					tempLayout.add( Collections.unmodifiableList( rowMap ) );
 
-					for (int col = 0; col < cols; col++)
-						rowMap.add(new CellID(binder.getID(), row, col));
+					for( int col = 0; col < cols; col++ )
+						rowMap.add( new CellID( binder.getID(), row, col ) );
 				}
 				return result;
 			}
@@ -182,17 +176,17 @@ public interface CellWorld extends GroundingCapability, Timed<SimTime>
 		/**
 		 * @param binder the local {@link Binder}
 		 * @return a {@link Collection} of neighboring {@link CellID}s
-		 * @throws CoalaException
+		 * @throws Exception
 		 */
-		public static Collection<CellID> determineTorusNeighbors(
-				final Binder binder) throws CoalaException
+		public static Collection<CellID>
+			determineTorusNeighbors( final Binder binder ) throws Exception
 		{
 
 			final CellID cellID = (CellID) binder.getID();
-			final List<List<CellID>> cellIDs = createLatticeLayout(binder);
+			final List<List<CellID>> cellIDs = createLatticeLayout( binder );
 
 			final int rows = cellIDs.size();
-			final int cols = cellIDs.get(0).size();
+			final int cols = cellIDs.get( 0 ).size();
 			final int row = cellID.getRow();
 			final int col = cellID.getCol();
 			final int north = (rows + row - 1) % rows;
@@ -200,14 +194,14 @@ public interface CellWorld extends GroundingCapability, Timed<SimTime>
 			final int west = (cols + col - 1) % cols;
 			final int east = (cols + col + 1) % cols;
 			return Arrays.asList( //
-					cellIDs.get(north).get(west), // northwest
-					cellIDs.get(row).get(west), // west
-					cellIDs.get(south).get(west), // south-west
-					cellIDs.get(north).get(col), // north
-					cellIDs.get(south).get(col), // south
-					cellIDs.get(north).get(east), // northeast
-					cellIDs.get(row).get(east), // east
-					cellIDs.get(south).get(east)); // south-east
+					cellIDs.get( north ).get( west ), // northwest
+					cellIDs.get( row ).get( west ), // west
+					cellIDs.get( south ).get( west ), // south-west
+					cellIDs.get( north ).get( col ), // north
+					cellIDs.get( south ).get( col ), // south
+					cellIDs.get( north ).get( east ), // northeast
+					cellIDs.get( row ).get( east ), // east
+					cellIDs.get( south ).get( east ) ); // south-east
 		}
 	}
 

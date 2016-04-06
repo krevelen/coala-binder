@@ -1,7 +1,4 @@
 /* $Id: aef5e30b392038b499b5be50a5e2057238304171 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/MachineUtil.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.lifecycle;
 
@@ -29,8 +24,6 @@ import java.util.concurrent.Executors;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
 import io.coala.log.LogUtil;
 import io.coala.name.Identifiable;
 import io.coala.name.Identifier;
@@ -45,8 +38,8 @@ import rx.schedulers.Schedulers;
  * {@link MachineUtil} utility class, e.g. to manage the {@link MachineStatus}
  * in {@link Machine}s
  * 
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class MachineUtil implements Util
 {
@@ -214,14 +207,10 @@ public class MachineUtil implements Util
 	/**
 	 * @param target
 	 * @param newStatus
-	 * @throws CoalaException
 	 */
 	public static <S extends MachineStatus<S>> void setStatus(
 		final Machine<S> target, final S newValue, final boolean completed )
 	{
-		if( target == null )
-			throw CoalaExceptionFactory.VALUE_NOT_SET.createRuntime( "target" );
-
 		@SuppressWarnings( "unchecked" )
 		final StatusListeners listeners = StatusListeners
 				.from( target.getClass(), newValue.getClass() );

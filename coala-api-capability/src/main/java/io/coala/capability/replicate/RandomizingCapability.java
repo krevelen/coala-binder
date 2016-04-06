@@ -40,23 +40,12 @@ import io.coala.random.RandomNumberStream;
 /**
  * {@link RandomizingCapability} provides random number generators or streams
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <K> the type of key for persisted values
- * @param <V> the type of value to persist
- * @param <THIS> the (sub)type of {@link RandomizingCapability} to build
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public interface RandomizingCapability extends Capability<BasicCapabilityStatus>
 {
 
-	/**
-	 * {@link Factory}
-	 * 
-	 * @version $Revision: 296 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 */
 	interface Factory extends CapabilityFactory<RandomizingCapability>
 	{
 		// empty
@@ -130,7 +119,8 @@ public interface RandomizingCapability extends Capability<BasicCapabilityStatus>
 			// owner agents
 			return getBinder().inject( RandomNumberStream.Factory.class )
 					.create( streamID,
-							CoalaProperty.randomSeed.value().getLong()
+							CoalaProperty.randomSeed.value()
+									.getLong( System.currentTimeMillis() )
 									+ getID().getOwnerID().hashCode() );
 		}
 

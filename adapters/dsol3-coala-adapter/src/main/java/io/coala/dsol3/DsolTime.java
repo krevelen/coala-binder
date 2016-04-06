@@ -26,13 +26,12 @@ import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.CoalaException;
 import io.coala.exception.ExceptionBuilder;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
 import io.coala.time.x.Instant;
 import io.coala.time.x.TimeSpan;
-import io.coala.util.ClassUtil;
+import io.coala.util.Instantiator;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
 import nl.tudelft.simulation.dsol.experiment.Replication;
@@ -278,14 +277,7 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	public static <T extends DEVSSimulatorInterface> T
 		createDEVSSimulator( final Class<T> simType )
 	{
-		try
-		{
-			return ClassUtil.instantiate( simType );
-		} catch( final CoalaException e )
-		{
-			throw ExceptionBuilder.unchecked( e, "Problem creating simulator" )
-					.build();
-		}
+		return Instantiator.instantiate( simType );
 	}
 
 	/**

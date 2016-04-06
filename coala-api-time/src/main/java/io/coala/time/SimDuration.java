@@ -15,11 +15,6 @@
  */
 package io.coala.time;
 
-import org.apache.logging.log4j.Logger;
-
-import io.coala.exception.CoalaRuntimeException;
-import io.coala.log.LogUtil;
-
 /**
  * {@link SimDuration}
  * 
@@ -31,9 +26,6 @@ public class SimDuration extends AbstractInstant<SimDuration>
 
 	/** */
 	private static final long serialVersionUID = 1L;
-
-	/** */
-	private static final Logger LOG = LogUtil.getLogger( SimDuration.class );
 
 	/** */
 	public static SimDuration ZERO = new SimDuration( 0, TimeUnit.MILLIS );
@@ -71,16 +63,7 @@ public class SimDuration extends AbstractInstant<SimDuration>
 	@Override
 	public SimDuration toUnit( final TimeUnit unit )
 	{
-		Number toValue = null;
-		try
-		{
-			toValue = unit.convertFrom( getValue(), getUnit() );
-		} catch( final CoalaRuntimeException e )
-		{
-			LOG.warn( "Problem converting " + toString() + " to " + unit.name()
-					+ ": " + e.getMessage() );
-			return this;
-		}
+		Number toValue = unit.convertFrom( getValue(), getUnit() );
 		return new SimDuration( toValue == null ? getValue() : toValue, unit );
 	}
 

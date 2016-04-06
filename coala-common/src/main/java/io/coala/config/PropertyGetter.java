@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: c183533a506e76c867a9266d7739e42017a7673b $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/config/PropertyGetter.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,8 +20,7 @@
  */
 package io.coala.config;
 
-import io.coala.exception.CoalaException;
-
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Map;
 
@@ -40,209 +39,209 @@ public interface PropertyGetter
 
 	/**
 	 * @return the configured value
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	String get() throws CoalaException;
+	String get() throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	String get(String defaultValue);
+	String get( String defaultValue ) throws Exception;
 
 	/**
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 * @throws NumberFormatException
 	 */
-	Number getNumber() throws NumberFormatException, CoalaException;
+	Number getNumber() throws NumberFormatException, Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	Number getNumber(Number defaultValue) throws NumberFormatException;
+	Number getNumber( Number defaultValue ) throws NumberFormatException;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	BigDecimal getBigDecimal(BigDecimal defaultValue);
+	BigDecimal getBigDecimal( BigDecimal defaultValue );
 
 	/**
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	Boolean getBoolean() throws CoalaException;
+	Boolean getBoolean() throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	Boolean getBoolean(Boolean defaultValue);
+	Boolean getBoolean( Boolean defaultValue );
 
 	/**
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 * @throws NumberFormatException
 	 */
-	Byte getByte() throws NumberFormatException, CoalaException;
+	Byte getByte() throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	Byte getByte(Byte defaultValue);
+	Byte getByte( Byte defaultValue );
 
 	/**
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	Character getChar() throws CoalaException;
-
-	/**
-	 * @param defaultValue
-	 * @return
-	 */
-	Character getChar(Character defaultValue);
-
-	/**
-	 * @return
-	 * @throws CoalaException
-	 */
-	Short getShort() throws CoalaException;
+	Character getChar() throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	Short getShort(Short defaultValue);
+	Character getChar( Character defaultValue );
 
 	/**
 	 * @return
-	 * @throws CoalaException
+	 * @throws Exception
 	 */
-	Integer getInt() throws CoalaException;
-
-	/**
-	 * @param defaultValue
-	 * @return
-	 */
-	Integer getInt(Integer defaultValue);
-
-	/**
-	 * @return
-	 * @throws CoalaException
-	 */
-	Long getLong() throws CoalaException;
+	Short getShort() throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	Long getLong(Long defaultValue);
+	Short getShort( Short defaultValue );
 
 	/**
 	 * @return
-	 * @throws CoalaException
+	 * @throws Exception
 	 */
-	Float getFloat() throws CoalaException;
-
-	/**
-	 * @param defaultValue
-	 * @return
-	 */
-	Float getFloat(Float defaultValue);
-
-	/**
-	 * @return
-	 * @throws CoalaException
-	 */
-	Double getDouble() throws CoalaException;
+	Integer getInt() throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	Double getDouble(Double defaultValue);
+	Integer getInt( Integer defaultValue );
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	Long getLong() throws Exception;
+
+	/**
+	 * @param defaultValue
+	 * @return
+	 */
+	Long getLong( Long defaultValue );
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	Float getFloat() throws Exception;
+
+	/**
+	 * @param defaultValue
+	 * @return
+	 */
+	Float getFloat( Float defaultValue );
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	Double getDouble() throws Exception;
+
+	/**
+	 * @param defaultValue
+	 * @return
+	 */
+	Double getDouble( Double defaultValue );
 
 	/**
 	 * @param enumType
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	<E extends Enum<E>> E getEnum(Class<E> enumType) throws CoalaException;
+	<E extends Enum<E>> E getEnum( Class<E> enumType ) throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	<E extends Enum<E>> E getEnum(E defaultValue);
+	<E extends Enum<E>> E getEnum( E defaultValue );
 
 	/**
 	 * @param valueType
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	<T> T getObject(Class<T> valueType) throws CoalaException;
+	<T extends Serializable> T getObject( Class<T> valueType ) throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
 	 */
-	<T> T getObject(T defaultValue);
+	<T extends Serializable> T getObject( T defaultValue );
 
 	/**
 	 * @param valueTypeRef
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	@SuppressWarnings("rawtypes")
-	<T> T getJSON(TypeReference valueTypeRef) throws CoalaException;
+	@SuppressWarnings( "rawtypes" )
+	<T> T getJSON( TypeReference valueTypeRef ) throws Exception;
 
 	/**
 	 * @param valueType
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	<T> T getJSON(JavaType valueType) throws CoalaException;
+	<T> T getJSON( JavaType valueType ) throws Exception;
 
 	/**
 	 * @param valueType
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	<T> T getJSON(Class<T> valueType) throws CoalaException;
+	<T> T getJSON( Class<T> valueType ) throws Exception;
 
 	/**
 	 * @param defaultValue
 	 * @return
-	 * @throws CoalaException if umarshalling failed
+	 * @throws Exception if umarshalling failed
 	 */
-	<T> T getJSON(T defaultValue) throws CoalaException;
+	<T> T getJSON( T defaultValue ) throws Exception;
 
 	/**
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	Class<?> getType() throws CoalaException;
+	Class<?> getType() throws Exception;
 
 	/**
 	 * @param superType
 	 * @return
-	 * @throws CoalaException if value was not configured nor any default was set
+	 * @throws Exception if value was not configured nor any default was set
 	 */
-	<T> Class<? extends T> getType(Class<T> superType) throws CoalaException;
+	<T> Class<? extends T> getType( Class<T> superType ) throws Exception;
 
 	/**
 	 * @param keySuperType
 	 * @param valueSuperType
 	 * @return a {@link Map} linking {@code keySuperType} subtypes to
 	 *         {@code valueSuperType} subtypes
-	 * @throws CoalaException
+	 * @throws Exception
 	 */
 	<K, V> Map<Class<? extends K>, Class<? extends V>> getBindings(
-			final Class<K> keySuperType, final Class<V> valueSuperType)
-			throws CoalaException;
+		final Class<K> keySuperType, final Class<V> valueSuperType )
+		throws Exception;
 
 }

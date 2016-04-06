@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: d05fd438ee4a0b9216fb13a2f22aefc816628808 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,14 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.lifecycle;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.name.AbstractIdentifiable;
 import io.coala.name.Identifier;
 import rx.Observable;
@@ -29,14 +27,11 @@ import rx.subjects.Subject;
 /**
  * {@link AbstractMachine}
  * 
- * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  * @param <ID> the (super)type of {@link Identifier}
  * @param <S> the (super)type of {@link MachineStatus}
  */
 public abstract class AbstractMachine<ID extends Identifier<?, ?>, S extends MachineStatus<S>>
-		extends AbstractIdentifiable<ID> implements Machine<S>
+	extends AbstractIdentifiable<ID> implements Machine<S>
 {
 
 	/** */
@@ -63,26 +58,26 @@ public abstract class AbstractMachine<ID extends Identifier<?, ?>, S extends Mac
 	 * 
 	 * @param id
 	 */
-	public AbstractMachine(final ID id)
+	public AbstractMachine( final ID id )
 	{
-		super(id);
+		super( id );
 	}
 
 	/**
 	 * @param status
+	 * @param status
 	 */
-	protected void setStatus(final S status, final boolean completed)
-
+	protected void setStatus( final S status, final boolean completed )
 	{
-		final S currentStatus = getStatus();
+		final S current = getStatus();
 
 		// sanity check
-		if (!status.permitsTransitionFrom(currentStatus))
-			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime(
-					"status", status, "Not permitted from current status: "
-							+ currentStatus);
+		if( !status.permitsTransitionFrom( current ) )
+			throw ExceptionFactory.createUnchecked(
+					"Status {} not permitted from current: {}", status,
+					current );
 
-		MachineUtil.setStatus(this, status, completed);
+		MachineUtil.setStatus( this, status, completed );
 	}
 
 	@Override

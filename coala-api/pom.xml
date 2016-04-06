@@ -23,6 +23,7 @@
 		<uuid.version>3.4</uuid.version>
 		<easymock.version>3.2</easymock.version>
 		<jscience.version>4.3.1</jscience.version>
+		<HdrHistogram.version>2.1.8</HdrHistogram.version>
 	</properties>
 
 	<repositories>
@@ -47,7 +48,7 @@
 	</repositories>
 
 	<dependencies>
-			
+
 		<dependency>
 			<groupId>io.coala</groupId>
 			<artifactId>coala-common</artifactId>
@@ -60,10 +61,16 @@
 			<version>${jscience.version}</version>
 		</dependency>
 
+		<!-- <dependency>
+			<groupId>org.hdrhistogram</groupId>
+			<artifactId>HdrHistogram</artifactId>
+			<version>${HdrHistogram.version}</version>
+		</dependency> -->
+
 		<!-- used in unit testing to create mock dependency instances -->
 		<!-- <dependency> <groupId>org.easymock</groupId> <artifactId>easymock</artifactId> 
 			<version>${easymock.version}</version> <scope>test</scope> </dependency> -->
-			
+
 		<dependency>
 			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>

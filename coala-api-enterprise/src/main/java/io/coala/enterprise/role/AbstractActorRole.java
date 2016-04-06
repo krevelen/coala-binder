@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import javax.inject.Inject;
-//import javax.inject.Named;
 import javax.inject.Named;
 
 import org.apache.logging.log4j.Logger;
@@ -45,7 +44,7 @@ import io.coala.config.PropertyGetter;
 import io.coala.enterprise.fact.CoordinationFact;
 import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.enterprise.organization.Organization;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.invoke.ProcedureCall;
 import io.coala.invoke.Schedulable;
 import io.coala.log.InjectLogger;
@@ -58,7 +57,7 @@ import io.coala.random.ProbabilityDistribution;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import io.coala.time.Trigger;
-import io.coala.util.ClassUtil;
+import io.coala.util.TypeArguments;
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.ReplaySubject;
@@ -108,8 +107,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 		super( null, binder );
 		setID( new ActorRoleID( binder.getID(), getClass() ) );
 
-		final List<Class<?>> typeArgs = ClassUtil
-				.getTypeArguments( AbstractActorRole.class, getClass() );
+		final List<Class<?>> typeArgs = TypeArguments
+				.of( AbstractActorRole.class, getClass() );
 		this.factType = (Class<F>) typeArgs.get( 0 );
 		// LOG.trace("Listening for messages of type: " +
 		// this.factType.getName());
@@ -284,8 +283,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 				break;
 
 			default:
-				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED
-						.createRuntime( "factType", fact.getID().getType() );
+				throw ExceptionFactory.createUnchecked( "Illegal factType: {}",
+						fact.getID().getType() );
 			}
 		} catch( final Throwable t )
 		{
@@ -442,7 +441,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 				.schedule(
 						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
 								latch, agentID ),
-				Trigger.createAbsolute( getTime() ) );
+						Trigger.createAbsolute( getTime() ) );
 
 		getBooter().createAgent( agentID, agentType ).subscribe( status );
 
@@ -474,7 +473,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 				.schedule(
 						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
 								latch, agentID ),
-				Trigger.createAbsolute( getTime() ) );
+						Trigger.createAbsolute( getTime() ) );
 	}
 
 	/**

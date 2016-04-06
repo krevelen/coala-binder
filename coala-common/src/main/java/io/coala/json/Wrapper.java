@@ -550,9 +550,8 @@ public interface Wrapper<T>
 		@SuppressWarnings( "rawtypes" )
 		public static <T> boolean equals( final Wrapper self, final Object obj )
 		{
-			if( obj == null || !self.getClass().equals( obj.getClass() ) )
-				return false;
-
+			if( obj == null || self.getClass() != obj.getClass() ) return false;
+			if( self == obj ) return true;
 			final Wrapper other = self.getClass().cast( obj );
 			return self.unwrap() == null ? other.unwrap() == null
 					: self.unwrap().equals( other.unwrap() );

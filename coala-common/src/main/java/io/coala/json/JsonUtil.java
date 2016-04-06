@@ -172,16 +172,26 @@ public class JsonUtil
 		}
 	}
 
+	/**
+	 * @param value the {@link Object} to serialize
+	 * @return the {@link String} representation in pretty JSON format
+	 * @deprecated use {@link #toJSON(Object)}
+	 */
 	@Deprecated
 	public static String toPrettyJSON( final Object object )
 	{
 		return toJSON( object );
 	}
 
+	/**
+	 * @param value the {@link Object} to serialize
+	 * @return the {@link String} representation in JSON format
+	 * @deprecated use {@link #stringify(Object)}
+	 */
 	@Deprecated
 	public static String toString( final Object value )
 	{
-		return toJSON( value );
+		return stringify( value );
 	}
 
 	/**

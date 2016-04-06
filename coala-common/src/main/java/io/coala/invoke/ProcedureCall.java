@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/ProcedureCall.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 6e3e8cf0cf37a7938f699347e0896e87e8be5df7 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,19 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.invoke;
-
-import io.coala.event.AbstractEvent;
-import io.coala.event.EventID;
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.exception.CoalaRuntimeException;
-import io.coala.model.ModelComponent;
-import io.coala.model.ModelComponentID;
-import io.coala.process.BasicProcessStatus;
-import io.coala.time.Instant;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,18 +24,22 @@ import java.util.concurrent.Callable;
 
 import com.eaio.uuid.UUID;
 
+import io.coala.event.AbstractEvent;
+import io.coala.event.EventID;
+import io.coala.exception.ExceptionFactory;
+import io.coala.model.ModelComponent;
+import io.coala.model.ModelComponentID;
+import io.coala.process.BasicProcessStatus;
+import io.coala.time.Instant;
+
 /**
  * {@link ProcedureCall}
- * 
- * @date $Date: 2014-06-19 15:17:32 +0200 (Thu, 19 Jun 2014) $
- * @version $Revision: 308 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <ID> the type of {@link EventID}
  * @param <THIS> the concrete type of {@link ProcedureCall}
  */
 public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
-		implements Callable<Void>
+	implements Callable<Void>
 {
 
 	/** */
@@ -67,18 +57,18 @@ public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 	 * @param id
 	 * @param producerID
 	 */
-	protected ProcedureCall(final ID id, final ModelComponent<?> producer,
-			final ProcedureID<?> procedureID, final Object... args)
+	protected ProcedureCall( final ID id, final ModelComponent<?> producer,
+		final ProcedureID<?> procedureID, final Object... args )
 	{
-		super(id, producer);
+		super( id, producer );
 
 		this.procedureID = procedureID;
-		if (args == null || args.length == 0)
+		if( args == null || args.length == 0 )
 			this.arguments = null;// Collections.emptyList();
 		else
-			this.arguments = Arrays.asList(args);
+			this.arguments = Arrays.asList( args );
 
-		forceStatus(BasicProcessStatus.INITIALIZED);
+		forceStatus( BasicProcessStatus.INITIALIZED );
 	}
 
 	/**
@@ -96,7 +86,7 @@ public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 
 	protected ModelComponent<?> getTarget()
 	{
-		return TARGET_CACHE.get(this.procedureID);
+		return TARGET_CACHE.get( this.procedureID );
 	}
 
 	protected String getMethodReference()
@@ -107,88 +97,80 @@ public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 	/** */
 	private boolean called = false;
 
-	/** @see Callable#call() */
 	@Override
 	public synchronized Void call()
 	{
-		if (this.called)
-			return null;
+		if( this.called ) return null;
 
 		this.called = true;
 		try
 		{
-			forceStatus(BasicProcessStatus.ACTIVE);
+			forceStatus( BasicProcessStatus.ACTIVE );
 			activate();
-			forceStatus(BasicProcessStatus.COMPLETE);
+			forceStatus( BasicProcessStatus.COMPLETE );
 			finish();
-			forceStatus(BasicProcessStatus.FINISHED);
+			forceStatus( BasicProcessStatus.FINISHED );
 			return null;
-		} catch (final CoalaRuntimeException t)
+		} catch( final Throwable t )
 		{
+			forceStatus( BasicProcessStatus.FAILED );
 			throw t;
-		} catch (final Throwable t)
-		{
-			forceStatus(BasicProcessStatus.FAILED);
-			throw CoalaExceptionFactory.INVOCATION_FAILED.createRuntime(t,
-					this.procedureID.getValue(), getTarget(), this.arguments);
 		}
 	}
 
 	public Callable<Object> toCallable()
 	{
-		return Schedulable.Util.toCallable(getMethodReference(), getTarget(),
-				getArguments());
+		return Schedulable.Util.toCallable( getMethodReference(), getTarget(),
+				getArguments() );
 	}
 
-	/** @see AbstractEvent#activate() */
 	@Override
 	public void activate()
 	{
 		try
 		{
-			Schedulable.Util.call(getMethodReference(), getTarget(),
-					getArguments());
-		} catch (final CoalaRuntimeException t)
+			Schedulable.Util.call( getMethodReference(), getTarget(),
+					getArguments() );
+		} catch( final Throwable t )
 		{
-			throw t;
-		} catch (final Throwable t)
-		{
-			throw CoalaExceptionFactory.INVOCATION_FAILED.createRuntime(t,
-					this.procedureID.getValue(), getTarget(), this.arguments);
+			throw ExceptionFactory.createUnchecked( t,
+					"Problem invoking {} at {} with {}",
+					this.procedureID.getValue(), getTarget(), this.arguments );
 		}
 	}
 
 	/** */
 	protected static final Map<ProcedureID<?>, ModelComponent<?>> TARGET_CACHE = Collections
-			.synchronizedMap(new HashMap<ProcedureID<?>, ModelComponent<?>>());
+			.synchronizedMap(
+					new HashMap<ProcedureID<?>, ModelComponent<?>>() );
 
 	/** */
 	protected static long ID_COUNT = 0; // TODO use UUID instead?
 
 	/**
 	 * @param source the {@link ModelComponent} calling the procedure, or
-	 *        {@code null}
+	 *            {@code null}
 	 * @param target the {@link ModelComponent} performing the procedure
 	 * @param schedulableMethodID the {@link Schedulable} identifier
 	 * @param arguments the procedure/method's arguments (if any)
 	 * @return the procedure call
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static <ID extends EventID<String>, T extends ModelComponentID<?>> ProcedureCall<ID> create(
-			final ModelComponent<?> source, final ModelComponent<T> target,
-			final String schedulableMethodID, final Object... arguments)
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public static <ID extends EventID<String>, T extends ModelComponentID<?>>
+		ProcedureCall<ID> create( final ModelComponent<?> source,
+			final ModelComponent<T> target, final String schedulableMethodID,
+			final Object... arguments )
 	{
-		final ProcedureID procedureID = new ProcedureID(schedulableMethodID,
-				target);
-		TARGET_CACHE.put(procedureID, target);
+		final ProcedureID procedureID = new ProcedureID( schedulableMethodID,
+				target );
+		TARGET_CACHE.put( procedureID, target );
 		final String idValue = new UUID().toString();//ProcedureCall.class.getSimpleName() + (ID_COUNT++);
 		final ProcedureCall<ID> result = new ProcedureCall<ID>(
-				(ID) new EventID(source.getID().getModelID(), idValue), source,
-				procedureID, arguments);
+				(ID) new EventID( source.getID().getModelID(), idValue ),
+				source, procedureID, arguments );
 		return result;
 	}
 
-	/** @see ModelComponent#getTime() */
 	@Override
 	public Instant<?> getTime()
 	{

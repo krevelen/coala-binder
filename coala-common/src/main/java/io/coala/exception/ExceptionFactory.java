@@ -19,7 +19,7 @@
  */
 package io.coala.exception;
 
-import java.util.Formatter;
+import java.text.MessageFormat;
 
 import io.coala.exception.ExceptionBuilder.CheckedException;
 import io.coala.exception.ExceptionBuilder.UncheckedException;
@@ -27,7 +27,7 @@ import io.coala.exception.ExceptionBuilder.UncheckedException;
 /**
  * {@link ExceptionFactory} has shorthand utility methods to create
  * {@link CheckedException}s and {@link UncheckedException}s which are emitted
- * via the {@link ExceptionStream} with an empty {@link Context}
+ * via the {@link ExceptionStream}
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -45,7 +45,7 @@ public abstract class ExceptionFactory
 	}
 
 	/**
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link CheckedException}
@@ -80,7 +80,7 @@ public abstract class ExceptionFactory
 
 	/**
 	 * @param cause the cause of this {@link CheckedException}
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link CheckedException}
@@ -101,7 +101,7 @@ public abstract class ExceptionFactory
 	}
 
 	/**
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link UncheckedException}
@@ -136,7 +136,7 @@ public abstract class ExceptionFactory
 
 	/**
 	 * @param cause the cause of this {@link UncheckedException}
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link UncheckedException}

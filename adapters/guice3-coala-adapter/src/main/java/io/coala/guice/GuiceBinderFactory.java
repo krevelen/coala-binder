@@ -18,6 +18,7 @@ package io.coala.guice;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.logging.log4j.Logger;
 
@@ -28,7 +29,6 @@ import io.coala.agent.AgentStatusUpdate;
 import io.coala.agent.BasicAgentStatus;
 import io.coala.bind.BinderFactory;
 import io.coala.bind.BinderFactoryConfig;
-import io.coala.exception.CoalaExceptionFactory;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import rx.Observable;
@@ -132,10 +132,7 @@ public class GuiceBinderFactory implements BinderFactory
 				LOG.warn( "UNEXPECTED: re-using binder for: " + agentID );
 			return cached;
 		}
-		if( getConfig() == null ) { throw CoalaExceptionFactory.VALUE_NOT_CONFIGURED
-				.createRuntime( "config",
-						"use BinderFactory#initialize(BinderFactoryConfig)" ); }
-
+		Objects.requireNonNull( getConfig() );
 		final AgentStatusUpdate defaultValue = new AgentStatusUpdate()
 		{
 
@@ -154,7 +151,7 @@ public class GuiceBinderFactory implements BinderFactory
 			@Override
 			public String toString()
 			{
-				return JsonUtil.toString( this );
+				return JsonUtil.stringify( this );
 			}
 		};
 

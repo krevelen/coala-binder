@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/main/java/com/almende/coala/eve/EveAgentManager.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 543357c10325d0fda120f6997e43b31b2383c5e3 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve3;
 
@@ -32,16 +27,13 @@ import io.coala.agent.AgentID;
 import io.coala.agent.AgentStatus;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 
 /**
  * {@link EveAgentManager}
  * 
- * @date $Date: 2014-07-08 12:11:12 +0200 (Tue, 08 Jul 2014) $
- * @version $Revision: 324 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class EveAgentManager extends AbstractAgentManager
 {
@@ -55,12 +47,10 @@ public class EveAgentManager extends AbstractAgentManager
 
 	/**
 	 * @return the singleton {@link EveAgentManager}
-	 * @throws CoalaException
 	 */
 	public synchronized static EveAgentManager getInstance()
 	{
-		if (INSTANCE == null)
-			return getInstance((String) null);
+		if( INSTANCE == null ) return getInstance( (String) null );
 
 		return INSTANCE;
 	}
@@ -68,21 +58,19 @@ public class EveAgentManager extends AbstractAgentManager
 	/**
 	 * @param configPath or {@code null} for default config
 	 * @return the singleton {@link EveAgentManager}
-	 * @throws CoalaException
 	 */
-	public synchronized static EveAgentManager getInstance(
-			final String configPath)
+	public synchronized static EveAgentManager
+		getInstance( final String configPath )
 	{
-		if (INSTANCE == null)
-			try
-			{
-				INSTANCE = getInstance(
-						BinderFactory.Builder.fromFile(configPath));
-			} catch (final CoalaException e)
-			{
-				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime(e,
-						"configPath", configPath);
-			}
+		if( INSTANCE == null ) try
+		{
+			INSTANCE = getInstance(
+					BinderFactory.Builder.fromFile( configPath ) );
+		} catch( final Exception e )
+		{
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem with config at {}", configPath );
+		}
 
 		return INSTANCE;
 	}
@@ -91,11 +79,12 @@ public class EveAgentManager extends AbstractAgentManager
 	 * @param binder
 	 * @return
 	 */
-	public synchronized static EveAgentManager getInstance(final Binder binder)
+	public synchronized static EveAgentManager
+		getInstance( final Binder binder )
 	{
-		if (INSTANCE == null)
+		if( INSTANCE == null )
 		{
-			INSTANCE = new EveAgentManager(binder);
+			INSTANCE = new EveAgentManager( binder );
 
 			INSTANCE.bootAgents();
 		}
@@ -106,14 +95,13 @@ public class EveAgentManager extends AbstractAgentManager
 	/**
 	 * @param binderFactoryBuilder or {@code null} for default config
 	 * @return the singleton {@link EveAgentManager}
-	 * @throws CoalaException
 	 */
-	public synchronized static EveAgentManager getInstance(
-			final BinderFactory.Builder binderFactoryBuilder)
+	public synchronized static EveAgentManager
+		getInstance( final BinderFactory.Builder binderFactoryBuilder )
 	{
-		if (INSTANCE == null)
+		if( INSTANCE == null )
 		{
-			INSTANCE = new EveAgentManager(binderFactoryBuilder);
+			INSTANCE = new EveAgentManager( binderFactoryBuilder );
 
 			INSTANCE.bootAgents();
 		}
@@ -125,16 +113,17 @@ public class EveAgentManager extends AbstractAgentManager
 
 	/** */
 	private final Map<AgentID, List<URI>> agentURLs = Collections
-			.synchronizedMap(new HashMap<AgentID, List<URI>>());
+			.synchronizedMap( new HashMap<AgentID, List<URI>>() );
 
 	/**
 	 * {@link EveAgentManager} constructor
 	 * 
 	 * @param binderFactoryBuilder
 	 */
-	protected EveAgentManager(final BinderFactory.Builder binderFactoryBuilder)
+	protected EveAgentManager(
+		final BinderFactory.Builder binderFactoryBuilder )
 	{
-		super(binderFactoryBuilder);
+		super( binderFactoryBuilder );
 	}
 
 	/**
@@ -142,17 +131,17 @@ public class EveAgentManager extends AbstractAgentManager
 	 * 
 	 * @param binder
 	 */
-	protected EveAgentManager(final Binder binder)
+	protected EveAgentManager( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	/* exposes the super method within this package */
 	@Override
-	protected void updateWrapperAgentStatus(final AgentID agentID,
-			final AgentStatus<?> status)
+	protected void updateWrapperAgentStatus( final AgentID agentID,
+		final AgentStatus<?> status )
 	{
-		super.updateWrapperAgentStatus(agentID, status);
+		super.updateWrapperAgentStatus( agentID, status );
 	}
 
 	/**
@@ -161,28 +150,21 @@ public class EveAgentManager extends AbstractAgentManager
 	 * @throws Exception
 	 */
 	@Override
-	protected AgentID boot(final Agent agent) throws CoalaException
+	protected AgentID boot( final Agent agent ) throws Exception
 	{
-		try
-		{
-			EveUtil.getWrapperAgent(agent.getID(), true);
-			return agent.getID();
-		} catch (final Exception e)
-		{
-			throw CoalaExceptionFactory.AGENT_CREATION_FAILED.create(e,
-					agent.getID());
-		}
+		EveUtil.getWrapperAgent( agent.getID(), true );
+		return agent.getID();
 	}
 
 	@Override
-	protected boolean delete(final AgentID agentID)
+	protected boolean delete( final AgentID agentID )
 	{
-		return super.delete(agentID);
+		return super.delete( agentID );
 	}
 
-	protected Binder getBinder(final AgentID agentID)
+	protected Binder getBinder( final AgentID agentID )
 	{
-		return super.getBinderFactory().create(agentID);
+		return super.getBinderFactory().create( agentID );
 	}
 
 	@Override
@@ -191,11 +173,11 @@ public class EveAgentManager extends AbstractAgentManager
 		// FIXME destroy/cleanup eve host somehow
 	}
 
-	protected void setExposed(final AgentID agentID, final Object exposed)
-			throws Exception
+	protected void setExposed( final AgentID agentID, final Object exposed )
+		throws Exception
 	{
-		((EveExposingAgent) EveUtil.getWrapperAgent(agentID, true))
-				.setExposed(exposed);
+		((EveExposingAgent) EveUtil.getWrapperAgent( agentID, true ))
+				.setExposed( exposed );
 	}
 
 	/**
@@ -204,25 +186,25 @@ public class EveAgentManager extends AbstractAgentManager
 	 * @param agentID
 	 * @param eveURLs
 	 */
-	protected void setAddress(final String eveId, final List<URI> eveURLs)
+	protected void setAddress( final String eveId, final List<URI> eveURLs )
 	{
-		this.agentURLs.put(EveUtil.toAgentID(eveId), eveURLs);
+		this.agentURLs.put( EveUtil.toAgentID( eveId ), eveURLs );
 	}
 
 	/**
 	 * @param agentID
 	 * @return the Eve wrapper agent's current addresses
 	 */
-	protected List<URI> getAddress(final AgentID agentID)
+	protected List<URI> getAddress( final AgentID agentID )
 	{
-		return this.agentURLs.get(agentID);
+		return this.agentURLs.get( agentID );
 	}
 
 	/**
 	 * @return
 	 */
-	protected Agent getAgent(final AgentID agentID, final boolean block)
+	protected Agent getAgent( final AgentID agentID, final boolean block )
 	{
-		return get(agentID, block);
+		return get( agentID, block );
 	}
 }

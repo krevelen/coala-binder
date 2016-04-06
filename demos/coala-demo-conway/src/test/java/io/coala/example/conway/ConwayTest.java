@@ -134,7 +134,7 @@ public class ConwayTest
 				.createLatticeLayout( binder );
 		final int total = cellStates.size() * cellStates.get( 0 ).size();
 		LOG.trace( "Initial states: " + JsonUtil
-				.toPrettyJSON( CellWorld.Util.importInitialValues( binder ) ) );
+				.toJSON( CellWorld.Util.importInitialValues( binder ) ) );
 
 		final CountDownLatch initializedLatch = new CountDownLatch( total );
 		final CountDownLatch completedLatch = new CountDownLatch( total );

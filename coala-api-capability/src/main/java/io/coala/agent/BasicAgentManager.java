@@ -1,7 +1,4 @@
-/* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/interpreter/InterpreterAgentManager.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
+/* $Id: 3de53a3f9a729f49ee88b0cf3f69e2bcc20eeae7 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,41 +12,31 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.agent;
 
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 
 /**
  * {@link BasicAgentManager}
  * 
- * @date $Date: 2014-08-12 12:56:22 +0200 (Tue, 12 Aug 2014) $
- * @version $Revision: 360 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class BasicAgentManager extends AbstractAgentManager
 {
-
-	/** */
-//	private static final Logger LOG = LogUtil
-//			.getLogger(InterfaceAgentManager.class);
 
 	/** */
 	private static BasicAgentManager INSTANCE;
 
 	/**
 	 * @return the singleton {@link BasicAgentManager}
-	 * @throws CoalaException
 	 */
 	public synchronized static BasicAgentManager getInstance()
 	{
-		if (INSTANCE == null)
-			return getInstance((String) null);
+		if( INSTANCE == null ) return getInstance( (String) null );
 
 		return INSTANCE;
 	}
@@ -57,21 +44,19 @@ public class BasicAgentManager extends AbstractAgentManager
 	/**
 	 * @param configPath or {@code null} for default config
 	 * @return the singleton {@link BasicAgentManager}
-	 * @throws CoalaException
 	 */
-	public synchronized static BasicAgentManager getInstance(
-			final String configPath)
+	public synchronized static BasicAgentManager
+		getInstance( final String configPath )
 	{
-		if (INSTANCE == null)
-			try
-			{
-				INSTANCE = getInstance(BinderFactory.Builder
-						.fromFile(configPath));
-			} catch (final CoalaException e)
-			{
-				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime(e,
-						"configPath", configPath);
-			}
+		if( INSTANCE == null ) try
+		{
+			INSTANCE = getInstance(
+					BinderFactory.Builder.fromFile( configPath ) );
+		} catch( final Exception e )
+		{
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem reading config from {}", configPath );
+		}
 
 		return INSTANCE;
 	}
@@ -80,12 +65,12 @@ public class BasicAgentManager extends AbstractAgentManager
 	 * @param binder
 	 * @return
 	 */
-	public synchronized static BasicAgentManager getInstance(
-			final Binder binder)
+	public synchronized static BasicAgentManager
+		getInstance( final Binder binder )
 	{
-		if (INSTANCE == null)
+		if( INSTANCE == null )
 		{
-			INSTANCE = new BasicAgentManager(binder);
+			INSTANCE = new BasicAgentManager( binder );
 
 			INSTANCE.bootAgents();
 		}
@@ -96,14 +81,13 @@ public class BasicAgentManager extends AbstractAgentManager
 	/**
 	 * @param binderFactoryBuilder or {@code null} for default config
 	 * @return the singleton {@link BasicAgentManager}
-	 * @throws CoalaException
 	 */
-	public synchronized static BasicAgentManager getInstance(
-			final BinderFactory.Builder binderFactoryBuilder)
+	public synchronized static BasicAgentManager
+		getInstance( final BinderFactory.Builder binderFactoryBuilder )
 	{
-		if (INSTANCE == null)
+		if( INSTANCE == null )
 		{
-			INSTANCE = new BasicAgentManager(binderFactoryBuilder);
+			INSTANCE = new BasicAgentManager( binderFactoryBuilder );
 
 			INSTANCE.bootAgents();
 		}
@@ -117,9 +101,9 @@ public class BasicAgentManager extends AbstractAgentManager
 	 * @param binderFactoryBuilder
 	 */
 	protected BasicAgentManager(
-			final BinderFactory.Builder binderFactoryBuilder)
+		final BinderFactory.Builder binderFactoryBuilder )
 	{
-		super(binderFactoryBuilder);
+		super( binderFactoryBuilder );
 	}
 
 	/**
@@ -127,18 +111,17 @@ public class BasicAgentManager extends AbstractAgentManager
 	 * 
 	 * @param binder
 	 */
-	protected BasicAgentManager(final Binder binder)
+	protected BasicAgentManager( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	/**
 	 * @param agent
 	 * @return the {@link EveWrapperAgent} for the created agent
-	 * @throws Exception
 	 */
 	@Override
-	protected AgentID boot(final Agent agent) throws CoalaException
+	protected AgentID boot( final Agent agent )
 	{
 		// LOG.warn("Oops !", new IllegalStateException("NOT IMPLEMENTED"));
 		return agent.getID();

@@ -30,8 +30,7 @@ import org.apache.logging.log4j.Logger;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.bind.BinderFactoryConfig;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.lifecycle.ActivationType;
 import io.coala.lifecycle.LifeCycle;
 import io.coala.lifecycle.LifeCycleHooks;
@@ -98,8 +97,6 @@ public abstract class AbstractAgentManager implements AgentManager
 
 	/**
 	 * {@link AbstractAgentManager} constructor
-	 * 
-	 * @throws CoalaException
 	 */
 	protected AbstractAgentManager(
 		final BinderFactory.Builder binderFactoryBuilder )
@@ -113,8 +110,6 @@ public abstract class AbstractAgentManager implements AgentManager
 
 	/**
 	 * {@link AbstractAgentManager} constructor
-	 * 
-	 * @throws CoalaException
 	 */
 	protected AbstractAgentManager( final Binder binder )
 	{
@@ -299,11 +294,9 @@ public abstract class AbstractAgentManager implements AgentManager
 			final Agent agent = get( agentID, false );
 			if( agent == null )
 			{
-				LOG.warn(
-						"Agent already deleted, ignoring state update: "
-								+ update.getStatus(),
-						CoalaExceptionFactory.AGENT_NOT_ALLOWED
-								.create( agentID ) );
+				LOG.warn( "Agent already deleted, ignoring state update: {}",
+						update.getStatus(), ExceptionFactory
+								.createUnchecked( "Not allowed {}", agentID ) );
 				return;
 			}
 			if( update.getStatus().isCompleteStatus() )
@@ -371,8 +364,6 @@ public abstract class AbstractAgentManager implements AgentManager
 
 	/**
 	 * create the agents specified for launch at startup
-	 * 
-	 * @throws CoalaException
 	 */
 	protected void bootAgents()
 	{
@@ -410,7 +401,7 @@ public abstract class AbstractAgentManager implements AgentManager
 		if( agentID == null )
 		{
 			LOG.warn( "Ignoring status update",
-					CoalaExceptionFactory.VALUE_NOT_SET.create( "agentID" ) );
+					ExceptionFactory.createUnchecked( "agentID not set" ) );
 			return;
 		}
 
@@ -546,8 +537,8 @@ public abstract class AbstractAgentManager implements AgentManager
 		boot( final AgentID agentID, final Class<? extends Agent> agentType )
 	{
 		if( agentID == null || agentID.getValue().isEmpty() )
-			return Observable.error( CoalaExceptionFactory.VALUE_NOT_SET.create(
-					"agentID", "Must specify the agentID when booting" ) );
+			return Observable.error( ExceptionFactory.createUnchecked(
+					"Must specify the agentID when booting" ) );
 
 		if( isCreated( agentID ) )
 		{
@@ -629,9 +620,9 @@ public abstract class AbstractAgentManager implements AgentManager
 	/**
 	 * @param agent the (pre-cached) {@link Agent} to boot
 	 * @return the agent's {@link AgentID}
-	 * @throws CoalaException if agent wrapping failed
+	 * @throws Exception if agent wrapping failed
 	 */
-	protected abstract AgentID boot( Agent agent ) throws CoalaException;
+	protected abstract AgentID boot( Agent agent ) throws Exception;
 
 	protected abstract void shutdown();
 
