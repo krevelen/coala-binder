@@ -16,7 +16,12 @@
 package io.coala.math3;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
+
+import javax.measure.quantity.Quantity;
+import javax.measure.unit.Unit;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
 import org.apache.commons.math3.distribution.BinomialDistribution;
@@ -44,10 +49,18 @@ import org.apache.commons.math3.distribution.UniformIntegerDistribution;
 import org.apache.commons.math3.distribution.UniformRealDistribution;
 import org.apache.commons.math3.distribution.WeibullDistribution;
 import org.apache.commons.math3.distribution.ZipfDistribution;
+import org.apache.commons.math3.fitting.GaussianCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.random.EmpiricalDistribution;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.util.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionBuilder;
+import io.coala.math.FrequencyDistribution;
+import io.coala.math.ValueWeight;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.RandomNumberStream;
 
@@ -115,18 +128,27 @@ public abstract class Math3ProbabilityDistribution<S>
 		};
 	}
 
-	public static <T> List<Pair<T, Double>> toPropabilityMassFunction(
-		final List<ProbabilityMass<T, ?>> probabilities )
+	/**
+	 * @param valueWeights the {@link List} of {@link ValueWeight}s
+	 * @return a probability mass function as {@link List} of {@link Pair}s
+	 */
+	public static <T> List<Pair<T, Double>>
+		toPropabilityMassFunction( final List<ValueWeight<T, ?>> valueWeights )
 	{
 		final List<Pair<T, Double>> pmf = new ArrayList<>();
-		if( probabilities == null || probabilities.isEmpty() )
+		if( valueWeights == null || valueWeights.isEmpty() )
 			throw ExceptionBuilder.unchecked( "Must have some value(s)" )
 					.build();
-		for( ProbabilityMass<T, ?> p : probabilities )
-			pmf.add( Pair.create( p.getValue(), p.getMass().doubleValue() ) );
+		for( ValueWeight<T, ?> p : valueWeights )
+			pmf.add( Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
 		return pmf;
 	}
 
+	/**
+	 * @param <T> the type of value
+	 * @param values the value array
+	 * @return a probability mass function as {@link List} of {@link Pair}s
+	 */
 	@SuppressWarnings( "unchecked" )
 	public static <T> List<Pair<T, Double>>
 		toPropabilityMassFunction( final T... values )
@@ -139,6 +161,23 @@ public abstract class Math3ProbabilityDistribution<S>
 			pmf.add( Pair.create( value, w ) );
 		return pmf;
 	}
+
+	@SuppressWarnings( "unchecked" )
+	public static <T extends Number> double[] toDoubles( final T... values )
+	{
+		final double[] result = new double[values.length];
+		int i = 0;
+		for( T value : values )
+			result[i++] = value.doubleValue();
+		return result;
+	}
+
+	// TODO wavelets, e.g.https://github.com/cscheiblich/JWave
+
+//	void fitHarmonic( Number initialAmplitude,
+//		Number initialAngularFrequency, Number initialPhase );
+//
+//	void fitPolynomial( Number... initialCoefficients );
 
 	/**
 	 * {@link Factory} creates {@link ProbabilityDistribution}s implemented by
@@ -155,11 +194,13 @@ public abstract class Math3ProbabilityDistribution<S>
 			return new Factory( stream );
 		}
 
+		/** the {@link RandomNumberStream} wrapping {@link #rng} */
 		private final RandomNumberStream stream;
 
+		/** the Math3 {@link RandomGenerator} */
 		private final RandomGenerator rng;
 
-		public Factory( final RandomNumberStream stream )
+		protected Factory( final RandomNumberStream stream )
 		{
 			this.stream = stream;
 			this.rng = Math3RandomNumberStream.toRandomGenerator( stream );
@@ -172,37 +213,37 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public <T> ProbabilityDistribution<T> getConstant( final T constant )
+		public <T> ProbabilityDistribution<T>
+			createDeterministic( final T constant )
 		{
-			return ProbabilityDistribution.Util.asConstant( constant );
+			return ProbabilityDistribution.Util.createDeterministic( constant );
 		}
 
 		@Override
-		public ProbabilityDistribution<Long> getBinomial( final Number trials,
-			final Number p )
+		public ProbabilityDistribution<Long>
+			createBinomial( final Number trials, final Number p )
 		{
 			return wrap( new BinomialDistribution( this.rng, trials.intValue(),
 					p.doubleValue() ) );
 		}
 
 		@Override
-		public <T> ProbabilityDistribution<T> getCategorical(
-
-			final List<ProbabilityMass<T, ?>> probabilities )
+		public <T> ProbabilityDistribution<T>
+			createCategorical( final List<ValueWeight<T, ?>> probabilities )
 		{
 			return wrap( new EnumeratedDistribution<T>( this.rng,
 					toPropabilityMassFunction( probabilities ) ) );
 		}
 
 		@Override
-		public ProbabilityDistribution<Long> getGeometric( final Number p )
+		public ProbabilityDistribution<Long> createGeometric( final Number p )
 		{
 			return wrap(
 					new GeometricDistribution( this.rng, p.doubleValue() ) );
 		}
 
 		@Override
-		public ProbabilityDistribution<Long> getHypergeometric(
+		public ProbabilityDistribution<Long> createHypergeometric(
 			final Number populationSize, final Number numberOfSuccesses,
 			final Number sampleSize )
 		{
@@ -212,7 +253,7 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public ProbabilityDistribution<Long> getPascal( final Number r,
+		public ProbabilityDistribution<Long> createPascal( final Number r,
 			final Number p )
 		{
 			return wrap( new PascalDistribution( this.rng, r.intValue(),
@@ -220,7 +261,7 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public ProbabilityDistribution<Long> getPoisson( final Number mean )
+		public ProbabilityDistribution<Long> createPoisson( final Number mean )
 		{
 			return wrap( new PoissonDistribution( this.rng, mean.doubleValue(),
 					PoissonDistribution.DEFAULT_EPSILON,
@@ -229,14 +270,14 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public ProbabilityDistribution<Long>
-			getZipf( final Number numberOfElements, final Number exponent )
+			createZipf( final Number numberOfElements, final Number exponent )
 		{
 			return wrap( new ZipfDistribution( this.rng,
 					numberOfElements.intValue(), exponent.doubleValue() ) );
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getBeta( final Number alpha,
+		public ProbabilityDistribution<Double> createBeta( final Number alpha,
 			final Number beta )
 		{
 			return wrap( new BetaDistribution( this.rng, alpha.doubleValue(),
@@ -244,8 +285,8 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getCauchy( final Number median,
-			final Number scale )
+		public ProbabilityDistribution<Double>
+			createCauchy( final Number median, final Number scale )
 		{
 			return wrap( new CauchyDistribution( this.rng, median.doubleValue(),
 					scale.doubleValue() ) );
@@ -253,7 +294,7 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public ProbabilityDistribution<Double>
-			getChiSquared( final Number degreesOfFreedom )
+			createChiSquared( final Number degreesOfFreedom )
 		{
 			return wrap( new ChiSquaredDistribution( this.rng,
 					degreesOfFreedom.doubleValue() ) );
@@ -261,14 +302,25 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public ProbabilityDistribution<Double>
-			getExponential( final Number mean )
+			createExponential( final Number mean )
 		{
 			return wrap( new ExponentialDistribution( this.rng,
 					mean.doubleValue() ) );
 		}
 
+		@SuppressWarnings( "unchecked" )
 		@Override
-		public ProbabilityDistribution<Double> getF(
+		public <T extends Number> ProbabilityDistribution<Double>
+			createEmpirical( final T... values )
+		{
+			final EmpiricalDistribution result = new EmpiricalDistribution(
+					values.length / 10, this.rng );
+			result.load( toDoubles( values ) );
+			return wrap( result );
+		}
+
+		@Override
+		public ProbabilityDistribution<Double> createF(
 			final Number numeratorDegreesOfFreedom,
 			final Number denominatorDegreesOfFreedom )
 		{
@@ -278,7 +330,7 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getGamma( final Number shape,
+		public ProbabilityDistribution<Double> createGamma( final Number shape,
 			final Number scale )
 		{
 			return wrap( new GammaDistribution( this.rng, shape.doubleValue(),
@@ -286,7 +338,7 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getLevy( final Number mu,
+		public ProbabilityDistribution<Double> createLevy( final Number mu,
 			final Number c )
 		{
 			return wrap( new LevyDistribution( this.rng, mu.doubleValue(),
@@ -294,15 +346,15 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getLogNormal( final Number scale,
-			final Number shape )
+		public ProbabilityDistribution<Double>
+			createLogNormal( final Number scale, final Number shape )
 		{
 			return wrap( new LogNormalDistribution( this.rng,
 					scale.doubleValue(), shape.doubleValue() ) );
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getNormal( final Number mean,
+		public ProbabilityDistribution<Double> createNormal( final Number mean,
 			final Number sd )
 		{
 			return wrap( new NormalDistribution( this.rng, mean.doubleValue(),
@@ -310,15 +362,15 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public ProbabilityDistribution<double[]>
-			getMultinormal( final double[] means, final double[][] covariances )
+		public ProbabilityDistribution<double[]> createMultinormal(
+			final double[] means, final double[][] covariances )
 		{
 			return wrap( new MultivariateNormalDistribution( this.rng, means,
 					covariances ) );
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getPareto( final Number scale,
+		public ProbabilityDistribution<Double> createPareto( final Number scale,
 			final Number shape )
 		{
 			return wrap( new ParetoDistribution( this.rng, scale.doubleValue(),
@@ -327,14 +379,14 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public ProbabilityDistribution<Double>
-			getT( final Number degreesOfFreedom )
+			createT( final Number degreesOfFreedom )
 		{
 			return wrap( new TDistribution( this.rng,
 					degreesOfFreedom.doubleValue() ) );
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getTriangular( final Number a,
+		public ProbabilityDistribution<Double> createTriangular( final Number a,
 			final Number b, final Number c )
 		{
 			return wrap( new TriangularDistribution( this.rng, a.doubleValue(),
@@ -343,15 +395,15 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public ProbabilityDistribution<Double>
-			getUniformContinuous( final Number lower, final Number upper )
+			createUniformContinuous( final Number lower, final Number upper )
 		{
 			return wrap( new UniformRealDistribution( this.rng,
 					lower.doubleValue(), upper.doubleValue() ) );
 		}
 
 		@Override
-		public ProbabilityDistribution<Double> getWeibull( final Number alpha,
-			final Number beta )
+		public ProbabilityDistribution<Double>
+			createWeibull( final Number alpha, final Number beta )
 		{
 			return wrap( new WeibullDistribution( this.rng, alpha.doubleValue(),
 					beta.doubleValue() ) );
@@ -359,7 +411,7 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public ProbabilityDistribution<Long>
-			getUniformDiscrete( final Number lower, final Number upper )
+			createUniformDiscrete( final Number lower, final Number upper )
 		{
 			return wrap( new UniformIntegerDistribution( this.rng,
 					lower.intValue(), upper.intValue() ) );
@@ -368,10 +420,71 @@ public abstract class Math3ProbabilityDistribution<S>
 		@SuppressWarnings( "unchecked" )
 		@Override
 		public <T> ProbabilityDistribution<T>
-			getUniformCategorical( final T... values )
+			createUniformCategorical( final T... values )
 		{
 			return wrap( new EnumeratedDistribution<T>( this.rng,
 					toPropabilityMassFunction( values ) ) );
 		}
+	}
+
+	/**
+	 * {@link Fitter}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	public static class Fitter implements ProbabilityDistribution.Fitter
+	{
+
+		public static Fitter of( final RandomNumberStream stream )
+		{
+			return of( Factory.of( stream ) );
+		}
+
+		public static Fitter of( final ProbabilityDistribution.Factory factory )
+		{
+			return new Fitter( factory );
+		}
+
+		/** */
+		private static final Logger LOG = LogManager.getLogger( Fitter.class );
+
+		/** */
+		private final ProbabilityDistribution.Factory factory;
+
+		/**
+		 * {@link Fitter} constructor
+		 * 
+		 * @param factory the {@link ProbabilityDistribution.Factory}
+		 */
+		protected Fitter( final ProbabilityDistribution.Factory factory )
+		{
+			this.factory = factory;
+		}
+
+		@Override
+		public ProbabilityDistribution.Factory getFactory()
+		{
+			return this.factory;
+		}
+
+		public <Q extends Quantity> Arithmetic<Q> fitNormal(
+			final FrequencyDistribution.Interval<Q, ?> freq,
+			final Unit<Q> unit )
+		{
+			final WeightedObservedPoints points = new WeightedObservedPoints();
+			for( Entry<Amount<Q>, Long> entry : freq.getFrequencies()
+					.entrySet() )
+				points.add( entry.getKey().getEstimatedValue(),
+						entry.getValue().doubleValue() );
+			final double[] params = GaussianCurveFitter.create()
+					.fit( points.toList() );
+			LOG.trace( "Fitted Gaussian with parameters: [norm,mu,sd]={}",
+					Arrays.asList( params ) );
+			return Util.toArithmetic(
+					getFactory().createNormal( params[1], params[2] ), unit )
+					.times( params[0] );
+		}
+
 	}
 }
