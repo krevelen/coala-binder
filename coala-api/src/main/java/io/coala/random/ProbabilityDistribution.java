@@ -29,6 +29,7 @@ import javax.measure.unit.Unit;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.ValueWeight;
 import io.coala.util.DecimalUtil;
@@ -100,9 +101,8 @@ public interface ProbabilityDistribution<T> extends Serializable
 			final String dist, final Parser parser, final Class<P> argType )
 		{
 			final Matcher m = Parser.DISTRIBUTION_FORMAT.matcher( dist.trim() );
-			if( !m.find() ) throw ExceptionBuilder
-					.unchecked( "Problem parsing distribution: %s", dist )
-					.build();
+			if( !m.find() ) throw ExceptionFactory.createUnchecked(
+					"Problem parsing probability distribution: {}", dist );
 			final List<ValueWeight<P, ?>> params = new ArrayList<>();
 			for( String valuePair : m.group( Parser.PARAMS_GROUP )
 					.split( Parser.PARAM_SEPARATORS ) )
@@ -644,8 +644,8 @@ public interface ProbabilityDistribution<T> extends Serializable
 			public <T, V> ProbabilityDistribution<T> parse( final String label,
 				final List<ValueWeight<V, ?>> args )
 			{
-				if( args.isEmpty() ) throw ExceptionBuilder.unchecked(
-						"Missing distribution parameters: %s", label ).build();
+				if( args.isEmpty() ) throw ExceptionFactory.createUnchecked(
+						"Missing distribution parameters: {}", label );
 
 				if( getFactory() == null )
 					return (ProbabilityDistribution<T>) Util

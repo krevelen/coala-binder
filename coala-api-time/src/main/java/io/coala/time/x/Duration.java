@@ -35,7 +35,7 @@ import org.jscience.physics.amount.Amount;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.Wrapper;
 import io.coala.random.ProbabilityDistribution;
 
@@ -149,10 +149,8 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 			return unwrap().longValue( unit );
 		} catch( final Throwable t )
 		{
-			throw ExceptionBuilder
-					.unchecked( "Could not convert "
-							+ unwrap().getUnit().getClass() + " to " + unit, t )
-					.build();
+			throw ExceptionFactory.createUnchecked(
+					"Could not convert {} to {}", unwrap().getUnit(), unit, t );
 		}
 	}
 

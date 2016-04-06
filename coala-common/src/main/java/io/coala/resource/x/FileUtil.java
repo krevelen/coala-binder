@@ -27,10 +27,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Objects;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 
 /**
@@ -106,8 +107,7 @@ public class FileUtil // implements Util
 			return toInputStream( path.toURL() );
 		} catch( final MalformedURLException e )
 		{
-			throw ExceptionBuilder.unchecked( "ILLEGAL: uri " + path, e )
-					.build();
+			throw ExceptionFactory.createUnchecked( e, "Illegal URI {}", path );
 		}
 	}
 
@@ -131,14 +131,13 @@ public class FileUtil // implements Util
 	public static InputStream toInputStream( final String path )
 		throws IOException
 	{
-		if( path == null )
-			throw ExceptionBuilder.unchecked( "NOT SET: path" ).build();
+		Objects.requireNonNull( path );
 
 		final File file = new File( path );
 		if( file.exists() )
 		{
-			LOG.trace( "Found '" + path + "' at location: "
-					+ file.getAbsolutePath() );
+			LOG.trace( "Found '{}' at location: {}", path,
+					file.getAbsolutePath() );
 
 			// if (path.exists() && path.isFile())
 			return new FileInputStream( file );
@@ -191,22 +190,21 @@ public class FileUtil // implements Util
 	public static OutputStream toOutputStream( final File file,
 		final boolean append )
 	{
-		if( file == null )
-			throw ExceptionBuilder.unchecked( "NOT SET: file" ).build();
+		Objects.requireNonNull( file );
 
 		try
 		{
 			if( file.createNewFile() )
-				LOG.info( "Created '" + file.getName() + "' at location: "
-						+ file.getAbsolutePath() );
+				LOG.info( "Created '{}' at location: {}", file.getName(),
+						file.getAbsolutePath() );
 			else
-				LOG.debug( "Found '" + file.getName() + "' at location: "
-						+ file.getAbsolutePath() );
+				LOG.debug( "Found '{}' at location: {}", file.getName(),
+						file.getAbsolutePath() );
 			return new FileOutputStream( file, append );
 		} catch( final IOException e )
 		{
-			throw ExceptionBuilder.unchecked( "NOT AVAILABLE: file " + file, e )
-					.build();
+			throw ExceptionFactory.createUnchecked( e, "Problem opening {}",
+					file );
 		}
 	}
 

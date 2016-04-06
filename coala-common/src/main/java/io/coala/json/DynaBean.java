@@ -68,7 +68,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 
 /**
@@ -466,14 +466,13 @@ public class DynaBean implements Cloneable
 				return null;
 			}
 
-			throw ExceptionBuilder
-					.unchecked( DynaBean.class.getSimpleName() + " ("
-							+ (method.getReturnType().isPrimitive()
-									? "primitive" : "complex")
-							+ ") value not set: " + this.type.getSimpleName()
-							+ "#" + beanProp + "(" + Arrays.asList( args )
-							+ ")" )
-					.build();
+			throw ExceptionFactory.createUnchecked(
+					"{} ({}) value not set: {}#{}({})",
+					DynaBean.class.getSimpleName(),
+					method.getReturnType().isPrimitive() ? "primitive"
+							: "complex",
+					this.type.getSimpleName(), beanProp,
+					Arrays.asList( args ) );
 		}
 	}
 
@@ -669,11 +668,9 @@ public class DynaBean implements Cloneable
 							bean.set( fieldName, tree.get( fieldName ) );
 					}
 				} else
-					throw ExceptionBuilder
-							.unchecked( "Expected " + resultType.getName()
-									+ " but parsed: "
-									+ tree.getClass().getSimpleName() )
-							.build();
+					throw ExceptionFactory.createUnchecked(
+							"Expected {} but parsed: {}", resultType,
+							tree.getClass() );
 
 				return DynaBean.proxyOf( om, resultType, bean, imports );
 			}

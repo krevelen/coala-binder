@@ -50,7 +50,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.name.x.Id;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;
@@ -472,9 +472,8 @@ public interface Wrapper<T>
 				return of( value, result );
 			} catch( final Throwable e )
 			{
-				throw ExceptionBuilder
-						.unchecked( "Problem reading value: " + json, e )
-						.build();
+				throw ExceptionFactory.createUnchecked(
+						"Problem reading value: {}", json, e );
 			}
 		}
 

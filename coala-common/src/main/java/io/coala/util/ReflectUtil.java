@@ -6,7 +6,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 
 /**
  * {@link ReflectUtil}
@@ -66,11 +66,10 @@ public class ReflectUtil implements Util
 					constructor.setAccessible( true );
 				return (Constructor<T>) constructor;
 			}
-			throw ExceptionBuilder.unchecked(
+			throw ExceptionFactory.createUnchecked(
 					"No matching public constructor found for {}{}", valueType,
 					argTypes == null ? Collections.emptyList()
-							: Arrays.asList( argTypes ) )
-					.build();
+							: Arrays.asList( argTypes ) );
 		}
 	}
 

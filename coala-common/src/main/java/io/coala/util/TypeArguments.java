@@ -24,10 +24,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionBuilder;
 import io.coala.log.LogUtil;
 
 /**
@@ -66,11 +66,8 @@ public class TypeArguments
 		final Class<T> genericAncestorType,
 		final Class<S> concreteDescendantType )
 	{
-		// sanity check
-		if( genericAncestorType == null ) throw ExceptionBuilder
-				.unchecked( "NOT SET: genericAncestorType" ).build();
-		if( concreteDescendantType == null ) throw ExceptionBuilder
-				.unchecked( "NOT SET: concreteDescendantType" ).build();
+		Objects.requireNonNull( genericAncestorType );
+		Objects.requireNonNull( concreteDescendantType );
 
 		final Map<Type, Type> resolvedTypes = new HashMap<Type, Type>();
 		Type type = concreteDescendantType;

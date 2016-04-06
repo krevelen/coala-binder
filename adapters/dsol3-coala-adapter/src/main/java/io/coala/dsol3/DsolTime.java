@@ -26,7 +26,7 @@ import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
 import io.coala.time.x.Instant;
@@ -97,8 +97,8 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 		case UNIT:
 			return Unit.ONE;
 		default:
-			throw ExceptionBuilder.unchecked( "Unsupported unit: " + unit )
-					.build();
+			throw ExceptionFactory
+					.createUnchecked( "Unsupported unit: " + unit );
 		}
 	}
 
@@ -114,8 +114,8 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 			return valueOf( TimeSpan.of( (Number) time.get() ) );
 		} catch( final Throwable t )
 		{
-			throw ExceptionBuilder
-					.unchecked( t, "Problem converting time: ", time ).build();
+			throw ExceptionFactory.createUnchecked( t,
+					"Problem converting time: ", time );
 		}
 	}
 

@@ -58,7 +58,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.ValueWeight;
 import io.coala.random.ProbabilityDistribution;
@@ -137,8 +137,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	{
 		final List<Pair<T, Double>> pmf = new ArrayList<>();
 		if( valueWeights == null || valueWeights.isEmpty() )
-			throw ExceptionBuilder.unchecked( "Must have some value(s)" )
-					.build();
+			throw ExceptionFactory.createUnchecked( "Must have some value(s)" );
 		for( ValueWeight<T, ?> p : valueWeights )
 			pmf.add( Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
 		return pmf;
@@ -155,8 +154,8 @@ public abstract class Math3ProbabilityDistribution<S>
 	{
 		final Double w = Double.valueOf( 1d );
 		final List<Pair<T, Double>> pmf = new ArrayList<>();
-		if( values == null || values.length == 0 ) throw ExceptionBuilder
-				.unchecked( "Must have some value(s)" ).build();
+		if( values == null || values.length == 0 )
+			throw ExceptionFactory.createUnchecked( "Must have some value(s)" );
 		for( T value : values )
 			pmf.add( Pair.create( value, w ) );
 		return pmf;
