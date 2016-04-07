@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 
+import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 
@@ -73,7 +74,7 @@ import io.coala.random.RandomNumberStream;
  */
 @SuppressWarnings( "serial" )
 public abstract class Math3ProbabilityDistribution<S>
-	implements ProbabilityDistribution<S>
+	extends ProbabilityDistribution<S>
 {
 
 	public static <T> Math3ProbabilityDistribution<T>
@@ -208,7 +209,7 @@ public abstract class Math3ProbabilityDistribution<S>
 		public <T> ProbabilityDistribution<T>
 			createDeterministic( final T constant )
 		{
-			return ProbabilityDistribution.Util.createDeterministic( constant );
+			return ProbabilityDistribution.createDeterministic( constant );
 		}
 
 		@Override
@@ -465,17 +466,17 @@ public abstract class Math3ProbabilityDistribution<S>
 			final Unit<Q> unit )
 		{
 			final WeightedObservedPoints points = new WeightedObservedPoints();
-			for( Entry<Amount<Q>, Long> entry : freq.getFrequencies()
-					.entrySet() )
+			for( Entry<Amount<Q>, Amount<Dimensionless>> entry : freq
+					.toProportions( Unit.ONE ).entrySet() )
 				points.add( entry.getKey().getEstimatedValue(),
-						entry.getValue().doubleValue() );
+						entry.getValue().getEstimatedValue() );
 			final double[] params = GaussianCurveFitter.create()
 					.fit( points.toList() );
 			LOG.trace( "Fitted Gaussian with parameters: [norm,mu,sd]={}",
 					Arrays.asList( params ) );
-			return Util.toMeasure(
+			return toArithmetic(
 					getFactory().createNormal( params[1], params[2] ), unit )
-					.times( params[0] );
+							.times( params[0] );
 		}
 
 	}

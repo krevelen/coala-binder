@@ -7,6 +7,7 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
+import io.coala.util.Compare;
 import io.coala.util.DecimalUtil;
 import io.coala.util.Util;
 
@@ -34,5 +35,10 @@ public class MeasureUtil implements Util
 						&& DecimalUtil.isExact( (BigDecimal) value )) )
 			return Amount.valueOf( value.longValue(), unit );
 		return Amount.valueOf( value.doubleValue(), unit );
+	}
+
+	public static boolean isNegative( final Amount<?> amount )
+	{
+		return !Compare.eq( amount, amount.abs() );
 	}
 }

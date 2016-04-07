@@ -1,6 +1,5 @@
 package io.coala.math;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -8,11 +7,14 @@ import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.measure.Measurable;
+import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
+import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.util.Compare;
 
 /**
  * {@link FrequencyDistribution} counts phenomena with a
@@ -29,19 +31,24 @@ import io.coala.exception.ExceptionFactory;
 public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, THIS>>
 {
 
-	Long getSumFrequency();
+	Amount<Dimensionless> getSumFrequency();
 
 	T getMode();
 
-	Map<T, Long> getFrequencies();
-
-	Long frequencyOf( T phenomenon );
-
-	Double proportionOf( T phenomenon );
-
 	Iterable<T> uniqueValues();
 
-	THIS add( T phenomenon, Long count );
+	Map<T, Amount<Dimensionless>> getFrequencies();
+
+	Amount<Dimensionless> frequencyOf( T phenomenon );
+
+	Amount<Dimensionless> proportionOf( T phenomenon,
+		Unit<Dimensionless> unit );
+
+	Map<T, Amount<Dimensionless>> toProportions( Unit<Dimensionless> unit );
+
+	THIS add( T phenomenon, long count );
+
+	THIS add( T phenomenon, Amount<Dimensionless> count );
 
 	THIS add( T phenomenon );
 
@@ -72,13 +79,21 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		Range<T> getRange();
 
 		@Override
-		NavigableMap<T, Long> getFrequencies();
+		NavigableMap<T, Amount<Dimensionless>> getFrequencies();
 
-		NavigableMap<T, Long> getCumulatives();
+		@Override
+		NavigableMap<T, Amount<Dimensionless>>
+			toProportions( Unit<Dimensionless> unit );
 
-		Long cumulativeFrequencyOf( T phenomenon );
+		NavigableMap<T, Amount<Dimensionless>> getCumulatives();
 
-		Double cumulativeProportionOf( T phenomenon );
+		Amount<Dimensionless> cumulativeFrequencyOf( T phenomenon );
+
+		Amount<Dimensionless> cumulativeProportionOf( T phenomenon,
+			Unit<Dimensionless> unit );
+
+		NavigableMap<T, Amount<Dimensionless>>
+			toCumulativeProportions( Unit<Dimensionless> unit );
 
 	}
 
@@ -178,33 +193,30 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		implements FrequencyDistribution<T, THIS>
 	{
 
-		private final Map<T, Long> frequencies;
+		private final Map<T, Amount<Dimensionless>> frequencies;
 
-		private final Map<T, Long> unmodifiable;
+		private Amount<Dimensionless> sumFreq;
+
+		private Amount<Dimensionless> modeFreq;
 
 		private T mode;
 
-		private Long modeFreq;
-
-		private Long sum;
-
 		public Simple()
 		{
-			this( new HashMap<T, Long>() );
+			this( new HashMap<T, Amount<Dimensionless>>() );
 		}
 
-		protected Simple( final Map<T, Long> frequencies )
+		protected Simple( final Map<T, Amount<Dimensionless>> frequencies )
 		{
 			this.frequencies = frequencies;
 
 			// initialize mode
-			for( Entry<T, Long> entry : frequencies.entrySet() )
+			for( Entry<T, Amount<Dimensionless>> entry : frequencies
+					.entrySet() )
 			{
 				updateMode( entry.getKey(), entry.getValue() );
 				updateSum( entry.getValue() );
 			}
-
-			this.unmodifiable = Collections.unmodifiableMap( this.frequencies );
 		}
 
 		@Override
@@ -214,27 +226,39 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public Long getSumFrequency()
+		public Amount<Dimensionless> getSumFrequency()
 		{
-			return this.sum;
+			return this.sumFreq;
 		}
 
 		@Override
-		public Map<T, Long> getFrequencies()
+		public Map<T, Amount<Dimensionless>> getFrequencies()
 		{
-			return this.unmodifiable;
+			return this.frequencies;
 		}
 
 		@Override
-		public Long frequencyOf( final T phenomenon )
+		public Amount<Dimensionless> frequencyOf( final T phenomenon )
 		{
 			return getFrequencies().get( phenomenon );
 		}
 
 		@Override
-		public Double proportionOf( final T phenomenon )
+		public Amount<Dimensionless> proportionOf( final T phenomenon,
+			final Unit<Dimensionless> unit )
 		{
-			return frequencyOf( phenomenon ).doubleValue() / getSumFrequency();
+			return frequencyOf( phenomenon ).divide( getSumFrequency() )
+					.to( unit );
+		}
+
+		@Override
+		public Map<T, Amount<Dimensionless>>
+			toProportions( final Unit<Dimensionless> unit )
+		{
+			final Map<T, Amount<Dimensionless>> result = new HashMap<>();
+			for( T value : uniqueValues() )
+				result.put( value, proportionOf( value, unit ) );
+			return result;
 		}
 
 		@Override
@@ -243,43 +267,59 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 			return getFrequencies().keySet();
 		}
 
-		protected void updateMode( final T phenomenon, final Long frequency )
+		protected void updateMode( final T phenomenon,
+			final Amount<Dimensionless> frequency )
 		{
-			if( frequency <= this.modeFreq ) return;
+			if( !frequency.isLargerThan( this.modeFreq ) ) return;
 			this.mode = phenomenon;
 			this.modeFreq = frequency;
 		}
 
-		protected void updateSum( final Long addendum )
+		protected void updateSum( final Amount<Dimensionless> addendum )
 		{
-			this.sum += addendum;
+			this.sumFreq = this.sumFreq.plus( addendum );
 		}
 
-		protected synchronized void put( final T phenomenon,
-			final Long frequency, final Long delta )
+		protected void put( final T phenomenon,
+			final Amount<Dimensionless> frequency,
+			final Amount<Dimensionless> delta )
 		{
-			this.frequencies.put( phenomenon, frequency );
-			updateMode( phenomenon, frequency );
-			updateSum( delta );
+			synchronized( getFrequencies() )
+			{
+				this.frequencies.put( phenomenon, frequency );
+				updateMode( phenomenon, frequency );
+				updateSum( delta );
+			}
 		}
 
 		@Override
-		public synchronized THIS add( final T phenomenon, final Long addendum )
+		public THIS add( final T phenomenon, final Amount<Dimensionless> count )
 		{
-			if( addendum < 1L ) throw ExceptionFactory.createUnchecked(
-					"Can't add {} (=< 0) of {}", addendum, phenomenon );
+			synchronized( getFrequencies() )
+			{
+				if( MeasureUtil.isNegative( count ) ) throw ExceptionFactory
+						.createUnchecked( "Can't add count {} (< 0) of {}",
+								count, phenomenon );
 
-			final Long oldFreq = this.frequencies.get( phenomenon );
-			final Long newFreq = oldFreq == null ? addendum
-					: addendum + oldFreq;
-			put( phenomenon, newFreq, addendum );
-			return (THIS) this;
+				final Amount<Dimensionless> oldFreq = this.frequencies
+						.get( phenomenon );
+				final Amount<Dimensionless> newFreq = oldFreq == null ? count
+						: count.plus( oldFreq );
+				put( phenomenon, newFreq, count );
+				return (THIS) this;
+			}
+		}
+
+		@Override
+		public THIS add( final T phenomenon, final long count )
+		{
+			return add( phenomenon, Amount.valueOf( count, Unit.ONE ) );
 		}
 
 		@Override
 		public THIS add( final T phenomenon )
 		{
-			return add( phenomenon, 1L );
+			return add( phenomenon, Amount.ONE );
 		}
 
 		@Override
@@ -301,8 +341,8 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		@Override
 		public THIS add( final FrequencyDistribution<T, ?> frequencies )
 		{
-			for( Entry<T, Long> entry : frequencies.getFrequencies()
-					.entrySet() )
+			for( Entry<T, Amount<Dimensionless>> entry : frequencies
+					.getFrequencies().entrySet() )
 				add( entry.getKey(), entry.getValue() );
 			return (THIS) this;
 		}
@@ -340,11 +380,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		extends Simple<T, THIS> implements Ordinal<T, THIS>
 	{
 
-		private final NavigableMap<T, Long> unmodifiable;
-
-		private final NavigableMap<T, Long> cumulatives;
-
-		private final NavigableMap<T, Long> cumulativesUnmodifiable;
+		private final NavigableMap<T, Amount<Dimensionless>> cumulatives;
 
 		private Range<T> range;
 
@@ -352,17 +388,20 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		public SimpleOrdinal()
 		{
-			this( new ConcurrentSkipListMap<T, Long>() );
+			this( new ConcurrentSkipListMap<T, Amount<Dimensionless>>() );
 		}
 
-		protected SimpleOrdinal( final Map<T, Long> frequencies )
+		protected SimpleOrdinal(
+			final Map<T, Amount<Dimensionless>> frequencies )
 		{
 			this( frequencies instanceof NavigableMap
-					? (NavigableMap<T, Long>) frequencies
-					: new ConcurrentSkipListMap<T, Long>( frequencies ) );
+					? (NavigableMap<T, Amount<Dimensionless>>) frequencies
+					: new ConcurrentSkipListMap<T, Amount<Dimensionless>>(
+							frequencies ) );
 		}
 
-		protected SimpleOrdinal( final NavigableMap<T, Long> frequencies )
+		protected SimpleOrdinal(
+			final NavigableMap<T, Amount<Dimensionless>> frequencies )
 		{
 			super( frequencies );
 
@@ -373,19 +412,17 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 			this.median = null;
 
 			// initialize cumulative frequencies and median
-			this.cumulatives = new ConcurrentSkipListMap<T, Long>();
-			long cumulative = 0L;
-			for( Entry<T, Long> entry : frequencies.entrySet() )
+			this.cumulatives = new ConcurrentSkipListMap<T, Amount<Dimensionless>>();
+			Amount<Dimensionless> cumulative = Amount.ZERO;
+			for( Entry<T, Amount<Dimensionless>> entry : frequencies
+					.entrySet() )
 			{
-				cumulative += entry.getValue();
+				cumulative = cumulative.plus( entry.getValue() );
 				this.cumulatives.put( entry.getKey(), cumulative );
 			}
 
-			if( cumulative > 0L ) this.median = calcMedian();
-
-			// FIXME in JRE1.8: Collections.unmodifiableNavigableMap( m )
-			this.unmodifiable = frequencies;
-			this.cumulativesUnmodifiable = this.cumulatives;
+			if( Compare.gt( cumulative, Amount.ZERO ) )
+				this.median = calcMedian();
 		}
 
 		protected void updateRange( final T phenomenon )
@@ -399,15 +436,16 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		 * @param tail the phenomena of which to update cumulative frequencies
 		 * @param delta the difference to add
 		 */
-		protected void updateCumulatives( final NavigableMap<T, Long> tail,
-			final Long delta )
+		protected void updateCumulatives(
+			final NavigableMap<T, Amount<Dimensionless>> tail,
+			final Amount<Dimensionless> delta )
 		{
-			Long cumulative = cumulativeFrequencyOf( tail.firstKey() )
-					- frequencyOf( tail.firstKey() );
+			Amount<Dimensionless> cumulative = cumulativeFrequencyOf(
+					tail.firstKey() ).minus( frequencyOf( tail.firstKey() ) );
 			this.cumulatives.clear();
-			for( Entry<T, Long> entry : tail.entrySet() )
+			for( Entry<T, Amount<Dimensionless>> entry : tail.entrySet() )
 				this.cumulatives.put( entry.getKey(),
-						cumulative += entry.getValue() );
+						cumulative = cumulative.plus( entry.getValue() ) );
 
 			final T last = getFrequencies().lastKey();
 			if( cumulativeFrequencyOf( last )
@@ -420,34 +458,37 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		protected T calcMedian()
 		{
-			final Long semi = (getSumFrequency() + 1) / 2;
+			final Amount<Dimensionless> semi = getSumFrequency().divide( 2 );
 			T median = getCumulatives().firstKey();
-			for( Entry<T, Long> entry : getCumulatives().entrySet() )
+			for( Entry<T, Amount<Dimensionless>> entry : getCumulatives()
+					.entrySet() )
 			{
-				if( entry.getValue() > semi )
-					return median;
-				else
-					median = entry.getKey();
+				if( entry.getValue().isGreaterThan( semi ) ) return median;
+				median = entry.getKey();
 			}
 			return median;
 		}
 
 		@Override
-		protected synchronized void put( final T phenomenon,
-			final Long frequency, final Long delta )
+		protected void put( final T phenomenon,
+			final Amount<Dimensionless> frequency,
+			final Amount<Dimensionless> delta )
 		{
-			super.put( phenomenon, frequency, delta );
+			synchronized( getFrequencies() )
+			{
+				super.put( phenomenon, frequency, delta );
 
-			updateRange( phenomenon );
-			updateCumulatives( getFrequencies().tailMap( phenomenon, true ),
-					delta );
-			this.median = calcMedian();
+				updateRange( phenomenon );
+				updateCumulatives( getFrequencies().tailMap( phenomenon, true ),
+						delta );
+				this.median = calcMedian();
+			}
 		}
 
 		@Override
-		public NavigableMap<T, Long> getFrequencies()
+		public NavigableMap<T, Amount<Dimensionless>> getFrequencies()
 		{
-			return this.unmodifiable;
+			return (NavigableMap<T, Amount<Dimensionless>>) super.getFrequencies();
 		}
 
 		@Override
@@ -463,22 +504,43 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public NavigableMap<T, Long> getCumulatives()
+		public NavigableMap<T, Amount<Dimensionless>> getCumulatives()
 		{
-			return this.cumulativesUnmodifiable;
+			return this.cumulatives;
 		}
 
 		@Override
-		public Long cumulativeFrequencyOf( final T phenomenon )
+		public Amount<Dimensionless> cumulativeFrequencyOf( final T phenomenon )
 		{
 			return getCumulatives().get( phenomenon );
 		}
 
 		@Override
-		public Double cumulativeProportionOf( final T phenomenon )
+		public Amount<Dimensionless> cumulativeProportionOf( final T phenomenon,
+			final Unit<Dimensionless> unit )
 		{
-			return cumulativeFrequencyOf( phenomenon ).doubleValue()
-					/ getSumFrequency();
+			return cumulativeFrequencyOf( phenomenon )
+					.divide( getSumFrequency() ).to( unit );
+		}
+
+		@Override
+		public NavigableMap<T, Amount<Dimensionless>>
+			toProportions( final Unit<Dimensionless> unit )
+		{
+			final NavigableMap<T, Amount<Dimensionless>> result = new ConcurrentSkipListMap<>();
+			for( T value : uniqueValues() )
+				result.put( value, proportionOf( value, unit ) );
+			return result;
+		}
+
+		@Override
+		public NavigableMap<T, Amount<Dimensionless>>
+			toCumulativeProportions( final Unit<Dimensionless> unit )
+		{
+			final NavigableMap<T, Amount<Dimensionless>> result = new ConcurrentSkipListMap<>();
+			for( T value : uniqueValues() )
+				result.put( value, cumulativeProportionOf( value, unit ) );
+			return result;
 		}
 	}
 
@@ -507,19 +569,27 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		@Override
 		protected Amount<Q> calcMedian()
 		{
-			final boolean interpolate = getSumFrequency() % 2 == 0;
-			final long halfFreq = (getSumFrequency() + 1) / 2;
-			Entry<Amount<Q>, Long> prev = getCumulatives().firstEntry();
-			for( Entry<Amount<Q>, Long> entry : getCumulatives()
+			final boolean interpolate = !getSumFrequency().isExact()
+					|| getSumFrequency().getExactValue() % 2 == 0;
+			final Amount<Dimensionless> halfFreq = getSumFrequency()
+					.plus( Amount.ONE ).divide( 2 );
+			Entry<Amount<Q>, Amount<Dimensionless>> prev = getCumulatives()
+					.firstEntry();
+			for( Entry<Amount<Q>, Amount<Dimensionless>> entry : getCumulatives()
 					.tailMap( prev.getKey(), false ).entrySet() )
 			{
-				if( entry.getValue() <= halfFreq )
+				// first pass halfway for median
+				if( Compare.le( entry.getValue(), halfFreq ) )
 				{
 					prev = entry;
 					continue;
 				}
-				if( interpolate && prev != null && prev.getValue() == halfFreq )
+				// interpolate? before- and after-half entries if uneven sumfreq
+				if( interpolate && prev != null
+						&& Compare.eq( prev.getValue(), halfFreq ) )
 					return prev.getKey().plus( entry.getKey() ).divide( 2 );
+
+				// otherwise? return before/on-half entry upon passing
 				return prev.getKey();
 			}
 			return prev.getKey();
@@ -527,7 +597,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		protected Bin<Q> resolveBin( final Amount<Q> amount )
 		{
-			// FIXME create and resolve bins, incl infinite extremes?
+			// FIXME initialize and resolve bins, incl infinite extremes?
 
 			final Entry<?, Bin<Q>> floor = getBins().floorEntry( amount );
 //			Objects.requireNonNull( floor, "Amount out of range: " + amount );
@@ -540,13 +610,18 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public synchronized THIS add( final Amount<Q> value, final Long count )
+		public THIS add( final Amount<Q> value,
+			final Amount<Dimensionless> count )
 		{
-			final Bin<Q> bin = resolveBin( value );
-			super.add( bin.getKernel(), count );
-			this.sum = this.sum.plus( value.times( count ) );
-			this.mean = this.sum.divide( getSumFrequency() );
-			return (THIS) this;
+			synchronized( getFrequencies() )
+			{
+				final Bin<Q> bin = resolveBin( value );
+				super.add( bin.getKernel(), count );
+				this.sum = this.sum.plus( value.times( count ) );
+				this.mean = this.sum.divide( getSumFrequency() )
+						.to( this.sum.getUnit() );
+				return (THIS) this;
+			}
 		}
 
 		@Override
@@ -577,6 +652,6 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	class SimpleRatio<Q extends Quantity, THIS extends SimpleRatio<Q, THIS>>
 		extends SimpleInterval<Q, THIS> implements Ratio<Q, THIS>
 	{
-
+		// explicitly expose #getSum() used by SimpleInterval to calculate mean
 	}
 }

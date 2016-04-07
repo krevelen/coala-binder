@@ -1,5 +1,7 @@
 package io.coala.math;
 
+import io.coala.util.Comparison;
+
 /**
  * {@link Extreme}
  * 
@@ -36,7 +38,7 @@ public class Extreme<T extends Comparable<? super T>>
 	{
 
 		/** also has lower {@link #ordinal()} for natural ordering */
-		LOWER( Comparison.LESS ),
+		LOWER( Comparison.LESSER ),
 
 		/** also has higher {@link #ordinal()} for natural ordering */
 		UPPER( Comparison.GREATER );

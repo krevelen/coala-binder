@@ -1,6 +1,8 @@
 package io.coala.math;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.util.Compare;
+import io.coala.util.Comparison;
 
 /**
  * {@link Range}
@@ -49,7 +51,7 @@ public class Range<T extends Comparable<? super T>>
 		if( this.minimum.isNegativeInfinity() ) return false;
 		return getMinimum().isInclusive()
 				? Comparison.of( value,
-						getMinimum().getValue() ) == Comparison.LESS
+						getMinimum().getValue() ) == Comparison.LESSER
 				: Comparison.of( value,
 						getMinimum().getValue() ) != Comparison.GREATER;
 	}
@@ -66,7 +68,7 @@ public class Range<T extends Comparable<? super T>>
 				? Comparison.of( value,
 						getMaximum().getValue() ) == Comparison.GREATER
 				: Comparison.of( value,
-						getMaximum().getValue() ) != Comparison.LESS;
+						getMaximum().getValue() ) != Comparison.LESSER;
 	}
 
 	/**
@@ -85,8 +87,8 @@ public class Range<T extends Comparable<? super T>>
 
 	public Range<T> intersect( final Range<T> that )
 	{
-		return of( Comparison.max( this.getMinimum(), that.getMinimum() ),
-				Comparison.min( this.getMaximum(), that.getMaximum() ) );
+		return of( Compare.max( this.getMinimum(), that.getMinimum() ),
+				Compare.min( this.getMaximum(), that.getMaximum() ) );
 	}
 
 	public static <T extends Comparable<? super T>> Range<T> infinite()
