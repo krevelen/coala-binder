@@ -1,10 +1,20 @@
 package io.coala.math;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.asin;
+import static java.lang.Math.cos;
+import static java.lang.Math.pow;
+import static java.lang.Math.sin;
+import static java.lang.Math.sqrt;
+
 import java.math.BigDecimal;
 
+import javax.measure.quantity.Angle;
 import javax.measure.quantity.Quantity;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
+import org.jscience.geography.coordinates.LatLong;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.util.Compare;
@@ -40,5 +50,23 @@ public class MeasureUtil implements Util
 	public static boolean isNegative( final Amount<?> amount )
 	{
 		return !Compare.eq( amount, amount.abs() );
+	}
+
+	public static Amount<Angle> angularDistance( final LatLong p1,
+		final LatLong p2 )
+	{
+		final double lat1 = p1.latitudeValue( SI.RADIAN );
+		final double lon1 = p1.longitudeValue( SI.RADIAN );
+		final double lat2 = p2.latitudeValue( SI.RADIAN );
+		final double lon2 = p2.longitudeValue( SI.RADIAN );
+		// using the haversine (half-versed-sine) formula for Great-circle distance
+		return Amount
+				.valueOf(
+						2 * asin(
+								sqrt( pow( sin( abs( lat1 - lat2 ) / 2 ), 2 )
+										+ cos( lat1 ) * cos( lat2 )
+												* pow( sin( abs( lon1 - lon2 )
+														/ 2 ), 2 ) ) ),
+						.000005, SI.RADIAN );
 	}
 }
