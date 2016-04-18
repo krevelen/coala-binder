@@ -894,7 +894,9 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		ProbabilityDistribution<Long> createPascal( Number r, Number p );
 
 		/**
-		 * <img alt="Probability density function" height="150" src=
+		 * Typically used for: event rate = hazard (Cox) = incidence
+		 * (epidemiology) = how frequent? <br/>
+		 * <img alt= "Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Poisson_pmf.svg/650px-Poisson_pmf.svg.png"/>
 		 * 
 		 * @param mean &mu; or &lambda;

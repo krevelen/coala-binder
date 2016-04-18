@@ -57,6 +57,7 @@
 
 		<!-- Conway's game of life -->
 		<module>demos/coala-demo-conway</module>
+		<module>colt-coala-adapter</module>
 	</modules>
 
 	<properties>
