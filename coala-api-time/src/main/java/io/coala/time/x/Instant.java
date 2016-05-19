@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.Wrapper;
 import io.coala.random.ProbabilityDistribution;
+import io.coala.time.x.TimeSpan.Prettifier;
 
 /**
  * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
@@ -83,6 +84,139 @@ import io.coala.random.ProbabilityDistribution;
 //@Wrapper.JavaPolymorph
 public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 {
+
+	/**
+	 * for "natural" Config value conversion for a {@link Duration} (i.e.
+	 * {@link TimeSpan}).
+	 * 
+	 * @see of(String)
+	 */
+	public static Instant valueOf( final String value )
+	{
+		return of( value );
+	}
+
+	/**
+	 * @param value a duration since the EPOCH as {@link DecimalMeasure JSR-275}
+	 *            measure (e.g. {@code "123 ms"}) or as ISO Period, parsed with
+	 *            {@link org.threeten.bp.Duration#parse(CharSequence) JSR-310}
+	 *            or {@link Period#parse(String) Joda}.
+	 * 
+	 *            Examples of ISO period:
+	 * 
+	 *            <pre>
+	 *    "PT20.345S" -> parses as "20.345 seconds"
+	 *    "PT15M"     -> parses as "15 minutes" (where a minute is 60 seconds)
+	 *    "PT10H"     -> parses as "10 hours" (where an hour is 3600 seconds)
+	 *    "P2D"       -> parses as "2 days" (where a day is 24 hours or 86400 seconds)
+	 *    "P2DT3H4M"  -> parses as "2 days, 3 hours and 4 minutes"
+	 *    "P-6H3M"    -> parses as "-6 hours and +3 minutes"
+	 *    "-P6H3M"    -> parses as "-6 hours and -3 minutes"
+	 *    "-P-6H+3M"  -> parses as "+6 hours and -3 minutes"
+	 *            </pre>
+	 * 
+	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
+	 * @see org.threeten.bp.Duration#parse(String)
+	 * @see org.joda.time.format.ISOPeriodFormat#standard()
+	 * @see DecimalMeasure
+	 */
+	public static Instant of( final String value )
+	{
+		return of( TimeSpan.valueOf( value ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value a{@link ReadableInstant} instant, e.g. {@link DateTime}
+	 */
+	public static Instant of( final ReadableInstant joda )
+	{
+		return of( joda.getMillis() );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value
+	 */
+	public static Instant of( final org.threeten.bp.Instant value )
+	{
+		return of( TimeSpan.of( DecimalMeasure.valueOf(
+				BigDecimal.valueOf( value.get( ChronoField.NANO_OF_SECOND ) )
+						.add( BigDecimal
+								.valueOf( value
+										.get( ChronoField.INSTANT_SECONDS ) )
+								.multiply( BigDecimal.TEN.pow( 9 ) ) ),
+				TimeSpan.NANOS ) ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value the {@link Amount} (of
+	 *            {@link javax.measure.quantity.Duration Duration} or
+	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
+	 */
+	public static Instant of( final Amount value )
+	{
+		return of( TimeSpan.of( value ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value the {@link Measure} (of
+	 *            {@link javax.measure.quantity.Duration Duration} or
+	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
+	 */
+	public static Instant of( final Measure value )
+	{
+		return of( TimeSpan.of( value ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param units the amount of time units
+	 */
+	public static Instant of( final Number units )
+	{
+		return of( TimeSpan.of( units ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value the {@link TimeSpan}
+	 */
+	public static Instant of( final TimeSpan value )
+	{
+		return Util.of( value, new Instant() );
+	}
+
+	@SuppressWarnings( "serial" )
+	public static <N extends Number, Q extends Quantity>
+		ProbabilityDistribution<Instant>
+		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
+	{
+		return new ProbabilityDistribution<Instant>()
+		{
+			@Override
+			public Instant draw()
+			{
+				final Number value = dist.draw();
+				return value instanceof BigDecimal
+						? of( DecimalMeasure.valueOf( (BigDecimal) value,
+								unit ) )
+						: value instanceof Long || value instanceof Integer
+								? of( DecimalMeasure.valueOf( value.longValue(),
+										unit ) )
+								: of( DecimalMeasure
+										.valueOf( value.doubleValue(), unit ) );
+			}
+		};
+	}
 
 	/** the ZERO */
 	public static final Instant ZERO = of( TimeSpan.ZERO );
@@ -314,137 +448,14 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 						offset.unwrap().to( unwrap().getUnit() ).getValue() ) );
 	}
 
-	/**
-	 * for "natural" Config value conversion for a {@link Duration} (i.e.
-	 * {@link TimeSpan}).
-	 * 
-	 * @see of(String)
-	 */
-	public static Instant valueOf( final String value )
+	public Prettifier prettify( final int scale )
 	{
-		return of( value );
+		return unwrap().prettify( scale );
 	}
 
-	/**
-	 * @param value a duration since the EPOCH as {@link DecimalMeasure JSR-275}
-	 *            measure (e.g. {@code "123 ms"}) or as ISO Period, parsed with
-	 *            {@link org.threeten.bp.Duration#parse(CharSequence) JSR-310}
-	 *            or {@link Period#parse(String) Joda}.
-	 * 
-	 *            Examples of ISO period:
-	 * 
-	 *            <pre>
-	 *    "PT20.345S" -> parses as "20.345 seconds"
-	 *    "PT15M"     -> parses as "15 minutes" (where a minute is 60 seconds)
-	 *    "PT10H"     -> parses as "10 hours" (where an hour is 3600 seconds)
-	 *    "P2D"       -> parses as "2 days" (where a day is 24 hours or 86400 seconds)
-	 *    "P2DT3H4M"  -> parses as "2 days, 3 hours and 4 minutes"
-	 *    "P-6H3M"    -> parses as "-6 hours and +3 minutes"
-	 *    "-P6H3M"    -> parses as "-6 hours and -3 minutes"
-	 *    "-P-6H+3M"  -> parses as "+6 hours and -3 minutes"
-	 *            </pre>
-	 * 
-	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
-	 * @see org.threeten.bp.Duration#parse(String)
-	 * @see org.joda.time.format.ISOPeriodFormat#standard()
-	 * @see DecimalMeasure
-	 */
-	public static Instant of( final String value )
+	public Prettifier prettify( final Unit<?> unit, final int scale )
 	{
-		return of( TimeSpan.valueOf( value ) );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value a{@link ReadableInstant} instant, e.g. {@link DateTime}
-	 */
-	public static Instant of( final ReadableInstant joda )
-	{
-		return of( joda.getMillis() );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value
-	 */
-	public static Instant of( final org.threeten.bp.Instant value )
-	{
-		return of( TimeSpan.of( DecimalMeasure.valueOf(
-				BigDecimal.valueOf( value.get( ChronoField.NANO_OF_SECOND ) )
-						.add( BigDecimal
-								.valueOf( value
-										.get( ChronoField.INSTANT_SECONDS ) )
-								.multiply( BigDecimal.TEN.pow( 9 ) ) ),
-				TimeSpan.NANOS ) ) );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value the {@link Amount} (of
-	 *            {@link javax.measure.quantity.Duration Duration} or
-	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
-	 */
-	public static Instant of( final Amount value )
-	{
-		return of( TimeSpan.of( value ) );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value the {@link Measure} (of
-	 *            {@link javax.measure.quantity.Duration Duration} or
-	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
-	 */
-	public static Instant of( final Measure value )
-	{
-		return of( TimeSpan.of( value ) );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param units the amount of time units
-	 */
-	public static Instant of( final Number units )
-	{
-		return of( TimeSpan.of( units ) );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value the {@link TimeSpan}
-	 */
-	public static Instant of( final TimeSpan value )
-	{
-		return Util.of( value, new Instant() );
-	}
-
-	@SuppressWarnings( "serial" )
-	public static <N extends Number, Q extends Quantity>
-		ProbabilityDistribution<Instant>
-		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
-	{
-		return new ProbabilityDistribution<Instant>()
-		{
-			@Override
-			public Instant draw()
-			{
-				final Number value = dist.draw();
-				return value instanceof BigDecimal
-						? of( DecimalMeasure.valueOf( (BigDecimal) value,
-								unit ) )
-						: value instanceof Long || value instanceof Integer
-								? of( DecimalMeasure.valueOf( value.longValue(),
-										unit ) )
-								: of( DecimalMeasure
-										.valueOf( value.doubleValue(), unit ) );
-			}
-		};
+		return unwrap().prettify( unit, scale );
 	}
 
 }

@@ -52,6 +52,16 @@ public class MeasureUtil implements Util
 		return !Compare.eq( amount, amount.abs() );
 	}
 
+	/**
+	 * Calculates the angular distance or central angle between two points on a
+	 * sphere, using the half-versed-sine or
+	 * <a href="https://www.wikiwand.com/en/Haversine_formula">haversine
+	 * formula</a> for great-circle distance
+	 * 
+	 * @param p1 a {@link LatLong}
+	 * @param p2 another {@link LatLong}
+	 * @return the {@link Amount} of central {@link Angle}
+	 */
 	public static Amount<Angle> angularDistance( final LatLong p1,
 		final LatLong p2 )
 	{
@@ -59,7 +69,6 @@ public class MeasureUtil implements Util
 		final double lon1 = p1.longitudeValue( SI.RADIAN );
 		final double lat2 = p2.latitudeValue( SI.RADIAN );
 		final double lon2 = p2.longitudeValue( SI.RADIAN );
-		// using the haversine (half-versed-sine) formula for Great-circle distance
 		return Amount
 				.valueOf(
 						2 * asin(

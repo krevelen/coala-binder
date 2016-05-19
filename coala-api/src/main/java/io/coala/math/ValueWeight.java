@@ -52,8 +52,7 @@ public class ValueWeight<V, W extends Number> extends Wrapper.Simple<V>
 	@Override
 	public String toString()
 	{
-		return this.getClass().getName() + "(" + this.getWeight() + " => "
-				+ this.getValue() + ")@" + this.hashCode();
+		return "(" + getWeight() + " => " + getValue() + ") @" + hashCode();
 	}
 
 	@SuppressWarnings( "unchecked" )
