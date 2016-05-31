@@ -194,14 +194,15 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 			@Override
 			public Duration draw()
 			{
+				// FIXME use MeasureUtil?
 				final Number value = dist.draw();
 				return value instanceof BigDecimal
-						? of( DecimalMeasure.valueOf( (BigDecimal) value,
-								unit ) )
+						? Duration.of( DecimalMeasure
+								.valueOf( (BigDecimal) value, unit ) )
 						: value instanceof Long || value instanceof Integer
-								? of( DecimalMeasure.valueOf( value.longValue(),
-										unit ) )
-								: of( DecimalMeasure
+								? Duration.of( DecimalMeasure
+										.valueOf( value.longValue(), unit ) )
+								: Duration.of( DecimalMeasure
 										.valueOf( value.doubleValue(), unit ) );
 			}
 		};

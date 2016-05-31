@@ -205,6 +205,7 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 			@Override
 			public Instant draw()
 			{
+				// FIXME use MeasureUtil?
 				final Number value = dist.draw();
 				return value instanceof BigDecimal
 						? Instant.of( DecimalMeasure
