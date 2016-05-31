@@ -61,7 +61,7 @@ import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
-import io.coala.math.ValueWeight;
+import io.coala.math.WeightedValue;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.RandomNumberStream;
 
@@ -130,16 +130,16 @@ public abstract class Math3ProbabilityDistribution<S>
 	}
 
 	/**
-	 * @param valueWeights the {@link List} of {@link ValueWeight}s
+	 * @param valueWeights the {@link List} of {@link WeightedValue}s
 	 * @return a probability mass function as {@link List} of {@link Pair}s
 	 */
-	public static <T> List<Pair<T, Double>>
-		toPropabilityMassFunction( final List<ValueWeight<T, ?>> valueWeights )
+	public static <T, WV extends WeightedValue<T, ?>> List<Pair<T, Double>>
+		toPropabilityMassFunction( final List<WV> valueWeights )
 	{
 		final List<Pair<T, Double>> pmf = new ArrayList<>();
 		if( valueWeights == null || valueWeights.isEmpty() )
 			throw ExceptionFactory.createUnchecked( "Must have some value(s)" );
-		for( ValueWeight<T, ?> p : valueWeights )
+		for( WeightedValue<T, ?> p : valueWeights )
 			pmf.add( Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
 		return pmf;
 	}
@@ -221,8 +221,8 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public <T> ProbabilityDistribution<T>
-			createCategorical( final List<ValueWeight<T, ?>> probabilities )
+		public <T, WV extends WeightedValue<T, ?>> ProbabilityDistribution<T>
+			createCategorical( final List<WV> probabilities )
 		{
 			return wrap( new EnumeratedDistribution<T>( this.rng,
 					toPropabilityMassFunction( probabilities ) ) );
@@ -461,7 +461,7 @@ public abstract class Math3ProbabilityDistribution<S>
 			return this.factory;
 		}
 
-		public <Q extends Quantity> Arithmetic<Q> fitNormal(
+		public <Q extends Quantity> ArithmeticDistribution<Q> fitNormal(
 			final FrequencyDistribution.Interval<Q, ?> freq,
 			final Unit<Q> unit )
 		{

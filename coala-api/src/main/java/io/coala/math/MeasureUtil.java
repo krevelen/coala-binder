@@ -8,7 +8,9 @@ import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
+import javax.measure.Measure;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
@@ -77,5 +79,24 @@ public class MeasureUtil implements Util
 												* pow( sin( abs( lon1 - lon2 )
 														/ 2 ), 2 ) ) ),
 						.000005, SI.RADIAN );
+	}
+
+	public static <Q extends Quantity, U extends Unit<Q>> String
+		toString( final Measure<?, Q> amount, final int scale )
+	{
+		return (amount.getValue() instanceof BigDecimal
+				? ((BigDecimal) amount.getValue()).setScale( scale,
+						RoundingMode.HALF_UP )
+				: BigDecimal.valueOf( amount.doubleValue( amount.getUnit() ) )
+						.setScale( scale, RoundingMode.HALF_UP ))
+								.toPlainString()
+				+ amount.getUnit();
+	}
+
+	public static String toString( final Amount<?> amount, final int scale )
+	{
+		return BigDecimal.valueOf( amount.getEstimatedValue() )
+				.setScale( scale, RoundingMode.HALF_UP ).toPlainString()
+				+ amount.getUnit();
 	}
 }

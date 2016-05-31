@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: bfdc8d8bb88fbee407229d510a7619daeed3b992 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -25,6 +25,8 @@ import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
+import org.jscience.physics.amount.Amount;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,7 +41,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * <p>
  * Assumes {@linkplain Double#NaN} as value for illegal/empty value types
  * 
- * @version $Id$
+ * @version $Id: bfdc8d8bb88fbee407229d510a7619daeed3b992 $
  * @author Rick van Krevelen
  */
 @JsonSerialize( using = Rate.JsonSerializer.class )
@@ -111,22 +113,27 @@ public class Rate extends DecimalMeasure<Frequency>
 
 	/**
 	 * {@link Rate} static factory method
-	 * 
-	 * @param value
 	 */
-	public static Rate valueOf( final BigDecimal value )
+	public static Rate of( final long value, final Unit<Frequency> amount )
 	{
-		return new Rate( value, SI.HERTZ );
+		return of( BigDecimal.valueOf( value ), amount );
 	}
 
 	/**
 	 * {@link Rate} static factory method
-	 * 
-	 * @param value
 	 */
-	public static Rate valueOf( final Number value )
+	public static Rate of( final double value, final Unit<Frequency> amount )
 	{
-		return new Rate( value.doubleValue() );
+		return of( BigDecimal.valueOf( value ), amount );
+	}
+
+	/**
+	 * {@link Rate} static factory method
+	 */
+	public static Rate of( final BigDecimal value,
+		final Unit<Frequency> amount )
+	{
+		return new Rate( value, amount );
 	}
 
 	/**
@@ -134,10 +141,23 @@ public class Rate extends DecimalMeasure<Frequency>
 	 * 
 	 * @param measure
 	 */
-	public static <V extends Number, Q extends Quantity> Rate valueOf( final Measure<V, Q> measure )
+	public static <V extends Number> Rate
+		of( final Measure<V, Frequency> measure )
 	{
-		return new Rate( BigDecimal.valueOf( measure.getValue().doubleValue() ),
-				measure.getUnit().asType( Frequency.class ) );
+		return measure.getValue() instanceof BigDecimal
+				? of( (BigDecimal) measure.getValue(), measure.getUnit() )
+				: of( measure.getValue().doubleValue(), measure.getUnit() );
+	}
+
+	/**
+	 * {@link Rate} static factory method
+	 * 
+	 * @param amount
+	 */
+	public static Rate of( final Amount<Frequency> amount )
+	{
+		return amount.isExact() ? of( amount.getExactValue(), amount.getUnit() )
+				: of( amount.getEstimatedValue(), amount.getUnit() );
 	}
 
 	/**
@@ -150,7 +170,8 @@ public class Rate extends DecimalMeasure<Frequency>
 		return new Rate( value );
 	}
 
-	public static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<Rate>
+	public static class JsonSerializer
+		extends com.fasterxml.jackson.databind.JsonSerializer<Rate>
 	{
 		public JsonSerializer()
 		{
@@ -158,7 +179,8 @@ public class Rate extends DecimalMeasure<Frequency>
 		}
 
 		@Override
-		public void serialize( final Rate value, final JsonGenerator gen, final SerializerProvider serializers )
+		public void serialize( final Rate value, final JsonGenerator gen,
+			final SerializerProvider serializers )
 			throws IOException, JsonProcessingException
 		{
 			// LOG.trace("Serializing " + value);
@@ -166,7 +188,8 @@ public class Rate extends DecimalMeasure<Frequency>
 		}
 	}
 
-	public static class JsonDeserializer extends com.fasterxml.jackson.databind.JsonDeserializer<Rate>
+	public static class JsonDeserializer
+		extends com.fasterxml.jackson.databind.JsonDeserializer<Rate>
 	{
 		public JsonDeserializer()
 		{
@@ -174,7 +197,8 @@ public class Rate extends DecimalMeasure<Frequency>
 		}
 
 		@Override
-		public Rate deserialize( final JsonParser p, final DeserializationContext ctxt )
+		public Rate deserialize( final JsonParser p,
+			final DeserializationContext ctxt )
 			throws IOException, JsonProcessingException
 		{
 			// LOG.trace("Deserializing " + p.getText());

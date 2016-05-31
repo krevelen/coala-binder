@@ -2,6 +2,7 @@ package io.coala.util;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 
 /**
  * {@link DecimalUtil}
@@ -30,6 +31,12 @@ public class DecimalUtil implements Util
 	{
 		return bd.signum() == 0 || bd.scale() <= 0
 				|| bd.stripTrailingZeros().scale() <= 0;
+	}
+
+	public static String toString( final double value, final int scale )
+	{
+		return BigDecimal.valueOf( value )
+				.setScale( scale, RoundingMode.HALF_UP ).toPlainString();
 	}
 
 }

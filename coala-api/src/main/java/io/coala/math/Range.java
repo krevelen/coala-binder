@@ -1,5 +1,11 @@
 package io.coala.math;
 
+import javax.measure.quantity.Dimensionless;
+import javax.measure.quantity.Quantity;
+import javax.measure.unit.Unit;
+
+import org.jscience.physics.amount.Amount;
+
 import io.coala.exception.ExceptionFactory;
 import io.coala.util.Compare;
 import io.coala.util.Comparison;
@@ -188,5 +194,12 @@ public class Range<T extends Comparable<? super T>>
 		of( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
 		return new Range<T>( minimum, maximum );
+	}
+
+	public static <Q extends Quantity> Range<Amount<Q>> of( final Number min,
+		final Number max, final Unit<Q> unit )
+	{
+		return of( MeasureUtil.toAmount( min, unit ),
+				MeasureUtil.toAmount( max, unit ) );
 	}
 }
