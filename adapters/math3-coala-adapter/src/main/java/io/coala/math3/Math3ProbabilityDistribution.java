@@ -418,6 +418,23 @@ public abstract class Math3ProbabilityDistribution<S>
 			return wrap( new EnumeratedDistribution<T>( this.rng,
 					toPropabilityMassFunction( values ) ) );
 		}
+
+		@Override
+		public ProbabilityDistribution<Boolean>
+			createBernoulli( final double probability )
+		{
+			return new ProbabilityDistribution<Boolean>()
+			{
+				@Override
+				public Boolean draw()
+				{
+					return rng.nextDouble() < probability;
+				}
+			};
+//			return wrap( new EnumeratedDistribution<Boolean>( this.rng,
+//					Arrays.asList( Pair.create( Boolean.TRUE, probability ),
+//							Pair.create( Boolean.FALSE, 1 - probability ) ) ) );
+		}
 	}
 
 	/**
@@ -474,9 +491,8 @@ public abstract class Math3ProbabilityDistribution<S>
 					.fit( points.toList() );
 			LOG.trace( "Fitted Gaussian with parameters: [norm,mu,sd]={}",
 					Arrays.asList( params ) );
-			return toArithmetic(
-					getFactory().createNormal( params[1], params[2] ), unit )
-							.times( params[0] );
+			return getFactory().createNormal( params[1], params[2] )
+					.toAmounts( unit ).times( params[0] );
 		}
 
 	}

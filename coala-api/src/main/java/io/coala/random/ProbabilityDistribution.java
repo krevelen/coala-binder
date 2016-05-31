@@ -870,6 +870,12 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 			createCategorical( List<WV> probabilities );
 
 		/**
+		 * @param p
+		 * @return
+		 */
+		ProbabilityDistribution<Boolean> createBernoulli( double p );
+
+		/**
 		 * <img alt="Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Geometric_pmf.svg/900px-Geometric_pmf.svg.png"/>
 		 * 
