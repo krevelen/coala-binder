@@ -207,12 +207,12 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 			{
 				final Number value = dist.draw();
 				return value instanceof BigDecimal
-						? of( DecimalMeasure.valueOf( (BigDecimal) value,
-								unit ) )
+						? Instant.of( DecimalMeasure
+								.valueOf( (BigDecimal) value, unit ) )
 						: value instanceof Long || value instanceof Integer
-								? of( DecimalMeasure.valueOf( value.longValue(),
-										unit ) )
-								: of( DecimalMeasure
+								? Instant.of( DecimalMeasure
+										.valueOf( value.longValue(), unit ) )
+								: Instant.of( DecimalMeasure
 										.valueOf( value.doubleValue(), unit ) );
 			}
 		};
