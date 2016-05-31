@@ -20,9 +20,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.inject.Provider;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 
@@ -34,6 +36,8 @@ import io.coala.math.MeasureUtil;
 import io.coala.math.WeightedValue;
 import io.coala.util.InstanceParser;
 import io.coala.util.Instantiator;
+import rx.functions.Action1;
+import rx.functions.Func0;
 import rx.functions.Func1;
 
 /**
@@ -59,8 +63,9 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	// TODO List<?> getParameters();
 
 	// continuous: https://www.wikiwand.com/en/Probability_density_function
-	// discrete: https://www.wikiwand.com/en/Probability_density_function
+	// discrete: https://www.wikiwand.com/en/Probability_mass_function
 	// TODO probabilityOf(T value)
+	// TODO cumulativeProbabilityOf(T value)
 
 	/**
 	 * From
@@ -81,26 +86,11 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 //	T getResidual();
 
 	/**
-	 * {@link Util} provides static helper methods for
-	 * {@link ProbabilityDistribution}s
-	 * 
-	 * @version $Id: a7842c5dc1c8963fe6c9721cdcda6c3b21980bb0 $
-	 * @author Rick van Krevelen
-	 */
-//	class Util implements io.coala.util.Util
-//	{
-//
-//		private Util()
-//		{
-//		}
-
-	/**
 	 * @param <T> the type of value
 	 * @param value the constant to be returned on each draw
 	 * @return a degenerate or deterministic {@link ProbabilityDistribution}
 	 */
-	public static <T> ProbabilityDistribution<T>
-		createDeterministic( final T value )
+	public static <T> ProbabilityDistribution<T> of( final T value )
 	{
 		return new ProbabilityDistribution<T>()
 		{
@@ -112,15 +102,76 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		};
 	}
 
-	public static <T, S> ProbabilityDistribution<S> transform(
-		final ProbabilityDistribution<T> dist, final Func1<T, S> transform )
+	/**
+	 * @param <T> the type of value
+	 * @param callable the {@link Callable} providing values, for JRE8
+	 * @return a decorator {@link ProbabilityDistribution}
+	 * @see https://github.com/orfjackal/retrolambda
+	 */
+	public static <T> ProbabilityDistribution<T>
+		of( final Callable<T> callable )
 	{
-		return new ProbabilityDistribution<S>()
+		return new ProbabilityDistribution<T>()
 		{
 			@Override
-			public S draw()
+			public T draw()
 			{
-				return transform.call( dist.draw() );
+				try
+				{
+					return callable.call();
+				} catch( final Exception e )
+				{
+					throw ExceptionFactory.createUnchecked( e,
+							"Problem drawing new value from {}", callable );
+				}
+			}
+		};
+	}
+
+	/**
+	 * @param <T> the type of value
+	 * @param provider the {@link Provider} providing values
+	 * @return a decorator {@link ProbabilityDistribution}
+	 */
+	public static <T> ProbabilityDistribution<T>
+		of( final Provider<T> provider )
+	{
+		return new ProbabilityDistribution<T>()
+		{
+			@Override
+			public T draw()
+			{
+				return provider.get();
+			}
+		};
+	}
+
+	/**
+	 * @param <T> the type of value
+	 * @param func the {@link Func0} providing values, for rxJava
+	 * @return a decorator {@link ProbabilityDistribution}
+	 */
+	public static <T> ProbabilityDistribution<T> of( final Func0<T> func )
+	{
+		return new ProbabilityDistribution<T>()
+		{
+			@Override
+			public T draw()
+			{
+				return func.call();
+			}
+		};
+	}
+
+	public <R> ProbabilityDistribution<R> apply( final Func1<T, R> transform )
+	{
+		final ProbabilityDistribution<T> self = this;
+		return new ProbabilityDistribution<R>()
+		{
+			@Override
+			public R draw()
+			{
+				return transform.call( self.draw() );
 			}
 		};
 	}
@@ -129,23 +180,20 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * wraps a {@link ProbabilityDistribution} over the full index range
 	 * <em>{0, &hellip;, n-1}</em> of specified {@link Enum} constants
 	 * 
-	 * @param <N> the type of (discrete) {@link Number} drawn originally
 	 * @param <E> the type of {@link Enum} value to produce
-	 * @param dist the {@link ProbabilityDistribution} of {@link N} values
 	 * @param enumType the {@link Class} to resolve
 	 * @return a uniform categorical {@link ProbabilityDistribution} of
 	 *         {@link E} values
 	 */
-	public static <N extends Number, E extends Enum<E>>
-		ProbabilityDistribution<E>
-		toEnum( final ProbabilityDistribution<N> dist, final Class<E> enumType )
+	public <E extends Enum<E>> ProbabilityDistribution<E>
+		toEnum( final Class<E> enumType )
 	{
-		return transform( dist, new Func1<N, E>()
+		return apply( new Func1<T, E>()
 		{
 			@Override
-			public E call( final N n )
+			public E call( final T n )
 			{
-				return enumType.getEnumConstants()[n.intValue()];
+				return enumType.getEnumConstants()[((Number) n).intValue()];
 			}
 		} );
 	}
@@ -154,19 +202,17 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * wraps a {@link ProbabilityDistribution} to construct instances of another
 	 * type which has a suitable constructor
 	 * 
-	 * @param <A> the type of constructor arguments
-	 * @param <T> the type of instances to construct
-	 * @param dist the {@link ProbabilityDistribution} of {@link A} values
+	 * @param <S> the type of instances to construct
 	 * @param valueType the {@link Class} to instantiate
-	 * @return a {@link ProbabilityDistribution} of {@link T} values
+	 * @return a {@link ProbabilityDistribution} of {@link S} values
 	 */
-	public static <A, T> ProbabilityDistribution<T> toInstancesOf(
-		final ProbabilityDistribution<A> dist, final Class<T> valueType )
+	public <S> ProbabilityDistribution<S>
+		toInstancesOf( final Class<S> valueType )
 	{
-		return transform( dist, new Func1<A, T>()
+		return apply( new Func1<T, S>()
 		{
 			@Override
-			public T call( final A arg )
+			public S call( final T arg )
 			{
 				return Instantiator.instantiate( valueType, arg );
 			}
@@ -181,40 +227,12 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 *         for measure {@link Amount}s from drawn {@link Number}s, with an
 	 *         attempt to maintain exactness
 	 */
-	public static <Q extends Quantity> ArithmeticDistribution<Q> toArithmetic(
-		final ProbabilityDistribution<? extends Number> dist,
-		final Unit<Q> unit )
+	@SuppressWarnings( "unchecked" )
+	public <Q extends Quantity> ArithmeticDistribution<Q>
+		toAmounts( final Unit<Q> unit )
 	{
-		return ArithmeticDistribution.Simple
-				.of( new ProbabilityDistribution<Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> draw()
-					{
-						return MeasureUtil.toAmount( dist.draw(), unit );
-					}
-				} );
-	}
-
-	/**
-	 * @param <V> the type of value
-	 * @param value the constant to be returned on each draw
-	 * @return a degenerate or deterministic {@link ProbabilityDistribution}
-	 */
-	public static <V extends Number, Q extends Quantity>
-		ArithmeticDistribution<Q>
-		createDeterministic( final V value, final Unit<Q> unit )
-	{
-		final Amount<Q> constant = MeasureUtil.toAmount( value, unit );
-		return ArithmeticDistribution.Simple
-				.of( new ProbabilityDistribution<Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> draw()
-					{
-						return constant;
-					}
-				} );
+		return ArithmeticDistribution
+				.of( (ProbabilityDistribution<? extends Number>) this, unit );
 	}
 
 	/**
@@ -229,6 +247,54 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	public static abstract class ArithmeticDistribution<Q extends Quantity>
 		extends ProbabilityDistribution<Amount<Q>>
 	{
+		public static <Q extends Quantity> ArithmeticDistribution<Q>
+			of( final ProbabilityDistribution<Amount<Q>> dist )
+		{
+			return new ArithmeticDistribution<Q>()
+			{
+				@Override
+				public Amount<Q> draw()
+				{
+					return dist.draw();
+				}
+			};
+		}
+
+		/**
+		 * @param <N> the measurement value {@link Number} type
+		 * @param <Q> the measurement {@link Quantity} to assign
+		 * @param dist the {@link ProbabilityDistribution} to wrap
+		 * @param unit the {@link Unit} of measurement to assign
+		 * @return an {@link ArithmeticDistribution}
+		 *         {@link ProbabilityDistribution} for measure {@link Amount}s
+		 *         from drawn {@link Number}s, with an attempt to maintain
+		 *         exactness
+		 */
+		public static <N extends Number, Q extends Quantity>
+			ArithmeticDistribution<Q>
+			of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
+		{
+			return of( new ProbabilityDistribution<Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> draw()
+				{
+					return MeasureUtil.toAmount( dist.draw(), unit );
+				}
+			} );
+		}
+
+		/**
+		 * @param <N> the type of {@link Number} value
+		 * @param value the constant to be returned on each draw
+		 * @return a degenerate or deterministic {@link ProbabilityDistribution}
+		 */
+		public static <N extends Number, Q extends Quantity>
+			ArithmeticDistribution<Q> of( final N value, final Unit<Q> unit )
+		{
+			final Amount<Q> constant = MeasureUtil.toAmount( value, unit );
+			return of( of( constant ) );
+		}
 
 		/**
 		 * @param <R> the new type of {@link Quantity} after transformation
@@ -236,12 +302,19 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @return a chained {@link ArithmeticDistribution}
 		 *         {@link ProbabilityDistribution}
 		 */
-		public abstract <R extends Quantity> ArithmeticDistribution<R>
-			transform( Func1<Amount<Q>, Amount<R>> transform );
-
-		// continuous: https://www.wikiwand.com/en/Probability_density_function
-		// discrete: https://www.wikiwand.com/en/Probability_density_function
-		// TODO cumulativeProbabilityOf(T value)
+		public <R extends Quantity> ArithmeticDistribution<R>
+			transform( final Func1<Amount<Q>, Amount<R>> transform )
+		{
+			final ArithmeticDistribution<Q> self = this;
+			return of( new ProbabilityDistribution<Amount<R>>()
+			{
+				@Override
+				public Amount<R> draw()
+				{
+					return transform.call( self.draw() );
+				}
+			} );
+		}
 
 		/**
 		 * @param that the {@link Amount} to be added
@@ -249,7 +322,17 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#plus(Amount)
 		 */
-		public abstract ArithmeticDistribution<Q> plus( Amount<?> that );
+		public ArithmeticDistribution<Q> plus( final Amount<?> that )
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.plus( that );
+				}
+			} );
+		}
 
 		/**
 		 * @param that the {@link Amount} to be subtracted
@@ -257,7 +340,17 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#minus(Amount)
 		 */
-		public abstract ArithmeticDistribution<Q> minus( Amount<?> that );
+		public ArithmeticDistribution<Q> minus( final Amount<?> that )
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.minus( that );
+				}
+			} );
+		}
 
 		/**
 		 * @param factor the exact scaling factor
@@ -265,7 +358,17 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#times(long)
 		 */
-		public abstract ArithmeticDistribution<Q> times( long factor );
+		public ArithmeticDistribution<Q> times( final long factor )
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.times( factor );
+				}
+			} );
+		}
 
 		/**
 		 * @param factor the approximate scaling factor
@@ -273,7 +376,17 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#times(double)
 		 */
-		public abstract ArithmeticDistribution<Q> times( double factor );
+		public ArithmeticDistribution<Q> times( final double factor )
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.times( factor );
+				}
+			} );
+		}
 
 		/**
 		 * @param <R> the new type of {@link Quantity} after transformation
@@ -282,8 +395,19 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#times(Amount)
 		 */
-		public abstract <R extends Quantity> ArithmeticDistribution<R>
-			times( Amount<?> factor );
+		public <R extends Quantity> ArithmeticDistribution<R>
+			times( final Amount<?> factor )
+		{
+			return transform( new Func1<Amount<Q>, Amount<R>>()
+			{
+				@SuppressWarnings( "unchecked" )
+				@Override
+				public Amount<R> call( final Amount<Q> t )
+				{
+					return (Amount<R>) t.times( factor );
+				}
+			} );
+		}
 
 		/**
 		 * @param divisor the exact divisor
@@ -291,7 +415,17 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#divide(long)
 		 */
-		public abstract ArithmeticDistribution<Q> divide( long divisor );
+		public ArithmeticDistribution<Q> divide( final long divisor )
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.divide( divisor );
+				}
+			} );
+		}
 
 		/**
 		 * @param divisor the approximate divisor
@@ -299,7 +433,17 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#divide(double)
 		 */
-		public abstract ArithmeticDistribution<Q> divide( double divisor );
+		public ArithmeticDistribution<Q> divide( final double divisor )
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.divide( divisor );
+				}
+			} );
+		}
 
 		/**
 		 * @param <R> the new type of {@link Quantity} after transformation
@@ -308,23 +452,54 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#divide(Amount)
 		 */
-		public abstract <R extends Quantity> ArithmeticDistribution<R>
-			divide( Amount<?> divisor );
+		public <R extends Quantity> ArithmeticDistribution<R>
+			divide( final Amount<?> divisor )
+		{
+			return transform( new Func1<Amount<Q>, Amount<R>>()
+			{
+				@SuppressWarnings( "unchecked" )
+				@Override
+				public Amount<R> call( final Amount<Q> t )
+				{
+					return (Amount<R>) t.divide( divisor );
+				}
+			} );
+		}
 
 		/**
 		 * @return a chained {@link ArithmeticDistribution}
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#inverse()
 		 */
-		public abstract <R extends Quantity> ArithmeticDistribution<R>
-			inverse();
+		public <R extends Quantity> ArithmeticDistribution<R> inverse()
+		{
+			return transform( new Func1<Amount<Q>, Amount<R>>()
+			{
+				@SuppressWarnings( "unchecked" )
+				@Override
+				public Amount<R> call( final Amount<Q> t )
+				{
+					return (Amount<R>) t.inverse();
+				}
+			} );
+		}
 
 		/**
 		 * @return a chained {@link ArithmeticDistribution}
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#abs()
 		 */
-		public abstract ArithmeticDistribution<Q> abs();
+		public ArithmeticDistribution<Q> abs()
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.abs();
+				}
+			} );
+		}
 
 		/**
 		 * @param <R> the new type of {@link Quantity} after transformation
@@ -332,7 +507,18 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#sqrt()
 		 */
-		public abstract <R extends Quantity> ArithmeticDistribution<R> sqrt();
+		public <R extends Quantity> ArithmeticDistribution<R> sqrt()
+		{
+			return transform( new Func1<Amount<Q>, Amount<R>>()
+			{
+				@SuppressWarnings( "unchecked" )
+				@Override
+				public Amount<R> call( final Amount<Q> t )
+				{
+					return (Amount<R>) t.sqrt();
+				}
+			} );
+		}
 
 		/**
 		 * @param <R> the new type of {@link Quantity} after transformation
@@ -341,8 +527,19 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#root(int)
 		 */
-		public abstract <R extends Quantity> ArithmeticDistribution<R>
-			root( int n );
+		public <R extends Quantity> ArithmeticDistribution<R>
+			root( final int n )
+		{
+			return transform( new Func1<Amount<Q>, Amount<R>>()
+			{
+				@SuppressWarnings( "unchecked" )
+				@Override
+				public Amount<R> call( final Amount<Q> t )
+				{
+					return (Amount<R>) t.root( n );
+				}
+			} );
+		}
 
 		/**
 		 * @param <R> the new type of {@link Quantity} after transformation
@@ -350,229 +547,18 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @return <code>this<sup>exp</sup></code>
 		 * @see Amount#pow(int)
 		 */
-		public abstract <R extends Quantity> ArithmeticDistribution<R>
-			pow( int exp );
-
-		/**
-		 * {@link Simple} implements a {@link ArithmeticDistribution}
-		 * {@link ProbabilityDistribution}
-		 * 
-		 * @param <Q>
-		 * @version $Id$
-		 * @author Rick van Krevelen
-		 */
-		public static class Simple<Q extends Quantity>
-			extends ArithmeticDistribution<Q>
+		public <R extends Quantity> ArithmeticDistribution<R>
+			pow( final int exp )
 		{
-			public static <Q extends Quantity> Simple<Q>
-				of( final ProbabilityDistribution<Amount<Q>> dist )
+			return transform( new Func1<Amount<Q>, Amount<R>>()
 			{
-				return new Simple<Q>( dist );
-			}
-
-			private final ProbabilityDistribution<Amount<Q>> dist;
-
-			protected Simple( final ProbabilityDistribution<Amount<Q>> dist )
-			{
-				this.dist = dist;
-			}
-
-			@Override
-			public Amount<Q> draw()
-			{
-				return this.dist.draw();
-			}
-
-			@Override
-			public <R extends Quantity> Simple<R>
-				transform( final Func1<Amount<Q>, Amount<R>> transform )
-			{
-				return of( new ProbabilityDistribution<Amount<R>>()
+				@SuppressWarnings( "unchecked" )
+				@Override
+				public Amount<R> call( final Amount<Q> t )
 				{
-					@Override
-					public Amount<R> draw()
-					{
-						return transform.call( dist.draw() );
-					}
-				} );
-			}
-
-			@Override
-			public Simple<Q> plus( final Amount<?> that )
-			{
-				return transform( new Func1<Amount<Q>, Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> call( final Amount<Q> t )
-					{
-						return t.plus( that );
-					}
-				} );
-			}
-
-			@Override
-			public Simple<Q> minus( final Amount<?> that )
-			{
-				return transform( new Func1<Amount<Q>, Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> call( final Amount<Q> t )
-					{
-						return t.minus( that );
-					}
-				} );
-			}
-
-			@Override
-			public Simple<Q> times( final long factor )
-			{
-				return transform( new Func1<Amount<Q>, Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> call( final Amount<Q> t )
-					{
-						return t.times( factor );
-					}
-				} );
-			}
-
-			@Override
-			public Simple<Q> times( final double factor )
-			{
-				return transform( new Func1<Amount<Q>, Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> call( final Amount<Q> t )
-					{
-						return t.times( factor );
-					}
-				} );
-			}
-
-			@Override
-			public <R extends Quantity> Simple<R>
-				times( final Amount<?> factor )
-			{
-				return transform( new Func1<Amount<Q>, Amount<R>>()
-				{
-					@SuppressWarnings( "unchecked" )
-					@Override
-					public Amount<R> call( final Amount<Q> t )
-					{
-						return (Amount<R>) t.times( factor );
-					}
-				} );
-			}
-
-			@Override
-			public Simple<Q> divide( final long divisor )
-			{
-				return transform( new Func1<Amount<Q>, Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> call( final Amount<Q> t )
-					{
-						return t.divide( divisor );
-					}
-				} );
-			}
-
-			@Override
-			public Simple<Q> divide( final double divisor )
-			{
-				return transform( new Func1<Amount<Q>, Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> call( final Amount<Q> t )
-					{
-						return t.divide( divisor );
-					}
-				} );
-			}
-
-			@Override
-			public <R extends Quantity> Simple<R>
-				divide( final Amount<?> divisor )
-			{
-				return transform( new Func1<Amount<Q>, Amount<R>>()
-				{
-					@SuppressWarnings( "unchecked" )
-					@Override
-					public Amount<R> call( final Amount<Q> t )
-					{
-						return (Amount<R>) t.divide( divisor );
-					}
-				} );
-			}
-
-			@Override
-			public Simple<Q> abs()
-			{
-				return transform( new Func1<Amount<Q>, Amount<Q>>()
-				{
-					@Override
-					public Amount<Q> call( final Amount<Q> t )
-					{
-						return t.abs();
-					}
-				} );
-			}
-
-			@Override
-			public <R extends Quantity> Simple<R> inverse()
-			{
-				return transform( new Func1<Amount<Q>, Amount<R>>()
-				{
-					@SuppressWarnings( "unchecked" )
-					@Override
-					public Amount<R> call( final Amount<Q> t )
-					{
-						return (Amount<R>) t.inverse();
-					}
-				} );
-			}
-
-			@Override
-			public <R extends Quantity> Simple<R> sqrt()
-			{
-				return transform( new Func1<Amount<Q>, Amount<R>>()
-				{
-					@SuppressWarnings( "unchecked" )
-					@Override
-					public Amount<R> call( final Amount<Q> t )
-					{
-						return (Amount<R>) t.sqrt();
-					}
-				} );
-			}
-
-			@Override
-			public <R extends Quantity> Simple<R> root( final int n )
-			{
-				return transform( new Func1<Amount<Q>, Amount<R>>()
-				{
-					@SuppressWarnings( "unchecked" )
-					@Override
-					public Amount<R> call( final Amount<Q> t )
-					{
-						return (Amount<R>) t.root( n );
-					}
-				} );
-			}
-
-			@Override
-			public <R extends Quantity> Simple<R> pow( final int exp )
-			{
-				return transform( new Func1<Amount<Q>, Amount<R>>()
-				{
-					@SuppressWarnings( "unchecked" )
-					@Override
-					public Amount<R> call( final Amount<Q> t )
-					{
-						return (Amount<R>) t.pow( exp );
-					}
-				} );
-			}
+					return (Amount<R>) t.pow( exp );
+				}
+			} );
 		}
 	}
 
@@ -586,7 +572,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		/**
 		 * the PARAM_SEPARATORS exclude comma character <code>','</code> due to
 		 * its common use as separator of decimals (e.g. <code>XX,X</code>) or
-		 * of thousands (e.g. <code>X,XXX,XXX.XX</code>)
+		 * of thousands (e.g. <code>n,nnn,nnn.nn</code>)
 		 */
 		public static final String PARAM_SEPARATORS = "[;]";
 
@@ -672,9 +658,8 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 			if( args.isEmpty() ) throw ExceptionFactory.createUnchecked(
 					"Missing distribution parameters: {}", label );
 
-			if( getFactory() == null )
-				return (ProbabilityDistribution<T>) createDeterministic(
-						args.get( 0 ).getValue() );
+			if( getFactory() == null ) return (ProbabilityDistribution<T>) of(
+					args.get( 0 ).getValue() );
 
 			switch( label.toLowerCase( Locale.ROOT ) )
 			{

@@ -209,7 +209,7 @@ public abstract class Math3ProbabilityDistribution<S>
 		public <T> ProbabilityDistribution<T>
 			createDeterministic( final T constant )
 		{
-			return ProbabilityDistribution.createDeterministic( constant );
+			return ProbabilityDistribution.of( constant );
 		}
 
 		@Override
