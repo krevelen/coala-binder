@@ -21,8 +21,8 @@
 
 	<properties>
 		<google-rfc-2445.version>20110304</google-rfc-2445.version>
-		<quartz.version>2.2.1</quartz.version>
-		<joda-time.version>2.7</joda-time.version>
+		<quartz.version>2.2.3</quartz.version>
+		<joda-time.version>2.9.4</joda-time.version>
 		<threetenbp.version>1.2</threetenbp.version>
 		<threeten-extra.version>0.9</threeten-extra.version>
 	</properties>

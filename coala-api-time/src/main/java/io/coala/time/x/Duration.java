@@ -20,8 +20,6 @@
  */
 package io.coala.time.x;
 
-import java.math.BigDecimal;
-
 import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
@@ -177,6 +175,16 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	/**
 	 * {@link Duration} static factory method
 	 * 
+	 * @param value the number of milliseconds
+	 */
+	public static Duration of( final Number value, final Unit<?> unit )
+	{
+		return of( TimeSpan.of( value, unit ) );
+	}
+
+	/**
+	 * {@link Duration} static factory method
+	 * 
 	 * @param value the {@link TimeSpan}
 	 */
 	public static Duration of( final TimeSpan value )
@@ -194,16 +202,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 			@Override
 			public Duration draw()
 			{
-				// FIXME use MeasureUtil?
-				final Number value = dist.draw();
-				return value instanceof BigDecimal
-						? Duration.of( DecimalMeasure
-								.valueOf( (BigDecimal) value, unit ) )
-						: value instanceof Long || value instanceof Integer
-								? Duration.of( DecimalMeasure
-										.valueOf( value.longValue(), unit ) )
-								: Duration.of( DecimalMeasure
-										.valueOf( value.doubleValue(), unit ) );
+				return Duration.of( dist.draw(), unit );
 			}
 		};
 	}
@@ -219,7 +218,7 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	}
 
 	/** */
-	public static final Duration ZERO = Duration.valueOf( "0 ms" );
+	public static final Duration ZERO = Duration.of( Amount.ZERO );
 
 	/** */
 	private TimeSpan value;

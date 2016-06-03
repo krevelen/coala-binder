@@ -17,8 +17,9 @@ package io.coala.dsol3;
 
 import java.math.BigDecimal;
 
-import javax.inject.Provider;
 import javax.measure.Measurable;
+import javax.measure.quantity.Dimensionless;
+import javax.measure.quantity.Quantity;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
@@ -50,22 +51,12 @@ import nl.tudelft.simulation.dsol.simulators.DEVSSimulatorInterface;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
-	implements Wrapper<TimeSpan>
+public class DsolTime<Q extends Quantity> extends
+	SimTime<Measurable<Q>, BigDecimal, DsolTime<Q>> implements Wrapper<TimeSpan>
 {
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( DsolTime.class );
-
-	/** the DEFAULT_PROVIDER constant - TODO read from config */
-	public static final Provider<DsolTime> DEFAULT_PROVIDER = new Provider<DsolTime>()
-	{
-		@Override
-		public DsolTime get()
-		{
-			return new DsolTime();
-		}
-	};
 
 	/** the ZERO constant */
 //	public static final DsolTime ZERO = valueOf( 0d );
@@ -103,15 +94,17 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	}
 
 	/**
+	 * TODO infer unit or apply {@link #resolve( unit )}
+	 * 
 	 * @param time
 	 * @return
 	 */
-	public static DsolTime
-		valueOf( @SuppressWarnings( "rawtypes" ) final SimTime time )
+	public static <Q extends Quantity> DsolTime<Q>
+		valueOf( final SimTime<?, ?, ?> time, final Unit<Q> unit )
 	{
 		try
 		{
-			return valueOf( TimeSpan.of( (Number) time.get() ) );
+			return valueOf( TimeSpan.of( (Number) time.get(), unit ) );
 		} catch( final Throwable t )
 		{
 			throw ExceptionFactory.createUnchecked( t,
@@ -123,7 +116,7 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	 * @param absoluteTime the {@link Instant}
 	 * @return the new {@link DsolTime}
 	 */
-	public static DsolTime valueOf( final Instant absoluteTime )
+	public static DsolTime<?> valueOf( final Instant absoluteTime )
 	{
 		return valueOf( absoluteTime.unwrap() );
 	}
@@ -132,38 +125,19 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	 * @param absoluteTime the {@link TimeSpan}
 	 * @return the new {@link DsolTime}
 	 */
-	public static DsolTime valueOf( final TimeSpan absoluteTime )
+	public static <Q extends Quantity> DsolTime<Q>
+		valueOf( final TimeSpan absoluteTime )
 	{
-		return Util.of( absoluteTime, new DsolTime() );
+		return Util.of( absoluteTime, new DsolTime<Q>() );
 	}
 
 	/**
 	 * @param absoluteTime
 	 * @return the new {@link DsolTime}
 	 */
-	public static DsolTime valueOf( final long absoluteTime )
+	public static DsolTime<Dimensionless> valueOf( final Number absoluteTime )
 	{
-		return valueOf( BigDecimal.valueOf( absoluteTime ) );
-	}
-
-	/**
-	 * @param absoluteTime
-	 * @return the new {@link DsolTime}
-	 */
-	public static DsolTime valueOf( final double absoluteTime )
-	{
-		return valueOf( BigDecimal.valueOf( absoluteTime ) );
-	}
-
-	/**
-	 * @param absoluteTime
-	 * @return the new {@link DsolTime}
-	 */
-	public static DsolTime valueOf( final BigDecimal absoluteTime )
-	{
-		final DsolTime result = DEFAULT_PROVIDER.get();
-		result.wrap( TimeSpan.of( absoluteTime ) );
-		return result;
+		return valueOf( TimeSpan.of( absoluteTime, Unit.ONE ) );
 	}
 
 	/**
@@ -212,7 +186,7 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public DsolTime plus( final DsolTime relativeTime )
+	public DsolTime<Q> plus( final DsolTime<Q> relativeTime )
 	{
 		return plus(
 				relativeTime.unwrap().to( unwrap().getUnit() ).getValue() );
@@ -230,7 +204,7 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public DsolTime subtract( final DsolTime relativeTime )
+	public DsolTime<Q> subtract( final DsolTime<Q> relativeTime )
 	{
 		return minus(
 				relativeTime.unwrap().to( unwrap().getUnit() ).getValue() );
@@ -238,14 +212,14 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public BigDecimal minus( final DsolTime absoluteTime )
+	public BigDecimal minus( final DsolTime<Q> absoluteTime )
 	{
 		return unwrap().getValue().subtract(
 				absoluteTime.unwrap().to( unwrap().getUnit() ).getValue() );
 	}
 
 	@Override
-	public DsolTime copy()
+	public DsolTime<Q> copy()
 	{
 		return valueOf( get() );
 	}
@@ -257,14 +231,14 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	}
 
 	@Override
-	public void set( final Measurable<?> absoluteTime )
+	public void set( final Measurable<Q> absoluteTime )
 	{
 		wrap( (TimeSpan) absoluteTime );
 	}
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public DsolTime setZero()
+	public DsolTime<Q> setZero()
 	{
 		return DsolTime
 				.valueOf( TimeSpan.of( BigDecimal.ZERO, unwrap().getUnit() ) );
@@ -293,13 +267,14 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	 * @throws NamingException in case a context for the replication cannot be
 	 *             created
 	 */
-	public static Replication<Measurable<?>, BigDecimal, DsolTime>
-		createReplication( final String id, final DsolTime startTime,
+	public static <Q extends Quantity>
+		Replication<Measurable<Q>, BigDecimal, DsolTime<Q>>
+		createReplication( final String id, final DsolTime<Q> startTime,
 			final BigDecimal warmupPeriod, final BigDecimal runLength,
-			final ModelInterface<Measurable<?>, BigDecimal, DsolTime> model )
+			final ModelInterface<Measurable<Q>, BigDecimal, DsolTime<Q>> model )
 			throws NamingException
 	{
-		return new Replication<Measurable<?>, BigDecimal, DsolTime>( id,
+		return new Replication<Measurable<Q>, BigDecimal, DsolTime<Q>>( id,
 				startTime, warmupPeriod, runLength, model );
 	}
 
@@ -311,13 +286,13 @@ public class DsolTime extends SimTime<Measurable<?>, BigDecimal, DsolTime>
 	 * @throws ClassCastException if concrete parameter type for absolute times
 	 *             does not extend {@link BigDecimal} or {@link Number}
 	 */
-	public static <T extends SimTime<?, ?, T>> Instant toInstant( final T time )
-	{
-		return time instanceof DsolTime ? ((DsolTime) time).toInstant()
-				: time.get() instanceof BigDecimal
-						? Instant.of( (BigDecimal) time.get() )
-						: Instant.of( Number.class.cast( time.get() ) );
-	}
+//	public static <T extends SimTime<?, ?, T>> Instant toInstant( final T time )
+//	{
+//		return time instanceof DsolTime ? ((DsolTime<?>) time).toInstant()
+//				: time.get() instanceof BigDecimal
+//						? Instant.of( (BigDecimal) time.get() )
+//						: Instant.of( (Number) time.get() );
+//	}
 
 //	public static class DsolReplication
 //		extends Replication<BigDecimal, BigDecimal, DsolTime>

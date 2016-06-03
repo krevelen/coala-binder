@@ -23,7 +23,6 @@ import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Duration;
-import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -148,26 +147,25 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * Returns the decimal measure for the specified number stated in the
-	 * specified unit.
-	 * 
-	 * @param decimal the measurement value.
-	 * @param unit the measurement unit.
-	 * @see DecimalMeasure#valueOf(Number, Unit)
-	 */
-	public static <Q extends Quantity> TimeSpan of( final Number decimal,
-		final Unit<Q> unit )
-	{
-		return new TimeSpan( decimal, unit );
-	}
-
-	/**
 	 * @param units the amount of time units
-	 * @return a {@link TimeSpan}
+	 * @return a {@link Dimensionless} {@link TimeSpan}
 	 */
 	public static TimeSpan of( final Number units )
 	{
-		return new TimeSpan( units, Unit.ONE );
+		return of( units, Unit.ONE );
+	}
+
+	/**
+	 * Returns the decimal measure for the specified number stated in the
+	 * specified unit.
+	 * 
+	 * @param decimal the measurement value
+	 * @param unit the measurement {@link Unit}
+	 * @see DecimalMeasure#valueOf(Number, Unit)
+	 */
+	public static TimeSpan of( final Number decimal, final Unit<?> unit )
+	{
+		return new TimeSpan( decimal, unit );
 	}
 
 	/** */
@@ -310,18 +308,6 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * {@link TimeSpan} main constructor for exact values
-	 * 
-	 * @param value
-	 * @param unit
-	 */
-	@SuppressWarnings( "unchecked" )
-	public TimeSpan( final long value, final Unit unit )
-	{
-		super( BigDecimal.valueOf( value ), unit );
-	}
-
-	/**
 	 * {@link TimeSpan} main constructor for (inexact) {@link Number}s
 	 * 
 	 * @param value
@@ -330,7 +316,7 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan( final Number value, final Unit unit )
 	{
-		super( BigDecimal.valueOf( value.doubleValue() ), unit );
+		super( DecimalUtil.valueOf( value ), unit );
 	}
 
 	/**
@@ -393,7 +379,6 @@ public class TimeSpan extends DecimalMeasure
 	 * @param augend the {@link BigDecimal} value to add
 	 * @return a new {@link TimeSpan}
 	 */
-	@SuppressWarnings( "unchecked" )
 	public TimeSpan add( final BigDecimal augend )
 	{
 		return of( getValue().add( augend ), getUnit() );
@@ -447,7 +432,6 @@ public class TimeSpan extends DecimalMeasure
 	 * @param subtrahend the {@link BigDecimal} value to add
 	 * @return a new {@link TimeSpan}
 	 */
-	@SuppressWarnings( "unchecked" )
 	public TimeSpan subtract( final BigDecimal subtrahend )
 	{
 		return of( getValue().subtract( subtrahend ), getUnit() );
@@ -507,7 +491,6 @@ public class TimeSpan extends DecimalMeasure
 	 * @param divisor the {@link BigDecimal} value to add
 	 * @return a new {@link TimeSpan}
 	 */
-	@SuppressWarnings( "unchecked" )
 	public TimeSpan divide( final BigDecimal divisor )
 	{
 		return of( getValue().divide( divisor ), getUnit() );
@@ -561,7 +544,6 @@ public class TimeSpan extends DecimalMeasure
 	 * @param multiplicand the {@link BigDecimal} value to multiply with
 	 * @return a new {@link TimeSpan}
 	 */
-	@SuppressWarnings( "unchecked" )
 	public TimeSpan multiply( final BigDecimal multiplicand )
 	{
 		return of( getValue().multiply( multiplicand ), getUnit() );
@@ -645,7 +627,9 @@ public class TimeSpan extends DecimalMeasure
 		public String toString()
 		{
 			return this.result != null ? this.result
-					: (this.result = this.span.to( this.unit ).getValue()
+					: (this.result = this.span
+							.to( this.unit, DecimalUtil.DECIMAL_PRECISION )
+							.getValue()
 							.setScale( this.scale, RoundingMode.HALF_UP )
 							.toString() + this.unit);
 		}

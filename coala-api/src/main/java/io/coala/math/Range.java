@@ -1,6 +1,5 @@
 package io.coala.math;
 
-import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 

@@ -21,7 +21,6 @@ import java.math.BigDecimal;
 import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
 import javax.measure.quantity.Frequency;
-import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 

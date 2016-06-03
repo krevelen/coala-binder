@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 31d0ce9187af30ae8ffb082f4def62f55ad5f386 $
  * $URL$
  * 
  * Part of the EU project Inertia, see http://www.inertia-project.eu/
@@ -24,12 +24,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParser;
 
 /**
- * {@link RecurrenceRuleType} of a {@linkplain TriggerPattern} with JSON
+ * {@link RecurrenceRuleType} of a {@linkplain Timing} with JSON
  * {@linkplain #value()} tokens. Note that {@link JsonParser} accepts
  * {@linkplain #ordinal()} as well.
  * 
  * @date $Date$
- * @version $Id$
+ * @version $Id: 31d0ce9187af30ae8ffb082f4def62f55ad5f386 $
  * @author <a href="mailto:rick@almende.org">Rick</a>
  */
 public enum RecurrenceRuleType

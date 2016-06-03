@@ -210,7 +210,7 @@
 						<encoding>${project.build.sourceEncoding}</encoding>
 						<compilerArgument>-Xlint:deprecation</compilerArgument>
 						<compilerArgument>-Xlint:unchecked</compilerArgument>
-						<verbose>true</verbose>
+						<verbose>false</verbose>
 					</configuration>
 				</plugin>
 				<plugin>

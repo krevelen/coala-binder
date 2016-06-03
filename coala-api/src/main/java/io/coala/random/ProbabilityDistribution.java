@@ -36,7 +36,6 @@ import io.coala.math.MeasureUtil;
 import io.coala.math.WeightedValue;
 import io.coala.util.InstanceParser;
 import io.coala.util.Instantiator;
-import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
 

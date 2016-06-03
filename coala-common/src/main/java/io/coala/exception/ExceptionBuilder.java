@@ -411,7 +411,15 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		@Override
 		public String getMessage()
 		{
-			return message.getFormattedMessage();
+			try
+			{
+				return this.message == null ? null
+						: this.message.getFormattedMessage();
+			} catch( final Exception e )
+			{
+				e.printStackTrace();
+				return this.message.toString();
+			}
 		}
 
 		/**

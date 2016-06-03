@@ -49,7 +49,8 @@ public class MeasureUtil implements Util
 		return Amount.valueOf( value.doubleValue(), unit );
 	}
 
-	public static boolean isNegative( final Amount<?> amount )
+	public static <Q extends Quantity> boolean
+		isNegative( final Amount<Q> amount )
 	{
 		return !Compare.eq( amount, amount.abs() );
 	}

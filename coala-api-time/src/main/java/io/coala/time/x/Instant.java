@@ -38,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.coala.json.Wrapper;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.time.x.TimeSpan.Prettifier;
+import io.coala.util.DecimalUtil;
 
 /**
  * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
@@ -179,10 +180,25 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 * {@link Instant} static factory method
 	 * 
 	 * @param units the amount of time units
+	 * @deprecated please specify unit (of
+	 *             {@link javax.measure.quantity.Duration Duration} or
+	 *             {@link Dimensionless}) using {@link #of(Number, Unit)}
 	 */
+	@Deprecated
 	public static Instant of( final Number units )
 	{
 		return of( TimeSpan.of( units ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param units the amount of time units
+	 */
+	public static <Q extends Quantity> Instant of( final Number value,
+		final Unit<Q> unit )
+	{
+		return of( TimeSpan.of( value, unit ) );
 	}
 
 	/**
@@ -445,8 +461,12 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	public Duration toDuration( final Instant offset )
 	{
 		return Duration.of( offset == null ? unwrap().getValue()
-				: unwrap().getValue().subtract(
-						offset.unwrap().to( unwrap().getUnit() ).getValue() ) );
+				: unwrap().getValue()
+						.subtract( offset.unwrap()
+								.to( unwrap().getUnit(),
+										DecimalUtil.DECIMAL_PRECISION )
+								.getValue() ),
+				unwrap().getUnit() );
 	}
 
 	public Prettifier prettify( final int scale )

@@ -67,7 +67,7 @@ public class ReflectUtil implements Util
 				return (Constructor<T>) constructor;
 			}
 			throw ExceptionFactory.createUnchecked(
-					"No matching public constructor found for {}{}", valueType,
+					"No matching public constructor found for %s%s", valueType,
 					argTypes == null ? Collections.emptyList()
 							: Arrays.asList( argTypes ) );
 		}

@@ -17,13 +17,16 @@ package io.coala.time.x;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.regex.Pattern;
+
+import javax.measure.unit.SI;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.ReadableDateTime;
+import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.TriggerBuilder;
@@ -38,26 +41,36 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.ical.compat.jodatime.DateTimeIteratorFactory;
 
-import io.coala.json.JsonUtil;
+import io.coala.exception.ExceptionFactory;
+import io.coala.json.Wrapper;
 import rx.Observable;
-import rx.Subscriber;
 import rx.functions.Func1;
 
 /**
- * {@link TriggerPattern} wraps a pattern value and its resulting observable
- * instants
+ * {@link Timing} wraps a {@link String} representation of some calendar-based
+ * pattern or period since the EPOCH, like:
+ * <ul>
+ * <li>a {@link CronExpression} (e.g. {@code "0 0 0 14 * *"} for
+ * <em>&ldquo;midnight of every 14th day
+ *            of the month&rdquo;</em> );</li>
+ * <li>a {@link DateTimeIteratorFactory iCal RRULE or RDATE} pattern (e.g.
+ * {@code "DTSTART;TZID=US-Eastern:19970902T090000\r\nRRULE:FREQ=DAILY;UNTIL=20130430T083000Z;INTERVAL=1;"}
+ * );</li>
+ * <li>a relative {@link Instant#of(String) period or duration} (e.g.
+ * {@code "P2DT3H4M"} or {@code "27.5 µs"} );</li>
+ * </ul>
  * 
  * @version $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
  * @author Rick van Krevelen
  */
-@JsonSerialize( using = TriggerPattern.JsonSerializer.class )
-@JsonDeserialize( using = TriggerPattern.JsonDeserializer.class )
-public class TriggerPattern
+// FIXME use generic Wrapper de/serializers ?
+@JsonSerialize( using = Timing.JsonSerializer.class )
+@JsonDeserialize( using = Timing.JsonDeserializer.class )
+public class Timing implements Wrapper<String>
 {
 
 	/** */
-	private static final Logger LOG = LogManager
-			.getLogger( TriggerPattern.class );
+	private static final Logger LOG = LogManager.getLogger( Timing.class );
 
 	/** */
 	private static final Pattern dtStartTimePattern = Pattern
@@ -68,36 +81,91 @@ public class TriggerPattern
 			.compile( "TZID=([^:;]*)" );
 
 	/** */
-	private Object value;
+	private String value;
 
 	/**
-	 * @param measure
-	 * @return
+	 * {@link Timing} constructor for "natural" polymorphic Jackson bean
+	 * deserialization
 	 * 
-	 * @see CronScheduleBuilder#cronSchedule(String)
-	 * @see DateTimeIteratorFactory#createDateTimeIterable(String,
-	 *      ReadableDateTime, DateTimeZone, boolean)
+	 * @see com.fasterxml.jackson.databind.deser.BeanDeserializer
 	 */
-	public static final Observable<Instant>
-		parseInstantOrIntervalOrRule( final String json )
+	public Timing()
 	{
+	}
+
+	@Override
+	public void wrap( final String value )
+	{
+		this.value = value;
+	}
+
+	public String unwrap()
+	{
+		return this.value;
+	}
+
+	@Override
+	public String toString()
+	{
+		return Util.toString( this );
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Util.hashCode( this );
+	}
+
+	@Override
+	public boolean equals( final Object that )
+	{
+		return Util.equals( this, that );
+	}
+
+	/**
+	 * @return
+	 */
+	@JsonIgnore
+	public Observable<Instant> asObservable( final Date offset )
+	{
+		final String pattern = unwrap();
 		try
 		{
+//			final MutableTrigger trigger = CronScheduleBuilder.cronSchedule( pattern ).build();
+
 			// example: "0/20 * * * * ?"
 			final CronTrigger trigger = TriggerBuilder.newTrigger()
-					.withSchedule( CronScheduleBuilder.cronSchedule( json ) )
+					.withSchedule( CronScheduleBuilder.cronSchedule( pattern ) )
 					.build();
-			return Observable.create( new Observable.OnSubscribe<Instant>()
+			return Observable.from( new Iterable<Instant>()
 			{
 				@Override
-				public void call( final Subscriber<? super Instant> sub )
+				public Iterator<Instant> iterator()
 				{
-					Date current = trigger.getStartTime();
-					while( current != null )
+					return new Iterator<Instant>()
 					{
-						sub.onNext( Instant.of( current.getTime() ) );
-						current = trigger.getFireTimeAfter( current );
-					}
+						private Date current = trigger
+								.getFireTimeAfter( offset );
+
+						@Override
+						public boolean hasNext()
+						{
+							return this.current != null;
+						}
+
+						@Override
+						public Instant next()
+						{
+							final Instant next = //this.current == null ? null :
+									Instant.of(
+											this.current.getTime()
+													- offset.getTime(),
+											SI.MILLI( SI.SECOND ) );
+							this.current = trigger
+									.getFireTimeAfter( this.current );
+							return next;
+						}
+					};
 				}
 			} );
 		} catch( final Exception e )
@@ -114,105 +182,40 @@ public class TriggerPattern
 				// FIXME parse DTSTART (see
 				// http://www.kanzaki.com/docs/ical/rrule.html)
 				final DateTimeZone zone = DateTimeZone
-						.forID( dtStartZonePattern.matcher( json ).group() );
+						.forID( dtStartZonePattern.matcher( pattern ).group() );
 				final DateTime start = DateTime
-						.parse( dtStartTimePattern.matcher( json ).group() )
+						.parse( dtStartTimePattern.matcher( pattern ).group() )
 						.withZone( zone );
 
 				// convert DateTime to Instant
 				return Observable
 						.from( DateTimeIteratorFactory.createDateTimeIterable(
-								json, start, zone, strict ) )
+								pattern, start, zone, strict ) )
 						.map( new Func1<DateTime, Instant>()
 						{
 							@Override
 							public Instant call( final DateTime dt )
 							{
-								return Instant.of( dt );
+								final Instant t = Instant.of( dt );
+								LOG.trace( "ical {}: {}: {}", pattern, dt, t );
+								return t;
 							}
 						} );
 			} catch( final Exception e1 )
 			{
-				return Observable.just( Instant.valueOf( json ) );
+				try
+				{
+					return Observable.just( Instant.valueOf( pattern ) );
+				} catch( final Exception e2 )
+				{
+
+					throw ExceptionFactory.createUnchecked( e,
+							"Problem parsing `{0}`, errors: \n\t{1}\n\t{2}\n\t{3}",
+							pattern, e.getMessage(), e1.getMessage(),
+							e2.getMessage() );
+				}
 			}
 		}
-	}
-
-	/**
-	 * {@link TriggerPattern} constructor for "natural" polymorphic Jackson bean
-	 * deserialization
-	 * 
-	 * @see com.fasterxml.jackson.databind.deser.BeanDeserializer
-	 */
-	public TriggerPattern( final String json )
-	{
-		this( (Object) json );
-	}
-
-	/**
-	 * {@link TriggerPattern} constructor for "natural" polymorphic Jackson bean
-	 * deserialization
-	 * 
-	 * @see com.fasterxml.jackson.databind.deser.BeanDeserializer
-	 */
-	public TriggerPattern( final double absoluteInstantMS )
-	{
-		this( Instant.of( absoluteInstantMS ) );
-	}
-
-	/**
-	 * {@link TriggerPattern} constructor for "natural" polymorphic Jackson bean
-	 * deserialization
-	 * 
-	 * @see com.fasterxml.jackson.databind.deser.BeanDeserializer
-	 */
-	public TriggerPattern( final int absoluteInstantMS )
-	{
-		this( Instant.of( absoluteInstantMS ) );
-	}
-
-	/**
-	 * {@link TriggerPattern} constructor
-	 * 
-	 * @param values
-	 * @param type
-	 */
-	public TriggerPattern( final Object value )
-	{
-		this.value = value;
-	}
-
-	public Object getValue()
-	{
-		return this.value;
-	}
-
-	@Override
-	public String toString()
-	{
-		return getValue().toString();
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return getValue().hashCode();
-	}
-
-	/**
-	 * @return
-	 */
-	@JsonIgnore
-	public Observable<Instant> asObservable()
-	{
-		if( getValue() instanceof Instant )
-			return Observable.just( (Instant) getValue() );
-
-		if( getValue() instanceof String )
-			return parseInstantOrIntervalOrRule( (String) getValue() );
-
-		throw new IllegalArgumentException(
-				"Can't convert " + getValue().getClass().getName() );
 	}
 
 	/*
@@ -237,16 +240,17 @@ public class TriggerPattern
 			 */
 
 	/**
-	 * @param jsonRecurrence
-	 * @return
+	 * @param pattern a {@link String} representation of some calendar-based
+	 *            period or pattern
+	 * @return the new {@link Timing} pattern wrapper
 	 */
-	public static TriggerPattern valueOf( final String json )
+	public static Timing valueOf( final String pattern )
 	{
-		return JsonUtil.valueOf( json, TriggerPattern.class );
+		return Util.valueOf( pattern, Timing.class );
 	}
 
 	public static class JsonSerializer
-		extends com.fasterxml.jackson.databind.JsonSerializer<TriggerPattern>
+		extends com.fasterxml.jackson.databind.JsonSerializer<Timing>
 	{
 		public JsonSerializer()
 		{
@@ -254,9 +258,9 @@ public class TriggerPattern
 		}
 
 		@Override
-		public void serialize( final TriggerPattern value,
-			final JsonGenerator gen, final SerializerProvider serializers )
-				throws IOException, JsonProcessingException
+		public void serialize( final Timing value, final JsonGenerator gen,
+			final SerializerProvider serializers )
+			throws IOException, JsonProcessingException
 		{
 			// LOG.trace("Serializing " + value);
 			gen.writeString( value.toString() );
@@ -264,7 +268,7 @@ public class TriggerPattern
 	}
 
 	public static class JsonDeserializer
-		extends com.fasterxml.jackson.databind.JsonDeserializer<TriggerPattern>
+		extends com.fasterxml.jackson.databind.JsonDeserializer<Timing>
 	{
 		public JsonDeserializer()
 		{
@@ -272,14 +276,11 @@ public class TriggerPattern
 		}
 
 		@Override
-		public TriggerPattern deserialize( final JsonParser p,
+		public Timing deserialize( final JsonParser p,
 			final DeserializationContext ctxt )
-				throws IOException, JsonProcessingException
+			throws IOException, JsonProcessingException
 		{
-			// LOG.trace("Deserializing " + p.getText());
-			return p.getCurrentToken().isNumeric()
-					? new TriggerPattern( p.getNumberValue().doubleValue() )
-					: new TriggerPattern( p.getText() );
+			return Util.valueOf( p.getText(), Timing.class );
 		}
 	}
 
