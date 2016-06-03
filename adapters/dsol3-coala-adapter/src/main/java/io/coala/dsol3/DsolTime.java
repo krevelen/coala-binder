@@ -236,7 +236,6 @@ public class DsolTime<Q extends Quantity> extends
 		wrap( (TimeSpan) absoluteTime );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	@Override
 	public DsolTime<Q> setZero()
 	{
