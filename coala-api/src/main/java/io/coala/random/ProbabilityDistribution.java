@@ -889,7 +889,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www4f.wolframalpha.com/Calculate/MSP/MSP45422d3he4dhebi328d000058fagd36che5g435?MSPStoreType=image/gif&s=55"/>
+		 * "https://upload.wikimedia.org/wikipedia/en/2/22/FishersNoncentralHypergeometric1.png"/>
 		 * 
 		 * @param populationSize <em>N</em>
 		 * @param numberOfSuccesses <em>m</em>
@@ -953,7 +953,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www4f.wolframalpha.com/Calculate/MSP/MSP8501hgb0bgf73624fc5000051a73dc4e9a96c67?MSPStoreType=image/gif&s=16"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Beta_distribution_pdf.svg/650px-Beta_distribution_pdf.svg.png"/>
 		 * 
 		 * @param alpha shape (positive)
 		 * @param beta shape (positive)
@@ -967,7 +967,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5b.wolframalpha.com/Calculate/MSP/MSP7871b54g7d40h84965d00003da5f5hdbcc5c814?MSPStoreType=image/gif&s=43"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cauchy_pdf.svg/600px-Cauchy_pdf.svg.png"/>
 		 * 
 		 * @param median the location <em>a</em>
 		 * @param scale <em>b</em> (positive)
@@ -982,7 +982,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5b.wolframalpha.com/Calculate/MSP/MSP6191i49013gc13cf2hb000022b4ceehae6f37ea?MSPStoreType=image/gif&s=36"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Chi-square_pdf.svg/642px-Chi-square_pdf.svg.png"/>
 		 * 
 		 * @param degreesOfFreedom <em>k</em>
 		 * @return a &chi;<sup>2</sup> {@link ProbabilityDistribution}
@@ -996,10 +996,10 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5b.wolframalpha.com/Calculate/MSP/MSP88621eh12e8g98651g400003ee0348d29i1g4d4?MSPStoreType=image/gif&s=52"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Exponential_pdf.svg/650px-Exponential_pdf.svg.png"/>
 		 * 
-		 * @param mean
-		 * @return an exponential {@link ProbabilityDistribution}
+		 * @param mean &lambda;
+		 * @return a (negative) exponential {@link ProbabilityDistribution}
 		 * @see <a href="https://www.wikiwand.com/en/Exponential_distribution">
 		 *      Wikipedia</a> and <a href=
 		 *      "https://www.wolframalpha.com/input/?i=exponential+distribution">
@@ -1018,7 +1018,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5b.wolframalpha.com/Calculate/MSP/MSP13671i38add4aggc73hh000014324ii26c1f66f7?MSPStoreType=image/gif&s=53"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/F_pdf.svg/650px-F_pdf.svg.png"/>
 		 * 
 		 * @param numeratorDegreesOfFreedom <em>n</em>
 		 * @param denominatorDegreesOfFreedom <em>m</em>
@@ -1037,7 +1037,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * <a href="https://www.wikiwand.com/en/Erlang_distribution">Erlang
 		 * distributions</a> (where shape <em>k</em> is an integer) <img alt=
 		 * "Probability density function" height="150" src=
-		 * "https://www4f.wolframalpha.com/Calculate/MSP/MSP63311b1eag7ab2ig548b00004782c2i0edach659?MSPStoreType=image/gif&s=2"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Gamma_distribution_pdf.svg/650px-Gamma_distribution_pdf.svg.png"/>
 		 * 
 		 * @param shape &alpha; or <em>k</em>
 		 * @param scale &beta; or &theta;
@@ -1052,7 +1052,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5a.wolframalpha.com/Calculate/MSP/MSP52951h27f65cf34d4e2h00003hac30i250a1h7fa?MSPStoreType=image/gif&s=44"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Levy0_distributionPDF.svg/650px-Levy0_distributionPDF.svg.png"/>
 		 * 
 		 * @param mu
 		 * @param c
@@ -1066,7 +1066,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5a.wolframalpha.com/Calculate/MSP/MSP241g2gaabgif7c3faf0000186db998af94bfha?MSPStoreType=image/gif&s=25"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/PDF-log_normal_distributions.svg/600px-PDF-log_normal_distributions.svg.png"/>
 		 * 
 		 * @param scale
 		 * @param shape
@@ -1081,10 +1081,10 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5a.wolframalpha.com/Calculate/MSP/MSP57711dh32162d1de95bc0000182h50icfigi6hd0?MSPStoreType=image/gif&s=53"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Normal_Distribution_PDF.svg/700px-Normal_Distribution_PDF.svg.png"/>
 		 * 
 		 * @param mean &mu;
-		 * @param stDev &sigma; (standard deviation)
+		 * @param stDev &sigma; > 0 (standard deviation)
 		 * @return a Gaussian or Normal {@link ProbabilityDistribution}
 		 * @see <a href="https://www.wikiwand.com/en/Normal_distribution">
 		 *      Wikipedia </a> and <a href=
@@ -1111,7 +1111,8 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 			double[][] covariances );
 
 		/**
-		 * <img alt="Probability density function" height="150" src=""/>
+		 * <img alt="Probability density function" height="150" src=
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Probability_density_function_of_Pareto_distribution.svg/650px-Probability_density_function_of_Pareto_distribution.svg.png"/>
 		 * 
 		 * @param scale
 		 * @param shape
@@ -1126,7 +1127,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5a.wolframalpha.com/Calculate/MSP/MSP12122ihg1d9af4a54280000415853423eie0hh4?MSPStoreType=image/gif&s=16"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Student_t_pdf.svg/650px-Student_t_pdf.svg.png"/>
 		 * 
 		 * @param degreesOfFreedom <em>v</em>
 		 * @return a Pearson type VII or Student's T
@@ -1157,7 +1158,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www4f.wolframalpha.com/Calculate/MSP/MSP656228c7a6e598g3d76000057af6a6d61g9e468?MSPStoreType=image/gif&s=41"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Uniform_discrete_pmf_svg.svg/650px-Uniform_discrete_pmf_svg.svg.png"/>
 		 * 
 		 * @param min <em>a</em>
 		 * @param max <em>b</em>
@@ -1173,7 +1174,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www4f.wolframalpha.com/Calculate/MSP/MSP11821h766ih567i7ifd30000345ii2eh6a6e27ee?MSPStoreType=image/gif&s=34"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Uniform_Distribution_PDF_SVG.svg/500px-Uniform_Distribution_PDF_SVG.svg.png"/>
 		 * 
 		 * @param min
 		 * @param max
@@ -1205,7 +1206,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
-		 * "https://www5b.wolframalpha.com/Calculate/MSP/MSP25522008f4d573002dac00004iec9101ia30f3ab?MSPStoreType=image/gif&s=41"/>
+		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Weibull_PDF.svg/650px-Weibull_PDF.svg.png"/>
 		 * 
 		 * @param alpha shape &alpha; (positive)
 		 * @param beta scale &beta; (positive)
