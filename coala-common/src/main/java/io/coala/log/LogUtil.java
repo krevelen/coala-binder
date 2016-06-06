@@ -34,10 +34,8 @@ import io.coala.util.Util;
 /**
  * {@link LogUtil}
  * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class LogUtil implements Util
 {
@@ -56,6 +54,10 @@ public class LogUtil implements Util
 
 	static
 	{
+		// redirect JUL to Log4J2
+		System.setProperty( "java.util.logging.manager",
+				org.apache.logging.log4j.jul.LogManager.class.getName() );
+
 		// FIXME allow override from COALA config
 		Locale.setDefault( Locale.forLanguageTag( System.getProperty(
 				LOCALE_PROPERTY_KEY, LOCALE_PROPERTY_DEFAULT ) ) );
