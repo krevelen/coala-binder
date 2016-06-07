@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>io.coala</groupId>
+  <artifactId>math3-coala-adapter</artifactId>
+  <versioning>
+    <versions>
+      <version>0.2.0-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20160607105005</lastUpdated>
+  </versioning>
+</metadata>

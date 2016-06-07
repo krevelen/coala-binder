@@ -1,0 +1,117 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>io.coala</groupId>
+		<artifactId>coala</artifactId>
+		<version>0.2.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<artifactId>coala-api-time</artifactId>
+
+	<name>${project.artifactId} ${project.version}</name>
+	<url>http://coala.io/</url>
+	<description>
+		COALA time API
+		$Id: 1baf39c244b811bf943d3f99df50d8f3b7faf230 $
+	</description>
+
+	<properties>
+		<google-rfc-2445.version>20110304</google-rfc-2445.version>
+		<quartz.version>2.2.3</quartz.version>
+		<joda-time.version>2.9.4</joda-time.version>
+		<threetenbp.version>1.2</threetenbp.version>
+		<threeten-extra.version>0.9</threeten-extra.version>
+	</properties>
+
+	<repositories>
+		<!-- COALA public Maven repository -->
+		<repository>
+			<name>COALA Public Maven Repository</name>
+			<id>coala-public</id>
+			<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>coala-api-capability</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<!-- Quartz implementation of CRON-like scheduler -->
+		<dependency>
+			<groupId>org.quartz-scheduler</groupId>
+			<artifactId>quartz</artifactId>
+			<version>${quartz.version}</version>
+			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- iCal recurrence rule (RRULE) implementation -->
+		<dependency>
+			<groupId>org.scala-saddle</groupId>
+			<artifactId>google-rfc-2445</artifactId>
+			<version>${google-rfc-2445.version}</version>
+			<scope>provided</scope>
+			<exclusions>
+				<!-- use a more recent implementation of joda-time -->
+				<exclusion>
+					<groupId>joda-time</groupId>
+					<artifactId>joda-time</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- Time-related implementations, similar to JSR-310 -->
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+			<version>${joda-time.version}</version>
+		</dependency>
+
+		<!-- Backport of JSR-310 from JDK 8 to JDK 7 and JDK 6. NOT an implementation 
+			of the JSR. -->
+		<dependency>
+			<groupId>org.threeten</groupId>
+			<artifactId>threetenbp</artifactId>
+			<version>${threetenbp.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.threeten</groupId>
+			<artifactId>threeten-extra</artifactId>
+			<version>${threeten-extra.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<!-- Used as unit testing framework, supports test-driven development -->
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Reference implementation of JSR-363 for JDK 8. -->
+		<!-- <dependency> <groupId>tec.uom</groupId> <artifactId>uom-se</artifactId> 
+			<version>0.7</version> <scope>test</scope> </dependency> -->
+
+	</dependencies>
+</project>
