@@ -19,9 +19,9 @@
  */
 package io.coala.exception;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Formatter;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
@@ -32,16 +32,15 @@ import org.apache.logging.log4j.message.StringFormattedMessage;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.exception.ExceptionBuilder.CheckedException;
+import io.coala.exception.ExceptionBuilder.UncheckedException;
 import io.coala.json.Contextualized;
 import io.coala.json.Contextualized.Context;
 import io.coala.log.LogUtil;
 
 /**
- * {@link ExceptionBuilder} creates {@link CheckedException}s and
- * {@link UncheckedException}s and publishes via the {@link ExceptionStream}
- * them upon {@link #build()}
- * <p>
+ * {@link ExceptionBuilder} creates {@link CheckedException.Builder}s and
+ * {@link UncheckedException.Builder}s, each of which emit the Exceptions upon
+ * {@link #build()} via the {@link ExceptionStream}
  * 
  * @param <THIS>
  * @version $Id$
@@ -64,7 +63,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/**
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link CheckedException.Builder}
@@ -100,7 +99,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 
 	/**
 	 * @param cause the cause of this {@link CheckedException}
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link CheckedException.Builder}
@@ -122,7 +121,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/**
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link UncheckedException.Builder}
@@ -158,7 +157,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 
 	/**
 	 * @param cause the cause of this {@link UncheckedException}
-	 * @param messageFormat following {@link Formatter} syntax
+	 * @param messageFormat following {@link MessageFormat} syntax
 	 * @param args stringifiable arguments as referenced in
 	 *            {@code messageFormat}
 	 * @return a {@link UncheckedException.Builder}
@@ -171,13 +170,13 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/** FIXME from config? */
-	private static final MessageFactory messageFactory = new MessageFormatMessageFactory();
+	private static final MessageFactory MESSAGE_FACTORY = new MessageFormatMessageFactory();
 
 	protected static Message format( final Object message )
 	{
 		try
 		{
-			return messageFactory.newMessage( message );
+			return MESSAGE_FACTORY.newMessage( message );
 		} catch( final Throwable t )
 		{
 			LOG.warn( new ParameterizedMessage( "Problem with message \"{}\"",
@@ -190,7 +189,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	{
 		try
 		{
-			return messageFactory.newMessage( message );
+			return MESSAGE_FACTORY.newMessage( message );
 		} catch( final Throwable t )
 		{
 			LOG.warn( new ParameterizedMessage( "Problem with message \"{}\"",
@@ -204,7 +203,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	{
 		try
 		{
-			return messageFactory.newMessage( messageFormat, params );
+			return MESSAGE_FACTORY.newMessage( messageFormat, params );
 		} catch( final Throwable t )
 		{
 			LOG.warn( new ParameterizedMessage(
@@ -212,6 +211,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 					messageFormat, params == null ? Collections.emptyList()
 							: Arrays.asList( params ) ),
 					t );
+			// attempt the standard String Formatter
 			return new StringFormattedMessage( messageFormat, params );
 		}
 	}
@@ -322,9 +322,12 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			public CheckedException build()
 			{
 				final CheckedException ex = this.cause == null
-						? new CheckedException( this.context, this.message )
-						: new CheckedException( this.context, this.message,
-								this.cause );
+						? new CheckedException(
+								this.context == null ? null : this.context,
+								this.message )
+						: new CheckedException(
+								this.context == null ? null : this.context,
+								this.message, this.cause );
 				return ExceptionStream.toPublished( ex );
 			}
 		}
@@ -408,7 +411,15 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		@Override
 		public String getMessage()
 		{
-			return message.getFormattedMessage();
+			try
+			{
+				return this.message == null ? null
+						: this.message.getFormattedMessage();
+			} catch( final Exception e )
+			{
+				e.printStackTrace();
+				return this.message.toString();
+			}
 		}
 
 		/**
@@ -437,9 +448,11 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			public UncheckedException build()
 			{
 				final UncheckedException ex = this.cause == null
-						? new UncheckedException( this.context.locked(),
-								this.message )
-						: new UncheckedException( this.context.locked(),
+						? new UncheckedException( this.context == null ? null
+								: this.context.locked(), this.message )
+						: new UncheckedException(
+								this.context == null ? null
+										: this.context.locked(),
 								this.message, this.cause );
 				return ExceptionStream.toPublished( ex );
 			}
@@ -482,7 +495,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/**
-	 * @return the new immutable {@link Contextualized} instance
+	 * @return the new immutable {@link Contextualized} {@link Exception}
 	 */
 	public abstract Contextualized build();
 

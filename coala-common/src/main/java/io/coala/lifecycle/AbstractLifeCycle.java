@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 78bdc3495417601286a847a1b6061eb5bfe8f023 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/AbstractLifeCycle.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -31,7 +31,7 @@ import io.coala.name.Identifier;
  * 
  */
 public abstract class AbstractLifeCycle<ID extends Identifier<?, ?>, S extends LifeCycleStatus<S>>
-		extends AbstractMachine<ID, S> implements LifeCycle<S>
+	extends AbstractMachine<ID, S> implements LifeCycle<S>
 {
 
 	/** */
@@ -50,18 +50,29 @@ public abstract class AbstractLifeCycle<ID extends Identifier<?, ?>, S extends L
 	 * 
 	 * @param id
 	 */
-	public AbstractLifeCycle(final ID id)
+	public AbstractLifeCycle( final ID id )
 	{
-		super(id);
+		super( id );
 	}
 
-	/**
-	 * @param status
-	 */
-	protected void forceStatus(final S status)
+	/** @param status */
+	protected void forceStatus( final S status )
 	{
-		super.setStatus(status,
-				status.isFinishedStatus() || status.isFailedStatus());
+		super.setStatus( status,
+				status.isFinishedStatus() || status.isFailedStatus() );
+	}
+
+	/** @param status */
+	protected void setStatus( final S status )
+	{
+		forceStatus( status );
+	}
+
+	@Override
+	@Deprecated
+	protected void setStatus( final S status, final boolean completed )
+	{
+		super.setStatus( status, completed );
 	}
 
 }

@@ -22,7 +22,7 @@ import org.apache.logging.log4j.Logger;
 import io.coala.agent.AgentStatusObserver;
 import io.coala.agent.AgentStatusUpdate;
 import io.coala.bind.Binder;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.lifecycle.AbstractLifeCycle;
 import io.coala.lifecycle.ActivationType;
 import io.coala.lifecycle.LifeCycleHooks;
@@ -207,8 +207,8 @@ public abstract class AbstractCapability<ID extends CapabilityID>
 			onError( t );
 			// LOG.error("Problem executing " + getID(), t);
 		}
-		CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime( "status",
-				update.getStatus(), "unexpected" );
+		ExceptionFactory.createUnchecked( "Illegal status: {}",
+				update.getStatus() );
 	}
 
 	@Override

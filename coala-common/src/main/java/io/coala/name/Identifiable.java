@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: b57b2e8447815391626c350c427b02ef9640d9f9 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,16 +12,14 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.name;
 
 /**
  * {@link Identifiable} owns an {@link AbstractIdentifier}
  * 
- * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id: b57b2e8447815391626c350c427b02ef9640d9f9 $
+ * @author Rick van Krevelen
  * 
  * @param <ID> the {@link Identifier} type
  * @param <THIS> the concrete {@link Identifiable} type
@@ -38,7 +36,7 @@ public interface Identifiable<ID extends Identifier<?, ?>>
 	/**
 	 * {@link Builder}
 	 * 
-	 * @version $Id$
+	 * @version $Id: b57b2e8447815391626c350c427b02ef9640d9f9 $
 	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 * 
 	 * @param <ID> the {@link Identifiable}'s {@link Identifier} type

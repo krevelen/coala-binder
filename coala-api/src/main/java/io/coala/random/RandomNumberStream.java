@@ -1,7 +1,4 @@
 /* $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/random/RandomNumberStream.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,14 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.random;
 
 import java.util.Random;
 
-import io.coala.json.Wrapper;
 import io.coala.name.AbstractIdentifiable;
 import io.coala.name.AbstractIdentifier;
 import io.coala.name.Identifiable;
@@ -38,32 +32,28 @@ import io.coala.name.Identifiable;
 public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 {
 
+	/** @see Random#nextBoolean() */
 	boolean nextBoolean();
 
+	/** @see Random#nextBytes(byte[]) */
 	void nextBytes( byte[] bytes );
 
-	/**
-	 * @return the next pseudo-random int
-	 */
+	/** @see Random#nextInt() */
 	int nextInt();
 
-	/**
-	 * @param n
-	 * @return the next pseudo-random {@link int} between 0 and {@code n}
-	 */
-	int nextInt( int n );
+	/** @see Random#nextInt(int) */
+	int nextInt( int bound );
 
-	/**
-	 * @return the next pseudo-random int
-	 */
-	// int nextInt(int min, int max);
-
+	/** @see Random#nextLong() */
 	long nextLong();
 
+	/** @see Random#nextFloat() */
 	float nextFloat();
 
+	/** @see Random#nextDouble() */
 	double nextDouble();
 
+	/** @see Random#nextGaussian() */
 	double nextGaussian();
 
 	/**
@@ -95,25 +85,24 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	}
 
 	/**
-	 * {@link RandomNumberStreamFactory}
+	 * {@link Factory}
 	 * 
-	 * @version $Revision: 324 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	interface Factory
 	{
 		/**
 		 * @param id
 		 * @param seed
-		 * @return
+		 * @return a {@link RandomNumberStream}
 		 */
 		RandomNumberStream create( String id, Number seed );
 
 		/**
 		 * @param id
 		 * @param seed
-		 * @return
+		 * @return a {@link RandomNumberStream}
 		 */
 		RandomNumberStream create( ID id, Number seed );
 
@@ -121,8 +110,6 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 
 	/**
 	 * {@link AbstractRandomNumberStream}
-	 * 
-	 * TODO deprecate using {@link Wrapper}s
 	 * 
 	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
@@ -172,8 +159,19 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 		 */
 		public JURStream( final ID id, final Number seed )
 		{
+			this( id, new Random( seed.longValue() ) );
+		}
+
+		/**
+		 * {@link JURStream} constructor
+		 * 
+		 * @param id
+		 * @param seed
+		 */
+		public JURStream( final ID id, final Random random )
+		{
 			super( id );
-			this.random = new Random( seed.longValue() );
+			this.random = random;
 		}
 
 		@Override

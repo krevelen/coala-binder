@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 844c9cd17da2474d65f253111dc29127ba0f8cee $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/booter/BasicBooterService.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -20,6 +20,10 @@
  */
 package io.coala.capability.admin;
 
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+
 import io.coala.agent.AbstractAgentManager;
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
@@ -29,13 +33,7 @@ import io.coala.agent.BasicAgentStatus;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.capability.BasicCapability;
-import io.coala.exception.CoalaException;
 import io.coala.log.InjectLogger;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Action0;
@@ -49,8 +47,8 @@ import rx.schedulers.Schedulers;
  * @author <a href="mailto:Rick@almende.org">Rick</a>
  *
  */
-public class BasicCreatingCapability extends BasicCapability implements
-		CreatingCapability
+public class BasicCreatingCapability extends BasicCapability
+	implements CreatingCapability
 {
 
 	/** */
@@ -69,71 +67,71 @@ public class BasicCreatingCapability extends BasicCapability implements
 	 * @param binder
 	 */
 	@Inject
-	protected BasicCreatingCapability(final Binder binder)
+	protected BasicCreatingCapability( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 		this.agentManager = new AbstractAgentManager(
-				binder.inject(BinderFactory.Builder.class))
+				binder.inject( BinderFactory.Builder.class ) )
 		{
 			@Override
-			protected AgentID boot(final Agent agent) throws CoalaException
+			protected AgentID boot( final Agent agent )// throws CoalaException
 			{
 				// fake the wrapper/container agent lifecycle
-				Schedulers.trampoline().createWorker().schedule(new Action0()
+				Schedulers.trampoline().createWorker().schedule( new Action0()
 				{
 					@Override
 					public void call()
 					{
-						updateWrapperAgentStatus(agent.getID(),
-								BasicAgentStatus.CREATED);
-						updateWrapperAgentStatus(agent.getID(),
-								BasicAgentStatus.INITIALIZED);
-						updateWrapperAgentStatus(agent.getID(),
-								BasicAgentStatus.ACTIVE);
+						updateWrapperAgentStatus( agent.getID(),
+								BasicAgentStatus.CREATED );
+						updateWrapperAgentStatus( agent.getID(),
+								BasicAgentStatus.INITIALIZED );
+						updateWrapperAgentStatus( agent.getID(),
+								BasicAgentStatus.ACTIVE );
 					}
-				});
-				agent.getStatusHistory().subscribe(
-						new Observer<BasicAgentStatus>()
+				} );
+				agent.getStatusHistory()
+						.subscribe( new Observer<BasicAgentStatus>()
 						{
 							@Override
-							public void onError(final Throwable e)
+							public void onError( final Throwable e )
 							{
 								e.printStackTrace();
 							}
 
 							@Override
-							public void onNext(final BasicAgentStatus status)
+							public void onNext( final BasicAgentStatus status )
 							{
-								if (status.isInitializedStatus())
+								if( status.isInitializedStatus() )
 								{
 									Schedulers.trampoline().createWorker()
-											.schedule(new Action0()
+											.schedule( new Action0()
 											{
 												@Override
 												public void call()
 												{
 													updateWrapperAgentStatus(
 															agent.getID(),
-															BasicAgentStatus.PASSIVE);
+															BasicAgentStatus.PASSIVE );
 												}
-											});
-								} else if (status.isFinishedStatus()
-										|| status.isFailedStatus())
+											} );
+								} else if( status.isFinishedStatus()
+										|| status.isFailedStatus() )
 								{
 									Schedulers.trampoline().createWorker()
-											.schedule(new Action0()
+											.schedule( new Action0()
 											{
 												@Override
 												public void call()
 												{
 													updateWrapperAgentStatus(
 															agent.getID(),
-															BasicAgentStatus.COMPLETE);
+															BasicAgentStatus.COMPLETE );
 													updateWrapperAgentStatus(
 															agent.getID(),
-															BasicAgentStatus.FINISHED);
+															BasicAgentStatus.FINISHED );
 												}
-											});
+											} );
 								}
 							}
 
@@ -144,7 +142,7 @@ public class BasicCreatingCapability extends BasicCapability implements
 								// life cycle is also {@link
 								// BasicAgentStatus#FINISHED}
 							}
-						});
+						} );
 				return agent.getID();
 			}
 
@@ -157,36 +155,36 @@ public class BasicCreatingCapability extends BasicCapability implements
 	}
 
 	@Override
-	public Observable<AgentID> getChildIDs(final boolean currentOnly)
+	public Observable<AgentID> getChildIDs( final boolean currentOnly )
 	{
-		return this.agentManager
-				.getChildIDs(getID().getOwnerID(), currentOnly);
+		return this.agentManager.getChildIDs( getID().getOwnerID(),
+				currentOnly );
 	}
 
 	@Override
-	public Observable<AgentStatusUpdate> createAgent(final String agentID)
+	public Observable<AgentStatusUpdate> createAgent( final String agentID )
 	{
-		return this.agentManager.boot(agentID);
+		return this.agentManager.boot( agentID );
 	}
 
 	@Override
-	public <A extends Agent> Observable<AgentStatusUpdate> createAgent(
-			final String agentID, final Class<A> agentType)
+	public <A extends Agent> Observable<AgentStatusUpdate>
+		createAgent( final String agentID, final Class<A> agentType )
 	{
-		return this.agentManager.boot(agentID, agentType);
+		return this.agentManager.boot( agentID, agentType );
 	}
 
 	@Override
-	public Observable<AgentStatusUpdate> createAgent(final AgentID agentID)
+	public Observable<AgentStatusUpdate> createAgent( final AgentID agentID )
 	{
-		return this.agentManager.boot(agentID);
+		return this.agentManager.boot( agentID );
 	}
 
 	@Override
-	public <A extends Agent> Observable<AgentStatusUpdate> createAgent(
-			final AgentID agentID, final Class<A> agentType)
+	public <A extends Agent> Observable<AgentStatusUpdate>
+		createAgent( final AgentID agentID, final Class<A> agentType )
 	{
-		return this.agentManager.boot(agentID, agentType);
+		return this.agentManager.boot( agentID, agentType );
 	}
 
 }

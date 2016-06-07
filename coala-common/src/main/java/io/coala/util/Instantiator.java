@@ -7,7 +7,7 @@ import java.util.WeakHashMap;
 
 import javax.inject.Provider;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.DynaBean;
 import io.coala.json.DynaBeanProxyProvider;
 import io.coala.json.JsonUtil;
@@ -111,9 +111,8 @@ public class Instantiator<T>
 			return this.constructor.newInstance( args );
 		} catch( final Throwable t )
 		{
-			throw ExceptionBuilder
-					.unchecked( t, "Problem instantiating %s", this.type )
-					.build();
+			throw ExceptionFactory.createUnchecked( t,
+					"Problem instantiating {}", this.type );
 		}
 	}
 

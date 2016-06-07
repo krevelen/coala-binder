@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.capability.interact.SendingCapability;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.JsonUtil;
 import io.coala.log.InjectLogger;
 import io.coala.message.Message;
@@ -21,11 +21,11 @@ import rx.Observer;
 /**
  * {@link EveSendingCapability}
  * 
- * @version $Id$
+ * @version $Id: 288edfd6500c6985c85605d9e941c65f4a510340 $
  * @author Rick van Krevelen
  */
 public class EveSendingCapability extends BasicCapability
-		implements SendingCapability
+	implements SendingCapability
 {
 
 	/** */
@@ -41,77 +41,67 @@ public class EveSendingCapability extends BasicCapability
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected EveSendingCapability(final Binder binder)
+	protected EveSendingCapability( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
-	public void send(final Message<?> msg) throws Exception
+	public void send( final Message<?> msg ) throws Exception
 	{
-		// @SuppressWarnings("deprecation")
-		// EveUtil.receiveMessageByPointer(msg);
-		final EveWrapperAgent ag = EveUtil.getWrapperAgent(msg.getSenderID(),
-				true);
-		if (ag == null)
-			throw new IllegalStateException(
-					"No Eve agent exists for " + msg.getSenderID());
-		final JsonNode payload = JsonUtil.toTree(msg);
-		final URI receiverURI = EveUtil.getAddress(msg.getReceiverID());
-		ag.doSend(payload, receiverURI);
+		final EveWrapperAgent ag = EveUtil.getWrapperAgent( msg.getSenderID(),
+				true );
+		if( ag == null ) throw new IllegalStateException(
+				"No Eve agent exists for " + msg.getSenderID() );
+		final JsonNode payload = JsonUtil.toTree( msg );
+		final URI receiverURI = EveUtil.getAddress( msg.getReceiverID() );
+		ag.doSend( payload, receiverURI );
 	}
 
 	@Override
-	public void send(final Message<?> msg, final Duration timeout)
-			throws Exception
+	public void send( final Message<?> msg, final Duration timeout )
+		throws Exception
 	{
-		if (!getID().getOwnerID().equals(msg.getSenderID()))
-			throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.create("senderID",
-					msg.getSenderID());
-		if (msg.getReceiverID() == null)
-			throw CoalaExceptionFactory.VALUE_NOT_SET.create("receiverID", msg);
-		// if (EveUtil.getWrapperAgent(msg.getSenderID(), false) == null)
-		// throw CoalaExceptionFactory.AGENT_NOT_ALLOWED
-		// .createRuntime(msg.getReceiverID());
+		if( !getID().getOwnerID().equals( msg.getSenderID() ) )
+			throw ExceptionFactory.createChecked( "Wrong senderID {} != {}",
+					msg.getSenderID(), getID().getOwnerID() );
 		final long timeoutMS = timeout == null ? 0 : timeout.getMillis();
-		if (timeoutMS <= 0)
+		if( timeoutMS <= 0 )
 		{
-			send(msg);
+			send( msg );
 			return;
 		}
 		// timeout specified
 		RuntimeException lastError = null;
 		int attempts = 0;
 		long elapsedMS = 0;
-		for (long startMS = System
+		for( long startMS = System
 				.currentTimeMillis(); elapsedMS < timeoutMS; elapsedMS = System
-						.currentTimeMillis() - startMS)
+						.currentTimeMillis() - startMS )
 		{
-			if (lastError != null)
-				LOG.trace("Attempt " + (++attempts) + " t-"
-						+ (timeoutMS - elapsedMS) + "ms to: "
-						+ msg.getReceiverID() + ", ignored error: "
-						+ lastError.getMessage());
+			if( lastError != null ) LOG.trace( "Attempt " + (++attempts) + " t-"
+					+ (timeoutMS - elapsedMS) + "ms to: " + msg.getReceiverID()
+					+ ", ignored error: " + lastError.getMessage() );
 			try
 			{
-				send(msg);
-				if (attempts != 0)
-					LOG.trace("Attempt " + (++attempts) + " @" + elapsedMS
-							+ "ms succeeded to: " + msg.getReceiverID());
+				send( msg );
+				if( attempts != 0 )
+					LOG.trace( "Attempt " + (++attempts) + " @" + elapsedMS
+							+ "ms succeeded to: " + msg.getReceiverID() );
 				return;
-			} catch (final RuntimeException t)
+			} catch( final RuntimeException t )
 			{
 				lastError = t;
-				Thread.sleep(100L);
+				Thread.sleep( 100L );
 			}
 		}
-		throw new IllegalStateException("Attempt " + (++attempts) + " @"
+		throw new IllegalStateException( "Attempt " + (++attempts) + " @"
 				+ elapsedMS + "ms failed to: " + msg.getReceiverID(),
-				lastError);
+				lastError );
 	}
 
 	@Override
-	public <T extends Message<?>> Observer<T> outgoing(final Duration timeout)
+	public <T extends Message<?>> Observer<T> outgoing( final Duration timeout )
 	{
 		return new Observer<T>()
 		{
@@ -123,25 +113,24 @@ public class EveSendingCapability extends BasicCapability
 			}
 
 			@Override
-			public void onError(final Throwable e)
+			public void onError( final Throwable e )
 			{
-				LOG.error("Problem in outgoing message source from "
-						+ getID().getOwnerID(), e);
+				LOG.error( "Problem in outgoing message source from "
+						+ getID().getOwnerID(), e );
 			}
 
 			@Override
-			public void onNext(final T t)
+			public void onNext( final T t )
 			{
 				try
 				{
-					send(t, timeout);
-				} catch (final Throwable e)
+					send( t, timeout );
+				} catch( final Throwable e )
 				{
-					LOG.warn("Problem sending to " + t.getReceiverID(), e);
+					LOG.warn( "Problem sending to " + t.getReceiverID(), e );
 					e.printStackTrace();
 				}
 			}
 		};
 	}
-
 }

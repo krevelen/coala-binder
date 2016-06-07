@@ -10,7 +10,7 @@ import javax.inject.Provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.util.TypeArguments;
 
 /**
@@ -122,9 +122,8 @@ public class DynaBeanProxyProvider<T> implements Provider<T>
 					this.imports );
 		} catch( final Throwable t )
 		{
-			throw ExceptionBuilder.unchecked( t,
-					"Problem providing proxy instance for %s", this.proxyType )
-					.build();
+			throw ExceptionFactory.createUnchecked( t,
+					"Problem providing proxy instance for {}", this.proxyType );
 		}
 	}
 }

@@ -42,8 +42,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.coala.agent.AgentID;
 import io.coala.bind.Binder;
 import io.coala.capability.interact.ReceivingCapability;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.message.Message;
@@ -131,8 +130,8 @@ public class EveUtil implements Util
 				binder = EveAgentManager.getInstance()
 						.getBinder( msg.getReceiverID() );
 			else
-				throw CoalaExceptionFactory.AGENT_UNAVAILABLE
-						.createRuntime( msg.getReceiverID() );
+				throw ExceptionFactory.createUnchecked( "Agent unavailable: {}",
+						msg.getReceiverID() );
 		} else
 			binder = ag.getBinder();
 
@@ -167,7 +166,7 @@ public class EveUtil implements Util
 	 */
 	@Deprecated
 	protected static <M extends Message<?>> void
-		sendMessageByPointer( final M msg )
+		sendMessageByPointer( final M msg ) throws Exception
 	{
 		try
 		{
@@ -177,8 +176,8 @@ public class EveUtil implements Util
 					receiverURI );
 		} catch( final Throwable t )
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE
-					.createRuntime( msg.getSenderID() );
+			throw ExceptionFactory.createChecked( "Agent unavailable: {}",
+					msg.getSenderID() );
 		}
 	}
 
@@ -206,10 +205,9 @@ public class EveUtil implements Util
 	/**
 	 * @param id
 	 * @return
-	 * @throws CoalaException
+	 * @throws Exception
 	 */
-	public static List<URI> getAddresses( final AgentID id )
-		throws CoalaException
+	public static List<URI> getAddresses( final AgentID id ) throws Exception
 	{
 		try
 		{
@@ -217,7 +215,7 @@ public class EveUtil implements Util
 			if( agent != null ) return agent.getUrls();
 		} catch( final Exception e )
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.create( id );
+			throw ExceptionFactory.createChecked( "Agent unavailable: {}", id );
 		}
 		return Collections.emptyList();
 	}
@@ -225,10 +223,8 @@ public class EveUtil implements Util
 	/**
 	 * @param eveAgentID
 	 * @return
-	 * @throws CoalaException
 	 */
 	protected static boolean hasWrapperAgent( final String eveAgentID )
-		throws CoalaException
 	{
 		synchronized( WRAPPER_AGENT_CACHE )
 		{
@@ -339,17 +335,13 @@ public class EveUtil implements Util
 			final ArrayNode agentConfigs = (ArrayNode) config.get( "agents" );
 			if( agentConfigs != null )
 				for( final JsonNode agent : agentConfigs )
-			{
+				{
 				final JsonNode idNode = agent.get( "id" );
-				if( idNode != null
-						&& !idNode.asText().equals( eveId.toString() ) )
-					continue;
+				if( idNode != null && !idNode.asText().equals( eveId.toString() ) ) continue;
 
-				LOG.trace( "Creating agent " + eveId + " from config at "
-						+ cfg.agentConfigUri() );
-				return valueOf( new AgentConfig( (ObjectNode) agent ),
-						agentType, parameters );
-			}
+				LOG.trace( "Creating agent " + eveId + " from config at " + cfg.agentConfigUri() );
+				return valueOf( new AgentConfig( (ObjectNode) agent ), agentType, parameters );
+				}
 		} catch( final IOException e )
 		{
 			LOG.warn( "Problem creating agent " + eveId + " from config at "

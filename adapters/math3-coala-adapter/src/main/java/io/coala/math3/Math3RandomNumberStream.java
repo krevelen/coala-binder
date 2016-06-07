@@ -23,16 +23,16 @@ package io.coala.math3;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.math3.random.ISAACRandom;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
-import org.apache.commons.math3.random.Well19937c;
-import org.apache.commons.math3.random.ISAACRandom;
 import org.apache.commons.math3.random.Well1024a;
 import org.apache.commons.math3.random.Well19937a;
+import org.apache.commons.math3.random.Well19937c;
 import org.apache.commons.math3.random.Well44497a;
 import org.apache.commons.math3.random.Well512a;
 
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.random.RandomNumberStream;
 import io.coala.random.RandomNumberStream.AbstractRandomNumberStream;
 import io.coala.util.Instantiator;
@@ -63,22 +63,22 @@ public class Math3RandomNumberStream extends AbstractRandomNumberStream
 					@Override
 					public void setSeed( final int seed )
 					{
-						throw CoalaExceptionFactory.INVOCATION_FAILED
-								.createRuntime( "Seed can be set only once" );
+						throw ExceptionFactory
+								.createUnchecked( "Seed can be set only once" );
 					}
 
 					@Override
 					public void setSeed( final int[] seed )
 					{
-						throw CoalaExceptionFactory.INVOCATION_FAILED
-								.createRuntime( "Seed can be set only once" );
+						throw ExceptionFactory
+								.createUnchecked( "Seed can be set only once" );
 					}
 
 					@Override
 					public void setSeed( final long seed )
 					{
-						throw CoalaExceptionFactory.INVOCATION_FAILED
-								.createRuntime( "Seed can be set only once" );
+						throw ExceptionFactory
+								.createUnchecked( "Seed can be set only once" );
 					}
 
 					@Override

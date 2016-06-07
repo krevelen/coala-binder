@@ -33,8 +33,6 @@ import io.coala.capability.replicate.ReplicationConfig;
 import io.coala.config.CoalaProperty;
 import io.coala.config.CoalaPropertyMap;
 import io.coala.config.ConfigUtil;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaRuntimeException;
 import io.coala.factory.Factory;
 import io.coala.log.LogUtil;
 
@@ -164,9 +162,9 @@ public interface BinderFactoryConfig extends Config
 
 		/**
 		 * @return
-		 * @throws CoalaException
+		 * @throws Exception
 		 */
-		public static Builder fromFile() throws CoalaException
+		public static Builder fromFile() throws Exception
 		{
 			return fromFile( null );
 		}
@@ -174,10 +172,10 @@ public interface BinderFactoryConfig extends Config
 		/**
 		 * @param configPath
 		 * @return
-		 * @throws CoalaException
+		 * @throws Exception
 		 */
 		public static Builder fromFile( final String configPath )
-			throws CoalaException
+			throws Exception
 		{
 			CoalaPropertyMap.getInstance( false ).load( configPath );
 
@@ -198,7 +196,7 @@ public interface BinderFactoryConfig extends Config
 			{
 				builder.withDefaultAgentType( CoalaProperty.defaultAgentType
 						.value().getType( Agent.class ) );
-			} catch( final CoalaRuntimeException e )
+			} catch( final RuntimeException e )
 			{
 				// ok
 			}
@@ -209,8 +207,7 @@ public interface BinderFactoryConfig extends Config
 
 			if( customAgentNames != null && customAgentNames.length > 0 )
 				for( String agentName : customAgentNames )
-				builder.withCustomAgentType( agentName, CoalaProperty.agentType
-						.value( agentName ).getType( Agent.class ) );
+				builder.withCustomAgentType( agentName, CoalaProperty.agentType.value( agentName ).getType( Agent.class ) );
 
 			builder.withBootAgentNames( CoalaProperty.bootAgentNames.value()
 					.getJSON( new String[] {} ) );

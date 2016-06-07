@@ -39,8 +39,7 @@ import io.coala.capability.replicate.ReplicationConfig;
 import io.coala.config.CoalaProperty;
 import io.coala.dsol.util.ExperimentBuilder;
 import io.coala.dsol.util.ReplicationBuilder;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.name.Identifier;
@@ -68,7 +67,7 @@ import rx.subjects.BehaviorSubject;
 import rx.subjects.Subject;
 
 /**
- * {@link DsolSimulatorService} combines a {@link SchedulingCapability} and 
+ * {@link DsolSimulatorService} combines a {@link SchedulingCapability} and
  * 
  * @version $Id: 89cfd12ede2065a2f68cdd22f6b145efd8a4b4e4 $
  * @author Rick van Krevelen
@@ -116,29 +115,13 @@ public class DsolSimulatorService extends BasicCapability implements
 	/** */
 	private transient Subject<ClockStatusUpdate, ClockStatusUpdate> statusUpdates;
 
-	/** */
-	// private SimTime grant = null;
-
-	// public interface Chronos
-	// {
-	// /**
-	// * @return the (minimal) time step resolution between grants, or
-	// * {@code null} for infinite
-	// */
-	// SimTime getTimeResolution();
-	//
-	// Observable<SimTime> requestGrant(SimTime request);
-	//
-	// }
-
 	/**
 	 * @param clockID
 	 * @return the local VM's simulator instance for specified {@link ClockID}
 	 * @throws NamingException
-	 * @throws SimRuntimeException
 	 */
 	protected static ReplicationBuilder getReplication( final ClockID clockID,
-		final ReplicationConfig config )
+		final ReplicationConfig config ) throws NamingException
 	{
 		synchronized( SIMULATORS )
 		{
@@ -147,21 +130,12 @@ public class DsolSimulatorService extends BasicCapability implements
 				final DEVSSimulatorInterface simulator = new DEVSSimulator();
 
 				final ModelInterface model = new ModelWrapper();
-				ReplicationBuilder repl;
-				try
-				{
-					repl = new ExperimentBuilder().withSimulator( simulator )
-							.withModel( model ).newTreatment()
-							.withTimeUnit( config.getBaseTimeUnit() )
-							.withRunInterval( config.getInterval() )
-							.newReplication(
-									config.getReplicationID().getValue() )
-							.withStream( config.getSeed() );
-				} catch( final Exception e )
-				{
-					throw CoalaExceptionFactory.INVOCATION_FAILED
-							.createRuntime( e, "initialize", simulator );
-				}
+				final ReplicationBuilder repl = new ExperimentBuilder()
+						.withSimulator( simulator ).withModel( model )
+						.newTreatment().withTimeUnit( config.getBaseTimeUnit() )
+						.withRunInterval( config.getInterval() )
+						.newReplication( config.getReplicationID().getValue() )
+						.withStream( config.getSeed() );
 
 				System.err.println( "Built clock: " + clockID );
 				SIMULATORS.put( clockID, repl );
@@ -405,8 +379,14 @@ public class DsolSimulatorService extends BasicCapability implements
 
 	protected DEVSSimulatorInterface getSimulator()
 	{
-		return (DEVSSimulatorInterface) getReplication( getClockID(),
-				this.config ).getExperiment().getSimulator();
+		try
+		{
+			return (DEVSSimulatorInterface) getReplication( getClockID(),
+					this.config ).getExperiment().getSimulator();
+		} catch( final NamingException e )
+		{
+			throw ExceptionFactory.createUnchecked( e, "Problem with sim" );
+		}
 	}
 
 	private Map<Identifier<?, ?>, List<SimEvent>> pendingEvents = new HashMap<>();
@@ -414,8 +394,8 @@ public class DsolSimulatorService extends BasicCapability implements
 	/**
 	 * {@link CallableSimEvent} wraps a {@link SimEvent} as {@link Callable}
 	 * 
-	 * @version $Id: 89cfd12ede2065a2f68cdd22f6b145efd8a4b4e4 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
+	 * @version $Id$
+	 * @author Rick van Krevelen
 	 */
 	public static class CallableSimEvent extends SimEvent
 		implements Callable<Void>
@@ -429,7 +409,6 @@ public class DsolSimulatorService extends BasicCapability implements
 		 * 
 		 * @param absTime
 		 * @param job
-		 * @throws CoalaException
 		 */
 		public CallableSimEvent( final TimeUnit baseTimeUnit,
 			final Instant<?> absTime, final Callable<Void> job )
@@ -519,7 +498,7 @@ public class DsolSimulatorService extends BasicCapability implements
 										SimEventInterface.MIN_PRIORITY, this,
 										this, "removeEvent",
 										new Object[]
-						{ job.getID(), event } ) );
+										{ job.getID(), event } ) );
 						// System.err.println(3);
 						return Boolean.TRUE;
 					} catch( final Throwable t )
@@ -634,7 +613,8 @@ public class DsolSimulatorService extends BasicCapability implements
 	private RandomNumberStream newRNG( final RandomNumberStream.ID streamID )
 	{
 		return getBinder().inject( RandomNumberStream.Factory.class )
-				.create( streamID, CoalaProperty.randomSeed.value().getLong() );
+				.create( streamID, CoalaProperty.randomSeed.value()
+						.getLong( System.currentTimeMillis() ) );
 	}
 
 	@Override

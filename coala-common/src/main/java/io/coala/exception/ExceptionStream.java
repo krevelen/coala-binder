@@ -17,11 +17,11 @@ import rx.subjects.Subject;
 public class ExceptionStream<T extends Throwable & Contextualized>
 {
 
-	/** */
+	/** the singleton {@link ExceptionStream} instance */
 	private static volatile ExceptionStream<?> INSTANCE = null;
 
 	/**
-	 * @return the singleton instance
+	 * @return the singleton {@link ExceptionStream} instance
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <T extends Throwable & Contextualized> ExceptionStream<T>

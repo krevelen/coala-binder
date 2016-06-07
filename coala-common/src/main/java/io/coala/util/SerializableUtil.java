@@ -9,7 +9,7 @@ import java.io.Serializable;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 
 /**
@@ -52,10 +52,9 @@ public class SerializableUtil
 			return valueType.cast( in.readObject() );
 		} catch( final Throwable e )
 		{
-			throw ExceptionBuilder
-					.unchecked( e, "Problem unmarshalling {} from {}",
-							valueType, serializable )
-					.build();
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem unmarshalling {} from {}", valueType,
+					serializable );
 		}
 	}
 
@@ -77,9 +76,8 @@ public class SerializableUtil
 			return new String( CODER.encode( data ) );
 		} catch( final Throwable e )
 		{
-			throw ExceptionBuilder
-					.unchecked( e, "Problem marshalling {}", object.getClass() )
-					.build();
+			throw ExceptionFactory.createUnchecked( e, "Problem marshalling {}",
+					object.getClass() );
 		}
 	}
 }

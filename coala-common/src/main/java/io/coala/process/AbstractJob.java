@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: acfc36bdaeca116ba844ba208eb8d54163511882 $
  * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/AbstractJob.java $
  * 
  * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
@@ -60,7 +60,7 @@ public abstract class AbstractJob<ID extends Identifier<?, ?>> extends
 	public AbstractJob(final ID id)
 	{
 		super(id);
-		if (CoalaProperty.addOriginatorStackTrace.value().getBoolean())
+		if (CoalaProperty.addOriginatorStackTrace.value().getBoolean(false))
 		{
 			final StringWriter sw = new StringWriter();
 			final PrintWriter pw = new PrintWriter(sw);

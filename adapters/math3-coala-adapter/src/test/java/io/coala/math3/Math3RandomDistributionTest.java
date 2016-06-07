@@ -24,7 +24,7 @@ import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
-import io.coala.random.RandomDistribution;
+import io.coala.random.ProbabilityDistribution;
 
 /**
  * {@link Math3RandomDistributionTest}
@@ -46,37 +46,37 @@ public class Math3RandomDistributionTest
 
 	@SuppressWarnings( "rawtypes" )
 	@Test
-	public void testParser()
+	public void testParser() throws Exception
 	{
-		final RandomDistribution.Parser parser = new RandomDistribution.Parser.Simple(
-				Math3RandomDistribution.Factory
+		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser(
+				Math3ProbabilityDistribution.Factory
 						.of( Math3RandomNumberStream.Factory.ofMersenneTwister()
 								.create( "rng", 0L ) ) );
 
+		final ProbabilityDistribution<DecimalMeasure> dist2 = parser
+				.parse( "const(2.01 day)", DecimalMeasure.class );
+		for( int i = 0; i < 10; i++ )
+			LOG.trace( "draw constant {}: {}", i, dist2.draw() );
+
+		final ProbabilityDistribution<BigDecimal> dist1 = parser
+				.parse( "uniform(5.1;6.2)", BigDecimal.class ); //± 1.1E-16
+		for( int i = 0; i < 10; i++ )
+			LOG.trace( "draw BigDecimal {}: {}", i, dist1.draw() );
+
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
-		final RandomDistribution<Amount> dist0 = RandomDistribution.Util
-				.valueOf( "uniform(2 ;3 )", parser, Amount.class ); //± 1.1E-16
+		final ProbabilityDistribution<Amount> dist0 = parser
+				.parse( "uniform-enum(2 ;3 )", Amount.class ); //± 1.1E-16
 		for( int i = 0; i < 10; i++ )
-			LOG.trace( "draw amount {}: {}", i, dist0.draw() );
+			LOG.trace( "draw Object {}: {}", i, dist0.draw() );
 
-		final RandomDistribution<BigDecimal> dist1 = RandomDistribution.Util
-				.valueOf( "uniform(5.1;6.2)", parser, BigDecimal.class ); //± 1.1E-16
+		final ProbabilityDistribution<MyValue> dist3 = parser
+				.parse( "uniform-enum()", MyValue.class );
 		for( int i = 0; i < 10; i++ )
-			LOG.trace( "draw decimal {}: {}", i, dist1.draw() );
+			LOG.trace( "draw MyValue {}: {}", i, dist3.draw() );
 
-		final RandomDistribution<DecimalMeasure> dist2 = RandomDistribution.Util
-				.valueOf( "const(2.01 day)", parser, DecimalMeasure.class );
+		final ProbabilityDistribution<MyValue> dist4 = parser
+				.parse( "uniform-enum( v1; v3 )", MyValue.class );
 		for( int i = 0; i < 10; i++ )
-			LOG.trace( "draw measure {}: {}", i, dist2.draw() );
-
-		final RandomDistribution<MyValue> dist3 = RandomDistribution.Util
-				.valueOf( "uniform()", parser, MyValue.class );
-		for( int i = 0; i < 10; i++ )
-			LOG.trace( "draw enum {}: {}", i, dist3.draw() );
-
-		final RandomDistribution<MyValue> dist4 = RandomDistribution.Util
-				.valueOf( "uniform( v1; v3 )", parser, MyValue.class );
-		for( int i = 0; i < 10; i++ )
-			LOG.trace( "draw enum subset {}: {}", i, dist4.draw() );
+			LOG.trace( "draw MyValue subset {}: {}", i, dist4.draw() );
 	}
 }

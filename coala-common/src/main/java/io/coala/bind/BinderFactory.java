@@ -20,6 +20,8 @@
  */
 package io.coala.bind;
 
+import org.aeonbits.owner.Mutable;
+
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
 import io.coala.agent.AgentStatusUpdate;
@@ -28,23 +30,16 @@ import io.coala.capability.CapabilityFactory;
 import io.coala.capability.replicate.ReplicationConfig;
 import io.coala.config.CoalaProperty;
 import io.coala.config.CoalaPropertyMap;
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
 import io.coala.factory.Factory;
-import io.coala.util.ClassUtil;
-
-import org.aeonbits.owner.Mutable;
-
+import io.coala.util.Instantiator;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 
 /**
  * {@link BinderFactory}
  * 
- * @date $Date: 2014-08-04 14:19:04 +0200 (Mon, 04 Aug 2014) $
- * @version $Revision: 336 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public interface BinderFactory extends Factory// , AgentStatusObserver
 {
@@ -56,8 +51,8 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 	 *            {@link Binder}s' owner {@link AgentStatusUpdate}s
 	 * @return this {@link BinderFactory} instance
 	 */
-	BinderFactory initialize(BinderFactoryConfig config,
-			Observable<AgentStatusUpdate> ownerStatusUpdates);
+	BinderFactory initialize( BinderFactoryConfig config,
+		Observable<AgentStatusUpdate> ownerStatusUpdates );
 
 	/** @return the {@link BinderFactoryConfig} used for initialization */
 	BinderFactoryConfig getConfig();
@@ -66,34 +61,34 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 	 * @param ownerName the identifier of the agent that owns the {@link Binder}
 	 * @return the (new) {@link Binder} object for specified {@code ownerName}
 	 */
-	Binder create(String ownerName);
+	Binder create( String ownerName );
 
 	/**
 	 * @param ownerName the identifier of the agent that owns the {@link Binder}
 	 * @param ownerType
 	 * @return the (new) {@link Binder} object for specified {@code ownerName}
 	 */
-	Binder create(String ownerName, Class<? extends Agent> ownerType);
+	Binder create( String ownerName, Class<? extends Agent> ownerType );
 
 	/**
 	 * @param ownerID the identifier of the agent that owns the {@link Binder}
 	 * @return the (new) {@link Binder} object for specified {@code ownerID}
 	 */
-	Binder create(AgentID ownerID);
+	Binder create( AgentID ownerID );
 
 	/**
 	 * @param ownerID the identifier of the agent that owns the {@link Binder}
 	 * @param ownerType
 	 * @return the (new) {@link Binder} object for specified {@code ownerID}
 	 */
-	Binder create(AgentID ownerID, Class<? extends Agent> ownerType);
+	Binder create( AgentID ownerID, Class<? extends Agent> ownerType );
 
 	/**
 	 * Removes the specified binder from cache
 	 * 
 	 * @param ownerID
 	 */
-	Binder remove(AgentID ownerID);
+	Binder remove( AgentID ownerID );
 
 	/**
 	 * {@link Builder}
@@ -123,46 +118,47 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 
 		/**
 		 * @return the {@link BinderFactory}
-		 * @throws CoalaException
+		 * @throws Exception
 		 */
-		public static Builder fromFile() throws CoalaException
+		public static Builder fromFile() throws Exception
 		{
-			return fromFile((String) null);
+			return fromFile( (String) null );
 		}
 
 		/**
 		 * @param configPath
 		 * @return the {@link BinderFactory}
-		 * @throws CoalaException
+		 * @throws Exception
 		 */
-		public static Builder fromFile(final String configPath)
-				throws CoalaException
+		public static Builder fromFile( final String configPath )
+			throws Exception
 		{
-			CoalaPropertyMap.getInstance(false).load(configPath);
+			CoalaPropertyMap.getInstance( false ).load( configPath );
 
-			return new Builder().withType(
-					CoalaProperty.binderFactoryType.value().getType(
-							BinderFactory.class)).withConfigBuilder(
-					BinderFactoryConfig.Builder.fromFile(configPath));
+			return new Builder()
+					.withType( CoalaProperty.binderFactoryType.value()
+							.getType( BinderFactory.class ) )
+					.withConfigBuilder( BinderFactoryConfig.Builder
+							.fromFile( configPath ) );
 		}
 
 		/**
 		 * @param inject
 		 * @return
 		 */
-		public static Builder fromConfig(final BinderFactoryConfig config)
+		public static Builder fromConfig( final BinderFactoryConfig config )
 		{
-			return new Builder().withType(config.getBinderFactoryType())
+			return new Builder().withType( config.getBinderFactoryType() )
 					.withConfigBuilder(
-							BinderFactoryConfig.Builder.fromConfig(config));
+							BinderFactoryConfig.Builder.fromConfig( config ) );
 		}
 
 		/**
 		 * @param binderFactoryType
 		 * @return
 		 */
-		public Builder withType(
-				final Class<? extends BinderFactory> binderFactoryType)
+		public Builder
+			withType( final Class<? extends BinderFactory> binderFactoryType )
 		{
 			this.binderFactoryType = binderFactoryType;
 			return this;
@@ -172,8 +168,8 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @param configBuilder
 		 * @return
 		 */
-		public Builder withConfigBuilder(
-				final BinderFactoryConfig.Builder configBuilder)
+		public Builder
+			withConfigBuilder( final BinderFactoryConfig.Builder configBuilder )
 		{
 			this.configBuilder = configBuilder;
 			return this;
@@ -183,10 +179,10 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @param idFactory
 		 * @return
 		 */
-		public Builder withReplicationConfig(
-				final ReplicationConfig replicationConfig)
+		public Builder
+			withReplicationConfig( final ReplicationConfig replicationConfig )
 		{
-			this.configBuilder.withReplicationConfig(replicationConfig);
+			this.configBuilder.withReplicationConfig( replicationConfig );
 			return this;
 		}
 
@@ -195,9 +191,9 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @return
 		 */
 		public Builder withDefaultAgentType(
-				final Class<? extends Agent> defaultAgentType)
+			final Class<? extends Agent> defaultAgentType )
 		{
-			this.configBuilder.withDefaultAgentType(defaultAgentType);
+			this.configBuilder.withDefaultAgentType( defaultAgentType );
 			return this;
 		}
 
@@ -206,10 +202,10 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @param agentType
 		 * @return
 		 */
-		public Builder withCustomAgentType(final String agentName,
-				final Class<? extends Agent> agentType)
+		public Builder withCustomAgentType( final String agentName,
+			final Class<? extends Agent> agentType )
 		{
-			this.configBuilder.withCustomAgentType(agentName, agentType);
+			this.configBuilder.withCustomAgentType( agentName, agentType );
 			return this;
 		}
 
@@ -217,9 +213,9 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @param bootAgentNames
 		 * @return
 		 */
-		public Builder withBootAgentNames(final String... bootAgentNames)
+		public Builder withBootAgentNames( final String... bootAgentNames )
 		{
-			this.configBuilder.withBootAgentNames(bootAgentNames);
+			this.configBuilder.withBootAgentNames( bootAgentNames );
 			return this;
 		}
 
@@ -228,13 +224,13 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @param serviceImplementationType
 		 * @return
 		 */
-		@SuppressWarnings("rawtypes")
+		@SuppressWarnings( "rawtypes" )
 		public Builder withSingletonServiceType(
-				final Class<? extends CapabilityFactory> serviceFactoryType,
-				final Class<? extends Capability> serviceImplementationType)
+			final Class<? extends CapabilityFactory> serviceFactoryType,
+			final Class<? extends Capability> serviceImplementationType )
 		{
-			this.configBuilder.withSingletonServiceType(serviceFactoryType,
-					serviceImplementationType);
+			this.configBuilder.withSingletonServiceType( serviceFactoryType,
+					serviceImplementationType );
 			return this;
 		}
 
@@ -243,13 +239,13 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @param serviceImplementationType
 		 * @return
 		 */
-		@SuppressWarnings("rawtypes")
+		@SuppressWarnings( "rawtypes" )
 		public Builder withInstantServiceType(
-				final Class<? extends Capability> serviceType,
-				final Class<? extends Capability> serviceImplementationType)
+			final Class<? extends Capability> serviceType,
+			final Class<? extends Capability> serviceImplementationType )
 		{
-			this.configBuilder.withInstantServiceType(serviceType,
-					serviceImplementationType);
+			this.configBuilder.withInstantServiceType( serviceType,
+					serviceImplementationType );
 			return this;
 		}
 
@@ -259,16 +255,16 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @return
 		 */
 		public Builder withCustomFactoryType(
-				final Class<? extends Factory> factoryType,
-				final Class<? extends Factory> factoryImplementationType)
+			final Class<? extends Factory> factoryType,
+			final Class<? extends Factory> factoryImplementationType )
 		{
-			this.configBuilder.withCustomFactoryType(factoryType,
-					factoryImplementationType);
+			this.configBuilder.withCustomFactoryType( factoryType,
+					factoryImplementationType );
 			return this;
 		}
 
-		public Builder withAgentStatusSource(
-				final Observable<AgentStatusUpdate> updates)
+		public Builder
+			withAgentStatusSource( final Observable<AgentStatusUpdate> updates )
 		{
 			this.agentStatusPublisher = updates;
 			return this;
@@ -279,16 +275,9 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 */
 		public BinderFactory build()
 		{
-			try
-			{
-				return ClassUtil.instantiate(this.binderFactoryType)
-						.initialize(this.configBuilder.build(),
-								this.agentStatusPublisher.asObservable());
-			} catch (final CoalaException e)
-			{
-				throw CoalaExceptionFactory.VALUE_NOT_ALLOWED.createRuntime(e,
-						"binderFactoryType", this.binderFactoryType);
-			}
+			return Instantiator.instantiate( this.binderFactoryType )
+					.initialize( this.configBuilder.build(),
+							this.agentStatusPublisher.asObservable() );
 		}
 
 		/**
@@ -297,10 +286,10 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 		 * @param value
 		 * @return
 		 */
-		public Builder withProperty(final Class<? extends Mutable> configType,
-				final String key, final String value)
+		public Builder withProperty( final Class<? extends Mutable> configType,
+			final String key, final String value )
 		{
-			this.configBuilder.withModelName(configType, key, value);
+			this.configBuilder.withModelName( configType, key, value );
 			return this;
 		}
 

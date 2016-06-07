@@ -50,7 +50,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.name.x.Id;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;
@@ -472,9 +472,8 @@ public interface Wrapper<T>
 				return of( value, result );
 			} catch( final Throwable e )
 			{
-				throw ExceptionBuilder
-						.unchecked( "Problem reading value: " + json, e )
-						.build();
+				throw ExceptionFactory.createUnchecked(
+						"Problem reading value: {}", json, e );
 			}
 		}
 
@@ -550,9 +549,8 @@ public interface Wrapper<T>
 		@SuppressWarnings( "rawtypes" )
 		public static <T> boolean equals( final Wrapper self, final Object obj )
 		{
-			if( obj == null || !self.getClass().equals( obj.getClass() ) )
-				return false;
-
+			if( obj == null || self.getClass() != obj.getClass() ) return false;
+			if( self == obj ) return true;
 			final Wrapper other = self.getClass().cast( obj );
 			return self.unwrap() == null ? other.unwrap() == null
 					: self.unwrap().equals( other.unwrap() );

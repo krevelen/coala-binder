@@ -37,7 +37,7 @@ import io.coala.agent.AgentStatus;
 import io.coala.agent.AgentStatusUpdate;
 import io.coala.agent.BasicAgentStatus;
 import io.coala.capability.interact.ReceivingCapability;
-import io.coala.exception.CoalaExceptionFactory;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.message.Message;
@@ -52,28 +52,29 @@ import rx.Observer;
  * @author Rick van Krevelen
  */
 public class EveWrapperAgent extends com.almende.eve.agent.Agent
-		implements Observer<AgentStatusUpdate>, EveSenderAgent,
-		EveReceiverAgent, EveExposingAgent
+	implements Observer<AgentStatusUpdate>, EveSenderAgent, EveReceiverAgent,
+	EveExposingAgent
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(EveWrapperAgent.class);
+	private static final Logger LOG = LogUtil
+			.getLogger( EveWrapperAgent.class );
 
 	/**
 	 * @return the {@link AgentID} identifier of the wrapped agent
 	 */
 	protected final AgentID getAgentID()
 	{
-		return EveUtil.toAgentID(getId());
+		return EveUtil.toAgentID( getId() );
 	}
 
 	/**
 	 * @param status
 	 */
-	protected final void updateWrapperStatus(final BasicAgentStatus status)
+	protected final void updateWrapperStatus( final BasicAgentStatus status )
 	{
-		EveAgentManager.getInstance().updateWrapperAgentStatus(getAgentID(),
-				status);
+		EveAgentManager.getInstance().updateWrapperAgentStatus( getAgentID(),
+				status );
 	}
 
 	/**
@@ -84,27 +85,25 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	{
 		final AgentID agentID = getAgentID();
 		final List<URI> eveURLs = getUrls();
-		LOG.info(String.format(
+		LOG.info( String.format(
 				"Eve wrapper: %s of agent: %s " + "went online at: %s", getId(),
-				agentID, eveURLs));
+				agentID, eveURLs ) );
 
 		try
 		{
-			EveAgentManager.getInstance().setAddress(getId(), eveURLs);
+			EveAgentManager.getInstance().setAddress( getId(), eveURLs );
 			final Observable<AgentStatusUpdate> statusstream = EveAgentManager
-					.getInstance().getAgentStatus(agentID);
-			if (statusstream != null)
-				statusstream.subscribe(this);
+					.getInstance().getAgentStatus( agentID );
+			if( statusstream != null )
+				statusstream.subscribe( this );
 			else
-				LOG.warn("No agent status updates available");
-		} catch (final Throwable t)
+				LOG.warn( "No agent status updates available" );
+		} catch( final Throwable t )
 		{
-			LOG.error(
-					String.format(
-							"Problem for wrapper %s getting "
-									+ "status updates from agent %s",
-							getId(), agentID),
-					t);
+			LOG.error( String.format(
+					"Problem for wrapper %s getting "
+							+ "status updates from agent %s",
+					getId(), agentID ), t );
 		}
 	}
 
@@ -112,7 +111,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	 * @see Observer#onError(Throwable)
 	 */
 	@Override
-	public final void onError(final Throwable t)
+	public final void onError( final Throwable t )
 	{
 		t.printStackTrace();
 	}
@@ -121,33 +120,32 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	 * @see Observer#onNext(Object)
 	 */
 	@Override
-	public final void onNext(final AgentStatusUpdate update)
+	public final void onNext( final AgentStatusUpdate update )
 	{
 		// System.err.println(
 		// "Wrapper " + getId() + " observed agent status: " + update);
 		final AgentStatus<?> status = update.getStatus();
-		if (this.destroyed)
-			throw CoalaExceptionFactory.STATUS_UPDATE_FAILED.createRuntime(
-					(Agent) null, status,
-					"Eve wrapper " + getId() + " ALREADY DESTROYED");
+		if( this.destroyed ) throw ExceptionFactory.createUnchecked(
+				"Update status of {} to {} failed: ALREADY DESTROYED", getId(),
+				status );
 
-		if (status.isInitializedStatus())
+		if( status.isInitializedStatus() )
 		{
-			updateWrapperStatus(BasicAgentStatus.PASSIVE);
+			updateWrapperStatus( BasicAgentStatus.PASSIVE );
 			// let Eve perform the activate() method, not this observer
-			getScheduler().schedule(// null,
-					new JSONRequest("activate",
-							JsonUtil.getJOM().createObjectNode()),
-					0);
-		} else if (status.isFinishedStatus() || status.isFailedStatus())
+			getScheduler().schedule( // null,
+					new JSONRequest( "activate",
+							JsonUtil.getJOM().createObjectNode() ),
+					0 );
+		} else if( status.isFinishedStatus() || status.isFailedStatus() )
 		{
-			updateWrapperStatus(BasicAgentStatus.COMPLETE);
+			updateWrapperStatus( BasicAgentStatus.COMPLETE );
 
 			// let Eve perform the finish() method, not this observer
-			getScheduler().schedule(// null,
-					new JSONRequest("finish",
-							JsonUtil.getJOM().createObjectNode()),
-					0);
+			getScheduler().schedule( // null,
+					new JSONRequest( "finish",
+							JsonUtil.getJOM().createObjectNode() ),
+					0 );
 		}
 	}
 
@@ -157,7 +155,7 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	@Override
 	public final void onCompleted()
 	{
-		System.err.println(getAgentID() + " completed, destroy wrapper?");
+		System.err.println( getAgentID() + " completed, destroy wrapper?" );
 	}
 
 	// @Override
@@ -174,8 +172,9 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	@Override
 	public String getType()
 	{
-		return EveAgentManager.getInstance().getAgent(getAgentID(), true)
-				.getClass().getSimpleName() + " $Id: ecf6f2e95f2cde727b947aa35aa3708c1fa2adaf $";
+		return EveAgentManager.getInstance().getAgent( getAgentID(), true )
+				.getClass().getSimpleName()
+				+ " $Id: ecf6f2e95f2cde727b947aa35aa3708c1fa2adaf $";
 	}
 
 	@Override
@@ -185,47 +184,47 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		// System.err.println("init "+getId());
 
 		// get Eve container to run initialize() when the scheduler is running
-		if (getScheduler() == null)
-			throw new NullPointerException("No scheduler ?!?");
-		getScheduler().schedule(// null,
-				new JSONRequest("initialize",
-						JsonUtil.getJOM().createObjectNode()),
-				0);
+		if( getScheduler() == null )
+			throw new NullPointerException( "No scheduler ?!?" );
+		getScheduler().schedule( // null,
+				new JSONRequest( "initialize",
+						JsonUtil.getJOM().createObjectNode() ),
+				0 );
 	}
 
-	@Access(AccessType.SELF)
+	@Access( AccessType.SELF )
 	public final void initialize()
 	{
-		updateWrapperStatus(BasicAgentStatus.CREATED);
+		updateWrapperStatus( BasicAgentStatus.CREATED );
 
 		configureLifeCycleHandling();
 
 		// trigger initialization of wrapped agent
-		updateWrapperStatus(BasicAgentStatus.INITIALIZED);
+		updateWrapperStatus( BasicAgentStatus.INITIALIZED );
 	}
 
-	@Access(AccessType.SELF)
+	@Access( AccessType.SELF )
 	public final void activate()
 	{
 		// LOG.trace("Eve wrapper " + getId() + " now activating...");
 
 		// trigger activation of wrapped agent
-		updateWrapperStatus(BasicAgentStatus.ACTIVE);
+		updateWrapperStatus( BasicAgentStatus.ACTIVE );
 
 		// LOG.trace("Eve wrapper " + getId() + " now deactivating...");
 
 		// completed activation of wrapped agent
-		updateWrapperStatus(BasicAgentStatus.PASSIVE);
+		updateWrapperStatus( BasicAgentStatus.PASSIVE );
 	}
 
 	private boolean destroyed = false;
 
-	@Access(AccessType.SELF)
+	@Access( AccessType.SELF )
 	public synchronized final void finish()
 	{
-		if (this.destroyed)
+		if( this.destroyed )
 		{
-			LOG.trace("Eve wrapper " + getId() + " ALREADY DESTROYED");
+			LOG.trace( "Eve wrapper " + getId() + " ALREADY DESTROYED" );
 			return;
 		}
 
@@ -233,15 +232,15 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		// LOG.trace("Eve wrapper " + getId() + " now finishing...");
 		try
 		{
-			updateWrapperStatus(BasicAgentStatus.FINISHED);
+			updateWrapperStatus( BasicAgentStatus.FINISHED );
 			// FIXME causes IOException on (delayed) null-response to self:
 			// EveUtil.getEveHost().deleteAgent(getId());
-		} catch (final Throwable t)
+		} catch( final Throwable t )
 		{
-			LOG.error(String.format(
+			LOG.error( String.format(
 					"Problem deleting" + " Eve wrapper %s of agent: %s",
-					getId(), getAgentID()), t);
-			updateWrapperStatus(BasicAgentStatus.FAILED);
+					getId(), getAgentID() ), t );
+			updateWrapperStatus( BasicAgentStatus.FAILED );
 		}
 	}
 
@@ -251,72 +250,73 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		super.destroy();// instanceOnly);
 		final AgentID agentID = getAgentID();
 		final List<URI> addresses = EveAgentManager.getInstance()
-				.getAddress(agentID);
-		LOG.info(String.format(
+				.getAddress( agentID );
+		LOG.info( String.format(
 				"Eve wrapper: %s of agent: %s " + "went offline at: %s",
-				getId(), agentID, addresses));
-		EveAgentManager.getInstance().delete(agentID);
+				getId(), agentID, addresses ) );
+		EveAgentManager.getInstance().delete( agentID );
 	}
 
 	private final Map<URI, Integer> pendingCalls = new HashMap<>();
 
 	@Override
-	public final void doSend(final JsonNode payload, final URI receiverURI)
-			throws JSONRPCException
+	public final void doSend( final JsonNode payload, final URI receiverURI )
+		throws JSONRPCException
 	{
 		final ObjectNode params = JsonUtil.getJOM().createObjectNode();
-		params.set(PAYLOAD_FIELD_NAME, payload);
+		params.set( PAYLOAD_FIELD_NAME, payload );
 		// final URI receiverURI = EveUtil.getAddress(payload.getReceiverID());
-		synchronized (pendingCalls)
+		synchronized( pendingCalls )
 		{
-			final Integer val = pendingCalls.get(receiverURI);
-			pendingCalls.put(receiverURI, val == null ? 1 : val + 1);
+			final Integer val = pendingCalls.get( receiverURI );
+			pendingCalls.put( receiverURI, val == null ? 1 : val + 1 );
 		}
-		LOG.trace(getUrls().get(0) + " calling " + receiverURI
-				+ ", total pending: " + pendingCalls);
+		LOG.trace( getUrls().get( 0 ) + " calling " + receiverURI
+				+ ", total pending: " + pendingCalls );
 		try
 		{
-		call(receiverURI, "doReceive", params, new AsyncCallback<Object>()
-		{
-			@Override
-			public void onSuccess(final Object result)
+			call( receiverURI, "doReceive", params, new AsyncCallback<Object>()
 			{
-				synchronized (pendingCalls)
+				@Override
+				public void onSuccess( final Object result )
 				{
-					final Integer val = pendingCalls.get(receiverURI);
-					if (val == null)
-						LOG.error("UNEXPECTED");
-					else
-						pendingCalls.put(receiverURI, val - 1);
+					synchronized( pendingCalls )
+					{
+						final Integer val = pendingCalls.get( receiverURI );
+						if( val == null )
+							LOG.error( "UNEXPECTED" );
+						else
+							pendingCalls.put( receiverURI, val - 1 );
+					}
+
+					// LOG.trace(getUrls().get(0) + " successfully called "
+					// + receiverURI + ": " + params);
 				}
 
-				// LOG.trace(getUrls().get(0) + " successfully called "
-				// + receiverURI + ": " + params);
-			}
-			@Override
-			public void onFailure(final Exception e)
-			{
-				LOG.error(getUrls().get(0) + " failed to reach " + receiverURI
-						+ ": " + params, e);
-			}
-		});
-		}catch(final IOException ioe)
+				@Override
+				public void onFailure( final Exception e )
+				{
+					LOG.error( getUrls().get( 0 ) + " failed to reach "
+							+ receiverURI + ": " + params, e );
+				}
+			} );
+		} catch( final IOException ioe )
 		{
-			LOG.error(getUrls().get(0) + " failed to reach " + receiverURI
-					+ ": " + params, ioe);
-			synchronized (pendingCalls)
+			LOG.error( getUrls().get( 0 ) + " failed to reach " + receiverURI
+					+ ": " + params, ioe );
+			synchronized( pendingCalls )
 			{
-				final Integer val = pendingCalls.get(receiverURI);
-				if (val == null)
-					LOG.error("UNEXPECTED");
+				final Integer val = pendingCalls.get( receiverURI );
+				if( val == null )
+					LOG.error( "UNEXPECTED" );
 				else
-					pendingCalls.put(receiverURI, val - 1);
+					pendingCalls.put( receiverURI, val - 1 );
 			}
 		}
 	}
 
 	@Override
-	public final void doReceive(final JsonNode payload)
+	public final void doReceive( final JsonNode payload )
 	{
 		// final ObjectNode params = JsonUtil.getJOM().createObjectNode();
 		// params.set(PAYLOAD_FIELD_NAME,
@@ -330,28 +330,28 @@ public class EveWrapperAgent extends com.almende.eve.agent.Agent
 		// throws BAALException
 		// {
 		final AgentID myID = getAgentID();
-		final Message<?> incoming = JsonUtil.valueOf(payload, Message.class);
-		((MessageHandler) EveAgentManager.getInstance().getAgent(myID, true)
-				.getBinder().inject(ReceivingCapability.class))
-						.onMessage(incoming);
+		final Message<?> incoming = JsonUtil.valueOf( payload, Message.class );
+		((MessageHandler) EveAgentManager.getInstance().getAgent( myID, true )
+				.getBinder().inject( ReceivingCapability.class ))
+						.onMessage( incoming );
 		// LOG.trace("Received " + incoming.getClass().getSimpleName() + ": "
 		// + incoming.getSenderID().getValue() + " > "
 		// + getAgentID().getValue());
 	}
 
 	@Override
-	public void setExposed(final Object exposed)
+	public void setExposed( final Object exposed )
 	{
-		getState().put(NAMESPACE, exposed);
+		getState().put( NAMESPACE, exposed );
 		// LOG.trace("Stored exposed object: " + exposed);
 	}
 
 	@Override
 	public Object getExposed()
 	{
-		final Object result = getState().get(NAMESPACE, Object.class);
-		if (result != null)
-			LOG.trace("Using exposed object: " + result.getClass().getName());
+		final Object result = getState().get( NAMESPACE, Object.class );
+		if( result != null )
+			LOG.trace( "Using exposed object: " + result.getClass().getName() );
 		// null is okay, e.g. during Eve's method discovery attempts
 		return result;
 	}

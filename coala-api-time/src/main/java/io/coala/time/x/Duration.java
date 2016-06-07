@@ -20,8 +20,6 @@
  */
 package io.coala.time.x;
 
-import java.math.BigDecimal;
-
 import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
@@ -35,9 +33,10 @@ import org.jscience.physics.amount.Amount;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.Wrapper;
-import io.coala.random.RandomDistribution;
+import io.coala.random.ProbabilityDistribution;
+import io.coala.time.x.TimeSpan.Prettifier;
 
 /**
  * {@linkplain Duration} wraps an {@linkplain TimeSpan} that is
@@ -95,121 +94,6 @@ import io.coala.random.RandomDistribution;
 @SuppressWarnings( { "rawtypes", "unchecked" } )
 public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 {
-
-	/** */
-	public static final Duration ZERO = Duration.valueOf( "0 ms" );
-
-	/** */
-	private TimeSpan value;
-
-	@Override
-	public TimeSpan unwrap()
-	{
-		return this.value;
-	}
-
-	@Override
-	public void wrap( final TimeSpan value )
-	{
-		this.value = value;
-	}
-
-	@Override
-	public String toString()
-	{
-		return unwrap().toString();
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return unwrap().hashCode();
-	}
-
-	@Override
-	public int compareTo( final Duration that )
-	{
-		return unwrap().compareTo( that.unwrap() );
-	}
-
-	/**
-	 * @param unit
-	 * @return
-	 */
-	public Duration to( final Unit unit )
-	{
-		return of( unwrap().to( unit ) );
-	}
-
-	@JsonIgnore
-	public long longValue( final Unit unit )
-	{
-		try
-		{
-			return unwrap().longValue( unit );
-		} catch( final Throwable t )
-		{
-			throw ExceptionBuilder
-					.unchecked( "Could not convert "
-							+ unwrap().getUnit().getClass() + " to " + unit, t )
-					.build();
-		}
-	}
-
-	@JsonIgnore
-	public long toMillisLong()
-	{
-		return longValue( TimeSpan.MILLIS );
-	}
-
-	@JsonIgnore
-	public long toNanosLong()
-	{
-		return longValue( TimeSpan.NANOS );
-	}
-
-	/**
-	 * @return the Joda {@link ReadableDuration} implementation of a time span
-	 */
-	@JsonIgnore
-	public ReadableDuration toJoda()
-	{
-		return org.joda.time.Duration.millis( toMillisLong() );
-	}
-
-	/**
-	 * @return a JSR-310 back-port {@link org.threeten.bp.Duration}
-	 *         implementation of a time span
-	 */
-	@JsonIgnore
-	public org.threeten.bp.Duration toJSR310()
-	{
-		return org.threeten.bp.Duration.ofNanos( toNanosLong() );
-	}
-
-	/**
-	 * @return a JRE8 {@link java.time.Duration} implementation of a time span
-	 */
-//	@JsonIgnore
-//	public java.time.Duration toJava8()
-//	{
-//		return java.time.Duration.ofNanos( toNanosLong() );
-//	}
-
-	/** @return the JScience {@link Amount} implementation of a time span */
-	@JsonIgnore
-	public Amount toAmount()
-	{
-		return Amount.valueOf( unwrap().doubleValue( unwrap().getUnit() ),
-				unwrap().getUnit() );
-	}
-
-	/** @return the JSR-275 {@link Measurable} implementation of a time span */
-	@JsonIgnore
-	public Measurable toMeasure()
-	{
-		return unwrap();
-	}
 
 	/**
 	 * for "natural" Config value conversion for a {@link Duration} (i.e.
@@ -291,6 +175,16 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	/**
 	 * {@link Duration} static factory method
 	 * 
+	 * @param value the number of milliseconds
+	 */
+	public static Duration of( final Number value, final Unit<?> unit )
+	{
+		return of( TimeSpan.of( value, unit ) );
+	}
+
+	/**
+	 * {@link Duration} static factory method
+	 * 
 	 * @param value the {@link TimeSpan}
 	 */
 	public static Duration of( final TimeSpan value )
@@ -300,23 +194,15 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 
 	@SuppressWarnings( "serial" )
 	public static <N extends Number, Q extends Quantity>
-		RandomDistribution<Duration>
-		of( final RandomDistribution<N> dist, final Unit<Q> unit )
+		ProbabilityDistribution<Duration>
+		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
 	{
-		return new RandomDistribution<Duration>()
+		return new ProbabilityDistribution<Duration>()
 		{
 			@Override
 			public Duration draw()
 			{
-				final Number value = dist.draw();
-				return value instanceof BigDecimal
-						? of( DecimalMeasure.valueOf( (BigDecimal) value,
-								unit ) )
-						: value instanceof Long || value instanceof Integer
-								? of( DecimalMeasure.valueOf( value.longValue(),
-										unit ) )
-								: of( DecimalMeasure
-										.valueOf( value.doubleValue(), unit ) );
+				return Duration.of( dist.draw(), unit );
 			}
 		};
 	}
@@ -329,5 +215,128 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	public static Duration between( final Instant i1, final Instant i2 )
 	{
 		return i1.compareTo( i2 ) > 0 ? i1.subtract( i2 ) : i2.subtract( i1 );
+	}
+
+	/** */
+	public static final Duration ZERO = Duration.of( Amount.ZERO );
+
+	/** */
+	private TimeSpan value;
+
+	@Override
+	public TimeSpan unwrap()
+	{
+		return this.value;
+	}
+
+	@Override
+	public void wrap( final TimeSpan value )
+	{
+		this.value = value;
+	}
+
+	@Override
+	public String toString()
+	{
+		return unwrap().toString();
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return unwrap().hashCode();
+	}
+
+	@Override
+	public int compareTo( final Duration that )
+	{
+		return unwrap().compareTo( that.unwrap() );
+	}
+
+	/**
+	 * @param unit
+	 * @return
+	 */
+	public Duration to( final Unit unit )
+	{
+		return of( unwrap().to( unit ) );
+	}
+
+	@JsonIgnore
+	public long longValue( final Unit unit )
+	{
+		try
+		{
+			return unwrap().longValue( unit );
+		} catch( final Throwable t )
+		{
+			throw ExceptionFactory.createUnchecked(
+					"Could not convert {} to {}", unwrap().getUnit(), unit, t );
+		}
+	}
+
+	@JsonIgnore
+	public long toMillisLong()
+	{
+		return longValue( TimeSpan.MILLIS );
+	}
+
+	@JsonIgnore
+	public long toNanosLong()
+	{
+		return longValue( TimeSpan.NANOS );
+	}
+
+	/**
+	 * @return the Joda {@link ReadableDuration} implementation of a time span
+	 */
+	@JsonIgnore
+	public ReadableDuration toJoda()
+	{
+		return org.joda.time.Duration.millis( toMillisLong() );
+	}
+
+	/**
+	 * @return a JSR-310 back-port {@link org.threeten.bp.Duration}
+	 *         implementation of a time span
+	 */
+	@JsonIgnore
+	public org.threeten.bp.Duration toJSR310()
+	{
+		return org.threeten.bp.Duration.ofNanos( toNanosLong() );
+	}
+
+	/**
+	 * @return a JRE8 {@link java.time.Duration} implementation of a time span
+	 */
+//	@JsonIgnore
+//	public java.time.Duration toJava8()
+//	{
+//		return java.time.Duration.ofNanos( toNanosLong() );
+//	}
+
+	/** @return the JScience {@link Amount} implementation of a time span */
+	@JsonIgnore
+	public Amount toAmount()
+	{
+		return Amount.valueOf( unwrap().doubleValue( unwrap().getUnit() ),
+				unwrap().getUnit() );
+	}
+
+	/** @return the JSR-275 {@link Measurable} implementation of a time span */
+	@JsonIgnore
+	public Measurable toMeasure()
+	{
+		return unwrap();
+	}
+
+	public Prettifier prettify( final int scale )
+	{
+		return unwrap().prettify( scale );
+	}
+
+	public Prettifier prettify( final Unit<?> unit, final int scale )
+	{
+		return unwrap().prettify( unit, scale );
 	}
 }

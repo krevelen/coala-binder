@@ -23,6 +23,8 @@ import java.rmi.RemoteException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import javax.measure.Measurable;
+import javax.measure.quantity.Quantity;
 import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
@@ -51,17 +53,18 @@ public class DsolSimTest
 	static final Logger LOG = LogUtil.getLogger( DsolSimTest.class );
 
 	/** */
-	@SuppressWarnings( { "rawtypes", "serial" } )
-	public static class TestModel extends EventProducer
-		implements ModelInterface
+	@SuppressWarnings( { "serial", "rawtypes" } )
+	public static class TestModel<Q extends Quantity> extends EventProducer
+		implements ModelInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>
 	{
 		/** the scheduler {@link DEVSSimulator} */
-		private DEVSSimulator<?, ?, DsolTime> scheduler;
+		private DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>> scheduler;
 
 		private int jobCount = 0;
 
 		@Override
-		public final DEVSSimulator<?, ?, DsolTime> getSimulator()
+		public final DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>>
+			getSimulator()
 		{
 			return this.scheduler;
 		}
@@ -71,12 +74,13 @@ public class DsolSimTest
 		public void constructModel( final SimulatorInterface simulator )
 			throws SimRuntimeException, RemoteException
 		{
-			this.scheduler = (DEVSSimulator<?, ?, DsolTime>) simulator;
+			this.scheduler = (DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>>) simulator;
 
 			LOG.trace( "Schedulable job count: " + this.jobCount );
 			for( int i = 0; i < this.jobCount; i++ )
 			{
-				final DsolTime t = DsolTime.valueOf( 1.0d * i );
+				final DsolTime<Q> t = (DsolTime<Q>) DsolTime
+						.valueOf( 1.0d * i );
 				this.scheduler.scheduleEventAbs( t, new Executable()
 				{
 					@Override
@@ -90,7 +94,7 @@ public class DsolSimTest
 			}
 		}
 
-		public DsolTime getTime()
+		public DsolTime<Q> getTime()
 		{
 			return getSimulator().getSimulatorTime();
 		}

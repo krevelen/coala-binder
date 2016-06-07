@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventInterface;
@@ -175,10 +175,9 @@ public class DsolEventObservable implements EventListenerInterface
 												listener.notify( event );
 											} catch( final RemoteException e )
 											{
-												throw ExceptionBuilder
-														.unchecked( e,
-																"RMI problem" )
-														.build();
+												throw ExceptionFactory
+														.createUnchecked( e,
+																"RMI problem" );
 											}
 										}
 									} ) );

@@ -22,6 +22,8 @@ package io.coala.dsol3;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
+import javax.measure.quantity.Quantity;
+
 import com.eaio.uuid.UUID;
 
 import io.coala.json.Wrapper;
@@ -37,8 +39,9 @@ import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEventInterface;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class DsolSimEvent extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
-	implements SimEventInterface<DsolTime>
+public class DsolSimEvent<Q extends Quantity>
+	extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
+	implements SimEventInterface<DsolTime<Q>>
 {
 	public static class ID extends Id.Ordinal<UUID>
 	{
@@ -58,7 +61,7 @@ public class DsolSimEvent extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
 		}
 	}
 
-	private final DsolTime time;
+	private final DsolTime<Q> time;
 
 	/**
 	 * the local procedure call, to be reconstructed upon remote deserialization
@@ -71,14 +74,14 @@ public class DsolSimEvent extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
 	 * @param time
 	 * @param call
 	 */
-	public DsolSimEvent( final DsolTime time, final Callable<Void> call )
+	public DsolSimEvent( final DsolTime<Q> time, final Callable<Void> call )
 	{
 		this.time = time;
 		this.call = call;
 	}
 
 	@Override
-	public DsolTime getAbsoluteExecutionTime()
+	public DsolTime<Q> getAbsoluteExecutionTime()
 	{
 		return this.time;
 	}
@@ -101,14 +104,14 @@ public class DsolSimEvent extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
 		return NORMAL_PRIORITY;
 	}
 
-	public static DsolSimEvent of( final DsolTime when,
-		final Callable<Void> call )
+	public static <Q extends Quantity> DsolSimEvent<Q>
+		of( final DsolTime<Q> when, final Callable<Void> call )
 	{
-		return new DsolSimEvent( when, call );
+		return new DsolSimEvent<Q>( when, call );
 	}
 
-	public static DsolSimEvent of( final DsolTime when,
-		final Runnable runnable )
+	public static <Q extends Quantity> DsolSimEvent<Q>
+		of( final DsolTime<Q> when, final Runnable runnable )
 	{
 		return of( when, new Callable<Void>()
 		{
@@ -121,8 +124,9 @@ public class DsolSimEvent extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
 		} );
 	}
 
-	public static DsolSimEvent of( final DsolTime when, final Object target,
-		final Method method, final Object... args )
+	public static <Q extends Quantity> DsolSimEvent<Q> of(
+		final DsolTime<Q> when, final Object target, final Method method,
+		final Object... args )
 	{
 		return of( when, new Callable<Void>()
 		{

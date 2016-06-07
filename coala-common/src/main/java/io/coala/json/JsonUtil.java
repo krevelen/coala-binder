@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
@@ -80,10 +80,9 @@ public class JsonUtil
 			return om.writer().writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionBuilder
-					.unchecked( e, "Problem JSONifying rawtype: %s",
-							object == null ? null : object.getClass() )
-					.build();
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem JSONifying rawtype: {}",
+					object == null ? null : object.getClass() );
 		}
 	}
 
@@ -110,7 +109,7 @@ public class JsonUtil
 					.writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionBuilder.unchecked( "Problem JSONifying", e ).build();
+			throw ExceptionFactory.createUnchecked( "Problem JSONifying", e );
 		}
 	}
 
@@ -128,11 +127,8 @@ public class JsonUtil
 			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder
-					.unchecked( e,
-							"Problem serializing "
-									+ object.getClass().getSimpleName() )
-					.build();
+			throw ExceptionFactory.createUnchecked( e, "Problem serializing {}",
+					object.getClass().getSimpleName() );
 		}
 	}
 
@@ -148,8 +144,8 @@ public class JsonUtil
 			return json == null ? null : getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked( "Problem unmarshalling", e )
-					.build();
+			throw ExceptionFactory.createUnchecked( "Problem deserializing",
+					e );
 		}
 	}
 
@@ -166,22 +162,31 @@ public class JsonUtil
 					: getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder
-					.unchecked( "Problem unmarshalling JSON: " + json, e )
-					.build();
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem deserializing JSON: {}", json );
 		}
 	}
 
+	/**
+	 * @param value the {@link Object} to serialize
+	 * @return the {@link String} representation in pretty JSON format
+	 * @deprecated use {@link #toJSON(Object)}
+	 */
 	@Deprecated
 	public static String toPrettyJSON( final Object object )
 	{
 		return toJSON( object );
 	}
 
+	/**
+	 * @param value the {@link Object} to serialize
+	 * @return the {@link String} representation in JSON format
+	 * @deprecated use {@link #stringify(Object)}
+	 */
 	@Deprecated
 	public static String toString( final Object value )
 	{
-		return toJSON( value );
+		return stringify( value );
 	}
 
 	/**
@@ -200,8 +205,8 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
-					+ resultType.getName() + " from JSON stream", e ).build();
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem unmarshalling {} from JSON stream", resultType );
 		}
 	}
 
@@ -234,8 +239,9 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
-					+ resultType.getName() + " from JSON: " + json, e ).build();
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem deserializing {} from JSON: {}", resultType,
+					json );
 		}
 	}
 
@@ -268,8 +274,9 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
-					+ resultType.getName() + " from JSON: " + tree, e ).build();
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem deserializing {} from JSON: {}", resultType,
+					tree );
 		}
 	}
 
@@ -306,8 +313,9 @@ public class JsonUtil
 
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked( "Problem unmarshalling "
-					+ typeReference + " from JSON: " + json, e ).build();
+			throw ExceptionFactory.createUnchecked( e,
+					"Problem deserializing {} from JSON: {}", typeReference,
+					json );
 		}
 	}
 

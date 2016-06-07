@@ -27,7 +27,7 @@ import java.net.URL;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 
 /**
@@ -76,8 +76,8 @@ public class FileUtil implements Util
 			throw e;
 		} catch( final Exception e )
 		{
-			throw ExceptionBuilder.unchecked( e, "Problem with path: {}",
-					path.toASCIIString() ).build();
+			throw ExceptionFactory.createUnchecked( e, "Illegal path: {}",
+					path );
 		}
 	}
 
@@ -124,10 +124,9 @@ public class FileUtil implements Util
 		final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		// FileUtil.class.getClassLoader()
 		final URL resourcePath = cl.getResource( path );
-		if( resourcePath == null ) { throw ExceptionBuilder
-				.unchecked( "File not found, looked in {} and classpath: {}",
-						file.getAbsolutePath(), path )
-				.build(); }
+		if( resourcePath == null ) { throw ExceptionFactory.createUnchecked(
+				"File not found, looked in {} and classpath: {}",
+				file.getAbsolutePath(), path ); }
 		LOG.trace( "Found '" + path + "' in classpath: " + resourcePath );
 		return cl.getResourceAsStream( path );
 	}

@@ -1,7 +1,4 @@
 /* $Id: 08d896029c3257392728d6e5555cce152c5775d5 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/xml/XmlContext.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,14 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.xml;
-
-import io.coala.exception.CoalaException;
-import io.coala.exception.CoalaExceptionFactory;
-import io.coala.util.ClassUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -30,11 +21,14 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEventHandler;
 
+import io.coala.util.Instantiator;
+
 /**
  * {@link XmlContext}
  * 
- * @version $Revision: 358 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @param <T>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class XmlContext<T>
 {
@@ -62,8 +56,8 @@ public class XmlContext<T>
 	 * 
 	 * @param contextPath
 	 */
-	protected XmlContext(final XmlContextID<?> contextID,
-			final ValidationEventHandler validationEventHandler)
+	protected XmlContext( final XmlContextID<?> contextID,
+		final ValidationEventHandler validationEventHandler )
 	{
 		this.contextID = contextID;
 		this.validationEventHandler = validationEventHandler;
@@ -85,79 +79,61 @@ public class XmlContext<T>
 	/**
 	 * @return the cached ObjectMapper
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	public synchronized T getObjectFactory()
 	{
-		if (this._ObjectMapper == null)
-			try
-			{
-				this._ObjectMapper = (T) ClassUtil.instantiate(this.contextID
-						.getObjectFactoryType());
-			} catch (final CoalaException e)
-			{
-				throw CoalaExceptionFactory.INCONSTRUCTIBLE.createRuntime(e,
-						this.contextID.getObjectFactoryType(), null);
-			}
+		if( this._ObjectMapper == null ) this._ObjectMapper = (T) Instantiator
+				.instantiate( this.contextID.getObjectFactoryType() );
 
 		return this._ObjectMapper;
 	}
 
 	/**
 	 * @return the {@link JAXBContext}
+	 * @throws JAXBException
 	 */
-	public synchronized JAXBContext getJAXBContext()
+	public synchronized JAXBContext getJAXBContext() throws JAXBException
 	{
-		if (this._Context == null)
-			try
-			{
-				this._Context = (getID().getObjectTypes() != null && getID()
-						.getObjectTypes().length > 0) ? (JAXBContext) JAXBContext
-						.newInstance(getID().getObjectTypes())
-						: (JAXBContext) JAXBContext.newInstance(getID()
-								.getObjectFactoryType().getPackage().getName());
-			} catch (final JAXBException e)
-			{
-				throw CoalaExceptionFactory.INCONSTRUCTIBLE.createRuntime(e,
-						JAXBContext.class, null);
-			}
+		if( this._Context == null )
+		{
+			this._Context = (getID().getObjectTypes() != null
+					&& getID().getObjectTypes().length > 0)
+							? (JAXBContext) JAXBContext
+									.newInstance( getID().getObjectTypes() )
+							: (JAXBContext) JAXBContext
+									.newInstance( getID().getObjectFactoryType()
+											.getPackage().getName() );
+		}
 
 		return this._Context;
 	}
 
 	/**
 	 * @return the cached {@link Marshaller}
+	 * @throws JAXBException
 	 */
-	public synchronized Marshaller getMarshaller()
+	public synchronized Marshaller getMarshaller() throws JAXBException
 	{
-		if (this._Marshaller == null)
-			try
-			{
-				this._Marshaller = getJAXBContext().createMarshaller();
-				this._Marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT,
-						true);
-			} catch (final JAXBException e)
-			{
-				throw CoalaExceptionFactory.INCONSTRUCTIBLE.createRuntime(e,
-						Marshaller.class, null);
-			}
+		if( this._Marshaller == null )
+		{
+			this._Marshaller = getJAXBContext().createMarshaller();
+			this._Marshaller.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT,
+					true );
+		}
 		return this._Marshaller;
 	}
 
 	/**
 	 * @return the cached {@link Unmarshaller}
+	 * @throws JAXBException
 	 */
-	public synchronized Unmarshaller getUnmarshaller()
+	public synchronized Unmarshaller getUnmarshaller() throws JAXBException
 	{
-		if (_Unmarshaller == null)
-			try
-			{
-				_Unmarshaller = getJAXBContext().createUnmarshaller();
-				_Unmarshaller.setEventHandler(getValidationEventHandler());
-			} catch (final JAXBException e)
-			{
-				throw CoalaExceptionFactory.INCONSTRUCTIBLE.createRuntime(e,
-						Marshaller.class, null);
-			}
+		if( _Unmarshaller == null )
+		{
+			_Unmarshaller = getJAXBContext().createUnmarshaller();
+			_Unmarshaller.setEventHandler( getValidationEventHandler() );
+		}
 
 		return _Unmarshaller;
 	}
@@ -167,10 +143,10 @@ public class XmlContext<T>
 	 * @param validationEventHandler
 	 * @return the new {@link XmlContext} instance
 	 */
-	public static <T> XmlContext<T> of(final XmlContextID<?> contextID,
-			final ValidationEventHandler validationEventHandler)
+	public static <T> XmlContext<T> of( final XmlContextID<?> contextID,
+		final ValidationEventHandler validationEventHandler )
 	{
-		return new XmlContext<T>(contextID, validationEventHandler);
+		return new XmlContext<T>( contextID, validationEventHandler );
 	}
 
 }

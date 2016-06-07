@@ -1,7 +1,4 @@
 /* $Id: ce69ef0e4d5d608cd33e74ddbf22ff8ca8be7ec6 $
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/transaction/TransactionTypeID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,15 +12,8 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.transaction;
-
-import io.coala.agent.AgentID;
-import io.coala.capability.CapabilityID;
-import io.coala.enterprise.fact.CoordinationFact;
-import io.coala.util.ClassUtil;
 
 import java.util.List;
 
@@ -31,15 +21,21 @@ import javax.inject.Inject;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.coala.agent.AgentID;
+import io.coala.capability.CapabilityID;
+import io.coala.enterprise.fact.CoordinationFact;
+import io.coala.util.TypeArguments;
+
 /**
  * {@link TransactionTypeID}
  * 
- * @version $Revision: 279 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
+ * @param <F>
+ * @param <T>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 public class TransactionTypeID<F extends CoordinationFact, T extends Transaction<F>>
-		extends CapabilityID
+	extends CapabilityID
 {
 
 	/** */
@@ -59,15 +55,15 @@ public class TransactionTypeID<F extends CoordinationFact, T extends Transaction
 	 * @param clientID the owner {@link AgentID}
 	 * @param cls the concrete {@link T} type
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Inject
-	public TransactionTypeID(final AgentID clientID, final Class<T> cls)
+	public TransactionTypeID( final AgentID clientID, final Class<T> cls )
 	{
-		super(clientID, cls);
-		final List<Class<?>> typeArgs = ClassUtil.getTypeArguments(
-				TransactionTypeID.class, getClass());
-		this.factType = (Class<F>) typeArgs.get(0);
-		this.transactionType = (Class<T>) typeArgs.get(1);
+		super( clientID, cls );
+		final List<Class<?>> typeArgs = TypeArguments
+				.of( TransactionTypeID.class, getClass() );
+		this.factType = (Class<F>) typeArgs.get( 0 );
+		this.transactionType = (Class<T>) typeArgs.get( 1 );
 	}
 
 	/**

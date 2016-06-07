@@ -31,7 +31,6 @@ import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.example.conway.CellLink.CellLinkStatus;
-import io.coala.exception.CoalaException;
 import io.coala.log.InjectLogger;
 import io.coala.time.SimDuration;
 import io.coala.time.SimTime;
@@ -130,9 +129,9 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	/**
 	 * @return an {@link Observable} stream of {@link CellLink} updates based on
 	 *         this world's current topology (default: torus)
-	 * @throws CoalaException
+	 * @throws Exception
 	 */
-	protected Observable<CellLink> myLinks() throws CoalaException
+	protected Observable<CellLink> myLinks() throws Exception
 	{
 		return Observable.from( Util.determineTorusNeighbors( getBinder() ) )
 				.map( new Func1<CellID, CellLink>()
@@ -146,7 +145,7 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	}
 
 	@Override
-	public synchronized void initialize() throws CoalaException
+	public synchronized void initialize() throws Exception
 	{
 		myLinks().subscribe( new Observer<CellLink>()
 		{

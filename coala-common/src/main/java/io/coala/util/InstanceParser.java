@@ -7,7 +7,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.coala.exception.ExceptionBuilder;
+import io.coala.exception.ExceptionFactory;
 import io.coala.json.JsonUtil;
 
 /**
@@ -102,8 +102,8 @@ public abstract class InstanceParser<T>
 										CharSequence.class ) );
 					} catch( final Exception e3 )
 					{
-						throw ExceptionBuilder.unchecked( e3,
-								"Problem parsing type: %s", valueType ).build();
+						throw ExceptionFactory.createUnchecked( e3,
+								"Problem parsing type: {}", valueType );
 					}
 				}
 			}
@@ -136,9 +136,9 @@ public abstract class InstanceParser<T>
 				return parse( value.trim() );
 			} catch( final Exception e1 )
 			{
-				throw ExceptionBuilder.unchecked( e1,
-						"Problem parsing type: %s from (trimmed) value: %s",
-						this.valueType, value ).build();
+				throw ExceptionFactory.createUnchecked( e1,
+						"Problem parsing type: {} from (trimmed) value: %s",
+						this.valueType, value );
 			}
 		}
 	}
