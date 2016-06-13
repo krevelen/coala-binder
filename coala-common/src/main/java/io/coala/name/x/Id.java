@@ -208,17 +208,11 @@ public class Id<T> extends Wrapper.Simple<T>
 		{
 			if( this == other ) return true;
 
-			if( other == null || getClass() != other.getClass() ) return false;
+			if( !super.equals( other ) ) return false;
 
 			final OrdinalChild<T, P> that = (OrdinalChild<T, P>) other;
-			if( getParent() == null )
-			{
-				if( that.getParent() != null ) return false;
-			} else if( getParent() != this
-					&& !getParent().equals( that.getParent() ) )
-				return false;
-
-			return super.equals( other );
+			return getParent() == null ? that.getParent() == null
+					: getParent().equals( that.getParent() );
 		}
 
 		/**

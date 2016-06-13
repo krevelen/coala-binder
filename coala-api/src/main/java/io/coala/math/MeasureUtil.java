@@ -82,7 +82,7 @@ public class MeasureUtil implements Util
 						.000005, SI.RADIAN );
 	}
 
-	public static <Q extends Quantity, U extends Unit<Q>> String
+	public static <Q extends Quantity> String
 		toString( final Measure<?, Q> amount, final int scale )
 	{
 		return (amount.getValue() instanceof BigDecimal
@@ -99,5 +99,13 @@ public class MeasureUtil implements Util
 		return BigDecimal.valueOf( amount.getEstimatedValue() )
 				.setScale( scale, RoundingMode.HALF_UP ).toPlainString()
 				+ amount.getUnit();
+	}
+
+	public static <Q extends Quantity> Number getValue( final Amount<Q> amount,
+		final Unit<Q> unit )
+	{
+		final Amount<Q> result = amount.to( unit );
+		return result.isExact() ? result.getExactValue()
+				: result.getEstimatedValue();
 	}
 }

@@ -123,8 +123,8 @@ public class JsonUtil
 		try
 		{
 			// checkRegistered(om, object.getClass());
-			// return om.valueToTree(object);
-			return om.readTree( stringify( object ) );
+			 return om.valueToTree(object);
+//			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
 			throw ExceptionFactory.createUnchecked( e, "Problem serializing {}",

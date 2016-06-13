@@ -77,9 +77,7 @@ public class Compare implements Util
 	public static <T extends Comparable<? super T>> boolean eq( final T o1,
 		final T o2 )
 	{
-		Objects.requireNonNull( o1 );
-		Objects.requireNonNull( o2 );
-		return Comparison.of( o1, o2 ) == Comparison.EQUIVALENT;
+		return Comparison.eq( o1, o2 );
 	}
 
 	/**
@@ -91,9 +89,7 @@ public class Compare implements Util
 	public static <T extends Comparable<? super T>> boolean lt( final T o1,
 		final T o2 )
 	{
-		Objects.requireNonNull( o1 );
-		Objects.requireNonNull( o2 );
-		return Comparison.of( o1, o2 ) == Comparison.LESSER;
+		return Comparison.lt( o1, o2 );
 	}
 
 	/**
@@ -105,7 +101,7 @@ public class Compare implements Util
 	public static <T extends Comparable<? super T>> boolean le( final T o1,
 		final T o2 )
 	{
-		return !gt( o1, o2 );
+		return Comparison.le( o1, o2 );
 	}
 
 	/**
@@ -117,9 +113,7 @@ public class Compare implements Util
 	public static <T extends Comparable<? super T>> boolean gt( final T o1,
 		final T o2 )
 	{
-		Objects.requireNonNull( o1 );
-		Objects.requireNonNull( o2 );
-		return Comparison.of( o1, o2 ) == Comparison.GREATER;
+		return Comparison.gt( o1, o2 );
 	}
 
 	/**
@@ -131,7 +125,7 @@ public class Compare implements Util
 	public static <T extends Comparable<? super T>> boolean ge( final T o1,
 		final T o2 )
 	{
-		return !lt( o1, o2 );
+		return Comparison.ge( o1, o2 );
 	}
 
 }

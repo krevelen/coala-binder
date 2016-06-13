@@ -21,7 +21,7 @@ import org.aeonbits.owner.Mutable;
 		"file:${user.dir}/" + Coala.CONFIG_FILE_DEFAULT,
 		"file:~/" + Coala.CONFIG_FILE_DEFAULT,
 		"classpath:" + Coala.CONFIG_FILE_DEFAULT } )
-@Separator( "," )
+@Separator( Coala.CONFIG_VALUE_SEP )
 public interface Config extends Mutable
 {
 

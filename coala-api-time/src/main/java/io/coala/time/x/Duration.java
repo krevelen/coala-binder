@@ -165,11 +165,11 @@ public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>
 	/**
 	 * {@link Duration} static factory method
 	 * 
-	 * @param value the number of milliseconds
+	 * @param units the number of time steps
 	 */
-	public static Duration of( final Number value )
+	public static Duration of( final Number units )
 	{
-		return of( TimeSpan.of( value ) );
+		return of( TimeSpan.of( units ) );
 	}
 
 	/**
