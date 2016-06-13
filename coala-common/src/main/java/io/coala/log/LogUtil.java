@@ -27,7 +27,6 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.MessageFormatMessage;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import io.coala.util.FileUtil;
