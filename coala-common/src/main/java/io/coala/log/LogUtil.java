@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import io.coala.util.FileUtil;
@@ -246,5 +247,11 @@ public class LogUtil implements Util
 				.getLogger( name );
 		result.setLevel( level );
 		return result;
+	}
+
+	public static Message toMessage( final String messagePattern,
+		final Object... parameters )
+	{
+		return new ParameterizedMessage( messagePattern, parameters );
 	}
 }

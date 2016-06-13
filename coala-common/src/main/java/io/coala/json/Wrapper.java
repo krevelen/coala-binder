@@ -33,7 +33,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -63,11 +62,12 @@ import io.coala.util.TypeArguments;
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
-@JsonTypeInfo(
-// include = JsonTypeInfo.As.WRAPPER_OBJECT, 
-// defaultImpl = Wrapper.Simple.class
-	use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-	property = "@class" )
+//Don't add type info, this forces simple strings to become objects {@class:""}
+//@JsonTypeInfo(
+//// include = JsonTypeInfo.As.WRAPPER_OBJECT, 
+//// defaultImpl = Wrapper.Simple.class
+//	use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+//	property = "@class" )
 public interface Wrapper<T>
 {
 

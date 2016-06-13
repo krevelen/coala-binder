@@ -26,9 +26,11 @@ import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
+import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.joda.time.ReadableDuration;
 import org.joda.time.ReadableInstant;
 import org.jscience.physics.amount.Amount;
 import org.threeten.bp.temporal.ChronoField;
@@ -87,9 +89,10 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 {
 
 	/**
-	 * for "natural" Config value conversion for a {@link Duration} (i.e.
-	 * {@link TimeSpan}).
+	 * for {@link Config}'s "natural" value conversion for a {@link Duration}
+	 * (i.e. {@link TimeSpan}).
 	 * 
+	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
 	 * @see of(String)
 	 */
 	public static Instant valueOf( final String value )
@@ -98,12 +101,14 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	}
 
 	/**
-	 * @param value a duration since the EPOCH as {@link DecimalMeasure JSR-275}
-	 *            measure (e.g. {@code "123 ms"}) or as ISO Period, parsed with
+	 * @param value a {@link String} representation of either:
+	 *            <ul>
+	 *            a duration since the EPOCH as {@link DecimalMeasure JSR-275}
+	 *            measure (e.g. {@code "123 ms"}); or
+	 *            <li>as ISO Period, parsed with
 	 *            {@link org.threeten.bp.Duration#parse(CharSequence) JSR-310}
-	 *            or {@link Period#parse(String) Joda}.
-	 * 
-	 *            Examples of ISO period:
+	 *            or (on failure) {@link Period#parse(String) Joda}. Examples of
+	 *            ISO period:
 	 * 
 	 *            <pre>
 	 *    "PT20.345S" -> parses as "20.345 seconds"
@@ -115,8 +120,8 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 *    "-P6H3M"    -> parses as "-6 hours and -3 minutes"
 	 *    "-P-6H+3M"  -> parses as "+6 hours and -3 minutes"
 	 *            </pre>
+	 *            </ul>
 	 * 
-	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
 	 * @see org.threeten.bp.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
@@ -131,9 +136,15 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	 * 
 	 * @param value a{@link ReadableInstant} instant, e.g. {@link DateTime}
 	 */
-	public static Instant of( final ReadableInstant joda )
+	public static Instant of( final ReadableInstant date,
+		final ReadableInstant offset )
 	{
-		return of( joda.getMillis() );
+		return of( date.getMillis() - offset.getMillis(), TimeSpan.MILLIS );
+	}
+
+	public static Instant of( final ReadableDuration joda )
+	{
+		return of( joda.getMillis(), TimeSpan.MILLIS );
 	}
 
 	/**
@@ -404,16 +415,17 @@ public class Instant implements Wrapper<TimeSpan>, Comparable<Instant>
 	}
 
 	@JsonIgnore
-	public Date toDate()
+	public Date toDate( final Date offset )
 	{
-		return new Date( toMillisLong() );
+		return new Date( offset.getTime() + toMillisLong() );
 	}
 
 	/** @return the Joda {@link ReadableInstant} implementation of an instant */
 	@JsonIgnore
-	public ReadableInstant toJoda()
+	public DateTime toJoda( final ReadableInstant offset )
 	{
-		return new org.joda.time.Instant( toMillisLong() );
+		return new DateTime( offset.getMillis() + toMillisLong(),
+				offset.getZone() );
 	}
 
 	/**

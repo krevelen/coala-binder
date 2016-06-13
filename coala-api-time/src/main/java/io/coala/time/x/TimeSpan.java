@@ -447,13 +447,15 @@ public class TimeSpan extends DecimalMeasure
 		// FIXME generate more exact Measure for discrete divisor values?
 		return DecimalMeasure
 				.valueOf(
-						getValue().divide( divisor instanceof DecimalMeasure
-								? ((DecimalMeasure) divisor)
-										.to( getUnit(),
-												DecimalUtil.DECIMAL_PRECISION )
-										.getValue()
-								: BigDecimal.valueOf(
-										divisor.doubleValue( getUnit() ) ) ),
+						getValue().divide(
+								divisor instanceof DecimalMeasure
+										? ((DecimalMeasure) divisor)
+												.to( getUnit(),
+														DecimalUtil.DECIMAL_PRECISION )
+												.getValue()
+										: BigDecimal.valueOf( divisor
+												.doubleValue( getUnit() ) ),
+								DecimalUtil.DECIMAL_PRECISION ),
 						Unit.ONE );
 	}
 

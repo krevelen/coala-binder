@@ -39,5 +39,7 @@ public interface Coala
 	/** Actual (run-time environment) value of the configuration file */
 	String CONFIG_FILE = System.getProperty(CONFIG_FILE_PROPERTY,
 			CONFIG_FILE_DEFAULT);
+	
+	String CONFIG_VALUE_SEP = ",";
 
 }

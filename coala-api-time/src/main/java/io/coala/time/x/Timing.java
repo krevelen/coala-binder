@@ -179,7 +179,7 @@ public class Timing implements Wrapper<String>
 				// + "UNTIL=20130430T083000Z;"
 				// + "INTERVAL=1;";
 
-				// FIXME parse DTSTART (see
+				// parse DTSTART (see
 				// http://www.kanzaki.com/docs/ical/rrule.html)
 				final DateTimeZone zone = DateTimeZone
 						.forID( dtStartZonePattern.matcher( pattern ).group() );
@@ -196,7 +196,10 @@ public class Timing implements Wrapper<String>
 							@Override
 							public Instant call( final DateTime dt )
 							{
-								final Instant t = Instant.of( dt );
+								final Instant t = Instant
+										.of( org.joda.time.Duration
+												.millis( dt.getMillis()
+														- offset.getTime() ) );
 								LOG.trace( "ical {}: {}: {}", pattern, dt, t );
 								return t;
 							}
@@ -205,14 +208,24 @@ public class Timing implements Wrapper<String>
 			{
 				try
 				{
-					return Observable.just( Instant.valueOf( pattern ) );
+					// ISO date/time
+					return Observable.just( Instant.of( org.joda.time.Duration
+							.millis( DateTime.parse( pattern ).getMillis()
+									- offset.getTime() ) ) );
 				} catch( final Exception e2 )
 				{
+					try
+					{
+						// ISO period
+						return Observable.just( Instant.valueOf( pattern ) );
+					} catch( final Exception e3 )
+					{
 
-					throw ExceptionFactory.createUnchecked( e,
-							"Problem parsing `{0}`, errors: \n\t{1}\n\t{2}\n\t{3}",
-							pattern, e.getMessage(), e1.getMessage(),
-							e2.getMessage() );
+						throw ExceptionFactory.createUnchecked( e,
+								"Problem parsing `{0}`, errors: \n\t{1}\n\t{2}\n\t{3}",
+								pattern, e.getMessage(), e1.getMessage(),
+								e2.getMessage() );
+					}
 				}
 			}
 		}
@@ -263,7 +276,7 @@ public class Timing implements Wrapper<String>
 			throws IOException, JsonProcessingException
 		{
 			// LOG.trace("Serializing " + value);
-			gen.writeString( value.toString() );
+			gen.writeString( Util.toString( value ) );
 		}
 	}
 
