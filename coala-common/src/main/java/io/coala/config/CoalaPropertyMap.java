@@ -31,6 +31,7 @@ import io.coala.util.FileUtil;
  * @version $Id: 0b49c65c3b8335ee2c3a3a7442b8b3ffec8d595f $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class CoalaPropertyMap extends Properties
 {
 
@@ -62,7 +63,7 @@ public class CoalaPropertyMap extends Properties
 		{
 			INSTANCE = new CoalaPropertyMap();
 			if( loadFromDefaultPath )
-				INSTANCE.load( ConfigUtil.PROPERTIES_FILE );
+				INSTANCE.load( ConfigUtil.CONFIG_FILE_BOOTTIME );
 		}
 		// else if (!loadFromDefaultPath && !INSTANCE.loadedPaths.isEmpty())
 		// LOG.warn("Already imported BAAL config from path(s): "
@@ -88,8 +89,8 @@ public class CoalaPropertyMap extends Properties
 	public synchronized CoalaPropertyMap load( final String fileName )
 	{
 
-		final String loadPath = fileName == null ? ConfigUtil.PROPERTIES_FILE
-				: fileName;
+		final String loadPath = fileName == null
+				? ConfigUtil.CONFIG_FILE_BOOTTIME : fileName;
 
 		if( this.loadedPaths.contains( loadPath ) )
 		{
@@ -103,8 +104,7 @@ public class CoalaPropertyMap extends Properties
 
 		try
 		{
-			final InputStream inStream = FileUtil
-					.toInputStream( loadPath );
+			final InputStream inStream = FileUtil.toInputStream( loadPath );
 			load( inStream );
 			this.loadedPaths.add( loadPath );
 			LOG.trace( "Imported config from path: " + loadPath );

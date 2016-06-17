@@ -178,7 +178,7 @@ public interface BinderFactoryConfig extends Config
 					.value().getType( BinderFactory.class ) );
 
 			if( configPath != null ) ConfigFactory
-					.setProperty( ConfigUtil.FILE_NAME_PROPERTY, configPath );
+					.setProperty( ConfigUtil.CONFIG_FILE_PROPERTY, configPath );
 			final ReplicationConfig cfg = ConfigFactory
 					.create( ReplicationConfig.class );
 			LOG.trace( "Loaded ReplicationConfig: " + cfg );

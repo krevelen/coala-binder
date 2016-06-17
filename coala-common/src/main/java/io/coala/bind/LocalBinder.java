@@ -24,6 +24,7 @@ import javax.inject.Singleton;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 
+import io.coala.config.GlobalConfig;
 import io.coala.name.x.Id;
 import rx.Observable;
 
@@ -115,7 +116,7 @@ public interface LocalBinder
 	 * @see ConfigFactory#create(Class, Map[])
 	 * @see ConfigCache#getOrCreate(Class, Map[])
 	 */
-	interface Config extends io.coala.config.Config
+	interface Config extends GlobalConfig
 	{
 		String context();
 
@@ -145,7 +146,7 @@ public interface LocalBinder
 		 * @see ConfigFactory#create(Class, Map[])
 		 * @see ConfigCache#getOrCreate(Class, Map[])
 		 */
-		interface FactoryConfig extends io.coala.config.Config
+		interface FactoryConfig extends GlobalConfig
 		{
 			List<String> initialContexts();
 

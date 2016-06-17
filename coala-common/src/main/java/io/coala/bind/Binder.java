@@ -20,8 +20,10 @@ import java.util.Set;
 import javax.inject.Provider;
 
 import io.coala.agent.Agent;
+import io.coala.agent.AgentID;
 import io.coala.capability.Capability;
 import io.coala.factory.Factory;
+import io.coala.name.Identifiable;
 
 /**
  * {@link Binder} can contain {@link Agent}s and provides services
@@ -30,7 +32,7 @@ import io.coala.factory.Factory;
  * @author Rick van Krevelen
  */
 @Deprecated
-public interface Binder //extends Identifiable<AgentID>
+public interface Binder extends Identifiable<AgentID>
 {
 
 	/** */
