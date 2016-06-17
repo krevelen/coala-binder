@@ -13,11 +13,8 @@ import io.coala.message.Message;
 
 /**
  * {@link BasicConfiguringCapability}
- * 
- * @version $Id: e2d9019442c0c8f4e1496a19f0746d57e274474c $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * @author <a href="mailto:Suki@almende.org">Suki</a>
  */
+@Deprecated
 public class BasicConfiguringCapability extends BasicCapability
 	implements ConfiguringCapability
 {

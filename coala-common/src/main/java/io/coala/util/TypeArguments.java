@@ -19,7 +19,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -124,17 +123,17 @@ public class TypeArguments
 							if( !genericAncestorType.equals( rawIntf ) )
 								continue;
 
-							LOG.trace(
-									"supertype params: "
-											+ Arrays.asList( superClass
-													.getTypeParameters() )
-											+ ", intf params: "
-											+ Arrays.asList( ClassUtil
-													.toClass( rawIntf )
-													.getTypeParameters() )
-											+ ", actual args: "
-											+ Arrays.asList( parameterizedIntf
-													.getActualTypeArguments() ) );
+//							LOG.trace(
+//									"supertype params: "
+//											+ Arrays.asList( superClass
+//													.getTypeParameters() )
+//											+ ", intf params: "
+//											+ Arrays.asList( ClassUtil
+//													.toClass( rawIntf )
+//													.getTypeParameters() )
+//											+ ", actual args: "
+//											+ Arrays.asList( parameterizedIntf
+//													.getActualTypeArguments() ) );
 
 							if( superClass.getTypeParameters().length > 0 )
 								return of( superClass, concreteDescendantType );

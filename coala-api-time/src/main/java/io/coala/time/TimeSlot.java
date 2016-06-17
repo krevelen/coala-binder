@@ -37,7 +37,9 @@ import io.coala.log.LogUtil;
  * 
  * @version $Id: b122c1e76281696485d6945bfdeff0a35d12db1e $
  * @author Rick van Krevelen
+ * @deprecated please use {@link io.coala.math.Range}
  */
+@Deprecated
 public class TimeSlot implements Serializable, Comparable<TimeSlot>
 {
 

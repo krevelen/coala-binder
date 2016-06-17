@@ -7,21 +7,21 @@ import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
+import io.coala.random.ProbabilityDistribution.Parser;
 
-public class RandomDistributionParserTest
+public class ProbabilityDistributionTest
 {
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger( ProbabilityDistribution.class );
+			.getLogger( ProbabilityDistributionTest.class );
 
 	@SuppressWarnings( "rawtypes" )
 	@Test
-	public void testValueOf() throws Exception
+	public void testParser() throws Exception
 	{
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
-		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser(
-				null );
+		final Parser parser = new Parser( null );
 
 		final ProbabilityDistribution<Amount> dist1 = parser
 				.parse( "uniform(2 ;3 )", Amount.class ); //± 1.1E-16

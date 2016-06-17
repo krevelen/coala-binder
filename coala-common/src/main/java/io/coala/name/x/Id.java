@@ -24,12 +24,10 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import io.coala.config.Config;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
-import io.coala.name.Identifier;
 
 /**
  * {@link Id} is a {@link Wrapper} for reference values. Its un/wrapping should
@@ -43,15 +41,13 @@ import io.coala.name.Identifier;
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
-@JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-	property = "@class" )
+//@JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+//	property = "@class" )
 public class Id<T> extends Wrapper.Simple<T>
 {
 
-	// FIXME override compareTo() to support Child sub-types
-
 	/** */
-	private static final Logger LOG = LogUtil.getLogger( Identifier.class );
+	private static final Logger LOG = LogUtil.getLogger( Id.class );
 
 	/**
 	 * @param json the JSON {@link String}

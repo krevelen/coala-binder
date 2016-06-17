@@ -43,6 +43,7 @@ import io.coala.random.RandomNumberStream;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public interface RandomizingCapability extends Capability<BasicCapabilityStatus>
 {
 

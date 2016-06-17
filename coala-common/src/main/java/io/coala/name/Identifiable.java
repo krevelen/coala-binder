@@ -23,7 +23,9 @@ package io.coala.name;
  * 
  * @param <ID> the {@link Identifier} type
  * @param <THIS> the concrete {@link Identifiable} type
+ * @deprecated please use {@link io.coala.json.Wrapper}
  */
+@Deprecated
 public interface Identifiable<ID extends Identifier<?, ?>>
 		extends Comparable<Identifiable<ID>>
 {

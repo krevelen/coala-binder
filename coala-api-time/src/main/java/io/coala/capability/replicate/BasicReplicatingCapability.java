@@ -56,6 +56,7 @@ import rx.subjects.Subject;
  * @version $Id: b17619a6b4279adbd4286009d1dbc48c3f69d4bc $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class BasicReplicatingCapability extends BasicCapability implements
 	ReplicatingCapability, RandomizingCapability, SchedulingCapability<SimTime>
 {

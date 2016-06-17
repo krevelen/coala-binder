@@ -28,7 +28,9 @@ import io.coala.name.Identifiable;
  * 
  * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
  * @author Rick van Krevelen
+ * @deprecated please use {@link PseudoRandom}
  */
+@Deprecated
 public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 {
 

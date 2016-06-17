@@ -50,7 +50,7 @@ public class Math3RandomDistributionTest
 	{
 		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser(
 				Math3ProbabilityDistribution.Factory
-						.of( Math3RandomNumberStream.Factory.ofMersenneTwister()
+						.createDeterministic( Math3RandomNumberStream.Factory.ofMersenneTwister()
 								.create( "rng", 0L ) ) );
 
 		final ProbabilityDistribution<DecimalMeasure> dist2 = parser

@@ -23,6 +23,7 @@ package io.coala.math3;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.aeonbits.owner.ConfigFactory;
 import org.apache.commons.math3.random.ISAACRandom;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -33,8 +34,8 @@ import org.apache.commons.math3.random.Well44497a;
 import org.apache.commons.math3.random.Well512a;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.random.PseudoRandom;
 import io.coala.random.RandomNumberStream;
-import io.coala.random.RandomNumberStream.AbstractRandomNumberStream;
 import io.coala.util.Instantiator;
 
 /**
@@ -45,7 +46,7 @@ import io.coala.util.Instantiator;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class Math3RandomNumberStream extends AbstractRandomNumberStream
+public class Math3RandomNumberStream implements PseudoRandom
 {
 
 	/**
@@ -53,8 +54,7 @@ public class Math3RandomNumberStream extends AbstractRandomNumberStream
 	 * @return the unwrapped {@link RandomGenerator} or otherwise a decorated
 	 *         {@link RandomNumberStream}
 	 */
-	public static RandomGenerator
-		toRandomGenerator( final RandomNumberStream rng )
+	public static RandomGenerator toRandomGenerator( final PseudoRandom rng )
 	{
 		return rng instanceof Math3RandomNumberStream
 				? ((Math3RandomNumberStream) rng).unwrap()
@@ -131,6 +131,21 @@ public class Math3RandomNumberStream extends AbstractRandomNumberStream
 				};
 	}
 
+	/** constructor */
+	public static Math3RandomNumberStream of( final Config config,
+		final RandomGenerator rng )
+	{
+		final Math3RandomNumberStream result = new Math3RandomNumberStream();
+		result.id = config.id();
+		result.seed = config.seed().longValue();
+		result.rng = rng;
+		return result;
+	}
+
+	private Name id;
+
+	private long seed;
+
 	private RandomGenerator rng;
 
 	/** {@link Abstract} zero-arg bean constructor */
@@ -139,12 +154,16 @@ public class Math3RandomNumberStream extends AbstractRandomNumberStream
 		//
 	}
 
-	/** {@link Abstract} constructor */
-	public Math3RandomNumberStream( final RandomNumberStream.ID id,
-		final RandomGenerator rng )
+	@Override
+	public Number getSeed()
 	{
-		super( id );
-		this.rng = rng;
+		return this.seed;
+	}
+
+	@Override
+	public Name getId()
+	{
+		return this.id;
 	}
 
 	protected RandomGenerator unwrap()
@@ -207,7 +226,7 @@ public class Math3RandomNumberStream extends AbstractRandomNumberStream
 	 * @author Rick van Krevelen
 	 */
 	public static class Factory<T extends RandomGenerator>
-		implements RandomNumberStream.Factory
+		implements PseudoRandom.Factory
 	{
 
 		/** the FACTORY_CACHE */
@@ -287,17 +306,16 @@ public class Math3RandomNumberStream extends AbstractRandomNumberStream
 		}
 
 		@Override
-		public Math3RandomNumberStream create( final String id,
-			final Number seed )
+		public Math3RandomNumberStream create()
 		{
-			return create( new ID( id ), seed );
+			return create( ConfigFactory.create( Config.class ) );
 		}
 
 		@Override
-		public Math3RandomNumberStream create( final ID id, final Number seed )
+		public Math3RandomNumberStream create( final Config config )
 		{
-			return new Math3RandomNumberStream( id,
-					this.instantiator.instantiate( seed.longValue() ) );
+			return Math3RandomNumberStream.of( config, this.instantiator
+					.instantiate( config.seed().longValue() ) );
 		}
 
 	}

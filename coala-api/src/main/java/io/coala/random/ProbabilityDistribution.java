@@ -18,6 +18,7 @@ package io.coala.random;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
@@ -28,9 +29,11 @@ import javax.inject.Provider;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 
+import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.log.LogUtil;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.MeasureUtil;
 import io.coala.math.WeightedValue;
@@ -52,14 +55,24 @@ import rx.functions.Func1;
 public abstract class ProbabilityDistribution<T> implements Serializable
 {
 
+	protected PseudoRandom stream = null;
+
+	protected List<?> params = Collections.emptyList();
+
+	public PseudoRandom getStream()
+	{
+		return this.stream;
+	}
+
+	public List<?> getParams()
+	{
+		return this.params;
+	}
+
 	/**
 	 * @return the next pseudo-random sample
 	 */
 	public abstract T draw();
-
-	// TODO RandomNumberStream getStream();
-
-	// TODO List<?> getParameters();
 
 	// continuous: https://www.wikiwand.com/en/Probability_density_function
 	// discrete: https://www.wikiwand.com/en/Probability_mass_function
@@ -89,9 +102,10 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @param value the constant to be returned on each draw
 	 * @return a degenerate or deterministic {@link ProbabilityDistribution}
 	 */
-	public static <T> ProbabilityDistribution<T> of( final T value )
+	public static <T> ProbabilityDistribution<T>
+		createDeterministic( final T value )
 	{
-		return new ProbabilityDistribution<T>()
+		final ProbabilityDistribution<T> result = new ProbabilityDistribution<T>()
 		{
 			@Override
 			public T draw()
@@ -99,6 +113,24 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 				return value;
 			}
 		};
+		result.params = Collections.singletonList( value );
+		return result;
+	}
+
+	public static ProbabilityDistribution<Boolean>
+		createBernoulli( final PseudoRandom rng, final Number probability )
+	{
+		final ProbabilityDistribution<Boolean> result = new ProbabilityDistribution<Boolean>()
+		{
+			@Override
+			public Boolean draw()
+			{
+				return rng.nextDouble() < probability.doubleValue();
+			}
+		};
+		result.stream = rng;
+		result.params = Collections.singletonList( probability );
+		return result;
 	}
 
 	/**
@@ -292,7 +324,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 			ArithmeticDistribution<Q> of( final N value, final Unit<Q> unit )
 		{
 			final Amount<Q> constant = MeasureUtil.toAmount( value, unit );
-			return of( of( constant ) );
+			return of( createDeterministic( constant ) );
 		}
 
 		/**
@@ -567,6 +599,8 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 */
 	public static class Parser
 	{
+		/** */
+		private static final Logger LOG = LogUtil.getLogger( Parser.class );
 
 		/**
 		 * the PARAM_SEPARATORS exclude comma character <code>','</code> due to
@@ -657,8 +691,14 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 			if( args.isEmpty() ) throw ExceptionFactory.createUnchecked(
 					"Missing distribution parameters: {}", label );
 
-			if( getFactory() == null ) return (ProbabilityDistribution<T>) of(
-					args.get( 0 ).getValue() );
+			if( getFactory() == null )
+			{
+				final T value = (T) args.get( 0 ).getValue();
+				LOG.warn( "No {} set, creating deterministic {}: {}",
+						Factory.class.getSimpleName(),
+						value.getClass().getSimpleName(), value );
+				return createDeterministic( value );
+			}
 
 			switch( label.toLowerCase( Locale.ROOT ) )
 			{
@@ -829,7 +869,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @return the {@link RandomNumberStream} used in creating
 		 *         {@link ProbabilityDistribution}s
 		 */
-		RandomNumberStream getStream();
+		PseudoRandom getStream();
 
 		/**
 		 * @param <T> the type of constant drawn
@@ -853,6 +893,8 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		ProbabilityDistribution<Long> createBinomial( Number trials, Number p );
 
 		/**
+		 * multinoulli
+		 * 
 		 * <img alt="Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/2D-simplex.svg/440px-2D-simplex.svg.png"/>
 		 * 
@@ -872,7 +914,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @param p
 		 * @return
 		 */
-		ProbabilityDistribution<Boolean> createBernoulli( double p );
+		ProbabilityDistribution<Boolean> createBernoulli( Number p );
 
 		/**
 		 * <img alt="Probability density function" height="150" src=

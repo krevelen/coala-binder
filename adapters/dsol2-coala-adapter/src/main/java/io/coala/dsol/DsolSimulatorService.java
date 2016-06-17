@@ -72,6 +72,7 @@ import rx.subjects.Subject;
  * @version $Id: 89cfd12ede2065a2f68cdd22f6b145efd8a4b4e4 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class DsolSimulatorService extends BasicCapability implements
 	ReplicatingCapability, SchedulingCapability<SimTime>, RandomizingCapability
 {

@@ -26,13 +26,13 @@ import java.util.Collections;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.MessageFactory;
-import org.apache.logging.log4j.message.MessageFormatMessageFactory;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.message.ParameterizedMessageFactory;
 import org.apache.logging.log4j.message.StringFormattedMessage;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.exception.ExceptionBuilder.UncheckedException;
+import io.coala.exception.ExceptionBuilder.CheckedException;
 import io.coala.json.Contextualized;
 import io.coala.json.Contextualized.Context;
 import io.coala.log.LogUtil;
@@ -170,7 +170,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/** FIXME from config? */
-	private static final MessageFactory MESSAGE_FACTORY = new MessageFormatMessageFactory();
+	private static final MessageFactory MESSAGE_FACTORY = new ParameterizedMessageFactory();
 
 	protected static Message format( final Object message )
 	{
