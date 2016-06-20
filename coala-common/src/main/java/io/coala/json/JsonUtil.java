@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import io.coala.exception.ExceptionFactory;
@@ -54,11 +55,12 @@ public class JsonUtil
 	private static final ObjectMapper JOM = new ObjectMapper();
 
 	/** singleton design pattern constructor */
-	private JsonUtil()
+	static//private JsonUtil()
 	{
 		// singleton design pattern
 		LOG.trace( "Using jackson v: " + JOM.version() );
 		JOM.registerModule( new JodaModule() );
+		JOM.registerModule( new UUIDModule() );
 	}
 
 	/** */
@@ -123,7 +125,7 @@ public class JsonUtil
 		try
 		{
 			// checkRegistered(om, object.getClass());
-			 return om.valueToTree(object);
+			return om.valueToTree( object );
 //			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
@@ -234,10 +236,16 @@ public class JsonUtil
 	{
 		try
 		{
-			return json == null || json.isEmpty() ? null
-					: (T) om.readValue( json,
+			return json == null || json.equalsIgnoreCase( "null" ) ? null
+					: (T) om.readValue(
+							!json.startsWith( "\"" )
+									&& resultType == String.class
+											? "\"" + json + "\"" : json,
 							checkRegistered( om, resultType, imports ) );
-		} catch( final Exception e )
+		} catch( final RuntimeException e )
+		{
+			throw e;
+		} catch( final Throwable e )
 		{
 			throw ExceptionFactory.createUnchecked( e,
 					"Problem deserializing {} from JSON: {}", resultType,

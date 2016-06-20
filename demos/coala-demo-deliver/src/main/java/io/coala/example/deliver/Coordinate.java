@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-examples/src/main/java/io/coala/example/deliver/Coordinate.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,17 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.example.deliver;
 
 /**
  * {@link Coordinate}
- * 
- * @version $Revision: 295 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class Coordinate
 {
@@ -44,7 +35,7 @@ public class Coordinate
 	 * @param latitude
 	 * @param longitude
 	 */
-	public Coordinate(final float latitude, final float longitude)
+	public Coordinate( final float latitude, final float longitude )
 	{
 		this.latitude = latitude;
 		this.longitude = longitude;

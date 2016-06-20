@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/MyMessageID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.eve;
 
@@ -26,9 +21,6 @@ import io.coala.time.SimTime;
 
 /**
  * {@link MyMessageID}
- * 
- * @version $Revision: 290 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class MyMessageID extends MessageID<Long, SimTime>
 {
@@ -52,9 +44,9 @@ public class MyMessageID extends MessageID<Long, SimTime>
 	 * @param modelID
 	 * @param instant
 	 */
-	public MyMessageID(final ModelID modelID, final SimTime instant)
+	public MyMessageID( final ModelID modelID, final SimTime instant )
 	{
-		super(modelID, msgID++, instant);
+		super( modelID, msgID++, instant );
 	}
 
 }

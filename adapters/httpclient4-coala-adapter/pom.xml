@@ -16,7 +16,6 @@
 	<description>
 		Utility and demo code for the Apache commons HTTP client implementation
 		$Id$
-		$URL: https://dev.almende.com/svn/abms/coala-httpcomponents-adapter/pom.xml $
 	</description>
 
 	<properties>

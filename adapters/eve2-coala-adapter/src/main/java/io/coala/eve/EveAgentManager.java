@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/main/java/com/almende/coala/eve/EveAgentManager.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve;
 
@@ -39,11 +34,6 @@ import org.apache.log4j.Logger;
 
 /**
  * {@link EveAgentManager}
- * 
- * @date $Date: 2014-07-08 12:11:12 +0200 (Tue, 08 Jul 2014) $
- * @version $Revision: 324 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class EveAgentManager extends AbstractAgentManager
 {

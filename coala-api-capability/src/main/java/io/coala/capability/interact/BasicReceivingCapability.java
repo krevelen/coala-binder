@@ -25,7 +25,6 @@ import rx.subjects.Subject;
  * 
  * @version $Id$
  * @author Rick van Krevelen
- * @author <a href="mailto:Suki@almende.org">Suki</a>
  */
 public class BasicReceivingCapability extends BasicCapability
 	implements ReceivingCapability, MessageHandler

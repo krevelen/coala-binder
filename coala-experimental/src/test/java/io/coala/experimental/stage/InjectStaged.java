@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/BeforeDestruction.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.experimental.stage;
 
@@ -34,13 +29,11 @@ import javax.inject.Provider;
 /**
  * {@link InjectStaged}
  * 
- * @date $Date$
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Retention( RetentionPolicy.RUNTIME )
+@Target( ElementType.TYPE )
 public @interface InjectStaged
 {
 	/**
@@ -78,9 +71,7 @@ public @interface InjectStaged
 	/**
 	 * {@link StageSelector}
 	 * 
-	 * @date $Date$
 	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface StageSelector
 	{
@@ -88,7 +79,7 @@ public @interface InjectStaged
 		 * @param staging
 		 * @return
 		 */
-		String[] selectStages(InjectStaged staging);
+		String[] selectStages( InjectStaged staging );
 
 		Map<Class<?>, SortedSet<String>> getCache();
 	}
@@ -100,7 +91,7 @@ public @interface InjectStaged
 		private final Map<Class<?>, SortedSet<String>> cache = new HashMap<>();
 
 		@Override
-		public String[] selectStages(final InjectStaged staging)
+		public String[] selectStages( final InjectStaged staging )
 		{
 			return staging.beforeProvide();
 		}
@@ -125,7 +116,7 @@ public @interface InjectStaged
 		private final Map<Class<?>, SortedSet<String>> cache = new HashMap<>();
 
 		@Override
-		public String[] selectStages(final InjectStaged staging)
+		public String[] selectStages( final InjectStaged staging )
 		{
 			return staging.afterProvide();
 		}

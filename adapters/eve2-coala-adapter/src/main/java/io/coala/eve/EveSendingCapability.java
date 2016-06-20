@@ -13,9 +13,6 @@ import org.apache.log4j.Logger;
 
 /**
  * {@link AGlobeMessengerService}
- * 
- * @version $Revision: 277 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class EveSendingCapability extends BasicCapability implements
 		SendingCapability

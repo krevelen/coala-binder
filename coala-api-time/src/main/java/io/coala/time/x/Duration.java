@@ -1,7 +1,4 @@
 /* $Id: a4d1db0cef5ed1fc88522da2c69aa49907d8de7d $
- * $URL$
- * 
- * Part of the EU project Inertia, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.time.x;
 
@@ -89,7 +84,6 @@ import io.coala.time.x.TimeSpan.Prettifier;
  * 
  * @date $Date$
  * @version $Id: a4d1db0cef5ed1fc88522da2c69aa49907d8de7d $
- * @author <a href="mailto:rick@almende.org">Rick</a>
  */
 @SuppressWarnings( { "rawtypes", "unchecked" } )
 public class Duration implements Wrapper<TimeSpan>, Comparable<Duration>

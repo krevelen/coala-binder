@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/process/BasicProcessorStatus.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.process;
 
@@ -27,7 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 
-public enum BasicProcessorStatus implements ProcessorStatus<BasicProcessorStatus>
+public enum BasicProcessorStatus
+		implements ProcessorStatus<BasicProcessorStatus>
 {
 	/** */
 	CREATED,
@@ -42,13 +38,13 @@ public enum BasicProcessorStatus implements ProcessorStatus<BasicProcessorStatus
 
 	private final Collection<BasicProcessorStatus> permittedNext;
 
-	private BasicProcessorStatus(BasicProcessorStatus... premittedNextStatus)
+	private BasicProcessorStatus( BasicProcessorStatus... premittedNextStatus )
 	{
-		if (premittedNextStatus == null || premittedNextStatus.length == 0)
+		if( premittedNextStatus == null || premittedNextStatus.length == 0 )
 			this.permittedNext = Collections.emptySet();
 		else
-			this.permittedNext = Collections.unmodifiableSet(EnumSet
-					.copyOf(Arrays.asList(premittedNextStatus)));
+			this.permittedNext = Collections.unmodifiableSet(
+					EnumSet.copyOf( Arrays.asList( premittedNextStatus ) ) );
 	}
 
 	/** @see MachineStatus#getPermittedTransitions() */
@@ -60,16 +56,16 @@ public enum BasicProcessorStatus implements ProcessorStatus<BasicProcessorStatus
 
 	/** @see MachineStatus#permitsTransitionFrom(MachineStatus) */
 	@Override
-	public boolean permitsTransitionFrom(final BasicProcessorStatus status)
+	public boolean permitsTransitionFrom( final BasicProcessorStatus status )
 	{
-		return status.getPermittedTransitions().contains(this);
+		return status.getPermittedTransitions().contains( this );
 	}
 
 	/** @see MachineStatus#permitsTransitionTo(MachineStatus) */
 	@Override
-	public boolean permitsTransitionTo(final BasicProcessorStatus status)
+	public boolean permitsTransitionTo( final BasicProcessorStatus status )
 	{
-		return getPermittedTransitions().contains(status);
+		return getPermittedTransitions().contains( status );
 	}
 
 }

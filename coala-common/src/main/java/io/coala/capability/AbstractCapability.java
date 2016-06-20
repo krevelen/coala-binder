@@ -36,6 +36,7 @@ import io.coala.log.LogUtil;
  * @version $Id: d734db94d6d1556589a997095245ec215a4b4459 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public abstract class AbstractCapability<ID extends CapabilityID>
 	extends AbstractLifeCycle<ID, BasicCapabilityStatus> implements
 	Capability<BasicCapabilityStatus>, AgentStatusObserver, LifeCycleHooks

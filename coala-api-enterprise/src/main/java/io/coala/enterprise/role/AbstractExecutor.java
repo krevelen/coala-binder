@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.role;
 
@@ -29,12 +27,11 @@ import org.slf4j.Logger;
  * {@link AbstractExecutor}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <F> the {@link CoordinationFact} type being handled
  */
 public abstract class AbstractExecutor<F extends CoordinationFact>
-		extends AbstractActorRole<F>implements Executor<F>
+	extends AbstractActorRole<F> implements Executor<F>
 {
 
 	/** */
@@ -50,71 +47,71 @@ public abstract class AbstractExecutor<F extends CoordinationFact>
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected AbstractExecutor(final Binder binder)
+	protected AbstractExecutor( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
-	protected abstract void onRequested(F request);
+	protected abstract void onRequested( F request );
 
-	protected void onCancelledRequest(final F cancel)
+	protected void onCancelledRequest( final F cancel )
 	{
-		logIgnore(cancel, false);
+		logIgnore( cancel, false );
 	}
 
-	protected void onExpiredPromise(final F promise)
+	protected void onExpiredPromise( final F promise )
 	{
-		logIgnore(promise, true);
+		logIgnore( promise, true );
 	}
 
-	protected void onExpiredPromiseCancellation(final F cancel)
+	protected void onExpiredPromiseCancellation( final F cancel )
 	{
-		logIgnore(cancel, true);
+		logIgnore( cancel, true );
 	}
 
-	protected void onAllowedPromiseCancellation(final F allow)
+	protected void onAllowedPromiseCancellation( final F allow )
 	{
-		logIgnore(allow, false);
+		logIgnore( allow, false );
 	}
 
-	protected void onRefusedPromiseCancellation(final F refuse)
+	protected void onRefusedPromiseCancellation( final F refuse )
 	{
-		logIgnore(refuse, false);
+		logIgnore( refuse, false );
 	}
 
-	protected void onExpiredState(final F state)
+	protected void onExpiredState( final F state )
 	{
-		logIgnore(state, true);
+		logIgnore( state, true );
 	}
 
-	protected void onExpiredStateCancellation(final F cancel)
+	protected void onExpiredStateCancellation( final F cancel )
 	{
-		logIgnore(cancel, true);
+		logIgnore( cancel, true );
 	}
 
-	protected void onAllowedStateCancellation(final F allow)
+	protected void onAllowedStateCancellation( final F allow )
 	{
-		logIgnore(allow, false);
+		logIgnore( allow, false );
 	}
 
-	protected void onRefusedStateCancellation(final F refuse)
+	protected void onRefusedStateCancellation( final F refuse )
 	{
-		logIgnore(refuse, false);
+		logIgnore( refuse, false );
 	}
 
-	protected void onAccepted(final F accept)
+	protected void onAccepted( final F accept )
 	{
-		logIgnore(accept, false);
+		logIgnore( accept, false );
 	}
 
-	protected void onCancelledAccept(final F cancel)
+	protected void onCancelledAccept( final F cancel )
 	{
-		logIgnore(cancel, false);
+		logIgnore( cancel, false );
 	}
 
-	protected void onRejected(final F reject)
+	protected void onRejected( final F reject )
 	{
-		logIgnore(reject, false);
+		logIgnore( reject, false );
 	}
 
 }

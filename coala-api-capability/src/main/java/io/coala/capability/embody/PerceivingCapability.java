@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/embodier/EmbodierService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability.embody;
 
@@ -27,35 +22,26 @@ import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
 
 /**
- * {@link PerceivingCapability} embodies an {@link Agent}s within some environment in
- * order to connect sensors (via publish-subscribe pattern) and effectors
- * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <THIS> the (sub)type of {@link PerceivingCapability} to build
+ * {@link PerceivingCapability} embodies an {@link Agent}s within some
+ * environment in order to connect sensors (via publish-subscribe pattern) and
+ * effectors
  */
-public interface PerceivingCapability
-		extends Capability<BasicCapabilityStatus>
+public interface PerceivingCapability extends Capability<BasicCapabilityStatus>
 {
-	
+
 	/**
 	 * {@link Factory}
-	 * 
-	 * @version $Revision: 296 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface Factory extends CapabilityFactory<PerceivingCapability>
 	{
 		// empty
 	}
-	
+
 	/**
 	 * @return
 	 */
 	Observable<Percept> perceive();
-	
+
 	//
 	// public interface EnvironmentID
 	// {

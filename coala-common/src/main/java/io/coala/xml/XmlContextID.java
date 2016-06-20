@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/xml/XmlContextID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.xml;
 
@@ -26,11 +21,8 @@ import javax.xml.bind.ValidationEventHandler;
 
 /**
  * {@link XmlContextID}
- * 
- * @version $Revision: 349 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
+@Deprecated
 public class XmlContextID<T> extends AbstractIdentifier<String>
 {
 
@@ -51,10 +43,10 @@ public class XmlContextID<T> extends AbstractIdentifier<String>
 	 * @param objectTypes the element object types to include in the context (if
 	 *            any)
 	 */
-	protected XmlContextID(final Class<T> objectFactoryType,
-			final Class<?>... objectTypes)
+	protected XmlContextID( final Class<T> objectFactoryType,
+		final Class<?>... objectTypes )
 	{
-		super(objectFactoryType.getCanonicalName());
+		super( objectFactoryType.getCanonicalName() );
 		this.objectFactoryType = objectFactoryType;
 		this.objectTypes = objectTypes;
 	}
@@ -80,18 +72,18 @@ public class XmlContextID<T> extends AbstractIdentifier<String>
 	 * @return the new {@link XmlContext} instance
 	 */
 	public XmlContext<T> newContextCacheEntry(
-			final ValidationEventHandler validationEventHandler)
+		final ValidationEventHandler validationEventHandler )
 	{
-		return XmlContext.of(this, validationEventHandler);
+		return XmlContext.of( this, validationEventHandler );
 	}
 
 	/**
 	 * @param clazz the type of ObjectFactory
 	 * @return the new {@link XmlContextID}
 	 */
-	public static <T> XmlContextID<T> of(final Class<T> clazz,
-			final Class<?>... objectTypes)
+	public static <T> XmlContextID<T> of( final Class<T> clazz,
+		final Class<?>... objectTypes )
 	{
-		return new XmlContextID<T>(clazz, objectTypes);
+		return new XmlContextID<T>( clazz, objectTypes );
 	}
 }

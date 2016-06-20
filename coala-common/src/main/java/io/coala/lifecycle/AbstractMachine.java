@@ -30,6 +30,7 @@ import rx.subjects.Subject;
  * @param <ID> the (super)type of {@link Identifier}
  * @param <S> the (super)type of {@link MachineStatus}
  */
+@Deprecated
 public abstract class AbstractMachine<ID extends Identifier<?, ?>, S extends MachineStatus<S>>
 	extends AbstractIdentifiable<ID> implements Machine<S>
 {
@@ -72,10 +73,9 @@ public abstract class AbstractMachine<ID extends Identifier<?, ?>, S extends Mac
 		final S current = getStatus();
 
 		// sanity check
-		if( !status.permitsTransitionFrom( current ) )
-			throw ExceptionFactory.createUnchecked(
-					"Status {} not permitted from current: {}", status,
-					current );
+		if( !status.permitsTransitionFrom( current ) ) throw ExceptionFactory
+				.createUnchecked( "Status {} not permitted from current: {}",
+						status, current );
 
 		MachineUtil.setStatus( this, status, completed );
 	}

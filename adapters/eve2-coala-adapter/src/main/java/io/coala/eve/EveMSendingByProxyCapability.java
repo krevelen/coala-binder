@@ -11,9 +11,6 @@ import org.apache.log4j.Logger;
 
 /**
  * {@link AGlobeMessengerService}
- * 
- * @version $Revision: 248 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class EveMSendingByProxyCapability extends EveSendingCapability
 {

@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.role;
 
@@ -23,13 +21,12 @@ import io.coala.enterprise.fact.CoordinationFact;
  * {@link Initiator}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <F> the {@link CoordinationFact} type being handled
  */
 public interface Initiator<F extends CoordinationFact> extends ActorRole<F>
 {
-	
+
 	// marker interface
 
 //	/** @param request */

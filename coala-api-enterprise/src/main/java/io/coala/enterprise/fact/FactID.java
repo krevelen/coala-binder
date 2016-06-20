@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/fact/FactID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.fact;
 
@@ -31,10 +26,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * {@link FactID}
- * 
- * @version $Revision: 300 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class FactID extends MessageID<UUID, SimTime>
 {
@@ -67,12 +58,12 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * triggers a completely new process structure)
 	 * 
 	 * @param modelID the {@link ModelID} for generating a new
-	 *        {@link TransactionID}
+	 *            {@link TransactionID}
 	 * @param time the {@link SimTime} of creation
 	 */
-	public FactID(final ModelID modelID, final SimTime time)
+	public FactID( final ModelID modelID, final SimTime time )
 	{
-		this(modelID, CoordinationFactType.REQUESTED, time);
+		this( modelID, CoordinationFactType.REQUESTED, time );
 	}
 
 	/**
@@ -83,13 +74,13 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * 
 	 * @param modelID the {@link ModelID} of the identified fact
 	 * @param type the {@link CoordinationFactType}, typically
-	 *        {@link CoordinationFactType#REQUESTED}
+	 *            {@link CoordinationFactType#REQUESTED}
 	 * @param time the {@link SimTime} of creation
 	 */
-	public FactID(final ModelID modelID, final CoordinationFactType type,
-			final SimTime time)
+	public FactID( final ModelID modelID, final CoordinationFactType type,
+		final SimTime time )
 	{
-		this(new TransactionID(modelID), type, time, (FactID) null);
+		this( new TransactionID( modelID ), type, time, (FactID) null );
 	}
 
 	/**
@@ -100,10 +91,10 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * @param time the {@link SimTime} of creation
 	 * @param cause the {@link CoordinationFact} that caused this new fact
 	 */
-	public FactID(final CoordinationFactType type, final SimTime time,
-			final CoordinationFact cause)
+	public FactID( final CoordinationFactType type, final SimTime time,
+		final CoordinationFact cause )
 	{
-		this(cause.getID().getTransactionID(), type, time, cause.getID());
+		this( cause.getID().getTransactionID(), type, time, cause.getID() );
 	}
 
 	/**
@@ -114,10 +105,10 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * @param time the {@link SimTime} of creation
 	 * @param causeID the {@link FactID} of the fact that caused this new fact
 	 */
-	public FactID(final CoordinationFactType type, final SimTime time,
-			final FactID causeID)
+	public FactID( final CoordinationFactType type, final SimTime time,
+		final FactID causeID )
 	{
-		this(causeID.getTransactionID(), type, time, causeID);
+		this( causeID.getTransactionID(), type, time, causeID );
 	}
 
 	/**
@@ -128,10 +119,10 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * @param time the {@link SimTime} of creation
 	 * @param cause the {@link CoordinationFact} that caused this new fact
 	 */
-	public FactID(final SimTime time, final CoordinationFact cause)
+	public FactID( final SimTime time, final CoordinationFact cause )
 	{
-		this(new TransactionID(time.getClockID().getModelID()),
-				CoordinationFactType.REQUESTED, time, cause);
+		this( new TransactionID( time.getClockID().getModelID() ),
+				CoordinationFactType.REQUESTED, time, cause );
 	}
 
 	/**
@@ -142,10 +133,10 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * @param time the {@link SimTime} of creation
 	 * @param causeID the {@link FactID} of the fact that caused this new fact
 	 */
-	public FactID(final SimTime time, final FactID causeID)
+	public FactID( final SimTime time, final FactID causeID )
 	{
-		this(new TransactionID(causeID.getModelID()),
-				CoordinationFactType.REQUESTED, time, causeID);
+		this( new TransactionID( causeID.getModelID() ),
+				CoordinationFactType.REQUESTED, time, causeID );
 	}
 
 	/**
@@ -156,11 +147,11 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * @param time the {@link SimTime} of creation
 	 * @param cause the {@link CoordinationFact} that caused this new fact
 	 */
-	public FactID(final TransactionID transactionID,
-			final CoordinationFactType type, final SimTime time,
-			final CoordinationFact cause)
+	public FactID( final TransactionID transactionID,
+		final CoordinationFactType type, final SimTime time,
+		final CoordinationFact cause )
 	{
-		this(transactionID, type, time, cause == null ? null : cause.getID());
+		this( transactionID, type, time, cause == null ? null : cause.getID() );
 	}
 
 	/**
@@ -171,11 +162,11 @@ public class FactID extends MessageID<UUID, SimTime>
 	 * @param time the {@link SimTime} of creation
 	 * @param causeID the {@link FactID} of the fact that caused this new fact
 	 */
-	public FactID(final TransactionID transactionID,
-			final CoordinationFactType type, final SimTime time,
-			final FactID causeID)
+	public FactID( final TransactionID transactionID,
+		final CoordinationFactType type, final SimTime time,
+		final FactID causeID )
 	{
-		super(transactionID.getModelID(), new UUID(), time);
+		super( transactionID.getModelID(), new UUID(), time );
 		this.transactionID = transactionID;
 		this.type = type;
 		this.causeID = causeID;
@@ -188,7 +179,7 @@ public class FactID extends MessageID<UUID, SimTime>
 	{
 		super();
 	}
-	
+
 	@JsonIgnore
 	@Override
 	public ModelID getModelID()

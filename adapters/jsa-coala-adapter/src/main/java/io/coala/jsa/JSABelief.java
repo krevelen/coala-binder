@@ -8,9 +8,6 @@ import jade.semantics.lang.sl.grammar.NotNode;
 
 /**
  * {@link JSABelief}
- * 
- * @version $Revision$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class JSABelief implements Belief {
 	

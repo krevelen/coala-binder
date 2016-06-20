@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/agent/AgentIDUtil.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.agent;
 
@@ -31,9 +26,6 @@ import java.util.Map.Entry;
 
 /**
  * {@link AgentIDUtil}
- * 
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @Deprecated
 public class AgentIDUtil implements Util
@@ -55,10 +47,11 @@ public class AgentIDUtil implements Util
 	 * @return
 	 * @deprecated use {@link AgentID#from(ModelComponentIDFactory, String)}
 	 */
-	public static AgentID toAgentID(final ModelComponentIDFactory agentIDFactory,
-			final String agentName)
+	public static AgentID toAgentID(
+		final ModelComponentIDFactory agentIDFactory, final String agentName )
 	{
-		return agentName == null ? null : agentIDFactory.createAgentID(agentName);
+		return agentName == null ? null
+				: agentIDFactory.createAgentID( agentName );
 	}
 
 	/**
@@ -69,13 +62,14 @@ public class AgentIDUtil implements Util
 	 * @return
 	 * @deprecated use {@link AgentID#from(ModelComponentIDFactory, String[])}
 	 */
-	public static List<AgentID> toAgentIDs(final ModelComponentIDFactory agentIDFactory,
-			final String... agentNames)
+	public static List<AgentID> toAgentIDs(
+		final ModelComponentIDFactory agentIDFactory,
+		final String... agentNames )
 	{
 		final List<AgentID> result = new ArrayList<AgentID>();
-		if (agentNames != null && agentNames.length > 0)
-			for (String agentName : agentNames)
-				result.add(toAgentID(agentIDFactory, agentName));
+		if( agentNames != null && agentNames.length > 0 )
+			for( String agentName : agentNames )
+			result.add( toAgentID( agentIDFactory, agentName ) );
 		return result;
 	}
 
@@ -88,13 +82,12 @@ public class AgentIDUtil implements Util
 	 * @deprecated use {@link AgentID#from(ModelComponentIDFactory, Map)}
 	 */
 	public static <T> Map<AgentID, T> toAgentIDs(
-			final ModelComponentIDFactory agentIDFactory, final Map<String, T> map)
+		final ModelComponentIDFactory agentIDFactory, final Map<String, T> map )
 	{
 		final Map<AgentID, T> result = new HashMap<AgentID, T>();
-		if (map != null && !map.isEmpty())
-			for (Entry<String, T> entry : map.entrySet())
-				result.put(agentIDFactory.createAgentID(entry.getKey()),
-						entry.getValue());
+		if( map != null && !map.isEmpty() )
+			for( Entry<String, T> entry : map.entrySet() )
+			result.put( agentIDFactory.createAgentID( entry.getKey() ), entry.getValue() );
 		return result;
 	}
 

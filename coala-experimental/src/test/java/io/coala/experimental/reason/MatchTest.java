@@ -61,10 +61,6 @@ public class MatchTest
 	/**
 	 * {@link IsNotANumber} inspired by
 	 * <a href="https://code.google.com/p/hamcrest/wiki/Tutorial">tutorial</a>
-	 * 
-	 * @version $Revision: 317 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	public static class IsNotANumber extends TypeSafeMatcher<Double>
 	{
@@ -93,10 +89,6 @@ public class MatchTest
 	 * {@link AreEvenNumbers} inspired by
 	 * <a href="http://java.dzone.com/articles/using-hamcrest-and-junit">this
 	 * blog</a>
-	 * 
-	 * @version $Revision: 317 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	public static class AreEvenNumbers
 		extends TypeSafeMatcher<Collection<Integer>>

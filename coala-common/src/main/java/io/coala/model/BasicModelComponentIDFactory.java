@@ -26,6 +26,7 @@ import io.coala.time.ClockID;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class BasicModelComponentIDFactory implements ModelComponentIDFactory
 {
 

@@ -36,10 +36,6 @@ import io.coala.log.LogUtil;
 
 /**
  * {@link FileUtil} provides some file related utilities
- * 
- * @date $Date: 2014-08-08 07:08:29 +0200 (Fri, 08 Aug 2014) $
- * @version $Revision: 349 $ $Author: krevelen $
- * @author <a href="mailto:rick@almende.org">Rick van Krevelen</a>
  */
 public class FileUtil // implements Util
 {

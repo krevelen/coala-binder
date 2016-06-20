@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.time;
 
@@ -31,12 +29,11 @@ import org.joda.time.DateTimeZone;
  * {@link Instant}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  * @param <THIS> the concrete type of {@link Instant} to compare/build
  */
-public interface Instant<THIS extends Instant<THIS>> extends Serializable,
-		Comparable<Instant<?>>
+@Deprecated
+public interface Instant<THIS extends Instant<THIS>>
+	extends Serializable, Comparable<Instant<?>>
 {
 
 	/**
@@ -44,7 +41,7 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 	 * Greenwich Mean Time (GMT) is practically equivalent with Universal Time
 	 * Coordinated (UTC), the international atom time standard.
 	 */
-	TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("GMT");
+	TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone( "GMT" );
 
 	/**
 	 * The default time zone used to generate {@link Calendar} instances.
@@ -77,53 +74,53 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 	/** @return the {@link TimeUnit} of this {@link Instant} */
 	TimeUnit getUnit();
 
-	THIS plus(Number value);
+	THIS plus( Number value );
 
-	THIS plus(Number value, TimeUnit unit);
+	THIS plus( Number value, TimeUnit unit );
 
-	THIS plus(Instant<?> value);
+	THIS plus( Instant<?> value );
 
-	THIS minus(Number value);
+	THIS minus( Number value );
 
-	THIS minus(Number value, TimeUnit unit);
+	THIS minus( Number value, TimeUnit unit );
 
-	THIS minus(Instant<?> value);
+	THIS minus( Instant<?> value );
 
-	THIS multipliedBy(Number factor);
+	THIS multipliedBy( Number factor );
 
-	THIS dividedBy(Number factor);
+	THIS dividedBy( Number factor );
 
-	@SuppressWarnings("unchecked")
-	THIS max(THIS... others);
+	@SuppressWarnings( "unchecked" )
+	THIS max( THIS... others );
 
-	@SuppressWarnings("unchecked")
-	THIS min(THIS... others);
+	@SuppressWarnings( "unchecked" )
+	THIS min( THIS... others );
 
-	boolean isBefore(Number value);
+	boolean isBefore( Number value );
 
-	boolean isBefore(Number value, TimeUnit unit);
+	boolean isBefore( Number value, TimeUnit unit );
 
-	boolean isBefore(Instant<?> value);
+	boolean isBefore( Instant<?> value );
 
-	boolean isOnOrBefore(Number value);
+	boolean isOnOrBefore( Number value );
 
-	boolean isOnOrBefore(Number value, TimeUnit unit);
+	boolean isOnOrBefore( Number value, TimeUnit unit );
 
-	boolean isOnOrBefore(Instant<?> value);
+	boolean isOnOrBefore( Instant<?> value );
 
-	boolean isAfter(Number value);
+	boolean isAfter( Number value );
 
-	boolean isAfter(Number value, TimeUnit unit);
+	boolean isAfter( Number value, TimeUnit unit );
 
-	boolean isAfter(Instant<?> value);
+	boolean isAfter( Instant<?> value );
 
-	boolean isOnOrAfter(Number value);
+	boolean isOnOrAfter( Number value );
 
-	boolean isOnOrAfter(Number value, TimeUnit unit);
+	boolean isOnOrAfter( Number value, TimeUnit unit );
 
-	boolean isOnOrAfter(Instant<?> value);
+	boolean isOnOrAfter( Instant<?> value );
 
-	Number dividedBy(Instant<?> value);
+	Number dividedBy( Instant<?> value );
 
 	/**
 	 * Compare this {@link Instant} with another based on {@link ClockID}s and
@@ -137,12 +134,12 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 	 * @see java.lang.Comparable#compareTo(Object)
 	 */
 	@Override
-	int compareTo(Instant<?> other);
+	int compareTo( Instant<?> other );
 
 //	@JsonIgnore
 //	TimeUnit getBaseUnit();
 
-	THIS toUnit(TimeUnit unit);
+	THIS toUnit( TimeUnit unit );
 
 //	THIS toBaseUnit();
 
@@ -164,19 +161,19 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 	Date toDate();
 
 	/** @return the value of this {@link Instant} as {@link Date} */
-	Date toDate(Date offset);
+	Date toDate( Date offset );
 
 	/** @return the value of this {@link Instant} as {@link DateTime} */
 	DateTime toDateTime();
 
 	/** @return the value of this {@link Instant} as {@link DateTime} */
-	DateTime toDateTime(DateTime offset);
+	DateTime toDateTime( DateTime offset );
 
 	/** @return the value of this {@link Instant} as {@link Calendar} */
 	Calendar toCalendar();
 
 	/** @return the value of this {@link Instant} as {@link Calendar} */
-	Calendar toCalendar(Date offset);
+	Calendar toCalendar( Date offset );
 
 	/**
 	 * @param interval the duration between iterations
@@ -184,13 +181,10 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 	 * @return the {@link Iterable} range of {@link Instant}s starting with this
 	 *         {@link THIS}
 	 */
-	Iterable<THIS> getRange(Instant<?> interval, Instant<?> max);
+	Iterable<THIS> getRange( Instant<?> interval, Instant<?> max );
 
 	/**
 	 * {@link Range}
-	 * 
-	 * @version $Revision: 296 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 *
 	 * @param <I>
 	 */
@@ -213,8 +207,8 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 		 * @param interval
 		 * @param max the (exclusive) limit, or {@code null} for unlimited
 		 */
-		protected Range(final I start, final Instant<?> interval,
-				final Instant<?> max)
+		protected Range( final I start, final Instant<?> interval,
+			final Instant<?> max )
 		{
 			this.interval = interval;
 			this.max = max;
@@ -228,26 +222,26 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 		 * @param interval the duration between iterations
 		 * @param max the (exclusive) limit, or {@code null} for unlimited
 		 */
-		public static <I extends Instant<?>> Range<I> of(final I start,
-				final Instant<?> interval, final Instant<?> max)
+		public static <I extends Instant<?>> Range<I> of( final I start,
+			final Instant<?> interval, final Instant<?> max )
 		{
-			return new Range<I>(start, interval, max);
+			return new Range<I>( start, interval, max );
 		}
 
 		/** @see Iterator#hasNext() */
 		@Override
 		public boolean hasNext()
 		{
-			return max == null || this.time.isBefore(max);
+			return max == null || this.time.isBefore( max );
 		}
 
 		/** @see Iterator#next() */
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings( "unchecked" )
 		@Override
 		public I next()
 		{
 			final I result = this.time;
-			this.time = (I) this.time.plus(this.interval);
+			this.time = (I) this.time.plus( this.interval );
 			return result;
 		}
 
@@ -255,7 +249,7 @@ public interface Instant<THIS extends Instant<THIS>> extends Serializable,
 		@Override
 		public void remove()
 		{
-			throw new IllegalStateException("READ-ONLY RANGE ITERATOR");
+			throw new IllegalStateException( "READ-ONLY RANGE ITERATOR" );
 		}
 	}
 

@@ -36,8 +36,8 @@ import io.coala.time.Instant;
  * {@link ProcedureCall}
  * 
  * @param <ID> the type of {@link EventID}
- * @param <THIS> the concrete type of {@link ProcedureCall}
  */
+@Deprecated
 public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 	implements Callable<Void>
 {

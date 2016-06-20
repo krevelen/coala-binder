@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.event;
 
@@ -26,12 +24,11 @@ import io.coala.model.ModelID;
  * {@link EventID}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <T> the {@link Serializable} and {@link Comparable} value type
  */
 public class EventID<T extends Serializable & Comparable<T>>
-		extends ModelComponentID<T>
+	extends ModelComponentID<T>
 {
 
 	/** */
@@ -51,9 +48,9 @@ public class EventID<T extends Serializable & Comparable<T>>
 	 * @param modelID
 	 * @param value
 	 */
-	public EventID(final ModelID modelID, final T value)
+	public EventID( final ModelID modelID, final T value )
 	{
-		super(modelID, value);
+		super( modelID, value );
 	}
 
 }

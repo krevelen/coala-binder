@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.transaction;
 
@@ -33,13 +31,12 @@ import rx.Observable;
  * {@link AbstractTransaction}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <F> the (super)type of {@link CoordinationFact}
  * @param <THIS> the concrete type of {@link AbstractTransaction}
  */
 public class AbstractTransaction<F extends CoordinationFact, THIS extends AbstractTransaction<F, THIS>>
-		extends AbstractCapability<CapabilityID>implements Transaction<F>
+	extends AbstractCapability<CapabilityID> implements Transaction<F>
 {
 
 	/** */
@@ -50,21 +47,21 @@ public class AbstractTransaction<F extends CoordinationFact, THIS extends Abstra
 	 * 
 	 * @param binder the {@link Binder}
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Inject
-	protected AbstractTransaction(final Binder binder)
+	protected AbstractTransaction( final Binder binder )
 	{
-		super(null, binder);
-		setID(new TransactionTypeID<F, THIS>(getBinder().getID(),
-				(Class<THIS>) getClass()));
+		super( null, binder );
+		setID( new TransactionTypeID<F, THIS>( getBinder().getID(),
+				(Class<THIS>) getClass() ) );
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public Observable<F> facts()
 	{
-		return getBinder().inject(FactPersisterService.class)
-				.find(((TransactionTypeID<F, THIS>) getID()).getFactType());
+		return getBinder().inject( FactPersisterService.class )
+				.find( ((TransactionTypeID<F, THIS>) getID()).getFactType() );
 	}
 
 	@Override
@@ -76,7 +73,7 @@ public class AbstractTransaction<F extends CoordinationFact, THIS extends Abstra
 	@Override
 	public SimTime getTime()
 	{
-		return (SimTime) getBinder().inject(TimingCapability.class).getTime();
+		return (SimTime) getBinder().inject( TimingCapability.class ).getTime();
 	}
 
 }

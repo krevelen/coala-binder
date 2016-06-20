@@ -1,7 +1,4 @@
 /* $Id$
- * $URL$
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.capability.online;
 
@@ -34,17 +29,13 @@ import org.junit.Test;
 
 /**
  * {@link FluentHCOnlineCapabilityTest}
- * 
- * @version $Revision$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class FluentHCOnlineCapabilityTest
 {
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(FluentHCOnlineCapabilityTest.class);
+			.getLogger( FluentHCOnlineCapabilityTest.class );
 
 	/** */
 	private static final String CONFIG_FILE = "coala.properties";
@@ -52,23 +43,22 @@ public class FluentHCOnlineCapabilityTest
 	@Test
 	public void testOnlineClient() throws Exception
 	{
-		LOG.trace("Started Apache HTTP Client capability test");
+		LOG.trace( "Started Apache HTTP Client capability test" );
 
-		final Binder binder = BinderFactory.Builder
-				.fromFile(CONFIG_FILE)
-				.withProperty(ReplicationConfig.class,
+		final Binder binder = BinderFactory.Builder.fromFile( CONFIG_FILE )
+				.withProperty( ReplicationConfig.class,
 						ReplicationConfig.MODEL_NAME_KEY,
-						"testModel" + System.currentTimeMillis()).build()
-				.create("testBooter");
+						"testModel" + System.currentTimeMillis() )
+				.build().create( "testBooter" );
 
-		final OnlineCapability web = binder.inject(OnlineCapability.class);
+		final OnlineCapability web = binder.inject( OnlineCapability.class );
 
 		final String uri = "http://www.google.com";
-		LOG.trace(web.request(URI.create(uri)).first().toString());
+		LOG.trace( web.request( URI.create( uri ) ).first().toString() );
 
-		new CountDownLatch(0).await(10, TimeUnit.SECONDS);
+		new CountDownLatch( 0 ).await( 10, TimeUnit.SECONDS );
 
-		LOG.trace("Completed Apache HTTP Client capability test");
+		LOG.trace( "Completed Apache HTTP Client capability test" );
 	}
 
 }

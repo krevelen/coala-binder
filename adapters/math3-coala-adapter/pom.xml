@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.2.0-b1</version>
 		<relativePath>../..</relativePath>
 	</parent>
 	<artifactId>math3-coala-adapter</artifactId>

@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/fact/CoordinationFact.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.fact;
 
@@ -28,9 +23,6 @@ import io.coala.time.SimTime;
 
 /**
  * {@link CoordinationFact}
- * 
- * @version $Revision: 305 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public interface CoordinationFact extends Message<FactID>
 {
@@ -59,13 +51,12 @@ public interface CoordinationFact extends Message<FactID>
 	 * {@link CoordinationFactBuilder}
 	 * 
 	 * @version $Revision: 305 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 * 
 	 * @param <F> the (super)type of {@link CoordinationFact}
 	 * @parm <THIS> the concrete type of {@link CoordinationFactBuilder}
 	 */
 	public interface Builder<F extends CoordinationFact, THIS extends Builder<F, THIS>>
-			extends Message.Builder<FactID, F, THIS>
+		extends Message.Builder<FactID, F, THIS>
 	{
 
 		/**
@@ -76,7 +67,7 @@ public interface CoordinationFact extends Message<FactID>
 		 *            {@link TransactionID}
 		 * @param time the {@link SimTime} of creation
 		 */
-		THIS withID(ModelID modelID, SimTime time);
+		THIS withID( ModelID modelID, SimTime time );
 
 		/**
 		 * {@link FactID} builder for identifying the root fact of a transaction
@@ -87,7 +78,7 @@ public interface CoordinationFact extends Message<FactID>
 		 *            {@link CoordinationFactType#REQUESTED}
 		 * @param time the {@link SimTime} of creation
 		 */
-		THIS withID(ModelID modelID, CoordinationFactType type, SimTime time);
+		THIS withID( ModelID modelID, CoordinationFactType type, SimTime time );
 
 		/**
 		 * {@link FactID} builder for identifying a new fact in the same
@@ -97,8 +88,8 @@ public interface CoordinationFact extends Message<FactID>
 		 * @param time the {@link SimTime} of creation
 		 * @param cause the {@link CoordinationFact} that caused this new fact
 		 */
-		THIS withID(CoordinationFactType type, SimTime time,
-				CoordinationFact cause);
+		THIS withID( CoordinationFactType type, SimTime time,
+			CoordinationFact cause );
 
 		/**
 		 * {@link FactID} builder for identifying a new fact in the same
@@ -109,7 +100,7 @@ public interface CoordinationFact extends Message<FactID>
 		 * @param causeID the {@link FactID} of the fact that caused this new
 		 *            fact
 		 */
-		THIS withID(CoordinationFactType type, SimTime time, FactID causeID);
+		THIS withID( CoordinationFactType type, SimTime time, FactID causeID );
 
 		/**
 		 * {@link FactID} builder for identifying a new
@@ -119,7 +110,7 @@ public interface CoordinationFact extends Message<FactID>
 		 * @param time the {@link SimTime} of creation
 		 * @param cause the {@link CoordinationFact} that caused this new fact
 		 */
-		THIS withID(SimTime time, CoordinationFact cause);
+		THIS withID( SimTime time, CoordinationFact cause );
 
 		/**
 		 * {@link FactID} builder for identifying a new
@@ -130,7 +121,7 @@ public interface CoordinationFact extends Message<FactID>
 		 * @param causeID the {@link FactID} of the fact that caused this new
 		 *            fact
 		 */
-		THIS withID(SimTime time, FactID causeID);
+		THIS withID( SimTime time, FactID causeID );
 
 		/**
 		 * {@link FactID} constructor
@@ -141,8 +132,8 @@ public interface CoordinationFact extends Message<FactID>
 		 * @param time the {@link SimTime} of creation
 		 * @param cause the {@link CoordinationFact} that caused this new fact
 		 */
-		THIS withID(TransactionID transactionID, CoordinationFactType type,
-				SimTime time, CoordinationFact cause);
+		THIS withID( TransactionID transactionID, CoordinationFactType type,
+			SimTime time, CoordinationFact cause );
 
 		/**
 		 * {@link FactID} builder
@@ -153,14 +144,14 @@ public interface CoordinationFact extends Message<FactID>
 		 * @param causeID the {@link FactID} of the fact that caused this new
 		 *            fact
 		 */
-		THIS withID(TransactionID transactionID, CoordinationFactType type,
-				SimTime time, FactID causeID);
+		THIS withID( TransactionID transactionID, CoordinationFactType type,
+			SimTime time, FactID causeID );
 
 		/**
 		 * @param expiration
 		 * @return this {@link Builder} for chaining purposes
 		 */
-		THIS withExpiration(SimTime expiration);
+		THIS withExpiration( SimTime expiration );
 
 	}
 

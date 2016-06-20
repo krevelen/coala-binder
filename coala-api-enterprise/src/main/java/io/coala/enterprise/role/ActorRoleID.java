@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.role;
 
@@ -22,10 +20,6 @@ import io.coala.capability.CapabilityID;
 
 /**
  * {@link ActorRoleID}
- * 
- * @version $Revision: 279 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class ActorRoleID extends CapabilityID
 {
@@ -39,10 +33,10 @@ public class ActorRoleID extends CapabilityID
 	 * @param ownerID the owner agent's {@link AgentID}
 	 * @param roleType the concrete type of identified {@link ActorRole}
 	 */
-	protected <T extends ActorRole<?>> ActorRoleID(final AgentID ownerID,
-			final Class<T> roleType)
+	protected <T extends ActorRole<?>> ActorRoleID( final AgentID ownerID,
+		final Class<T> roleType )
 	{
-		super(ownerID, roleType);
+		super( ownerID, roleType );
 	}
 
 }

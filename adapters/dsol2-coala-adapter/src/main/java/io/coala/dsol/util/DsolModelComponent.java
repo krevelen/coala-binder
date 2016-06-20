@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/io/coala/dsol/util/DsolModelComponent.java $
- * 
- * Part of the EU project INERTIA, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.dsol.util;
 
@@ -33,11 +28,7 @@ import org.joda.time.Duration;
 import org.joda.time.Interval;
 
 /**
- * {@link InertiaModelComponent}
- * 
- * @date $Date: 2014-05-07 11:59:26 +0200 (Wed, 07 May 2014) $
- * @version $Revision: 258 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * {@link DsolModelComponent}
  * 
  * @param <S> the type of {@link SimulatorInterface}
  * @param <M> the type of {@link DsolModel}
@@ -64,7 +55,7 @@ public interface DsolModelComponent<S extends SimulatorInterface, M extends Dsol
 	StreamInterface getRNG();
 
 	/** @return the specified random number generator/stream */
-	StreamInterface getRNG(final String name);
+	StreamInterface getRNG( final String name );
 
 	/** @return the simulator */
 	S getSimulator();
@@ -76,32 +67,34 @@ public interface DsolModelComponent<S extends SimulatorInterface, M extends Dsol
 	double simTime();
 
 	/** @return the current simulation time in specified timeUnit */
-	double simTime(TimeUnit timeUnit);
+	double simTime( TimeUnit timeUnit );
 
 	/** @return the current simulation time in specified timeUnit */
-	double simTime(TimeUnitInterface timeUnit);
+	double simTime( TimeUnitInterface timeUnit );
 
 	/** @return the simulation time for specified ISO time */
-	double simTime(DateTime time);
+	double simTime( DateTime time );
 
 	/** @return the simulation time for specified duration */
-	double simTime(Duration duration);
+	double simTime( Duration duration );
 
 	/** @return the current simulation time */
 	SimTime getSimTime();
 
 	/** @return the current simulation time */
-	SimTime getSimTime(double simTime);
+	SimTime getSimTime( double simTime );
 
 	/**
 	 * @param time
 	 * @return
 	 */
-	SimTime getSimTime(DateTime time);
+	SimTime getSimTime( DateTime time );
 
 	/** @return the current simulation ISO date time */
 	DateTime getDateTime();
-	
-	/** @return the simulation ISO interval after warm-up and before run length */
+
+	/**
+	 * @return the simulation ISO interval after warm-up and before run length
+	 */
 	Interval getInterval();
 }

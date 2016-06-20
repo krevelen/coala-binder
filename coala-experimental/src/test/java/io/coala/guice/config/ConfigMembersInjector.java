@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/config/ConfigMembersInjector.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.guice.config;
 
@@ -32,13 +27,9 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.MembersInjector;
 
 /**
- * {@link ConfigMembersInjector} inspired by <a
- * href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html"
- * >here</a>
- * 
- * @version $Revision: 300 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
+ * {@link ConfigMembersInjector} inspired by
+ * <a href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html" >
+ * here</a>
  */
 public class ConfigMembersInjector<T> implements MembersInjector<T>
 {
@@ -48,7 +39,7 @@ public class ConfigMembersInjector<T> implements MembersInjector<T>
 
 	/** */
 	private static final Logger LOG = LoggerFactory
-			.getLogger(ConfigMembersInjector.class);
+			.getLogger( ConfigMembersInjector.class );
 
 	/** */
 	private final Field field;
@@ -62,133 +53,137 @@ public class ConfigMembersInjector<T> implements MembersInjector<T>
 	 * @param field
 	 * @param configuration
 	 */
-	public ConfigMembersInjector(final Field field,
-			final Configuration configuration)
+	public ConfigMembersInjector( final Field field,
+		final Configuration configuration )
 	{
 		this.field = field;
 		this.configuration = configuration;
-		this.field.setAccessible(true);
+		this.field.setAccessible( true );
 	}
 
 	@Override
-	public void injectMembers(final T instance)
+	public void injectMembers( final T instance )
 	{
 		final InjectConfig injectConfigAnnotation = field
-				.getAnnotation(InjectConfig.class);
+				.getAnnotation( InjectConfig.class );
 		final String configurationParameterName = injectConfigAnnotation.name();
 		try
 		{
 			final Class<?> type = this.field.getType();
-			if (type == Integer.TYPE)
+			if( type == Integer.TYPE )
 			{
-				if (this.configuration.containsKey(configurationParameterName))
+				if( this.configuration
+						.containsKey( configurationParameterName ) )
 				{
-					this.field.setInt(instance, this.configuration
-							.getInt(configurationParameterName));
+					this.field.setInt( instance, this.configuration
+							.getInt( configurationParameterName ) );
 				} else
 				{
-					LOG.debug(NO_PROPERTY_FOUND_LOG_MESSAGE,
-							configurationParameterName);
-					this.field.setInt(instance,
-							injectConfigAnnotation.defaultIntValue());
+					LOG.debug( NO_PROPERTY_FOUND_LOG_MESSAGE,
+							configurationParameterName );
+					this.field.setInt( instance,
+							injectConfigAnnotation.defaultIntValue() );
 				}
-			} else if (type == Boolean.TYPE)
+			} else if( type == Boolean.TYPE )
 			{
-				if (this.configuration.containsKey(configurationParameterName))
+				if( this.configuration
+						.containsKey( configurationParameterName ) )
 				{
-					this.field.setBoolean(instance, this.configuration
-							.getBoolean(configurationParameterName));
+					this.field.setBoolean( instance, this.configuration
+							.getBoolean( configurationParameterName ) );
 				} else
 				{
-					LOG.debug(NO_PROPERTY_FOUND_LOG_MESSAGE,
-							configurationParameterName);
-					this.field.setBoolean(instance,
-							injectConfigAnnotation.defaultBooleanValue());
+					LOG.debug( NO_PROPERTY_FOUND_LOG_MESSAGE,
+							configurationParameterName );
+					this.field.setBoolean( instance,
+							injectConfigAnnotation.defaultBooleanValue() );
 				}
 
-			} else if (type == Short.TYPE)
+			} else if( type == Short.TYPE )
 			{
-				if (configuration.containsKey(configurationParameterName))
+				if( configuration.containsKey( configurationParameterName ) )
 				{
-					this.field.setShort(instance, this.configuration
-							.getShort(configurationParameterName));
+					this.field.setShort( instance, this.configuration
+							.getShort( configurationParameterName ) );
 				} else
 				{
-					LOG.debug(NO_PROPERTY_FOUND_LOG_MESSAGE,
-							configurationParameterName);
-					this.field.setShort(instance,
-							injectConfigAnnotation.defaultShortValue());
+					LOG.debug( NO_PROPERTY_FOUND_LOG_MESSAGE,
+							configurationParameterName );
+					this.field.setShort( instance,
+							injectConfigAnnotation.defaultShortValue() );
 				}
-			} else if (type == Byte.TYPE)
+			} else if( type == Byte.TYPE )
 			{
-				if (configuration.containsKey(configurationParameterName))
+				if( configuration.containsKey( configurationParameterName ) )
 				{
-					this.field.setByte(instance, this.configuration
-							.getByte(configurationParameterName));
+					this.field.setByte( instance, this.configuration
+							.getByte( configurationParameterName ) );
 				} else
 				{
-					LOG.debug(NO_PROPERTY_FOUND_LOG_MESSAGE,
-							configurationParameterName);
-					this.field.setByte(instance,
-							injectConfigAnnotation.defaultByteValue());
+					LOG.debug( NO_PROPERTY_FOUND_LOG_MESSAGE,
+							configurationParameterName );
+					this.field.setByte( instance,
+							injectConfigAnnotation.defaultByteValue() );
 				}
-			} else if (type == Long.TYPE)
+			} else if( type == Long.TYPE )
 			{
-				if (this.configuration.containsKey(configurationParameterName))
+				if( this.configuration
+						.containsKey( configurationParameterName ) )
 				{
-					this.field.setLong(instance, this.configuration
-							.getLong(configurationParameterName));
+					this.field.setLong( instance, this.configuration
+							.getLong( configurationParameterName ) );
 				} else
 				{
-					LOG.debug(NO_PROPERTY_FOUND_LOG_MESSAGE,
-							configurationParameterName);
-					this.field.setLong(instance,
-							injectConfigAnnotation.defaultLongValue());
+					LOG.debug( NO_PROPERTY_FOUND_LOG_MESSAGE,
+							configurationParameterName );
+					this.field.setLong( instance,
+							injectConfigAnnotation.defaultLongValue() );
 				}
-			} else if (type == Float.TYPE)
+			} else if( type == Float.TYPE )
 			{
-				if (this.configuration.containsKey(configurationParameterName))
+				if( this.configuration
+						.containsKey( configurationParameterName ) )
 				{
-					this.field.setFloat(instance, this.configuration
-							.getFloat(configurationParameterName));
+					this.field.setFloat( instance, this.configuration
+							.getFloat( configurationParameterName ) );
 				} else
 				{
-					LOG.debug(NO_PROPERTY_FOUND_LOG_MESSAGE,
-							configurationParameterName);
-					this.field.setFloat(instance,
-							injectConfigAnnotation.defaultFloatValue());
+					LOG.debug( NO_PROPERTY_FOUND_LOG_MESSAGE,
+							configurationParameterName );
+					this.field.setFloat( instance,
+							injectConfigAnnotation.defaultFloatValue() );
 				}
-			} else if (type == Double.TYPE)
+			} else if( type == Double.TYPE )
 			{
-				if (configuration.containsKey(configurationParameterName))
+				if( configuration.containsKey( configurationParameterName ) )
 				{
-					this.field.setDouble(instance, this.configuration
-							.getDouble(configurationParameterName));
+					this.field.setDouble( instance, this.configuration
+							.getDouble( configurationParameterName ) );
 				} else
 				{
-					LOG.debug(NO_PROPERTY_FOUND_LOG_MESSAGE,
-							configurationParameterName);
-					this.field.setDouble(instance,
-							injectConfigAnnotation.defaultDoubleValue());
+					LOG.debug( NO_PROPERTY_FOUND_LOG_MESSAGE,
+							configurationParameterName );
+					this.field.setDouble( instance,
+							injectConfigAnnotation.defaultDoubleValue() );
 				}
-			} else if (type == Character.TYPE)
+			} else if( type == Character.TYPE )
 			{
-				if (configuration.containsKey(configurationParameterName))
+				if( configuration.containsKey( configurationParameterName ) )
 				{
-					this.field.setChar(
-							instance,
-							this.configuration.getString(
-									configurationParameterName).charAt(0));
+					this.field.setChar( instance,
+							this.configuration
+									.getString( configurationParameterName )
+									.charAt( 0 ) );
 				}
 			} else
 			{
-				final Object property = getProperty(configurationParameterName,
-						injectConfigAnnotation);
-				this.field.set(instance, property);
+				final Object property = getProperty( configurationParameterName,
+						injectConfigAnnotation );
+				this.field.set( instance, property );
 			}
-		} catch (final Throwable ex)
+		} catch( final Throwable ex )
 		{
-			LOG.error("Problem injecting configuration", ex);
+			LOG.error( "Problem injecting configuration", ex );
 		}
 	}
 
@@ -199,21 +194,22 @@ public class ConfigMembersInjector<T> implements MembersInjector<T>
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	private Object getProperty(final String configurationParameterName,
-			final InjectConfig injectConfigAnnotation)
-			throws InstantiationException, IllegalAccessException
+	private Object getProperty( final String configurationParameterName,
+		final InjectConfig injectConfigAnnotation )
+		throws InstantiationException, IllegalAccessException
 	{
 		final String property;
-		if (this.configuration.containsKey(configurationParameterName))
+		if( this.configuration.containsKey( configurationParameterName ) )
 		{
-			property = this.configuration.getString(configurationParameterName);
+			property = this.configuration
+					.getString( configurationParameterName );
 		} else
 		{
 			property = injectConfigAnnotation.defaultValue();
 		}
 		final ConfigConverter<?> converter = injectConfigAnnotation.converter()
 				.newInstance();
-		final Object value = converter.convert(property);
+		final Object value = converter.convert( property );
 		return value;
 	}
 }

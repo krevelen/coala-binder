@@ -19,7 +19,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,10 +31,6 @@ import io.coala.log.LogUtil;
 
 /**
  * {@link TypeArguments}
- * 
- * @date $Date$
- * @version $Id: 99b983878b62652cfd2e2839ea9f800b6532499b $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class TypeArguments
 {
@@ -124,17 +119,17 @@ public class TypeArguments
 							if( !genericAncestorType.equals( rawIntf ) )
 								continue;
 
-							LOG.trace(
-									"supertype params: "
-											+ Arrays.asList( superClass
-													.getTypeParameters() )
-											+ ", intf params: "
-											+ Arrays.asList( ClassUtil
-													.toClass( rawIntf )
-													.getTypeParameters() )
-											+ ", actual args: "
-											+ Arrays.asList( parameterizedIntf
-													.getActualTypeArguments() ) );
+//							LOG.trace(
+//									"supertype params: "
+//											+ Arrays.asList( superClass
+//													.getTypeParameters() )
+//											+ ", intf params: "
+//											+ Arrays.asList( ClassUtil
+//													.toClass( rawIntf )
+//													.getTypeParameters() )
+//											+ ", actual args: "
+//											+ Arrays.asList( parameterizedIntf
+//													.getActualTypeArguments() ) );
 
 							if( superClass.getTypeParameters().length > 0 )
 								return of( superClass, concreteDescendantType );

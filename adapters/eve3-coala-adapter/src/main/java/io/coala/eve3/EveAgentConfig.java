@@ -208,10 +208,6 @@ public interface EveAgentConfig extends ReplicationConfig
 
 	/**
 	 * {@link JsonNodeConverter}
-	 *
-	 * @date $Date$
-	 * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class JsonNodeConverter implements Converter<JsonNode>
 	{
@@ -224,10 +220,6 @@ public interface EveAgentConfig extends ReplicationConfig
 
 	/**
 	 * {@link AgentConfigConverter}
-	 *
-	 * @date $Date$
-	 * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class AgentConfigConverter implements Converter<AgentConfig>
 	{
@@ -240,10 +232,6 @@ public interface EveAgentConfig extends ReplicationConfig
 
 	/**
 	 * {@link AgentConfigConverter}
-	 * 
-	 * @date $Date$
-	 * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
-	 * @author <a href="mailto:rick@almende.org">Rick</a>
 	 */
 	public class InputStreamConverter implements Converter<InputStream>
 	{

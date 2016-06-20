@@ -1,7 +1,5 @@
 /* $Id: 159ef9e618c1d99cb8ef0ad10548596a3f3afff6 $
  * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
- * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy
@@ -14,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2015 Almende B.V. 
  */
 package io.coala.exception;
 
@@ -26,13 +22,13 @@ import java.util.Collections;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.MessageFactory;
-import org.apache.logging.log4j.message.MessageFormatMessageFactory;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.message.ParameterizedMessageFactory;
 import org.apache.logging.log4j.message.StringFormattedMessage;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.exception.ExceptionBuilder.UncheckedException;
+import io.coala.exception.ExceptionBuilder.CheckedException;
 import io.coala.json.Contextualized;
 import io.coala.json.Contextualized.Context;
 import io.coala.log.LogUtil;
@@ -170,7 +166,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/** FIXME from config? */
-	private static final MessageFactory MESSAGE_FACTORY = new MessageFormatMessageFactory();
+	private static final MessageFactory MESSAGE_FACTORY = new ParameterizedMessageFactory();
 
 	protected static Message format( final Object message )
 	{

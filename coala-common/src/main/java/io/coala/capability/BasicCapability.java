@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/BasicService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,27 +12,21 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.bind.Binder;
 import io.coala.capability.configure.ConfiguringCapability;
 import io.coala.config.PropertyGetter;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * {@link BasicCapability}
- * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
-public abstract class BasicCapability extends AbstractCapability<CapabilityID> implements
-		Capability<BasicCapabilityStatus>
+@Deprecated
+public abstract class BasicCapability extends AbstractCapability<CapabilityID>
+	implements Capability<BasicCapabilityStatus>
 {
 
 	/** */
@@ -46,10 +37,10 @@ public abstract class BasicCapability extends AbstractCapability<CapabilityID> i
 	 * 
 	 * @param binder
 	 */
-	protected BasicCapability(final Binder binder)
+	protected BasicCapability( final Binder binder )
 	{
-		this(null, binder);
-		setID(new CapabilityID(binder.getID(), getClass()));
+		this( null, binder );
+		setID( new CapabilityID( binder.getID(), getClass() ) );
 	}
 
 	/**
@@ -58,9 +49,9 @@ public abstract class BasicCapability extends AbstractCapability<CapabilityID> i
 	 * @param id
 	 * @param binder
 	 */
-	protected BasicCapability(final CapabilityID id, final Binder binder)
+	protected BasicCapability( final CapabilityID id, final Binder binder )
 	{
-		super(id, binder);
+		super( id, binder );
 	}
 
 	/**
@@ -70,9 +61,10 @@ public abstract class BasicCapability extends AbstractCapability<CapabilityID> i
 	 * @return
 	 */
 	@JsonIgnore
-	protected PropertyGetter getProperty(final String key)
+	protected PropertyGetter getProperty( final String key )
 	{
-		return getBinder().inject(ConfiguringCapability.class).getProperty(key);
+		return getBinder().inject( ConfiguringCapability.class )
+				.getProperty( key );
 	}
 
 }

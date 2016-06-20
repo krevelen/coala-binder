@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/main/java/com/almende/coala/eve/EveUtil.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve;
 
@@ -45,17 +40,12 @@ import com.almende.eve.config.Config;
 
 /**
  * {@link EveUtil}
- * 
- * @date $Date: 2014-05-05 09:27:49 +0200 (Mon, 05 May 2014) $
- * @version $Revision: 248 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class EveUtil implements Util
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(EveUtil.class);
+	private static final Logger LOG = LogUtil.getLogger( EveUtil.class );
 
 	/** */
 	public static final String HOST_CONFIG_PROPERTY = "eve.config";
@@ -80,12 +70,12 @@ public class EveUtil implements Util
 	 */
 	protected static AgentHost getEveHost() throws CoalaException
 	{
-		if (!HOST_INITIALIZED)
+		if( !HOST_INITIALIZED )
 		{
-			final String path = System.getProperty(HOST_CONFIG_PROPERTY,
-					HOST_CONFIG_DEFAULT);
+			final String path = System.getProperty( HOST_CONFIG_PROPERTY,
+					HOST_CONFIG_DEFAULT );
 			AgentHost.getInstance().loadConfig(
-					new Config(FileUtil.getFileAsInputStream(path)));
+					new Config( FileUtil.getFileAsInputStream( path ) ) );
 			HOST_INITIALIZED = true;
 		}
 		return AgentHost.getInstance();
@@ -98,26 +88,26 @@ public class EveUtil implements Util
 	 * @param id
 	 * @return
 	 */
-	protected static AgentID toAgentID(final String id)
+	protected static AgentID toAgentID( final String id )
 	{
 		// FIXME create/employ global lookup service/agent
 
-		final AgentID result = AGENT_ID_CACHE.get(id);
-		if (result == null)
-			LOG.warn("Unknown wrapped agentID for Eve agent Id: " + id);
+		final AgentID result = AGENT_ID_CACHE.get( id );
+		if( result == null )
+			LOG.warn( "Unknown wrapped agentID for Eve agent Id: " + id );
 
-		return AGENT_ID_CACHE.get(id);
+		return AGENT_ID_CACHE.get( id );
 	}
 
 	/**
 	 * @param agentID
 	 * @return
 	 */
-	public static String toEveAgentId(final AgentID agentID)
+	public static String toEveAgentId( final AgentID agentID )
 	{
 		// be robust against spaces, weird characters, etc.
-		final String result = WebUtil.urlEncode(agentID.toString());
-		AGENT_ID_CACHE.put(result, agentID);
+		final String result = WebUtil.urlEncode( agentID.toString() );
+		AGENT_ID_CACHE.put( result, agentID );
 		return result;
 	}
 
@@ -125,10 +115,10 @@ public class EveUtil implements Util
 	 * @param agentID
 	 * @return
 	 */
-	public static URI getAddress(final AgentID agentID)
+	public static URI getAddress( final AgentID agentID )
 	{
 		// FIXME create/employ global lookup service/agent
-		return URI.create("local:" + toEveAgentId(agentID));
+		return URI.create( "local:" + toEveAgentId( agentID ) );
 	}
 
 	/**
@@ -137,17 +127,18 @@ public class EveUtil implements Util
 	 * @throws Exception
 	 */
 	@Deprecated
-	protected static <M extends Message<?>> void receiveMessageByPointer(
-			final M msg)
+	protected static <M extends Message<?>> void
+		receiveMessageByPointer( final M msg )
 	{
 		try
 		{
-			((EveReceiverAgent) getEveHost().getAgent(
-					toEveAgentId(msg.getReceiverID()))).doReceive(msg);
-		} catch (final Throwable t)
+			((EveReceiverAgent) getEveHost()
+					.getAgent( toEveAgentId( msg.getReceiverID() ) ))
+							.doReceive( msg );
+		} catch( final Throwable t )
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime(t,
-					msg.getReceiverID());
+			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime( t,
+					msg.getReceiverID() );
 		}
 	}
 
@@ -155,20 +146,20 @@ public class EveUtil implements Util
 	 * @param msg
 	 * @throws Exception
 	 */
-	protected static <M extends Message<?>> void receiveMessageByProxy(
-			final M msg)
+	protected static <M extends Message<?>> void
+		receiveMessageByProxy( final M msg )
 	{
 		try
 		{
 			// FIXME use when agent proxy+delete works:
 			// getEveHost().getAgent(toEveAgentId(msg.getSenderID())),
-			getEveHost().createAgentProxy(null,
-					getAddress(msg.getReceiverID()), EveReceiverAgent.class)
-					.doReceive(msg);
-		} catch (final Throwable t)
+			getEveHost().createAgentProxy( null,
+					getAddress( msg.getReceiverID() ), EveReceiverAgent.class )
+					.doReceive( msg );
+		} catch( final Throwable t )
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime(msg
-					.getReceiverID());
+			throw CoalaExceptionFactory.AGENT_UNAVAILABLE
+					.createRuntime( msg.getReceiverID() );
 		}
 	}
 
@@ -178,17 +169,18 @@ public class EveUtil implements Util
 	 * @throws Exception
 	 */
 	@Deprecated
-	protected static <M extends Message<?>> void sendMessageByPointer(
-			final M msg)
+	protected static <M extends Message<?>> void
+		sendMessageByPointer( final M msg )
 	{
 		try
 		{
-			((EveSenderAgent) getEveHost().getAgent(
-					toEveAgentId(msg.getSenderID()))).doSend(msg);
-		} catch (final Throwable t)
+			((EveSenderAgent) getEveHost()
+					.getAgent( toEveAgentId( msg.getSenderID() ) ))
+							.doSend( msg );
+		} catch( final Throwable t )
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime(msg
-					.getSenderID());
+			throw CoalaExceptionFactory.AGENT_UNAVAILABLE
+					.createRuntime( msg.getSenderID() );
 		}
 	}
 
@@ -198,18 +190,18 @@ public class EveUtil implements Util
 	 * @throws Exception
 	 */
 	@Deprecated
-	protected static void sendMessageByProxy(final Message<?> msg)
+	protected static void sendMessageByProxy( final Message<?> msg )
 	{
 		try
 		{
-			getEveHost().createAgentProxy(null,
-			// getEveHost().getAgent(toEveAgentId(msg.getSenderID())),
-					getAddress(msg.getSenderID()), EveSenderAgent.class)
-					.doSend(msg);
-		} catch (final Throwable t)
+			getEveHost().createAgentProxy( null,
+					// getEveHost().getAgent(toEveAgentId(msg.getSenderID())),
+					getAddress( msg.getSenderID() ), EveSenderAgent.class )
+					.doSend( msg );
+		} catch( final Throwable t )
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.createRuntime(msg
-					.getReceiverID());
+			throw CoalaExceptionFactory.AGENT_UNAVAILABLE
+					.createRuntime( msg.getReceiverID() );
 		}
 	}
 
@@ -224,20 +216,19 @@ public class EveUtil implements Util
 	 * @throws InstantiationException
 	 * @throws ClassNotFoundException
 	 */
-	public static List<String> getAddresses(final AgentID id)
-			throws CoalaException
+	public static List<String> getAddresses( final AgentID id )
+		throws CoalaException
 	{
 		try
 		{
-			final Agent agent = getEveHost().getAgent(toEveAgentId(id));
-			if (agent != null)
-				return agent.getUrls();
-		} catch (final CoalaException e)
+			final Agent agent = getEveHost().getAgent( toEveAgentId( id ) );
+			if( agent != null ) return agent.getUrls();
+		} catch( final CoalaException e )
 		{
 			throw e;
-		} catch (final Exception e)
+		} catch( final Exception e )
 		{
-			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.create(id);
+			throw CoalaExceptionFactory.AGENT_UNAVAILABLE.create( id );
 		}
 		return Collections.emptyList();
 	}

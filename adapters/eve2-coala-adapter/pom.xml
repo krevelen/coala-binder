@@ -16,17 +16,16 @@
 	<description>
 		Utility and demo code for the Eve agent platform
 		$Id$
-		$URL: https://dev.almende.com/svn/abms/eve-util/pom.xml $
 	</description>
 	<url>https://eve.almende.com/</url>
 
 	<properties>
 		<eve.version>2.2.2</eve.version>
 	</properties>
-	
+
 	<repositories>
 	</repositories>
-	
+
 	<dependencies>
 
 		<dependency>
@@ -36,7 +35,7 @@
 			<artifactId>javax.inject</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-core</artifactId>
@@ -47,14 +46,14 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-core</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-guice3-adapter</artifactId>
 			<version>1.0.0</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

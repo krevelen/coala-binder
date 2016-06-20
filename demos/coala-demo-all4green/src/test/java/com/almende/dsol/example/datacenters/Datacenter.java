@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/dsol-util/src/test/java/com/almende/dsol/example/datacenters/Datacenter.java $
- * 
- * Part of the EU project All4Green, see http://www.all4green-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright � 2010-2012 Almende B.V. 
  */
 package com.almende.dsol.example.datacenters;
 
@@ -43,11 +38,6 @@ import org.joda.time.Interval;
 
 /**
  * Datacenter
- * 
- * @date $Date: 2014-05-07 11:59:26 +0200 (Wed, 07 May 2014) $
- * @version $Revision: 258 $
- * @author <a href="mailto:rick@almende.org">Rick van Krevelen</a>
- * 
  */
 public class Datacenter extends AbstractFederationModelComponent implements
 		Comparable<Datacenter> {

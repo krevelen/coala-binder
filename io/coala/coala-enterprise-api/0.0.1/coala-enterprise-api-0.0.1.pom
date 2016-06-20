@@ -12,7 +12,7 @@
 
 	<artifactId>coala-enterprise-api</artifactId>
 
-	<name>${project.artifactId}</name>
+	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demonstration code for a DEMO ontology API
 		$Id: 4384e9a9a21a2c2270497350b0f8417bd13e2b4f $
@@ -226,7 +226,7 @@
 					<configuration>
 						<outputDirectory>${jaxb.targetdir}</outputDirectory>
 						<schemaDirectory>${jaxb.sourcedir}</schemaDirectory>
-						<packageName>eu.inertia.xml.agent</packageName>
+						<packageName>io.coala.enterprise.agent</packageName>
 						<arguments>-disableXmlSecurity</arguments>
 						<clearOutputDir>true</clearOutputDir>
 					</configuration>
