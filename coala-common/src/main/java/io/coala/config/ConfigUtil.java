@@ -23,10 +23,8 @@ package io.coala.config;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -136,7 +134,7 @@ public class ConfigUtil implements Util
 	{
 		final Properties props = new Properties();
 		flatten( props, root,
-				new StringBuilder( concat( CONFIG_KEY_SEP, baseKeys ) ) );
+				new StringBuilder( join( CONFIG_KEY_SEP, baseKeys ) ) );
 		return props;
 	}
 
@@ -182,7 +180,14 @@ public class ConfigUtil implements Util
 		}
 	}
 
-	private static Object tryNumber( final Object value )
+	/**
+	 * Try to cast or parse as {@link Number}
+	 * 
+	 * @param value the value {@link Object} to parse
+	 * @return the {@link Number}, {@link Boolean} or {@link BigDecimal} value
+	 *         if successful
+	 */
+	public static Object tryNumber( final Object value )
 	{
 		if( value == null ) return null;
 		if( value instanceof Number ) return value;
@@ -199,7 +204,14 @@ public class ConfigUtil implements Util
 		}
 	}
 
-	public static CharSequence concat( final CharSequence delim,
+	/**
+	 * pre-JDK8 {@link String#join(CharSequence, CharSequence...)}
+	 * 
+	 * @param delim the delimiter {@link CharSequence}
+	 * @param values the value {@link CharSequence}(s) to concatenate
+	 * @return a concatenated {@link CharSequence}
+	 */
+	public static CharSequence join( final CharSequence delim,
 		final CharSequence... values )
 	{
 		if( values == null || values.length == 0 || delim == null ) return null;
@@ -209,16 +221,91 @@ public class ConfigUtil implements Util
 		return result;
 	}
 
-	private static final Pattern SPLITTER = Pattern
-			.compile( Pattern.quote( CONFIG_KEY_SEP ) );
+	/**
+	 * <code>{"0": a, "1": b, &hellip;}</code> &rArr;
+	 * <code>[a, b, &hellip;}</code>
+	 * 
+	 * @param map the {@link Map} node to convert (recursively)
+	 * @return the converted {@link Map} or {@link List}
+	 */
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public static Object objectsToArrays( final Map map )
+	{
+		final Set<Integer> indices = new HashSet<>();
+		for( Object key : map.keySet() )
+		{
+			// recurse
+			final Object value = map.get( key );
+			if( value instanceof Map )
+				map.put( key, objectsToArrays( (Map) value ) );
 
-	public static Object expand( final Map<Object, Object> props,
+			// store any index keys
+			if( key instanceof Integer ) indices.add( (Integer) key );
+		}
+		// check enough indices 
+		if( indices.size() != map.size() ) return map;
+		// check correct indices
+		for( int i = 0; i < map.size(); i++ )
+			if( !indices.remove( i ) ) return map;
+		// convert indices to (ordered) list
+		final List result = new ArrayList( map.size() );
+		for( int i = 0; i < map.size(); i++ )
+			result.add( map.get( i ) );
+		return result;
+	}
+
+	/**
+	 * Get or create the node for some key path
+	 * 
+	 * @param tree the (relative) root {@link Map}
+	 * @param path the (relative) key path as {@link List} of {@link String}s
+	 * @return the (nested) node {@link Map}
+	 */
+	public static Map<Object, Object>
+		nodeForPath( final Map<Object, Object> tree, final List<String> path )
+	{
+		if( path == null || path.isEmpty() ) return tree;
+		final String first = path.remove( 0 );
+		@SuppressWarnings( "unchecked" )
+		Map<Object, Object> node = (Map<Object, Object>) tree.get( first );
+		if( node == null )
+		{
+			node = new HashMap<>();
+			try
+			{
+				tree.put( Integer.parseInt( first ), node );
+			} catch( final NumberFormatException e )
+			{
+				tree.put( first, node );
+			}
+		}
+		return nodeForPath( node, path );
+	}
+
+	/**
+	 * @param props the flat properties {@link Map}, e.g. {@link Properties}
+	 * @param baseKeys the base key(s) to prefix
+	 * @return the expanded property tree root {@link JsonNode}
+	 */
+	public static JsonNode expand( final Map<Object, Object> props,
 		final String... baseKeys )
 	{
-//		final Map<List<String>, SortedMap<Integer, JsonNode>> arrays = new HashMap<>();
+		return expand( CONFIG_KEY_SEP, props, baseKeys );
+	}
+
+	/**
+	 * @param keySep the key separator {@link String}
+	 * @param props the flat properties {@link Map}, e.g. {@link Properties}
+	 * @param baseKeys the base key(s) to prefix
+	 * @return the expanded property tree root {@link JsonNode}
+	 */
+	public static JsonNode expand( final String keySep,
+		final Map<Object, Object> props, final String... baseKeys )
+	{
+		final Pattern splitter = Pattern.compile( Pattern.quote( keySep ) );
 		final Map<Object, Object> result = new HashMap<>();
 		final String prefix = baseKeys == null || baseKeys.length == 0 ? null
-				: concat( CONFIG_KEY_SEP, baseKeys ) + CONFIG_KEY_SEP;
+				: join( keySep, baseKeys ) + keySep;
 		for( Map.Entry<Object, Object> entry : props.entrySet() )
 		{
 			String key = entry.getKey().toString();
@@ -227,68 +314,20 @@ public class ConfigUtil implements Util
 				if( !key.startsWith( prefix ) ) continue;
 				key = key.substring( prefix.length() );
 			}
-			final int lastSepIndex = key.lastIndexOf( CONFIG_KEY_SEP );
+			final int lastSepIndex = key.lastIndexOf( keySep );
+			// convert any numeric value to a BigDecimal TODO make optional?
 			final Object value = tryNumber( entry.getValue() );
 			final String field = lastSepIndex < 0 ? key
-					: key.substring( lastSepIndex + CONFIG_KEY_SEP.length() );
+					: key.substring( lastSepIndex + keySep.length() );
 			if( lastSepIndex < 0 )
 				result.put( key, value );
 			else
 			{
-				final Deque<String> path = new ArrayDeque<String>(
-						Arrays.asList( SPLITTER
-								.split( key.substring( 0, lastSepIndex ) ) ) );
+				final List<String> path = new ArrayList<String>( Arrays.asList(
+						splitter.split( key.substring( 0, lastSepIndex ) ) ) );
 				nodeForPath( result, path ).put( field, value );
 			}
 		}
-		return JsonUtil.getJOM()
-				.valueToTree( convertIndexMapsToLists( result ) );
-	}
-
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	private static Object convertIndexMapsToLists( final Map map )
-	{
-		final Set<Integer> indices = new HashSet<>();
-		for( Object key : map.keySet() )
-		{
-			// store any index keys
-			if( key instanceof Integer ) indices.add( (Integer) key );
-
-			// recurse
-			final Object value = map.get( key );
-			if( value instanceof Map )
-				map.put( key, convertIndexMapsToLists( (Map) value ) );
-		}
-		// check enough indices 
-		if( indices.size() != map.size() ) return map;
-		// check correct indices
-		for( int i = 0; i < map.size(); i++ )
-			if( !indices.remove( Integer.valueOf( i ) ) ) return map;
-		// convert indices to (ordered) list
-		final List result = new ArrayList( map.size() );
-		for( int i = 0; i < map.size(); i++ )
-			result.add( map.get( Integer.valueOf( i ) ) );
-		return result;
-	}
-
-	private static Map<Object, Object>
-		nodeForPath( final Map<Object, Object> root, final Deque<String> path )
-	{
-		if( path == null || path.size() == 0 ) return root;
-		final String first = path.removeFirst();
-		@SuppressWarnings( "unchecked" )
-		Map<Object, Object> node = (Map<Object, Object>) root.get( first );
-		if( node == null )
-		{
-			node = new HashMap<>();
-			try
-			{
-				root.put( Integer.parseInt( first ), node );
-			} catch( final Exception e )
-			{
-				root.put( first, node );
-			}
-		}
-		return nodeForPath( node, path );
+		return JsonUtil.getJOM().valueToTree( objectsToArrays( result ) );
 	}
 }
