@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.event;
 
@@ -31,13 +29,12 @@ import io.coala.process.AbstractJob;
  * {@link AbstractEvent}
  * 
  * @version $Id $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <ID> the concrete {@link EventID} type
- * @param <THIS> the concrete {@link AbstractEvent} type
  */
-public abstract class AbstractEvent<ID extends EventID<?>> extends
-		AbstractJob<ID> implements Event<ID>, LifeCycleHooks
+@Deprecated
+public abstract class AbstractEvent<ID extends EventID<?>>
+	extends AbstractJob<ID> implements Event<ID>, LifeCycleHooks
 {
 
 	/** */
@@ -67,9 +64,9 @@ public abstract class AbstractEvent<ID extends EventID<?>> extends
 	 * @param id
 	 * @param producerID
 	 */
-	protected AbstractEvent(final ID id, final ModelComponent<?> producer)
+	protected AbstractEvent( final ID id, final ModelComponent<?> producer )
 	{
-		this(id, producer.getOwnerID(), producer.getID());
+		this( id, producer.getOwnerID(), producer.getID() );
 	}
 
 	/**
@@ -78,17 +75,17 @@ public abstract class AbstractEvent<ID extends EventID<?>> extends
 	 * @param id
 	 * @param producerID
 	 */
-	protected AbstractEvent(final ID id, final AgentID ownerID,
-			final ModelComponentID<?> producerID)
+	protected AbstractEvent( final ID id, final AgentID ownerID,
+		final ModelComponentID<?> producerID )
 	{
-		super(id);
+		super( id );
 		this.ownerID = ownerID;
 		this.producerID = producerID;
 	}
 
 	/** @param producerID */
-	protected synchronized void setProducerID(
-			final ModelComponentID<?> producerID)
+	protected synchronized void
+		setProducerID( final ModelComponentID<?> producerID )
 	{
 		this.producerID = producerID;
 	}

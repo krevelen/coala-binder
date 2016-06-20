@@ -21,6 +21,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.KeyDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
@@ -49,7 +51,6 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.name.x.Id;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;
@@ -274,7 +275,9 @@ public interface Wrapper<T>
 					.addSerializer( type,
 							createJsonSerializer( type, valueType ) )
 					.addDeserializer( type,
-							createJsonDeserializer( type, valueType ) ) );
+							createJsonDeserializer( type, valueType ) )
+					.addKeyDeserializer( type,
+							createJsonKeyDeserializer( type, valueType ) ) );
 		}
 
 		/**
@@ -293,8 +296,20 @@ public interface Wrapper<T>
 					final SerializerProvider serializers )
 					throws IOException, JsonProcessingException
 				{
-					serializers.findValueSerializer( valueType, null )
-							.serialize( value.unwrap(), jgen, serializers );
+//					LOG.trace( "Finding serializer for {} value: {} ({})", type,
+//							value.unwrap(), value.unwrap().getClass() );
+					if( value == null || value.unwrap() == null )
+						jgen.writeNull();
+					else if( value.unwrap().getClass() == String.class )
+						jgen.writeString( (String) value.unwrap() );
+					else if( value.unwrap() instanceof Number )
+						jgen.writeNumber( value.unwrap() instanceof BigDecimal
+								? (BigDecimal) value.unwrap()
+								: BigDecimal.valueOf( ((Number) value.unwrap())
+										.doubleValue() ) );
+					else
+						serializers.findValueSerializer( valueType, null )
+								.serialize( value.unwrap(), jgen, serializers );
 				}
 
 				@Override
@@ -342,19 +357,24 @@ public interface Wrapper<T>
 					final DeserializationContext ctxt )
 					throws IOException, JsonProcessingException
 				{
+//					LOG.trace( "parsing {} as {}", jp.getText(),
+//							type.getName() );
+
 					if( jp.getText() == null || jp.getText().length() == 0
-							|| jp.getText().equals( "null" ) )
+							|| jp.getText().equalsIgnoreCase( "null" ) )
 						return null;
 
-					// LOG.trace("parsing " + jp.getText() + " as "
-					// + type.getName());
 					final JavaPolymorph annot = type
 							.getAnnotation( JavaPolymorph.class );
 
 					final S value; // = jp.readValueAs(valueType)
 
 					if( annot == null )
+					{
+						LOG.trace( "parsing {} as {}", jp.getText(),
+								type.getName() );
 						value = jp.readValueAs( valueType );
+					}
 					else
 					{
 						final Class<? extends S> valueSubtype = resolveAnnotType(
@@ -374,6 +394,39 @@ public interface Wrapper<T>
 						// valueSubtype);
 					}
 
+					final T result = this.provider.instantiate();
+					result.wrap( value );
+					return result;
+				}
+			};
+		}
+
+		/**
+		 * @param type the wrapper type to deserialize
+		 * @param valueType the wrapped type to deserialize
+		 * @return the {@link JsonDeserializer}
+		 */
+		public static final <S, T extends Wrapper<S>> KeyDeserializer
+			createJsonKeyDeserializer( final Class<T> type,
+				final Class<S> valueType )
+		{
+			return new KeyDeserializer()
+			{
+				private final Instantiator<T> provider = Instantiator
+						.of( type );
+
+				@Override
+				public Object deserializeKey( final String key,
+					final DeserializationContext ctxt )
+					throws IOException, JsonProcessingException
+				{
+					if( key == null || key.length() == 0
+							|| key.equalsIgnoreCase( "null" ) )
+						return null;
+
+					// FIXME assumes a Wrapper<String> for now
+					@SuppressWarnings( "unchecked" )
+					final S value = (S) key;
 					final T result = this.provider.instantiate();
 					result.wrap( value );
 					return result;
@@ -404,7 +457,7 @@ public interface Wrapper<T>
 			 * "Problem determining return type for this method", e) .build(); }
 			 */
 
-			// FIXME use Jackson to determine actual concrete @class
+			// FIXME assumes Wrapper<String> for now, determine actual @class
 			return (T) JsonUtil.valueOf( json,
 					new TypeReference<Wrapper.Simple<String>>()
 					{
@@ -446,35 +499,37 @@ public interface Wrapper<T>
 		public static <S, T extends Wrapper<S>> T valueOf( final String json,
 			final T result )
 		{
-			try
+			final Class<S> valueType = (Class<S>) TypeArguments
+					.of( Wrapper.class, result.getClass(),
+							Wrapper.Util.WRAPPER_TYPE_ARGUMENT_CACHE )
+					.get( 0 );
+
+			final JavaPolymorph annot = result.getClass()
+					.getAnnotation( JavaPolymorph.class );
+
+			final S value;
+			if( annot == null )
 			{
-				final Class<S> valueType = (Class<S>) TypeArguments
-						.of( Wrapper.class, result.getClass(),
-								Wrapper.Util.WRAPPER_TYPE_ARGUMENT_CACHE )
-						.get( 0 );
-
-				final JavaPolymorph annot = result.getClass()
-						.getAnnotation( JavaPolymorph.class );
-
-				final S value;
-
-				if( annot == null )
-				{
-					value = valueType == String.class ? (S) json
-							: JsonUtil.valueOf( json, valueType );
-				} else
-				{
-					final JsonNode tree = JsonUtil.toTree( json );
-					final Class<? extends S> annotType = resolveAnnotType(
-							annot, valueType, tree.getNodeType() );
-					value = JsonUtil.valueOf( json, annotType );
-				}
-				return of( value, result );
-			} catch( final Throwable e )
+				final Class<?> type = valueType != Object.class ? valueType
+						: json.startsWith( "\"" ) ? String.class
+								: json.equalsIgnoreCase(
+										Boolean.TRUE.toString() )
+										|| json.equalsIgnoreCase(
+												Boolean.FALSE.toString() )
+														? Boolean.class
+														: BigDecimal.class;
+//				LOG.trace( "{}->{}->? ({})", json, valueType, type );
+				value = valueType == String.class && !json.startsWith( "\"" )
+						? (S) json : (S) JsonUtil.valueOf( json, type );
+//				LOG.trace( "{}->{}->{} ({})", json, valueType, value, type );
+			} else
 			{
-				throw ExceptionFactory.createUnchecked(
-						"Problem reading value: {}", json, e );
+				final JsonNode tree = JsonUtil.toTree( json );
+				final Class<? extends S> annotType = resolveAnnotType( annot,
+						valueType, tree.getNodeType() );
+				value = JsonUtil.valueOf( json, annotType );
 			}
+			return of( value, result );
 		}
 
 		/**

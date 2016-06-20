@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/process/BasicProcessStatus.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.process;
 
@@ -50,16 +45,16 @@ public enum BasicProcessStatus implements ProcessStatus<BasicProcessStatus>
 
 	/** @see MachineStatus#permitsTransitionFrom(MachineStatus) */
 	@Override
-	public boolean permitsTransitionFrom(final BasicProcessStatus status)
+	public boolean permitsTransitionFrom( final BasicProcessStatus status )
 	{
-		return status != null && status.permitsTransitionTo(this);
+		return status != null && status.permitsTransitionTo( this );
 	}
 
 	/** @see MachineStatus#permitsTransitionTo(MachineStatus) */
 	@Override
-	public boolean permitsTransitionTo(final BasicProcessStatus status)
+	public boolean permitsTransitionTo( final BasicProcessStatus status )
 	{
-		switch (status)
+		switch( status )
 		{
 		case CREATED:
 			return this == CREATED;

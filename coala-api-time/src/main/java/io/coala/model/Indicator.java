@@ -38,6 +38,7 @@ import io.coala.time.Instant;
  * @version $Id: d0df7259248826794fc863291937b4a44ab48345 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class Indicator<A extends Agent, I extends Instant<I>, THIS extends Indicator<A, I, THIS>>
 	extends
 	AbstractModelComponent<BasicModelComponentID, A, ValueChangedEvent<I>>

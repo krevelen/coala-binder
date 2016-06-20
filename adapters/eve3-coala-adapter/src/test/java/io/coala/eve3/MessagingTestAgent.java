@@ -79,9 +79,6 @@ public class MessagingTestAgent extends BasicAgent
 
 	/**
 	 * {@link MyMessage}
-	 * 
-	 * @version $Id: cf7d93a458ffe55cb49bd3c639155e7d1a793abd $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class MyMessage extends AbstractMessage<MyMessageID>
 	{

@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability.interact;
 
@@ -29,16 +27,12 @@ import rx.Observer;
  * {@link SendingCapability}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public interface SendingCapability extends Capability<BasicCapabilityStatus>
 {
 
 	/**
 	 * {@link Factory}
-	 * 
-	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface Factory extends CapabilityFactory<SendingCapability>
 	{
@@ -49,7 +43,7 @@ public interface SendingCapability extends Capability<BasicCapabilityStatus>
 	 * @param msg the {@link Message} to transport
 	 * @throws Exception
 	 */
-	void send(Message<?> msg) throws Exception;
+	void send( Message<?> msg ) throws Exception;
 
 	/**
 	 * @param msg the {@link Message} to transport
@@ -57,13 +51,13 @@ public interface SendingCapability extends Capability<BasicCapabilityStatus>
 	 *            an allowed delivery timeout
 	 * @throws Exception
 	 */
-	void send(Message<?> msg, Duration timeout) throws Exception;
+	void send( Message<?> msg, Duration timeout ) throws Exception;
 
 	/**
 	 * @param timeout any non-{@code null} positive {@link Duration} indicates
 	 *            an allowed delivery timeout
 	 * @return an {@link Observer} of outgoing {@link Message}s
 	 */
-	<T extends Message<?>> Observer<T> outgoing(Duration timeout);
+	<T extends Message<?>> Observer<T> outgoing( Duration timeout );
 
 }

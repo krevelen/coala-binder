@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.guice.config;
 
@@ -35,7 +33,6 @@ import com.google.inject.spi.TypeListener;
  * here</a>
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class ConfigTypeListener implements TypeListener
 {
@@ -49,21 +46,21 @@ public class ConfigTypeListener implements TypeListener
 	 * @param configuration
 	 */
 	@Inject
-	public ConfigTypeListener(final Configuration configuration)
+	public ConfigTypeListener( final Configuration configuration )
 	{
 		this.configuration = configuration;
 	}
 
 	@Override
-	public <T> void hear(final TypeLiteral<T> type,
-			final TypeEncounter<T> encounter)
+	public <T> void hear( final TypeLiteral<T> type,
+		final TypeEncounter<T> encounter )
 	{
-		for (Field field : type.getRawType().getDeclaredFields())
+		for( Field field : type.getRawType().getDeclaredFields() )
 		{
-			if (field.isAnnotationPresent(InjectConfig.class))
+			if( field.isAnnotationPresent( InjectConfig.class ) )
 			{
 				encounter.register(
-						new ConfigMembersInjector<T>(field, configuration));
+						new ConfigMembersInjector<T>( field, configuration ) );
 			}
 		}
 	}

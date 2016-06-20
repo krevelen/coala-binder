@@ -206,7 +206,7 @@ public class WrapperTest
 	@Test
 	public void equalsTest()
 	{
-		LOG.trace( "Testing equals() on " + Wrapper.Util.class  );
+		LOG.trace( "Testing equals() on " + Wrapper.Util.class );
 		final Object valueObject = "myValue";
 		final MySimpleWrapper valueWrap = MySimpleWrapper
 				.valueOf( valueObject );
@@ -297,27 +297,22 @@ public class WrapperTest
 				valueWrap,
 				Wrapper.Util.valueOf( valueJSON, MySimpleWrapper.class ) );
 
-		/* FIXME
-		LOG.trace( "Testing JSON de/serialization of " + Wrapper.class + "<"
-				+ Float.class.getSimpleName() + ">" );
-		JsonUtil.getJOM()
-				.disable( DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS );
-		final Float floatValue = 0.1f;
-		final MySimpleWrapper floatWrap = MySimpleWrapper.valueOf( floatValue );
-		final String floatJSON = JsonUtil.toJSON( floatValue );
-		assertEquals(
-				MySimpleWrapper.class.getSimpleName() + "<"
-						+ floatValue.getClass().getSimpleName() + "<"
-						+ floatJSON + ">> must stringify as " + floatJSON,
-				floatValue.toString(), JsonUtil.stringify( floatWrap ) );
-		assertEquals(
-				"JSON " + floatJSON + " must parse as "
-						+ MySimpleWrapper.class.getSimpleName() + "<"
-						+ floatValue.getClass().getSimpleName() + "<"
-						+ floatJSON + ">>",
-				floatWrap,
-				Wrapper.Util.valueOf( floatJSON, MySimpleWrapper.class ) );
-		*/
+		/*
+		 * FIXME LOG.trace( "Testing JSON de/serialization of " + Wrapper.class
+		 * + "<" + Float.class.getSimpleName() + ">" ); JsonUtil.getJOM()
+		 * .disable( DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS ); final
+		 * Float floatValue = 0.1f; final MySimpleWrapper floatWrap =
+		 * MySimpleWrapper.valueOf( floatValue ); final String floatJSON =
+		 * JsonUtil.toJSON( floatValue ); assertEquals(
+		 * MySimpleWrapper.class.getSimpleName() + "<" +
+		 * floatValue.getClass().getSimpleName() + "<" + floatJSON +
+		 * ">> must stringify as " + floatJSON, floatValue.toString(),
+		 * JsonUtil.stringify( floatWrap ) ); assertEquals( "JSON " + floatJSON
+		 * + " must parse as " + MySimpleWrapper.class.getSimpleName() + "<" +
+		 * floatValue.getClass().getSimpleName() + "<" + floatJSON + ">>",
+		 * floatWrap, Wrapper.Util.valueOf( floatJSON, MySimpleWrapper.class )
+		 * );
+		 */
 
 		LOG.trace( "Testing JSON de/serialization of " + Wrapper.class + "<"
 				+ Double.class.getSimpleName() + ">" );
@@ -332,13 +327,17 @@ public class WrapperTest
 						+ doubleValue.getClass().getSimpleName() + "<"
 						+ doubleJSON + ">> must stringify as " + doubleJSON,
 				doubleValue.toString(), JsonUtil.stringify( doubleWrap ) );
+		LOG.trace( "{}->{}", doubleWrap.unwrap().getClass(),
+				Wrapper.Util.valueOf( doubleJSON, MySimpleWrapper.class )
+						.unwrap().getClass() );
 		assertEquals(
 				"JSON " + doubleJSON + " must parse as "
 						+ MySimpleWrapper.class.getSimpleName() + "<"
 						+ doubleValue.getClass().getSimpleName() + "<"
 						+ doubleJSON + ">>",
-				doubleWrap,
-				Wrapper.Util.valueOf( doubleJSON, MySimpleWrapper.class ) );
+				((Number)doubleWrap.unwrap()).doubleValue(),
+				((Number)Wrapper.Util.valueOf( doubleJSON, MySimpleWrapper.class )
+						.unwrap()).doubleValue(), .0001 );
 
 		LOG.trace( "Testing JSON de/serialization of " + Wrapper.class + "<"
 				+ BigDecimal.class.getSimpleName() + ">" );

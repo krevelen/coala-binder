@@ -38,12 +38,9 @@ import io.coala.log.LogUtil;
 
 /**
  * {@link BinderFactoryConfig}
- * 
- * @version $Revision: 324 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 @SuppressWarnings( "rawtypes" )
+@Deprecated
 public interface BinderFactoryConfig extends Config
 {
 
@@ -116,10 +113,6 @@ public interface BinderFactoryConfig extends Config
 
 	/**
 	 * {@link Builder}
-	 * 
-	 * @version $Revision: 324 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 * 
 	 */
 	public static class Builder
 	{
@@ -185,7 +178,7 @@ public interface BinderFactoryConfig extends Config
 					.value().getType( BinderFactory.class ) );
 
 			if( configPath != null ) ConfigFactory
-					.setProperty( ConfigUtil.FILE_NAME_PROPERTY, configPath );
+					.setProperty( ConfigUtil.CONFIG_FILE_PROPERTY, configPath );
 			final ReplicationConfig cfg = ConfigFactory
 					.create( ReplicationConfig.class );
 			LOG.trace( "Loaded ReplicationConfig: " + cfg );

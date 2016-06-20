@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/role/AbstractInitiator.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.role;
 
@@ -32,12 +27,11 @@ import org.slf4j.Logger;
  * {@link AbstractInitiator}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <F> the {@link CoordinationFact} type being handled
  */
-public abstract class AbstractInitiator<F extends CoordinationFact> extends
-		AbstractActorRole<F> implements Initiator<F>
+public abstract class AbstractInitiator<F extends CoordinationFact>
+	extends AbstractActorRole<F> implements Initiator<F>
 {
 
 	/** */
@@ -53,66 +47,66 @@ public abstract class AbstractInitiator<F extends CoordinationFact> extends
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	protected AbstractInitiator(final Binder binder)
+	protected AbstractInitiator( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
-	protected void onExpiredRequest(final F request)
+	protected void onExpiredRequest( final F request )
 	{
-		logIgnore(request, true);
+		logIgnore( request, true );
 	}
 
-	protected void onExpiredRequestCancellation(final F cancel)
+	protected void onExpiredRequestCancellation( final F cancel )
 	{
-		logIgnore(cancel, true);
+		logIgnore( cancel, true );
 	}
 
-	protected void onAllowedRequestCancellation(final F allow)
+	protected void onAllowedRequestCancellation( final F allow )
 	{
-		logIgnore(allow, false);
+		logIgnore( allow, false );
 	}
 
-	protected void onRefusedRequestCancellation(final F refuse)
+	protected void onRefusedRequestCancellation( final F refuse )
 	{
-		logIgnore(refuse, false);
+		logIgnore( refuse, false );
 	}
 
-	protected void onPromised(final F promise)
+	protected void onPromised( final F promise )
 	{
-		logIgnore(promise, false);
+		logIgnore( promise, false );
 	}
 
-	protected void onCancelledPromise(final F cancel)
+	protected void onCancelledPromise( final F cancel )
 	{
-		logIgnore(cancel, false);
+		logIgnore( cancel, false );
 	}
 
-	protected void onDeclined(final F decline)
+	protected void onDeclined( final F decline )
 	{
-		logIgnore(decline, false);
+		logIgnore( decline, false );
 	}
 
-	protected abstract void onStated(F state);
+	protected abstract void onStated( F state );
 
-	protected void onCancelledState(final F cancel)
+	protected void onCancelledState( final F cancel )
 	{
-		logIgnore(cancel, false);
+		logIgnore( cancel, false );
 	}
 
-	protected void onExpiredAcceptCancellation(final F cancel)
+	protected void onExpiredAcceptCancellation( final F cancel )
 	{
-		logIgnore(cancel, true);
+		logIgnore( cancel, true );
 	}
 
-	protected void onAllowedAcceptCancellation(final F allow)
+	protected void onAllowedAcceptCancellation( final F allow )
 	{
-		logIgnore(allow, false);
+		logIgnore( allow, false );
 	}
 
-	protected void onRefusedAcceptCancellation(final F refuse)
+	protected void onRefusedAcceptCancellation( final F refuse )
 	{
-		logIgnore(refuse, false);
+		logIgnore( refuse, false );
 	}
 
 }

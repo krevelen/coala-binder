@@ -23,9 +23,11 @@ package io.coala.name;
  * 
  * @param <ID> the {@link Identifier} type
  * @param <THIS> the concrete {@link Identifiable} type
+ * @deprecated please use {@link io.coala.json.Wrapper}
  */
+@Deprecated
 public interface Identifiable<ID extends Identifier<?, ?>>
-		extends Comparable<Identifiable<ID>>
+	extends Comparable<Identifiable<ID>>
 {
 
 	/**
@@ -37,7 +39,6 @@ public interface Identifiable<ID extends Identifier<?, ?>>
 	 * {@link Builder}
 	 * 
 	 * @version $Id: b57b2e8447815391626c350c427b02ef9640d9f9 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 * 
 	 * @param <ID> the {@link Identifiable}'s {@link Identifier} type
 	 * @param <T> the {@link Identifiable} type
@@ -49,7 +50,7 @@ public interface Identifiable<ID extends Identifier<?, ?>>
 		 * @param id the {@link ID} value to set
 		 * @return this {@link Builder} for chaining
 		 */
-		THIS withID(ID id);
+		THIS withID( ID id );
 
 		/**
 		 * @return the built {@link T} result

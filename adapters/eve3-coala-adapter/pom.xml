@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.2.0-b1</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -37,7 +37,7 @@
 		<repository>
 			<name>COALA Public Maven Repository</name>
 			<id>coala-public</id>
-			<url>https://github.com/krevelen/coala/raw/mvn-repo/</url>
+			<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
 			<releases>
 				<enabled>true</enabled>
 				<updatePolicy>daily</updatePolicy>

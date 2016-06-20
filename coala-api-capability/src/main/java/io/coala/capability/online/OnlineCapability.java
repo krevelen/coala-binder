@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/resource/HTTPClientService.java $
- * 
- * Part of the EU project INERTIA, see http://www.inertia-project.eu/inertia/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.capability.online;
 
@@ -33,20 +28,12 @@ import java.util.Map;
 
 /**
  * {@link OnlineCapability}
- * 
- * @version $Revision: 358 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 {
 
 	/**
 	 * {@link Factory}
-	 * 
-	 * @version $Revision: 358 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	interface Factory extends CapabilityFactory<OnlineCapability>
 	{
@@ -63,7 +50,7 @@ public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 	 * @param uri the {@link URI} to {@link HttpMethod#GET GET} from
 	 * @return the {@link ResourceStreamer}
 	 */
-	ResourceStreamer request(URI uri);
+	ResourceStreamer request( URI uri );
 
 	/**
 	 * @param uri the {@link URI} to {@link HttpMethod#GET GET} from
@@ -71,14 +58,14 @@ public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 	 *            {@link ResourceStreamer result}, or {@code null} if irrelevant
 	 * @return the {@link ResourceStreamer}
 	 */
-	ResourceStreamer request(URI uri, ResourceType responseType);
+	ResourceStreamer request( URI uri, ResourceType responseType );
 
 	/**
 	 * @param uri the {@link URI}
 	 * @param method the {@link HttpMethod}
 	 * @return the {@link ResourceStreamer}
 	 */
-	ResourceStreamer request(URI uri, HttpMethod method);
+	ResourceStreamer request( URI uri, HttpMethod method );
 
 	/**
 	 * @param uri the {@link URI}
@@ -87,8 +74,8 @@ public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 	 *            {@link ResourceStreamer result}, or {@code null} if irrelevant
 	 * @return the {@link ResourceStreamer}
 	 */
-	ResourceStreamer request(URI uri, HttpMethod method,
-			ResourceType responseType);
+	ResourceStreamer request( URI uri, HttpMethod method,
+		ResourceType responseType );
 
 	/**
 	 * @param uri the {@link URI}
@@ -98,8 +85,8 @@ public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 	 * @return the {@link ResourceStreamer} with same type as
 	 *         {@link ResourceStreamer#getType() content.getType()}
 	 */
-	ResourceStreamer request(URI uri, HttpMethod method,
-			ResourceStreamer content);
+	ResourceStreamer request( URI uri, HttpMethod method,
+		ResourceStreamer content );
 
 	/**
 	 * @param uri the {@link URI}
@@ -111,8 +98,8 @@ public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 	 *            {@link InputStream}(s), or {@code null} if empty
 	 * @return the {@link ResourceStreamer}
 	 */
-	ResourceStreamer request(URI uri, HttpMethod method,
-			ResourceType resultType, ResourceStreamer content);
+	ResourceStreamer request( URI uri, HttpMethod method,
+		ResourceType resultType, ResourceStreamer content );
 
 	/**
 	 * @param uri the {@link URI}
@@ -123,8 +110,8 @@ public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 	 *            {@code null} if empty
 	 * @return the {@link ResourceStreamer}
 	 */
-	ResourceStreamer request(URI uri, HttpMethod method,
-			ResourceType responseType, Map<String, ?> formData);
+	ResourceStreamer request( URI uri, HttpMethod method,
+		ResourceType responseType, Map<String, ?> formData );
 
 	/**
 	 * @param uri the {@link URI}
@@ -135,8 +122,8 @@ public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 	 *            to send as form data, or {@code null} if empty
 	 * @return the {@link ResourceStreamer}
 	 */
-	@SuppressWarnings("rawtypes")
-	ResourceStreamer request(URI uri, HttpMethod method,
-			ResourceType responseType, Map.Entry... formData);
+	@SuppressWarnings( "rawtypes" )
+	ResourceStreamer request( URI uri, HttpMethod method,
+		ResourceType responseType, Map.Entry... formData );
 
 }

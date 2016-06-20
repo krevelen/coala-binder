@@ -35,9 +35,11 @@ import io.coala.log.InjectLogger;
  * @param <ID> the type of {@link Identifier}
  * @version $Id$
  * @author Rick van Krevelen
+ * @deprecated please use {@link io.coala.name.x.Id}
  */
 @JsonInclude( Include.NON_NULL )
 @JsonTypeInfo( use = Id.CLASS, include = As.PROPERTY, property = "class" )
+@Deprecated
 public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 	implements Identifiable<ID>, Serializable
 {

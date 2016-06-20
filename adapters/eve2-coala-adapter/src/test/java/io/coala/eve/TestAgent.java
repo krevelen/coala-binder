@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/TestAgent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve;
 
@@ -38,11 +33,6 @@ import rx.Observer;
 
 /**
  * {@link TestAgent}
- * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public class TestAgent extends BasicAgent
 {
@@ -59,9 +49,9 @@ public class TestAgent extends BasicAgent
 	 * @param binder
 	 */
 	@Inject
-	public TestAgent(final Binder binder)
+	public TestAgent( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	/** @see BasicAgent#initialize() */
@@ -69,18 +59,18 @@ public class TestAgent extends BasicAgent
 	public void initialize()
 	{
 		// subscribe message handler
-		getBinder().inject(ReceivingCapability.class).getIncoming()
-				.ofType(MyMessage.class).subscribe(new Observer<MyMessage>()
+		getBinder().inject( ReceivingCapability.class ).getIncoming()
+				.ofType( MyMessage.class ).subscribe( new Observer<MyMessage>()
 				{
 					@Override
-					public void onNext(final MyMessage msg)
+					public void onNext( final MyMessage msg )
 					{
 						try
 						{
-							handle(msg);
-						} catch (Exception e)
+							handle( msg );
+						} catch( Exception e )
 						{
-							onError(e);
+							onError( e );
 						}
 					}
 
@@ -91,21 +81,21 @@ public class TestAgent extends BasicAgent
 					}
 
 					@Override
-					public void onError(final Throwable t)
+					public void onError( final Throwable t )
 					{
 						t.printStackTrace();
 					}
-				});
+				} );
 
-		if (getID().equals(EveWrapperAgentMessagingTest.senderAgentID))
+		if( getID().equals( EveWrapperAgentMessagingTest.senderAgentID ) )
 		{
 			try
 			{
-				LOG.info("About to ping...");
+				LOG.info( "About to ping..." );
 				ping();
-			} catch (Exception e)
+			} catch( Exception e )
 			{
-				LOG.error("No ping today!", e);
+				LOG.error( "No ping today!", e );
 			}
 		}
 	}
@@ -114,10 +104,10 @@ public class TestAgent extends BasicAgent
 	 * @param t
 	 * @return
 	 */
-	protected SimTime createTick(int t)
+	protected SimTime createTick( int t )
 	{
-		return getBinder().inject(SimTimeFactory.class).create(t,
-				TimeUnit.TICKS);
+		return getBinder().inject( SimTimeFactory.class ).create( t,
+				TimeUnit.TICKS );
 	}
 
 	/**
@@ -125,10 +115,10 @@ public class TestAgent extends BasicAgent
 	 */
 	public void ping() throws Exception
 	{
-		final MyMessage msg = new MyMessage(createTick(0), getID(),
-				EveWrapperAgentMessagingTest.receiverAgentID, "ping");
-		LOG.trace("About to send ping: " + msg);
-		getBinder().inject(SendingCapability.class).send(msg);
+		final MyMessage msg = new MyMessage( createTick( 0 ), getID(),
+				EveWrapperAgentMessagingTest.receiverAgentID, "ping" );
+		LOG.trace( "About to send ping: " + msg );
+		getBinder().inject( SendingCapability.class ).send( msg );
 	}
 
 	/**
@@ -136,33 +126,35 @@ public class TestAgent extends BasicAgent
 	 */
 	public void pong() throws Exception
 	{
-		final MyMessage msg = new MyMessage(createTick(1), getID(),
-				EveWrapperAgentMessagingTest.senderAgentID, "pong");
+		final MyMessage msg = new MyMessage( createTick( 1 ), getID(),
+				EveWrapperAgentMessagingTest.senderAgentID, "pong" );
 
-		LOG.trace("About to send pong: " + msg);
-		getBinder().inject(SendingCapability.class).send(msg);
+		LOG.trace( "About to send pong: " + msg );
+		getBinder().inject( SendingCapability.class ).send( msg );
 	}
 
 	@Override
 	public void finish()
 	{
-		LOG.trace(getID() + " is done");
+		LOG.trace( getID() + " is done" );
 	}
 
 	/**
 	 * @param message
 	 * @throws Exception
 	 */
-	public void handle(final MyMessage message) throws Exception
+	public void handle( final MyMessage message ) throws Exception
 	{
-		LOG.trace(getID().getValue() + " handling " + message.content + "...");
-		if (getID().equals(EveWrapperAgentMessagingTest.receiverAgentID))
+		LOG.trace(
+				getID().getValue() + " handling " + message.content + "..." );
+		if( getID().equals( EveWrapperAgentMessagingTest.receiverAgentID ) )
 		{
 			pong();
-			setStatus(BasicAgentStatus.COMPLETE);
-		} else if (getID().equals(EveWrapperAgentMessagingTest.senderAgentID))
+			setStatus( BasicAgentStatus.COMPLETE );
+		} else if( getID()
+				.equals( EveWrapperAgentMessagingTest.senderAgentID ) )
 		{
-			setStatus(BasicAgentStatus.COMPLETE);
+			setStatus( BasicAgentStatus.COMPLETE );
 		}
 	}
 

@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/dsol-util/src/test/java/com/almende/dsol/example/datacenters/Service.java $
- * 
- * Part of the EU project All4Green, see http://www.all4green-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright � 2010-2012 Almende B.V. 
  */
 package com.almende.dsol.example.datacenters;
 
@@ -32,11 +27,6 @@ import org.joda.time.Interval;
 
 /**
  * Service
- * 
- * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
- * @version $Revision: 235 $
- * @author <a href="mailto:rick@almende.org">Rick van Krevelen</a>
- * 
  */
 public class Service extends AbstractFederationModelComponent
 {
@@ -45,7 +35,7 @@ public class Service extends AbstractFederationModelComponent
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(Service.class);
+	private static final Logger LOG = LogUtil.getLogger( Service.class );
 
 	/** */
 	private static int ID_COUNT = 1;
@@ -67,29 +57,28 @@ public class Service extends AbstractFederationModelComponent
 	 * @throws RemoteException
 	 * @throws SimRuntimeException
 	 */
-	public Service(final FederationModel model, final Datacenter owner,
-			final Interval interval, final double consumptionKW,
-			final double hourlyCashflow)
+	public Service( final FederationModel model, final Datacenter owner,
+		final Interval interval, final double consumptionKW,
+		final double hourlyCashflow )
 	{
-		super(model, "SVC" + ID_COUNT++);
+		super( model, "SVC" + ID_COUNT++ );
 		this.ownerName = owner.getName();
 		this.consumptionKW = consumptionKW;
 		this.hourlyCashflow = hourlyCashflow;
 
-		this.startTime = simTime(interval.getStart());
-		final double endTime = simTime(interval.getEnd());
+		this.startTime = simTime( interval.getStart() );
+		final double endTime = simTime( interval.getEnd() );
 		try
 		{
-			getSimulator().scheduleEvent(
-					new SimEvent(this.startTime, this, this, STARTED_METHOD_ID,
-							FederationModel.NO_ARGS));
-			getSimulator().scheduleEvent(
-					new SimEvent(endTime, this, this, COMPLETED_METHOD_ID,
-							FederationModel.NO_ARGS));
-		} catch (final RemoteException | SimRuntimeException e)
+			getSimulator().scheduleEvent( new SimEvent( this.startTime, this,
+					this, STARTED_METHOD_ID, FederationModel.NO_ARGS ) );
+			getSimulator().scheduleEvent( new SimEvent( endTime, this, this,
+					COMPLETED_METHOD_ID, FederationModel.NO_ARGS ) );
+		} catch( final RemoteException | SimRuntimeException e )
 		{
-			LOG.error("t=" + model.getSimTime() + " (" + model.getDateTime()
-					+ ") Problem scheduling service start/end: " + interval, e);
+			LOG.error( "t=" + model.getSimTime() + " (" + model.getDateTime()
+					+ ") Problem scheduling service start/end: " + interval,
+					e );
 		}
 
 		// LOG.trace(String.format(
@@ -104,9 +93,9 @@ public class Service extends AbstractFederationModelComponent
 	{
 		// LOG.trace("Service " + getId() + " started, t= "
 		// + this.model.toDateTime());
-		fireEvent(SERVICE_STARTED, null);
-		fireEvent(CONSUMPTION_CHANGED, this.consumptionKW);
-		fireEvent(CASHFLOW_CHANGED, this.hourlyCashflow);
+		fireEvent( SERVICE_STARTED, null );
+		fireEvent( CONSUMPTION_CHANGED, this.consumptionKW );
+		fireEvent( CASHFLOW_CHANGED, this.hourlyCashflow );
 	}
 
 	private static final String COMPLETED_METHOD_ID = "completed";
@@ -115,9 +104,9 @@ public class Service extends AbstractFederationModelComponent
 	{
 		// LOG.trace("Service " + getId() + " completed, t= "
 		// + this.model.toDateTime());
-		fireEvent(SERVICE_COMPLETED, null);
-		fireEvent(CONSUMPTION_CHANGED, -this.consumptionKW);
-		fireEvent(CASHFLOW_CHANGED, -this.hourlyCashflow);
+		fireEvent( SERVICE_COMPLETED, null );
+		fireEvent( CONSUMPTION_CHANGED, -this.consumptionKW );
+		fireEvent( CASHFLOW_CHANGED, -this.hourlyCashflow );
 	}
 
 	/** @return the id */

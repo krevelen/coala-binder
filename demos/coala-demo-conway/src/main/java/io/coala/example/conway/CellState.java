@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.example.conway;
 
@@ -34,9 +32,8 @@ import io.coala.time.TimeUnit;
  * {@link CellState}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-@SuppressWarnings("serial")
+@SuppressWarnings( "serial" )
 public class CellState extends AbstractMessage<CellState.ID>
 {
 
@@ -50,12 +47,12 @@ public class CellState extends AbstractMessage<CellState.ID>
 			super();
 		}
 
-		public ID(final ModelID modelID, final SimTime time)
+		public ID( final ModelID modelID, final SimTime time )
 		{
-			super(modelID, new UUID(), time);
+			super( modelID, new UUID(), time );
 		}
 	}
-	
+
 	/** */
 	private LifeStatus state = null;
 
@@ -74,10 +71,10 @@ public class CellState extends AbstractMessage<CellState.ID>
 	 * @param fromID
 	 * @param lifeState
 	 */
-	public CellState(final SimTime generation, final CellID fromID,
-			final LifeStatus lifeState)
+	public CellState( final SimTime generation, final CellID fromID,
+		final LifeStatus lifeState )
 	{
-		this(generation, fromID, fromID, lifeState);
+		this( generation, fromID, fromID, lifeState );
 	}
 
 	/**
@@ -88,10 +85,11 @@ public class CellState extends AbstractMessage<CellState.ID>
 	 * @param toID
 	 * @param lifeState
 	 */
-	protected CellState(final SimTime generation, final CellID fromID,
-			final AgentID toID, final LifeStatus lifeState)
+	protected CellState( final SimTime generation, final CellID fromID,
+		final AgentID toID, final LifeStatus lifeState )
 	{
-		super(new ID(fromID.getModelID(), generation), fromID, fromID, toID);
+		super( new ID( fromID.getModelID(), generation ), fromID, fromID,
+				toID );
 		this.state = lifeState;
 	}
 
@@ -130,18 +128,18 @@ public class CellState extends AbstractMessage<CellState.ID>
 	@Override
 	public String toString()
 	{
-		return String.format("%s|%s|%s", getCellID().getValue(),
-				getGeneration().intValue(), getState());
+		return String.format( "%s|%s|%s", getCellID().getValue(),
+				getGeneration().intValue(), getState() );
 	}
 
 	/**
 	 * @param receiverID {@link AgentID} of the receiver to inform
 	 * @return a new {@link CellState} copy
 	 */
-	public CellState copyFor(final AgentID receiverID)
+	public CellState copyFor( final AgentID receiverID )
 	{
-		return new CellState(getGeneration(), getCellID(), receiverID,
-				getState());
+		return new CellState( getGeneration(), getCellID(), receiverID,
+				getState() );
 	}
 
 	/**
@@ -149,12 +147,13 @@ public class CellState extends AbstractMessage<CellState.ID>
 	 * @param myNeighborStateCount neighborhood values
 	 * @return new value for this {@link CellState} after transition
 	 */
-	public CellState next(final SimDuration delta,
-			final Map<LifeStatus, Integer> myNeighborStateCount)
+	public CellState next( final SimDuration delta,
+		final Map<LifeStatus, Integer> myNeighborStateCount )
 	{
 		final LifeStatus toState = getState()
-				.getTransition(myNeighborStateCount);
-		return new CellState(getGeneration().plus(delta), getCellID(), toState);
+				.getTransition( myNeighborStateCount );
+		return new CellState( getGeneration().plus( delta ), getCellID(),
+				toState );
 	}
 
 }

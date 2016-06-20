@@ -36,10 +36,6 @@ import io.coala.log.LogUtil;
 
 /**
  * {@link FileUtil} provides some file related utilities
- * 
- * @date $Date: 2014-08-08 07:08:29 +0200 (Fri, 08 Aug 2014) $
- * @version $Revision: 349 $ $Author: krevelen $
- * @author <a href="mailto:rick@almende.org">Rick van Krevelen</a>
  */
 public class FileUtil // implements Util
 {
@@ -131,6 +127,20 @@ public class FileUtil // implements Util
 	public static InputStream toInputStream( final String path )
 		throws IOException
 	{
+		return toInputStream( path,
+				Thread.currentThread().getContextClassLoader() );
+	}
+
+	/**
+	 * Searches the file system first and then the context class path for a file
+	 * 
+	 * @param path an absolute path in the file system or (context) classpath
+	 * @return an {@link InputStream} for the specified {@code path}
+	 * @throws IOException
+	 */
+	public static InputStream toInputStream( final String path,
+		final ClassLoader cl ) throws IOException
+	{
 		Objects.requireNonNull( path );
 
 		final File file = new File( path );
@@ -164,7 +174,6 @@ public class FileUtil // implements Util
 			// ignore
 		}
 
-		final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		// FileUtil.class.getClassLoader()
 		final URL resourcePath = cl.getResource( path );
 		if( resourcePath == null ) { throw new FileNotFoundException(

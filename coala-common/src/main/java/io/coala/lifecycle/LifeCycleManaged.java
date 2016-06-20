@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/lifecycle/LifeCycleManaged.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.lifecycle;
 
@@ -29,13 +24,10 @@ import java.lang.annotation.Target;
 /**
  * {@link LifeCycleManaged} annotates status field in a {@link Machine} as
  * manageable
- * 
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Retention( RetentionPolicy.RUNTIME )
+@Target( ElementType.FIELD )
 public @interface LifeCycleManaged
 {
 

@@ -1,7 +1,4 @@
 /* $Id: c05bb05ed449d4c799122d1140a614fbbbd4c9a4 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/exception/CoalaExceptionFactory.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.exception;
 
@@ -49,7 +44,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link Object} the agent identifier
 	 * </ul>
 	 */
-	AGENT_CREATION_FAILED("Failed to create agent with id '%s'", Object.class),
+	AGENT_CREATION_FAILED( "Failed to create agent with id '%s'", Object.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when an illegal agent creation is
@@ -60,8 +55,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link AgentID} the agent identifier
 	 * </ul>
 	 */
-	AGENT_NOT_ALLOWED("Agent with id '%s' is not (yet) valid in this model",
-			AgentID.class),
+	AGENT_NOT_ALLOWED( "Agent with id '%s' is not (yet) valid in this model", AgentID.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when an agent is unavailable
@@ -71,8 +65,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link AgentID} the agent identifier
 	 * </ul>
 	 */
-	AGENT_UNAVAILABLE("Agent with id '%s' is not (yet) available in this JVM",
-			AgentID.class),
+	AGENT_UNAVAILABLE( "Agent with id '%s' is not (yet) available in this JVM", AgentID.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when a configuration property was
@@ -84,8 +77,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link String} config source
 	 * </ul>
 	 */
-	VALUE_NOT_CONFIGURED("Property '%s' not set in configuration source '%s'",
-			String.class, String.class),
+	VALUE_NOT_CONFIGURED( "Property '%s' not set in configuration source '%s'", String.class, String.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when a value/argument/parameter is
@@ -96,7 +88,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link String} value/argument/parameter name
 	 * </ul>
 	 */
-	VALUE_NOT_SET("Value/argument/parameter '%s' can't be null!", String.class),
+	VALUE_NOT_SET( "Value/argument/parameter '%s' can't be null!", String.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when a value/argument/parameter is
@@ -108,8 +100,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link Object} invalid value
 	 * </ul>
 	 */
-	VALUE_NOT_ALLOWED("Value/argument/parameter not allowed: %s = '%s'",
-			String.class, Object.class),
+	VALUE_NOT_ALLOWED( "Value/argument/parameter not allowed: %s = '%s'", String.class, Object.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when an object could not be
@@ -121,8 +112,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link Class} type
 	 * </ul>
 	 */
-	MARSHAL_FAILED("Problem marshalling '%s' of type '%s'", Object.class,
-			Class.class),
+	MARSHAL_FAILED( "Problem marshalling '%s' of type '%s'", Object.class, Class.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when an object could not be
@@ -134,8 +124,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link Class} result type
 	 * </ul>
 	 */
-	UNMARSHAL_FAILED("Problem unmarshalling '%s' to %s", String.class,
-			Class.class),
+	UNMARSHAL_FAILED( "Problem unmarshalling '%s' to %s", String.class, Class.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when an object could not be
@@ -147,8 +136,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link Collection} constructor argument types
 	 * </ul>
 	 */
-	INCONSTRUCTIBLE("No (public) constructor found for %s with arguments: %s",
-			Class.class, Collection.class),
+	INCONSTRUCTIBLE( "No (public) constructor found for %s with arguments: %s", Class.class, Collection.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when a {@link Machine}'s
@@ -160,8 +148,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link MachineStatus} new status
 	 * </ul>
 	 */
-	STATUS_UPDATE_FAILED("Problem updating lifecycle status for %s to %s",
-			Machine.class, MachineStatus.class),
+	STATUS_UPDATE_FAILED( "Problem updating lifecycle status for %s to %s", Machine.class, MachineStatus.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when a method could not be invoked
@@ -172,8 +159,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link Object} invocation target object
 	 * </ul>
 	 */
-	INVOCATION_FAILED("Invocation failed for method name %s of target %s",
-			String.class, Object.class),
+	INVOCATION_FAILED( "Invocation failed for method name %s of target %s", String.class, Object.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when an annotation could not be
@@ -185,8 +171,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link Object} the annotated target object
 	 * </ul>
 	 */
-	ANNOTATION_NOT_FOUND("No annotation found of %s at target %s", Class.class,
-			Object.class),
+	ANNOTATION_NOT_FOUND( "No annotation found of %s at target %s", Class.class, Object.class ),
 
 	/**
 	 * This {@link CoalaException} is thrown when an operation or method failed
@@ -197,7 +182,7 @@ public enum CoalaExceptionFactory
 	 * <li>{@link String} the target method/operation
 	 * </ul>
 	 */
-	OPERATION_FAILED("Operation %s failed", String.class),
+	OPERATION_FAILED( "Operation %s failed", String.class ),
 
 	;
 
@@ -212,7 +197,7 @@ public enum CoalaExceptionFactory
 	 */
 	private CoalaExceptionFactory()
 	{
-		this("An exception occurred");
+		this( "An exception occurred" );
 	}
 
 	/**
@@ -221,8 +206,8 @@ public enum CoalaExceptionFactory
 	 * @param messageFormat
 	 * @param argumentTypes
 	 */
-	private CoalaExceptionFactory(final String messageFormat,
-			final Class<?>... argumentTypes)
+	private CoalaExceptionFactory( final String messageFormat,
+		final Class<?>... argumentTypes )
 	{
 		this.messageFormat = messageFormat;
 		this.argumentTypes = argumentTypes;
@@ -232,63 +217,63 @@ public enum CoalaExceptionFactory
 	 * @param values
 	 * @return
 	 */
-	private boolean checkArgumentTypes(final Object... values)
+	private boolean checkArgumentTypes( final Object... values )
 	{
-		if (this.argumentTypes == null || this.argumentTypes.length == 0)
+		if( this.argumentTypes == null || this.argumentTypes.length == 0 )
 			return true;
-		if (values == null || values.length < this.argumentTypes.length)
+		if( values == null || values.length < this.argumentTypes.length )
 		{
-			new IllegalArgumentException("Incorrect value count for " + name()
-					+ ": " + Arrays.asList(values)).printStackTrace();
+			new IllegalArgumentException( "Incorrect value count for " + name()
+					+ ": " + Arrays.asList( values ) ).printStackTrace();
 			return false;
 		}
-		for (int i = 0; i < this.argumentTypes.length; i++)
-			if (values[i] == null)
+		for( int i = 0; i < this.argumentTypes.length; i++ )
+			if( values[i] == null )
 			{
 				// new NullPointerException("Value " + i + " for " + name()
 				// + " can't be null!").printStackTrace();
 				// return false;
-			} else if (!ClassUtil.isAssignableFrom(this.argumentTypes[i],
-					values[i].getClass()))
+			} else if( !ClassUtil.isAssignableFrom( this.argumentTypes[i],
+					values[i].getClass() ) )
 			{
 				new IllegalArgumentException(
 						"Incorrect value type for " + name() + ". Value " + i
 								+ " (" + values[i] + ") should be of type: "
-								+ this.argumentTypes[i].getName())
+								+ this.argumentTypes[i].getName() )
 										.printStackTrace();
 				return false;
 			}
 		return true;
 	}
 
-	protected static String formatMessage(final String messageFormat,
-			final Object... values)
+	protected static String formatMessage( final String messageFormat,
+		final Object... values )
 	{
 		return values == null || values.length == 0 ? messageFormat
-				: String.format(messageFormat, values);
+				: String.format( messageFormat, values );
 	}
 
-	protected String formatMessage(final Object... values)
+	protected String formatMessage( final Object... values )
 	{
-		if (values == null || values.length <= this.argumentTypes.length)
-			return checkArgumentTypes(values)
-					? formatMessage(this.messageFormat, values)
+		if( values == null || values.length <= this.argumentTypes.length )
+			return checkArgumentTypes( values )
+					? formatMessage( this.messageFormat, values )
 					: this.messageFormat;
 
 		final Object[] shortValues = new Object[this.argumentTypes.length];
 		final Object[] remainingValues = new Object[values.length
 				- this.argumentTypes.length];
-		System.arraycopy(values, 0, shortValues, 0, shortValues.length);
-		System.arraycopy(values, shortValues.length, remainingValues, 0,
-				remainingValues.length);
-		for (int i = 0; i < remainingValues.length; i++)
+		System.arraycopy( values, 0, shortValues, 0, shortValues.length );
+		System.arraycopy( values, shortValues.length, remainingValues, 0,
+				remainingValues.length );
+		for( int i = 0; i < remainingValues.length; i++ )
 			remainingValues[i] = remainingValues[i] instanceof Identifiable
 					? ((Identifiable<?>) remainingValues[i]).getID()
 					: remainingValues[i];
 		final String result = this.messageFormat + " "
-				+ Arrays.asList(remainingValues);
-		return checkArgumentTypes(values) ? formatMessage(result, shortValues)
-				: result;
+				+ Arrays.asList( remainingValues );
+		return checkArgumentTypes( values )
+				? formatMessage( result, shortValues ) : result;
 	}
 
 	/**
@@ -296,16 +281,16 @@ public enum CoalaExceptionFactory
 	 */
 	public CoalaException create()
 	{
-		return new CoalaException(this.messageFormat);
+		return new CoalaException( this.messageFormat );
 	}
 
 	/**
 	 * @param values
 	 * @return
 	 */
-	public CoalaException create(final Object... values)
+	public CoalaException create( final Object... values )
 	{
-		return new CoalaException(formatMessage(values));
+		return new CoalaException( formatMessage( values ) );
 	}
 
 	/**
@@ -313,9 +298,9 @@ public enum CoalaExceptionFactory
 	 * @param values
 	 * @return
 	 */
-	public CoalaException create(final Throwable cause, Object... values)
+	public CoalaException create( final Throwable cause, Object... values )
 	{
-		return new CoalaException(formatMessage(values), cause);
+		return new CoalaException( formatMessage( values ), cause );
 	}
 
 	/**
@@ -323,16 +308,16 @@ public enum CoalaExceptionFactory
 	 */
 	public CoalaRuntimeException createRuntime()
 	{
-		return new CoalaRuntimeException(this.messageFormat);
+		return new CoalaRuntimeException( this.messageFormat );
 	}
 
 	/**
 	 * @param values
 	 * @return
 	 */
-	public CoalaRuntimeException createRuntime(final Object... values)
+	public CoalaRuntimeException createRuntime( final Object... values )
 	{
-		return new CoalaRuntimeException(formatMessage(values));
+		return new CoalaRuntimeException( formatMessage( values ) );
 	}
 
 	/**
@@ -340,10 +325,10 @@ public enum CoalaExceptionFactory
 	 * @param values
 	 * @return
 	 */
-	public CoalaRuntimeException createRuntime(final Throwable cause,
-			final Object... values)
+	public CoalaRuntimeException createRuntime( final Throwable cause,
+		final Object... values )
 	{
-		return new CoalaRuntimeException(formatMessage(values), cause);
+		return new CoalaRuntimeException( formatMessage( values ), cause );
 	}
 
 }

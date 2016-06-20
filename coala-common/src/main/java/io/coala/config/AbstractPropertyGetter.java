@@ -1,7 +1,4 @@
 /* $Id: 477f095b595d0f93e71a36218aa6e217cb8e6daa $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/config/AbstractPropertyGetter.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.config;
 
@@ -43,6 +38,7 @@ import io.coala.util.SerializableUtil;
  * @version $Id: 477f095b595d0f93e71a36218aa6e217cb8e6daa $
  * @author Rick van Krevelen
  */
+@Deprecated
 public abstract class AbstractPropertyGetter implements PropertyGetter
 {
 	/** */
@@ -93,7 +89,7 @@ public abstract class AbstractPropertyGetter implements PropertyGetter
 						+ getProperties().getProperty( this.key ) );
 
 		throw ExceptionFactory.createChecked( "No value for key {} in {}",
-				this.key, ConfigUtil.PROPERTIES_FILE );
+				this.key, ConfigUtil.CONFIG_FILE_BOOTTIME );
 	}
 
 	@Override
@@ -104,7 +100,7 @@ public abstract class AbstractPropertyGetter implements PropertyGetter
 		if( result != null ) return result;
 
 		LOG.trace( "No value for key {} in {}, using default: {}", this.key,
-				ConfigUtil.PROPERTIES_FILE, this.defaultValue );
+				ConfigUtil.CONFIG_FILE_BOOTTIME, this.defaultValue );
 		return defaultValue;
 	}
 

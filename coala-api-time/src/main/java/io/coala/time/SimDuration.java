@@ -20,7 +20,9 @@ package io.coala.time;
  * 
  * @version $Id: 70708e323cf08416282a4f6d2dbcfa9120d2f43e $
  * @author Rick van Krevelen
+ * @deprecated please use {@link io.coala.time.x.Duration}
  */
+@Deprecated
 public class SimDuration extends AbstractInstant<SimDuration>
 {
 

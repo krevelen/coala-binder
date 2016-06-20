@@ -1,7 +1,4 @@
 /* $Id: a430a87b173a24c397020182393912dbe22cce06 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/time/TimeUnit.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.time;
 
@@ -24,11 +19,6 @@ import io.coala.exception.ExceptionFactory;
 
 /**
  * {@link TimeUnit}
- * 
- * @date $Date: 2014-06-20 12:27:58 +0200 (Fri, 20 Jun 2014) $
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public enum TimeUnit
 {

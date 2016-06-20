@@ -57,10 +57,6 @@ public class ConfigTest
 
 	/**
 	 * {@link TestConfig}
-	 * 
-	 * @version $Revision: 317 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	@Sources( { "file:~/.myapp.config", "file:${user.home}/etc/myapp.config",
 			"classpath:foo/bar/baz.properties" } )
@@ -68,25 +64,25 @@ public class ConfigTest
 	{
 		/** @return */
 		@Key( "server.http.port" )
-			int port();
+		int port();
 
 		/** @return */
 		@Key( "server.host.name" )
-			String hostname();
+		String hostname();
 
 		/** @return */
 		@Key( "server.max.threads" )
 		@DefaultValue( "42" )
-			int maxThreads();
+		int maxThreads();
 
 		@DefaultValue( "Hello Mr. %s!" )
-			String helloMr( String name );
+		String helloMr( String name );
 
 		@DefaultValue( "Welcome: ${user.name}" )
-			String welcomeString();
+		String welcomeString();
 
 		@DefaultValue( "${TMPDIR}/tempFile.tmp" )
-			File tempFile();
+		File tempFile();
 	}
 
 	@Test

@@ -27,10 +27,6 @@ import io.coala.model.ModelComponent;
 /**
  * {@link JULMembersInjector}
  * 
- * @date $Date: 2014-04-18 17:39:26 +0200 (Fri, 18 Apr 2014) $
- * @version $Revision: 240 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  * @param <T>
  */
 class JULMembersInjector<T> implements MembersInjector<T>

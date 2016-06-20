@@ -46,6 +46,7 @@ import io.coala.time.SimTime;
  * @version $Id: ca3bac33935db68b7ba8a3ad62bb0df17fa248fb $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class BasicAgent extends AbstractLifeCycle<AgentID, BasicAgentStatus>
 	implements Agent, LifeCycle<BasicAgentStatus>, LifeCycleHooks
 {

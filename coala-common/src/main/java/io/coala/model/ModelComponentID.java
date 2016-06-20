@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.model;
 
@@ -27,10 +25,10 @@ import io.coala.name.AbstractIdentifier;
  * {@link ModelComponentID}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
+@Deprecated
 public class ModelComponentID<T extends Serializable & Comparable<T>>
-		extends AbstractIdentifier<T>
+	extends AbstractIdentifier<T>
 {
 
 	/** */
@@ -44,8 +42,10 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 
 	/** */
 	public static final char PATH_SEP = Character
-			.valueOf(System.getProperty(PATH_SEP_PROPERTY,
-					Character.toString(PATH_SEP_DEFAULT)).charAt(0));
+			.valueOf( System
+					.getProperty( PATH_SEP_PROPERTY,
+							Character.toString( PATH_SEP_DEFAULT ) )
+					.charAt( 0 ) );
 
 	/** */
 	private static final long serialVersionUID = 1L;
@@ -71,10 +71,10 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	 * @param value
 	 */
 	// @Inject
-	public ModelComponentID(final ModelID modelID, final T value)
+	public ModelComponentID( final ModelID modelID, final T value )
 	{
-		super(value);
-		setModelID(modelID);
+		super( value );
+		setModelID( modelID );
 	}
 
 	/**
@@ -84,16 +84,16 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	 * @param value
 	 */
 	// @Inject
-	public ModelComponentID(final ModelComponentID<?> parentID, final T value)
+	public ModelComponentID( final ModelComponentID<?> parentID, final T value )
 	{
-		super(value);
-		setParentID(parentID);
+		super( value );
+		setParentID( parentID );
 	}
 
 	/**
 	 * @param modelID
 	 */
-	protected synchronized final void setModelID(final ModelID modelID)
+	protected synchronized final void setModelID( final ModelID modelID )
 	{
 		this.modelID = modelID;
 	}
@@ -101,11 +101,11 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	/**
 	 * @param parentID
 	 */
-	protected synchronized final void setParentID(
-			final ModelComponentID<?> parentID)
+	protected synchronized final void
+		setParentID( final ModelComponentID<?> parentID )
 	{
 		this.parentID = parentID;
-		setModelID(parentID.getModelID());
+		setModelID( parentID.getModelID() );
 	}
 
 	/**
@@ -136,10 +136,10 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	public String toString()
 	{
 		return getModelID() == this ? getValue().toString()
-				: (/*!isOrphan() ? getParentID().toString()
-						:*/ getModelID() == null ? ORPHAN_MODEL_ID
-								: getModelID().getValue())
-						+ PATH_SEP + getValue();
+				: (/*
+					 * !isOrphan() ? getParentID().toString() :
+					 */ getModelID() == null ? ORPHAN_MODEL_ID
+						: getModelID().getValue()) + PATH_SEP + getValue();
 	}
 
 	@Override
@@ -162,58 +162,52 @@ public class ModelComponentID<T extends Serializable & Comparable<T>>
 	}
 
 	@Override
-	public boolean equals(final Object other)
+	public boolean equals( final Object other )
 	{
 		// FIXME apply some common strategy via Visitor design pattern
 
-		if (this == other)
-			return true;
+		if( this == other ) return true;
 
-		if (!super.equals(other) || getClass() != other.getClass())
+		if( !super.equals( other ) || getClass() != other.getClass() )
 			return false;
 
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings( "unchecked" )
 		final ModelComponentID<T> that = (ModelComponentID<T>) other;
-		if (getModelID() == null)
+		if( getModelID() == null )
 		{
-			if (that.getModelID() != null)
-				return false;
-		} else
-			if (getModelID() != this && !getModelID().equals(that.getModelID()))
+			if( that.getModelID() != null ) return false;
+		} else if( getModelID() != this
+				&& !getModelID().equals( that.getModelID() ) )
 			return false;
-		if (getParentID() == null)
+		if( getParentID() == null )
 		{
-			if (that.getParentID() != null)
-				return false;
-		} else if (getParentID() != this
-				&& !getParentID().equals(that.getParentID()))
+			if( that.getParentID() != null ) return false;
+		} else if( getParentID() != this
+				&& !getParentID().equals( that.getParentID() ) )
 			return false;
 
-		return super.equals(other);
+		return super.equals( other );
 	}
 
 	@Override
-	public int compareTo(final AbstractIdentifier<T> other)
+	public int compareTo( final AbstractIdentifier<T> other )
 	{
 		// FIXME apply some common strategy via Visitor design pattern
 
-		if (getModelID() != this && getModelID() != null)
+		if( getModelID() != this && getModelID() != null )
 		{
 			final int modelIDCompare = getModelID()
-					.compareTo(((ModelComponentID<?>) other).getModelID());
-			if (modelIDCompare != 0)
-				return modelIDCompare;
+					.compareTo( ((ModelComponentID<?>) other).getModelID() );
+			if( modelIDCompare != 0 ) return modelIDCompare;
 		}
 
-		if (getValue() == null)
-			throw new NullPointerException(
-					getClass() + ": Can't compare with this null value");
+		if( getValue() == null ) throw new NullPointerException(
+				getClass() + ": Can't compare with this null value" );
 
-		if (other.getValue() == null)
-			throw new NullPointerException(
-					getClass() + ": Can't compare with other null value");
+		if( other.getValue() == null ) throw new NullPointerException(
+				getClass() + ": Can't compare with other null value" );
 
-		return getValue().compareTo(other.getValue());
+		return getValue().compareTo( other.getValue() );
 	}
 
 }

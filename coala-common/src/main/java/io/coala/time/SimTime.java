@@ -30,6 +30,7 @@ import io.coala.log.LogUtil;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class SimTime extends AbstractInstant<SimTime>
 {
 

@@ -321,26 +321,22 @@ public class StageUtil implements Util
 		final Set<Class<? extends Throwable>> result = new HashSet<>();
 		if( ignore != null && ignore.length != 0 )
 			outer: for( Class<? extends Throwable> cls : ignore )
-		{
+			{
 			for( Class<? extends Throwable> old : result )
 			{
-				if( old.isAssignableFrom( cls ) )
-				{
-					LOG.info( "ignore() level '" + old.getName()
-							+ "' subsumes '" + cls.getName() + "' annotated in "
-							+ source );
-					continue outer;
-				}
-				if( cls.isAssignableFrom( old ) )
-				{
-					LOG.info( "ignore() level '" + cls.getName()
-							+ "' annotated in " + source + " subsumes '"
-							+ old.getName() + "'" );
-					result.remove( old );
-				}
+			if( old.isAssignableFrom( cls ) )
+			{
+			LOG.info( "ignore() level '" + old.getName() + "' subsumes '" + cls.getName() + "' annotated in " + source );
+			continue outer;
+			}
+			if( cls.isAssignableFrom( old ) )
+			{
+			LOG.info( "ignore() level '" + cls.getName() + "' annotated in " + source + " subsumes '" + old.getName() + "'" );
+			result.remove( old );
+			}
 			}
 			result.add( cls );
-		}
+			}
 		return result;
 	}
 
@@ -441,7 +437,7 @@ public class StageUtil implements Util
 	public static <T> boolean invokeEventHandlers(
 		final Observer<StageChange> stageObserver, final Class<T> type,
 		final T target, final String currentStage, final StageEvent event )
-			throws Throwable
+		throws Throwable
 	{
 		Object result;
 		boolean failed = false;
@@ -597,9 +593,7 @@ public class StageUtil implements Util
 	/**
 	 * {@link StageChangeImpl}
 	 * 
-	 * @date $Date$
 	 * @version $Id: 9a6f8c0ff212cc075671d77c0745054d0f1c0b82 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	private static class StageChangeImpl implements StageChange
 	{
@@ -673,9 +667,7 @@ public class StageUtil implements Util
 	/**
 	 * {@link FinalizeDecorator}
 	 * 
-	 * @date $Date$
 	 * @version $Id: 9a6f8c0ff212cc075671d77c0745054d0f1c0b82 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 *
 	 * @param <T>
 	 */

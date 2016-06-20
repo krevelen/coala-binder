@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.name;
 
@@ -23,11 +21,11 @@ import java.io.Serializable;
  * {@link Identifier}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  * @param <T> the {@link Comparable} and {@link Serializable} content type
  * @param <THIS> the concrete {@link Identifier} type
+ * @deprecated please use {@link io.coala.json.Wrapper}
  */
+@Deprecated
 public interface Identifier<T extends Comparable<T> & Serializable, THIS extends Identifier<T, ?>>
 		extends Serializable, Comparable<THIS>
 {

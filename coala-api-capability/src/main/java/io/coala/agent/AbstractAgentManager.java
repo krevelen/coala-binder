@@ -123,10 +123,6 @@ public abstract class AbstractAgentManager implements AgentManager
 
 	/**
 	 * {@link AgentStarter}
-	 * 
-	 * @version $Revision: 353 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	protected class AgentStarter implements Observer<AgentStatusUpdate>
 	{
@@ -268,10 +264,6 @@ public abstract class AbstractAgentManager implements AgentManager
 
 	/**
 	 * {@link AgentFinisher}
-	 * 
-	 * @version $Revision: 353 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	protected class AgentFinisher implements Observer<AgentStatusUpdate>
 	{

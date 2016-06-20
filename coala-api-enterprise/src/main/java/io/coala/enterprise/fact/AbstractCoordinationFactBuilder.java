@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/enterprise-ontology/src/main/java/io/coala/enterprise/fact/AbstractCoordinationFactBuilder.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.fact;
 
@@ -34,13 +29,9 @@ import io.coala.time.SimTime;
 
 /**
  * {@link AbstractCoordinationFactBuilder}
- * 
- * @version $Revision: 290 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact, THIS extends AbstractCoordinationFactBuilder<F, THIS>>
-		implements Builder<F, THIS>
+	implements Builder<F, THIS>
 {
 
 	/** */
@@ -113,7 +104,7 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 		return this.expiration;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	protected THIS self()
 	{
 		return (THIS) this;
@@ -121,7 +112,7 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 
 	/** @see Identifiable.Builder#withID(FactID) */
 	@Override
-	public THIS withID(final FactID factID)
+	public THIS withID( final FactID factID )
 	{
 		this.factID = factID;
 		return self();
@@ -129,9 +120,9 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 
 	/** @see CoordinationFact.Builder#withID(ModelID, SimTime) */
 	@Override
-	public THIS withID(final ModelID modelID, final SimTime time)
+	public THIS withID( final ModelID modelID, final SimTime time )
 	{
-		return withID(new FactID(modelID, time));
+		return withID( new FactID( modelID, time ) );
 	}
 
 	/**
@@ -139,10 +130,10 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 	 *      SimTime)
 	 */
 	@Override
-	public THIS withID(final ModelID modelID, final CoordinationFactType type,
-			final SimTime time)
+	public THIS withID( final ModelID modelID, final CoordinationFactType type,
+		final SimTime time )
 	{
-		return withID(new FactID(modelID, type, time));
+		return withID( new FactID( modelID, type, time ) );
 	}
 
 	/**
@@ -150,10 +141,10 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 	 *      CoordinationFact)
 	 */
 	@Override
-	public THIS withID(final CoordinationFactType type, final SimTime time,
-			final CoordinationFact cause)
+	public THIS withID( final CoordinationFactType type, final SimTime time,
+		final CoordinationFact cause )
 	{
-		return withID(new FactID(type, time, cause));
+		return withID( new FactID( type, time, cause ) );
 	}
 
 	/**
@@ -161,28 +152,28 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 	 *      FactID)
 	 */
 	@Override
-	public THIS withID(final CoordinationFactType type, final SimTime time,
-			final FactID causeID)
+	public THIS withID( final CoordinationFactType type, final SimTime time,
+		final FactID causeID )
 	{
-		return withID(new FactID(type, time, causeID));
+		return withID( new FactID( type, time, causeID ) );
 	}
 
 	/**
 	 * @see CoordinationFact.Builder#withID(SimTime, CoordinationFact)
 	 */
 	@Override
-	public THIS withID(final SimTime time, final CoordinationFact cause)
+	public THIS withID( final SimTime time, final CoordinationFact cause )
 	{
-		return withID(new FactID(time, cause));
+		return withID( new FactID( time, cause ) );
 	}
 
 	/**
 	 * @see CoordinationFact.Builder#withID(SimTime, FactID)
 	 */
 	@Override
-	public THIS withID(final SimTime time, final FactID causeID)
+	public THIS withID( final SimTime time, final FactID causeID )
 	{
-		return withID(new FactID(time, causeID));
+		return withID( new FactID( time, causeID ) );
 	}
 
 	/**
@@ -190,11 +181,11 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 	 *      SimTime, CoordinationFact)
 	 */
 	@Override
-	public THIS withID(final TransactionID transactionID,
-			final CoordinationFactType type, final SimTime time,
-			final CoordinationFact cause)
+	public THIS withID( final TransactionID transactionID,
+		final CoordinationFactType type, final SimTime time,
+		final CoordinationFact cause )
 	{
-		return withID(new FactID(transactionID, type, time, cause));
+		return withID( new FactID( transactionID, type, time, cause ) );
 	}
 
 	/**
@@ -202,16 +193,15 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 	 *      SimTime, FactID)
 	 */
 	@Override
-	public THIS withID(final TransactionID transactionID,
-			final CoordinationFactType type, final SimTime time,
-			final FactID causeID)
+	public THIS withID( final TransactionID transactionID,
+		final CoordinationFactType type, final SimTime time,
+		final FactID causeID )
 	{
-		return withID(new FactID(transactionID, type, time, causeID));
+		return withID( new FactID( transactionID, type, time, causeID ) );
 	}
 
-	/** @see CoordinationFact.Builder#withExpiration(com.almende.coala.time.SimTime) */
 	@Override
-	public THIS withExpiration(final SimTime expiration)
+	public THIS withExpiration( final SimTime expiration )
 	{
 		this.expiration = expiration;
 		return self();
@@ -219,7 +209,7 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 
 	/** @see Message.Builder#withSenderID(AgentID) */
 	@Override
-	public THIS withSenderID(final AgentID senderID)
+	public THIS withSenderID( final AgentID senderID )
 	{
 		this.senderID = senderID;
 		return self();
@@ -227,7 +217,7 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 
 	/** @see Message.Builder#withReceiverID(AgentID) */
 	@Override
-	public THIS withReceiverID(final AgentID receiverID)
+	public THIS withReceiverID( final AgentID receiverID )
 	{
 		this.receiverID = receiverID;
 		return self();
@@ -235,7 +225,7 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 
 	/** @see Event.Builder#withProducerID(ModelComponentID) */
 	@Override
-	public THIS withProducerID(final ModelComponentID<?> producerID)
+	public THIS withProducerID( final ModelComponentID<?> producerID )
 	{
 		this.producerID = producerID;
 		return self();
@@ -243,17 +233,18 @@ public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact
 
 	/** @see ModelComponent.Builder#withOwnerID(AgentID) */
 	@Override
-	public THIS withOwnerID(final AgentID ownerID)
+	public THIS withOwnerID( final AgentID ownerID )
 	{
 		this.ownerID = ownerID;
 		return self();
 	}
 
 	/** @see Event.Builder#withProducerID(ModelComponentID) */
-	public THIS withProducer(final ModelComponent<?> producer)
+	public THIS withProducer( final ModelComponent<?> producer )
 	{
-		return withProducerID(producer.getID()).withOwnerID(
-				producer.getOwnerID()).withSenderID(producer.getOwnerID());
+		return withProducerID( producer.getID() )
+				.withOwnerID( producer.getOwnerID() )
+				.withSenderID( producer.getOwnerID() );
 	}
 
 }

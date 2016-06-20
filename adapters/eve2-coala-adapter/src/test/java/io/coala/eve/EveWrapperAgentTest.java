@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/eve-util/src/test/java/com/almende/coala/eve/EveWrapperAgentTest.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve;
 
@@ -34,10 +29,6 @@ import rx.Observer;
 
 /**
  * {@link EveWrapperAgentTest}
- * 
- * @date $Date: 2014-06-19 12:25:20 +0200 (Thu, 19 Jun 2014) $
- * @version $Revision: 306 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 @Ignore
 public class EveWrapperAgentTest
@@ -45,31 +36,31 @@ public class EveWrapperAgentTest
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(EveWrapperAgentTest.class);
+			.getLogger( EveWrapperAgentTest.class );
 
 	@Test
 	public void testConfig() throws Exception
 	{
-		LOG.trace("Starting EveAgentFactory...");
+		LOG.trace( "Starting EveAgentFactory..." );
 		final EveAgentManager eve = EveAgentManager.getInstance();
 
-		final CountDownLatch latch = new CountDownLatch(1);
+		final CountDownLatch latch = new CountDownLatch( 1 );
 
 		final String agentID = "_testAgent_";
-		eve.boot(agentID, TestAgent.class).subscribe(
-				new Observer<AgentStatusUpdate>()
+		eve.boot( agentID, TestAgent.class )
+				.subscribe( new Observer<AgentStatusUpdate>()
 				{
 					@Override
-					public void onNext(final AgentStatusUpdate update)
+					public void onNext( final AgentStatusUpdate update )
 					{
-						if (update.getStatus().isInitializedStatus())
+						if( update.getStatus().isInitializedStatus() )
 							latch.countDown();
 					}
 
 					@Override
-					public void onError(final Throwable t)
+					public void onError( final Throwable t )
 					{
-						LOG.warn("Problem with wrapper status update", t);
+						LOG.warn( "Problem with wrapper status update", t );
 					}
 
 					@Override
@@ -77,10 +68,10 @@ public class EveWrapperAgentTest
 					{
 						// TODO cleanup?
 					}
-				});
+				} );
 
 		latch.await();
-		LOG.trace("Eve wrapper for agent " + agentID + " finalized!");
+		LOG.trace( "Eve wrapper for agent " + agentID + " finalized!" );
 	}
 
 }

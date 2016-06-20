@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.message;
 
@@ -28,12 +26,11 @@ import io.coala.model.ModelComponentID;
  * {@link AbstractMessage}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <ID> the {@link MessageID} type
  */
 public abstract class AbstractMessage<ID extends MessageID<?, ?>>
-		extends AbstractTimedEvent<ID>implements Message<ID>
+	extends AbstractTimedEvent<ID> implements Message<ID>
 {
 
 	/** */
@@ -62,10 +59,11 @@ public abstract class AbstractMessage<ID extends MessageID<?, ?>>
 	 * @param receiverID
 	 */
 	// @Inject
-	protected AbstractMessage(final ID id, final ModelComponentID<?> producerID,
-			final AgentID senderID, final AgentID receiverID)
+	protected AbstractMessage( final ID id,
+		final ModelComponentID<?> producerID, final AgentID senderID,
+		final AgentID receiverID )
 	{
-		super(id, null, null);
+		super( id, null, null );
 		this.senderID = senderID;
 		this.receiverID = receiverID;
 	}
@@ -77,10 +75,10 @@ public abstract class AbstractMessage<ID extends MessageID<?, ?>>
 	 * @param producerID
 	 * @param receiverID
 	 */
-	public AbstractMessage(final ID id, final ModelComponent<?> producer,
-			final AgentID receiverID)
+	public AbstractMessage( final ID id, final ModelComponent<?> producer,
+		final AgentID receiverID )
 	{
-		super(id, producer);
+		super( id, producer );
 		this.senderID = producer.getOwnerID();
 		this.receiverID = receiverID;
 	}

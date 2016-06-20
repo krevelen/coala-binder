@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.organization;
 
@@ -29,7 +27,6 @@ import io.coala.time.SimTime;
  * {@link AbstractOrganization}
  * 
  * @version $Id: 4ddff9cc3ae108cbe8b5ba3c85790dc08454e64a $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public abstract class AbstractOrganization extends BasicAgent implements
 		Organization

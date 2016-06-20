@@ -21,21 +21,15 @@ import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import rx.Observer;
 
-
 /**
  * {@link ScenarioTest}
- * 
- * @date $Date: 2014-09-28 14:42:17 +0200 (zo, 28 sep 2014) $
- * @version $Revision: 1083 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 // @Ignore
 public class ScenarioTest
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(ScenarioTest.class);
+	private static final Logger LOG = LogUtil.getLogger( ScenarioTest.class );
 
 	/** */
 	public static final long nofHours = (24 * 31);
@@ -46,12 +40,10 @@ public class ScenarioTest
 	/** */
 	public static final String scenario = "generated_usecase.xml";
 
-
 	/** */
 	private static String replicationID = //"testRepl"
-	//		+ (System.currentTimeMillis() / 1000)
-	 "arum"
-	;
+			//		+ (System.currentTimeMillis() / 1000)
+			"arum";
 
 	/** */
 	private static Binder binder;
@@ -61,22 +53,21 @@ public class ScenarioTest
 	{
 		try
 		{
-		System.err.println("Setting up binder");
-		binder = BinderFactory.Builder
-				.fromFile("arum.properties")
-				.withProperty(ReplicationConfig.class,
-						ReplicationConfig.MODEL_NAME_KEY, replicationID)
-				.build().create("_unittest_");
-		System.err.println("Injecting events");
-		binder.inject(Datasource.class).removeEvents();
-		binder.inject(Datasource.class).removeResourceDescriptors();
-		binder.inject(Datasource.class).removeReplication();
-		binder.inject(Datasource.class).removeProcesses();
+			System.err.println( "Setting up binder" );
+			binder = BinderFactory.Builder.fromFile( "arum.properties" )
+					.withProperty( ReplicationConfig.class,
+							ReplicationConfig.MODEL_NAME_KEY, replicationID )
+					.build().create( "_unittest_" );
+			System.err.println( "Injecting events" );
+			binder.inject( Datasource.class ).removeEvents();
+			binder.inject( Datasource.class ).removeResourceDescriptors();
+			binder.inject( Datasource.class ).removeReplication();
+			binder.inject( Datasource.class ).removeProcesses();
 //		UseCase.Util.saveDefaultReplication(binder, new File(scenario),
 //				new File(training), projectID, Amount.valueOf(30, Unit.ONE),
 //				Amount.valueOf(30, NonSI.DAY));
-		System.err.println("Binder ready");
-		}catch(final Throwable t)
+			System.err.println( "Binder ready" );
+		} catch( final Throwable t )
 		{
 			t.printStackTrace();
 		}
@@ -85,98 +76,110 @@ public class ScenarioTest
 	@Test
 	public void scenarioTest() throws Exception
 	{
-		System.err.println("Starting test");
+		System.err.println( "Starting test" );
 		final String scenarioName = "testScenario";
 
-		LOG.info("Sim repl duration: " + binder.inject(ReplicationConfig.class));
+		LOG.info( "Sim repl duration: "
+				+ binder.inject( ReplicationConfig.class ) );
 
-		LOG.info(binder.getID() + ": Test scenario starting...");
+		LOG.info( binder.getID() + ": Test scenario starting..." );
 
 		final CreatingCapability booterSvc = binder
-				.inject(CreatingCapability.class);
+				.inject( CreatingCapability.class );
 
 		final ReplicatingCapability simulator = binder
-				.inject(ReplicatingCapability.class);
-		final SimTime endOfSimulation = simulator.getTime().plus(2,TimeUnit.DAYS);
-		final CountDownLatch latch = new CountDownLatch(1);
+				.inject( ReplicatingCapability.class );
+		final SimTime endOfSimulation = simulator.getTime().plus( 2,
+				TimeUnit.DAYS );
+		final CountDownLatch latch = new CountDownLatch( 1 );
 
-		simulator.getTimeUpdates().subscribe(new Observer<SimTime>()
+		simulator.getTimeUpdates().subscribe( new Observer<SimTime>()
+		{
+			private SimTime currentSimTime = simulator.getTime();
+
+			public void onNext( final SimTime time )
+			{
+
+				if( time.isAfter( endOfSimulation ) )
 				{
-					private SimTime	currentSimTime = simulator.getTime();
+					wrapUp();
+					latch.countDown();
+				} else if( time.isAfter( currentSimTime ) )
+				{
+					System.out.println( "Simulator " + simulator.getClockID()
+							+ " time is now " + time );
+					currentSimTime = time;
+				}
+			}
 
-					public void onNext(final SimTime time)
+			public void onCompleted()
+			{
+			}
+
+			public void onError( final Throwable t )
+			{
+				t.printStackTrace();
+			}
+		} );
+
+		booterSvc
+				.createAgent( scenarioName,
+						ScenarioManagementOrganization.class )
+				.subscribe( new AgentStatusObserver()
+				{
+
+					public void onNext( final AgentStatusUpdate update )
 					{
+						LOG.info( binder.getID() + ": " + scenarioName
+								+ " agent status now " + update.getStatus() );
 
-						if (time.isAfter(endOfSimulation)) {
+						if( update.getStatus().isInitializedStatus() )
+						{
+							LOG.info( binder.getID() + ": Starting sim!" );
+							simulator.start();
+						}
+						if( update.getStatus().isFinishedStatus()
+								|| update.getStatus().isFailedStatus() )
+						{
+							LOG.info(
+									binder.getID() + ": Aborted simulation!" );
 							wrapUp();
 							latch.countDown();
-						} else if (time.isAfter(currentSimTime)) {
-							System.out.println("Simulator " + simulator.getClockID()
-								+ " time is now " + time);
-							currentSimTime = time;
 						}
 					}
 
-					public void onCompleted()
-					{
-					}
-
-					public void onError(final Throwable t)
-					{
-						t.printStackTrace();
-					}
-				});
-
-
-		booterSvc.createAgent(scenarioName,
-				ScenarioManagementOrganization.class).subscribe(
-				new AgentStatusObserver()
-				{
-
-					public void onNext(final AgentStatusUpdate update)
-					{
-						LOG.info(binder.getID() + ": " + scenarioName
-								+ " agent status now " + update.getStatus());
-
-						if (update.getStatus().isInitializedStatus())
-						{
-							LOG.info(binder.getID() + ": Starting sim!");
-							simulator.start();
-						} if (update.getStatus().isFinishedStatus() || update.getStatus().isFailedStatus())
-						{
-							LOG.info(binder.getID() + ": Aborted simulation!");
-							wrapUp();
-							latch.countDown();
-						} 
-					}
-
-					public void onError(final Throwable e)
+					public void onError( final Throwable e )
 					{
 						e.printStackTrace();
 					}
 
 					public void onCompleted()
 					{
-						LOG.info(binder.getID() + ": " + scenarioName
-								+ " status updates COMPLETED");
+						LOG.info( binder.getID() + ": " + scenarioName
+								+ " status updates COMPLETED" );
 					}
-				});
+				} );
 
 		// wait for scenario agent to finish
 		latch.await();
 
-		LOG.info(binder.getID() + ": Test scenario complete");
+		LOG.info( binder.getID() + ": Test scenario complete" );
 	}
 
-	protected void wrapUp() {
-		try {
-			new TimeLineWriter().writeTimeLine(binder.inject(ConfiguringCapability.class).getProperty("guiTemplate").get("gui"));
+	protected void wrapUp()
+	{
+		try
+		{
+			new TimeLineWriter()
+					.writeTimeLine( binder.inject( ConfiguringCapability.class )
+							.getProperty( "guiTemplate" ).get( "gui" ) );
 			new MidasWriter().writeToMidas();
 			new EventTraceWriter().writeSimulatorOutput();
-			
-		} catch (Exception e) {
-			LOG.error("Failed to write output of ASIMOV",e);
-			System.exit(1);
+
+		} catch( Exception e )
+		{
+			LOG.error( "Failed to write output of ASIMOV", e );
+			System.exit( 1 );
 		}
 	}
 }

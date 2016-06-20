@@ -1,7 +1,4 @@
 /* $Id$
- * $URL$
- * 
- * Part of the EU project Inertia, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,17 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2014 Almende B.V. 
  */
 package io.coala.experimental.stage;
 
 /**
  * {@link Stage}
- * 
- * @date $Date$
- * @version $Revision$
- * @author <a href="mailto:gebruiker@almende.org">gebruiker</a>
  */
 public enum Stage
 {

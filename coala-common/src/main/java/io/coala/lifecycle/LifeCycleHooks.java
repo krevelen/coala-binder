@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.lifecycle;
 
@@ -24,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * {@link LifeCycle} object
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public interface LifeCycleHooks
 {

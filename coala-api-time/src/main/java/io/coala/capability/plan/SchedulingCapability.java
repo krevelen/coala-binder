@@ -24,9 +24,8 @@ import io.coala.time.Trigger;
  * {@link SchedulingCapability}
  * 
  * @param <I>
- * @version $Id: 3910462899309fbce4d82fb12041417f0f755501 $
- * @author Rick van Krevelen
  */
+@Deprecated
 public interface SchedulingCapability<I extends Instant<I>> extends TimingCapability<I>
 {
 

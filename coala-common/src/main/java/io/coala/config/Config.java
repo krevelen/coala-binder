@@ -11,9 +11,8 @@ import org.aeonbits.owner.Mutable;
 /**
  * {@link Config}
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Id: 60907217eef5350279876f1d64002469ef2132f1 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
+ * @version $Id$
+ * @author Rick van Krevelen
  */
 @LoadPolicy( LoadType.MERGE )
 @Sources( { "file:${" + Coala.CONFIG_FILE_PROPERTY + "}",
@@ -22,7 +21,7 @@ import org.aeonbits.owner.Mutable;
 		"file:~/" + Coala.CONFIG_FILE_DEFAULT,
 		"classpath:" + Coala.CONFIG_FILE_DEFAULT } )
 @Separator( Coala.CONFIG_VALUE_SEP )
+@Deprecated
 public interface Config extends Mutable
 {
-
 }

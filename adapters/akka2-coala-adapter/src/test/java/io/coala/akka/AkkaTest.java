@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/akka-util/src/test/java/com/almende/akka/test/AkkaTest.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.akka;
 
@@ -37,10 +32,6 @@ import com.typesafe.config.ConfigFactory;
 /**
  * {@link AkkaTest} implements examples from the original documentation found at
  * <a href="http://doc.akka.io/docs/akka/2.2.3/java/">doc.akka.io</a>
- * 
- * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
- * @version $Revision: 235 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class AkkaTest
 {
@@ -50,10 +41,6 @@ public class AkkaTest
 
 	/**
 	 * {@link Msg}
-	 * 
-	 * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
-	 * @version $Revision: 235 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static enum Msg
 	{
@@ -68,10 +55,6 @@ public class AkkaTest
 
 	/**
 	 * {@link Greeter}
-	 * 
-	 * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
-	 * @version $Revision: 235 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class Greeter extends UntypedActor
 	{
@@ -91,10 +74,6 @@ public class AkkaTest
 
 	/**
 	 * {@link HelloWorld}
-	 * 
-	 * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
-	 * @version $Revision: 235 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class HelloWorld extends UntypedActor
 	{
@@ -124,10 +103,6 @@ public class AkkaTest
 
 	/**
 	 * {@link HelloActor}
-	 * 
-	 * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
-	 * @version $Revision: 235 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class HelloActor extends UntypedActor
 	{
@@ -148,10 +123,6 @@ public class AkkaTest
 
 	/**
 	 * {@link WorldActor}
-	 * 
-	 * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
-	 * @version $Revision: 235 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class WorldActor extends UntypedActor
 	{
@@ -168,10 +139,6 @@ public class AkkaTest
 
 	/**
 	 * {@link HelloKernel}
-	 * 
-	 * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
-	 * @version $Revision: 235 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public static class HelloKernel implements Bootable
 	{
