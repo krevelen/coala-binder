@@ -1,11 +1,8 @@
-/* $Id: 9364899fa417facb02358f204723493cf3eeacff $
- * $URL: https://dev.almende.com/svn/abms/dsol-util/src/main/java/nl/tudelft/simulation/logger/Logger.java $
+/* $Id$
  * 
  * @(#) Logger.java Aug 27, 2003 Copyright (c) 2002-2005 Delft University of
  * Technology Jaffalaan 5, 2628 BX Delft, the Netherlands. All rights reserved.
  * This software is proprietary information of Delft University of Technology
- * 
- * Part of the EU project INERTIA, see http://www.inertia-project.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -19,9 +16,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright � 2010-2013 Almende B.V. 
- * 
  */
 package nl.tudelft.simulation.logger;
 
@@ -54,9 +48,7 @@ import nl.tudelft.simulation.language.reflection.ClassUtil;
  * General Public License (LGPL) </a>, no warranty.
  * 
  * @author <a href="http://www.peter-jacobs.com">Peter Jacobs </a>
- * @author <a href="mailto:rick@almende.org">Rick van Krevelen</a>
- * @date $Date: 2014-04-30 15:15:27 +0200 (Wed, 30 Apr 2014) $
- * @version $Revision: 247 $
+ * @author Rick van Krevelen
  */
 public class Logger
 {

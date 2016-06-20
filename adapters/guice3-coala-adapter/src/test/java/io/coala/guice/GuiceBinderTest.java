@@ -1,0 +1,115 @@
+/* $Id: cb0d884977af928fd3936149d5145de78a2dc3b8 $
+ * 
+ * @license
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package io.coala.guice;
+
+import org.apache.logging.log4j.Logger;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import com.google.inject.assistedinject.AssistedInjectBinding;
+import com.google.inject.assistedinject.AssistedInjectTargetVisitor;
+import com.google.inject.assistedinject.AssistedMethod;
+import com.google.inject.spi.DefaultBindingTargetVisitor;
+
+import io.coala.agent.Agent;
+import io.coala.agent.AgentFactory;
+import io.coala.bind.BinderFactory;
+import io.coala.capability.replicate.ReplicationConfig;
+import io.coala.config.ConfigUtil;
+import io.coala.log.LogUtil;
+import io.coala.time.SimTime;
+import io.coala.time.TimeUnit;
+
+/**
+ * {@link GuiceBinderTest}
+ */
+public class GuiceBinderTest
+{
+
+	/** */
+	private static final Logger LOG = LogUtil
+			.getLogger( GuiceBinderTest.class );
+
+	/**
+	 * {@link Visitor}
+	 * 
+	 * @version $Id: cb0d884977af928fd3936149d5145de78a2dc3b8 $
+	 * @author Rick van Krevelen
+	 */
+	public static class Visitor
+		extends DefaultBindingTargetVisitor<Object, Void>
+		implements AssistedInjectTargetVisitor<Object, Void>
+	{
+
+		/**
+		 * @see AssistedInjectTargetVisitor#visit(AssistedInjectBinding)
+		 */
+		@Override
+		public Void
+			visit( final AssistedInjectBinding<? extends Object> binding )
+		{
+			// Loop over each method in the factory...
+			for( AssistedMethod method : binding.getAssistedMethods() )
+			{
+				LOG.trace( "Non-assisted Dependencies: "
+						+ method.getDependencies() + ", Factory Method: "
+						+ method.getFactoryMethod()
+						+ ", Implementation Constructor: "
+						+ method.getImplementationConstructor()
+						+ ", Implementation Type: "
+						+ method.getImplementationType() );
+			}
+			return null;
+		}
+	}
+
+	@Ignore // FIXME !
+	@Test
+	public void injectTest() throws Exception
+	{
+		System.setProperty( ConfigUtil.CONFIG_FILE_PROPERTY,
+				ConfigUtil.CONFIG_FILE_DEFAULT );
+		final BinderFactory factory = BinderFactory.Builder.fromFile()
+				.withProperty( ReplicationConfig.class,
+						ReplicationConfig.MODEL_NAME_KEY,
+						"testModel" + System.currentTimeMillis() )
+				.build();
+
+		final GuiceBinder binder = (GuiceBinder) factory.create( "testAgent",
+				TestAgent.class );
+
+		// test TestAgentFactory; log binding using a visitor
+
+		binder.getInjector().getBinding( AgentFactory.class )
+				.acceptTargetVisitor( new Visitor() );
+
+		final AgentFactory agentFactory = binder.inject( AgentFactory.class );
+
+		final Agent testAgent = agentFactory.create();
+		LOG.trace( "Assisted Injector created a " + testAgent.getClass() );
+
+		// test SimTimeFactory; log binding using a visitor
+
+		binder.getInjector().getBinding( SimTime.Factory.class )
+				.acceptTargetVisitor( new Visitor() );
+
+		final SimTime testTime = (SimTime) binder
+				.inject( SimTime.Factory.class ).create( 1, TimeUnit.TICKS );
+		LOG.trace( "Assisted Injector created a time: " + testTime
+		// + ", in base time units: " + testTime.toBaseUnit()
+		);
+	}
+}
