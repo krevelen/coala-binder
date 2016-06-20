@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>io.coala</groupId>
+  <artifactId>jason-coala-adapter</artifactId>
+  <versioning>
+    <release>0.2.0-b1</release>
+    <versions>
+      <version>0.2.0-b1</version>
+    </versions>
+    <lastUpdated>20160620140132</lastUpdated>
+  </versioning>
+</metadata>
