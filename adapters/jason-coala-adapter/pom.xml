@@ -12,7 +12,7 @@
 
 	<artifactId>jason-coala-adapter</artifactId>
 
-	<name>${project.artifactId}</name>
+	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for the Jason agent platform
 		$Id$
