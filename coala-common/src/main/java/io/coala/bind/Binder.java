@@ -51,8 +51,8 @@ public interface Binder extends Identifiable<AgentID>
 
 	<T> Provider<T> rebind( Class<T> type, T instance );
 
-	<T> Provider<T> rebind( Class<T> type, Provider<? extends T> provider );
+	<T> Provider<T> rebind( Class<T> type, Provider<T> provider );
 
-	<T> Provider<T> rebind( Class<T> type, Class<? extends T> factory );
+//	<T> Provider<T> rebind( Class<T> type, Class<? extends T> factory );
 
 }

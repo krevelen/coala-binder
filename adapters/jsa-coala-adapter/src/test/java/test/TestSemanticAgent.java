@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/jsa-util/src/test/java/test/TestSemanticAgent.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package test;
 
@@ -39,18 +34,13 @@ import org.junit.Test;
 
 /**
  * {@link TestSemanticAgent}
- * 
- * @date $Date: 2014-04-18 16:38:34 +0200 (Fri, 18 Apr 2014) $
- * @version $Revision: 235 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
 @Ignore
 public class TestSemanticAgent
 {
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(TestSemanticAgent.class);
+			.getLogger( TestSemanticAgent.class );
 
 	/** */
 	private static final String[] args = new String[] { "-gui", "-local-host",
@@ -67,33 +57,33 @@ public class TestSemanticAgent
 	public static void setUp() throws Exception
 	{
 		// Create the Profile
-		if (args.length > 0)
+		if( args.length > 0 )
 		{
-			if (args[0].startsWith("-"))
+			if( args[0].startsWith( "-" ) )
 			{
 				// Settings specified as command line arguments
-				final Properties pp = Boot.parseCmdLineArgs(args);
-				if (pp != null)
+				final Properties pp = Boot.parseCmdLineArgs( args );
+				if( pp != null )
 				{
-					profile = new ProfileImpl(pp);
+					profile = new ProfileImpl( pp );
 				} else
 				{
 					// One of the "exit-immediately" options was specified!
-					System.exit(0);
+					System.exit( 0 );
 				}
 			} else
 			{
 				// Settings specified in a property file
-				profile = new ProfileImpl(args[0]);
+				profile = new ProfileImpl( args[0] );
 			}
 		} else
 		{
 			// Settings specified in the default property file
-			profile = new ProfileImpl(Boot.DEFAULT_FILENAME);
+			profile = new ProfileImpl( Boot.DEFAULT_FILENAME );
 		}
 
 		// Start a new JADE runtime system
-		Runtime.instance().setCloseVM(false);
+		Runtime.instance().setCloseVM( false );
 
 		// Check whether this is the Main Container or a peripheral
 		// container
@@ -101,23 +91,22 @@ public class TestSemanticAgent
 
 	private static AgentContainer getContainer() throws Exception
 	{
-		if (container != null)
-			return container;
+		if( container != null ) return container;
 
-		if (profile.getBooleanProperty(Profile.MAIN, true))
+		if( profile.getBooleanProperty( Profile.MAIN, true ) )
 		{
-			LOG.trace("Creating main container...");
-			container = Runtime.instance().createMainContainer(profile);
+			LOG.trace( "Creating main container..." );
+			container = Runtime.instance().createMainContainer( profile );
 		} else
 		{
-			LOG.trace("Creating peripheral agent container...");
-			container = Runtime.instance().createAgentContainer(profile);
+			LOG.trace( "Creating peripheral agent container..." );
+			container = Runtime.instance().createAgentContainer( profile );
 		}
 
-		if (container == null)
-			throw new Exception("Unable to create new agent platform");
+		if( container == null )
+			throw new Exception( "Unable to create new agent platform" );
 
-		LOG.trace("Initialized " + container.getContainerName());
+		LOG.trace( "Initialized " + container.getContainerName() );
 		return container;
 	}
 
@@ -127,29 +116,30 @@ public class TestSemanticAgent
 		try
 		{
 			final AgentContainer container = getContainer();
-			while (container.getState().getCode() != PlatformState.cPLATFORM_STATE_KILLED)
+			while( container.getState()
+					.getCode() != PlatformState.cPLATFORM_STATE_KILLED )
 			{
 				try
 				{
 					final String name = container.getContainerName();
-					LOG.trace("Waiting for " + name + " (state: "
-							+ container.getState() + ") to die...");
+					LOG.trace( "Waiting for " + name + " (state: "
+							+ container.getState() + ") to die..." );
 					container.kill();
-					Thread.sleep(100);
-				} catch (final InterruptedException ignore)
+					Thread.sleep( 100 );
+				} catch( final InterruptedException ignore )
 				{
 					//
-				} catch (final StaleProxyException e)
+				} catch( final StaleProxyException e )
 				{
-					LOG.warn("Container (state: " + container.getState()
-							+ ") is stale!?");
+					LOG.warn( "Container (state: " + container.getState()
+							+ ") is stale!?" );
 					break;
 				}
 			}
-			LOG.trace("Agent container has been killed");
-		} catch (final Exception e)
+			LOG.trace( "Agent container has been killed" );
+		} catch( final Exception e )
 		{
-			LOG.error("Problem closing agent container", e);
+			LOG.error( "Problem closing agent container", e );
 		}
 	}
 
@@ -159,22 +149,22 @@ public class TestSemanticAgent
 		final AgentContainer container = getContainer();
 		final String agName = "MyTestAgent";
 		final MySemanticAgent agObject = new MySemanticAgent();
-		LOG.trace("Adding new agent: " + agName + "...");
-		container.acceptNewAgent(agName, agObject);
+		LOG.trace( "Adding new agent: " + agName + "..." );
+		container.acceptNewAgent( agName, agObject );
 
-		while (agObject.getAgentState().getValue() != Agent.AP_DELETED)
+		while( agObject.getAgentState().getValue() != Agent.AP_DELETED )
 		{
-			LOG.trace("Waiting for " + agName + " (state: "
-					+ agObject.getAgentState() + ") to be killed via GUI...");
+			LOG.trace( "Waiting for " + agName + " (state: "
+					+ agObject.getAgentState() + ") to be killed via GUI..." );
 			try
 			{
-				Thread.sleep(1000);
-			} catch (final InterruptedException ignore)
+				Thread.sleep( 1000 );
+			} catch( final InterruptedException ignore )
 			{
 				//
 			}
 		}
-		
+
 		container.kill();
 	}
 

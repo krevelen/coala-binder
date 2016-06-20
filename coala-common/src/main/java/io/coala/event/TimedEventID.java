@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.event;
 
@@ -27,13 +25,12 @@ import io.coala.time.Timed;
  * {@link TimedEventID}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <T> the {@link Serializable} and {@link Comparable} value type
  * @param <I> the {@link Instant} type
  */
 public class TimedEventID<T extends Serializable & Comparable<T>, I extends Instant<I>>
-		extends EventID<T> implements Timed<I>
+	extends EventID<T> implements Timed<I>
 {
 
 	/** */
@@ -57,9 +54,9 @@ public class TimedEventID<T extends Serializable & Comparable<T>, I extends Inst
 	 * @param value the (unique) value of this identifier
 	 * @param instant the {@link Instant} the identified {@link Event} occurs
 	 */
-	public TimedEventID(final ModelID modelID, final T value, final I instant)
+	public TimedEventID( final ModelID modelID, final T value, final I instant )
 	{
-		super(modelID, value);
+		super( modelID, value );
 		this.time = instant;
 	}
 
@@ -72,8 +69,8 @@ public class TimedEventID<T extends Serializable & Comparable<T>, I extends Inst
 	@Override
 	public String toString()
 	{
-		return String.format("%s t=%s", super.toString(),
-				getTime() == null ? "?" : getTime().toString());
+		return String.format( "%s t=%s", super.toString(),
+				getTime() == null ? "?" : getTime().toString() );
 	}
 
 }

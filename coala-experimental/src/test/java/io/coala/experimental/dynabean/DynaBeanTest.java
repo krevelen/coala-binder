@@ -60,10 +60,6 @@ import io.coala.log.LogUtil;
  * >jannocessor</a>, Jackson-based
  * <a href="http://avro.apache.org/docs/1.7.6/gettingstartedjava.html" >Apache
  * Avro</a>, etc.
- * 
- * @version $Revision: 320 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class DynaBeanTest
 {

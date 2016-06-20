@@ -1,7 +1,4 @@
 /* $Id: f190f0b00e0bcc4f38c5508f628f54fa11af51c6 $
- * $URL: https://dev.almende.com/svn/abms/guice-util/src/main/java/io/coala/guice/log/InjectLoggerTypeListener.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.guice.log;
 
@@ -33,10 +28,6 @@ import io.coala.log.LogUtil;
 
 /**
  * {@link InjectLoggerTypeListener}
- * 
- * @date $Date: 2014-04-18 17:39:26 +0200 (Fri, 18 Apr 2014) $
- * @version $Revision: 240 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class InjectLoggerTypeListener implements TypeListener
 {

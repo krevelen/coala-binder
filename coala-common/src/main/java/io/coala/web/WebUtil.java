@@ -25,15 +25,12 @@ import io.coala.util.Util;
 
 /**
  * {@link WebUtil} contains internet-related utility methods
- * 
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class WebUtil implements Util
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(WebUtil.class);
+	private static final Logger LOG = LogUtil.getLogger( WebUtil.class );
 
 	/** */
 	private static final String DEFAULT_CHARSET = "UTF-8";
@@ -42,25 +39,26 @@ public class WebUtil implements Util
 	 * @param data
 	 * @return
 	 */
-	public static String urlEncode(final String data)
+	public static String urlEncode( final String data )
 	{
-		return urlEncode(data,DEFAULT_CHARSET);
+		return urlEncode( data, DEFAULT_CHARSET );
 	}
 
 	/**
 	 * @param data
 	 * @return
 	 */
-	@SuppressWarnings("deprecation")
-	public static String urlEncode(final String data, final String charset)
+	@SuppressWarnings( "deprecation" )
+	public static String urlEncode( final String data, final String charset )
 	{
 		try
 		{
-			return URLEncoder.encode(data, charset);
-		} catch (final UnsupportedEncodingException e)
+			return URLEncoder.encode( data, charset );
+		} catch( final UnsupportedEncodingException e )
 		{
-			LOG.warn("Problem encoding agent id using: " + DEFAULT_CHARSET, e);
-			return URLEncoder.encode(data);
+			LOG.warn( "Problem encoding agent id using: " + DEFAULT_CHARSET,
+					e );
+			return URLEncoder.encode( data );
 		}
 	}
 

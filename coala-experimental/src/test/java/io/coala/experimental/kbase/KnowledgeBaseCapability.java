@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/reasoner/KnowledgeBaseService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.experimental.kbase;
 
@@ -33,20 +28,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link KnowledgeBaseCapability} provides reasoning capability
  * 
- * @date $Date: 2014-06-03 14:26:09 +0200 (Tue, 03 Jun 2014) $
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  * @param <B> the type of belief
  */
-public interface KnowledgeBaseCapability extends Capability<BasicCapabilityStatus>
+public interface KnowledgeBaseCapability
+	extends Capability<BasicCapabilityStatus>
 {
 
 	/**
 	 * {@link Factory}
-	 * 
-	 * @version $Revision: 296 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface Factory extends CapabilityFactory<KnowledgeBaseCapability>
 	{
@@ -60,12 +49,12 @@ public interface KnowledgeBaseCapability extends Capability<BasicCapabilityStatu
 
 	interface Rule<T> // is the belief pattern matcher
 	{
-		Observable<T> match(Observable<Belief> beliefs);
+		Observable<T> match( Observable<Belief> beliefs );
 
 		Rule<Belief> IDENTITY = new Rule<Belief>()
 		{
 			@Override
-			public Observable<Belief> match(final Observable<Belief> beliefs)
+			public Observable<Belief> match( final Observable<Belief> beliefs )
 			{
 				return beliefs.asObservable();
 			}
@@ -74,14 +63,14 @@ public interface KnowledgeBaseCapability extends Capability<BasicCapabilityStatu
 		Rule<Belief> NEGATION = new Rule<Belief>()
 		{
 			@Override
-			public Observable<Belief> match(final Observable<Belief> beliefs)
+			public Observable<Belief> match( final Observable<Belief> beliefs )
 			{
-				return Observable.create(new OnSubscribe<Belief>()
+				return Observable.create( new OnSubscribe<Belief>()
 				{
 					@Override
-					public void call(final Subscriber<? super Belief> sub)
+					public void call( final Subscriber<? super Belief> sub )
 					{
-						beliefs.subscribe(new Observer<Belief>()
+						beliefs.subscribe( new Observer<Belief>()
 						{
 							@Override
 							public void onCompleted()
@@ -90,38 +79,38 @@ public interface KnowledgeBaseCapability extends Capability<BasicCapabilityStatu
 							}
 
 							@Override
-							public void onError(final Throwable e)
+							public void onError( final Throwable e )
 							{
-								sub.onError(e);
+								sub.onError( e );
 							}
 
 							@Override
-							public void onNext(Belief t)
+							public void onNext( Belief t )
 							{
-								sub.onNext(t.negate());
+								sub.onNext( t.negate() );
 							}
-						});
+						} );
 					}
-				});
+				} );
 			}
 		};
 	}
 
 	/** @return the rules */
 	@JsonIgnore
-	Observable<Rule<?>> getRules(boolean currentOnly);
+	Observable<Rule<?>> getRules( boolean currentOnly );
 
 	/** @return the (inferred) beliefs */
 	@JsonIgnore
-	Observable<Belief> getBeliefs(boolean currentOnly);
+	Observable<Belief> getBeliefs( boolean currentOnly );
 
 	/** @return the newly inferred and added beliefs */
-	Observable<Belief> add(Rule<?> rule);
+	Observable<Belief> add( Rule<?> rule );
 
 	/** @return the (recursively added) newly inferred beliefs */
-	Observable<Belief> add(Belief belief);
+	Observable<Belief> add( Belief belief );
 
 	/** @return the resulting matched */
-	<T> Observable<T> match(Rule<T> rule, boolean readOnly);
+	<T> Observable<T> match( Rule<T> rule, boolean readOnly );
 
 }

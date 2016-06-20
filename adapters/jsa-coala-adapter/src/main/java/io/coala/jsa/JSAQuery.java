@@ -9,10 +9,6 @@ import jade.semantics.lang.sl.tools.SL;
 
 /**
  * {@link JSAQuery}
- * 
- * @version $Revision: 237 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class JSAQuery implements Query
 {
@@ -22,12 +18,12 @@ public class JSAQuery implements Query
 
 	protected final Node node;
 
-	public JSAQuery(Node node)
+	public JSAQuery( Node node )
 	{
 		super();
-		if (node instanceof StringConstantNode)
+		if( node instanceof StringConstantNode )
 		{
-			this.node = SL.formula("(false)");
+			this.node = SL.formula( "(false)" );
 		} else
 			this.node = node;
 	}
@@ -43,11 +39,10 @@ public class JSAQuery implements Query
 		return node.toString();
 	}
 
-	/** @see com.almende.coala.service.reasoner.ReasonerService.Query#negate() */
 	@Override
 	public Query negate()
 	{
-		return new JSAQuery(new NotNode((Formula) getNode()));
+		return new JSAQuery( new NotNode( (Formula) getNode() ) );
 	}
 
 }

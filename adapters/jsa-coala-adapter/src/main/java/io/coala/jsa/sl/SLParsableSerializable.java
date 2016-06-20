@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/jsa-util/src/main/java/com/almende/coala/jsa/sl/SLParsableSerializable.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,27 +12,28 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.jsa.sl;
 
 import java.io.Serializable;
 
 // Type for requirements
-public class SLParsableSerializable implements SLParsable, Serializable {
+public class SLParsableSerializable implements SLParsable, Serializable
+{
 
 	/** */
 	private static final long serialVersionUID = 1L;
-	
-	protected SLParsableSerializable() {
+
+	protected SLParsableSerializable()
+	{
 		// zero argument constructor;
 	}
-	
-	public SLParsableSerializable(final String string) {
+
+	public SLParsableSerializable( final String string )
+	{
 		this.value = string;
 	}
-	
+
 	private String value;
 
 	/**
@@ -49,24 +47,27 @@ public class SLParsableSerializable implements SLParsable, Serializable {
 	/**
 	 * @param value the value to set
 	 */
-	public void setValue(final String value)
+	public void setValue( final String value )
 	{
 		this.value = value;
 	}
-	
+
 	@Override
-	public String toString(){
+	public String toString()
+	{
 		return value;
 	}
-	
+
 	@Override
-	public boolean equals(Object o) {
-		return toString().equals(o.toString());
+	public boolean equals( Object o )
+	{
+		return toString().equals( o.toString() );
 	}
-	
+
 	@Override
-	public int hashCode() {
+	public int hashCode()
+	{
 		return toString().hashCode();
 	}
-	
+
 }

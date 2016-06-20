@@ -49,10 +49,6 @@ import rx.functions.Func1;
 
 /**
  * {@link ResourceStreamer}
- * 
- * @version $Revision: 359 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class ResourceStreamer
 {

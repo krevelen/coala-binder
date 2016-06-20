@@ -35,15 +35,15 @@ import io.coala.log.InjectLogger;
  * {@link AbstractInstant}
  * 
  * @version $Id: 34cb0fcc5b4ad7f7fb2f5f5e43fadf1efcd2bdfe $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <THIS> the concrete {@link AbstractInstant} type
  */
 // @Embeddable
-@JsonInclude(Include.NON_NULL)
+@JsonInclude( Include.NON_NULL )
+@Deprecated
 public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
-		// extends Number
-		implements Instant<THIS>, JSONConvertible<THIS>
+// extends Number
+	implements Instant<THIS>, JSONConvertible<THIS>
 {
 
 	/** */
@@ -78,12 +78,12 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	 * @param value
 	 * @param unit
 	 */
-	protected AbstractInstant(final ClockID source, final Number value,
-			final TimeUnit unit)
+	protected AbstractInstant( final ClockID source, final Number value,
+		final TimeUnit unit )
 	{
-		setClockID(source);
-		setValue(value);
-		setUnit(unit);
+		setClockID( source );
+		setValue( value );
+		setUnit( unit );
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	/**
 	 * @param source the source to set
 	 */
-	protected synchronized void setClockID(final ClockID source)
+	protected synchronized void setClockID( final ClockID source )
 	{
 		this.clockID = source;
 	}
@@ -109,7 +109,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	/**
 	 * @param value the value to set
 	 */
-	protected synchronized void setValue(final Number value)
+	protected synchronized void setValue( final Number value )
 	{
 		this.value = value;
 	}
@@ -123,7 +123,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	/**
 	 * @param unit the unit to set
 	 */
-	protected synchronized void setUnit(final TimeUnit unit)
+	protected synchronized void setUnit( final TimeUnit unit )
 	{
 		this.unit = unit;
 	}
@@ -134,31 +134,31 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	 * @param unit the {@link TimeUnit}
 	 * @return this {@link THIS} object
 	 */
-	@SuppressWarnings("unchecked")
-	public THIS withTime(final ClockID clockID, final Number value,
-			final TimeUnit unit)
+	@SuppressWarnings( "unchecked" )
+	public THIS withTime( final ClockID clockID, final Number value,
+		final TimeUnit unit )
 	{
-		setValue(value);
-		setUnit(unit);
-		setClockID(clockID);
+		setValue( value );
+		setUnit( unit );
+		setClockID( clockID );
 		return (THIS) this;
 	}
 
 	@Override
 	public String toString()
 	{
-		return String.format("%s %s @%s", getValue(), getUnit(), getClockID());
+		return String.format( "%s %s @%s", getValue(), getUnit(),
+				getClockID() );
 	}
 
 	@Override
-	public int compareTo(final Instant<?> other)
+	public int compareTo( final Instant<?> other )
 	{
-		final int compareClockID = getClockID().compareTo(other.getClockID());
-		if (compareClockID != 0)
-			return compareClockID;
+		final int compareClockID = getClockID().compareTo( other.getClockID() );
+		if( compareClockID != 0 ) return compareClockID;
 
-		return Double.compare(doubleValue(),
-				other.toUnit(getUnit()).doubleValue());
+		return Double.compare( doubleValue(),
+				other.toUnit( getUnit() ).doubleValue() );
 	}
 
 	@Override
@@ -175,33 +175,26 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Override
-	public boolean equals(Object obj)
+	public boolean equals( Object obj )
 	{
-		if (this == obj)
-			return true;
-		if (obj == null || getClass() != obj.getClass())
-			return false;
+		if( this == obj ) return true;
+		if( obj == null || getClass() != obj.getClass() ) return false;
 
 		final THIS other = (THIS) obj;
 
-		if (getClockID() == null)
+		if( getClockID() == null )
 		{
-			if (other.getClockID() != null)
-				return false;
-		} else if (!getClockID().equals(other.getClockID()))
-			return false;
+			if( other.getClockID() != null ) return false;
+		} else if( !getClockID().equals( other.getClockID() ) ) return false;
 
-		if (this.getUnit() != other.getUnit())
-			return false;
+		if( this.getUnit() != other.getUnit() ) return false;
 
-		if (this.getValue() == null)
+		if( this.getValue() == null )
 		{
-			if (other.getValue() != null)
-				return false;
-		} else if (!this.getValue().equals(other.getValue()))
-			return false;
+			if( other.getValue() != null ) return false;
+		} else if( !this.getValue().equals( other.getValue() ) ) return false;
 
 		return true;
 	}
@@ -233,13 +226,13 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	@Override
 	public THIS toNanoseconds()
 	{
-		return toUnit(TimeUnit.NANOS);
+		return toUnit( TimeUnit.NANOS );
 	}
 
 	@Override
 	public THIS toMilliseconds()
 	{
-		return toUnit(TimeUnit.MILLIS);
+		return toUnit( TimeUnit.MILLIS );
 	}
 
 	@JsonIgnore
@@ -251,213 +244,212 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	@Override
 	public THIS toSeconds()
 	{
-		return toUnit(TimeUnit.SECONDS);
+		return toUnit( TimeUnit.SECONDS );
 	}
 
 	@Override
 	public THIS toMinutes()
 	{
-		return toUnit(TimeUnit.MINUTES);
+		return toUnit( TimeUnit.MINUTES );
 	}
 
 	@Override
 	public THIS toHours()
 	{
-		return toUnit(TimeUnit.HOURS);
+		return toUnit( TimeUnit.HOURS );
 	}
 
 	@Override
 	public THIS toDays()
 	{
-		return toUnit(TimeUnit.DAYS);
+		return toUnit( TimeUnit.DAYS );
 	}
 
 	@Override
 	public THIS toWeeks()
 	{
-		return toUnit(TimeUnit.WEEKS);
+		return toUnit( TimeUnit.WEEKS );
 	}
 
 	@Override
 	public Date toDate()
 	{
-		return new Date(getMillis());
+		return new Date( getMillis() );
 	}
 
 	@Override
-	public Date toDate(final Date offset)
+	public Date toDate( final Date offset )
 	{
-		return new Date(offset.getTime() + getMillis());
+		return new Date( offset.getTime() + getMillis() );
 	}
 
 	@Override
 	public DateTime toDateTime()
 	{
-		return new DateTime(getMillis(), DEFAULT_DATETIME_ZONE);
+		return new DateTime( getMillis(), DEFAULT_DATETIME_ZONE );
 	}
 
 	@Override
-	public DateTime toDateTime(final DateTime offset)
+	public DateTime toDateTime( final DateTime offset )
 	{
-		return offset.plus(getMillis());
+		return offset.plus( getMillis() );
 	}
 
 	@Override
 	public Calendar toCalendar()
 	{
-		final Calendar result = GregorianCalendar.getInstance(DEFAULT_TIME_ZONE,
-				DEFAULT_LOCALE);
-		result.setTimeInMillis(getMillis());
+		final Calendar result = GregorianCalendar
+				.getInstance( DEFAULT_TIME_ZONE, DEFAULT_LOCALE );
+		result.setTimeInMillis( getMillis() );
 		return result;
 	}
 
 	@Override
-	public Calendar toCalendar(final Date offset)
+	public Calendar toCalendar( final Date offset )
 	{
-		final Calendar result = GregorianCalendar.getInstance(DEFAULT_TIME_ZONE,
-				DEFAULT_LOCALE);
-		result.setTimeInMillis(offset.getTime() + toMilliseconds().longValue());
+		final Calendar result = GregorianCalendar
+				.getInstance( DEFAULT_TIME_ZONE, DEFAULT_LOCALE );
+		result.setTimeInMillis(
+				offset.getTime() + toMilliseconds().longValue() );
 		return result;
 	}
 
 	@Override
-	public THIS plus(final Number value, final TimeUnit unit)
+	public THIS plus( final Number value, final TimeUnit unit )
 	{
-		return plus(getUnit().convertFrom(value, unit).doubleValue());
+		return plus( getUnit().convertFrom( value, unit ).doubleValue() );
 	}
 
 	@Override
-	public THIS plus(final Instant<?> value)
+	public THIS plus( final Instant<?> value )
 	{
-		return plus(value.toUnit(getUnit()).doubleValue());
+		return plus( value.toUnit( getUnit() ).doubleValue() );
 	}
 
 	@Override
-	public THIS minus(final Number value)
+	public THIS minus( final Number value )
 	{
-		return plus(-value.doubleValue());
+		return plus( -value.doubleValue() );
 	}
 
 	@Override
-	public THIS minus(final Number value, final TimeUnit unit)
+	public THIS minus( final Number value, final TimeUnit unit )
 	{
-		return plus(-value.doubleValue(), unit);
+		return plus( -value.doubleValue(), unit );
 	}
 
 	@Override
-	public THIS minus(final Instant<?> value)
+	public THIS minus( final Instant<?> value )
 	{
-		return minus(value.toUnit(getUnit()).doubleValue());
+		return minus( value.toUnit( getUnit() ).doubleValue() );
 	}
 
 	@Override
-	public THIS multipliedBy(final Number factor)
+	public THIS multipliedBy( final Number factor )
 	{
-		return minus((factor.doubleValue() - 1) * getValue().doubleValue());
+		return minus( (factor.doubleValue() - 1) * getValue().doubleValue() );
 	}
 
 	@Override
-	public THIS dividedBy(final Number factor)
+	public THIS dividedBy( final Number factor )
 	{
-		return multipliedBy(1. / factor.doubleValue());
+		return multipliedBy( 1. / factor.doubleValue() );
 	}
 
 	@Override
-	public Number dividedBy(final Instant<?> value)
+	public Number dividedBy( final Instant<?> value )
 	{
-		return doubleValue() / value.toUnit(getUnit()).doubleValue();
+		return doubleValue() / value.toUnit( getUnit() ).doubleValue();
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Override
-	public THIS max(final THIS... others)
+	public THIS max( final THIS... others )
 	{
 		THIS result = (THIS) this;
-		if (others != null && others.length != 0)
-			for (THIS other : others)
-				if (other.isAfter(result))
-					result = other;
+		if( others != null && others.length != 0 ) for( THIS other : others )
+			if( other.isAfter( result ) ) result = other;
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Override
-	public THIS min(final THIS... others)
+	public THIS min( final THIS... others )
 	{
 		THIS result = (THIS) this;
-		if (others != null && others.length != 0)
-			for (THIS other : others)
-				if (other.isBefore(result))
-					result = other;
+		if( others != null && others.length != 0 ) for( THIS other : others )
+			if( other.isBefore( result ) ) result = other;
 		return result;
 	}
 
 	@Override
-	public boolean isBefore(final Number value)
+	public boolean isBefore( final Number value )
 	{
-		return isBefore(value, getUnit());
+		return isBefore( value, getUnit() );
 	}
 
 	@Override
-	public boolean isBefore(final Number value, final TimeUnit unit)
+	public boolean isBefore( final Number value, final TimeUnit unit )
 	{
-		return doubleValue() < getUnit().convertFrom(value, unit).doubleValue();
+		return doubleValue() < getUnit().convertFrom( value, unit )
+				.doubleValue();
 	}
 
 	@Override
-	public boolean isBefore(final Instant<?> value)
+	public boolean isBefore( final Instant<?> value )
 	{
-		return isBefore(value.getValue(), value.getUnit());
+		return isBefore( value.getValue(), value.getUnit() );
 	}
 
 	@Override
-	public boolean isOnOrBefore(final Number value)
+	public boolean isOnOrBefore( final Number value )
 	{
-		return !isAfter(value);
+		return !isAfter( value );
 	}
 
 	@Override
-	public boolean isOnOrBefore(final Number value, final TimeUnit unit)
+	public boolean isOnOrBefore( final Number value, final TimeUnit unit )
 	{
-		return !isAfter(value, unit);
+		return !isAfter( value, unit );
 	}
 
 	@Override
-	public boolean isOnOrBefore(final Instant<?> value)
+	public boolean isOnOrBefore( final Instant<?> value )
 	{
-		return !isAfter(value);
+		return !isAfter( value );
 	}
 
 	@Override
-	public boolean isOnOrAfter(final Number value)
+	public boolean isOnOrAfter( final Number value )
 	{
-		return !isBefore(value);
+		return !isBefore( value );
 	}
 
 	@Override
-	public boolean isOnOrAfter(final Number value, final TimeUnit unit)
+	public boolean isOnOrAfter( final Number value, final TimeUnit unit )
 	{
-		return !isBefore(value, unit);
+		return !isBefore( value, unit );
 	}
 
 	@Override
-	public boolean isOnOrAfter(final Instant<?> value)
+	public boolean isOnOrAfter( final Instant<?> value )
 	{
-		return !isBefore(value);
+		return !isBefore( value );
 	}
 
 	@Override
-	public boolean isAfter(final Number value)
+	public boolean isAfter( final Number value )
 	{
-		return isAfter(value, getUnit());
+		return isAfter( value, getUnit() );
 	}
 
 	@Override
-	public boolean isAfter(final Number value, final TimeUnit unit)
+	public boolean isAfter( final Number value, final TimeUnit unit )
 	{
 		// try
 		// {
-		return doubleValue() > getUnit().convertFrom(value, unit).doubleValue();
+		return doubleValue() > getUnit().convertFrom( value, unit )
+				.doubleValue();
 		// } catch (final CoalaRuntimeException e)
 		// {
 		// return value.doubleValue() > doubleValue();
@@ -465,17 +457,17 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public boolean isAfter(final Instant<?> value)
+	public boolean isAfter( final Instant<?> value )
 	{
-		return isAfter(value.getValue(), value.getUnit());
+		return isAfter( value.getValue(), value.getUnit() );
 	}
 
 	@Override
-	public Iterable<THIS> getRange(final Instant<?> interval,
-			final Instant<?> max)
+	public Iterable<THIS> getRange( final Instant<?> interval,
+		final Instant<?> max )
 	{
-		@SuppressWarnings("unchecked")
-		final Iterator<THIS> iterator = Range.of((THIS) this, interval, max);
+		@SuppressWarnings( "unchecked" )
+		final Iterator<THIS> iterator = Range.of( (THIS) this, interval, max );
 		return new Iterable<THIS>()
 		{
 			@Override
@@ -489,14 +481,14 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	@Override
 	public String toJSON()
 	{
-		return JsonUtil.toJSON(this);
+		return JsonUtil.toJSON( this );
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings( "unchecked" )
 	@Override
-	public THIS fromJSON(final String jsonValue)
+	public THIS fromJSON( final String jsonValue )
 	{
-		return (THIS) JsonUtil.valueOf(jsonValue, getClass());
+		return (THIS) JsonUtil.valueOf( jsonValue, getClass() );
 	}
 
 }

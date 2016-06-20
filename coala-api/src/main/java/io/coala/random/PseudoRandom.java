@@ -15,8 +15,12 @@
  */
 package io.coala.random;
 
+import static org.aeonbits.owner.util.Collections.entry;
+import static org.aeonbits.owner.util.Collections.map;
+
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Random;
 
 import org.aeonbits.owner.ConfigFactory;
@@ -24,6 +28,7 @@ import org.aeonbits.owner.Converter;
 
 import com.eaio.uuid.UUID;
 
+import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper.Util;
 import io.coala.name.x.Id;
 
@@ -89,18 +94,22 @@ public interface PseudoRandom
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Config extends io.coala.config.Config
+	interface Config extends GlobalConfig
 	{
+		String NAME_KEY = "random.id";
+
 		String NAME_DEFAULT = "RNG";
+
+		String SEED_KEY = "random.seed";
 
 		String SEED_DEFAULT = "NaN";
 
-		@Key( "random.id" )
+		@Key( NAME_KEY )
 		@DefaultValue( NAME_DEFAULT )
 		@ConverterClass( NameConverter.class )
 		Name id();
 
-		@Key( "random.seed" )
+		@Key( SEED_KEY )
 		@DefaultValue( SEED_DEFAULT )
 		@ConverterClass( SystemMillisConverter.class )
 		BigDecimal seed();
@@ -154,6 +163,11 @@ public interface PseudoRandom
 		PseudoRandom create();
 
 		/**
+		 * @return a {@link PseudoRandom}
+		 */
+		PseudoRandom create( CharSequence id, Number seed );
+
+		/**
 		 * @param config the {@link Config}
 		 * @return a {@link PseudoRandom}
 		 */
@@ -182,6 +196,17 @@ public interface PseudoRandom
 			public JavaPseudoRandom create( final Config config )
 			{
 				return JavaPseudoRandom.of( config );
+			}
+
+			@SuppressWarnings( "unchecked" )
+			@Override
+			public PseudoRandom create( final CharSequence id,
+				final Number seed )
+			{
+				return create( ConfigFactory.create( Config.class,
+						map( new Map.Entry[]
+				{ entry( Config.NAME_KEY, id.toString() ),
+						entry( Config.SEED_KEY, seed.toString() ) } ) ) );
 			}
 		}
 

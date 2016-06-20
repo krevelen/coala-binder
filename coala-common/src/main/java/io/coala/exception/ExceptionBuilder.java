@@ -1,7 +1,5 @@
 /* $Id: 159ef9e618c1d99cb8ef0ad10548596a3f3afff6 $
  * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
- * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy
@@ -14,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2015 Almende B.V. 
  */
 package io.coala.exception;
 

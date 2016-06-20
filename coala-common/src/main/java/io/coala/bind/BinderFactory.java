@@ -88,10 +88,6 @@ public interface BinderFactory extends Factory// , AgentStatusObserver
 
 	/**
 	 * {@link Builder}
-	 * 
-	 * @date $Date: 2014-08-04 14:19:04 +0200 (Mon, 04 Aug 2014) $
-	 * @version $Revision: 336 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class Builder
 	{

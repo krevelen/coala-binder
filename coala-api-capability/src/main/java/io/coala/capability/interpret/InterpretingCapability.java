@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/interpreter/InterpreterService.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability.interpret;
 
@@ -34,21 +29,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * {@link InterpretingCapability} links agents for lookup or directory purposes
- * 
- * @date $Date: 2014-08-12 12:56:22 +0200 (Tue, 12 Aug 2014) $
- * @version $Revision: 360 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
- * @param <THIS> the (sub)type of {@link InterpretingCapability} to build
  */
-public interface InterpretingCapability extends Capability<BasicCapabilityStatus>
+public interface InterpretingCapability
+	extends Capability<BasicCapabilityStatus>
 {
 
 	/**
 	 * {@link Factory}
-	 * 
-	 * @version $Revision: 360 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface Factory extends CapabilityFactory<InterpretingCapability>
 	{
@@ -65,7 +52,7 @@ public interface InterpretingCapability extends Capability<BasicCapabilityStatus
 	 * @param scripts the JS script resources
 	 * @return an {@link Observable} of the evaluated result {@link Object}s
 	 */
-	Observable<Object> eval(ResourceStreamer scripts);
+	Observable<Object> eval( ResourceStreamer scripts );
 
 	/**
 	 * @param me the JS version of my agent
@@ -93,7 +80,7 @@ public interface InterpretingCapability extends Capability<BasicCapabilityStatus
 	 * @param name the represented (agent) object's attribute name
 	 * @return the represented (agent) object's attribute value
 	 */
-	Object getAttribute(String name);
+	Object getAttribute( String name );
 
 	/**
 	 * Update an attribute of the represented (agent) object
@@ -102,7 +89,7 @@ public interface InterpretingCapability extends Capability<BasicCapabilityStatus
 	 * @param value the new value of the represented (agent) object's attribute
 	 * @return
 	 */
-	Object put(String name, Object value);
+	Object put( String name, Object value );
 
 	/**
 	 * @param observable the (Java) {@link Observable} to be subscribed to with
@@ -114,7 +101,7 @@ public interface InterpretingCapability extends Capability<BasicCapabilityStatus
 	 * @param onCompleted an (interpreted) callback method to be wrapped by
 	 *            {@link Observer#onCompleted()}, or {@code null} to ignore
 	 */
-	<T> void subscribe(Observable<T> observable, Object onNext, Object onError,
-			Object onCompleted);
+	<T> void subscribe( Observable<T> observable, Object onNext, Object onError,
+		Object onCompleted );
 
 }

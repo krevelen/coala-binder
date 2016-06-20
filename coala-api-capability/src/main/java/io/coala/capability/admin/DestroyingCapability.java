@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability.admin;
 
@@ -28,15 +26,12 @@ import io.coala.lifecycle.LifeCycleHooks;
  * {@link LifeCycleHooks#finish()} method;
  * 
  * @version $Id$
- * @author <a href="mailto:suki@almende.org">suki</a>
  */
 public interface DestroyingCapability extends Capability<BasicCapabilityStatus>
 {
 
 	/**
 	 * {@link Factory}
-	 * 
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	interface Factory extends CapabilityFactory<DestroyingCapability>
 	{
@@ -54,6 +49,6 @@ public interface DestroyingCapability extends Capability<BasicCapabilityStatus>
 	 * @return the specified {@link AgentID} again once it has been killed
 	 * @throws Exception if kill failed
 	 */
-	AgentID destroy(AgentID id) throws Exception;
+	AgentID destroy( AgentID id ) throws Exception;
 
 }

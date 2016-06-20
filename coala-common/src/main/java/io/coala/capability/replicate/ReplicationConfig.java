@@ -124,9 +124,6 @@ public interface ReplicationConfig extends Config
 
 	/**
 	 * {@link DateTimeConverter}
-	 * 
-	 * @version $Id$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class DateTimeConverter implements Converter<DateTime>
 	{
@@ -143,9 +140,6 @@ public interface ReplicationConfig extends Config
 
 	/**
 	 * {@link PeriodConverter}
-	 * 
-	 * @version $Revision$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class PeriodConverter implements Converter<Period>
 	{
@@ -158,9 +152,6 @@ public interface ReplicationConfig extends Config
 
 	/**
 	 * {@link ModelIDConverter}
-	 * 
-	 * @version $Revision$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class ModelIDConverter implements Converter<ModelID>
 	{
@@ -173,9 +164,6 @@ public interface ReplicationConfig extends Config
 
 	/**
 	 * {@link ClockIDConverter}
-	 * 
-	 * @version $Revision$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class ClockIDConverter implements Converter<ClockID>
 	{
@@ -193,9 +181,6 @@ public interface ReplicationConfig extends Config
 
 	/**
 	 * {@link IntervalConverter}
-	 * 
-	 * @version $Revision$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class IntervalConverter implements Converter<Interval>
 	{
@@ -215,9 +200,6 @@ public interface ReplicationConfig extends Config
 
 	/**
 	 * {@link ModelComponentIDFactoryConverter}
-	 * 
-	 * @version $Revision$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class ModelComponentIDFactoryConverter
 		implements Converter<ModelComponentIDFactory>
@@ -233,9 +215,6 @@ public interface ReplicationConfig extends Config
 
 	/**
 	 * {@link SimTimeFactoryConverter}
-	 * 
-	 * @version $Revision$
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	public class SimTimeFactoryConverter implements Converter<SimTimeFactory>
 	{

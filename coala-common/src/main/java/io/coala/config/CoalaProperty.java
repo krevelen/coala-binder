@@ -36,11 +36,12 @@ import io.coala.time.TimeUnit;
  * @version $Id: 85b207559b6ab0b4d41c917dc7a95ab18deab35e $
  * @author Rick van Krevelen
  */
+@Deprecated
 public enum CoalaProperty
 {
 
 	/** This property specifies the model name as {@link ModelID} */
-	modelName("_model_" + DateTime.now().getMillisOfDay()),
+	modelName( "_model_" + DateTime.now().getMillisOfDay() ),
 
 	/** */
 	identifierFactoryType,
@@ -49,48 +50,50 @@ public enum CoalaProperty
 	binderFactoryType,
 
 	/** */
-	clockName("_clock_"),
+	clockName( "_clock_" ),
 
 	/** */
-	clockOffset(DateTime.now().withTimeAtStartOfDay().toDate()),
+	clockOffset( DateTime.now().withTimeAtStartOfDay().toDate() ),
 
-	/** see ISO Period format specification in {@link ISOPeriodFormat#standard()} */
-	clockDuration(Period.days(25).toString()),
-
-	/** */
-	baseTimeUnit(TimeUnit.HOURS.name()),
-
-	/** */
-	bootAgentNames(new String[] { "_launcher_" }),
+	/**
+	 * see ISO Period format specification in {@link ISOPeriodFormat#standard()}
+	 */
+	clockDuration( Period.days( 25 ).toString() ),
 
 	/** */
-	defaultAgentType(Agent.class),
+	baseTimeUnit( TimeUnit.HOURS.name() ),
 
 	/** */
-	customAgentNames(new String[] {}),
+	bootAgentNames( new String[] { "_launcher_" } ),
 
 	/** */
-	agentType(Agent.class),
+	defaultAgentType( Agent.class ),
 
 	/** */
-	singletonServiceTypes(new HashMap<String, String>()),
+	customAgentNames( new String[] {} ),
 
 	/** */
-	instantServiceTypes(new HashMap<String, String>()),
+	agentType( Agent.class ),
 
 	/** */
-	customFactoryTypes(new HashMap<String, String>()),
+	singletonServiceTypes( new HashMap<String, String>() ),
 
 	/** */
-	randomSeed(System.currentTimeMillis()),
+	instantServiceTypes( new HashMap<String, String>() ),
 
 	/** */
-	addOriginatorStackTrace(false),
+	customFactoryTypes( new HashMap<String, String>() ),
+
+	/** */
+	randomSeed( System.currentTimeMillis() ),
+
+	/** */
+	addOriginatorStackTrace( false ),
 
 	;
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger(CoalaProperty.class);
+	private static final Logger LOG = LogUtil.getLogger( CoalaProperty.class );
 
 	/** */
 	private final Object defaultValue;
@@ -100,7 +103,7 @@ public enum CoalaProperty
 	 */
 	private CoalaProperty()
 	{
-		this(null);
+		this( null );
 	}
 
 	/**
@@ -108,7 +111,7 @@ public enum CoalaProperty
 	 * 
 	 * @param defaultValue
 	 */
-	private CoalaProperty(final String defaultValue)
+	private CoalaProperty( final String defaultValue )
 	{
 		this.defaultValue = defaultValue;
 	}
@@ -118,7 +121,7 @@ public enum CoalaProperty
 	 * 
 	 * @param defaultValue
 	 */
-	private CoalaProperty(final Object defaultValue)
+	private CoalaProperty( final Object defaultValue )
 	{
 		this.defaultValue = defaultValue;
 	}
@@ -130,35 +133,34 @@ public enum CoalaProperty
 	}
 
 	/** @return the default value */
-	public boolean isDefault(final Object value)
+	public boolean isDefault( final Object value )
 	{
-		return defaultValue().equals(value);
+		return defaultValue().equals( value );
 	}
 
 	/**
 	 * @param prefixes
 	 * @return the {@link CoalaPropertyGetter} utility object
 	 */
-	public CoalaPropertyGetter value(final String... prefixes)
+	public CoalaPropertyGetter value( final String... prefixes )
 	{
 		String defaultValue = null;
-		if (this.defaultValue instanceof String)
+		if( this.defaultValue instanceof String )
 			defaultValue = (String) this.defaultValue;
-		else if (this.defaultValue != null)
-			try
-			{
-				defaultValue = JsonUtil.getJOM().writeValueAsString(
-						this.defaultValue);
-				// LOG.trace("Marshalled default value for '" + name() +
-				// "' to: " + defaultValue);
-			} catch (final JsonProcessingException e)
-			{
-				LOG.warn("Unable to marshal default value for " + name(), e);
-			}
+		else if( this.defaultValue != null ) try
+		{
+			defaultValue = JsonUtil.getJOM()
+					.writeValueAsString( this.defaultValue );
+			// LOG.trace("Marshalled default value for '" + name() +
+			// "' to: " + defaultValue);
+		} catch( final JsonProcessingException e )
+		{
+			LOG.warn( "Unable to marshal default value for " + name(), e );
+		}
 
 		final CoalaPropertyGetter result = new CoalaPropertyGetter(
-				CoalaPropertyGetter.addKeyPrefixes(name(), prefixes),
-				defaultValue);
+				CoalaPropertyGetter.addKeyPrefixes( name(), prefixes ),
+				defaultValue );
 		// LOG.trace("Created '" + key
 		// + "' property's getter with default value type: "
 		// + (this.defaultValue == null ? "<?>" : this.defaultValue

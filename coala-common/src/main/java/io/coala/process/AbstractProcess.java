@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/process/AbstractProcess.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.process;
 
@@ -26,13 +21,10 @@ import io.coala.name.Identifier;
 
 /**
  * {@link AbstractProcess}
- * 
- * @version $Revision: 296 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
-public abstract class AbstractProcess<ID extends Identifier<?, ?>> extends
-		AbstractLifeCycle<ID, BasicProcessStatus> implements Process<ID>
+@Deprecated
+public abstract class AbstractProcess<ID extends Identifier<?, ?>>
+	extends AbstractLifeCycle<ID, BasicProcessStatus> implements Process<ID>
 {
 
 	/** */
@@ -51,10 +43,10 @@ public abstract class AbstractProcess<ID extends Identifier<?, ?>> extends
 	 * 
 	 * @param id
 	 */
-	public AbstractProcess(final ID id)
+	public AbstractProcess( final ID id )
 	{
-		super(id);
-		MachineUtil.setStatus(this, BasicProcessStatus.CREATED, false);
+		super( id );
+		MachineUtil.setStatus( this, BasicProcessStatus.CREATED, false );
 	}
 
 }

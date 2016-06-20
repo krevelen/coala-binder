@@ -33,8 +33,8 @@ public class ColtProbabilityDistributionTest
 	@Test
 	public void testGibbsSampling()
 	{
-		int N = 50000;
-		int thin = 1000;
+		int N = 500;
+		int thin = 100;
 		DoubleRandomEngine rngEngine = new DoubleMersenneTwister( new Date() );
 		Normal rngN = new Normal( 0.0, 1.0, rngEngine );
 		Gamma rngG = new Gamma( 1.0, 1.0, rngEngine );

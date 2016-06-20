@@ -49,10 +49,6 @@ public @interface Schedulable
 
 	/**
 	 * {@link Util}
-	 * 
-	 * @version $Revision: 302 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 * 
 	 */
 	@SuppressWarnings( "rawtypes" )
 	class Util

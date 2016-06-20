@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-httpcomponents-adapter/src/main/java/io/coala/http/ApacheHTTPClientService.java $
- * 
- * Part of the EU project INERTIA, see http://www.inertia-project.eu/inertia/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.capability.online;
 
@@ -88,9 +83,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * {@link FluentHCOnlineCapability}
- * 
- * @version $Revision: 358 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class FluentHCOnlineCapability extends BasicOnlineCapability
 {
@@ -100,35 +92,34 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger(FluentHCOnlineCapability.class);
+			.getLogger( FluentHCOnlineCapability.class );
 
 	private static boolean setup = false;
 
 	@Inject
-	public FluentHCOnlineCapability(final Binder binder)
+	public FluentHCOnlineCapability( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
-	public void initialize() throws NoSuchAlgorithmException,
-			KeyManagementException
+	public void initialize()
+		throws NoSuchAlgorithmException, KeyManagementException
 	{
-		synchronized (FluentHCOnlineCapability.class)
+		synchronized( FluentHCOnlineCapability.class )
 		{
-			if (setup)
+			if( setup ) return;
+
+			if( !getBinder().inject( ConfiguringCapability.class )
+					.getProperty( TRUST_MANAGER_DISABLED_PROPERTY_KEY )
+					.getBoolean( TRUST_MANAGER_DISABLED_PROPERTY_DEFAULT ) )
 				return;
 
-			if (!getBinder().inject(ConfiguringCapability.class)
-					.getProperty(TRUST_MANAGER_DISABLED_PROPERTY_KEY)
-					.getBoolean(TRUST_MANAGER_DISABLED_PROPERTY_DEFAULT))
-				return;
-
-			final SSLContext ctx = SSLContext.getInstance("TLS");
-			ctx.init(new KeyManager[0],
-					new TrustManager[] { new DummyTrustManager() },
-					new SecureRandom());
-			SSLContext.setDefault(ctx);
+			final SSLContext ctx = SSLContext.getInstance( "TLS" );
+			ctx.init( new KeyManager[0],
+					new TrustManager[]
+			{ new DummyTrustManager() }, new SecureRandom() );
+			SSLContext.setDefault( ctx );
 			setup = true;
 		}
 	}
@@ -138,78 +129,78 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 	 * @param uri
 	 * @return
 	 */
-	@SuppressWarnings("rawtypes")
-	public static Request getFluentRequest(final HttpMethod method,
-			final URI uri, final Map.Entry... formData)
+	@SuppressWarnings( "rawtypes" )
+	public static Request getFluentRequest( final HttpMethod method,
+		final URI uri, final Map.Entry... formData )
 	{
 		final Request request;
-		switch (method)
+		switch( method )
 		{
 		case GET:
-			request = Request.Get(toFormDataURI(uri, formData));
+			request = Request.Get( toFormDataURI( uri, formData ) );
 			break;
 		case HEAD:
-			request = Request.Head(toFormDataURI(uri, formData));
+			request = Request.Head( toFormDataURI( uri, formData ) );
 			break;
 		case POST:
-			request = Request.Post(uri);
+			request = Request.Post( uri );
 			break;
 		case PUT:
-			request = Request.Put(uri);
+			request = Request.Put( uri );
 			break;
 		case DELETE:
-			request = Request.Delete(toFormDataURI(uri, formData));
+			request = Request.Delete( toFormDataURI( uri, formData ) );
 			break;
 		case OPTIONS:
-			request = Request.Options(toFormDataURI(uri, formData));
+			request = Request.Options( toFormDataURI( uri, formData ) );
 			break;
 		case TRACE:
-			request = Request.Trace(toFormDataURI(uri, formData));
+			request = Request.Trace( toFormDataURI( uri, formData ) );
 			break;
 		default:
-			throw new IllegalStateException("UNSUPPORTED: " + method);
+			throw new IllegalStateException( "UNSUPPORTED: " + method );
 		}
-		return request.useExpectContinue().version(HttpVersion.HTTP_1_1);
+		return request.useExpectContinue().version( HttpVersion.HTTP_1_1 );
 	}
 
-	public static HttpUriRequest getRequest(final HttpMethod method,
-			final URI uri)
+	public static HttpUriRequest getRequest( final HttpMethod method,
+		final URI uri )
 	{
 		final HttpRequestBase request;
-		switch (method)
+		switch( method )
 		{
 		case POST:
-			request = new HttpPost(uri);// Request.Post(uri);
+			request = new HttpPost( uri );// Request.Post(uri);
 			break;
 		case PUT:
-			request = new HttpPut(uri);// Request.Put(uri);
+			request = new HttpPut( uri );// Request.Put(uri);
 			break;
 		case DELETE:
-			request = new HttpDelete(uri);// Request.Delete(uri);
+			request = new HttpDelete( uri );// Request.Delete(uri);
 			break;
 		case GET:
-			request = new HttpGet(uri);// Request.Get(uri);
+			request = new HttpGet( uri );// Request.Get(uri);
 			break;
 		default:
-			throw new IllegalStateException("UNSUPPORTED: " + method);
+			throw new IllegalStateException( "UNSUPPORTED: " + method );
 		}
-		request.setProtocolVersion(HttpVersion.HTTP_1_1);
+		request.setProtocolVersion( HttpVersion.HTTP_1_1 );
 		final RequestConfig.Builder configBuilder = RequestConfig.custom();
 		// TODO read (additional) HTTP client settings from external config
-		configBuilder.setExpectContinueEnabled(true);
-		request.setConfig(configBuilder.build());
+		configBuilder.setExpectContinueEnabled( true );
+		request.setConfig( configBuilder.build() );
 		return request;
 	}
 
-	@SuppressWarnings("rawtypes")
-	public static List<NameValuePair> toFormData(final Map.Entry... formData)
+	@SuppressWarnings( "rawtypes" )
+	public static List<NameValuePair> toFormData( final Map.Entry... formData )
 	{
 		final List<NameValuePair> paramList = new ArrayList<>();
-		for (Map.Entry entry : formData)
+		for( Map.Entry entry : formData )
 		{
 			final String name = entry.getKey().toString();
 			final String value = entry.getValue().toString();
-			paramList.add(new NameValuePair()
+			paramList.add( new NameValuePair()
 			{
 				@Override
 				public String getName()
@@ -222,182 +213,187 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 				{
 					return value;
 				}
-			});
+			} );
 		}
 		return paramList;
 	}
 
-	public static HttpEntity toFormEntity(final List<NameValuePair> paramList)
+	public static HttpEntity toFormEntity( final List<NameValuePair> paramList )
 	{
-		final ContentType contentType = ContentType.create(
-				URLEncodedUtils.CONTENT_TYPE, Consts.ISO_8859_1);
+		final ContentType contentType = ContentType
+				.create( URLEncodedUtils.CONTENT_TYPE, Consts.ISO_8859_1 );
 		final Charset charset = contentType != null ? contentType.getCharset()
 				: null;
-		final String s = URLEncodedUtils.format(paramList,
-				charset != null ? charset.name() : null);
+		final String s = URLEncodedUtils.format( paramList,
+				charset != null ? charset.name() : null );
 		byte[] raw;
 		try
 		{
-			raw = charset != null ? s.getBytes(charset.name()) : s.getBytes();
-		} catch (UnsupportedEncodingException ex)
+			raw = charset != null ? s.getBytes( charset.name() ) : s.getBytes();
+		} catch( UnsupportedEncodingException ex )
 		{
 			raw = s.getBytes();
 		}
-		return new ApacheInternalByteArrayEntity(raw, contentType);
+		return new ApacheInternalByteArrayEntity( raw, contentType );
 	}
 
-	public static HttpEntity toStreamEntity(final ResourceStream stream)
+	public static HttpEntity toStreamEntity( final ResourceStream stream )
 	{
-		return new ApacheInternalInputStreamEntity(stream.getStream(), -1,
-				ContentType.create(stream.getType().getMIMEType()));
-	}
-
-	@Override
-	public ResourceStreamer request(final URI uri, final HttpMethod method,
-			final ResourceType resultType, final ResourceStreamer content)
-	{
-		return doRequest(uri, method, resultType, content);
+		return new ApacheInternalInputStreamEntity( stream.getStream(), -1,
+				ContentType.create( stream.getType().getMIMEType() ) );
 	}
 
 	@Override
-	public ResourceStreamer request(final URI uri, final HttpMethod method,
-			final ResourceType resultType, final Map<String, ?> formData)
+	public ResourceStreamer request( final URI uri, final HttpMethod method,
+		final ResourceType resultType, final ResourceStreamer content )
 	{
-		return doRequest(uri, method, resultType, null, formData.entrySet()
-				.toArray(new Map.Entry[formData.size()]));
+		return doRequest( uri, method, resultType, content );
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
-	public ResourceStreamer request(final URI uri, final HttpMethod method,
-			final ResourceType resultType, final Map.Entry... formData)
+	public ResourceStreamer request( final URI uri, final HttpMethod method,
+		final ResourceType resultType, final Map<String, ?> formData )
 	{
-		return doRequest(uri, method, resultType, null, formData);
+		return doRequest( uri, method, resultType, null,
+				formData.entrySet().toArray( new Map.Entry[formData.size()] ) );
 	}
 
-	private static void scheduleCountdown(final CountDownLatch latch)
+	@SuppressWarnings( "rawtypes" )
+	@Override
+	public ResourceStreamer request( final URI uri, final HttpMethod method,
+		final ResourceType resultType, final Map.Entry... formData )
 	{
-		Schedulers.io().createWorker().schedule(new Action0()
+		return doRequest( uri, method, resultType, null, formData );
+	}
+
+	private static void scheduleCountdown( final CountDownLatch latch )
+	{
+		Schedulers.io().createWorker().schedule( new Action0()
 		{
 			@Override
 			public void call()
 			{
 				latch.countDown();
 			}
-		});
+		} );
 	}
 
-	@SuppressWarnings("rawtypes")
-	protected static ResourceStreamer doRequest(final URI uri,
-			final HttpMethod method, final ResourceType resultType,
-			final ResourceStreamer content, final Map.Entry... formData)
+	@SuppressWarnings( "rawtypes" )
+	protected static ResourceStreamer doRequest( final URI uri,
+		final HttpMethod method, final ResourceType resultType,
+		final ResourceStreamer content, final Map.Entry... formData )
 	{
-		LOG.trace(method + " " + uri);
-		return ResourceStreamer.from(Observable
-				.create(new OnSubscribe<ResourceStream>()
+		LOG.trace( method + " " + uri );
+		return ResourceStreamer
+				.from( Observable.create( new OnSubscribe<ResourceStream>()
 				{
 					@Override
-					public void call(
-							final Subscriber<? super ResourceStream> sub)
+					public void
+						call( final Subscriber<? super ResourceStream> sub )
 					{
-						final CountDownLatch latch = new CountDownLatch(1);
+						final CountDownLatch latch = new CountDownLatch( 1 );
 
 						// final HttpUriRequest request = getRequest(method,
 						// uri);
 						// if (request instanceof HttpEntityEnclosingRequest)
-						final Request request = getFluentRequest(method, uri,
-								formData);
+						final Request request = getFluentRequest( method, uri,
+								formData );
 						final MyResponseHandler handler = new MyResponseHandler(
-								request, resultType, sub, latch);
+								request, resultType, sub, latch );
 
-						if (method == HttpMethod.POST
-								|| method == HttpMethod.PUT)
+						if( method == HttpMethod.POST
+								|| method == HttpMethod.PUT )
 						{
-							if (formData != null && formData.length > 0)
+							if( formData != null && formData.length > 0 )
 							{
-								if (content != null)
-									LOG.warn("IGNORING NON-EMPTY CONTENT, prioritizing non-empty form data");
+								if( content != null ) LOG.warn(
+										"IGNORING NON-EMPTY CONTENT, prioritizing non-empty form data" );
 								Schedulers.io().createWorker()
-										.schedule(new Action0()
+										.schedule( new Action0()
 										{
 											@Override
 											public void call()
 											{
-												execute(request,
-														handler,
-														sub,
-														toFormEntity(toFormData(formData)));
-												scheduleCountdown(latch);
+												execute( request, handler, sub,
+														toFormEntity(
+																toFormData(
+																		formData ) ) );
+												scheduleCountdown( latch );
 											}
-										});
-							} else if (content == null)
+										} );
+							} else if( content == null )
 							{
 								Schedulers.io().createWorker()
-										.schedule(new Action0()
+										.schedule( new Action0()
 										{
 											@Override
 											public void call()
 											{
-												execute(request, handler, sub,
-														null);
-												scheduleCountdown(latch);
+												execute( request, handler, sub,
+														null );
+												scheduleCountdown( latch );
 											}
-										});
+										} );
 							} else
 							{
 								// TODO is this allowing parallel streaming?
-								LOG.trace("POSTing with raw content stream...");
+								LOG.trace(
+										"POSTing with raw content stream..." );
 								Schedulers.io().createWorker()
-										.schedule(new Action0()
+										.schedule( new Action0()
 										{
 											@Override
 											public void call()
 											{
-												content.getStreams()
-														.subscribe(
-																new Observer<ResourceStream>()
-																{
-																	@Override
-																	public void onCompleted()
-																	{
-																		sub.onCompleted();
-																		scheduleCountdown(latch);
-																	}
+												content.getStreams().subscribe(
+														new Observer<ResourceStream>()
+														{
+															@Override
+															public void
+																onCompleted()
+															{
+																sub.onCompleted();
+																scheduleCountdown(
+																		latch );
+															}
 
-																	@Override
-																	public void onError(
-																			final Throwable e)
-																	{
-																		sub.onError(e);
-																		scheduleCountdown(latch);
-																	}
+															@Override
+															public void onError(
+																final Throwable e )
+															{
+																sub.onError(
+																		e );
+																scheduleCountdown(
+																		latch );
+															}
 
-																	@Override
-																	public void onNext(
-																			final ResourceStream is)
-																	{
-																		execute(request,
-																				handler,
-																				sub,
-																				toStreamEntity(is));
-																	}
-																});
+															@Override
+															public void onNext(
+																final ResourceStream is )
+															{
+																execute( request,
+																		handler,
+																		sub,
+																		toStreamEntity(
+																				is ) );
+															}
+														} );
 
 											}
-										});
+										} );
 							}
 						} else
 						// GET, OPTIONS, HEADER, TRACE, or DELETE
 						{
-							if (content != null)
-								LOG.warn("IGNORING NON-EMPTY CONTENT, not applicable for HTTP request method: "
-										+ method);
-							execute(request, handler, sub, null);
+							if( content != null ) LOG
+									.warn( "IGNORING NON-EMPTY CONTENT, not applicable for HTTP request method: "
+											+ method );
+							execute( request, handler, sub, null );
 							sub.onCompleted();
-							scheduleCountdown(latch);
+							scheduleCountdown( latch );
 						}
 					}
-				}));
+				} ) );
 	}
 
 	/**
@@ -406,19 +402,17 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 	 * @param sub
 	 * @param entity
 	 */
-	protected static void execute(final Request request,
-			final MyResponseHandler handler,
-			final Subscriber<? super ResourceStream> sub,
-			final HttpEntity entity)
+	protected static void execute( final Request request,
+		final MyResponseHandler handler,
+		final Subscriber<? super ResourceStream> sub, final HttpEntity entity )
 	{
 		try
 		{
-			if (entity != null)
-				request.body(entity);
-			request.execute().handleResponse(handler);
-		} catch (final Throwable e)
+			if( entity != null ) request.body( entity );
+			request.execute().handleResponse( handler );
+		} catch( final Throwable e )
 		{
-			sub.onError(e);
+			sub.onError( e );
 		}
 	}
 
@@ -428,9 +422,9 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 	 * @param sub
 	 * @param entity
 	 */
-	protected void execute(final HttpUriRequest request,
-			final ResponseHandler<?> handler, final Observer<?> sub,
-			final HttpEntity entity)
+	protected void execute( final HttpUriRequest request,
+		final ResponseHandler<?> handler, final Observer<?> sub,
+		final HttpEntity entity )
 	{
 		// Schedulers.io().createWorker().schedule(new Action0()
 		// {
@@ -439,12 +433,12 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 		// {
 		try
 		{
-			if (entity != null)
-				((HttpEntityEnclosingRequest) request).setEntity(entity);
-			HttpClientBuilder.create().build().execute(request, handler);
-		} catch (final Throwable e)
+			if( entity != null )
+				((HttpEntityEnclosingRequest) request).setEntity( entity );
+			HttpClientBuilder.create().build().execute( request, handler );
+		} catch( final Throwable e )
 		{
-			sub.onError(e);
+			sub.onError( e );
 		}
 		// }
 		// });
@@ -452,23 +446,19 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 
 	/**
 	 * {@link DummyTrustManager}
-	 * 
-	 * @version $Revision: 358 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	static class DummyTrustManager implements X509TrustManager
 	{
 
 		@Override
-		public void checkClientTrusted(final X509Certificate[] arg0,
-				final String arg1) throws CertificateException
+		public void checkClientTrusted( final X509Certificate[] arg0,
+			final String arg1 ) throws CertificateException
 		{
 		}
 
 		@Override
-		public void checkServerTrusted(final X509Certificate[] arg0,
-				final String arg1) throws CertificateException
+		public void checkServerTrusted( final X509Certificate[] arg0,
+			final String arg1 ) throws CertificateException
 		{
 		}
 
@@ -481,10 +471,6 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 
 	/**
 	 * {@link MyResponseHandler}
-	 * 
-	 * @version $Revision: 358 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	static class MyResponseHandler implements ResponseHandler<Void>
 	{
@@ -510,10 +496,10 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 		 * @param subscriber
 		 * @param latch
 		 */
-		public MyResponseHandler(final Request request,
-				final ResourceType expectedType,
-				final Subscriber<? super ResourceStream> subscriber,
-				final CountDownLatch latch)
+		public MyResponseHandler( final Request request,
+			final ResourceType expectedType,
+			final Subscriber<? super ResourceStream> subscriber,
+			final CountDownLatch latch )
 		{
 			this.request = request;
 			this.expectedType = expectedType;
@@ -522,44 +508,39 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 		}
 
 		@Override
-		public Void handleResponse(final HttpResponse response)
-				throws ClientProtocolException, IOException
+		public Void handleResponse( final HttpResponse response )
+			throws ClientProtocolException, IOException
 		{
 			final StatusLine statusLine = response.getStatusLine();
-			if (statusLine.getStatusCode() >= 300)
-				throw new HttpResponseException(statusLine.getStatusCode(),
-						statusLine.getReasonPhrase());
+			if( statusLine.getStatusCode() >= 300 )
+				throw new HttpResponseException( statusLine.getStatusCode(),
+						statusLine.getReasonPhrase() );
 
 			final HttpEntity entity = response.getEntity();
-			if (entity == null)
+			if( entity == null )
 			{
-				this.subscriber.onError(new ClientProtocolException(
-						"Response contains no content"));
+				this.subscriber.onError( new ClientProtocolException(
+						"Response contains no content" ) );
 				return null;
 			}
 
-			final ResourceType type = entity.getContentType() == null ? expectedType
-					: ResourceType.ofMIMEType(entity.getContentType()
-							.getValue());
+			final ResourceType type = entity.getContentType() == null
+					? expectedType
+					: ResourceType
+							.ofMIMEType( entity.getContentType().getValue() );
 			// FIXME copy to a new stream!
 			try
 			{
-				subscriber.onNext(ResourceStream.of(entity.getContent(), type,
-						request.toString()));
+				subscriber.onNext( ResourceStream.of( entity.getContent(), type,
+						request.toString() ) );
 /*
-				int secs = 0;
-				while (latch.getCount() > 0)
-				{
-					if (secs > 0)
-						LOG.trace("Blocking after response from " + request
-								+ "...");
-					latch.await(3, TimeUnit.SECONDS);
-					secs++;
-				}
-*/
-			} catch (final Exception e)
+ * int secs = 0; while (latch.getCount() > 0) { if (secs > 0) LOG.trace(
+ * "Blocking after response from " + request + "..."); latch.await(3,
+ * TimeUnit.SECONDS); secs++; }
+ */
+			} catch( final Exception e )
 			{
-				subscriber.onError(e);
+				subscriber.onError( e );
 			}
 			return null;
 		}
@@ -568,61 +549,55 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 	/**
 	 * {@link ApacheInternalByteArrayEntity} copied from
 	 * {@link org.apache.http.client.fluent.InternalByteArrayEntity}
-	 * 
-	 * @version $Revision: 358 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	static class ApacheInternalByteArrayEntity extends AbstractHttpEntity
-			implements Cloneable
+		implements Cloneable
 	{
 
 		private final byte[] b;
 		private final int off, len;
 
-		public ApacheInternalByteArrayEntity(final byte[] b,
-				final ContentType contentType)
+		public ApacheInternalByteArrayEntity( final byte[] b,
+			final ContentType contentType )
 		{
 			super();
-			Args.notNull(b, "Source byte array");
+			Args.notNull( b, "Source byte array" );
 			this.b = b;
 			this.off = 0;
 			this.len = this.b.length;
-			if (contentType != null)
+			if( contentType != null )
 			{
-				setContentType(contentType.toString());
+				setContentType( contentType.toString() );
 			}
 		}
 
-		public ApacheInternalByteArrayEntity(final byte[] b, final int off,
-				final int len, final ContentType contentType)
+		public ApacheInternalByteArrayEntity( final byte[] b, final int off,
+			final int len, final ContentType contentType )
 		{
 			super();
-			Args.notNull(b, "Source byte array");
-			if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) < 0)
-					|| ((off + len) > b.length))
-			{
-				throw new IndexOutOfBoundsException("off: " + off + " len: "
-						+ len + " b.length: " + b.length);
-			}
+			Args.notNull( b, "Source byte array" );
+			if( (off < 0) || (off > b.length) || (len < 0) || ((off + len) < 0)
+					|| ((off + len) > b.length) ) { throw new IndexOutOfBoundsException(
+							"off: " + off + " len: " + len + " b.length: "
+									+ b.length ); }
 			this.b = b;
 			this.off = off;
 			this.len = len;
-			if (contentType != null)
+			if( contentType != null )
 			{
-				setContentType(contentType.toString());
+				setContentType( contentType.toString() );
 			}
 		}
 
-		public ApacheInternalByteArrayEntity(final byte[] b)
+		public ApacheInternalByteArrayEntity( final byte[] b )
 		{
-			this(b, null);
+			this( b, null );
 		}
 
-		public ApacheInternalByteArrayEntity(final byte[] b, final int off,
-				final int len)
+		public ApacheInternalByteArrayEntity( final byte[] b, final int off,
+			final int len )
 		{
-			this(b, off, len, null);
+			this( b, off, len, null );
 		}
 
 		public boolean isRepeatable()
@@ -637,13 +612,13 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 
 		public InputStream getContent()
 		{
-			return new ByteArrayInputStream(this.b, this.off, this.len);
+			return new ByteArrayInputStream( this.b, this.off, this.len );
 		}
 
-		public void writeTo(final OutputStream outstream) throws IOException
+		public void writeTo( final OutputStream outstream ) throws IOException
 		{
-			Args.notNull(outstream, "Output stream");
-			outstream.write(this.b, this.off, this.len);
+			Args.notNull( outstream, "Output stream" );
+			outstream.write( this.b, this.off, this.len );
 			outstream.flush();
 		}
 
@@ -657,10 +632,6 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 	/**
 	 * {@link ApacheInternalInputStreamEntity} adapted from
 	 * {@link org.apache.http.client.fluent.InternalInputStreamEntity}
-	 * 
-	 * @version $Revision: 358 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
-	 *
 	 */
 	static class ApacheInternalInputStreamEntity extends AbstractHttpEntity
 	{
@@ -668,15 +639,15 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 		private final InputStream content;
 		private final long length;
 
-		public ApacheInternalInputStreamEntity(final InputStream instream,
-				final long length, final ContentType contentType)
+		public ApacheInternalInputStreamEntity( final InputStream instream,
+			final long length, final ContentType contentType )
 		{
 			super();
-			this.content = Args.notNull(instream, "Source input stream");
+			this.content = Args.notNull( instream, "Source input stream" );
 			this.length = length;
-			if (contentType != null)
+			if( contentType != null )
 			{
-				setContentType(contentType.toString());
+				setContentType( contentType.toString() );
 			}
 		}
 
@@ -695,17 +666,17 @@ public class FluentHCOnlineCapability extends BasicOnlineCapability
 			return this.content;
 		}
 
-		public void writeTo(final OutputStream outstream) throws IOException
+		public void writeTo( final OutputStream outstream ) throws IOException
 		{
-			Args.notNull(outstream, "Output stream");
+			Args.notNull( outstream, "Output stream" );
 			final InputStream instream = this.content;
 			try
 			{
-				if (this.length < 0)
-					IOUtils.copy(instream, outstream);
+				if( this.length < 0 )
+					IOUtils.copy( instream, outstream );
 				else
 					// should not occur
-					IOUtils.copyLarge(instream, outstream, 0, this.length);
+					IOUtils.copyLarge( instream, outstream, 0, this.length );
 			} finally
 			{
 				instream.close();

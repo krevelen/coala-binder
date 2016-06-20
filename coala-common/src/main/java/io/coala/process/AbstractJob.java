@@ -1,7 +1,4 @@
 /* $Id: acfc36bdaeca116ba844ba208eb8d54163511882 $
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/scheduler/AbstractJob.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,26 +12,21 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.process;
-
-import io.coala.config.CoalaProperty;
-import io.coala.name.Identifier;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import io.coala.config.CoalaProperty;
+import io.coala.name.Identifier;
+
 /**
  * {@link AbstractJob}
- * 
- * @version $Revision: 309 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
-public abstract class AbstractJob<ID extends Identifier<?, ?>> extends
-		AbstractProcess<ID> implements Job<ID>
+@Deprecated
+public abstract class AbstractJob<ID extends Identifier<?, ?>>
+	extends AbstractProcess<ID> implements Job<ID>
 {
 
 	/** */
@@ -57,14 +49,14 @@ public abstract class AbstractJob<ID extends Identifier<?, ?>> extends
 	 * 
 	 * @param id
 	 */
-	public AbstractJob(final ID id)
+	public AbstractJob( final ID id )
 	{
-		super(id);
-		if (CoalaProperty.addOriginatorStackTrace.value().getBoolean(false))
+		super( id );
+		if( CoalaProperty.addOriginatorStackTrace.value().getBoolean( false ) )
 		{
 			final StringWriter sw = new StringWriter();
-			final PrintWriter pw = new PrintWriter(sw);
-			new Exception().printStackTrace(pw);
+			final PrintWriter pw = new PrintWriter( sw );
+			new Exception().printStackTrace( pw );
 
 			this.stackTrace = sw.toString();
 		} else

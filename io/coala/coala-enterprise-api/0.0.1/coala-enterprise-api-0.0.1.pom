@@ -226,7 +226,7 @@
 					<configuration>
 						<outputDirectory>${jaxb.targetdir}</outputDirectory>
 						<schemaDirectory>${jaxb.sourcedir}</schemaDirectory>
-						<packageName>eu.inertia.xml.agent</packageName>
+						<packageName>io.coala.enterprise.agent</packageName>
 						<arguments>-disableXmlSecurity</arguments>
 						<clearOutputDir>true</clearOutputDir>
 					</configuration>

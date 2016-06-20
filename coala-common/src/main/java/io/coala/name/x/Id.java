@@ -19,13 +19,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import org.aeonbits.owner.ConfigCache;
+import org.aeonbits.owner.Mutable;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import io.coala.config.Config;
+import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
 
@@ -67,7 +68,7 @@ public class Id<T> extends Wrapper.Simple<T>
 	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
 	 * @author Rick van Krevelen
 	 */
-	public static interface IdConfig extends Config
+	public static interface IdConfig extends GlobalConfig, Mutable
 	{
 		String ID_SEPARATOR_KEY = "io.coala.name.separator";
 

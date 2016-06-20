@@ -37,9 +37,6 @@ public interface TimingCapability<I extends Instant<I>> extends
 
 	/**
 	 * {@link Factory}
-	 * 
-	 * @version $Revision: 300 $
-	 * @author <a href="mailto:Rick@almende.org">Rick</a>
 	 */
 	@SuppressWarnings("rawtypes")
 	interface Factory extends CapabilityFactory<TimingCapability>

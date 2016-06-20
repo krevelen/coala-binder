@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-examples/src/main/java/io/coala/example/deliver/LocationID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.example.deliver;
 
@@ -29,10 +24,6 @@ import java.util.List;
 
 /**
  * {@link LocationID}
- * 
- * @version $Revision: 295 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- *
  */
 public class LocationID extends ModelComponentID<String>
 {
@@ -56,14 +47,14 @@ public class LocationID extends ModelComponentID<String>
 	 * @param zipCode
 	 * @param geoFence
 	 */
-	public LocationID(final ModelID companyID, final String zipCode,
-			final Coordinate... geoFence)
+	public LocationID( final ModelID companyID, final String zipCode,
+		final Coordinate... geoFence )
 	{
-		super(companyID, zipCode);
-		if (geoFence == null || geoFence.length == 0)
+		super( companyID, zipCode );
+		if( geoFence == null || geoFence.length == 0 )
 			this.geoFence = Collections.emptyList();
 		else
-			this.geoFence = Arrays.asList(geoFence);
+			this.geoFence = Arrays.asList( geoFence );
 	}
 
 	/**
@@ -71,22 +62,24 @@ public class LocationID extends ModelComponentID<String>
 	 *         {@link LocationID}'s geoFence/bounding box, {@code false}
 	 *         otherwise
 	 */
-	public boolean contains(final Coordinate coordinate)
+	public boolean contains( final Coordinate coordinate )
 	{
-		float minLat = Float.MAX_VALUE, minLon = Float.MAX_VALUE, minAlt = Float.MAX_VALUE, maxLat = Float.MIN_VALUE, maxLon = Float.MIN_VALUE, maxAlt = Float.MIN_VALUE;
-		for (Coordinate coord : this.geoFence)
+		float minLat = Float.MAX_VALUE, minLon = Float.MAX_VALUE,
+				minAlt = Float.MAX_VALUE, maxLat = Float.MIN_VALUE,
+				maxLon = Float.MIN_VALUE, maxAlt = Float.MIN_VALUE;
+		for( Coordinate coord : this.geoFence )
 		{
-			minLat = Math.min(minLat, coord.latitude);
-			minLon = Math.min(minLon, coord.longitude);
-			minAlt = Math.min(minAlt, coord.altitude);
-			maxLat = Math.max(maxLat, coord.latitude);
-			maxLon = Math.max(maxLon, coord.longitude);
-			maxAlt = Math.max(maxAlt, coord.altitude);
+			minLat = Math.min( minLat, coord.latitude );
+			minLon = Math.min( minLon, coord.longitude );
+			minAlt = Math.min( minAlt, coord.altitude );
+			maxLat = Math.max( maxLat, coord.latitude );
+			maxLon = Math.max( maxLon, coord.longitude );
+			maxAlt = Math.max( maxAlt, coord.altitude );
 		}
 		return !(coordinate.latitude < minLat || coordinate.latitude > maxLat
 				|| coordinate.longitude < minLon
-				|| coordinate.longitude > maxLon
-				|| coordinate.altitude < minAlt || coordinate.altitude > maxAlt);
+				|| coordinate.longitude > maxLon || coordinate.altitude < minAlt
+				|| coordinate.altitude > maxAlt);
 	}
 
 	// FIXME extend equals to check if geoFences match

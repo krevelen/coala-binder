@@ -1,7 +1,4 @@
 /* $Id$
- * $URL: https://dev.almende.com/svn/abms/coala-common/src/main/java/com/almende/coala/service/ServiceID.java $
- * 
- * Part of the EU project Adapt4EE, see http://www.adapt4ee.eu/
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,26 +12,20 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.capability;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.agent.AgentID;
 import io.coala.model.ModelComponentID;
 import io.coala.model.ModelID;
 import io.coala.name.AbstractIdentifier;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * {@link CapabilityID}
- * 
- * @date $Date: 2014-06-13 14:10:35 +0200 (Fri, 13 Jun 2014) $
- * @version $Revision: 300 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
- * 
  */
+@Deprecated
 public class CapabilityID extends ModelComponentID<String>
 {
 
@@ -54,10 +45,10 @@ public class CapabilityID extends ModelComponentID<String>
 	 * @param clientID
 	 * @param serviceType
 	 */
-	public <S extends Capability<?>> CapabilityID(final AgentID clientID,
-			final Class<S> serviceType)
+	public <S extends Capability<?>> CapabilityID( final AgentID clientID,
+		final Class<S> serviceType )
 	{
-		this(clientID, serviceType.getName());
+		this( clientID, serviceType.getName() );
 		this.serviceType = serviceType;
 	}
 
@@ -67,12 +58,12 @@ public class CapabilityID extends ModelComponentID<String>
 	 * @param clientID
 	 * @param value
 	 */
-	public CapabilityID(final AgentID clientID, final String value)
+	public CapabilityID( final AgentID clientID, final String value )
 	{
-		super(clientID.getModelID(), value);
+		super( clientID.getModelID(), value );
 		this.clientID = clientID;
 	}
-	
+
 	@JsonIgnore
 	@Override
 	public ModelID getModelID()
@@ -81,7 +72,8 @@ public class CapabilityID extends ModelComponentID<String>
 	}
 
 	/**
-	 * @return the identifier of the {@link AgentID} using this {@link Capability}
+	 * @return the identifier of the {@link AgentID} using this
+	 *         {@link Capability}
 	 */
 	public AgentID getOwnerID()
 	{
@@ -118,37 +110,33 @@ public class CapabilityID extends ModelComponentID<String>
 
 	/** @see AbstractIdentifier#equals(Object) */
 	@Override
-	public boolean equals(final Object other)
+	public boolean equals( final Object other )
 	{
 		// FIXME apply some common strategy via Visitor design pattern
 
-		if (this == other)
-			return true;
+		if( this == other ) return true;
 
-		if (!super.equals(other) || getClass() != other.getClass())
+		if( !super.equals( other ) || getClass() != other.getClass() )
 			return false;
 
 		final CapabilityID that = (CapabilityID) other;
-		if (getOwnerID() == null)
+		if( getOwnerID() == null )
 		{
-			if (that.getOwnerID() != null)
-				return false;
-		} else if (!getOwnerID().equals(that.getOwnerID()))
-			return false;
-		return super.equals(other);
+			if( that.getOwnerID() != null ) return false;
+		} else if( !getOwnerID().equals( that.getOwnerID() ) ) return false;
+		return super.equals( other );
 	}
 
 	/** @see Comparable#compareTo(Object) */
 	@Override
-	public int compareTo(final AbstractIdentifier<String> other)
+	public int compareTo( final AbstractIdentifier<String> other )
 	{
 		// FIXME apply some common strategy via Visitor design pattern
 
-		final int modelIDCompare = getOwnerID().compareTo(
-				((CapabilityID) other).getOwnerID());
-		if (modelIDCompare != 0)
-			return modelIDCompare;
-		return getValue().compareTo(other.getValue());
+		final int modelIDCompare = getOwnerID()
+				.compareTo( ((CapabilityID) other).getOwnerID() );
+		if( modelIDCompare != 0 ) return modelIDCompare;
+		return getValue().compareTo( other.getValue() );
 	}
 
 }

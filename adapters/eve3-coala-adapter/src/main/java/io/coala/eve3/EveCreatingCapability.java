@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.eve3;
 
@@ -35,10 +33,9 @@ import rx.Observable;
  * {@link EveCreatingCapability}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
-public class EveCreatingCapability extends BasicCapability implements
-		CreatingCapability
+public class EveCreatingCapability extends BasicCapability
+	implements CreatingCapability
 {
 
 	/** */
@@ -54,43 +51,43 @@ public class EveCreatingCapability extends BasicCapability implements
 	 * @param binder the {@link Binder}
 	 */
 	@Inject
-	private EveCreatingCapability(final Binder binder)
+	private EveCreatingCapability( final Binder binder )
 	{
-		super(binder);
+		super( binder );
 	}
 
 	@Override
-	public Observable<AgentStatusUpdate> createAgent(final String agentID)
+	public Observable<AgentStatusUpdate> createAgent( final String agentID )
 	{
-		return createAgent(agentID, null);
+		return createAgent( agentID, null );
 	}
 
 	@Override
-	public <A extends Agent> Observable<AgentStatusUpdate> createAgent(
-			final String agentID, final Class<A> agentType)
+	public <A extends Agent> Observable<AgentStatusUpdate>
+		createAgent( final String agentID, final Class<A> agentType )
 	{
-		return EveAgentManager.getInstance(getBinder())
-				.boot(agentID, agentType);
+		return EveAgentManager.getInstance( getBinder() ).boot( agentID,
+				agentType );
 	}
 
 	@Override
-	public Observable<AgentStatusUpdate> createAgent(final AgentID agentID)
+	public Observable<AgentStatusUpdate> createAgent( final AgentID agentID )
 	{
-		return createAgent(agentID, null);
+		return createAgent( agentID, null );
 	}
 
 	@Override
-	public <A extends Agent> Observable<AgentStatusUpdate> createAgent(
-			final AgentID agentID, final Class<A> type)
+	public <A extends Agent> Observable<AgentStatusUpdate>
+		createAgent( final AgentID agentID, final Class<A> type )
 	{
-		return EveAgentManager.getInstance(getBinder()).boot(agentID, type);
+		return EveAgentManager.getInstance( getBinder() ).boot( agentID, type );
 	}
 
 	@Override
-	public Observable<AgentID> getChildIDs(final boolean currentOnly)
+	public Observable<AgentID> getChildIDs( final boolean currentOnly )
 	{
-		return EveAgentManager.getInstance(getBinder()).getChildIDs(
-				getID().getOwnerID(), currentOnly);
+		return EveAgentManager.getInstance( getBinder() )
+				.getChildIDs( getID().getOwnerID(), currentOnly );
 	}
 
 }

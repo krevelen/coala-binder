@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2013 Almende B.V. 
  */
 package io.coala.message;
 
@@ -27,14 +25,12 @@ import java.io.Serializable;
  * {@link MessageID} sets the identifier value type of a {@link Message}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <ID> the {@link Serializable} and {@link Comparable} value type
  * @param <I> the type of {@link Instant}
- * @param <THIS> the type of {@link MessageID} to compare with
  */
 public class MessageID<ID extends Serializable & Comparable<ID>, I extends Instant<I>>
-		extends TimedEventID<ID, I>
+	extends TimedEventID<ID, I>
 {
 
 	/** */
@@ -55,9 +51,9 @@ public class MessageID<ID extends Serializable & Comparable<ID>, I extends Insta
 	 * @param value
 	 * @param instant
 	 */
-	public MessageID(final ModelID modelID, final ID value, final I instant)
+	public MessageID( final ModelID modelID, final ID value, final I instant )
 	{
-		super(modelID, value, instant);
+		super( modelID, value, instant );
 	}
 
 	/**
@@ -67,10 +63,12 @@ public class MessageID<ID extends Serializable & Comparable<ID>, I extends Insta
 	 * @param value
 	 * @param instant
 	 */
-	public static <ID extends Serializable & Comparable<ID>, I extends Instant<I>> MessageID<ID, I> of(
-			final ModelID modelID, final ID value, final I instant)
+	public static <
+		ID extends Serializable & Comparable<ID>, I extends Instant<I>>
+		MessageID<ID, I>
+		of( final ModelID modelID, final ID value, final I instant )
 	{
-		return new MessageID<>(modelID, value, instant);
+		return new MessageID<>( modelID, value, instant );
 	}
 
 }

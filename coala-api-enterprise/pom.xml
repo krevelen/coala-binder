@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.2.0-b1</version>
 		<relativePath>..</relativePath>
 	</parent>
 
 	<artifactId>coala-api-enterprise</artifactId>
 
-	<name>${project.artifactId}</name>
+	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demonstration code for a DEMO ontology API
 		$Id: 8fa31d1a21f5de2ffc92a557dd6095efed08a512 $
@@ -256,7 +256,7 @@
 					<configuration>
 						<outputDirectory>${jaxb.targetdir}</outputDirectory>
 						<schemaDirectory>${jaxb.sourcedir}</schemaDirectory>
-						<packageName>eu.inertia.xml.agent</packageName>
+						<packageName>io.coala.enterprise.agent</packageName>
 						<arguments>-disableXmlSecurity</arguments>
 						<clearOutputDir>true</clearOutputDir>
 					</configuration>

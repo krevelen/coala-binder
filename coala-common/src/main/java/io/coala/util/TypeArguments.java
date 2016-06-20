@@ -31,10 +31,6 @@ import io.coala.log.LogUtil;
 
 /**
  * {@link TypeArguments}
- * 
- * @date $Date$
- * @version $Id: 99b983878b62652cfd2e2839ea9f800b6532499b $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class TypeArguments
 {

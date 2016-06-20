@@ -20,9 +20,6 @@ import rx.functions.Action1;
 
 /**
  * {@link EveWrapperAgentMessagingTest}
- * 
- * @version $Revision: 312 $
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 // @Ignore
 public class EveWrapperAgentMessagingTest

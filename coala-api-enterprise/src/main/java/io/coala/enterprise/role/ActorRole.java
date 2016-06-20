@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.role;
 
@@ -32,13 +30,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * {@link ActorRole}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  * 
  * @param <F> the (super)type of {@link CoordinationFact}
  */
-public interface ActorRole<F extends CoordinationFact> extends
-		Capability<BasicCapabilityStatus>, ModelComponent<CapabilityID>,
-		Timed<SimTime>
+public interface ActorRole<F extends CoordinationFact>
+	extends Capability<BasicCapabilityStatus>, ModelComponent<CapabilityID>,
+	Timed<SimTime>
 {
 
 	/**

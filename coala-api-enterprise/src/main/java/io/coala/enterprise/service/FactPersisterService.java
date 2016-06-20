@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.enterprise.service;
 
@@ -27,7 +25,6 @@ import rx.Observable;
  * {@link FactPersisterService}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public interface FactPersisterService extends PersistingCapability
 {
@@ -41,21 +38,21 @@ public interface FactPersisterService extends PersistingCapability
 	 * @param fact the type of {@link CoordinationFact} to match
 	 * @return an {@link Observable} of the matching persisted facts
 	 */
-	<F extends CoordinationFact> Observable<F> find(Class<F> fact);
+	<F extends CoordinationFact> Observable<F> find( Class<F> fact );
 
 	/**
 	 * @param fact the type of {@link CoordinationFact} to match
 	 * @param factType the {@link CoordinationFactType} to match
 	 * @return an {@link Observable} of the matching persisted facts
 	 */
-	<F extends CoordinationFact> Observable<F> find(Class<F> fact,
-			CoordinationFactType factType);
+	<F extends CoordinationFact> Observable<F> find( Class<F> fact,
+		CoordinationFactType factType );
 
 	/**
 	 * @param fact the type of {@link CoordinationFact} to return
 	 * @param factID the {@link FactID} to match
 	 * @return the persisted fact or {@code null} if not found
 	 */
-	<F extends CoordinationFact> F find(Class<F> fact, FactID factID);
+	<F extends CoordinationFact> F find( Class<F> fact, FactID factID );
 
 }

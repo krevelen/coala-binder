@@ -12,8 +12,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
- * Copyright (c) 2010-2014 Almende B.V. 
  */
 package io.coala.capability.online;
 
@@ -34,7 +32,6 @@ import javax.inject.Inject;
  * {@link BasicOnlineCapability}
  * 
  * @version $Id$
- * @author <a href="mailto:Rick@almende.org">Rick</a>
  */
 public class BasicOnlineCapability extends BasicCapability
 		implements OnlineCapability
