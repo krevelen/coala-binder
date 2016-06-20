@@ -24,13 +24,17 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.aeonbits.owner.ConfigFactory;
@@ -212,7 +216,7 @@ public class ConfigUtil implements Util
 		final String... baseKeys )
 	{
 //		final Map<List<String>, SortedMap<Integer, JsonNode>> arrays = new HashMap<>();
-		final Map<String, Object> result = new HashMap<>();
+		final Map<Object, Object> result = new HashMap<>();
 		final String prefix = baseKeys == null || baseKeys.length == 0 ? null
 				: concat( CONFIG_KEY_SEP, baseKeys ) + CONFIG_KEY_SEP;
 		for( Map.Entry<Object, Object> entry : props.entrySet() )
@@ -230,25 +234,60 @@ public class ConfigUtil implements Util
 			if( lastSepIndex < 0 )
 				result.put( key, value );
 			else
-				nodeForPath( result,
-						new ArrayDeque<String>( Arrays.asList( SPLITTER
-								.split( key.substring( 0, lastSepIndex ) ) ) ) )
-										.put( field, value );
+			{
+				final Deque<String> path = new ArrayDeque<String>(
+						Arrays.asList( SPLITTER
+								.split( key.substring( 0, lastSepIndex ) ) ) );
+				nodeForPath( result, path ).put( field, value );
+			}
 		}
-		return JsonUtil.getJOM().valueToTree( result );
+		return JsonUtil.getJOM()
+				.valueToTree( convertIndexMapsToLists( result ) );
 	}
 
-	private static Map<String, Object>
-		nodeForPath( final Map<String, Object> root, final Deque<String> path )
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	private static Object convertIndexMapsToLists( final Map map )
+	{
+		final Set<Integer> indices = new HashSet<>();
+		for( Object key : map.keySet() )
+		{
+			// store any index keys
+			if( key instanceof Integer ) indices.add( (Integer) key );
+
+			// recurse
+			final Object value = map.get( key );
+			if( value instanceof Map )
+				map.put( key, convertIndexMapsToLists( (Map) value ) );
+		}
+		// check enough indices 
+		if( indices.size() != map.size() ) return map;
+		// check correct indices
+		for( int i = 0; i < map.size(); i++ )
+			if( !indices.remove( Integer.valueOf( i ) ) ) return map;
+		// convert indices to (ordered) list
+		final List result = new ArrayList( map.size() );
+		for( int i = 0; i < map.size(); i++ )
+			result.add( map.get( Integer.valueOf( i ) ) );
+		return result;
+	}
+
+	private static Map<Object, Object>
+		nodeForPath( final Map<Object, Object> root, final Deque<String> path )
 	{
 		if( path == null || path.size() == 0 ) return root;
 		final String first = path.removeFirst();
 		@SuppressWarnings( "unchecked" )
-		Map<String, Object> node = (Map<String, Object>) root.get( first );
+		Map<Object, Object> node = (Map<Object, Object>) root.get( first );
 		if( node == null )
 		{
 			node = new HashMap<>();
-			root.put( first, node );
+			try
+			{
+				root.put( Integer.parseInt( first ), node );
+			} catch( final Exception e )
+			{
+				root.put( first, node );
+			}
 		}
 		return nodeForPath( node, path );
 	}
