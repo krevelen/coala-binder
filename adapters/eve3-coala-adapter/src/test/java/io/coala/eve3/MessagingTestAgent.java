@@ -15,14 +15,11 @@
  */
 package io.coala.eve3;
 
-import javax.inject.Inject;
-
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
 import io.coala.agent.BasicAgent;
 import io.coala.agent.BasicAgentStatus;
-import io.coala.bind.Binder;
 import io.coala.capability.interact.ReceivingCapability;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.log.InjectLogger;
@@ -39,6 +36,7 @@ import rx.Observer;
  * @version $Id: cf7d93a458ffe55cb49bd3c639155e7d1a793abd $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class MessagingTestAgent extends BasicAgent
 {
 
@@ -119,17 +117,6 @@ public class MessagingTestAgent extends BasicAgent
 
 	@InjectLogger
 	private Logger LOG;
-
-	/**
-	 * {@link MessagingTestAgent} CDI constructor
-	 * 
-	 * @param binder the {@link Binder}
-	 */
-	@Inject
-	public MessagingTestAgent( final Binder binder )
-	{
-		super( binder );
-	}
 
 	/**
 	 * @see BasicAgent#initialize()

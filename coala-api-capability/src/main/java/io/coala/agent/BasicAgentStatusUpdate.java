@@ -5,6 +5,7 @@ import io.coala.name.AbstractIdentifiable;
 /**
  * {@link BasicAgentStatusUpdate}
  */
+@Deprecated
 public class BasicAgentStatusUpdate extends
 		AbstractIdentifiable<AgentStatusUpdateID> implements AgentStatusUpdate
 {

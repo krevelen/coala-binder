@@ -20,10 +20,10 @@
 	</description>
 
 	<properties>
-		<joda-time.version>2.9.2</joda-time.version>
+		<joda-time.version>2.9.4</joda-time.version>
 		<uuid.version>3.4.0</uuid.version>
-		<jackson.version>2.7.1</jackson.version>
-		<rxjava.version>1.1.1</rxjava.version>
+		<jackson.version>2.7.5</jackson.version>
+		<rxjava.version>1.1.6</rxjava.version>
 		<commons-codec.version>1.9</commons-codec.version>
 		<commons-io.version>2.4</commons-io.version>
 		<owner.version>1.0.9</owner.version>
@@ -149,7 +149,6 @@
 		<dependency>
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest-all</artifactId>
-			<version>${hamcrest.version}</version>
 			<scope>test</scope>
 		</dependency>
 

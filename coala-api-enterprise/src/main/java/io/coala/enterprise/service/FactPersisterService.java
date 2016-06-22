@@ -26,6 +26,7 @@ import rx.Observable;
  * 
  * @version $Id$
  */
+@Deprecated
 public interface FactPersisterService extends PersistingCapability
 {
 

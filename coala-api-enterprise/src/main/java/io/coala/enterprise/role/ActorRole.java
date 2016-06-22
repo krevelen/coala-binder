@@ -33,9 +33,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * 
  * @param <F> the (super)type of {@link CoordinationFact}
  */
-public interface ActorRole<F extends CoordinationFact>
-	extends Capability<BasicCapabilityStatus>, ModelComponent<CapabilityID>,
-	Timed<SimTime>
+@Deprecated
+public interface ActorRole<F extends CoordinationFact> extends
+	Capability<BasicCapabilityStatus>, ModelComponent<CapabilityID>, Timed
 {
 
 	/**

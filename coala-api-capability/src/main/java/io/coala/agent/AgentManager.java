@@ -20,6 +20,7 @@ import rx.Observable;
 /**
  * {@link AgentManager}
  */
+@Deprecated
 public interface AgentManager
 {
 

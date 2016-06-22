@@ -50,6 +50,7 @@ import rx.functions.Func1;
 /**
  * {@link ResourceStreamer}
  */
+@Deprecated
 public class ResourceStreamer
 {
 

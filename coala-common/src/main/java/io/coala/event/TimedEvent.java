@@ -20,6 +20,7 @@ package io.coala.event;
  * 
  * @param <ID> the type of {@link TimedEventID} for time-ordered event identity
  */
+@Deprecated
 public interface TimedEvent<ID extends TimedEventID<?, ?>> extends Event<ID>
 {
 

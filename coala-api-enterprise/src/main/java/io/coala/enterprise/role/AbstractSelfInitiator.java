@@ -30,6 +30,7 @@ import org.slf4j.Logger;
  * 
  * @param <F> the {@link CoordinationFact} type being handled
  */
+@Deprecated
 public abstract class AbstractSelfInitiator<F extends CoordinationFact>
 	extends AbstractExecutor<F> implements Initiator<F>
 {

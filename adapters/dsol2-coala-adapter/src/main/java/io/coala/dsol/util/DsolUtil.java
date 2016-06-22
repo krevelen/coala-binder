@@ -37,6 +37,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
  * @version $Id: 08e62b4916057f901eb3f264de25cde4f98f1553 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class DsolUtil
 {
 

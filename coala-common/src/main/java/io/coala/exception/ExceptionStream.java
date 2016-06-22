@@ -1,12 +1,13 @@
 package io.coala.exception;
 
-import io.coala.json.Contextualized;
+import io.coala.json.Contextual;
 import rx.Observable;
+import rx.Observer;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
 /**
- * {@link ExceptionStream} wraps a {@link Subject} for {@link Contextualized}
+ * {@link ExceptionStream} wraps a {@link Subject} for {@link Contextual}
  * {@link Throwable}s via static {@link #toPublished(Throwable)} and
  * {@link #asObservable()} methods.
  * 
@@ -14,7 +15,7 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class ExceptionStream<T extends Throwable & Contextualized>
+public class ExceptionStream<T extends Throwable & Contextual>
 {
 
 	/** the singleton {@link ExceptionStream} instance */
@@ -24,7 +25,7 @@ public class ExceptionStream<T extends Throwable & Contextualized>
 	 * @return the singleton {@link ExceptionStream} instance
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <T extends Throwable & Contextualized> ExceptionStream<T>
+	public static <T extends Throwable & Contextual> ExceptionStream<T>
 		getInstance()
 	{
 		if( INSTANCE == null ) INSTANCE = new ExceptionStream<T>();
@@ -34,18 +35,19 @@ public class ExceptionStream<T extends Throwable & Contextualized>
 	/**
 	 * Helper-method
 	 * 
-	 * @param e the {@link Contextualized} {@link Throwable} to publish
-	 * @return the same {@link Contextualized} to allow chaining
+	 * @param e the {@link Contextual} {@link Throwable} to publish
+	 * @return the same {@link Contextual} to allow chaining
 	 */
-	public static <T extends Throwable & Contextualized> T
+	@SuppressWarnings( "unchecked" )
+	public static <T extends Throwable & Contextual> T
 		toPublished( final T e )
 	{
-		getInstance().subject.onNext( e );
+		((Observer<T>) getInstance().subject).onNext( e );
 		return e;
 	}
 
 	/**
-	 * @return an {@link Observable} of {@link Contextualized} {@link Throwable}
+	 * @return an {@link Observable} of {@link Contextual} {@link Throwable}
 	 *         s
 	 */
 	public static Observable<? extends Throwable> asObservable()

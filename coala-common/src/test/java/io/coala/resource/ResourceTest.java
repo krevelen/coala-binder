@@ -28,6 +28,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link ResourceTest}
  */
+@Deprecated
 public class ResourceTest
 {
 

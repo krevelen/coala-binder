@@ -30,33 +30,25 @@ public class GlobalConfigTest
 		LOG.trace( "Testing YAML + OWNER config" );
 		final File yamlPath = new File( "log4j2-test.yaml" );
 		final String baseKey = "base";
-		final Properties props = ConfigUtil.flattenYaml( yamlPath, baseKey );
+		final Properties props = YamlUtil.flattenYaml( yamlPath, baseKey );
+		props.setProperty( "base" + GlobalConfig.KEY_SEP + "extra", "new val" );
 		LOG.trace( "Flattened {} as: {}", yamlPath, props );
 		final GlobalConfig conf = ConfigCache.getOrCreate( GlobalConfig.class,
 				props );
-		/*ConfigUtil.getYamlMapper().registerModule( new SimpleModule()
-				.addSerializer( String.class, new JsonSerializer<String>()
-				{
-
-					@Override
-					public void serializeWithType( String value,
-						JsonGenerator gen, SerializerProvider serializers,
-						TypeSerializer typeSer ) throws IOException
-					{
-						this.serialize( value, gen, serializers );
-					}
-
-					@Override
-					public void serialize( String value, JsonGenerator gen,
-						SerializerProvider serializers )
-						throws IOException, JsonProcessingException
-					{
-						System.err.println(value);
-						gen.writeRawValue( value );
-					}
-				} ) );*/
+		/*
+		 * ConfigUtil.getYamlMapper().registerModule( new SimpleModule()
+		 * .addSerializer( String.class, new JsonSerializer<String>() {
+		 * 
+		 * @Override public void serializeWithType( String value, JsonGenerator
+		 * gen, SerializerProvider serializers, TypeSerializer typeSer ) throws
+		 * IOException { this.serialize( value, gen, serializers ); }
+		 * 
+		 * @Override public void serialize( String value, JsonGenerator gen,
+		 * SerializerProvider serializers ) throws IOException,
+		 * JsonProcessingException { System.err.println(value);
+		 * gen.writeRawValue( value ); } } ) );
+		 */
 		LOG.trace( "Got config: {} -> \n{}", conf,
-				ConfigUtil.getYamlMapper().writer().writeValueAsString(
-						ConfigUtil.expand( props, baseKey ) ) );
+				YamlUtil.toYAML( "no comment", props, baseKey ) );
 	}
 }

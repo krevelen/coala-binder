@@ -37,6 +37,7 @@ import nl.tudelft.simulation.event.TimedEvent;
  * @version $Id: fe2cda04d439908999cbaa9af3ac5a60db3433fc $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class DsolAccumulator<S extends DEVSSimulatorInterface, M extends DsolModel<S, M>, THIS extends DsolAccumulator<S, M, THIS>>
 	extends DsolIndicator<S, M, THIS>
 {

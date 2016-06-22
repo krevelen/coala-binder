@@ -30,7 +30,7 @@ import com.eaio.uuid.UUID;
 
 import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper.Util;
-import io.coala.name.x.Id;
+import io.coala.name.Id;
 
 /**
  * {@link PseudoRandom} generates a stream of pseudo-random numbers, with an API
@@ -119,12 +119,10 @@ public interface PseudoRandom
 			@Override
 			public Name convert( final Method method, final String input )
 			{
-				return Util
-						.valueOf(
-								input == null || input.isEmpty()
-										|| input.equalsIgnoreCase( "null" )
-												? NAME_DEFAULT : input,
-								Name.class );
+				return Util.of( input == null || input.isEmpty()
+						|| input.equalsIgnoreCase( "null" ) ? NAME_DEFAULT
+								: input,
+						Name.class );
 			}
 		}
 

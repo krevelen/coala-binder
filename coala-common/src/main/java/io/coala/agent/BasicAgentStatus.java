@@ -29,6 +29,7 @@ import io.coala.log.LogUtil;
  * @version $Id: b82e5b2a4df66af46d627c6b303ac414bc6bad47 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public enum BasicAgentStatus implements AgentStatus<BasicAgentStatus>
 {
 	/** constructed */

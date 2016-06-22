@@ -20,6 +20,7 @@ import io.coala.exception.ExceptionFactory;
 /**
  * {@link TimeUnit}
  */
+@Deprecated
 public enum TimeUnit
 {
 	/** */

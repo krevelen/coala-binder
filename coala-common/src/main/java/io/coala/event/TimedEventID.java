@@ -18,6 +18,7 @@ package io.coala.event;
 import java.io.Serializable;
 
 import io.coala.model.ModelID;
+import io.coala.time.AbstractInstant;
 import io.coala.time.Instant;
 import io.coala.time.Timed;
 
@@ -29,7 +30,8 @@ import io.coala.time.Timed;
  * @param <T> the {@link Serializable} and {@link Comparable} value type
  * @param <I> the {@link Instant} type
  */
-public class TimedEventID<T extends Serializable & Comparable<T>, I extends Instant<I>>
+@Deprecated
+public class TimedEventID<T extends Serializable & Comparable<T>, I extends AbstractInstant<I>>
 	extends EventID<T> implements Timed<I>
 {
 

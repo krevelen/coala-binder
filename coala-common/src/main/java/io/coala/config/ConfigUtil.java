@@ -15,8 +15,6 @@
  */
 package io.coala.config;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,13 +30,9 @@ import java.util.regex.Pattern;
 
 import org.aeonbits.owner.ConfigFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import io.coala.json.JsonUtil;
-import io.coala.util.FileUtil;
 import io.coala.util.Util;
 
 /**
@@ -73,39 +67,12 @@ public class ConfigUtil implements Util
 		// empty
 	}
 
-	private static ObjectMapper mapper = null;
-
 	private static CharSequence subKey( final CharSequence baseKey,
 		final CharSequence sub )
 	{
 		return baseKey == null || baseKey.length() == 0 ? sub
 				: new StringBuilder( baseKey ).append( CONFIG_KEY_SEP )
 						.append( sub );
-	}
-
-	/**
-	 * @return a {@link ObjectMapper} singleton for YAML file formats
-	 */
-	public synchronized static ObjectMapper getYamlMapper()
-	{
-		if( mapper == null ) mapper = new ObjectMapper( new YAMLFactory() );
-		return mapper;
-	}
-
-	/**
-	 * @param yamlPath the (relative, absolute, or class-path) YAML location
-	 * @param baseKeys the base keys for all imported property keys
-	 * @return a flat {@link Properties} mapping
-	 * @throws JsonProcessingException
-	 * @throws IOException
-	 */
-	public static Properties flattenYaml( final File yamlPath,
-		final CharSequence... baseKeys )
-		throws JsonProcessingException, IOException
-	{
-		return flatten(
-				getYamlMapper().readTree( FileUtil.toInputStream( yamlPath ) ),
-				baseKeys );
 	}
 
 	public static Properties flatten( final JsonNode root )
@@ -125,7 +92,7 @@ public class ConfigUtil implements Util
 	{
 		final Properties props = new Properties();
 		flatten( props, root,
-				new StringBuilder( join( CONFIG_KEY_SEP, baseKeys ) ) );
+				new StringBuilder( String.join( CONFIG_KEY_SEP, baseKeys ) ) );
 		return props;
 	}
 
@@ -178,7 +145,7 @@ public class ConfigUtil implements Util
 	 * @return the {@link Number}, {@link Boolean} or {@link BigDecimal} value
 	 *         if successful
 	 */
-	public static Object tryNumber( final Object value )
+	protected static Object tryNumber( final Object value )
 	{
 		if( value == null ) return null;
 		if( value instanceof Number ) return value;
@@ -196,23 +163,6 @@ public class ConfigUtil implements Util
 	}
 
 	/**
-	 * pre-JDK8 {@link String#join(CharSequence, CharSequence...)}
-	 * 
-	 * @param delim the delimiter {@link CharSequence}
-	 * @param values the value {@link CharSequence}(s) to concatenate
-	 * @return a concatenated {@link CharSequence}
-	 */
-	public static CharSequence join( final CharSequence delim,
-		final CharSequence... values )
-	{
-		if( values == null || values.length == 0 || delim == null ) return null;
-		final StringBuilder result = new StringBuilder( values[0] );
-		for( int i = 1; i < values.length; i++ )
-			result.append( delim ).append( values[i] );
-		return result;
-	}
-
-	/**
 	 * <code>{"0": a, "1": b, &hellip;}</code> &rArr;
 	 * <code>[a, b, &hellip;}</code>
 	 * 
@@ -220,7 +170,7 @@ public class ConfigUtil implements Util
 	 * @return the converted {@link Map} or {@link List}
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public static Object objectsToArrays( final Map map )
+	protected static Object objectsToArrays( final Map map )
 	{
 		final Set<Integer> indices = new HashSet<>();
 		for( Object key : map.keySet() )
@@ -252,7 +202,7 @@ public class ConfigUtil implements Util
 	 * @param path the (relative) key path as {@link List} of {@link String}s
 	 * @return the (nested) node {@link Map}
 	 */
-	public static Map<Object, Object>
+	protected static Map<Object, Object>
 		nodeForPath( final Map<Object, Object> tree, final List<String> path )
 	{
 		if( path == null || path.isEmpty() ) return tree;
@@ -278,7 +228,7 @@ public class ConfigUtil implements Util
 	 * @param baseKeys the base key(s) to prefix
 	 * @return the expanded property tree root {@link JsonNode}
 	 */
-	public static JsonNode expand( final Map<Object, Object> props,
+	public static JsonNode expand( final Map<?, ?> props,
 		final String... baseKeys )
 	{
 		return expand( CONFIG_KEY_SEP, props, baseKeys );
@@ -290,14 +240,14 @@ public class ConfigUtil implements Util
 	 * @param baseKeys the base key(s) to prefix
 	 * @return the expanded property tree root {@link JsonNode}
 	 */
-	public static JsonNode expand( final String keySep,
-		final Map<Object, Object> props, final String... baseKeys )
+	public static JsonNode expand( final String keySep, final Map<?, ?> props,
+		final String... baseKeys )
 	{
 		final Pattern splitter = Pattern.compile( Pattern.quote( keySep ) );
 		final Map<Object, Object> result = new HashMap<>();
 		final String prefix = baseKeys == null || baseKeys.length == 0 ? null
-				: join( keySep, baseKeys ) + keySep;
-		for( Map.Entry<Object, Object> entry : props.entrySet() )
+				: String.join( keySep, baseKeys ) + keySep;
+		for( Map.Entry<?, ?> entry : props.entrySet() )
 		{
 			String key = entry.getKey().toString();
 			if( prefix != null )

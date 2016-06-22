@@ -20,7 +20,7 @@
 	<url>http://jason.sf.net/</url>
 
 	<properties>
-		<jason.version>1.4.1</jason.version>
+		<jason.version>1.4.2</jason.version>
 	</properties>
 
 	<repositories>
@@ -48,7 +48,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>jason</groupId>
+			<groupId>net.sf.jason</groupId>
 			<artifactId>jason</artifactId>
 			<version>${jason.version}</version>
 		</dependency>

@@ -15,15 +15,11 @@
  */
 package io.coala.example.conway;
 
-import javax.inject.Inject;
-
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.BasicAgent;
-import io.coala.bind.Binder;
 import io.coala.capability.interact.ReceivingCapability;
 import io.coala.log.InjectLogger;
-import io.coala.time.SimTime;
 import rx.Observable;
 import rx.Observer;
 
@@ -33,6 +29,7 @@ import rx.Observer;
  * @version $Id: 6906eff0d90d13e4805e609859895520fb71412a $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class BasicCell extends BasicAgent implements Cell
 {
 
@@ -42,17 +39,6 @@ public class BasicCell extends BasicAgent implements Cell
 	/** */
 	@InjectLogger
 	private transient Logger LOG;
-
-	/**
-	 * {@link BasicCell} CDI constructor
-	 * 
-	 * @param binder the {@link Binder}
-	 */
-	@Inject
-	private BasicCell( final Binder binder )
-	{
-		super( binder );
-	}
 
 	@Override
 	public void initialize() throws Exception
@@ -97,7 +83,7 @@ public class BasicCell extends BasicAgent implements Cell
 					public void onCompleted()
 					{
 						LOG.trace( "My world has ended, simulation done!" );
-						die();
+//						die();
 					}
 
 					@Override
@@ -113,10 +99,10 @@ public class BasicCell extends BasicAgent implements Cell
 				} );
 	}
 
-	@Override
-	public SimTime getTime()
-	{
-		return getBinder().inject( CellWorld.class ).getTime();
-	}
+//	@Override
+//	public SimTime getTime()
+//	{
+//		return getBinder().inject( CellWorld.class ).getTime();
+//	}
 
 }

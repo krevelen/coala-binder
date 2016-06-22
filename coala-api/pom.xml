@@ -20,8 +20,6 @@
 	</description>
 
 	<properties>
-		<uuid.version>3.4</uuid.version>
-		<easymock.version>3.2</easymock.version>
 		<jscience.version>4.3.1</jscience.version>
 		<HdrHistogram.version>2.1.8</HdrHistogram.version>
 	</properties>

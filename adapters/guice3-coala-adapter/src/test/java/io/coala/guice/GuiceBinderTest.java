@@ -36,6 +36,7 @@ import io.coala.time.TimeUnit;
 /**
  * {@link GuiceBinderTest}
  */
+@Deprecated
 public class GuiceBinderTest
 {
 

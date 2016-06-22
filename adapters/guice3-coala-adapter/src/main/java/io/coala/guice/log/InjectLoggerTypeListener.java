@@ -29,6 +29,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link InjectLoggerTypeListener}
  */
+@Deprecated
 public class InjectLoggerTypeListener implements TypeListener
 {
 	/** */

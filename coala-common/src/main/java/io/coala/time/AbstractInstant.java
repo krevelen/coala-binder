@@ -152,7 +152,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public int compareTo( final Instant<?> other )
+	public int compareTo( final AbstractInstant<?> other )
 	{
 		final int compareClockID = getClockID().compareTo( other.getClockID() );
 		if( compareClockID != 0 ) return compareClockID;

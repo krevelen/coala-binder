@@ -29,6 +29,7 @@ import java.util.Map;
 /**
  * {@link OnlineCapability}
  */
+@Deprecated
 public interface OnlineCapability extends Capability<BasicCapabilityStatus>
 {
 

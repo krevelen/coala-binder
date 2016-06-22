@@ -26,6 +26,7 @@ import rx.Observable;
 /**
  * {@link CreatingCapability} links agents for lookup or directory purposes
  */
+@Deprecated
 public interface CreatingCapability extends Capability<BasicCapabilityStatus>
 {
 

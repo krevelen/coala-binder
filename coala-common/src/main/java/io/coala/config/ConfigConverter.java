@@ -20,6 +20,7 @@ package io.coala.config;
  * <a href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html" >
  * here</a>
  */
+@Deprecated
 public interface ConfigConverter<T>
 {
 	/**

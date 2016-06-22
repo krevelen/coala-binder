@@ -24,6 +24,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
  * @param <S> the type of {@link SimulatorInterface}
  * @param <THIS> the final type of {@link DsolModel}
  */
+@Deprecated
 public interface DsolModel<S extends SimulatorInterface, THIS extends DsolModel<S, THIS>>
 	extends DsolModelComponent<S, THIS>, ModelInterface
 {

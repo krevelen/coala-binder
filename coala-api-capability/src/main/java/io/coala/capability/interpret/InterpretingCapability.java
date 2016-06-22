@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link InterpretingCapability} links agents for lookup or directory purposes
  */
+@Deprecated
 public interface InterpretingCapability
 	extends Capability<BasicCapabilityStatus>
 {

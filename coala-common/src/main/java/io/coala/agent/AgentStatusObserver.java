@@ -20,6 +20,7 @@ import rx.Observer;
 /**
  * {@link AgentStatusObserver}
  */
+@Deprecated
 public interface AgentStatusObserver extends Observer<AgentStatusUpdate>
 {
 

@@ -31,6 +31,7 @@ import java.lang.annotation.Target;
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.FIELD )
+@Deprecated
 public @interface InjectConfig
 {
 	/** */
@@ -40,7 +41,7 @@ public @interface InjectConfig
 	String defaultValue() default "";
 
 	/** */
-	byte defaultByteValue() default 0;
+	byte defaultByteValue() default 0x00;
 
 	/** */
 	short defaultShortValue() default 0;
@@ -49,10 +50,10 @@ public @interface InjectConfig
 	int defaultIntValue() default 0;
 
 	/** */
-	long defaultLongValue() default 0;
+	long defaultLongValue() default 0L;
 
 	/** */
-	float defaultFloatValue() default 0;
+	float defaultFloatValue() default 0f;
 
 	/** */
 	double defaultDoubleValue() default 0.0;
