@@ -30,6 +30,7 @@ import org.aeonbits.owner.Converter;
 import io.coala.config.GlobalConfig;
 import io.coala.config.YamlConfig;
 import io.coala.name.Identified;
+import io.coala.util.Instantiator;
 import rx.Observable;
 
 /**
@@ -50,13 +51,6 @@ public interface LocalBinder extends LocalContextual
 	<T> T inject( Class<T> type );
 
 	/**
-	 * @param type the type to (re)bind
-	 * @param instance the constant or singleton instance to bind
-	 * @return the new {@link LocalProvider}
-	 */
-	<T> LocalProvider<T> bind( Class<T> type, T instance );
-
-	/**
 	 * @param type the factory type to (re)bind
 	 * @param provider the instance {@link Provider}
 	 * @return the (wrapped) {@link LocalProvider}
@@ -64,11 +58,26 @@ public interface LocalBinder extends LocalContextual
 	<T> LocalProvider<T> bind( Class<T> type, Provider<T> provider );
 
 	/**
+	 * @param type the type to (re)bind
+	 * @param instance the constant or singleton instance to bind
+	 * @return the new {@link LocalProvider}
+	 */
+	default <T> LocalProvider<T> bind( final Class<T> type, final T instance )
+	{
+		return bind( type, LocalProvider.of( this, instance ) );
+	}
+
+	/**
 	 * @param type the {@link Singleton} type to (re)bind
 	 * @param args the parameter constants to use for each instantiation
 	 * @return the new {@link LocalProvider}
 	 */
-	<T> LocalProvider<T> bind( Class<T> type, Object... args );
+	default <T> LocalProvider<T> bind( final Class<T> type,
+		final Object... args )
+	{
+		return bind( type, LocalProvider.of( this,
+				Instantiator.providerOf( type, args ), false ) );
+	}
 
 	/**
 	 * @return an {@link Observable} stream of all (re)bound {@link Class}s
@@ -76,7 +85,7 @@ public interface LocalBinder extends LocalContextual
 	Observable<Class<?>> emitBindings();
 
 	/**
-	 * {@link LocalProvider} is a contextual or local {@link Provider}
+	 * {@link LocalProvider} is a {@link LocalContextual} {@link Provider}
 	 * 
 	 * @param <T>
 	 * @version $Id$
@@ -85,90 +94,137 @@ public interface LocalBinder extends LocalContextual
 	interface LocalProvider<T> extends Provider<T>, LocalContextual
 	{
 
+		@SuppressWarnings( "unchecked" )
+		static <T> LocalProvider<T> of( final LocalContextual origin,
+			final Class<T> type )
+		{
+			return of( origin,
+					Provider.class.isAssignableFrom( type )
+							? (Provider<T>) Instantiator.instantiate( type )
+							: Instantiator.providerOf( type ),
+					false );
+		}
+
 		static <T> LocalProvider<T> of( final LocalContextual origin,
 			final T instance )
 		{
 			return of( origin, () ->
 			{
 				return instance;
-			} );
+			}, true );
 		}
 
 		static <T> LocalProvider<T> of( final LocalContextual origin,
-			final Provider<T> p )
+			final Provider<T> provider, final boolean caching )
 		{
-			if( p instanceof LocalProvider
-					&& LocalContextual.equals( (LocalContextual) p, origin ) )
-				return (LocalProvider<T>) p;
+			if( provider instanceof LocalProvider && LocalContextual
+					.equals( (LocalContextual) provider, origin ) )
+				return (LocalProvider<T>) provider;
 
-			return new LocalProvider<T>()
-			{
-				@Override
-				public T get()
-				{
-					return p.get();
-				}
-
-				@Override
-				public Context context()
-				{
-					return origin.context();
-				}
-
-				@Override
-				public String id()
-				{
-					return origin.id();
-				}
-			};
-		}
-	}
-
-	class MutableCachingProvider<T> implements LocalProvider<T>
-	{
-		public static <T> MutableCachingProvider<T>
-			of( final LocalProvider<T> source )
-		{
-			final MutableCachingProvider<T> result = new MutableCachingProvider<>();
-			result.source = source;
+			final Wrapped<T> result = caching ? new Caching<T>()
+					: new Wrapped<T>();
+			result.origin = origin;
+			result.provider = provider;
 			return result;
 		}
 
-		private LocalProvider<T> source;
+		class Wrapped<T> implements LocalProvider<T>
+		{
+			protected LocalContextual origin;
+			protected Provider<T> provider;
 
-		private T cache = null;
+			@Override
+			public T get()
+			{
+				return this.provider.get();
+			}
+
+			@Override
+			public Context context()
+			{
+				return this.origin.context();
+			}
+
+			@Override
+			public String id()
+			{
+				return this.origin.id();
+			}
+		}
 
 		/**
-		 * {@link MutableCachingProvider} zero-arg bean constructor
+		 * {@link Caching}
+		 * 
+		 * @param <T>
+		 * @version $Id$
+		 * @author Rick van Krevelen
 		 */
-		protected MutableCachingProvider()
+		class Caching<T> extends Wrapped<T>
 		{
-			// empty
+			T cache = null;
+
+			@Override
+			public synchronized T get()
+			{
+				return this.cache == null ? this.cache = super.get()
+						: this.cache;
+			}
+		}
+	}
+
+	/**
+	 * {@link MutableProvider} is a {@link LocalProvider} with
+	 * {@link #reset(LocalProvider)} function
+	 * 
+	 * @param <T>
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	interface MutableProvider<T> extends LocalProvider<T>
+	{
+		/**
+		 * @param newProvider the new {@link LocalProvider} instance
+		 * @return this {@link MutableProvider} to allow chaining
+		 */
+		MutableProvider<T> reset( LocalProvider<T> newProvider );
+
+		static <T> MutableProvider<T> of( final LocalContextual origin,
+			final Class<T> type )
+		{
+			return of( LocalProvider.of( origin, type ) );
 		}
 
-		@Override
-		public synchronized T get()
+		static <T> MutableProvider<T> of( final LocalContextual origin,
+			final T instance )
 		{
-			return this.cache == null ? (this.cache = this.source.get())
-					: this.cache;
+			return of( LocalProvider.of( origin, instance ) );
 		}
 
-		public synchronized void reset( final LocalProvider<T> source )
+		static <T> MutableProvider<T> of( final LocalProvider<T> provider )
 		{
-			this.source = source;
-			this.cache = null;
+			return new Caching<T>().reset( provider );
 		}
 
-		@Override
-		public String id()
+		/**
+		 * {@link Caching}
+		 * 
+		 * @param <T>
+		 * @version $Id$
+		 * @author Rick van Krevelen
+		 */
+		class Caching<T> extends LocalProvider.Caching<T>
+			implements MutableProvider<T>
 		{
-			return this.source.id();
-		}
+			@Override
+			public synchronized MutableProvider<T>
+				reset( final LocalProvider<T> provider )
+			{
+				this.origin = provider;
+				this.provider = provider;
+				this.cache = null;
+				return this;
+			}
 
-		@Override
-		public Context context()
-		{
-			return this.source.context();
 		}
 	}
 
@@ -181,13 +237,25 @@ public interface LocalBinder extends LocalContextual
 	interface Config extends LocalConfig
 	{
 
-		/** the (relative) PROVIDER_TYPES_KEY */
-		String PROVIDER_TYPES_KEY = "providers";
+		/** the (relative) {@link #FIXED_TYPES_KEY} */
+		String FIXED_TYPES_KEY = "fixed";
 
-		@Key( PROVIDER_TYPES_KEY )
+		@Key( FIXED_TYPES_KEY )
+		Class<?>[] fixedTypes();
+
+		/** the (relative) {@link #MUTABLE_TYPES_KEY} */
+		String MUTABLE_TYPES_KEY = "mutable";
+
+		@Key( MUTABLE_TYPES_KEY )
+		Class<?>[] mutableTypes();
+
+		/** the (relative) {@link #LAUNCH_TYPES_KEY} */
+		String LAUNCH_TYPES_KEY = "launch";
+
+		@Key( LAUNCH_TYPES_KEY )
 		Class<?>[] launchTypes();
 
-		/** the (relative) EXTEND_KEY */
+		/** the (relative) {@link #EXTENDS_KEY} */
 		String EXTENDS_KEY = "extends";
 
 		@Key( EXTENDS_KEY )
@@ -241,9 +309,27 @@ public interface LocalBinder extends LocalContextual
 					imports );
 		}
 
-		static String binderKeyPrefixFor( final String id )
+		/**
+		 * @param imports
+		 * @return
+		 * @see ConfigCache#getOrCreate(Class, Map...)
+		 */
+		static LauncherConfig getOrCreate( final Map<?, ?>... imports )
 		{
-			return String.join( KEY_SEP, "binder", id, "" );
+			return ConfigCache.getOrCreate( LauncherConfig.class, imports );
+		}
+
+		static String keyFor( final String... keys )
+		{
+			if( keys == null || keys.length < 2 )
+				throw new IllegalArgumentException(
+						"Key list must contain <id> and at least another key" );
+			final String[] list = new String[keys.length + 1];
+			int n = 0;
+			list[n++] = "binder";
+			for( String key : keys )
+				list[n++] = key;
+			return String.join( KEY_SEP, list );
 		}
 
 		class BinderConfigConverter implements Converter<Config>
@@ -256,12 +342,12 @@ public interface LocalBinder extends LocalContextual
 
 				final Map<String, String> imports = new HashMap<>();
 				imports.put( ID_KEY, id );
-				final String prefix = binderKeyPrefixFor( id );
+				final String prefix = keyFor( id, "" );
 				for( String key : launcherConfig.propertyNames() )
 					if( key.startsWith( prefix ) )
 						imports.put( key.substring( prefix.length() ),
 								launcherConfig.getProperty( key ) );
-				
+
 				// TODO extend another id's config values
 
 				// TODO multiple numbered instances (similar to 'extends')

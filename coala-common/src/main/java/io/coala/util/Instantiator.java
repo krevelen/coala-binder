@@ -38,8 +38,8 @@ public class Instantiator<T>
 
 	/**
 	 * @param valueType the {@link Class} to instantiate/proxy
-	 * @param args the constructor arguments (constants for each instantiation)
-	 * @return a new {@link Instantiator}
+	 * @param args the constructor arguments (constant for each instantiation)
+	 * @return a new {@link Provider}
 	 */
 	public static <T> Provider<T> providerOf( final Class<T> valueType,
 		final Object... args )
@@ -47,15 +47,14 @@ public class Instantiator<T>
 		final Class<?>[] argTypes = new Class<?>[args.length];
 		for( int i = 0; i < args.length; i++ )
 			argTypes[i] = args[i] == null ? null : args[i].getClass();
+		final Instantiator<T> instantiator = of( valueType, argTypes );
 
 		return new Provider<T>()
 		{
-			private Instantiator<T> instantiator = of( valueType, argTypes );
-
 			@Override
 			public T get()
 			{
-				return this.instantiator.instantiate( args );
+				return instantiator.instantiate( args );
 			}
 		};
 	}
@@ -132,7 +131,9 @@ public class Instantiator<T>
 				return ProxyProvider.of( JsonUtil.getJOM(), this.type, imports )
 						.get();
 			}
-			return this.constructor.newInstance( args );
+			return this.constructor != null
+					? this.constructor.newInstance( args )
+					: this.type.newInstance();
 		} catch( final Throwable t )
 		{
 			throw ExceptionFactory.createUnchecked( t,

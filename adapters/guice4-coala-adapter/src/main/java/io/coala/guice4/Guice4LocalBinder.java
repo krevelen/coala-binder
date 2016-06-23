@@ -1,8 +1,11 @@
 package io.coala.guice4;
 
+import java.lang.reflect.Constructor;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.apache.logging.log4j.Logger;
@@ -12,7 +15,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import io.coala.bind.LocalBinder;
-import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;
@@ -35,63 +37,99 @@ public class Guice4LocalBinder implements LocalBinder
 	private static synchronized Injector
 		createInjectorFor( final Guice4LocalBinder binder )
 	{
-		return Guice.createInjector( new AbstractModule()
+		final Injector result = Guice.createInjector( new AbstractModule()
 		{
-			@SuppressWarnings( "unchecked" )
+			@Override
 			public void configure()
 			{
-				LOG.trace( "Binding {} config: {}", binder.id, binder.config );
 				bind( Config.class ).toInstance( binder.config );
 				binder.bindings.onNext( Config.class );
+				LOG.trace( "Bound {} config: {}", binder.id, binder.config );
+
+				bind( LocalBinder.class ).toInstance( binder );
+				binder.bindings.onNext( LocalBinder.class );
+				LOG.trace( "Bound {} binder: {}", binder.id,
+						binder.getClass() );
+
+				final Class<?>[] mutableTypes = binder.config.mutableTypes();
+				if( mutableTypes == null )
+					LOG.trace( "No mutable types to bind for: {}", binder.id );
+				else
+					for( Class<?> type : mutableTypes )
+						bindAny( type );
+
 				final Class<?>[] launchTypes = binder.config.launchTypes();
 				if( launchTypes == null )
+					LOG.trace( "No types to launch for: {}", binder.id );
+				else
+					for( Class<?> type : launchTypes )
+						bindAny( type );
+			}
+
+			@SuppressWarnings( { "unchecked", "rawtypes" } )
+			private <T> Class<T>
+				bindProvider( final Class<? extends Provider> providerType )
+			{
+				final Class<T> result = (Class<T>) TypeArguments
+						.of( Provider.class, providerType ).get( 0 );
+				bind( result )
+						.toProvider( Instantiator.instantiate( providerType ) );
+				return result;
+			}
+
+			@SuppressWarnings( "unchecked" )
+			private <T> void bindAny( final Class<T> type )
+			{
+				if( Provider.class.isAssignableFrom( type ) )
 				{
-					LOG.trace( "No types to bind/launch for {}", binder.id );
-					return;
-				}
-				for( Class<?> type : launchTypes )
-				{
-					if( !Provider.class.isAssignableFrom( type ) ) continue;
+					final Class<T> valueType = bindProvider(
+							type.asSubclass( Provider.class ) );
+					LOG.trace( "Bound {} | {} -> {} via {}", binder.id,
+							valueType, type, getProvider( type ).hashCode() );
+					binder.bindings.onNext( valueType );
+				} else
 					try
 					{
-						@SuppressWarnings( "rawtypes" )
-						final Class<? extends Provider> providerType = type
-								.asSubclass( Provider.class );
-						final Class<?> valueType = TypeArguments
-								.of( Provider.class, providerType ).get( 0 );
-						LOG.trace( "Binding {} | {} -> {}", binder.id,
-								valueType, providerType );
-						bind( valueType )
-								.toProvider( providerType.newInstance() );
-						binder.bindings.onNext( valueType );
-					} catch( final RuntimeException e )
-					{
-						throw e;
+						bind( type ).toProvider(
+								MutableProvider.of( binder, type ) );
+						LOG.trace( "Bound {} | {} via {}", binder.id, type,
+								type, getProvider( type ).hashCode() );
+						binder.bindings.onNext( type );
 					} catch( final Exception e )
 					{
-						throw ExceptionFactory.createUnchecked( e,
-								"Problem creating provider of type: {}", type );
-					}
-				}
-				for( Class<?> type : launchTypes )
-				{
-					if( Provider.class.isAssignableFrom( type ) ) continue;
-					LOG.trace( "Constructing {} object: {}", binder.id, type );
-					// FIXME apply constructor arguments from config?
-					try
-					{
-						Instantiator.instantiate( type );
-					} catch( final RuntimeException e )
-					{
+						for( Constructor<?> constructor : type
+								.getConstructors() )
+							if( constructor
+									.isAnnotationPresent( Inject.class ) )
+							{
+								bind( type ).toConstructor(
+										(Constructor<T>) constructor );
+								LOG.trace( "Bound {} | {} -> {} via {}",
+										binder.id, type,
+										Arrays.asList( constructor
+												.getParameterTypes() ),
+										getProvider( type ).hashCode() );
+								binder.bindings.onNext( type );
+								return;
+							}
 						throw e;
-					} catch( final Exception e )
-					{
-						throw ExceptionFactory.createUnchecked( e,
-								"Problem constructing: {}", type );
 					}
-				}
 			}
 		} );
+
+		final Class<?>[] launchTypes = binder.config.launchTypes();
+		if( launchTypes == null )
+			LOG.trace( "No types to launch for: {}", binder.id );
+		else
+			for( Class<?> type : launchTypes )
+			{
+				final Provider<?> provider = result.getProvider( type );
+				provider.get();
+				LOG.trace( "Launched {} | {} via {}", binder.id, type,
+						provider.hashCode() );
+			}
+
+		return result;
 	}
 
 	private static final Map<String, Injector> INJECTOR_CACHE = new HashMap<>();
@@ -168,32 +206,18 @@ public class Guice4LocalBinder implements LocalBinder
 		final Provider<T> provider )
 	{
 		final LocalProvider<T> result = LocalProvider.of( this,
-				injector().getProvider( type ) );
-		if( result instanceof MutableCachingProvider )
+				injector().getProvider( type ), false );
+		if( result instanceof MutableProvider )
 		{
-			((MutableCachingProvider<T>) result)
-					.reset( LocalProvider.of( this, provider ) );
+			((MutableProvider<T>) result)
+					.reset( LocalProvider.of( this, provider, false ) );
 			this.bindings.onNext( type );
 		}
 		return result;
 	}
 
-	@Override
-	public <T> LocalProvider<T> bind( final Class<T> type, final T instance )
-	{
-		return bind( type, LocalProvider.of( this, instance ) );
-	}
-
-	@Override
-	public <T> LocalProvider<T> bind( final Class<T> type,
-		final Object... args )
-	{
-		return bind( type, Instantiator.providerOf( type, args ) );
-	}
-
 	public static class Guice4Launcher implements Launcher
 	{
-
 		/**
 		 * @param config
 		 * @return a new {@link Guice4Launcher}
@@ -215,25 +239,5 @@ public class Guice4LocalBinder implements LocalBinder
 		{
 			Guice4LocalBinder.of( config );
 		}
-
 	}
-//	public static class Factory implements LocalBinder.Factory
-//	{
-//
-//		public static Factory of( final FactoryConfig config )
-//		{
-//			final Factory result = Instantiator.of( config.factoryType() )
-//					.instantiate();
-//			// FIXME
-//			return result;
-//		}
-//
-//		@Override
-//		public void create( final Config config )
-//		{
-//			// TODO Auto-generated method stub
-//
-//		}
-//
-//	}
 }
