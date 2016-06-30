@@ -91,7 +91,7 @@
 		<dependency>
 			<!-- used for configurable properties injection -->
 			<groupId>org.aeonbits.owner</groupId>
-			<artifactId>owner</artifactId>
+			<artifactId>owner-java8</artifactId>
 			<version>${owner.version}</version>
 		</dependency>
 

@@ -27,6 +27,7 @@ import java.util.Map;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Converter;
+import org.aeonbits.owner.Mutable;
 
 import com.eaio.uuid.UUID;
 
@@ -74,7 +75,7 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 	 * @see ConfigFactory#create(Class, Map[])
 	 * @see ConfigCache#getOrCreate(Class, Map[])
 	 */
-	interface LocalConfig extends GlobalConfig
+	interface LocalConfig extends GlobalConfig, Mutable
 	{
 
 		String ID_KEY = "id";
@@ -84,49 +85,46 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 		String ID_PREFIX = "${" + ID_KEY + "}";
 
 		/**
-		 * @param id
-		 * @param type
-		 * @param imports
+		 * @param id the {@link #id()} value to set
+		 * @param type the type of {@link LocalConfig} to create
+		 * @param imports additional property key-value {@link Map}
 		 * @return the (cached) {@link Config} instance
 		 * @see ConfigCache#getOrCreate(Class, Map[])
 		 */
 		static <T extends LocalConfig> T create( final String id,
 			final Class<T> type, final Map<?, ?>... imports )
 		{
-			// add "id={id}" key-value pair to imports
 			return ConfigFactory.create( type, ConfigUtil.join(
 					Collections.singletonMap( Config.ID_KEY, id ), imports ) );
 		}
 
 		/**
-		 * @param id
-		 * @param type
-		 * @param imports
+		 * @param id the {@link #id()} value to set
+		 * @param type the type of {@link LocalConfig} to get/create
+		 * @param imports additional property key-value {@link Map}
 		 * @return the (cached) {@link Config} instance
 		 * @see ConfigCache#getOrCreate(Class, Map[])
 		 */
 		static <T extends LocalConfig> T getOrCreate( final String id,
 			final Class<T> type, final Map<?, ?>... imports )
 		{
-			// add "id={id}" key-value pair to imports
 			return ConfigCache.getOrCreate( id, type, ConfigUtil.join(
 					Collections.singletonMap( Config.ID_KEY, id ), imports ) );
 		}
 
 		/**
-		 * @param self the {@link Config} to scan
-		 * @param prefix the key prefix key {@link String} to filter
-		 * @param args arguments for {@link String#format(String, Object...)}
+		 * @param base the key prefix key {@link String} to filter
+		 * @param expansions transforms: <code>"${x}" &rarr; "y"</code>
 		 * @return a {@link Collection} of unique {@link String} sub-keys
 		 */
-		static Collection<String> enumerate( final LocalConfig self,
-			final String base, final Map<String, String> expansions )
+		default Collection<String> enumerate( final String base,
+			final Map<String, String> expansions )
 		{
-			String prefix = base.replace( ID_PREFIX, self.id() ) + KEY_SEP;
+			String prefix = base.replace( ID_PREFIX, id() ) + KEY_SEP;
 			if( expansions != null )
 				for( Map.Entry<String, String> entry : expansions.entrySet() )
 				prefix = prefix.replace( "${" + entry.getKey() + "}", entry.getValue() );
-			return ConfigUtil.enumerate( self, prefix, null );
+			return ConfigUtil.enumerate( this, prefix, null );
 		}
 
 		@Key( ID_KEY )
@@ -137,17 +135,22 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 		/** the (relative) {@link #EXTENDS_KEY} */
 		String EXTENDS_PREFIX = ID_PREFIX + KEY_SEP + "extend";
 
-		static Collection<String> extendsKeys( final Config self )
+		default Collection<String> extendsKeys()
 		{
-			return enumerate( self, EXTENDS_PREFIX, null );
+			return enumerate( EXTENDS_PREFIX, null );
 		}
 
-		@Key( EXTENDS_PREFIX + KEY_SEP + "%s" )
-		String extend( String ref );
+		String EXTENDS_INDEX_KEY = "extendsIndex";
 
-		String CONTEXT_KEY = ID_PREFIX + "context";
+		@Key( EXTENDS_INDEX_KEY )
+		String extendsIndex();
 
-		@Key( CONTEXT_KEY )
+		@Key( EXTENDS_PREFIX + KEY_SEP + "${" + EXTENDS_INDEX_KEY + "}" )
+		String extend();
+
+		String CONTEXT_KEY = "context";
+
+		@Key( ID_PREFIX + CONTEXT_KEY )
 		@ConverterClass( Context.ConfigConverter.class )
 		Context context();
 

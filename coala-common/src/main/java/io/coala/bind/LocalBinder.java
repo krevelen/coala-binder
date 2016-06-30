@@ -24,7 +24,6 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.aeonbits.owner.ConfigCache;
-import org.aeonbits.owner.Mutable;
 
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
@@ -269,7 +268,7 @@ public interface LocalBinder extends LocalContextual
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Config extends LocalConfig, Mutable
+	interface Config extends LocalConfig
 	{
 
 		/**
@@ -280,12 +279,11 @@ public interface LocalBinder extends LocalContextual
 		 */
 		static Config getOrCreate( final String id, final LaunchConfig config )
 		{
-			final Map<String, String> imports = ConfigUtil
-					.export( config,
+			return LocalConfig.getOrCreate( id, Config.class,
+					ConfigUtil.export( config,
 							Pattern.compile( "^" + Pattern.quote( id + KEY_SEP )
 									+ "(?<sub>.*)" ),
-							null /* "local.${sub}" */ );
-			return LocalConfig.getOrCreate( id, Config.class, imports );
+							null /* "local.${sub}" */ ) );
 		}
 
 		String BINDER_KEY = "binder";
@@ -296,9 +294,9 @@ public interface LocalBinder extends LocalContextual
 
 		String BINDING_PREFIX = BINDER_BASE + KEY_SEP + BINDING_KEY;
 
-		static Collection<String> bindingIndices( final Config self )
+		default Collection<String> bindingIndices()
 		{
-			return LocalConfig.enumerate( self, BINDING_PREFIX, null );
+			return enumerate( BINDING_PREFIX, null );
 		}
 
 		String BINDING_INDEX_KEY = "bindingIndex";
@@ -328,10 +326,9 @@ public interface LocalBinder extends LocalContextual
 
 		String INJECTABLE_PREFIX = BINDING_BASE + KEY_SEP + INJECTABLE_KEY;
 
-		static Collection<String> injectablesIndices( final Config self,
-			final String binding )
+		default Collection<String> injectablesIndices( final String binding )
 		{
-			return LocalConfig.enumerate( self, INJECTABLE_PREFIX,
+			return enumerate( INJECTABLE_PREFIX,
 					Collections.singletonMap( BINDING_INDEX_KEY, binding ) );
 		}
 

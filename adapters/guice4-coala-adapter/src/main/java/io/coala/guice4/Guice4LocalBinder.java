@@ -62,7 +62,7 @@ public class Guice4LocalBinder implements LocalBinder
 
 				final Config conf = binder.config;
 				LOG.trace( "Creating injector for {}", conf.id() );
-				for( String binding : Config.bindingIndices( conf ) )
+				for( String binding : conf.bindingIndices() )
 				{
 					// FIXME resolve variable key more elegantly?
 					conf.setProperty( Config.BINDING_INDEX_KEY, binding );
@@ -74,8 +74,8 @@ public class Guice4LocalBinder implements LocalBinder
 									+ " in " + conf );
 					final boolean mutable = conf.bindingMutable();
 					final boolean initable = conf.bindingInitable();
-					final Collection<String> typeKeys = Config
-							.injectablesIndices( conf, binding );
+					final Collection<String> typeKeys = conf
+							.injectablesIndices( binding );
 					LOG.trace(
 							"Binding {}::{} <= [{}]:{} (init: {}, mutable: {})",
 							LocalContextual.toString( conf.id() ), typeKeys,
@@ -197,7 +197,7 @@ public class Guice4LocalBinder implements LocalBinder
 	 */
 	private static void initTypesFor( final Guice4LocalBinder binder )
 	{
-		for( String binding : Config.bindingIndices( binder.config ) )
+		for( String binding : binder.config.bindingIndices() )
 		{
 			binder.config.setProperty( Config.BINDING_INDEX_KEY, binding );
 			if( !binder.config.bindingInitable() ) continue;
