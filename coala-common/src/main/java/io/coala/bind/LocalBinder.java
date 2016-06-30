@@ -15,17 +15,11 @@
  */
 package io.coala.bind;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.aeonbits.owner.ConfigCache;
-
-import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 import io.coala.name.Identified;
 import io.coala.util.Instantiator;
@@ -243,117 +237,71 @@ public interface LocalBinder extends LocalContextual
 	}
 
 	/**
-	 * {@link Config}
+	 * {@link BinderConfig}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface LaunchConfig extends GlobalConfig
+	interface BinderConfig extends GlobalConfig
 	{
 
-		String LAUNCH_KEY = "launch";
+		String PROVIDERS_KEY = "providers";
 
-		static Collection<String> launchIds( LaunchConfig config )
+		default Map<String, ProviderConfig>
+			providerConfigs( final Map<?, ?>... imports )
 		{
-			return ConfigUtil.enumerate( config, null, KEY_SEP + LAUNCH_KEY );
-		};
-
-		@Key( LocalConfig.ID_PREFIX + KEY_SEP + LAUNCH_KEY )
-		Boolean binderLaunch();
+			return subConfigs( PROVIDERS_KEY, ProviderConfig.class, imports );
+		}
 	}
 
 	/**
-	 * {@link Config}
+	 * {@link ProviderConfig}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Config extends LocalConfig
+	interface ProviderConfig extends GlobalConfig
 	{
-
-		/**
-		 * @param id
-		 * @param imports
-		 * @return the (cached) {@link Config} instance
-		 * @see ConfigCache#getOrCreate(Class, Map[])
-		 */
-		static Config getOrCreate( final String id, final LaunchConfig config )
-		{
-			return LocalConfig.getOrCreate( id, Config.class,
-					ConfigUtil.export( config,
-							Pattern.compile( "^" + Pattern.quote( id + KEY_SEP )
-									+ "(?<sub>.*)" ),
-							null /* "local.${sub}" */ ) );
-		}
-
-		String BINDER_KEY = "binder";
-
-		String BINDER_BASE = ID_PREFIX + KEY_SEP + BINDER_KEY;
-
-		String BINDING_KEY = "binding";
-
-		String BINDING_PREFIX = BINDER_BASE + KEY_SEP + BINDING_KEY;
-
-		default Collection<String> bindingIndices()
-		{
-			return enumerate( BINDING_PREFIX, null );
-		}
-
-		String BINDING_INDEX_KEY = "bindingIndex";
-
-		@Key( BINDING_INDEX_KEY )
-		String bindingIndex();
-
-		String BINDING_BASE = BINDING_PREFIX + KEY_SEP + "${"
-				+ BINDING_INDEX_KEY + "}";
-
-		String MUTABLE_KEY = "mutable";
-
-		@Key( BINDING_BASE + KEY_SEP + MUTABLE_KEY )
-		@DefaultValue( "false" )
-		boolean bindingMutable();
 
 		String INITABLE_KEY = "init";
 
-		@Key( BINDING_BASE + KEY_SEP + INITABLE_KEY )
+		@Key( INITABLE_KEY )
 		@DefaultValue( "false" )
-		boolean bindingInitable();
+		boolean initable();
+
+		String MUTABLE_KEY = "mutable";
+
+		@Key( MUTABLE_KEY )
+		@DefaultValue( "false" )
+		boolean mutable();
 
 		String IMPLEMENTATION_KEY = "impl";
 
-		@Key( BINDING_BASE + KEY_SEP + IMPLEMENTATION_KEY )
-		Class<?> bindingImplementation();
+		@Key( IMPLEMENTATION_KEY )
+		Class<?> implementation();
 
-		String INJECTABLE_KEY = "inject";
+		String BINDINGS_KEY = "bindings";
 
-		String INJECTABLE_PREFIX = BINDING_BASE + KEY_SEP + INJECTABLE_KEY;
-
-		default Collection<String> injectablesIndices( final String binding )
+		default Map<String, BindingConfig>
+			injectableConfigs( final Map<?, ?>... imports )
 		{
-			return enumerate( INJECTABLE_PREFIX,
-					Collections.singletonMap( BINDING_INDEX_KEY, binding ) );
+			return subConfigs( BINDINGS_KEY, BindingConfig.class,
+					imports );
 		}
-
-		String INJECTABLE_INDEX_KEY = "injectIndex";
-
-		@Key( INJECTABLE_INDEX_KEY )
-		String injectableIndex();
-
-		@Key( INJECTABLE_PREFIX + KEY_SEP + "${" + INJECTABLE_INDEX_KEY + "}" )
-		Class<?> bindingInjectable();
 	}
 
 	/**
-	 * {@link Launcher}
+	 * {@link BindingConfig}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Launcher
+	interface BindingConfig extends GlobalConfig
 	{
-		/**
-		 * @param id the identifier of the {@link LocalBinder} to launch
-		 */
-		void launch( String id );
+
+		String TYPE_KEY = "type";
+
+		@Key( TYPE_KEY )
+		Class<?> type();
 	}
 }

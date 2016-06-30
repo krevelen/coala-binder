@@ -307,6 +307,18 @@ public class ConfigUtil implements Util
 	 * @return the (matched) keys and values
 	 */
 	public static Map<String, String> export( final Accessible config,
+		final Pattern keyFilter )
+	{
+		return export( config, keyFilter, null );
+	}
+
+	/**
+	 * @param config the {@link Accessible} config to export
+	 * @param keyFilter (optional) the {@link Pattern} to match keys against
+	 * @param replacement (optional) the key replacement pattern
+	 * @return the (matched) keys and values
+	 */
+	public static Map<String, String> export( final Accessible config,
 		final Pattern keyFilter, final String replacement )
 	{
 		final Map<String, String> result = new TreeMap<>();
@@ -317,11 +329,19 @@ public class ConfigUtil implements Util
 			for( String key : config.propertyNames() )
 			{
 				final Matcher m = keyFilter.matcher( key );
-				if( m.find() ) result.put(
-						replacement != null ? m.replaceFirst( replacement )
-								: m.groupCount() > 1 ? m.group( 1 )
-										: m.group( 0 ),
-						config.getProperty( key ) );
+				if( m.find() )
+				{
+					final String replace = replacement != null
+							? m.replaceFirst( replacement )
+							: m.groupCount() > 1 ? m.group( 1 ) : m.group( 0 );
+//					LogUtil.getLogger( ConfigUtil.class ).trace(
+//							"Matched {} with {} => {}", keyFilter, key,
+//							replace );
+					result.put( replace, config.getProperty( key ) );
+				}
+//				else
+//					LogUtil.getLogger( ConfigUtil.class )
+//							.trace( "Match failed {} with {}", keyFilter, key );
 			}
 		return result;
 	}

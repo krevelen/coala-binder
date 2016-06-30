@@ -1,9 +1,11 @@
 package io.coala.guice4;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -16,6 +18,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import io.coala.bind.Launcher;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalContextual;
 import io.coala.exception.ExceptionFactory;
@@ -60,30 +63,26 @@ public class Guice4LocalBinder implements LocalBinder
 						bindProvider( (Class<?>) entry.getKey(),
 								LocalProvider.of( binder, entry.getValue() ) );
 
-				final Config conf = binder.config;
-				for( String binding : conf.bindingIndices() )
+				final BinderConfig conf = binder.config;
+				for( ProviderConfig binding : conf.providerConfigs().values() )
 				{
-					// FIXME resolve index keys more elegantly?
-					conf.setProperty( Config.BINDING_INDEX_KEY, binding );
-
-					final Class<?> impl = conf.bindingImplementation();
+					final Class<?> impl = binding.implementation();
 					Objects.requireNonNull( impl,
-							Config.IMPLEMENTATION_KEY + " not set for " + String
-									.format( Config.BINDING_BASE, binding )
-									+ " in " + conf );
-					final boolean mutable = conf.bindingMutable();
-					final boolean initable = conf.bindingInitable();
-					final Collection<String> typeKeys = conf
-							.injectablesIndices( binding );
+							ProviderConfig.IMPLEMENTATION_KEY + " not set for "
+									+ " for " + binding.base() );
+					final boolean mutable = binding.mutable();
+					final boolean initable = binding.initable();
+					final Collection<BindingConfig> typeKeys = binding
+							.injectableConfigs().values();
 
 					LocalProvider<?> provider = null;
+					if( initable ) binder.initable.add( impl );
 					if( initable || typeKeys.isEmpty() )
 						provider = bindLocal( impl, mutable, impl );
 
-					for( String inject : typeKeys )
+					for( BindingConfig inject : typeKeys )
 					{
-						conf.setProperty( Config.INJECTABLE_INDEX_KEY, inject );
-						final Class<?> type = conf.bindingInjectable();
+						final Class<?> type = inject.type();
 						if( provider == null )
 							provider = bindLocal( impl, mutable, type );
 						else // reuse
@@ -189,26 +188,21 @@ public class Guice4LocalBinder implements LocalBinder
 	 */
 	private static void initTypesFor( final Guice4LocalBinder binder )
 	{
-		for( String binding : binder.config.bindingIndices() )
-		{
-			binder.config.setProperty( Config.BINDING_INDEX_KEY, binding );
-			if( !binder.config.bindingInitable() ) continue;
-			final Class<?> type = binder.config.bindingImplementation();
-			binder.injector.getInstance( type );
-		}
+		while( !binder.initable.isEmpty() )
+			binder.injector.getInstance( binder.initable.remove( 0 ) );
 	}
 
 	/**
-	 * @param config the {@link Config}
+	 * @param config the {@link BinderConfig}
 	 * @return
 	 */
-	public static Guice4LocalBinder of( final String id,
-		final Map<Class<?>, ?> bindImports, final LaunchConfig config )
+	public static Guice4LocalBinder of( final LocalConfig config,
+		final Map<Class<?>, ?> bindImports )
 	{
 		final Guice4LocalBinder result = new Guice4LocalBinder();
-		result.config = Config.getOrCreate( id, config );
-		result.id = id;
-		result.context = result.config.context();
+		result.config = config.binderConfig();
+		result.id = config.id();
+		result.context = config.context();
 		if( result.context == null ) result.context = new Context();
 		result.injector = cachedInjectorFor( result, bindImports );
 		initTypesFor( result );
@@ -220,9 +214,11 @@ public class Guice4LocalBinder implements LocalBinder
 
 	private final transient Map<Class<?>, MutableProvider<?>> mutables = new HashMap<>();
 
+	private final transient List<Class<?>> initable = new ArrayList<>();
+
 	private transient Injector injector;
 
-	private transient Config config;
+	private transient BinderConfig config;
 
 	private String id;
 
@@ -285,7 +281,7 @@ public class Guice4LocalBinder implements LocalBinder
 		{
 			final Guice4Launcher result = new Guice4Launcher();
 			result.config = config;
-			final Collection<String> ids = LaunchConfig.launchIds( config );
+			final Collection<String> ids = config.launchIds();
 			if( ids.isEmpty() )
 				LOG.trace( "Nothing to launch in config: {}", config );
 			else
@@ -299,9 +295,8 @@ public class Guice4LocalBinder implements LocalBinder
 		@Override
 		public void launch( final String id )
 		{
-			Guice4LocalBinder.of( id,
-					Collections.singletonMap( Launcher.class, this ),
-					this.config );
+			Guice4LocalBinder.of( this.config.localConfig( id ),
+					Collections.singletonMap( Launcher.class, this ) );
 			LOG.trace( "Launched {}", id );
 		}
 

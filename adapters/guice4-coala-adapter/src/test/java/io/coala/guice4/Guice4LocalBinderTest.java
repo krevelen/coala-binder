@@ -1,8 +1,6 @@
 package io.coala.guice4;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 import javax.inject.Inject;
 
@@ -10,10 +8,11 @@ import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import io.coala.bind.Launcher.LaunchConfig;
 import io.coala.bind.LocalBinder;
-import io.coala.bind.LocalBinder.Config;
-import io.coala.bind.LocalBinder.LaunchConfig;
-import io.coala.config.YamlConfig;
+import io.coala.bind.LocalBinder.BinderConfig;
+import io.coala.bind.LocalBinder.ProviderConfig;
+import io.coala.bind.LocalContextual.LocalConfig;
 import io.coala.config.YamlUtil;
 import io.coala.guice4.Guice4LocalBinder.Guice4Launcher;
 import io.coala.log.LogUtil;
@@ -73,38 +72,37 @@ public class Guice4LocalBinderTest
 			yaml.append( nl ).append( id ).append( colon ).append( nl );
 			yaml.append( tab ).append( LaunchConfig.LAUNCH_KEY ).append( colon )
 					.append( true ).append( nl );
-			yaml.append( tab ).append( Config.BINDER_KEY ).append( colon )
+			yaml.append( tab ).append( LocalConfig.BINDER_KEY ).append( colon )
 					.append( nl );
-			yaml.append( tab ).append( tab ).append( Config.BINDING_KEY )
-					.append( colon ).append( nl );
+			yaml.append( tab ).append( tab )
+					.append( BinderConfig.PROVIDERS_KEY ).append( colon )
+					.append( nl );
 			// MyInjectable
 			yaml.append( tab ).append( tab ).append( item )
-					.append( Config.IMPLEMENTATION_KEY ).append( colon )
+					.append( ProviderConfig.IMPLEMENTATION_KEY ).append( colon )
 					.append( MyInjectable.class.getName() ).append( nl );
 //			yaml.append( tab ).append( tab ).append( tab )
-//					.append( Config.INITABLE_KEY ).append( colon )
+//					.append( ProviderConfig.INITABLE_KEY ).append( colon )
 //					.append( false ).append( nl );
 			yaml.append( tab ).append( tab ).append( tab )
-					.append( Config.MUTABLE_KEY ).append( colon ).append( true )
-					.append( nl );
+					.append( ProviderConfig.MUTABLE_KEY ).append( colon )
+					.append( true ).append( nl );
 			// MyInjecting
 			yaml.append( tab ).append( tab ).append( item )
-					.append( Config.IMPLEMENTATION_KEY ).append( colon )
+					.append( ProviderConfig.IMPLEMENTATION_KEY ).append( colon )
 					.append( MyInjecting.class.getName() ).append( nl );
 			yaml.append( tab ).append( tab ).append( tab )
-					.append( Config.INITABLE_KEY ).append( colon )
+					.append( ProviderConfig.INITABLE_KEY ).append( colon )
 					.append( true ).append( nl );
 //			yaml.append( tab ).append( tab ).append( tab )
-//					.append( Config.MUTABLE_KEY ).append( colon )
+//					.append( ProviderConfig.MUTABLE_KEY ).append( colon )
 //					.append( false );
 		}
 		LOG.trace( "Starting Guice4 test with yaml: {}", yaml );
-		final Map<?, ?> imports = new TreeMap<>( YamlUtil.flattenYaml( yaml ) );
 		final LaunchConfig config = ConfigCache.getOrCreate( LaunchConfig.class,
-				imports );
-
-		LOG.trace( "Launcher config export: {}",
-				YamlConfig.toYAML( config, "to YAML" ) );
+				YamlUtil.flattenYaml( yaml ) );
+		
+		LOG.trace( "Launching config, export: {}", config.toYAML( "to YAML" ) );
 		Guice4Launcher.of( config );
 	}
 }
