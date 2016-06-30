@@ -18,6 +18,7 @@ package io.coala.config;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,13 +27,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.ConfigFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
 import io.coala.util.Util;
 
 /**
@@ -196,22 +202,29 @@ public class ConfigUtil implements Util
 	}
 
 	/**
-	 * Get or create the node for some key path
+	 * Get or create the node for some (String/Integer) key-path
 	 * 
 	 * @param tree the (relative) root {@link Map}
 	 * @param path the (relative) key path as {@link List} of {@link String}s
 	 * @return the (nested) node {@link Map}
 	 */
+	@SuppressWarnings( "unchecked" )
 	protected static Map<Object, Object>
 		nodeForPath( final Map<Object, Object> tree, final List<String> path )
 	{
 		if( path == null || path.isEmpty() ) return tree;
 		final String first = path.remove( 0 );
-		@SuppressWarnings( "unchecked" )
-		Map<Object, Object> node = (Map<Object, Object>) tree.get( first );
+		Map<Object, Object> node;
+		try
+		{
+			node = (Map<Object, Object>) tree.get( Integer.parseInt( first ) );
+		} catch( final NumberFormatException e )
+		{
+			node = (Map<Object, Object>) tree.get( first );
+		}
 		if( node == null )
 		{
-			node = new HashMap<>();
+			node = new TreeMap<>();
 			try
 			{
 				tree.put( Integer.parseInt( first ), node );
@@ -270,5 +283,71 @@ public class ConfigUtil implements Util
 			}
 		}
 		return JsonUtil.getJOM().valueToTree( objectsToArrays( result ) );
+	}
+
+	/**
+	 * @param add
+	 * @param imports
+	 * @return
+	 */
+	public static Map<?, ?>[] join( final Map<?, ?> add,
+		final Map<?, ?>... imports )
+	{
+		final Map<?, ?>[] result = new Map<?, ?>[imports == null ? 1
+				: imports.length + 1];
+		result[0] = add;
+		for( int i = 0; imports != null && i < imports.length; i++ )
+			result[i + 1] = imports[i];
+		return result;
+	}
+
+	/**
+	 * @param config the {@link Accessible} config to export
+	 * @param keyFilter (optional) the {@link Pattern} to match keys against
+	 * @param replacement (optional) the key replacement pattern
+	 * @return the (matched) keys and values
+	 */
+	public static Map<String, String> export( final Accessible config,
+		final Pattern keyFilter, final String replacement )
+	{
+		final Map<String, String> result = new TreeMap<>();
+		if( keyFilter == null )
+			for( String key : config.propertyNames() )
+				result.put( key, config.getProperty( key ) );
+		else
+			for( String key : config.propertyNames() )
+			{
+				final Matcher m = keyFilter.matcher( key );
+				if( m.find() ) result.put(
+						replacement != null ? m.replaceFirst( replacement )
+								: m.groupCount() > 1 ? m.group( 1 )
+										: m.group( 0 ),
+						config.getProperty( key ) );
+			}
+		LogUtil.getLogger( ConfigUtil.class ).trace(
+				"Export [ {} => {} ] yielded {}", keyFilter, replacement,
+				result );
+		return result;
+	}
+
+	/**
+	 * @param config
+	 * @param contextPrefix
+	 * @return
+	 */
+	public static Collection<String> enumerate( final Accessible config,
+		final String prefix, final String postfix )
+	{
+		final String regex = (prefix == null ? "" : Pattern.quote( prefix ))
+				+ "([^\\.]+)"
+				+ (postfix == null ? "" : Pattern.quote( postfix ));
+		final Pattern filter = Pattern.compile( regex );
+		final Set<String> unique = new TreeSet<>();
+		for( Object key : config.propertyNames() )
+		{
+			final Matcher m = filter.matcher( key.toString() );
+			if( m.find() ) unique.add( m.group( 1 ) );
+		}
+		return unique;
 	}
 }

@@ -1,6 +1,8 @@
 package io.coala.util;
 
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
@@ -44,8 +46,9 @@ public class Instantiator<T>
 	public static <T> Provider<T> providerOf( final Class<T> valueType,
 		final Object... args )
 	{
-		final Class<?>[] argTypes = new Class<?>[args.length];
-		for( int i = 0; i < args.length; i++ )
+		final Class<?>[] argTypes = new Class<?>[args == null ? 0
+				: args.length];
+		for( int i = 0; args != null && i < args.length; i++ )
 			argTypes[i] = args[i] == null ? null : args[i].getClass();
 		final Instantiator<T> instantiator = of( valueType, argTypes );
 
@@ -55,6 +58,13 @@ public class Instantiator<T>
 			public T get()
 			{
 				return instantiator.instantiate( args );
+			}
+
+			@Override
+			public String toString()
+			{
+				return valueType.getName() + (args == null
+						? Collections.emptyList() : Arrays.asList( args ));
 			}
 		};
 	}

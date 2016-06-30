@@ -22,7 +22,6 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.Properties;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -54,10 +53,22 @@ public class YamlUtil implements Util
 	}
 
 	/**
+	 * @param yamlContent the YAML-formatted tree
+	 * @param baseKeys the base keys for all imported property keys
+	 * @return a flat {@link Properties} mapping
+	 * @throws IOException
+	 */
+	public static Properties flattenYaml( final CharSequence yamlContent,
+		final CharSequence... baseKeys ) throws IOException
+	{
+		return ConfigUtil.flatten(
+				getYamlMapper().readTree( yamlContent.toString() ), baseKeys );
+	}
+
+	/**
 	 * @param yamlPath the (relative, absolute, or class-path) YAML location
 	 * @param baseKeys the base keys for all imported property keys
 	 * @return a flat {@link Properties} mapping
-	 * @throws JsonProcessingException
 	 * @throws IOException
 	 */
 	public static Properties flattenYaml( final File yamlPath,
