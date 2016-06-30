@@ -38,7 +38,6 @@ import org.aeonbits.owner.ConfigFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
 import io.coala.util.Util;
 
 /**
@@ -324,9 +323,6 @@ public class ConfigUtil implements Util
 										: m.group( 0 ),
 						config.getProperty( key ) );
 			}
-		LogUtil.getLogger( ConfigUtil.class ).trace(
-				"Export [ {} => {} ] yielded {}", keyFilter, replacement,
-				result );
 		return result;
 	}
 

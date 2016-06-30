@@ -81,9 +81,9 @@ public class Guice4LocalBinderTest
 			yaml.append( tab ).append( tab ).append( item )
 					.append( Config.IMPLEMENTATION_KEY ).append( colon )
 					.append( MyInjectable.class.getName() ).append( nl );
-			yaml.append( tab ).append( tab ).append( tab )
-					.append( Config.INITABLE_KEY ).append( colon )
-					.append( false ).append( nl );
+//			yaml.append( tab ).append( tab ).append( tab )
+//					.append( Config.INITABLE_KEY ).append( colon )
+//					.append( false ).append( nl );
 			yaml.append( tab ).append( tab ).append( tab )
 					.append( Config.MUTABLE_KEY ).append( colon ).append( true )
 					.append( nl );
@@ -94,9 +94,9 @@ public class Guice4LocalBinderTest
 			yaml.append( tab ).append( tab ).append( tab )
 					.append( Config.INITABLE_KEY ).append( colon )
 					.append( true ).append( nl );
-			yaml.append( tab ).append( tab ).append( tab )
-					.append( Config.MUTABLE_KEY ).append( colon )
-					.append( false );
+//			yaml.append( tab ).append( tab ).append( tab )
+//					.append( Config.MUTABLE_KEY ).append( colon )
+//					.append( false );
 		}
 		LOG.trace( "Starting Guice4 test with yaml: {}", yaml );
 		final Map<?, ?> imports = new TreeMap<>( YamlUtil.flattenYaml( yaml ) );

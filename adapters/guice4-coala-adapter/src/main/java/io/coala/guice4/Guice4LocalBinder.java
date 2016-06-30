@@ -61,10 +61,9 @@ public class Guice4LocalBinder implements LocalBinder
 								LocalProvider.of( binder, entry.getValue() ) );
 
 				final Config conf = binder.config;
-				LOG.trace( "Creating injector for {}", conf.id() );
 				for( String binding : conf.bindingIndices() )
 				{
-					// FIXME resolve variable key more elegantly?
+					// FIXME resolve index keys more elegantly?
 					conf.setProperty( Config.BINDING_INDEX_KEY, binding );
 
 					final Class<?> impl = conf.bindingImplementation();
@@ -76,10 +75,6 @@ public class Guice4LocalBinder implements LocalBinder
 					final boolean initable = conf.bindingInitable();
 					final Collection<String> typeKeys = conf
 							.injectablesIndices( binding );
-					LOG.trace(
-							"Binding {}::{} <= [{}]:{} (init: {}, mutable: {})",
-							LocalContextual.toString( conf.id() ), typeKeys,
-							binding, impl, initable, mutable );
 
 					LocalProvider<?> provider = null;
 					if( initable || typeKeys.isEmpty() )
@@ -100,9 +95,6 @@ public class Guice4LocalBinder implements LocalBinder
 			private void emit( final Class<?> type, final Object impl )
 			{
 				binder.bindings.onNext( LocalBinder.class );
-				LOG.trace( "Bound {}::{} -> {} of {}",
-						LocalContextual.toString( binder.id ),
-						type.getSimpleName(), getProvider( type ), impl );
 			}
 
 			/**
@@ -202,10 +194,7 @@ public class Guice4LocalBinder implements LocalBinder
 			binder.config.setProperty( Config.BINDING_INDEX_KEY, binding );
 			if( !binder.config.bindingInitable() ) continue;
 			final Class<?> type = binder.config.bindingImplementation();
-			final Object obj = binder.injector.getInstance( type );
-			LOG.trace( "Initialized {}::{} <= {}",
-					LocalContextual.toString( binder.id ), type.getSimpleName(),
-					obj.getClass().getSimpleName() );
+			binder.injector.getInstance( type );
 		}
 	}
 

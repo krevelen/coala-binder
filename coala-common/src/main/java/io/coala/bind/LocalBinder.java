@@ -310,12 +310,14 @@ public interface LocalBinder extends LocalContextual
 		String MUTABLE_KEY = "mutable";
 
 		@Key( BINDING_BASE + KEY_SEP + MUTABLE_KEY )
-		Boolean bindingMutable();
+		@DefaultValue( "false" )
+		boolean bindingMutable();
 
 		String INITABLE_KEY = "init";
 
 		@Key( BINDING_BASE + KEY_SEP + INITABLE_KEY )
-		Boolean bindingInitable();
+		@DefaultValue( "false" )
+		boolean bindingInitable();
 
 		String IMPLEMENTATION_KEY = "impl";
 
