@@ -40,7 +40,8 @@ import rx.Observable;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface CellWorld extends GroundingCapability, Timed<SimTime>
+@Deprecated
+public interface CellWorld extends GroundingCapability//, Timed<SimTime>
 {
 
 	interface Factory extends CapabilityFactory<CellWorld>

@@ -24,6 +24,7 @@ import io.coala.time.SimTime;
 /**
  * {@link CoordinationFact}
  */
+@Deprecated
 public interface CoordinationFact extends Message<FactID>
 {
 

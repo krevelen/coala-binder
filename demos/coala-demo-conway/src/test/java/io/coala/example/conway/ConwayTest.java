@@ -49,6 +49,7 @@ import rx.functions.Action1;
  * @version $Id: 4230e66f10a519cf8f246e639d2ff072c214a715 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class ConwayTest
 {
 

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-b1</version>
+		<version>0.2.0-b2-SNAPSHOT</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -20,7 +20,7 @@
 	<url>http://jason.sf.net/</url>
 
 	<properties>
-		<jason.version>1.4.1</jason.version>
+		<jason.version>1.4.2</jason.version>
 	</properties>
 
 	<repositories>
@@ -48,7 +48,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>jason</groupId>
+			<groupId>net.sf.jason</groupId>
 			<artifactId>jason</artifactId>
 			<version>${jason.version}</version>
 		</dependency>

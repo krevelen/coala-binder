@@ -32,6 +32,7 @@ import rx.Observer;
  * @version $Id: e18ce506411a6728e42f316b48bc079101b4e237 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class CleanupTest
 {
 
@@ -56,7 +57,6 @@ public class CleanupTest
 			eve.boot( agentID, CleanupTestAgent.class )
 					.subscribe( new Observer<AgentStatusUpdate>()
 					{
-						@SuppressWarnings( "deprecation" )
 						@Override
 						public void onNext( final AgentStatusUpdate update )
 						{

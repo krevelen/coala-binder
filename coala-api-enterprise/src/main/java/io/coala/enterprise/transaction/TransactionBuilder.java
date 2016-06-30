@@ -18,6 +18,7 @@ package io.coala.enterprise.transaction;
 /**
  * {@link TransactionBuilder}
  */
+@Deprecated
 public interface TransactionBuilder<T extends Transaction<?>>
 {
 	T create();

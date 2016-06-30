@@ -29,6 +29,7 @@ import rx.Observable;
  * 
  * @param <F> the (super)type of {@link CoordinationFact}
  */
+@Deprecated
 public interface Transaction<F extends CoordinationFact>
 	extends Capability<BasicCapabilityStatus>, ModelComponent<CapabilityID>
 {

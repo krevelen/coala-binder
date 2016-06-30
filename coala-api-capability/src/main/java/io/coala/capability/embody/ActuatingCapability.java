@@ -27,6 +27,7 @@ import io.coala.capability.CapabilityFactory;
  * 
  * @param <THIS> the (sub)type of {@link ActuatingCapability} to build
  */
+@Deprecated
 public interface ActuatingCapability extends Capability<BasicCapabilityStatus>
 {
 

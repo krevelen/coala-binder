@@ -24,6 +24,7 @@ import io.coala.name.AbstractIdentifier;
 /**
  * {@link CellID}
  */
+@Deprecated
 public class CellID extends AgentID
 {
 

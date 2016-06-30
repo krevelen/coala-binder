@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-b1</version>
+		<version>0.2.0-b2-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 
@@ -23,8 +23,6 @@
 		<google-rfc-2445.version>20110304</google-rfc-2445.version>
 		<quartz.version>2.2.3</quartz.version>
 		<joda-time.version>2.9.4</joda-time.version>
-		<threetenbp.version>1.2</threetenbp.version>
-		<threeten-extra.version>0.9</threeten-extra.version>
 	</properties>
 
 	<repositories>
@@ -88,24 +86,14 @@
 			<version>${joda-time.version}</version>
 		</dependency>
 
-		<!-- Backport of JSR-310 from JDK 8 to JDK 7 and JDK 6. NOT an implementation 
-			of the JSR. -->
-		<dependency>
-			<groupId>org.threeten</groupId>
-			<artifactId>threetenbp</artifactId>
-			<version>${threetenbp.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.threeten</groupId>
-			<artifactId>threeten-extra</artifactId>
-			<version>${threeten-extra.version}</version>
-			<scope>provided</scope>
-		</dependency>
-
 		<dependency>
 			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-all</artifactId>
 			<scope>test</scope>
 		</dependency>
 

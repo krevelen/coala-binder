@@ -33,7 +33,7 @@ import org.joda.time.DateTimeZone;
  */
 @Deprecated
 public interface Instant<THIS extends Instant<THIS>>
-	extends Serializable, Comparable<Instant<?>>
+	extends Serializable, Comparable<AbstractInstant<?>>
 {
 
 	/**
@@ -134,7 +134,7 @@ public interface Instant<THIS extends Instant<THIS>>
 	 * @see java.lang.Comparable#compareTo(Object)
 	 */
 	@Override
-	int compareTo( Instant<?> other );
+	int compareTo( AbstractInstant<?> other );
 
 //	@JsonIgnore
 //	TimeUnit getBaseUnit();

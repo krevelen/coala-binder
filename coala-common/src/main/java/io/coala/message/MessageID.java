@@ -15,11 +15,12 @@
  */
 package io.coala.message;
 
+import java.io.Serializable;
+
 import io.coala.event.TimedEventID;
 import io.coala.model.ModelID;
+import io.coala.time.AbstractInstant;
 import io.coala.time.Instant;
-
-import java.io.Serializable;
 
 /**
  * {@link MessageID} sets the identifier value type of a {@link Message}
@@ -29,7 +30,8 @@ import java.io.Serializable;
  * @param <ID> the {@link Serializable} and {@link Comparable} value type
  * @param <I> the type of {@link Instant}
  */
-public class MessageID<ID extends Serializable & Comparable<ID>, I extends Instant<I>>
+@Deprecated
+public class MessageID<ID extends Serializable & Comparable<ID>, I extends AbstractInstant<I>>
 	extends TimedEventID<ID, I>
 {
 
@@ -64,7 +66,7 @@ public class MessageID<ID extends Serializable & Comparable<ID>, I extends Insta
 	 * @param instant
 	 */
 	public static <
-		ID extends Serializable & Comparable<ID>, I extends Instant<I>>
+		ID extends Serializable & Comparable<ID>, I extends AbstractInstant<I>>
 		MessageID<ID, I>
 		of( final ModelID modelID, final ID value, final I instant )
 	{

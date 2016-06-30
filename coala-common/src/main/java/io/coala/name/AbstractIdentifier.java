@@ -32,7 +32,7 @@ import io.coala.json.JsonUtil;
  * @param <T> the type of {@link Comparable} and {@link Serializable}
  * @version $Id$
  * @author Rick van Krevelen
- * @deprecated please use {@link io.coala.name.x.Id}
+ * @deprecated please use {@link io.coala.name.Id}
  */
 @Deprecated
 @JsonInclude( Include.NON_NULL )

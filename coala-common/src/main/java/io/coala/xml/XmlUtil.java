@@ -67,6 +67,7 @@ import rx.functions.Func1;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class XmlUtil implements Util
 {
 

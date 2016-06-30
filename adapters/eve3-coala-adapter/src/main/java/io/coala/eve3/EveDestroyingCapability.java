@@ -21,6 +21,7 @@ import rx.schedulers.Schedulers;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class EveDestroyingCapability extends BasicCapability
 	implements DestroyingCapability
 {

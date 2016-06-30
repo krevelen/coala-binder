@@ -18,6 +18,7 @@ package io.coala.time;
 /**
  * {@link Timed}
  */
+@Deprecated
 public interface Timed<I extends Instant<I>>
 {
 

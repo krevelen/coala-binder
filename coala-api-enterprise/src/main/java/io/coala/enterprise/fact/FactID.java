@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link FactID}
  */
+@Deprecated
 public class FactID extends MessageID<UUID, SimTime>
 {
 

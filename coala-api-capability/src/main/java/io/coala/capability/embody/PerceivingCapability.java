@@ -26,6 +26,7 @@ import io.coala.capability.CapabilityFactory;
  * environment in order to connect sensors (via publish-subscribe pattern) and
  * effectors
  */
+@Deprecated
 public interface PerceivingCapability extends Capability<BasicCapabilityStatus>
 {
 

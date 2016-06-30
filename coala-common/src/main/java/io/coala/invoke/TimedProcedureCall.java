@@ -23,6 +23,7 @@ import io.coala.event.TimedEventID;
  * 
  * @param <ID> the type of {@link TimedEventID} for time-ordered event identity
  */
+@Deprecated
 public abstract class TimedProcedureCall<ID extends TimedEventID<?, ?>>
 	extends ProcedureCall<ID> implements TimedEvent<ID>
 {

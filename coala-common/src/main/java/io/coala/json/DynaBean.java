@@ -34,8 +34,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.inject.Provider;
+
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -70,6 +74,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
+import io.coala.util.TypeArguments;
 
 /**
  * {@link DynaBean} implements a dynamic bean, ready for JSON de/serialization
@@ -783,6 +788,120 @@ public class DynaBean implements Cloneable
 		{ type }, new DynaBeanInvocationHandler( om, type, bean, imports ) );
 	}
 
+	/**
+	 * {@link ProxyProvider}
+	 * 
+	 * @param <T>
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	public static class ProxyProvider<T> implements Provider<T>
+	{
+
+		/** cache of type arguments for known {@link Proxy} sub-types */
+		private static final Map<Class<?>, List<Class<?>>> PROXY_TYPE_ARGUMENT_CACHE = new HashMap<>();
+
+		/**
+		 * @param proxyType should be a non-abstract concrete {@link Class} that
+		 *            has a public zero-arg constructor
+		 * @return the new {@link ProxyProvider} instance
+		 */
+		public static <T> ProxyProvider<T> of( final Class<T> proxyType,
+			final Properties... imports )
+		{
+			return of( JsonUtil.getJOM(), proxyType, imports );
+		}
+
+		/**
+		 * @param om the {@link ObjectMapper} for get and set de/serialization
+		 * @param proxyType should be a non-abstract concrete {@link Class} that
+		 *            has a public zero-arg constructor
+		 * @return the new {@link ProxyProvider} instance
+		 */
+		public static <T> ProxyProvider<T> of( final ObjectMapper om,
+			final Class<T> proxyType, final Properties... imports )
+		{
+			return new ProxyProvider<T>( om, proxyType, new DynaBean(),
+					imports );
+		}
+
+		/**
+		 * @param om the {@link ObjectMapper} for get and set de/serialization
+		 * @param beanType should be a non-abstract concrete {@link Class} that
+		 *            has a public zero-arg constructor
+		 * @param cache the {@link Map} of previously created instances
+		 * @return the cached (new) {@link ProxyProvider} instance
+		 */
+		public static <T> ProxyProvider<T> of( final ObjectMapper om,
+			final Class<T> beanType,
+			final Map<Class<?>, ProxyProvider<?>> cache,
+			final Properties... imports )
+		{
+			if( cache == null ) return of( om, beanType, imports );
+
+			synchronized( cache )
+			{
+				@SuppressWarnings( "unchecked" )
+				ProxyProvider<T> result = (ProxyProvider<T>) cache
+						.get( beanType );
+				if( result == null )
+				{
+					result = of( om, beanType, imports );
+					cache.put( beanType, result );
+				}
+				return result;
+			}
+		}
+
+		/** */
+		private final ObjectMapper om;
+
+		/** */
+		private final Class<T> proxyType;
+
+		/** */
+		private final DynaBean bean;
+
+		/** */
+		private final Properties[] imports;
+
+		/**
+		 * {@link ProxyProvider} constructor
+		 * 
+		 * @param om
+		 * @param proxyType
+		 * @param bean the (possibly prepared) {@link DynaBean}
+		 * @param imports
+		 */
+		public ProxyProvider( final ObjectMapper om, final Class<T> proxyType,
+			final DynaBean bean, final Properties... imports )
+		{
+			this.om = om;
+			this.proxyType = proxyType;
+			this.bean = bean;
+			this.imports = imports;
+		}
+
+		@Override
+		public T get()
+		{
+			try
+			{
+				@SuppressWarnings( "unchecked" )
+				final Class<T> proxyType = this.proxyType == null
+						? (Class<T>) TypeArguments.of( ProxyProvider.class,
+								getClass(), PROXY_TYPE_ARGUMENT_CACHE ).get( 0 )
+						: this.proxyType;
+				return DynaBean.proxyOf( this.om, proxyType, this.bean,
+						this.imports );
+			} catch( final Throwable t )
+			{
+				throw ExceptionFactory.createUnchecked( t,
+						"Problem providing proxy instance for {}",
+						this.proxyType );
+			}
+		}
+	}
 //	/**
 //	 * {@link Builder}
 //	 * 

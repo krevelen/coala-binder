@@ -26,6 +26,7 @@ import java.io.Serializable;
  * 
  * @param <ID> the type of {@link EventID} for this {@link Event}
  */
+@Deprecated
 public interface Event<ID extends EventID<?>>
 	extends ModelComponent<ID>, Job<ID>, Serializable
 {

@@ -38,6 +38,7 @@ import nl.tudelft.simulation.event.EventType;
  * @version $Id: 377b527c6330b274d30426fff75988af0696cf6c $
  * @author Rick van Krevelen
  */
+@Deprecated
 public abstract class AbstractDsolModel<S extends SimulatorInterface, THIS extends AbstractDsolModel<S, THIS>>
 	extends AbstractDsolModelComponent<S, THIS> implements DsolModel<S, THIS>
 {

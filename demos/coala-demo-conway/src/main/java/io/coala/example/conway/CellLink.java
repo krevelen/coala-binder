@@ -23,6 +23,7 @@ import io.coala.name.AbstractIdentifier;
 /**
  * {@link CellLink}
  */
+@Deprecated
 public class CellLink extends AbstractIdentifiable<CellLink.ID>
 {
 

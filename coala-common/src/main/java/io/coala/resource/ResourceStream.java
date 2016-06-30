@@ -39,6 +39,7 @@ import io.coala.xml.XmlContext;
  * @version $Id: eaf4f804beb5113e463a5e5f6c5ea9962fdb2740 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class ResourceStream
 {
 

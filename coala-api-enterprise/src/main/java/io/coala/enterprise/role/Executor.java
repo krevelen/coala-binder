@@ -24,6 +24,7 @@ import io.coala.enterprise.fact.CoordinationFact;
  * 
  * @param <F> the type of {@link CoordinationFact} being handled
  */
+@Deprecated
 public interface Executor<F extends CoordinationFact> extends ActorRole<F>
 {
 

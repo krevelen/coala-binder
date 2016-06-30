@@ -25,6 +25,7 @@ import io.coala.name.Identifier;
  * {@link PersistingCapability} provides functionality similar to JPA entity
  * management
  */
+@Deprecated
 public interface PersistingCapability extends Capability<BasicCapabilityStatus>
 {
 

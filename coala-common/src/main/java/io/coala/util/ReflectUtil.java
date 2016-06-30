@@ -6,6 +6,8 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 
+import javax.inject.Inject;
+
 import io.coala.exception.ExceptionFactory;
 
 /**
@@ -39,6 +41,10 @@ public class ReflectUtil implements Util
 	public static <T> Constructor<T> getAccessibleConstructor(
 		final Class<T> valueType, final Class<?>... argTypes )
 	{
+		if( valueType.getConstructors().length == 0
+				&& (argTypes == null || argTypes.length == 0) )
+			return null; // go with zero-arg default constructor
+
 		try
 		{
 			final Constructor<T> result = valueType.getConstructor( argTypes );
@@ -66,8 +72,14 @@ public class ReflectUtil implements Util
 					constructor.setAccessible( true );
 				return (Constructor<T>) constructor;
 			}
-			throw ExceptionFactory.createUnchecked(
-					"No matching public constructor found for %s%s", valueType,
+
+			// assume first @Inject constructor can be matched by some Injector
+			for( Constructor<?> constructor : valueType.getConstructors() )
+				if( constructor.isAnnotationPresent( Inject.class ) )
+					return null;
+
+			throw ExceptionFactory.createUnchecked( e,
+					"No matching public constructor found for {}{}", valueType,
 					argTypes == null ? Collections.emptyList()
 							: Arrays.asList( argTypes ) );
 		}

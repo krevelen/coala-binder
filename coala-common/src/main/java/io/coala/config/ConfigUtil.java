@@ -15,11 +15,10 @@
  */
 package io.coala.config;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -28,17 +27,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.ConfigFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import io.coala.json.JsonUtil;
-import io.coala.util.FileUtil;
 import io.coala.util.Util;
 
 /**
@@ -73,39 +72,12 @@ public class ConfigUtil implements Util
 		// empty
 	}
 
-	private static ObjectMapper mapper = null;
-
 	private static CharSequence subKey( final CharSequence baseKey,
 		final CharSequence sub )
 	{
 		return baseKey == null || baseKey.length() == 0 ? sub
 				: new StringBuilder( baseKey ).append( CONFIG_KEY_SEP )
 						.append( sub );
-	}
-
-	/**
-	 * @return a {@link ObjectMapper} singleton for YAML file formats
-	 */
-	public synchronized static ObjectMapper getYamlMapper()
-	{
-		if( mapper == null ) mapper = new ObjectMapper( new YAMLFactory() );
-		return mapper;
-	}
-
-	/**
-	 * @param yamlPath the (relative, absolute, or class-path) YAML location
-	 * @param baseKeys the base keys for all imported property keys
-	 * @return a flat {@link Properties} mapping
-	 * @throws JsonProcessingException
-	 * @throws IOException
-	 */
-	public static Properties flattenYaml( final File yamlPath,
-		final CharSequence... baseKeys )
-		throws JsonProcessingException, IOException
-	{
-		return flatten(
-				getYamlMapper().readTree( FileUtil.toInputStream( yamlPath ) ),
-				baseKeys );
 	}
 
 	public static Properties flatten( final JsonNode root )
@@ -125,7 +97,7 @@ public class ConfigUtil implements Util
 	{
 		final Properties props = new Properties();
 		flatten( props, root,
-				new StringBuilder( join( CONFIG_KEY_SEP, baseKeys ) ) );
+				new StringBuilder( String.join( CONFIG_KEY_SEP, baseKeys ) ) );
 		return props;
 	}
 
@@ -178,7 +150,7 @@ public class ConfigUtil implements Util
 	 * @return the {@link Number}, {@link Boolean} or {@link BigDecimal} value
 	 *         if successful
 	 */
-	public static Object tryNumber( final Object value )
+	protected static Object tryNumber( final Object value )
 	{
 		if( value == null ) return null;
 		if( value instanceof Number ) return value;
@@ -196,23 +168,6 @@ public class ConfigUtil implements Util
 	}
 
 	/**
-	 * pre-JDK8 {@link String#join(CharSequence, CharSequence...)}
-	 * 
-	 * @param delim the delimiter {@link CharSequence}
-	 * @param values the value {@link CharSequence}(s) to concatenate
-	 * @return a concatenated {@link CharSequence}
-	 */
-	public static CharSequence join( final CharSequence delim,
-		final CharSequence... values )
-	{
-		if( values == null || values.length == 0 || delim == null ) return null;
-		final StringBuilder result = new StringBuilder( values[0] );
-		for( int i = 1; i < values.length; i++ )
-			result.append( delim ).append( values[i] );
-		return result;
-	}
-
-	/**
 	 * <code>{"0": a, "1": b, &hellip;}</code> &rArr;
 	 * <code>[a, b, &hellip;}</code>
 	 * 
@@ -220,7 +175,7 @@ public class ConfigUtil implements Util
 	 * @return the converted {@link Map} or {@link List}
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public static Object objectsToArrays( final Map map )
+	protected static Object objectsToArrays( final Map map )
 	{
 		final Set<Integer> indices = new HashSet<>();
 		for( Object key : map.keySet() )
@@ -246,22 +201,29 @@ public class ConfigUtil implements Util
 	}
 
 	/**
-	 * Get or create the node for some key path
+	 * Get or create the node for some (String/Integer) key-path
 	 * 
 	 * @param tree the (relative) root {@link Map}
 	 * @param path the (relative) key path as {@link List} of {@link String}s
 	 * @return the (nested) node {@link Map}
 	 */
-	public static Map<Object, Object>
+	@SuppressWarnings( "unchecked" )
+	protected static Map<Object, Object>
 		nodeForPath( final Map<Object, Object> tree, final List<String> path )
 	{
 		if( path == null || path.isEmpty() ) return tree;
 		final String first = path.remove( 0 );
-		@SuppressWarnings( "unchecked" )
-		Map<Object, Object> node = (Map<Object, Object>) tree.get( first );
+		Map<Object, Object> node;
+		try
+		{
+			node = (Map<Object, Object>) tree.get( Integer.parseInt( first ) );
+		} catch( final NumberFormatException e )
+		{
+			node = (Map<Object, Object>) tree.get( first );
+		}
 		if( node == null )
 		{
-			node = new HashMap<>();
+			node = new TreeMap<>();
 			try
 			{
 				tree.put( Integer.parseInt( first ), node );
@@ -278,7 +240,7 @@ public class ConfigUtil implements Util
 	 * @param baseKeys the base key(s) to prefix
 	 * @return the expanded property tree root {@link JsonNode}
 	 */
-	public static JsonNode expand( final Map<Object, Object> props,
+	public static JsonNode expand( final Map<?, ?> props,
 		final String... baseKeys )
 	{
 		return expand( CONFIG_KEY_SEP, props, baseKeys );
@@ -290,14 +252,14 @@ public class ConfigUtil implements Util
 	 * @param baseKeys the base key(s) to prefix
 	 * @return the expanded property tree root {@link JsonNode}
 	 */
-	public static JsonNode expand( final String keySep,
-		final Map<Object, Object> props, final String... baseKeys )
+	public static JsonNode expand( final String keySep, final Map<?, ?> props,
+		final String... baseKeys )
 	{
 		final Pattern splitter = Pattern.compile( Pattern.quote( keySep ) );
 		final Map<Object, Object> result = new HashMap<>();
 		final String prefix = baseKeys == null || baseKeys.length == 0 ? null
-				: join( keySep, baseKeys ) + keySep;
-		for( Map.Entry<Object, Object> entry : props.entrySet() )
+				: String.join( keySep, baseKeys ) + keySep;
+		for( Map.Entry<?, ?> entry : props.entrySet() )
 		{
 			String key = entry.getKey().toString();
 			if( prefix != null )
@@ -320,5 +282,68 @@ public class ConfigUtil implements Util
 			}
 		}
 		return JsonUtil.getJOM().valueToTree( objectsToArrays( result ) );
+	}
+
+	/**
+	 * @param add
+	 * @param imports
+	 * @return
+	 */
+	public static Map<?, ?>[] join( final Map<?, ?> add,
+		final Map<?, ?>... imports )
+	{
+		final Map<?, ?>[] result = new Map<?, ?>[imports == null ? 1
+				: imports.length + 1];
+		result[0] = add;
+		for( int i = 0; imports != null && i < imports.length; i++ )
+			result[i + 1] = imports[i];
+		return result;
+	}
+
+	/**
+	 * @param config the {@link Accessible} config to export
+	 * @param keyFilter (optional) the {@link Pattern} to match keys against
+	 * @param replacement (optional) the key replacement pattern
+	 * @return the (matched) keys and values
+	 */
+	public static Map<String, String> export( final Accessible config,
+		final Pattern keyFilter, final String replacement )
+	{
+		final Map<String, String> result = new TreeMap<>();
+		if( keyFilter == null )
+			for( String key : config.propertyNames() )
+				result.put( key, config.getProperty( key ) );
+		else
+			for( String key : config.propertyNames() )
+			{
+				final Matcher m = keyFilter.matcher( key );
+				if( m.find() ) result.put(
+						replacement != null ? m.replaceFirst( replacement )
+								: m.groupCount() > 1 ? m.group( 1 )
+										: m.group( 0 ),
+						config.getProperty( key ) );
+			}
+		return result;
+	}
+
+	/**
+	 * @param config
+	 * @param contextPrefix
+	 * @return
+	 */
+	public static Collection<String> enumerate( final Accessible config,
+		final String prefix, final String postfix )
+	{
+		final String regex = (prefix == null ? "" : Pattern.quote( prefix ))
+				+ "([^\\.]+)"
+				+ (postfix == null ? "" : Pattern.quote( postfix ));
+		final Pattern filter = Pattern.compile( regex );
+		final Set<String> unique = new TreeSet<>();
+		for( Object key : config.propertyNames() )
+		{
+			final Matcher m = filter.matcher( key.toString() );
+			if( m.find() ) unique.add( m.group( 1 ) );
+		}
+		return unique;
 	}
 }

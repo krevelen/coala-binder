@@ -34,6 +34,7 @@ import rx.Observable;
  * 
  * @version $Id$
  */
+@Deprecated
 public class EveCreatingCapability extends BasicCapability
 	implements CreatingCapability
 {

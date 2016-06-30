@@ -37,7 +37,6 @@ import io.coala.capability.configure.ConfiguringCapability;
 import io.coala.capability.interact.ReceivingCapability;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.capability.know.ReasoningCapability;
-import io.coala.capability.plan.SchedulingCapability;
 import io.coala.capability.replicate.RandomizingCapability;
 import io.coala.capability.replicate.ReplicatingCapability;
 import io.coala.config.PropertyGetter;
@@ -54,9 +53,9 @@ import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentIDFactory;
 import io.coala.process.Job;
 import io.coala.random.ProbabilityDistribution;
+import io.coala.time.Duration;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
-import io.coala.time.Trigger;
 import io.coala.util.TypeArguments;
 import rx.Observable;
 import rx.Observer;
@@ -70,6 +69,7 @@ import rx.subjects.Subject;
  * @version $Id: 9d35c3a08c36d3cbbec8c503f95caff69836e379 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public abstract class AbstractActorRole<F extends CoordinationFact>
 	extends AbstractCapability<CapabilityID> implements ActorRole<F>
 {
@@ -118,12 +118,11 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 			@Override
 			public void onNext( final F fact )
 			{
-				final SimTime now = getTime();
+//				final SimTime now = getTime();
 				// LOG.trace("SCHEDULING FACT: " + fact + " AT " + now);
-				getScheduler().schedule(
-						ProcedureCall.create( AbstractActorRole.this,
-								AbstractActorRole.this, FACT_HANDLER, fact ),
-						Trigger.createAbsolute( now ) );
+				after( Duration.ZERO )
+						.call( ProcedureCall.create( AbstractActorRole.this,
+								AbstractActorRole.this, FACT_HANDLER, fact ) );
 				// LOG.trace("SCHEDULED FACT: " + fact + " AT " + now);
 			}
 
@@ -324,10 +323,9 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	/**
 	 * @see ActorRole#getTime()
 	 */
-	@Override
 	public SimTime getTime()
 	{
-		return getScheduler().getTime();
+		return null;//scheduler().getTime();
 	}
 
 	/**
@@ -377,9 +375,6 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 		return (AbstractExecutor<F>) this;
 	}
 
-	private static final String ADD_PROCESS_MANAGER_AGENT = "addProcessManagerAgent";
-
-	@Schedulable( ADD_PROCESS_MANAGER_AGENT )
 	protected synchronized Observable<AgentStatusUpdate> bootAgent(
 		final AgentID agentID, final Class<? extends Agent> agentType,
 		// final BasicAgentStatus blockSimUntilState,
@@ -411,8 +406,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 							+ " reached unblock status: "
 							+ update.getStatus() );
 					// first schedule/block, then countdown/yield
-					getScheduler().schedule( next,
-							Trigger.createAbsolute( getTime() ) );
+					after( Duration.ZERO ).call( (ProcedureCall<?>) next );
 					success = true;
 					latch.countDown(); // yield
 				}
@@ -425,8 +419,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 				LOG().warn(
 						"Child agent died but never reached blockable status"
 								+ ", scheduling next job now" );
-				getScheduler().schedule( next,
-						Trigger.createAbsolute( getTime() ) );
+				after( Duration.ZERO ).call( (ProcedureCall<?>) next );
 				latch.countDown();
 			}
 
@@ -437,11 +430,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 			}
 		} );
 
-		getScheduler()
-				.schedule(
-						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
-								latch, agentID ),
-						Trigger.createAbsolute( getTime() ) );
+		after( Duration.ZERO ).call( ProcedureCall.create( this, this,
+				AWAIT_METHOD_ID, latch, agentID ) );
 
 		getBooter().createAgent( agentID, agentType ).subscribe( status );
 
@@ -469,11 +459,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 		{
 		}
 		Thread.yield();
-		getScheduler()
-				.schedule(
-						ProcedureCall.create( this, this, AWAIT_METHOD_ID,
-								latch, agentID ),
-						Trigger.createAbsolute( getTime() ) );
+		after( Duration.ZERO ).call( ProcedureCall.create( this, this,
+				AWAIT_METHOD_ID, latch, agentID ) );
 	}
 
 	/**
@@ -508,9 +495,8 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 		throws Exception
 	{
 		// LOG.trace("Sending fact: " + fact);
-		getScheduler().schedule(
-				ProcedureCall.create( this, this, SEND_METHOD_ID, fact ),
-				Trigger.createAbsolute( getTime().plus( delay ) ) );
+		after( Duration.of( delay.getValue() ) ).call(
+				ProcedureCall.create( this, this, SEND_METHOD_ID, fact ) );
 		return fact;
 	}
 
@@ -533,16 +519,6 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	protected CreatingCapability getBooter()
 	{
 		return getBinder().inject( CreatingCapability.class );
-	}
-
-	/**
-	 * @return the agent's local {@link SchedulingCapability}
-	 */
-	@SuppressWarnings( "unchecked" )
-	@JsonIgnore
-	protected SchedulingCapability<SimTime> getScheduler()
-	{
-		return getBinder().inject( SchedulingCapability.class );
 	}
 
 	/**

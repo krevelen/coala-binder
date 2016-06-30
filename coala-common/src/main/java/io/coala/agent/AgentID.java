@@ -28,6 +28,7 @@ import io.coala.model.ModelID;
 /**
  * {@link AgentID}
  */
+@Deprecated
 public class AgentID extends ModelComponentID<String>
 {
 

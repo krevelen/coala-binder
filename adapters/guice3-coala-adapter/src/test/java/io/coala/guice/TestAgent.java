@@ -15,12 +15,9 @@
  */
 package io.coala.guice;
 
-import javax.inject.Inject;
-
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.BasicAgent;
-import io.coala.bind.Binder;
 import io.coala.log.InjectLogger;
 
 /**
@@ -29,6 +26,7 @@ import io.coala.log.InjectLogger;
  * @version $Id: 66032c0baba05deb597677d08ca80e4552402ac9 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class TestAgent extends BasicAgent
 {
 
@@ -38,17 +36,6 @@ public class TestAgent extends BasicAgent
 	/** */
 	@InjectLogger
 	private Logger LOG;
-
-	/**
-	 * {@link TestAgent} CDI constructor
-	 * 
-	 * @param binder the {@link Binder}
-	 */
-	@Inject
-	public TestAgent( final Binder host )
-	{
-		super( host );
-	}
 
 	@Override
 	public void activate()

@@ -56,6 +56,7 @@ import io.coala.web.WebUtil;
  * @version $Id: 13876ecf6459e1a3cfaa95f5a401c1b6bf9a392a $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class EveUtil implements Util
 {
 

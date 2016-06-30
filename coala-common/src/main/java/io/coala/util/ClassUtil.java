@@ -26,7 +26,6 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.CoalaException;
 import io.coala.log.LogUtil;
 
 /**
@@ -35,7 +34,6 @@ import io.coala.log.LogUtil;
  * @version $Id: 2070bb85b6ee8891e4612011dac89dfe69f9fa38 $
  * @author Rick van Krevelen
  */
-@SuppressWarnings( "deprecation" )
 public class ClassUtil implements Util
 {
 
@@ -163,12 +161,10 @@ public class ClassUtil implements Util
 	 * @param returnType the type of the stored property value
 	 * @param args the arguments for construction
 	 * @return the property value's class instantiated
-	 * @throws CoalaException if the property's value is no instance of
-	 *             valueClass
 	 * @deprecated
 	 */
 	public static <T> T instantiate( final Class<T> returnType,
-		final Object... args ) throws CoalaException
+		final Object... args )
 	{
 		return Instantiator.instantiate( returnType, args );
 	}
@@ -177,13 +173,11 @@ public class ClassUtil implements Util
 	 * @param serializable the {@link String} representation of the
 	 *            {@link Serializable} object
 	 * @return the deserialized {@link Object}
-	 * @throws CoalaException if value was not configured nor any default was
-	 *             set
 	 * @deprecated
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <T> T deserialize( final String serializable,
-		final Class<T> returnType ) throws CoalaException
+		final Class<T> returnType )
 	{
 		return (T) SerializableUtil.deserialize( serializable,
 				returnType.asSubclass( Serializable.class ) );
@@ -195,11 +189,9 @@ public class ClassUtil implements Util
 	 * @param object the {@link Serializable} object to serialize
 	 * @return the {@link String} representation of the {@link Serializable}
 	 *         object
-	 * @throws CoalaException
 	 * @deprecated
 	 */
 	public static String serialize( final Serializable object )
-		throws CoalaException
 	{
 		return SerializableUtil.serialize( object );
 	}

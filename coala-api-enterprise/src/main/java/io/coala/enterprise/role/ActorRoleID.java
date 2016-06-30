@@ -21,6 +21,7 @@ import io.coala.capability.CapabilityID;
 /**
  * {@link ActorRoleID}
  */
+@Deprecated
 public class ActorRoleID extends CapabilityID
 {
 

@@ -30,8 +30,8 @@ import org.apache.logging.log4j.Logger;
 import io.coala.exception.ExceptionFactory;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
-import io.coala.time.x.Instant;
-import io.coala.time.x.TimeSpan;
+import io.coala.time.Instant;
+import io.coala.time.TimeSpan;
 import io.coala.util.Instantiator;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
@@ -170,9 +170,10 @@ public class DsolTime<Q extends Quantity> extends
 	}
 
 	@Override
-	public void wrap( final TimeSpan absoluteTime )
+	public DsolTime<Q> wrap( final TimeSpan absoluteTime )
 	{
 		this.value = absoluteTime;
+		return this;
 	}
 
 	/**

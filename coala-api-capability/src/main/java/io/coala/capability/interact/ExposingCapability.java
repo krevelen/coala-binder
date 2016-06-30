@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link ExposingCapability}
  */
+@Deprecated
 public interface ExposingCapability extends Capability<BasicCapabilityStatus>
 {
 

@@ -24,6 +24,7 @@ import io.coala.capability.embody.PerceivingCapability;
  * environment in order to connect sensors (via publish-subscribe pattern) and
  * effectors
  */
+@Deprecated
 public interface RepresentingCapability extends PerceivingCapability
 {
 

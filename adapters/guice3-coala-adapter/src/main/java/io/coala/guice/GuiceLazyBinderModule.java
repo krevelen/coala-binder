@@ -41,6 +41,7 @@ import io.coala.util.TypeArguments;
  * @version $Id: 16e93b291a86eb34cb5741299ec7df584b05abbf $
  * @author Rick van Krevelen
  */
+@Deprecated
 public abstract class GuiceLazyBinderModule extends AbstractModule
 {
 

@@ -15,62 +15,32 @@
  */
 package io.coala.bind;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.aeonbits.owner.ConfigCache;
-import org.aeonbits.owner.ConfigFactory;
 
+import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
-import io.coala.name.x.Id;
+import io.coala.name.Identified;
+import io.coala.util.Instantiator;
 import rx.Observable;
 
 /**
  * {@link LocalBinder} maintains {@link LocalProvider} bindings for providing
- * objects within its own local {@link Context}
+ * objects {@link LocalContextual}, i.e. within its own locally
+ * {@link Identified} {@link Context}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface LocalBinder
+public interface LocalBinder extends LocalContextual
 {
-
-	/**
-	 * @return the {@link Config} used for this {@link LocalBinder}
-	 */
-	Config config();
-
-	/** */
-	Context context();
-
-	/**
-	 * @param type the type to bind as query
-	 * @param instance the constant or singleton instance to bind as result
-	 * @return the new {@link Provider}
-	 */
-	<T, S extends T> LocalProvider<T> bind( Class<T> type, S instance );
-
-	/**
-	 * @param type the factory type to bind as singleton instance
-	 * @return the new {@link Provider}
-	 */
-	<T, S extends T> LocalProvider<T> bind( Class<T> type,
-		Provider<S> provider );
-
-	/**
-	 * @param type the {@link Singleton} type to instantiate on each binding
-	 * @param args the parameter constants to use for each instantiation
-	 * @return the new {@link Provider}
-	 */
-	<T> LocalProvider<T> bind( Class<T> type, Object... args );
-
-	/**
-	 * @return an {@link Observable} stream of all binding {@link Provider}s
-	 */
-	Observable<LocalProvider<?>> emitBindings();
 
 	/**
 	 * @param type the expected type of object
@@ -79,33 +49,197 @@ public interface LocalBinder
 	<T> T inject( Class<T> type );
 
 	/**
-	 * {@link Context}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
+	 * @param type the factory type to (re)bind
+	 * @param provider the instance {@link Provider}
+	 * @return this {@link LocalBinder} to allow chaining
 	 */
-	class Context extends Id.Ordinal<String>
+	<T> LocalBinder reset( Class<T> type, Provider<T> provider );
+
+	/**
+	 * @param type the type to (re)bind
+	 * @param instance the constant or singleton instance to bind
+	 * @return this {@link LocalBinder} to allow chaining
+	 */
+	default <T> LocalBinder reset( final Class<T> type, final T instance )
 	{
-		/**
-		 * @param value the {@link String} value
-		 * @return the new {@link Context}
-		 */
-		public static Context valueOf( final String value )
-		{
-			return Util.of( value, new Context() );
-		}
+		return reset( type, LocalProvider.of( this, instance ) );
 	}
 
 	/**
-	 * {@link LocalProvider} is a contextual or local {@link Provider}
+	 * @param type the {@link Singleton} type to (re)bind
+	 * @param args the parameter constants to use for each instantiation
+	 * @return this {@link LocalBinder} to allow chaining
+	 */
+	default <T> LocalBinder reset( final Class<T> type,
+		final Class<? extends T> impl, final Object... args )
+	{
+		return reset( type, LocalProvider.of( this,
+				Instantiator.providerOf( impl.asSubclass( type ), args ),
+				false ) );
+	}
+
+	/**
+	 * @return an {@link Observable} stream of all (re)bound {@link Class}s
+	 */
+	Observable<Class<?>> emitBindings();
+
+	/**
+	 * {@link LocalProvider} is a {@link LocalContextual} {@link Provider}
 	 * 
 	 * @param <T>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface LocalProvider<T> extends Provider<T>
+	interface LocalProvider<T> extends Provider<T>, LocalContextual
 	{
-		Context context();
+
+		@SuppressWarnings( "unchecked" )
+		static <T> LocalProvider<T> of( final LocalContextual origin,
+			final Class<T> type )
+		{
+			return of( origin,
+					Provider.class.isAssignableFrom( type )
+							? (Provider<T>) Instantiator.instantiate( type )
+							: Instantiator.providerOf( type ),
+					false );
+		}
+
+		static <T> LocalProvider<T> of( final LocalContextual origin,
+			final T instance )
+		{
+			return of( origin, new Provider<T>()
+			{
+				public T get()
+				{
+					return instance;
+				}
+
+				@Override
+				public String toString()
+				{
+					return instance.toString();
+				}
+			}, true );
+		}
+
+		static <T> LocalProvider<T> of( final LocalContextual origin,
+			final Provider<T> provider, final boolean caching )
+		{
+			if( provider instanceof LocalProvider && LocalContextual
+					.equals( (LocalContextual) provider, origin ) )
+				return (LocalProvider<T>) provider;
+
+			final LocalWrapped<T> result = caching ? new LocalCaching<T>()
+					: new LocalWrapped<T>();
+			result.origin = origin;
+			result.provider = provider;
+			return result;
+		}
+
+		class LocalWrapped<T> implements LocalProvider<T>
+		{
+			protected LocalContextual origin;
+			protected Provider<T> provider;
+
+			@Override
+			public T get()
+			{
+				return this.provider.get();
+			}
+
+			@Override
+			public Context context()
+			{
+				return this.origin.context();
+			}
+
+			@Override
+			public String id()
+			{
+				return this.origin.id();
+			}
+
+			@Override
+			public String toString()
+			{
+				return getClass().getSimpleName() + "::"
+						+ this.provider.toString();
+			}
+		}
+
+		/**
+		 * {@link LocalCaching}
+		 * 
+		 * @param <T>
+		 * @version $Id$
+		 * @author Rick van Krevelen
+		 */
+		class LocalCaching<T> extends LocalWrapped<T>
+		{
+			T cache = null;
+
+			@Override
+			public synchronized T get()
+			{
+				return this.cache == null ? this.cache = super.get()
+						: this.cache;
+			}
+		}
+	}
+
+	/**
+	 * {@link MutableProvider} is a {@link LocalProvider} with
+	 * {@link #reset(LocalProvider)} function
+	 * 
+	 * @param <T>
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	interface MutableProvider<T> extends LocalProvider<T>
+	{
+		/**
+		 * @param newProvider the new {@link LocalProvider} instance
+		 * @return this {@link MutableProvider} to allow chaining
+		 */
+		MutableProvider<T> reset( LocalProvider<T> newProvider );
+
+		static <T> MutableProvider<T> of( final LocalContextual origin,
+			final Class<T> type )
+		{
+			return of( LocalProvider.of( origin, type ) );
+		}
+
+		static <T> MutableProvider<T> of( final LocalContextual origin,
+			final T instance )
+		{
+			return of( LocalProvider.of( origin, instance ) );
+		}
+
+		static <T> MutableProvider<T> of( final LocalProvider<T> provider )
+		{
+			return new MutableCaching<T>().reset( provider );
+		}
+
+		/**
+		 * {@link MutableCaching}
+		 * 
+		 * @param <T>
+		 * @version $Id$
+		 * @author Rick van Krevelen
+		 */
+		class MutableCaching<T> extends LocalCaching<T>
+			implements MutableProvider<T>
+		{
+			@Override
+			public synchronized MutableProvider<T>
+				reset( final LocalProvider<T> provider )
+			{
+				this.origin = provider;
+				this.provider = provider;
+				this.cache = null;
+				return this;
+			}
+		}
 	}
 
 	/**
@@ -113,44 +247,113 @@ public interface LocalBinder
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
-	 * @see ConfigFactory#create(Class, Map[])
-	 * @see ConfigCache#getOrCreate(Class, Map[])
 	 */
-	interface Config extends GlobalConfig
+	interface LaunchConfig extends GlobalConfig
 	{
-		String context();
 
-		Map<Class<?>, Class<?>> initialBindings();
+		String LAUNCH_KEY = "launch";
+
+		static Collection<String> launchIds( LaunchConfig config )
+		{
+			return ConfigUtil.enumerate( config, null, KEY_SEP + LAUNCH_KEY );
+		};
+
+		@Key( LocalConfig.ID_PREFIX + KEY_SEP + LAUNCH_KEY )
+		Boolean binderLaunch();
 	}
 
 	/**
-	 * {@link Factory}
+	 * {@link Config}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Factory extends io.coala.factory.Factory
+	interface Config extends LocalConfig
 	{
 
-		FactoryConfig config();
-
-		void bootInitial();
-
-		void boot( Config config );
-
 		/**
-		 * {@link FactoryConfig}
-		 * 
-		 * @version $Id$
-		 * @author Rick van Krevelen
-		 * @see ConfigFactory#create(Class, Map[])
+		 * @param id
+		 * @param imports
+		 * @return the (cached) {@link Config} instance
 		 * @see ConfigCache#getOrCreate(Class, Map[])
 		 */
-		interface FactoryConfig extends GlobalConfig
+		static Config getOrCreate( final String id, final LaunchConfig config )
 		{
-			List<String> initialContexts();
-
-			Class<? extends Factory> factoryType();
+			return LocalConfig.getOrCreate( id, Config.class,
+					ConfigUtil.export( config,
+							Pattern.compile( "^" + Pattern.quote( id + KEY_SEP )
+									+ "(?<sub>.*)" ),
+							null /* "local.${sub}" */ ) );
 		}
+
+		String BINDER_KEY = "binder";
+
+		String BINDER_BASE = ID_PREFIX + KEY_SEP + BINDER_KEY;
+
+		String BINDING_KEY = "binding";
+
+		String BINDING_PREFIX = BINDER_BASE + KEY_SEP + BINDING_KEY;
+
+		default Collection<String> bindingIndices()
+		{
+			return enumerate( BINDING_PREFIX, null );
+		}
+
+		String BINDING_INDEX_KEY = "bindingIndex";
+
+		@Key( BINDING_INDEX_KEY )
+		String bindingIndex();
+
+		String BINDING_BASE = BINDING_PREFIX + KEY_SEP + "${"
+				+ BINDING_INDEX_KEY + "}";
+
+		String MUTABLE_KEY = "mutable";
+
+		@Key( BINDING_BASE + KEY_SEP + MUTABLE_KEY )
+		@DefaultValue( "false" )
+		boolean bindingMutable();
+
+		String INITABLE_KEY = "init";
+
+		@Key( BINDING_BASE + KEY_SEP + INITABLE_KEY )
+		@DefaultValue( "false" )
+		boolean bindingInitable();
+
+		String IMPLEMENTATION_KEY = "impl";
+
+		@Key( BINDING_BASE + KEY_SEP + IMPLEMENTATION_KEY )
+		Class<?> bindingImplementation();
+
+		String INJECTABLE_KEY = "inject";
+
+		String INJECTABLE_PREFIX = BINDING_BASE + KEY_SEP + INJECTABLE_KEY;
+
+		default Collection<String> injectablesIndices( final String binding )
+		{
+			return enumerate( INJECTABLE_PREFIX,
+					Collections.singletonMap( BINDING_INDEX_KEY, binding ) );
+		}
+
+		String INJECTABLE_INDEX_KEY = "injectIndex";
+
+		@Key( INJECTABLE_INDEX_KEY )
+		String injectableIndex();
+
+		@Key( INJECTABLE_PREFIX + KEY_SEP + "${" + INJECTABLE_INDEX_KEY + "}" )
+		Class<?> bindingInjectable();
+	}
+
+	/**
+	 * {@link Launcher}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	interface Launcher
+	{
+		/**
+		 * @param id the identifier of the {@link LocalBinder} to launch
+		 */
+		void launch( String id );
 	}
 }

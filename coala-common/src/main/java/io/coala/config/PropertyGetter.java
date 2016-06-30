@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JavaType;
 /**
  * {@link PropertyGetter}
  */
+@Deprecated
 public interface PropertyGetter
 {
 

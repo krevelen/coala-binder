@@ -33,6 +33,7 @@ import org.joda.time.Interval;
  * @param <S> the type of {@link SimulatorInterface}
  * @param <M> the type of {@link DsolModel}
  */
+@Deprecated
 public interface DsolModelComponent<S extends SimulatorInterface, M extends DsolModel<S, M>>
 {
 

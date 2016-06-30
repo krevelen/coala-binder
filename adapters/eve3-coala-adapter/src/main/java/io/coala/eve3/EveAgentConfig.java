@@ -50,6 +50,7 @@ import io.coala.util.FileUtil;
  * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
  * @author Rick van Krevelen
  */
+@Deprecated
 public interface EveAgentConfig extends ReplicationConfig
 {
 

@@ -15,8 +15,6 @@
  */
 package io.coala.eve3;
 
-import javax.inject.Inject;
-
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
@@ -37,6 +35,7 @@ import rx.Observer;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
+@Deprecated
 public class CleanupTestAgent extends BasicAgent
 {
 
@@ -60,11 +59,8 @@ public class CleanupTestAgent extends BasicAgent
 	 * 
 	 * @param binder the {@link Binder}
 	 */
-	@Inject
-	public CleanupTestAgent( final Binder binder )
+	public CleanupTestAgent( )
 	{
-		super( binder );
-
 		getBinder().inject( ReceivingCapability.class ).getIncoming()
 				.ofType( Harakiri.class )// .observeOn(Schedulers.trampoline())
 				.subscribe( new Observer<Harakiri>()
