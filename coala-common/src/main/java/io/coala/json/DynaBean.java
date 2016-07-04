@@ -446,11 +446,12 @@ public class DynaBean implements Cloneable
 					return DynaBean.getComparator( comparable ).compare(
 							(Comparable) this.bean, (Comparable) args[0] );
 
-				if( method.getReturnType().equals( Void.TYPE )
-						//&& method.getName().startsWith( "set" )
-						&& method.getParameterTypes().length == 1
+				if( method.getParameterTypes().length == 1
 						&& method.getParameterTypes()[0]
-								.isAssignableFrom( args[0].getClass() ) )
+								.isAssignableFrom( args[0].getClass() )
+						//&& method.getName().startsWith( "set" ) )
+						//&& method.getReturnType().equals( Void.TYPE ) 
+						)
 				{
 					this.bean.set( beanProp, args[0] );
 					return null; // setters return void
@@ -475,7 +476,7 @@ public class DynaBean implements Cloneable
 					"{} ({}) value not set: {}#{}({})",
 					DynaBean.class.getSimpleName(),
 					method.getReturnType().isPrimitive() ? "primitive"
-							: "complex",
+							: "Object",
 					this.type.getSimpleName(), beanProp,
 					Arrays.asList( args ) );
 		}
