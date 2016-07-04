@@ -20,6 +20,7 @@
 package io.coala.bind;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.aeonbits.owner.ConfigCache;
@@ -71,7 +72,10 @@ public interface Launcher
 		default LocalConfig localConfig( final String id,
 			final Map<?, ?>... imports )
 		{
-			return subConfig( id, LocalConfig.class, imports );
+			return subConfig( id, LocalConfig.class,
+					ConfigUtil.join(
+							Collections.singletonMap( LocalConfig.ID_KEY, id ),
+							imports ) );
 		}
 	}
 }

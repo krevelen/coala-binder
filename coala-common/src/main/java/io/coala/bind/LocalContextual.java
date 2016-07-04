@@ -91,7 +91,7 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 			public String convert( final Method method, final String input )
 			{
 				return input == null || input.isEmpty()
-						|| input.equals( ID_PREFIX ) ? "anon|" + (new UUID())
+						|| input.equals( ID_DEFAULT ) ? "anon|" + (new UUID())
 								: input;
 			}
 		}
@@ -113,7 +113,7 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 		{
 			return subConfig( BINDER_KEY, BinderConfig.class, imports );
 		}
-		
+
 		// TODO add 'extends' key to inherit/import from other contexts
 	}
 }
