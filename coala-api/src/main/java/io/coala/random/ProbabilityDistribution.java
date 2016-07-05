@@ -348,6 +348,24 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		}
 
 		/**
+		 * @param unit the {@link Unit} to convert to
+		 * @return a chained {@link ArithmeticDistribution}
+		 *         {@link ProbabilityDistribution}
+		 * @see Amount#to(Unit)
+		 */
+		public ArithmeticDistribution<Q> to( final Unit<Q> unit )
+		{
+			return transform( new Func1<Amount<Q>, Amount<Q>>()
+			{
+				@Override
+				public Amount<Q> call( final Amount<Q> t )
+				{
+					return t.to( unit );
+				}
+			} );
+		}
+
+		/**
 		 * @param that the {@link Amount} to be added
 		 * @return a chained {@link ArithmeticDistribution}
 		 *         {@link ProbabilityDistribution}
@@ -427,15 +445,14 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @see Amount#times(Amount)
 		 */
 		public <R extends Quantity> ArithmeticDistribution<R>
-			times( final Amount<?> factor )
+			times( final Amount<?> factor, final Unit<R> unit )
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
 			{
-				@SuppressWarnings( "unchecked" )
 				@Override
 				public Amount<R> call( final Amount<Q> t )
 				{
-					return (Amount<R>) t.times( factor );
+					return t.times( factor ).to( unit );
 				}
 			} );
 		}
@@ -484,15 +501,14 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @see Amount#divide(Amount)
 		 */
 		public <R extends Quantity> ArithmeticDistribution<R>
-			divide( final Amount<?> divisor )
+			divide( final Amount<?> divisor, final Unit<R> unit )
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
 			{
-				@SuppressWarnings( "unchecked" )
 				@Override
 				public Amount<R> call( final Amount<Q> t )
 				{
-					return (Amount<R>) t.divide( divisor );
+					return t.divide( divisor ).to( unit );
 				}
 			} );
 		}
