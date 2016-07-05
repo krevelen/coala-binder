@@ -3,7 +3,6 @@ package io.coala.guice4;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +16,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.matcher.Matchers;
 
-import io.coala.bind.Launcher;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalContextual;
 import io.coala.exception.ExceptionFactory;
@@ -37,7 +36,7 @@ import rx.subjects.Subject;
 public class Guice4LocalBinder implements LocalBinder
 {
 	/** */
-	private static final Logger LOG = LogUtil
+	static final Logger LOG = LogUtil
 			.getLogger( Guice4LocalBinder.class );
 
 	/**
@@ -54,6 +53,12 @@ public class Guice4LocalBinder implements LocalBinder
 			@Override
 			public void configure()
 			{
+				bindListener( Matchers.any(),
+						new Guice4InjectLoggerTypeListener() );
+
+				bindListener( Matchers.any(),
+						new Guice4InjectConfigTypeListener() );
+
 				// binds itself, how nice :-)
 				bind( LocalBinder.class ).toInstance( binder );
 				emit( LocalBinder.class, binder );
@@ -269,41 +274,5 @@ public class Guice4LocalBinder implements LocalBinder
 	public String toString()
 	{
 		return LocalContextual.toString( this );
-	}
-
-	public static class Guice4Launcher implements Launcher
-	{
-		/**
-		 * @param config
-		 * @return a new {@link Guice4Launcher}
-		 */
-		public static Guice4Launcher of( final LaunchConfig config )
-		{
-			final Guice4Launcher result = new Guice4Launcher();
-			result.config = config;
-			final Collection<String> ids = config.launchIds();
-			if( ids.isEmpty() )
-				LOG.trace( "Nothing to launch in config: {}", config );
-			else
-				for( String id : ids )
-					result.launch( id );
-			return result;
-		}
-
-		private LaunchConfig config;
-
-		@Override
-		public void launch( final String id )
-		{
-			Guice4LocalBinder.of( this.config.localConfig( id ),
-					Collections.singletonMap( Launcher.class, this ) );
-			LOG.trace( "Launched {}", id );
-		}
-
-//		@Override
-//		public String toString()
-//		{
-//			return getClass().getSimpleName() + '<' + id() + '>';
-//		}
 	}
 }
