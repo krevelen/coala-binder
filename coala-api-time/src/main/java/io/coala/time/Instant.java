@@ -64,7 +64,7 @@ import io.coala.util.DecimalUtil;
  * <a href="http://www.threeten.org/">threeten.org</a>:</dt>
  * <dd>
  * <li>supports nanosecond precision,</li>s
- * <li>{@linkplain org.threeten.bp.Instant} parses strictly ISO8601 format
+ * <li>{@linkplain org.threeten.bp.OldInstant} parses strictly ISO8601 format
  * (millis/nanos) only</li>
  * <dt>Joda's time API from <a href="http://www.joda.org/">joda.org</a></dt>
  * <dd>
@@ -396,7 +396,7 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 	}
 
 	/**
-	 * @return the JSR-310 back-port {@link org.threeten.bp.Instant}
+	 * @return the JSR-310 back-port {@link org.threeten.bp.OldInstant}
 	 *         implementation of an instant
 	 */
 	@JsonIgnore

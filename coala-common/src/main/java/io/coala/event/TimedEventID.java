@@ -19,8 +19,8 @@ import java.io.Serializable;
 
 import io.coala.model.ModelID;
 import io.coala.time.AbstractInstant;
-import io.coala.time.Instant;
-import io.coala.time.Timed;
+import io.coala.time.OldInstant;
+import io.coala.time.OldTimed;
 
 /**
  * {@link TimedEventID}
@@ -28,17 +28,17 @@ import io.coala.time.Timed;
  * @version $Id$
  * 
  * @param <T> the {@link Serializable} and {@link Comparable} value type
- * @param <I> the {@link Instant} type
+ * @param <I> the {@link OldInstant} type
  */
 @Deprecated
 public class TimedEventID<T extends Serializable & Comparable<T>, I extends AbstractInstant<I>>
-	extends EventID<T> implements Timed<I>
+	extends EventID<T> implements OldTimed<I>
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
-	/** the {@link Instant} the identified {@link Event} occurs */
+	/** the {@link OldInstant} the identified {@link Event} occurs */
 	private I time;
 
 	/**
@@ -54,7 +54,7 @@ public class TimedEventID<T extends Serializable & Comparable<T>, I extends Abst
 	 * 
 	 * @param modelID the {@link ModelID}
 	 * @param value the (unique) value of this identifier
-	 * @param instant the {@link Instant} the identified {@link Event} occurs
+	 * @param instant the {@link OldInstant} the identified {@link Event} occurs
 	 */
 	public TimedEventID( final ModelID modelID, final T value, final I instant )
 	{

@@ -24,7 +24,7 @@ import io.coala.json.JSONConvertible;
 import io.coala.log.LogUtil;
 
 /**
- * {@link SimTime} is an {@link Instant} with a particular base unit and
+ * {@link SimTime} is an {@link AbstractInstant} with a particular base unit and
  * implementing {@link JSONConvertible}
  * 
  * @version $Id$
