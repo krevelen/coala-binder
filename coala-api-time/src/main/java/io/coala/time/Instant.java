@@ -314,12 +314,7 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 		return of( unwrap().add( augend.unwrap() ) );
 	}
 
-	public Instant add( final Measure augend )
-	{
-		return of( unwrap().add( augend ) );
-	}
-
-	public Instant add( final Amount augend )
+	public Instant add( final Measurable<?> augend )
 	{
 		return of( unwrap().add( augend ) );
 	}

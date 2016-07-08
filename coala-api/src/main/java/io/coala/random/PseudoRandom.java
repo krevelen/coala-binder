@@ -15,11 +15,13 @@
  */
 package io.coala.random;
 
-import static org.aeonbits.owner.util.Collections.entry;
-import static org.aeonbits.owner.util.Collections.map;
-
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -31,6 +33,7 @@ import com.eaio.uuid.UUID;
 import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper.Util;
 import io.coala.name.Id;
+import io.coala.name.Identified;
 
 /**
  * {@link PseudoRandom} generates a stream of pseudo-random numbers, with an API
@@ -40,11 +43,9 @@ import io.coala.name.Id;
  * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
  * @author Rick van Krevelen
  */
-public interface PseudoRandom
+public interface PseudoRandom extends Identified<PseudoRandom.Name>
 {
-	Number getSeed();
-
-	Name getId();
+	Number seed();
 
 	/** @see Random#nextBoolean() */
 	boolean nextBoolean();
@@ -71,6 +72,62 @@ public interface PseudoRandom
 	double nextGaussian();
 
 	/**
+	 * @param elements
+	 * @return
+	 */
+	default <E> E nextElement( final List<E> elements )
+	{
+		if( elements == null || elements.isEmpty() ) return null;
+		return elements.get( nextInt( elements.size() ) );
+	}
+
+	/**
+	 * NOTE that if the {@link Collection} is not ordered, e.g. a
+	 * {@link HashSet}, then results are not guaranteed reproducible
+	 * 
+	 * @param elements the {@link Collection}
+	 * @return the next random element
+	 */
+	default <E> E nextElement( final Collection<E> elements )
+	{
+		if( elements == null || elements.isEmpty() ) return null;
+		return nextElement( elements, elements.size() );
+	}
+
+	/**
+	 * NOTE that if the {@link Map} is not ordered, e.g. a {@link HashMap}, then
+	 * results are not guaranteed reproducible
+	 * 
+	 * @param elements the {@link Collection}
+	 * @return the next random element
+	 */
+	default <K, V> Map.Entry<K, V> nextEntry( final Map<K, V> elements )
+	{
+		if( elements == null || elements.isEmpty() ) return null;
+		return nextElement( elements.entrySet(), elements.size() );
+	}
+
+	/**
+	 * NOTE that if the {@link Iterable} is not ordered, e.g. a {@link HashSet},
+	 * then results are not guaranteed reproducible
+	 * 
+	 * @param elements the {@link Iterable}
+	 * @param size the n
+	 * @return the next random element
+	 */
+	default <E> E nextElement( final Iterable<E> elements, final int size )
+	{
+		if( elements == null || size < 1 ) return null;
+		final Iterator<E> it = elements.iterator();
+		for( int i = 0, n = nextInt( size ); it.hasNext(); i++ )
+			if( i == n )
+				return it.next();
+			else
+				it.next();
+		throw new IllegalStateException();
+	}
+
+	/**
 	 * {@link Name}
 	 * 
 	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
@@ -82,9 +139,9 @@ public interface PseudoRandom
 		 * @param value the {@link String} value
 		 * @return the new {@link Name}
 		 */
-		public static Name of( final String value )
+		public static Name of( final CharSequence value )
 		{
-			return Util.of( value, new Name() );
+			return Util.of( value.toString(), new Name() );
 		}
 	}
 
@@ -158,18 +215,32 @@ public interface PseudoRandom
 		/**
 		 * @return a {@link PseudoRandom}
 		 */
-		PseudoRandom create();
-
-		/**
-		 * @return a {@link PseudoRandom}
-		 */
-		PseudoRandom create( CharSequence id, Number seed );
+		default PseudoRandom create()
+		{
+			return create( ConfigFactory.create( Config.class ) );
+		}
 
 		/**
 		 * @param config the {@link Config}
 		 * @return a {@link PseudoRandom}
 		 */
-		PseudoRandom create( Config config );
+		default PseudoRandom create( final Config config )
+		{
+			return create( config.id(), config.seed() );
+		}
+
+		/**
+		 * @return a {@link PseudoRandom}
+		 */
+		default PseudoRandom create( final CharSequence id, final Number seed )
+		{
+			return create( Name.of( id.toString() ), seed );
+		}
+
+		/**
+		 * @return a {@link PseudoRandom}
+		 */
+		PseudoRandom create( Name id, Number seed );
 
 	}
 
@@ -185,34 +256,17 @@ public interface PseudoRandom
 		public static class Factory implements PseudoRandom.Factory
 		{
 			@Override
-			public JavaPseudoRandom create()
+			public PseudoRandom create( final Name id, final Number seed )
 			{
-				return create( ConfigFactory.create( Config.class ) );
-			}
-
-			@Override
-			public JavaPseudoRandom create( final Config config )
-			{
-				return JavaPseudoRandom.of( config );
-			}
-
-			@SuppressWarnings( "unchecked" )
-			@Override
-			public PseudoRandom create( final CharSequence id,
-				final Number seed )
-			{
-				return create( ConfigFactory.create( Config.class,
-						map( new Map.Entry[]
-				{ entry( Config.NAME_KEY, id.toString() ),
-						entry( Config.SEED_KEY, seed.toString() ) } ) ) );
+				return JavaPseudoRandom.of( id, seed.longValue() );
 			}
 		}
 
-		public static JavaPseudoRandom of( final Config config )
+		public static JavaPseudoRandom of( final Name id, final Long seed )
 		{
 			final JavaPseudoRandom result = new JavaPseudoRandom();
-			result.id = config.id();
-			result.seed = config.seed().longValue();
+			result.id = id;
+			result.seed = seed;
 			result.random = new Random( result.seed );
 			return result;
 		}
@@ -223,17 +277,17 @@ public interface PseudoRandom
 		/** the seed */
 		private Long seed;
 
-		/** the {@link Random} generator */
+		/** the wrapped {@link Random} generator */
 		private Random random;
 
 		@Override
-		public Name getId()
+		public Name id()
 		{
 			return this.id;
 		}
 
 		@Override
-		public Number getSeed()
+		public Number seed()
 		{
 			return this.seed;
 		}

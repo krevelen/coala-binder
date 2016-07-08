@@ -21,6 +21,7 @@ package io.coala.time;
 
 import java.util.concurrent.Callable;
 
+import javax.measure.Measurable;
 import javax.measure.quantity.Dimensionless;
 
 //import javax.measure.quantity.Dimensionless;
@@ -71,7 +72,7 @@ public interface Timed
 	 *            {@link Dimensionless} units
 	 * @return the {@link FutureSelf}
 	 */
-	default FutureSelf after( final TimeSpan delay )
+	default FutureSelf after( final Measurable<?> delay )
 	{
 		return FutureSelf.of( this, now().add( delay ) );
 	}

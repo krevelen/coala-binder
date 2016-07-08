@@ -15,13 +15,9 @@
  */
 package io.coala.math3;
 
-import static org.aeonbits.owner.util.Collections.entry;
-import static org.aeonbits.owner.util.Collections.map;
-
 import java.util.HashMap;
 import java.util.Map;
 
-import org.aeonbits.owner.ConfigFactory;
 import org.apache.commons.math3.random.ISAACRandom;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -128,19 +124,19 @@ public class Math3RandomNumberStream implements PseudoRandom
 	}
 
 	/** constructor */
-	public static Math3RandomNumberStream of( final Config config,
+	public static Math3RandomNumberStream of( final Name id, final Long seed,
 		final RandomGenerator rng )
 	{
 		final Math3RandomNumberStream result = new Math3RandomNumberStream();
-		result.id = config.id();
-		result.seed = config.seed().longValue();
+		result.id = id;
+		result.seed = seed;
 		result.rng = rng;
 		return result;
 	}
 
 	private Name id;
 
-	private long seed;
+	private Long seed;
 
 	private RandomGenerator rng;
 
@@ -151,13 +147,13 @@ public class Math3RandomNumberStream implements PseudoRandom
 	}
 
 	@Override
-	public Number getSeed()
+	public Number seed()
 	{
 		return this.seed;
 	}
 
 	@Override
-	public Name getId()
+	public Name id()
 	{
 		return this.id;
 	}
@@ -302,26 +298,10 @@ public class Math3RandomNumberStream implements PseudoRandom
 		}
 
 		@Override
-		public Math3RandomNumberStream create()
+		public PseudoRandom create( final Name id, final Number seed )
 		{
-			return create( ConfigFactory.create( Config.class ) );
-		}
-
-		@Override
-		public Math3RandomNumberStream create( final Config config )
-		{
-			return Math3RandomNumberStream.of( config, this.instantiator
-					.instantiate( config.seed().longValue() ) );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		@Override
-		public PseudoRandom create( final CharSequence id, final Number seed )
-		{
-			return create( ConfigFactory.create( Config.class,
-					map( new Map.Entry[]
-			{ entry( Config.NAME_KEY, id.toString() ),
-					entry( Config.SEED_KEY, seed.toString() ) } ) ) );
+			return Math3RandomNumberStream.of( id, seed.longValue(),
+					this.instantiator.instantiate( seed.longValue() ) );
 		}
 
 	}

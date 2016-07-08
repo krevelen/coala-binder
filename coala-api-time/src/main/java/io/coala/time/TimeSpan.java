@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 
 import javax.measure.DecimalMeasure;
+import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Duration;
@@ -333,28 +334,20 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * @param augend the {@link Measure}, e.g. another {@link TimeSpan}
+	 * @param augend the {@link Measurable}, e.g. another {@link TimeSpan},
+	 *            {@link Measure} or {@link Amount}
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public TimeSpan add( final Measure augend )
+	public TimeSpan add( final Measurable<?> augend )
 	{
 		return augend instanceof DecimalMeasure
 				? add( (BigDecimal) ((DecimalMeasure) augend)
 						.to( getUnit(), DecimalUtil.DECIMAL_PRECISION )
 						.getValue() )
-				: add( augend.doubleValue( getUnit() ) );
-	}
-
-	/**
-	 * @param augend
-	 * @return a new {@link TimeSpan}
-	 */
-	@SuppressWarnings( "unchecked" )
-	public TimeSpan add( final Amount augend )
-	{
-		return augend.isExact() ? add( augend.longValue( getUnit() ) )
-				: add( augend.doubleValue( getUnit() ) );
+				: add( augend instanceof Amount && ((Amount) augend).isExact()
+						? augend.longValue( getUnit() )
+						: augend.doubleValue( getUnit() ) );
 	}
 
 	/**
