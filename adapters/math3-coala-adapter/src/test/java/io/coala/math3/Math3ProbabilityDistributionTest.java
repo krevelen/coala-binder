@@ -27,17 +27,17 @@ import io.coala.log.LogUtil;
 import io.coala.random.ProbabilityDistribution;
 
 /**
- * {@link Math3RandomDistributionTest}
+ * {@link Math3ProbabilityDistributionTest}
  * 
  * @version $Id: bfadf655bd8008aafea9b9abf73eab34d7701718 $
  * @author Rick van Krevelen
  */
-public class Math3RandomDistributionTest
+public class Math3ProbabilityDistributionTest
 {
 
 	/** */
 	private static final Logger LOG = LogUtil
-			.getLogger( Math3RandomDistributionTest.class );
+			.getLogger( Math3ProbabilityDistributionTest.class );
 
 	enum MyValue
 	{
@@ -50,7 +50,7 @@ public class Math3RandomDistributionTest
 	{
 		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser(
 				Math3ProbabilityDistribution.Factory
-						.of( Math3RandomNumberStream.Factory.ofMersenneTwister()
+						.of( Math3PseudoRandom.Factory.ofMersenneTwister()
 								.create( "rng", 0L ) ) );
 
 		final ProbabilityDistribution<DecimalMeasure> dist2 = parser

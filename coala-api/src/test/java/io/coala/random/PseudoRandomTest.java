@@ -24,7 +24,7 @@ public class PseudoRandomTest
 	{
 		LOG.trace( "Testing {}", Config.class );
 		final Config conf = ConfigFactory.create( Config.class );
-		LOG.trace( "Got config: {}; name={}; seeds={}", conf, conf.id(),
+		LOG.trace( "Got config: {}; name={}; seed={}", conf, conf.id(),
 				conf.seed() );
 	}
 }

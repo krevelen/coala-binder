@@ -38,7 +38,7 @@ import io.coala.name.Identified;
 /**
  * {@link PseudoRandom} generates a stream of pseudo-random numbers, with an API
  * similar to the standard Java {@link Random} generator (which is wrapped
- * accordingly in the {@link JavaPseudoRandom} decorator)
+ * accordingly in the {@link JavaRandom} decorator)
  * 
  * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
  * @author Rick van Krevelen
@@ -245,29 +245,22 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	}
 
 	/**
-	 * {@link JavaPseudoRandom} decorates a standard Java {@link Random}
-	 * generator as {@link PseudoRandom}
+	 * {@link JavaRandom} decorates a standard Java {@link Random} generator as
+	 * {@link PseudoRandom}
 	 * 
 	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
 	 * @author Rick van Krevelen
 	 */
-	class JavaPseudoRandom implements PseudoRandom
+	class JavaRandom extends Random implements PseudoRandom
 	{
-		public static class Factory implements PseudoRandom.Factory
-		{
-			@Override
-			public PseudoRandom create( final Name id, final Number seed )
-			{
-				return JavaPseudoRandom.of( id, seed.longValue() );
-			}
-		}
+		/** the serialVersionUID */
+		private static final long serialVersionUID = 1L;
 
-		public static JavaPseudoRandom of( final Name id, final Long seed )
+		public static JavaRandom of( final Name id, final long seed )
 		{
-			final JavaPseudoRandom result = new JavaPseudoRandom();
+			final JavaRandom result = new JavaRandom();
 			result.id = id;
-			result.seed = seed;
-			result.random = new Random( result.seed );
+			result.setSeed( seed );
 			return result;
 		}
 
@@ -277,8 +270,12 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		/** the seed */
 		private Long seed;
 
-		/** the wrapped {@link Random} generator */
-		private Random random;
+		@Override
+		public void setSeed( final long seed )
+		{
+			super.setSeed( seed );
+			this.seed = seed;
+		}
 
 		@Override
 		public Name id()
@@ -287,57 +284,18 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		}
 
 		@Override
-		public Number seed()
+		public Long seed()
 		{
 			return this.seed;
 		}
 
-		@Override
-		public boolean nextBoolean()
+		public static class Factory implements PseudoRandom.Factory
 		{
-			return this.random.nextBoolean();
-		}
-
-		@Override
-		public void nextBytes( final byte[] bytes )
-		{
-			this.random.nextBytes( bytes );
-		}
-
-		@Override
-		public int nextInt()
-		{
-			return this.random.nextInt();
-		}
-
-		@Override
-		public int nextInt( final int n )
-		{
-			return this.random.nextInt( n );
-		}
-
-		@Override
-		public long nextLong()
-		{
-			return this.random.nextLong();
-		}
-
-		@Override
-		public float nextFloat()
-		{
-			return this.random.nextFloat();
-		}
-
-		@Override
-		public double nextDouble()
-		{
-			return this.random.nextDouble();
-		}
-
-		@Override
-		public double nextGaussian()
-		{
-			return this.random.nextGaussian();
+			@Override
+			public JavaRandom create( final Name id, final Number seed )
+			{
+				return JavaRandom.of( id, seed.longValue() );
+			}
 		}
 	}
 }

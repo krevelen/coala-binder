@@ -252,7 +252,19 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 	/**
 	 * @param <Q> the measurement {@link Quantity} to assign
-	 * @param dist the {@link ProbabilityDistribution} to wrap
+	 * @return an {@link ArithmeticDistribution} {@link ProbabilityDistribution}
+	 *         for measure {@link Amount}s from drawn {@link Number}s, with an
+	 *         attempt to maintain exactness
+	 */
+	@SuppressWarnings( "unchecked" )
+	public <Q extends Quantity> ArithmeticDistribution<Q> toAmounts()
+	{
+		return ArithmeticDistribution
+				.of( (ProbabilityDistribution<Amount<Q>>) this );
+	}
+
+	/**
+	 * @param <Q> the measurement {@link Quantity} to assign
 	 * @param unit the {@link Unit} of measurement to assign
 	 * @return an {@link ArithmeticDistribution} {@link ProbabilityDistribution}
 	 *         for measure {@link Amount}s from drawn {@link Number}s, with an
@@ -661,6 +673,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @return a {@link ProbabilityDistribution} of {@link T} values
 		 * @throws Exception
 		 */
+		@SuppressWarnings( "unchecked" )
 		public <T, P> ProbabilityDistribution<T> parse( final String dist,
 			final Class<P> argType ) throws Exception
 		{
@@ -668,27 +681,40 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 			if( !m.find() ) throw ExceptionFactory.createChecked(
 					"Problem parsing probability distribution: {}", dist );
 			final List<WeightedValue<P, ?>> params = new ArrayList<>();
+			final InstanceParser<P> argParser = InstanceParser.of( argType );
 			for( String valuePair : m.group( PARAMS_GROUP )
 					.split( PARAM_SEPARATORS ) )
 			{
 				if( valuePair.trim().isEmpty() ) continue; // empty parentheses
 				final String[] valueWeights = valuePair
 						.split( WEIGHT_SEPARATORS );
-				if( valueWeights.length == 1 )
-				{
-					params.add( WeightedValue.of( InstanceParser.of( argType )
-							.parseOrTrimmed( valuePair ), 1 ) );
-				} else
-					params.add( WeightedValue.of(
-							InstanceParser.of( argType )
-									.parseOrTrimmed( valueWeights[0] ),
-							new BigDecimal( valueWeights[1] ) ) );
+				params.add(
+						valueWeights.length == 1 // no weight given
+								? WeightedValue.of(
+										argParser.parseOrTrimmed( valuePair ),
+										BigDecimal.ONE )
+								: WeightedValue.of(
+										argParser.parseOrTrimmed(
+												valueWeights[0] ),
+										new BigDecimal( valueWeights[1] ) ) );
 			}
-			final Integer one = Integer.valueOf( 1 );
 			if( params.isEmpty() && argType.isEnum() )
 				for( P constant : argType.getEnumConstants() )
-				params.add( WeightedValue.of( constant, one ) );
-			return parse( m.group( DIST_GROUP ), params );
+				params.add( WeightedValue.of( constant, BigDecimal.ONE ) );
+			final ProbabilityDistribution<T> result = parse(
+					m.group( DIST_GROUP ), params );
+			if( !Amount.class.isAssignableFrom( argType ) || params.isEmpty() )
+				return result;
+
+			final Amount<?> first = (Amount<?>) params.get( 0 ).getValue();
+			// check parameter value unit compatibility
+			for( int i = params.size() - 1; i > 0; i-- )
+				if( !((Amount<?>) params.get( i ).getValue()).getUnit()
+						.isCompatible( first.getUnit() ) )
+					throw ExceptionFactory.createUnchecked(
+							"quantities incompatible of {} and {}", first,
+							params.get( i ).getValue() );
+			return (ProbabilityDistribution<T>) result.toAmounts();
 		}
 
 		/**
@@ -710,7 +736,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 			if( getFactory() == null )
 			{
 				final T value = (T) args.get( 0 ).getValue();
-				LOG.warn( "No {} set, creating deterministic {}: {}",
+				LOG.warn( "No {} set, creating Deterministic<{}>: {}",
 						Factory.class.getSimpleName(),
 						value.getClass().getSimpleName(), value );
 				return createDeterministic( value );

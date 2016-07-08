@@ -203,7 +203,7 @@ public abstract class Math3ProbabilityDistribution<S>
 		{
 			final Factory result = new Factory();
 			result.stream = stream;
-			result.rng = Math3RandomNumberStream.toRandomGenerator( stream );
+			result.rng = Math3PseudoRandom.toRandomGenerator( stream );
 			return result;
 		}
 
