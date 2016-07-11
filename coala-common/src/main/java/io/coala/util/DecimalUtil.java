@@ -3,7 +3,6 @@ package io.coala.util;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.math.RoundingMode;
 
 /**
  * {@link DecimalUtil}
@@ -15,7 +14,7 @@ public class DecimalUtil implements Util
 {
 
 	/** TODO from config? */
-	public static final MathContext DECIMAL_PRECISION = MathContext.DECIMAL128;
+	public static final MathContext DEFAULT_CONTEXT = MathContext.DECIMAL128;
 
 	/**
 	 * {@link DecimalUtil} inaccessible singleton constructor
@@ -25,8 +24,9 @@ public class DecimalUtil implements Util
 	}
 
 	/**
-	 * see <a href="http://stackoverflow.com/a/12748321">stackoverflow
-	 * discussion</a>
+	 * @return {@code true} iff the {@link BigDecimal} has scale {@code <=0}
+	 * @see <a href="http://stackoverflow.com/a/12748321">stackoverflow
+	 *      discussion</a>
 	 */
 	public static boolean isExact( final BigDecimal bd )
 	{
@@ -37,20 +37,28 @@ public class DecimalUtil implements Util
 	public static String toString( final double value, final int scale )
 	{
 		return BigDecimal.valueOf( value )
-				.setScale( scale, RoundingMode.HALF_UP ).toPlainString();
+				.setScale( scale, DEFAULT_CONTEXT.getRoundingMode() )
+				.toPlainString();
+	}
+
+	public static BigDecimal valueOf( final BigDecimal value )
+	{
+		return value;
+	}
+
+	public static BigDecimal valueOf( final BigInteger value )
+	{
+		return valueOf( value.longValueExact() );
+	}
+
+	public static BigDecimal valueOf( final long value )
+	{
+		return BigDecimal.valueOf( value );
 	}
 
 	public static BigDecimal valueOf( final Number value )
 	{
-		return value instanceof BigDecimal ? (BigDecimal) value
-				: value instanceof Long || long.class.isInstance( value )
-						|| value instanceof Integer
-						|| int.class.isInstance( value )
-						|| value instanceof Short
-						|| short.class.isInstance( value )
-						|| value instanceof BigInteger
-								? BigDecimal.valueOf( value.longValue() )
-								: BigDecimal.valueOf( value.doubleValue() );
+		return BigDecimal.valueOf( value.doubleValue() );
 	}
 
 }

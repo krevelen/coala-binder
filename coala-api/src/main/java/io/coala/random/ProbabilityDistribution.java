@@ -15,12 +15,15 @@
  */
 package io.coala.random;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +39,7 @@ import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.MeasureUtil;
+import io.coala.math.Range;
 import io.coala.math.WeightedValue;
 import io.coala.util.InstanceParser;
 import io.coala.util.Instantiator;
@@ -51,33 +55,17 @@ import rx.functions.Func1;
  * @version $Id$
  * @author Rick van Krevelen
  */
-@SuppressWarnings( "serial" )
-public abstract class ProbabilityDistribution<T> implements Serializable
+public interface ProbabilityDistribution<T> //extends Serializable
 {
-
-	protected PseudoRandom stream = null;
-
-	protected List<?> params = Collections.emptyList();
-
-	public PseudoRandom getStream()
-	{
-		return this.stream;
-	}
-
-	public List<?> getParams()
-	{
-		return this.params;
-	}
 
 	/**
 	 * @return the next pseudo-random sample
 	 */
-	public abstract T draw();
+	T draw();
 
 	// continuous: https://www.wikiwand.com/en/Probability_density_function
 	// discrete: https://www.wikiwand.com/en/Probability_mass_function
-	// TODO probabilityOf(T value)
-	// TODO cumulativeProbabilityOf(T value)
+	// TODO probabilityOf(T value), cumulativeProbabilityOf(T value)
 
 	/**
 	 * From
@@ -102,8 +90,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @param value the constant to be returned on each draw
 	 * @return a degenerate or deterministic {@link ProbabilityDistribution}
 	 */
-	public static <T> ProbabilityDistribution<T>
-		createDeterministic( final T value )
+	static <T> ProbabilityDistribution<T> createDeterministic( final T value )
 	{
 		final ProbabilityDistribution<T> result = new ProbabilityDistribution<T>()
 		{
@@ -113,11 +100,10 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 				return value;
 			}
 		};
-		result.params = Collections.singletonList( value );
 		return result;
 	}
 
-	public static ProbabilityDistribution<Boolean>
+	static ProbabilityDistribution<Boolean>
 		createBernoulli( final PseudoRandom rng, final Number probability )
 	{
 		final ProbabilityDistribution<Boolean> result = new ProbabilityDistribution<Boolean>()
@@ -128,8 +114,6 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 				return rng.nextDouble() < probability.doubleValue();
 			}
 		};
-		result.stream = rng;
-		result.params = Collections.singletonList( probability );
 		return result;
 	}
 
@@ -194,7 +178,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		};
 	}
 
-	public <R> ProbabilityDistribution<R> apply( final Func1<T, R> transform )
+	default <R> ProbabilityDistribution<R> apply( final Func1<T, R> transform )
 	{
 		final ProbabilityDistribution<T> self = this;
 		return new ProbabilityDistribution<R>()
@@ -216,7 +200,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @return a uniform categorical {@link ProbabilityDistribution} of
 	 *         {@link E} values
 	 */
-	public <E extends Enum<E>> ProbabilityDistribution<E>
+	default <E extends Enum<E>> ProbabilityDistribution<E>
 		toEnum( final Class<E> enumType )
 	{
 		return apply( new Func1<T, E>()
@@ -237,7 +221,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @param valueType the {@link Class} to instantiate
 	 * @return a {@link ProbabilityDistribution} of {@link S} values
 	 */
-	public <S> ProbabilityDistribution<S>
+	default <S> ProbabilityDistribution<S>
 		toInstancesOf( final Class<S> valueType )
 	{
 		return apply( new Func1<T, S>()
@@ -257,7 +241,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 *         attempt to maintain exactness
 	 */
 	@SuppressWarnings( "unchecked" )
-	public <Q extends Quantity> ArithmeticDistribution<Q> toAmounts()
+	default <Q extends Quantity> ArithmeticDistribution<Q> toAmounts()
 	{
 		return ArithmeticDistribution
 				.of( (ProbabilityDistribution<Amount<Q>>) this );
@@ -271,7 +255,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 *         attempt to maintain exactness
 	 */
 	@SuppressWarnings( "unchecked" )
-	public <Q extends Quantity> ArithmeticDistribution<Q>
+	default <Q extends Quantity> ArithmeticDistribution<Q>
 		toAmounts( final Unit<Q> unit )
 	{
 		return ArithmeticDistribution
@@ -287,7 +271,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	public static abstract class ArithmeticDistribution<Q extends Quantity>
+	interface ArithmeticDistribution<Q extends Quantity>
 		extends ProbabilityDistribution<Amount<Q>>
 	{
 		public static <Q extends Quantity> ArithmeticDistribution<Q>
@@ -345,7 +329,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @return a chained {@link ArithmeticDistribution}
 		 *         {@link ProbabilityDistribution}
 		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
+		default <R extends Quantity> ArithmeticDistribution<R>
 			transform( final Func1<Amount<Q>, Amount<R>> transform )
 		{
 			final ArithmeticDistribution<Q> self = this;
@@ -365,7 +349,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#to(Unit)
 		 */
-		public ArithmeticDistribution<Q> to( final Unit<Q> unit )
+		default ArithmeticDistribution<Q> to( final Unit<Q> unit )
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -383,7 +367,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#plus(Amount)
 		 */
-		public ArithmeticDistribution<Q> plus( final Amount<?> that )
+		default ArithmeticDistribution<Q> plus( final Amount<?> that )
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -401,7 +385,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#minus(Amount)
 		 */
-		public ArithmeticDistribution<Q> minus( final Amount<?> that )
+		default ArithmeticDistribution<Q> minus( final Amount<?> that )
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -419,7 +403,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#times(long)
 		 */
-		public ArithmeticDistribution<Q> times( final long factor )
+		default ArithmeticDistribution<Q> times( final long factor )
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -437,7 +421,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#times(double)
 		 */
-		public ArithmeticDistribution<Q> times( final double factor )
+		default ArithmeticDistribution<Q> times( final double factor )
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -456,7 +440,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#times(Amount)
 		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
+		default <R extends Quantity> ArithmeticDistribution<R>
 			times( final Amount<?> factor, final Unit<R> unit )
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
@@ -475,7 +459,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#divide(long)
 		 */
-		public ArithmeticDistribution<Q> divide( final long divisor )
+		default ArithmeticDistribution<Q> divide( final long divisor )
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -493,7 +477,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#divide(double)
 		 */
-		public ArithmeticDistribution<Q> divide( final double divisor )
+		default ArithmeticDistribution<Q> divide( final double divisor )
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -512,7 +496,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#divide(Amount)
 		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
+		default <R extends Quantity> ArithmeticDistribution<R>
 			divide( final Amount<?> divisor, final Unit<R> unit )
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
@@ -530,7 +514,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#inverse()
 		 */
-		public <R extends Quantity> ArithmeticDistribution<R> inverse()
+		default <R extends Quantity> ArithmeticDistribution<R> inverse()
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
 			{
@@ -548,7 +532,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#abs()
 		 */
-		public ArithmeticDistribution<Q> abs()
+		default ArithmeticDistribution<Q> abs()
 		{
 			return transform( new Func1<Amount<Q>, Amount<Q>>()
 			{
@@ -566,7 +550,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#sqrt()
 		 */
-		public <R extends Quantity> ArithmeticDistribution<R> sqrt()
+		default <R extends Quantity> ArithmeticDistribution<R> sqrt()
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
 			{
@@ -586,7 +570,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *         {@link ProbabilityDistribution}
 		 * @see Amount#root(int)
 		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
+		default <R extends Quantity> ArithmeticDistribution<R>
 			root( final int n )
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
@@ -606,7 +590,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @return <code>this<sup>exp</sup></code>
 		 * @see Amount#pow(int)
 		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
+		default <R extends Quantity> ArithmeticDistribution<R>
 			pow( final int exp )
 		{
 			return transform( new Func1<Amount<Q>, Amount<R>>()
@@ -618,6 +602,150 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 					return (Amount<R>) t.pow( exp );
 				}
 			} );
+		}
+	}
+
+	/**
+	 * {@link Multivariate} describes individual-level features/strata known for
+	 * the population-level distribution of births among mothers such as age,
+	 * income etc.
+	 * 
+	 * @param <K> the type of criteria/variates
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	interface Multivariate<K>
+	{
+		Map<K, Object> values();
+
+		@SuppressWarnings( "unchecked" )
+		static <V> boolean match( final Range<?> range, final V value )
+		{
+			return ((Range<? super V>) range).contains( value );
+		}
+
+		default boolean match( final Map<K, Range<?>> filter )
+		{
+			for( Map.Entry<K, Range<?>> entry : filter.entrySet() )
+				if( !match( entry.getValue(), values().get( entry.getKey() ) ) )
+					return false;
+			return true;
+		}
+
+		default void addValues( final Map<K, Set<Object>> ranges )
+		{
+			for( Map.Entry<K, Object> value : values().entrySet() )
+				ranges.computeIfAbsent( value.getKey(), t ->
+				{
+					return new HashSet<Object>();
+				} ).add( value.getValue() );
+		}
+
+		default <T extends Multivariate<K>> void checkRemovableValues(
+			final Map<K, Set<Object>> ranges, final Iterable<T> others )
+		{
+			final Map<K, Object> removable = new HashMap<>( values() );
+			for( T other : others )
+			{
+				removable.entrySet().removeIf( e ->
+				{
+					return e.getValue()
+							.equals( other.values().get( e.getKey() ) );
+				} );
+				if( removable.isEmpty() ) break;
+			}
+		}
+	}
+
+	/**
+	 * {@link MultivariateDistribution} restrict the sampling to multivariate
+	 * items or units
+	 * 
+	 * @param <T> the type of {@link Multivariate} values to sample
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	interface MultivariateDistribution<T extends Multivariate<?>>
+		extends ProbabilityDistribution<T>
+	{
+		// ProbabilityDistribution<? extends V> sampler(K variate);
+
+		void register( T item );
+
+		@SuppressWarnings( "unchecked" )
+		default void register( T... items )
+		{
+			if( items != null ) for( T item : items )
+				register( item );
+		}
+
+		default void register( Iterable<T> items )
+		{
+			if( items != null ) for( T item : items )
+				register( item );
+		}
+
+		void unregister( T item );
+
+		@SuppressWarnings( "unchecked" )
+		default void unregister( T... items )
+		{
+			if( items != null ) for( T item : items )
+				unregister( item );
+		}
+
+		default void unregister( Iterable<T> items )
+		{
+			if( items != null ) for( T item : items )
+				unregister( item );
+		}
+
+		static <T extends Multivariate<K>, K> MultivariateDistribution<T> of(
+			final PseudoRandom stream, final Collection<T> items,
+			final Map<K, ProbabilityDistribution<Range<?>>> variates )
+		{
+			final Map<K, Set<Object>> ranges = new HashMap<>();
+			items.forEach( t ->
+			{
+				t.addValues( ranges );
+			} );
+
+			final MultivariateDistribution<T> result = new MultivariateDistribution<T>()
+			{
+				@Override
+				public T draw()
+				{
+					if( items.isEmpty() ) return null;
+					if( items.size() == 1 ) return items.iterator().next();
+					final List<T> candidates = new ArrayList<>();
+					final Map<K, Range<?>> filter = new HashMap<>();
+					variates.entrySet().forEach( e ->
+					{
+						filter.put( e.getKey(), e.getValue().draw() );
+					} );
+					items.forEach( t ->
+					{
+						if( t.match( filter ) ) candidates.add( t );
+					} ); 
+					return candidates
+							.get( stream.nextInt( candidates.size() ) );
+				}
+
+				@Override
+				public void register( final T item )
+				{
+					items.add( item );
+					item.addValues( ranges );
+				}
+
+				@Override
+				public void unregister( final T item )
+				{
+					items.remove( item );
+					item.checkRemovableValues( ranges, items );
+				}
+			};
+			return result;
 		}
 	}
 

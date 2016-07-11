@@ -10,6 +10,7 @@ import static java.lang.Math.sqrt;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Quantity;
@@ -101,11 +102,48 @@ public class MeasureUtil implements Util
 				+ amount.getUnit();
 	}
 
-	public static <Q extends Quantity> Number getValue( final Amount<Q> amount,
+	public static <Q extends Quantity> Number toNumber( final Amount<Q> amount,
 		final Unit<Q> unit )
 	{
 		final Amount<Q> result = amount.to( unit );
 		return result.isExact() ? result.getExactValue()
 				: result.getEstimatedValue();
+	}
+
+	public static <Q extends Quantity> BigDecimal
+		toBigDecimal( final Amount<Q> amount )
+	{
+		return toBigDecimal( amount, amount.getUnit() );
+	}
+
+	public static <Q extends Quantity> BigDecimal
+		toBigDecimal( final Amount<Q> amount, final Unit<Q> unit )
+	{
+		final Amount<Q> result = amount.to( unit );
+		return result.isExact() ? BigDecimal.valueOf( result.getExactValue() )
+				: BigDecimal.valueOf( result.getEstimatedValue() );
+	}
+
+	/**
+	 * @param measure
+	 * @return
+	 */
+	public static <Q extends Quantity> BigDecimal
+		toBigDecimal( final Measure<?, Q> measure )
+	{
+		return toBigDecimal( measure, measure.getUnit() );
+	}
+
+	/**
+	 * @param measure
+	 * @return
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity> BigDecimal
+		toBigDecimal( final Measure<?, Q> measure, final Unit<Q> unit )
+	{
+		return measure instanceof DecimalMeasure
+				? ((DecimalMeasure<Q>) measure).to( unit ).getValue()
+				: BigDecimal.valueOf( measure.doubleValue( unit ) );
 	}
 }

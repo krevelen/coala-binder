@@ -72,9 +72,8 @@ import io.coala.random.PseudoRandom;
  * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
  * @author Rick van Krevelen
  */
-@SuppressWarnings( "serial" )
 public abstract class Math3ProbabilityDistribution<S>
-	extends ProbabilityDistribution<S>
+	implements ProbabilityDistribution<S>
 {
 
 	@SafeVarargs
@@ -90,8 +89,8 @@ public abstract class Math3ProbabilityDistribution<S>
 				return dist.sample();
 			}
 		};
-		result.stream = stream;
-		result.params = Arrays.asList( args );
+//		result.stream = stream;
+//		result.params = Arrays.asList( args );
 		return result;
 	}
 
@@ -108,7 +107,7 @@ public abstract class Math3ProbabilityDistribution<S>
 				return Long.valueOf( dist.sample() );
 			}
 		};
-		result.stream = stream;
+//		result.stream = stream;
 		return result;
 	}
 
@@ -125,7 +124,7 @@ public abstract class Math3ProbabilityDistribution<S>
 				return Double.valueOf( dist.sample() );
 			}
 		};
-		result.stream = stream;
+//		result.stream = stream;
 		return result;
 	}
 
@@ -142,7 +141,7 @@ public abstract class Math3ProbabilityDistribution<S>
 				return dist.sample();
 			}
 		};
-		result.stream = stream;
+//		result.stream = stream;
 		return result;
 	}
 

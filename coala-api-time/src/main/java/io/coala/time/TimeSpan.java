@@ -26,6 +26,7 @@ import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Duration;
+import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -41,6 +42,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import io.coala.math.MeasureUtil;
 import io.coala.util.DecimalUtil;
 
 /**
@@ -65,6 +67,9 @@ import io.coala.util.DecimalUtil;
 @JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
 public class TimeSpan extends DecimalMeasure
 {
+
+	/** */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * for "natural" Config value conversion for a {@link Duration} (i.e.
@@ -101,7 +106,7 @@ public class TimeSpan extends DecimalMeasure
 	/**
 	 * {@link TimeSpan} static factory method
 	 * 
-	 * @param temporal a {@link TemporalAmount}
+	 * @param temporal a JSR-310 {@link TemporalAmount}
 	 */
 	public static TimeSpan of( final TemporalAmount temporal )
 	{
@@ -116,7 +121,7 @@ public class TimeSpan extends DecimalMeasure
 	/**
 	 * {@link TimeSpan} static factory method
 	 * 
-	 * @param value a {@link ReadableDuration}, e.g.
+	 * @param value a Joda {@link ReadableDuration}, e.g.
 	 *            {@link org.joda.time.Duration}
 	 */
 	public static TimeSpan of( final ReadableDuration value )
@@ -127,10 +132,10 @@ public class TimeSpan extends DecimalMeasure
 	/**
 	 * {@link TimeSpan} static factory method
 	 * 
-	 * @param value a {@link Measure} of {@link Duration} or
-	 *            {@link Dimensionless} units
+	 * @param value a {@link Measure} of some {@link Duration} or
+	 *            {@link Dimensionless} {@link Quantity}
 	 */
-	public static TimeSpan of( final Measure<? extends Number, ?> value )
+	public static TimeSpan of( final Measure<?, ?> value )
 	{
 		return new TimeSpan( value );
 	}
@@ -143,11 +148,12 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public static TimeSpan of( final Amount value )
 	{
-		return new TimeSpan( BigDecimal.valueOf( value.getEstimatedValue() ),
-				value.getUnit() );
+		return new TimeSpan( value );
 	}
 
 	/**
+	 * {@link TimeSpan} static factory method
+	 * 
 	 * @param units the amount of time units
 	 * @return a {@link Dimensionless} {@link TimeSpan}
 	 */
@@ -261,9 +267,6 @@ public class TimeSpan extends DecimalMeasure
 		}
 	}
 
-	/** */
-	private static final long serialVersionUID = 1L;
-
 	/**
 	 * {@link TimeSpan} constructor for "natural" polymorphic Jackson bean
 	 * deserialization
@@ -303,9 +306,20 @@ public class TimeSpan extends DecimalMeasure
 	 * @param measure
 	 * @param unit
 	 */
-	public TimeSpan( final Measure<? extends Number, ?> measure )
+	public <Q extends Quantity> TimeSpan( final Measure<?, Q> measure )
 	{
-		this( measure.getValue(), measure.getUnit() );
+		this( MeasureUtil.toBigDecimal( measure ), measure.getUnit() );
+	}
+
+	/**
+	 * {@link TimeSpan} constructor
+	 * 
+	 * @param amount
+	 * @param unit
+	 */
+	public TimeSpan( final Amount<?> amount )
+	{
+		this( MeasureUtil.toBigDecimal( amount ), amount.getUnit() );
 	}
 
 	/**
@@ -321,19 +335,6 @@ public class TimeSpan extends DecimalMeasure
 	}
 
 	/**
-	 * {@link TimeSpan} main constructor for {@link BigDecimal} values
-	 * 
-	 * @param value
-	 * @param unit
-	 */
-	@SuppressWarnings( "unchecked" )
-	public TimeSpan( final BigDecimal value, final Unit unit )
-	{
-		super( value instanceof BigDecimal ? (BigDecimal) value
-				: BigDecimal.valueOf( value.doubleValue() ), unit );
-	}
-
-	/**
 	 * @param augend the {@link Measurable}, e.g. another {@link TimeSpan},
 	 *            {@link Measure} or {@link Amount}
 	 * @return a new {@link TimeSpan}
@@ -343,7 +344,7 @@ public class TimeSpan extends DecimalMeasure
 	{
 		return augend instanceof DecimalMeasure
 				? add( (BigDecimal) ((DecimalMeasure) augend)
-						.to( getUnit(), DecimalUtil.DECIMAL_PRECISION )
+						.to( getUnit(), DecimalUtil.DEFAULT_CONTEXT )
 						.getValue() )
 				: add( augend instanceof Amount && ((Amount) augend).isExact()
 						? augend.longValue( getUnit() )
@@ -356,25 +357,7 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public TimeSpan add( final Number augend )
 	{
-		return add( BigDecimal.valueOf( augend.doubleValue() ) );
-	}
-
-	/**
-	 * @param augend
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan add( final long augend )
-	{
-		return add( BigDecimal.valueOf( augend ) );
-	}
-
-	/**
-	 * @param augend the {@link BigDecimal} value to add
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan add( final BigDecimal augend )
-	{
-		return of( getValue().add( augend ), getUnit() );
+		return of( getValue().add( DecimalUtil.valueOf( augend ) ), getUnit() );
 	}
 
 	/**
@@ -382,25 +365,17 @@ public class TimeSpan extends DecimalMeasure
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public TimeSpan subtract( final Measure subtrahend )
+	public TimeSpan subtract( final Measurable<?> subtrahend )
 	{
-		return subtrahend.getValue() instanceof DecimalMeasure
+		return subtrahend instanceof DecimalMeasure
 				? subtract( (BigDecimal) ((DecimalMeasure) subtrahend)
-						.to( getUnit(), DecimalUtil.DECIMAL_PRECISION )
+						.to( getUnit(), DecimalUtil.DEFAULT_CONTEXT )
 						.getValue() )
-				: subtract( subtrahend.doubleValue( getUnit() ) );
-	}
-
-	/**
-	 * @param subtrahend
-	 * @return a new {@link TimeSpan}
-	 */
-	@SuppressWarnings( "unchecked" )
-	public TimeSpan subtract( final Amount subtrahend )
-	{
-		return subtrahend.isExact()
-				? subtract( subtrahend.longValue( getUnit() ) )
-				: subtract( subtrahend.doubleValue( getUnit() ) );
+				: subtrahend instanceof Amount
+						&& ((Amount) subtrahend).isExact()
+								? subtract( subtrahend.longValue( getUnit() ) )
+								: subtract(
+										subtrahend.doubleValue( getUnit() ) );
 	}
 
 	/**
@@ -409,59 +384,46 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public TimeSpan subtract( final Number subtrahend )
 	{
-		return subtract( BigDecimal.valueOf( subtrahend.doubleValue() ) );
+		return of( getValue().subtract( DecimalUtil.valueOf( subtrahend ) ),
+				getUnit() );
 	}
 
 	/**
-	 * @param subtrahend
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan subtract( final long subtrahend )
-	{
-		return subtract( BigDecimal.valueOf( subtrahend ) );
-	}
-
-	/**
-	 * @param subtrahend the {@link BigDecimal} value to add
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan subtract( final BigDecimal subtrahend )
-	{
-		return of( getValue().subtract( subtrahend ), getUnit() );
-	}
-
-	/**
-	 * @param divisor the {@link Measure}, e.g. another {@link TimeSpan}
+	 * @param divisor the {@link Dimensionless} {@link Measure}
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public DecimalMeasure divide( final Measure<? extends Number, ?> divisor )
+	public TimeSpan divide( final Measurable<Dimensionless> divisor )
 	{
 		// FIXME generate more exact Measure for discrete divisor values?
-		return DecimalMeasure
-				.valueOf(
-						getValue().divide(
-								divisor instanceof DecimalMeasure
-										? ((DecimalMeasure) divisor)
-												.to( getUnit(),
-														DecimalUtil.DECIMAL_PRECISION )
-												.getValue()
-										: BigDecimal.valueOf( divisor
-												.doubleValue( getUnit() ) ),
-								DecimalUtil.DECIMAL_PRECISION ),
-						Unit.ONE );
+		return divide( divisor instanceof DecimalMeasure
+				? ((DecimalMeasure) divisor)
+						.to( Unit.ONE, DecimalUtil.DEFAULT_CONTEXT ).getValue()
+				: BigDecimal.valueOf( divisor.doubleValue( Unit.ONE ) ) );
 	}
 
 	/**
-	 * @param divisor
+	 * @param divisor the {@link Measure}
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public Amount divide( final Amount divisor )
+	public <Q extends Quantity> TimeSpan
+		divide( final Measure<? extends Number, Q> divisor )
 	{
-		// FIXME generate more exact Amount for discrete TimeSpan values?
-		return divisor.inverse()
-				.times( Amount.valueOf( doubleValue( getUnit() ), getUnit() ) );
+		return of(
+				getValue().divide( DecimalUtil.valueOf( divisor.getValue() ) ),
+				getUnit().divide( divisor.getUnit() ) );
+	}
+
+	/**
+	 * @param divisor the {@link Amount}
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public <Q extends Quantity> TimeSpan divide( final Amount<Q> divisor )
+	{
+		return of( getValue().divide( MeasureUtil.toBigDecimal( divisor ) ),
+				getUnit().divide( divisor.getUnit() ) );
 	}
 
 	/**
@@ -470,25 +432,8 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public TimeSpan divide( final Number divisor )
 	{
-		return divide( BigDecimal.valueOf( divisor.doubleValue() ) );
-	}
-
-	/**
-	 * @param divisor
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan divide( final long divisor )
-	{
-		return divide( BigDecimal.valueOf( divisor ) );
-	}
-
-	/**
-	 * @param divisor the {@link BigDecimal} value to add
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan divide( final BigDecimal divisor )
-	{
-		return of( getValue().divide( divisor ), getUnit() );
+		return of( getValue().divide( DecimalUtil.valueOf( divisor ),
+				DecimalUtil.DEFAULT_CONTEXT ), getUnit() );
 	}
 
 	/**
@@ -496,52 +441,48 @@ public class TimeSpan extends DecimalMeasure
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public DecimalMeasure multiply( final Measure<?, Dimensionless> multiplier )
+	public TimeSpan multiply( final Measurable<Dimensionless> multiplier )
 	{
-		return DecimalMeasure.valueOf(
-				getValue().multiply( multiplier.getValue() instanceof BigDecimal
-						? (BigDecimal) multiplier.getValue()
-						: BigDecimal.valueOf(
-								multiplier.doubleValue( Unit.ONE ) ) ),
-				getUnit() );
+		return multiply( multiplier instanceof DecimalMeasure
+				? ((DecimalMeasure) multiplier)
+						.to( Unit.ONE, DecimalUtil.DEFAULT_CONTEXT ).getValue()
+				: BigDecimal.valueOf( multiplier.doubleValue( Unit.ONE ) ) );
 	}
 
 	/**
-	 * @param multiplicand
+	 * @param multiplier the {@link Measure}
 	 * @return a new {@link TimeSpan}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public Amount multiply( final Amount<Dimensionless> multiplicand )
+	public <Q extends Quantity> TimeSpan
+		multiply( final Measure<? extends Number, Q> multiplier )
 	{
-		return multiplicand
-				.times( Amount.valueOf( getValue().doubleValue(), getUnit() ) );
+		return of(
+				getValue().multiply(
+						DecimalUtil.valueOf( multiplier.getValue() ) ),
+				getUnit().times( multiplier.getUnit() ) );
 	}
 
 	/**
-	 * @param multiplicand
+	 * @param multiplier the {@link Amount}
+	 * @return a new {@link TimeSpan}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public <Q extends Quantity> TimeSpan multiply( final Amount<Q> multiplier )
+	{
+		return of(
+				getValue().multiply( MeasureUtil.toBigDecimal( multiplier ) ),
+				getUnit().times( multiplier.getUnit() ) );
+	}
+
+	/**
+	 * @param multiplicand the {@link Number} to multiply with
 	 * @return a new {@link TimeSpan}
 	 */
 	public TimeSpan multiply( final Number multiplicand )
 	{
-		return multiply( BigDecimal.valueOf( multiplicand.doubleValue() ) );
-	}
-
-	/**
-	 * @param multiplicand
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan multiply( final long multiplicand )
-	{
-		return multiply( BigDecimal.valueOf( multiplicand ) );
-	}
-
-	/**
-	 * @param multiplicand the {@link BigDecimal} value to multiply with
-	 * @return a new {@link TimeSpan}
-	 */
-	public TimeSpan multiply( final BigDecimal multiplicand )
-	{
-		return of( getValue().multiply( multiplicand ), getUnit() );
+		return of( getValue().multiply( DecimalUtil.valueOf( multiplicand ),
+				DecimalUtil.DEFAULT_CONTEXT ), getUnit() );
 	}
 
 	public Prettifier prettify( final int scale )
@@ -623,7 +564,7 @@ public class TimeSpan extends DecimalMeasure
 		{
 			return this.result != null ? this.result
 					: (this.result = this.span
-							.to( this.unit, DecimalUtil.DECIMAL_PRECISION )
+							.to( this.unit, DecimalUtil.DEFAULT_CONTEXT )
 							.getValue()
 							.setScale( this.scale, RoundingMode.HALF_UP )
 							.toString() + this.unit);
