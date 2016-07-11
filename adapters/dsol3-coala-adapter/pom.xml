@@ -19,7 +19,8 @@
 	</description>
 
 	<properties>
-		<dsol.version>3.00.18</dsol.version>
+		<dsol.version>3.00.20</dsol.version>
+		<quartz.version>2.2.3</quartz.version>
 	</properties>
 
 	<repositories>
@@ -46,7 +47,7 @@
 			<url>http://simulation.tudelft.nl/maven</url>
 			<releases>
 				<enabled>true</enabled>
-				<updatePolicy>daily</updatePolicy>
+				<updatePolicy>never</updatePolicy>
 			</releases>
 			<snapshots>
 				<enabled>false</enabled>
@@ -77,6 +78,20 @@
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest-all</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- Quartz implementation of CRON-like scheduler -->
+		<dependency>
+			<groupId>org.quartz-scheduler</groupId>
+			<artifactId>quartz</artifactId>
+			<version>${quartz.version}</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>

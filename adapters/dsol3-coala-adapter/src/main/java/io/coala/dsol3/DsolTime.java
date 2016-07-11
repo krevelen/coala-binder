@@ -33,7 +33,7 @@ import io.coala.log.LogUtil;
 import io.coala.time.Instant;
 import io.coala.time.TimeSpan;
 import io.coala.util.Instantiator;
-import nl.tudelft.simulation.dsol.ModelInterface;
+import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
 import nl.tudelft.simulation.dsol.experiment.Replication;
 import nl.tudelft.simulation.dsol.experiment.Treatment;
@@ -271,7 +271,7 @@ public class DsolTime<Q extends Quantity> extends
 		Replication<Measurable<Q>, BigDecimal, DsolTime<Q>>
 		createReplication( final String id, final DsolTime<Q> startTime,
 			final BigDecimal warmupPeriod, final BigDecimal runLength,
-			final ModelInterface<Measurable<Q>, BigDecimal, DsolTime<Q>> model )
+			final DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>> model )
 			throws NamingException
 	{
 		return new Replication<Measurable<Q>, BigDecimal, DsolTime<Q>>( id,

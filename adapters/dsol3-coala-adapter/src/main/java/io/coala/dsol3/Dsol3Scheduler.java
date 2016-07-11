@@ -20,7 +20,7 @@ import io.coala.time.Instant;
 import io.coala.time.Scheduler;
 import io.coala.util.Caller;
 import io.coala.util.Caller.ThrowingConsumer;
-import nl.tudelft.simulation.dsol.ModelInterface;
+import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEvent;
@@ -70,7 +70,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			final DsolTime start = DsolTime.valueOf( startTime );
 			LOG.trace( "jscience: {} => dsol: {}", startTime, start );
 
-			final ModelInterface model = new ModelInterface()
+			final DSOLModel model = new DSOLModel()
 			{
 				@Override
 				public void constructModel( final SimulatorInterface simulator )
