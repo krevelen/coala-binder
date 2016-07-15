@@ -30,7 +30,6 @@ import javax.measure.unit.Unit;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
 import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.joda.time.ReadableDuration;
 import org.joda.time.ReadableInstant;
 import org.jscience.physics.amount.Amount;
@@ -60,8 +59,8 @@ import io.coala.util.DecimalUtil;
  * <li>takes any value type (e.g. {@linkplain Number}) or granularity (e.g.
  * {@link SI#NANO(javax.measure.unit.Unit nano)} or
  * {@link SI#PICO(javax.measure.unit.Unit) pico})</li></dd>
- * <dt>The JSR-310 {@code javax.time} Java8 extension back-port from
- * <a href="http://www.threeten.org/">threeten.org</a>:</dt>
+ * <dt>The JSR-310 {@code javax.time} Java8 extension (or back-port from
+ * <a href="http://www.threeten.org/">threeten.org</a>):</dt>
  * <dd>
  * <li>supports nanosecond precision,</li>s
  * <li>{@linkplain org.threeten.bp.OldInstant} parses strictly ISO8601 format
@@ -104,12 +103,13 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	/**
 	 * @param value a {@link String} representation of either:
 	 *            <ul>
-	 *            a duration since the EPOCH as {@link DecimalMeasure JSR-275}
-	 *            measure (e.g. {@code "123 ms"}); or
-	 *            <li>as ISO Period, parsed with
-	 *            {@link org.threeten.bp.Duration#parse(CharSequence) JSR-310}
-	 *            or (on failure) {@link Period#parse(String) Joda}. Examples of
-	 *            ISO period:
+	 *            <li>a {@link DecimalMeasure JSR-275 Measure of duration} (e.g.
+	 *            {@code "123 ms"}); or
+	 *            <li>as {@code ISO 8601 Period} parsed with
+	 *            {@link java.time.Duration#parse(CharSequence) JSR-310} or (on
+	 *            failure)
+	 *            {@link org.joda.time.format.ISOPeriodFormat#standard() Joda},
+	 *            e.g.:
 	 * 
 	 *            <pre>
 	 *    "PT20.345S" -> parses as "20.345 seconds"
@@ -123,7 +123,8 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 *            </pre>
 	 *            </ul>
 	 * 
-	 * @see org.threeten.bp.Duration#parse(String)
+	 * 
+	 * @see java.time.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
 	 */

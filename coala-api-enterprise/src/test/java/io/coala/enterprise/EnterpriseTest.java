@@ -7,13 +7,13 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.enterprise.fact.CoordinationFactType;
+import io.coala.log.LogUtil;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
@@ -29,9 +29,8 @@ import io.coala.time.Units;
 public class EnterpriseTest
 {
 
-	/** */
-	private static final Logger LOG = LogManager
-			.getLogger( EnterpriseTest.class );
+	/** TODO specialized logging adding e.g. Timed#now() and Identified#id() */
+	private static final Logger LOG = LogUtil.getLogger( EnterpriseTest.class );
 
 	private static final CoordinationFact.Factory factFactory = CoordinationFact.Factory
 			.ofSimpleProxy();
@@ -93,7 +92,7 @@ public class EnterpriseTest
 							org1.id(), null, null, Collections
 									.singletonMap( "myParam2", "myValue2" ) );
 
-					// FIXME hold outgoing fact until this call completes
+					// FIXME hold outgoing fact until this lambda returns?
 
 					LOG.trace( "generated fact: {}", fact );
 					org1.on( fact );
