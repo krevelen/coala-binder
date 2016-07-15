@@ -20,6 +20,7 @@ import io.coala.time.Instant;
 import io.coala.time.Scheduler;
 import io.coala.util.Caller;
 import io.coala.util.Caller.ThrowingConsumer;
+import io.coala.util.Caller.ThrowingRunnable;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
@@ -42,7 +43,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 
 	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
 		final Instant start, final Duration duration,
-		final Runnable modelInitializer )
+		final ThrowingRunnable<?> modelInitializer )
 	{
 		return of( id, start, duration, Caller.of( modelInitializer )::ignore );
 	}
@@ -206,7 +207,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	@SuppressWarnings( "unchecked" )
 	@Override
 	public Expectation schedule( final Instant when,
-		final Consumer<Instant> what )
+		final ThrowingConsumer<Instant, ?> what )
 	{
 		synchronized( this.listeners )
 		{
@@ -234,7 +235,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 						try
 						{
 							what.accept( t );
-						} catch( final Exception e )
+						} catch( final Throwable e )
 						{
 							this.time.onError( e );
 						}

@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
-import org.junit.Assert;
 import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Scheduler;
@@ -98,7 +97,7 @@ public class EnterpriseTest
 
 					LOG.trace( "generated fact: {}", fact );
 					org1.on( fact );
-//					throw new RuntimeException(); // FIXME error handling
+					throw new Exception(); // FIXME fail on error?
 				} );
 
 		// TODO test fact expiration handling

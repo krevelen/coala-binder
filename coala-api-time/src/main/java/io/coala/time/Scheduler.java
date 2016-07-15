@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
+import io.coala.util.Caller.ThrowingConsumer;
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.BehaviorSubject;
@@ -50,7 +51,7 @@ public interface Scheduler extends Timed
 	 * @param what the {@link Runnable}
 	 * @return the occurrence {@link Expectation}, for optional cancellation
 	 */
-	Expectation schedule( Instant when, Consumer<Instant> what );
+	Expectation schedule( Instant when, ThrowingConsumer<Instant, ?> what );
 
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
@@ -79,15 +80,26 @@ public interface Scheduler extends Timed
 	 *         next {@link Instant}, until completion of simulation time or
 	 *         observed instants or an error occurs
 	 */
-	default <T> Observable<Expectation>
-		schedule( final Observable<Instant> when, final Consumer<Instant> what )
+	default <T> Observable<Expectation> schedule(
+		final Observable<Instant> when,
+		final ThrowingConsumer<Instant, ?> what )
 	{
 		return schedule( when, new Observer<Instant>()
 		{
 			@Override
 			public void onNext( final Instant t )
 			{
-				what.accept( t );
+				try
+				{
+					what.accept( t );
+				} catch( final RuntimeException e )
+				{
+					throw e;
+				} catch( final Throwable e )
+				{
+					throw ExceptionFactory.createUnchecked( e,
+							"Problem calling {}", what );
+				}
 			}
 
 			@Override
