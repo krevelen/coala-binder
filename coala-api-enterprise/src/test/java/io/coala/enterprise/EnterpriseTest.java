@@ -15,7 +15,6 @@ import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.enterprise.fact.CoordinationFactType;
-import io.coala.log.LogUtil;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
@@ -63,8 +62,6 @@ public class EnterpriseTest
 					t.toJoda( offset ) );
 		}, e ->
 		{
-		}, () ->
-		{
 		} );
 
 		// create organization
@@ -72,7 +69,7 @@ public class EnterpriseTest
 				factFactory );
 		final CompositeActor sales = org1.actor( "sales" );
 
-		// create business rule
+		// add business rule(s)
 		sales.on( TestFact.class, org1.id() ).subscribe( fact ->
 		{
 			final TestFact response = sales.createResponse( fact,
@@ -80,11 +77,9 @@ public class EnterpriseTest
 					Collections.singletonMap( "myParam1", "myValue1" ) );
 			LOG.trace( "{} responded: {} for incoming: {}", sales.id(),
 					response, fact );
-			Assert.assertEquals( "causeID does not reference fact",
-					response.causeID(), fact.id() );
 		} );
 
-		// observe outgoing
+		// observe generated facts
 		org1.outgoing().subscribe( fact ->
 		{
 			LOG.trace( "observed outgoing fact: {}", fact );
@@ -98,8 +93,12 @@ public class EnterpriseTest
 					final TestFact fact = sales.createRequest( TestFact.class,
 							org1.id(), null, null, Collections
 									.singletonMap( "myParam2", "myValue2" ) );
+
+					// FIXME hold outgoing fact until this call completes
+
 					LOG.trace( "generated fact: {}", fact );
-					org1.onNext( fact );
+					org1.on( fact );
+//					throw new RuntimeException(); // FIXME error handling
 				} );
 
 		// TODO test fact expiration handling
@@ -114,8 +113,6 @@ public class EnterpriseTest
 
 		// TODO test Jason or GOAL scripts for business rules
 
-		// TODO test exception handling (for control interaction)
-
 		// TODO test/implement JSON de/serialization (for UI interaction)
 
 		// TODO test persistence (for database interaction)
@@ -126,27 +123,30 @@ public class EnterpriseTest
 	@Test
 	public void testDemo() throws InterruptedException
 	{
-		final CountDownLatch latch = new CountDownLatch( 1 );
+		// initialize replication
 		final Scheduler scheduler = Dsol3Scheduler.of( "demoTest",
 				Instant.of( "5 h" ), Duration.of( "500 day" ),
 				EnterpriseTest::initScenario );
 
+		// track progress
+		final CountDownLatch latch = new CountDownLatch( 1 );
 		scheduler.time().subscribe( t ->
 		{
+			// virtual time passes...
 		}, e ->
 		{
-			LOG.trace( LogUtil.toMessage( "problem, t={}", scheduler.now() ),
-					e );
 			fail( e.getMessage() );
 		}, () ->
 		{
-			LOG.trace( "completed, t={}", scheduler.now() );
 			latch.countDown();
 		} );
 		scheduler.resume();
 
+		// await completion
 		latch.await( 1, TimeUnit.SECONDS );
 		assertEquals( "Scheduler not completed in time", 0, latch.getCount() );
+
+		LOG.trace( "completed, t={}", scheduler.now() );
 	}
 
 }

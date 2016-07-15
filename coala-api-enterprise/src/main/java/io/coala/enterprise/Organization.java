@@ -27,7 +27,6 @@ import io.coala.name.Identified;
 import io.coala.time.Scheduler;
 import io.coala.time.Timed;
 import rx.Observable;
-import rx.Observer;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
@@ -38,7 +37,7 @@ import rx.subjects.Subject;
  * @author Rick van Krevelen
  */
 public interface Organization extends Timed,
-	Identified.Ordinal<Organization.ID>, Observer<CoordinationFact>
+	Identified.Ordinal<Organization.ID>
 {
 
 	/** @return */
@@ -52,6 +51,9 @@ public interface Organization extends Timed,
 	 * @return
 	 */
 	CompositeActor actor( CompositeActor.ID actorID );
+	
+	/** @param incoming */
+	void on(CoordinationFact incoming);
 
 	/**
 	 * @param actorID
@@ -124,19 +126,7 @@ public interface Organization extends Timed,
 			}
 
 			@Override
-			public void onCompleted()
-			{
-				incoming.onCompleted();
-			}
-
-			@Override
-			public void onError( final Throwable e )
-			{
-				incoming.onError( e );
-			}
-
-			@Override
-			public void onNext( final CoordinationFact fact )
+			public void on( final CoordinationFact fact )
 			{
 				incoming.onNext( fact );
 			}

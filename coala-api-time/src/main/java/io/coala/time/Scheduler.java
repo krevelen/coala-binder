@@ -37,7 +37,20 @@ public interface Scheduler extends Timed
 	 * @param what the {@link Runnable}
 	 * @return the occurrence {@link Expectation}, for optional cancellation
 	 */
-	Expectation schedule( Instant when, Runnable what );
+	default Expectation schedule( Instant when, Runnable what )
+	{
+		return schedule( when, t ->
+		{
+			what.run();
+		} );
+	}
+
+	/**
+	 * @param when the {@link Instant} of execution
+	 * @param what the {@link Runnable}
+	 * @return the occurrence {@link Expectation}, for optional cancellation
+	 */
+	Expectation schedule( Instant when, Consumer<Instant> what );
 
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
@@ -51,25 +64,9 @@ public interface Scheduler extends Timed
 	default <T> Observable<Expectation>
 		schedule( final Observable<Instant> when, final Runnable what )
 	{
-		return schedule( when, new Observer<Instant>()
+		return schedule( when, t ->
 		{
-			@Override
-			public void onNext( final Instant t )
-			{
-				what.run();
-			}
-
-			@Override
-			public void onError( final Throwable e )
-			{
-				// ignore errors, already passed to result Observable
-			}
-
-			@Override
-			public void onCompleted()
-			{
-				// ignore complete, result Observable also completes
-			}
+			what.run();
 		} );
 	}
 
@@ -77,7 +74,7 @@ public interface Scheduler extends Timed
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
-	 * @param what the {@link Runnable} to execute upon each {@link Instant}
+	 * @param what the {@link Consumer} to execute upon each {@link Instant}
 	 * @return an {@link Observable} stream of {@link Expectation}s for each
 	 *         next {@link Instant}, until completion of simulation time or
 	 *         observed instants or an error occurs
@@ -191,8 +188,8 @@ public interface Scheduler extends Timed
 				} catch( final Throwable e )
 				{
 					// failed first() Instant, interrupt recursion
-					LogUtil.getLogger( getClass() ).error( "Problem in event",
-							e );
+					LogUtil.getLogger( getClass() )
+							.error( "Problem in event, canceled remaining", e );
 					try
 					{
 						result.onError( e );

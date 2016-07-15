@@ -205,7 +205,8 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public Expectation schedule( final Instant when, final Runnable runner )
+	public Expectation schedule( final Instant when,
+		final Consumer<Instant> what )
 	{
 		synchronized( this.listeners )
 		{
@@ -232,7 +233,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 					{
 						try
 						{
-							runner.run();
+							what.accept( t );
 						} catch( final Exception e )
 						{
 							this.time.onError( e );
