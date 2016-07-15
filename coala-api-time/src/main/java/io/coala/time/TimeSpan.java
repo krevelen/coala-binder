@@ -137,7 +137,8 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public static TimeSpan of( final Measure<?, ?> value )
 	{
-		return new TimeSpan( value );
+		return value instanceof TimeSpan ? (TimeSpan) value
+				: new TimeSpan( value );
 	}
 
 	/**

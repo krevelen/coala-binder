@@ -18,6 +18,7 @@ package io.coala.dsol3;
 import java.math.BigDecimal;
 
 import javax.measure.Measurable;
+import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.NonSI;
@@ -26,6 +27,7 @@ import javax.measure.unit.Unit;
 import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
+import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.json.Wrapper;
@@ -99,6 +101,7 @@ public class DsolTime<Q extends Quantity> extends
 	 * @param time
 	 * @return
 	 */
+	@SuppressWarnings( "unchecked" )
 	public static <Q extends Quantity> DsolTime<Q>
 		valueOf( final SimTime<?, ?, ?> time, final Unit<Q> unit )
 	{
@@ -116,6 +119,7 @@ public class DsolTime<Q extends Quantity> extends
 	 * @param absoluteTime the {@link Instant}
 	 * @return the new {@link DsolTime}
 	 */
+	@SuppressWarnings( "unchecked" )
 	public static DsolTime<?> valueOf( final Instant absoluteTime )
 	{
 		return valueOf( absoluteTime.unwrap() );
@@ -126,15 +130,26 @@ public class DsolTime<Q extends Quantity> extends
 	 * @return the new {@link DsolTime}
 	 */
 	public static <Q extends Quantity> DsolTime<Q>
-		valueOf( final TimeSpan absoluteTime )
+		valueOf( final Measure<?, Q> absoluteTime )
 	{
-		return Util.of( absoluteTime, new DsolTime<Q>() );
+		return Util.of( TimeSpan.of( absoluteTime ), new DsolTime<Q>() );
+	}
+
+	/**
+	 * @param absoluteTime the {@link TimeSpan}
+	 * @return the new {@link DsolTime}
+	 */
+	public static <Q extends Quantity> DsolTime<Q>
+		valueOf( final Amount<Q> absoluteTime )
+	{
+		return Util.of( TimeSpan.of( absoluteTime ), new DsolTime<Q>() );
 	}
 
 	/**
 	 * @param absoluteTime
 	 * @return the new {@link DsolTime}
 	 */
+	@SuppressWarnings( "unchecked" )
 	public static DsolTime<Dimensionless> valueOf( final Number absoluteTime )
 	{
 		return valueOf( TimeSpan.of( absoluteTime, Unit.ONE ) );
@@ -220,6 +235,7 @@ public class DsolTime<Q extends Quantity> extends
 	}
 
 	@Override
+	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> copy()
 	{
 		return valueOf( get() );
@@ -238,6 +254,7 @@ public class DsolTime<Q extends Quantity> extends
 	}
 
 	@Override
+	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> setZero()
 	{
 		return DsolTime
@@ -277,97 +294,4 @@ public class DsolTime<Q extends Quantity> extends
 		return new Replication<Measurable<Q>, BigDecimal, DsolTime<Q>>( id,
 				startTime, warmupPeriod, runLength, model );
 	}
-
-	/**
-	 * @param time the DSOL {@link SimTime}, e.g. a {@link DsolTime},
-	 *            {@code SimTime}<? extends {@link BigDecimal},?,?>, or
-	 *            {@code SimTime}<? extends {@link Number},?,?>
-	 * @return the {@link Instant} representation
-	 * @throws ClassCastException if concrete parameter type for absolute times
-	 *             does not extend {@link BigDecimal} or {@link Number}
-	 */
-//	public static <T extends SimTime<?, ?, T>> Instant toInstant( final T time )
-//	{
-//		return time instanceof DsolTime ? ((DsolTime<?>) time).toInstant()
-//				: time.get() instanceof BigDecimal
-//						? Instant.of( (BigDecimal) time.get() )
-//						: Instant.of( (Number) time.get() );
-//	}
-
-//	public static class DsolReplication
-//		extends Replication<BigDecimal, BigDecimal, DsolTime>
-//	{
-//		public DsolReplication( final DsolExperiment experiment )
-//			throws NamingException
-//		{
-//			super( experiment );
-//		}
-//
-//		protected DsolReplication( final String id, final DsolTime startTime,
-//			final BigDecimal warmupPeriod, final BigDecimal runLength,
-//			final ModelInterface<BigDecimal, BigDecimal, DsolTime> model )
-//				throws NamingException
-//		{
-//			super( id, startTime, warmupPeriod, runLength, model );
-//		}
-//	}
-
-//	public static class DsolTreatment
-//		extends Treatment<BigDecimal, BigDecimal, DsolTime>
-//	{
-//		/**
-//		 * constructs a {@link DsolTreatment}
-//		 * 
-//		 * @param experiment reflects the experiment
-//		 * @param id an id to recognize the treatment
-//		 * @param startTime the absolute start time of a run (can be zero)
-//		 * @param warmupPeriod the relative warm-up time of a run (can be zero),
-//		 *            <i>included</i> in the runLength
-//		 * @param runLength the run length of a run (relative to the start time)
-//		 * @param replicationMode the replication mode of this treatment
-//		 */
-//		public DsolTreatment( final DsolExperiment experiment, final String id,
-//			final DsolTime startTime, final BigDecimal warmupPeriod,
-//			final BigDecimal runLength, final ReplicationMode replicationMode )
-//		{
-//			super( experiment, id, startTime, warmupPeriod, runLength,
-//					replicationMode );
-//		}
-//
-//		/**
-//		 * constructs a {@link DsolTreatment}
-//		 * 
-//		 * @param experiment reflects the experiment
-//		 * @param id an id to recognize the treatment
-//		 * @param startTime the absolute start time of a run (can be zero)
-//		 * @param warmupPeriod the relative warm-up time of a run (can be zero),
-//		 *            <i>included</i> in the runLength
-//		 * @param runLength the run length of a run (relative to the start time)
-//		 */
-//		public DsolTreatment( final DsolExperiment experiment, final String id,
-//			final DsolTime startTime, final BigDecimal warmupPeriod,
-//			final BigDecimal runLength )
-//		{
-//			super( experiment, id, startTime, warmupPeriod, runLength );
-//		}
-//	}
-
-//	public static class DsolExperiment
-//		extends Experiment<BigDecimal, BigDecimal, DsolTime>
-//	{
-//
-//		/**
-//		 * constructs a new {@link DsolExperiment}
-//		 * 
-//		 * @param treatment the treatment for this experiment
-//		 * @param simulator the simulator
-//		 * @param model the model to experiment with
-//		 */
-//		public DsolExperiment( final DsolTreatment treatment,
-//			final DsolDEVSSimulator simulator, final DsolModel model )
-//		{
-//			super( treatment, simulator, model );
-//		}
-//	}
-
 }

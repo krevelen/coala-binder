@@ -40,6 +40,22 @@ import rx.subjects.Subject;
 public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 {
 
+	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+		final Instant start, final Duration duration,
+		final Runnable modelInitializer )
+	{
+		return of( id, start, duration, Caller.of( modelInitializer )::ignore );
+	}
+
+	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+		final Instant start, final Duration duration,
+		final ThrowingConsumer<Scheduler, ?> modelInitializer )
+	{
+		return new Dsol3Scheduler<Q>( id, start,
+				Duration.of( 0, start.unwrap().getUnit() ), duration,
+				Caller.rethrow( modelInitializer ) );
+	}
+
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Dsol3Scheduler.class );
 
@@ -224,30 +240,4 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 					} ) );
 		}
 	}
-
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final Runnable modelInitializer )
-	{
-		return of( id, start, duration, Caller.of( modelInitializer )::ignore );
-	}
-
-//	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-//		final Instant start, final Duration length,
-//		final Consumer<Scheduler> modelInitializer )
-//	{
-//		return new Dsol3Scheduler<Q>( id, start,
-//				Duration.of( 0, start.unwrap().getUnit() ), length,
-//				modelInitializer );
-//	}
-
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final ThrowingConsumer<Scheduler, ?> modelInitializer )
-	{
-		return new Dsol3Scheduler<Q>( id, start,
-				Duration.of( 0, start.unwrap().getUnit() ), duration,
-				Caller.rethrow( modelInitializer ) );
-	}
-
 }

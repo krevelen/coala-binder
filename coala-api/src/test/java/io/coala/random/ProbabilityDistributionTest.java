@@ -9,7 +9,6 @@ import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
-import io.coala.random.ProbabilityDistribution.Parser;
 
 public class ProbabilityDistributionTest
 {
@@ -28,7 +27,7 @@ public class ProbabilityDistributionTest
 	public void testParser() throws Exception
 	{
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
-		final Parser parser = new Parser( null );
+		final DistributionParser parser = new DistributionParser( null );
 
 		final ProbabilityDistribution<DecimalMeasure> dist2 = parser
 				.parse( "const(2.01 day)", DecimalMeasure.class );

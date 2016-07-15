@@ -8,6 +8,7 @@ import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 
 import javax.measure.DecimalMeasure;
@@ -40,14 +41,30 @@ public class MeasureUtil implements Util
 	{
 	}
 
+	public static <Q extends Quantity> Amount<Q> toAmount( final long value,
+		final Unit<Q> unit )
+	{
+		return Amount.valueOf( value, unit );
+	}
+
+	public static <Q extends Quantity> Amount<Q>
+		toAmount( final BigInteger value, final Unit<Q> unit )
+	{
+		return toAmount( value.longValueExact(), unit );
+	}
+
+	public static <Q extends Quantity> Amount<Q>
+		toAmount( final BigDecimal value, final Unit<Q> unit )
+	{
+		return DecimalUtil.isExact( value )
+				? toAmount( value.longValue(), unit )
+				: Amount.valueOf( value.doubleValue(), unit );
+	}
+
 	public static <Q extends Quantity> Amount<Q> toAmount( final Number value,
 		final Unit<Q> unit )
 	{
-		if( value instanceof Long || value instanceof Integer
-				|| (value instanceof BigDecimal
-						&& DecimalUtil.isExact( (BigDecimal) value )) )
-			return Amount.valueOf( value.longValue(), unit );
-		return Amount.valueOf( value.doubleValue(), unit );
+		return toAmount( BigDecimal.valueOf( value.doubleValue() ), unit );
 	}
 
 	public static <Q extends Quantity> boolean

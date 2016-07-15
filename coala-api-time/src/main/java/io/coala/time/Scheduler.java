@@ -125,8 +125,8 @@ public interface Scheduler extends Timed
 	 * @param what the {@link Observer} of the same {@link Instant}s but delayed
 	 *            until they occur in simulation time
 	 * @return an {@link Observable} stream of {@link Expectation}s, until
-	 *         completion of simulation time or observed instants or an error
-	 *         occursF
+	 *         completion of simulation time or of observed instants or an error
+	 *         occurs
 	 */
 	default <T> Observable<Expectation>
 		schedule( final Observable<Instant> when, final Observer<Instant> what )
@@ -156,6 +156,8 @@ public interface Scheduler extends Timed
 				} catch( final Throwable e )
 				{
 					// failed first() Instant, interrupt recursion
+					LogUtil.getLogger( getClass() ).error( "Problem in event",
+							e );
 					try
 					{
 						result.onError( e );

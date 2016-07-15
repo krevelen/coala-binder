@@ -143,9 +143,10 @@ public class Id<T> extends Wrapper.Simple<T>
 		 * 
 		 * @param parent
 		 */
-		public void setParent( final P parent )
+		public OrdinalChild setParent( final P parent )
 		{
 			this.parent = parent;
+			return this;
 		}
 
 		/** @return the parent {@link Id} */

@@ -18,6 +18,7 @@ package io.coala.math3;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Dimensionless;
@@ -62,6 +63,7 @@ import org.jscience.physics.amount.Amount;
 import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.WeightedValue;
+import io.coala.random.AmountDistribution;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.PseudoRandom;
 
@@ -149,15 +151,15 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * @param valueWeights the {@link List} of {@link WeightedValue}s
 	 * @return a probability mass function as {@link List} of {@link Pair}s
 	 */
-	public static <T, WV extends WeightedValue<T, ?>> List<Pair<T, Double>>
-		toPropabilityMassFunction( final List<WV> valueWeights )
+	public static <T, WV extends WeightedValue<T>> List<Pair<T, Double>>
+		toPropabilityMassFunction( final Iterable<WV> valueWeights )
 	{
-		final List<Pair<T, Double>> pmf = new ArrayList<>();
-		if( valueWeights == null || valueWeights.isEmpty() )
-			throw ExceptionFactory.createUnchecked( "Must have some value(s)" );
-		for( WeightedValue<T, ?> p : valueWeights )
-			pmf.add( Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
-		return pmf;
+		Objects.requireNonNull( valueWeights );
+		final List<Pair<T, Double>> result = new ArrayList<>();
+		for( WeightedValue<T> p : valueWeights )
+			result.add(
+					Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
+		return result;
 	}
 
 	/**
@@ -244,8 +246,8 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public <T, WV extends WeightedValue<T, ?>> ProbabilityDistribution<T>
-			createCategorical( final List<WV> probabilities )
+		public <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
+			createCategorical( final Iterable<WV> probabilities )
 		{
 			return Math3ProbabilityDistribution.of(
 					new EnumeratedDistribution<T>( this.rng,
@@ -515,7 +517,7 @@ public abstract class Math3ProbabilityDistribution<S>
 			return this.factory;
 		}
 
-		public <Q extends Quantity> ArithmeticDistribution<Q> fitNormal(
+		public <Q extends Quantity> AmountDistribution<Q> fitNormal(
 			final FrequencyDistribution.Interval<Q, ?> freq,
 			final Unit<Q> unit )
 		{

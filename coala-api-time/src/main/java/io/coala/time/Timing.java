@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 
+import javax.measure.DecimalMeasure;
 import javax.measure.unit.SI;
 
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +51,7 @@ import rx.functions.Func1;
  * {@link Timing} wraps a {@link String} representation of some calendar-based
  * pattern or period since the EPOCH, like:
  * <ul>
- * <li>a {@link CronExpression} (e.g. {@code "0 0 0 14 * *"} for
+ * <li>a {@link CronExpression} (e.g. {@code "0 0 0 14 * ? *"} for
  * <em>&ldquo;midnight of every 14th day
  *            of the month&rdquo;</em> );</li>
  * <li>a {@link DateTimeIteratorFactory iCal RRULE or RDATE} pattern (e.g.
@@ -114,14 +115,14 @@ public class Timing extends Wrapper.Simple<String>
 						@Override
 						public Instant next()
 						{
-							final Instant next = //this.current == null ? null :
-									Instant.of(
-											this.current.getTime()
-													- offset.getTime(),
-											SI.MILLI( SI.SECOND ) );
+							final long millis = this.current.getTime()
+									- offset.getTime();
+
 							this.current = trigger
 									.getFireTimeAfter( this.current );
-							return next;
+							return Instant.of( DecimalMeasure
+									.valueOf( millis, SI.MILLI( SI.SECOND ) )
+									.to( Units.DAYS ) );
 						}
 					};
 				}
@@ -209,6 +210,16 @@ public class Timing extends Wrapper.Simple<String>
 			 * @Override public void remove() { throw
 			 * ExceptionBuilder.unchecked("NOT SUPPORTED") .build(); } }; } }; }
 			 */
+
+	/**
+	 * @param pattern a {@link String} representation of some calendar-based
+	 *            period or pattern
+	 * @return the new {@link Timing} pattern wrapper
+	 */
+	public static Timing of( final String pattern )
+	{
+		return valueOf( pattern );
+	}
 
 	/**
 	 * @param pattern a {@link String} representation of some calendar-based

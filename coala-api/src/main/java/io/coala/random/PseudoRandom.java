@@ -17,6 +17,8 @@ package io.coala.random;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +36,7 @@ import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper.Util;
 import io.coala.name.Id;
 import io.coala.name.Identified;
+import io.coala.util.DecimalUtil;
 
 /**
  * {@link PseudoRandom} generates a stream of pseudo-random numbers, with an API
@@ -53,6 +56,24 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	/** @see Random#nextBytes(byte[]) */
 	void nextBytes( byte[] bytes );
 
+	// adopted from BigInteger#randomBits(int, Random)
+	default byte[] nextBits( final int numBits )
+	{
+		if( numBits < 0 ) throw new IllegalArgumentException(
+				"numBits must be non-negative" );
+		int numBytes = (int) (((long) numBits + 7) / 8); // avoid overflow
+		byte[] randomBits = new byte[numBytes];
+
+		// Generate random bytes and mask out any excess bits
+		if( numBytes > 0 )
+		{
+			nextBytes( randomBits );
+			int excessBits = 8 * numBytes - numBits;
+			randomBits[0] &= (1 << (8 - excessBits)) - 1;
+		}
+		return randomBits;
+	}
+
 	/** @see Random#nextInt() */
 	int nextInt();
 
@@ -70,6 +91,28 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 
 	/** @see Random#nextGaussian() */
 	double nextGaussian();
+
+	/** draw with 128-bits precision (c.q. {@link MathContext#DECIMAL128}) */
+	default BigInteger nextBigInteger()
+	{
+		return nextBigInteger( 128 );
+	}
+
+	default BigInteger nextBigInteger( int numBits )
+	{
+		return new BigInteger( 1, nextBits( numBits ) );
+	}
+
+	/** draw with 128-bits precision (c.q. {@link MathContext#DECIMAL128}) */
+	default BigDecimal nextBigDecimal()
+	{
+		return nextBigDecimal( 128 );
+	}
+
+	default BigDecimal nextBigDecimal( int numBits )
+	{
+		return DecimalUtil.valueOf( nextBits( numBits ) );
+	}
 
 	/**
 	 * @param elements
@@ -242,60 +285,5 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		 */
 		PseudoRandom create( Name id, Number seed );
 
-	}
-
-	/**
-	 * {@link JavaRandom} decorates a standard Java {@link Random} generator as
-	 * {@link PseudoRandom}
-	 * 
-	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
-	 * @author Rick van Krevelen
-	 */
-	class JavaRandom extends Random implements PseudoRandom
-	{
-		/** the serialVersionUID */
-		private static final long serialVersionUID = 1L;
-
-		public static JavaRandom of( final Name id, final long seed )
-		{
-			final JavaRandom result = new JavaRandom();
-			result.id = id;
-			result.setSeed( seed );
-			return result;
-		}
-
-		/** the id */
-		private Name id;
-
-		/** the seed */
-		private Long seed;
-
-		@Override
-		public void setSeed( final long seed )
-		{
-			super.setSeed( seed );
-			this.seed = seed;
-		}
-
-		@Override
-		public Name id()
-		{
-			return this.id;
-		}
-
-		@Override
-		public Long seed()
-		{
-			return this.seed;
-		}
-
-		public static class Factory implements PseudoRandom.Factory
-		{
-			@Override
-			public JavaRandom create( final Name id, final Number seed )
-			{
-				return JavaRandom.of( id, seed.longValue() );
-			}
-		}
 	}
 }

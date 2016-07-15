@@ -24,6 +24,7 @@ import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
+import io.coala.random.DistributionParser;
 import io.coala.random.ProbabilityDistribution;
 
 /**
@@ -48,7 +49,7 @@ public class Math3ProbabilityDistributionTest
 	@Test
 	public void testParser() throws Exception
 	{
-		final ProbabilityDistribution.Parser parser = new ProbabilityDistribution.Parser(
+		final DistributionParser parser = new DistributionParser(
 				Math3ProbabilityDistribution.Factory
 						.of( Math3PseudoRandom.Factory.ofMersenneTwister()
 								.create( "rng", 0L ) ) );
