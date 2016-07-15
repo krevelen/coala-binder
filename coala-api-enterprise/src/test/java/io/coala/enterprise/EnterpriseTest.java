@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
+import org.junit.Assert;
 import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Scheduler;
@@ -34,6 +35,9 @@ public class EnterpriseTest
 	private static final Logger LOG = LogManager
 			.getLogger( EnterpriseTest.class );
 
+	private static final CoordinationFact.Factory factFactory = CoordinationFact.Factory
+			.ofSimpleProxy();
+
 	/**
 	 * {@link TestFact} custom fact kind
 	 * 
@@ -45,13 +49,10 @@ public class EnterpriseTest
 		// empty 
 	}
 
-	private static final CoordinationFact.Factory factFactory = CoordinationFact.Factory
-			.ofSimpleProxy();
-
 	/**
 	 * @param scheduler
 	 */
-	private void initScenario( final Scheduler scheduler )
+	private static void initScenario( final Scheduler scheduler )
 	{
 		LOG.trace( "initializing..." );
 
@@ -74,12 +75,13 @@ public class EnterpriseTest
 		// create business rule
 		sales.on( TestFact.class, org1.id() ).subscribe( fact ->
 		{
-			LOG.trace( "{} handling incoming fact: {}", sales.id(), fact );
 			final TestFact response = sales.createResponse( fact,
 					CoordinationFactType.STATED, true, null,
 					Collections.singletonMap( "myParam1", "myValue1" ) );
-			LOG.trace( "{} handled incoming, created: {}", sales.id(),
-					response );
+			LOG.trace( "{} responded: {} for incoming: {}", sales.id(),
+					response, fact );
+			Assert.assertEquals( "causeID does not reference fact",
+					response.causeID(), fact.id() );
 		} );
 
 		// observe outgoing
@@ -88,10 +90,10 @@ public class EnterpriseTest
 			LOG.trace( "observed outgoing fact: {}", fact );
 		} );
 
-		// initiate transactions with self
+		// spawn initial transactions with self
 		scheduler.schedule(
 				Timing.of( "0 0 0 14 * ? *" ).asObservable( offset.toDate() ),
-				() ->
+				t ->
 				{
 					final TestFact fact = sales.createRequest( TestFact.class,
 							org1.id(), null, null, Collections
@@ -100,7 +102,23 @@ public class EnterpriseTest
 					org1.onNext( fact );
 				} );
 
-		// TODO test expiration handling
+		// TODO test fact expiration handling
+
+		// TODO test multilevel composition of business rules, e.g. via sub-goals?
+
+		// TODO test performance statistics aggregation
+
+		// TODO test on-the-fly adapting business rules
+		// e.g. parametric: "reorder-level: 300->400" 
+		// or compositional: "product-lines: a[demand push->pull]"
+
+		// TODO test Jason or GOAL scripts for business rules
+
+		// TODO test exception handling (for control interaction)
+
+		// TODO test/implement JSON de/serialization (for UI interaction)
+
+		// TODO test persistence (for database interaction)
 
 		LOG.trace( "initialized!" );
 	}
@@ -111,7 +129,7 @@ public class EnterpriseTest
 		final CountDownLatch latch = new CountDownLatch( 1 );
 		final Scheduler scheduler = Dsol3Scheduler.of( "demoTest",
 				Instant.of( "5 h" ), Duration.of( "500 day" ),
-				this::initScenario );
+				EnterpriseTest::initScenario );
 
 		scheduler.time().subscribe( t ->
 		{

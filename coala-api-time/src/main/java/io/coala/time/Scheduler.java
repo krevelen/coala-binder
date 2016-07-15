@@ -2,6 +2,7 @@ package io.coala.time;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
@@ -56,6 +57,40 @@ public interface Scheduler extends Timed
 			public void onNext( final Instant t )
 			{
 				what.run();
+			}
+
+			@Override
+			public void onError( final Throwable e )
+			{
+				// ignore errors, already passed to result Observable
+			}
+
+			@Override
+			public void onCompleted()
+			{
+				// ignore complete, result Observable also completes
+			}
+		} );
+	}
+
+	/**
+	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * 
+	 * @param when the {@link Observable} stream of {@link Instant}s
+	 * @param what the {@link Runnable} to execute upon each {@link Instant}
+	 * @return an {@link Observable} stream of {@link Expectation}s for each
+	 *         next {@link Instant}, until completion of simulation time or
+	 *         observed instants or an error occurs
+	 */
+	default <T> Observable<Expectation>
+		schedule( final Observable<Instant> when, final Consumer<Instant> what )
+	{
+		return schedule( when, new Observer<Instant>()
+		{
+			@Override
+			public void onNext( final Instant t )
+			{
+				what.accept( t );
 			}
 
 			@Override
