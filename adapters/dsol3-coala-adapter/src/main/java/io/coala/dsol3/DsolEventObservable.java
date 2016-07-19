@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.coala.exception.ExceptionFactory;
-import nl.tudelft.simulation.dsol.ModelInterface;
+import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventInterface;
 import nl.tudelft.simulation.event.EventListenerInterface;
@@ -88,10 +88,10 @@ public class DsolEventObservable implements EventListenerInterface
 	public <T extends DsolEvent<?>> DsolEventObservable
 		subscribeTo( final EventProducer producer, final Class<T> eventType )
 	{
-		if( producer instanceof ModelInterface )
+		if( producer instanceof DSOLModel )
 			try
 			{
-				subscribeTo( ((ModelInterface) producer).getSimulator() );
+				subscribeTo( ((DSOLModel) producer).getSimulator() );
 			} catch( final RemoteException e )
 			{
 				this.relay.onError( e );

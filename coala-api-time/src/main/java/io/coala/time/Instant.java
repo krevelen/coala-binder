@@ -30,7 +30,6 @@ import javax.measure.unit.Unit;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
 import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.joda.time.ReadableDuration;
 import org.joda.time.ReadableInstant;
 import org.jscience.physics.amount.Amount;
@@ -60,11 +59,11 @@ import io.coala.util.DecimalUtil;
  * <li>takes any value type (e.g. {@linkplain Number}) or granularity (e.g.
  * {@link SI#NANO(javax.measure.unit.Unit nano)} or
  * {@link SI#PICO(javax.measure.unit.Unit) pico})</li></dd>
- * <dt>The JSR-310 {@code javax.time} Java8 extension back-port from
- * <a href="http://www.threeten.org/">threeten.org</a>:</dt>
+ * <dt>The JSR-310 {@code javax.time} Java8 extension (or back-port from
+ * <a href="http://www.threeten.org/">threeten.org</a>):</dt>
  * <dd>
  * <li>supports nanosecond precision,</li>s
- * <li>{@linkplain org.threeten.bp.Instant} parses strictly ISO8601 format
+ * <li>{@linkplain org.threeten.bp.OldInstant} parses strictly ISO8601 format
  * (millis/nanos) only</li>
  * <dt>Joda's time API from <a href="http://www.joda.org/">joda.org</a></dt>
  * <dd>
@@ -85,7 +84,8 @@ import io.coala.util.DecimalUtil;
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
 //@Wrapper.JavaPolymorph
-public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Instant>
+public class Instant extends Wrapper.Simple<TimeSpan>
+	implements Comparable<Instant>
 {
 
 	/**
@@ -103,12 +103,13 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 	/**
 	 * @param value a {@link String} representation of either:
 	 *            <ul>
-	 *            a duration since the EPOCH as {@link DecimalMeasure JSR-275}
-	 *            measure (e.g. {@code "123 ms"}); or
-	 *            <li>as ISO Period, parsed with
-	 *            {@link org.threeten.bp.Duration#parse(CharSequence) JSR-310}
-	 *            or (on failure) {@link Period#parse(String) Joda}. Examples of
-	 *            ISO period:
+	 *            <li>a {@link DecimalMeasure JSR-275 Measure of duration} (e.g.
+	 *            {@code "123 ms"}); or
+	 *            <li>as {@code ISO 8601 Period} parsed with
+	 *            {@link java.time.Duration#parse(CharSequence) JSR-310} or (on
+	 *            failure)
+	 *            {@link org.joda.time.format.ISOPeriodFormat#standard() Joda},
+	 *            e.g.:
 	 * 
 	 *            <pre>
 	 *    "PT20.345S" -> parses as "20.345 seconds"
@@ -122,7 +123,8 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 	 *            </pre>
 	 *            </ul>
 	 * 
-	 * @see org.threeten.bp.Duration#parse(String)
+	 * 
+	 * @see java.time.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
 	 */
@@ -190,12 +192,8 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 	/**
 	 * {@link Instant} static factory method
 	 * 
-	 * @param units the amount of time units
-	 * @deprecated please specify unit (of
-	 *             {@link javax.measure.quantity.Duration Duration} or
-	 *             {@link Dimensionless}) using {@link #of(Number, Unit)}
+	 * @param units the amount of {@link Dimensionless} time units
 	 */
-	@Deprecated
 	public static Instant of( final Number units )
 	{
 		return of( TimeSpan.of( units ) );
@@ -222,7 +220,6 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 		return Util.of( value, Instant.class );
 	}
 
-	@SuppressWarnings( "serial" )
 	public static <N extends Number, Q extends Quantity>
 		ProbabilityDistribution<Instant>
 		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
@@ -258,52 +255,49 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 		return Util.compare( this, that );
 	}
 
-	public DecimalMeasure
-		multiply( final Measure<?, Dimensionless> multiplicand )
+	@Deprecated
+	public Instant multiply( final Measurable<Dimensionless> multiplicand )
 	{
-		return unwrap().multiply( multiplicand );
+		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	public Amount multiply( final Amount<Dimensionless> multiplicand )
-	{
-		return unwrap().multiply( multiplicand );
-	}
-
+	@Deprecated
 	public Instant multiply( final long multiplicand )
 	{
 		return of( unwrap().multiply( multiplicand ) );
 	}
 
+	@Deprecated
 	public Instant multiply( final Number multiplicand )
 	{
 		return of( unwrap().multiply( multiplicand ) );
 	}
 
+	@Deprecated
 	public Instant multiply( final BigDecimal multiplicand )
 	{
 		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	public DecimalMeasure divide( final Measure divisor )
+	@Deprecated
+	public Instant divide( final Measurable<Dimensionless> divisor )
 	{
-		return unwrap().divide( divisor );
+		return of( unwrap().divide( divisor ) );
 	}
 
-	public Amount divide( final Amount divisor )
-	{
-		return unwrap().divide( divisor );
-	}
-
+	@Deprecated
 	public Instant divide( final long divisor )
 	{
 		return of( unwrap().divide( divisor ) );
 	}
 
+	@Deprecated
 	public Instant divide( final Number divisor )
 	{
 		return of( unwrap().divide( divisor ) );
 	}
 
+	@Deprecated
 	public Instant divide( final BigDecimal divisor )
 	{
 		return of( unwrap().divide( divisor ) );
@@ -314,12 +308,7 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 		return of( unwrap().add( augend.unwrap() ) );
 	}
 
-	public Instant add( final Measure augend )
-	{
-		return of( unwrap().add( augend ) );
-	}
-
-	public Instant add( final Amount augend )
+	public Instant add( final Measurable<?> augend )
 	{
 		return of( unwrap().add( augend ) );
 	}
@@ -349,7 +338,7 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 		return Duration.of( unwrap().subtract( subtrahend.unwrap() ) );
 	}
 
-	public Instant subtract( final Amount subtrahend )
+	public Instant subtract( final Measurable<?> subtrahend )
 	{
 		return of( unwrap().subtract( subtrahend ) );
 	}
@@ -369,26 +358,22 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 		return of( unwrap().subtract( subtrahend ) );
 	}
 
-	@JsonIgnore
 	public long toMillisLong()
 	{
 		return unwrap().longValue( TimeSpan.MILLIS );
 	}
 
-	@JsonIgnore
 	public long toNanosLong()
 	{
 		return unwrap().longValue( TimeSpan.NANOS );
 	}
 
-	@JsonIgnore
 	public Date toDate( final Date offset )
 	{
 		return new Date( offset.getTime() + toMillisLong() );
 	}
 
 	/** @return the Joda {@link ReadableInstant} implementation of an instant */
-	@JsonIgnore
 	public DateTime toJoda( final ReadableInstant offset )
 	{
 		return new DateTime( offset.getMillis() + toMillisLong(),
@@ -396,23 +381,14 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 	}
 
 	/**
-	 * @return the JSR-310 back-port {@link org.threeten.bp.Instant}
-	 *         implementation of an instant
+	 * @return the JSR-310 {@link java.time.Instant} implementation of an
+	 *         instant
 	 */
-	@JsonIgnore
-	public java.time.Instant toJSR310()
+	public java.time.Instant toJSR310( final Date offset )
 	{
-		return java.time.Instant.ofEpochMilli( toMillisLong() );
+		return java.time.Instant
+				.ofEpochMilli( offset.getTime() + toMillisLong() );
 	}
-
-	/**
-	 * @return the JRE8 {@link java.time.Instant} implementation of an instant
-	 */
-//	@JsonIgnore
-//	public java.time.Instant toJava8()
-//	{
-//		return java.time.Instant.ofEpochMilli( toMillisLong() );
-//	}
 
 	/** @return the JSR-275 {@link Measurable} implementation of an instant */
 	@JsonIgnore
@@ -428,8 +404,11 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 	@JsonIgnore
 	public Amount toAmount()
 	{
-		return Amount.valueOf( unwrap().getValue().doubleValue(),
-				unwrap().getUnit() );
+		return DecimalUtil.isExact( unwrap().getValue() )
+				? Amount.valueOf( unwrap().getValue().longValue(),
+						unwrap().getUnit() )
+				: Amount.valueOf( unwrap().getValue().doubleValue(),
+						unwrap().getUnit() );
 	}
 
 	/**
@@ -443,7 +422,7 @@ public class Instant extends Wrapper.Simple<TimeSpan> implements Comparable<Inst
 				: unwrap().getValue()
 						.subtract( offset.unwrap()
 								.to( unwrap().getUnit(),
-										DecimalUtil.DECIMAL_PRECISION )
+										DecimalUtil.DEFAULT_CONTEXT )
 								.getValue() ),
 				unwrap().getUnit() );
 	}

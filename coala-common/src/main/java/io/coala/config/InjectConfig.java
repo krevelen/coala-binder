@@ -21,6 +21,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.aeonbits.owner.ConfigCache;
+
+import io.coala.bind.LocalBinder;
+import io.coala.name.Identified;
+
 /**
  * {@link InjectConfig} inspired by
  * <a href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html" >
@@ -31,37 +36,44 @@ import java.lang.annotation.Target;
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.FIELD )
-@Deprecated
 public @interface InjectConfig
 {
-	/** */
-	String name();
+	/**
+	 * @return the {@link Scope} for sharing injected {@link Config} instances
+	 */
+	Scope scope() default Scope.CONFIG;
 
-	/** */
-	String defaultValue() default "";
+	/**
+	 * {@link Scope} determines which key to use for
+	 * {@link ConfigCache#getOrCreate(Object, Class, java.util.Map...)}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	enum Scope
+	{
+		/**
+		 * use the {@link Config} sub-type as caching key (i.e. {@link Config}
+		 * instance shared across current ClassLoader)
+		 */
+		CONFIG,
 
-	/** */
-	byte defaultByteValue() default 0x00;
+		/**
+		 * use the injectable field as caching key (i.e. share {@link Config}
+		 * instance for this {@link Field} across current ClassLoader)
+		 */
+		FIELD,
 
-	/** */
-	short defaultShortValue() default 0;
+		/**
+		 * use the {@link LocalBinder} instance as caching key (i.e. share
+		 * {@link Config} instance unique for this {@link LocalBinder})
+		 */
+		BINDER,
 
-	/** */
-	int defaultIntValue() default 0;
-
-	/** */
-	long defaultLongValue() default 0L;
-
-	/** */
-	float defaultFloatValue() default 0f;
-
-	/** */
-	double defaultDoubleValue() default 0.0;
-
-	/** */
-	boolean defaultBooleanValue() default false;
-
-	/** */
-	@SuppressWarnings( "rawtypes" )
-	Class<? extends ConfigConverter> converter() default ConfigDefaultConverter.class;
+		/**
+		 * use the {@link Identified#id()} as caching key (i.e. share
+		 * {@link Config} instance for the {@link Identified#id()} value)
+		 */
+		ID,
+	}
 }

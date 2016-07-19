@@ -187,7 +187,6 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 		return Util.of( value, new Duration() );
 	}
 
-	@SuppressWarnings( "serial" )
 	public static <N extends Number, Q extends Quantity>
 		ProbabilityDistribution<Duration>
 		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )

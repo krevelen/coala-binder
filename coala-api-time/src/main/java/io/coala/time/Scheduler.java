@@ -2,9 +2,11 @@ package io.coala.time;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
+import io.coala.util.Caller.ThrowingConsumer;
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.BehaviorSubject;
@@ -36,7 +38,20 @@ public interface Scheduler extends Timed
 	 * @param what the {@link Runnable}
 	 * @return the occurrence {@link Expectation}, for optional cancellation
 	 */
-	Expectation schedule( Instant when, Runnable what );
+	default Expectation schedule( Instant when, Runnable what )
+	{
+		return schedule( when, t ->
+		{
+			what.run();
+		} );
+	}
+
+	/**
+	 * @param when the {@link Instant} of execution
+	 * @param what the {@link Runnable}
+	 * @return the occurrence {@link Expectation}, for optional cancellation
+	 */
+	Expectation schedule( Instant when, ThrowingConsumer<Instant, ?> what );
 
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
@@ -50,12 +65,41 @@ public interface Scheduler extends Timed
 	default <T> Observable<Expectation>
 		schedule( final Observable<Instant> when, final Runnable what )
 	{
+		return schedule( when, t ->
+		{
+			what.run();
+		} );
+	}
+
+	/**
+	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * 
+	 * @param when the {@link Observable} stream of {@link Instant}s
+	 * @param what the {@link Consumer} to execute upon each {@link Instant}
+	 * @return an {@link Observable} stream of {@link Expectation}s for each
+	 *         next {@link Instant}, until completion of simulation time or
+	 *         observed instants or an error occurs
+	 */
+	default <T> Observable<Expectation> schedule(
+		final Observable<Instant> when,
+		final ThrowingConsumer<Instant, ?> what )
+	{
 		return schedule( when, new Observer<Instant>()
 		{
 			@Override
 			public void onNext( final Instant t )
 			{
-				what.run();
+				try
+				{
+					what.accept( t );
+				} catch( final RuntimeException e )
+				{
+					throw e;
+				} catch( final Throwable e )
+				{
+					throw ExceptionFactory.createUnchecked( e,
+							"Problem calling {}", what );
+				}
 			}
 
 			@Override
@@ -125,8 +169,8 @@ public interface Scheduler extends Timed
 	 * @param what the {@link Observer} of the same {@link Instant}s but delayed
 	 *            until they occur in simulation time
 	 * @return an {@link Observable} stream of {@link Expectation}s, until
-	 *         completion of simulation time or observed instants or an error
-	 *         occursF
+	 *         completion of simulation time or of observed instants or an error
+	 *         occurs
 	 */
 	default <T> Observable<Expectation>
 		schedule( final Observable<Instant> when, final Observer<Instant> what )
@@ -156,6 +200,8 @@ public interface Scheduler extends Timed
 				} catch( final Throwable e )
 				{
 					// failed first() Instant, interrupt recursion
+					LogUtil.getLogger( getClass() )
+							.error( "Problem in event, canceled remaining", e );
 					try
 					{
 						result.onError( e );

@@ -16,10 +16,10 @@
 package io.coala.time;
 
 /**
- * {@link Timed}
+ * {@link OldTimed}
  */
 @Deprecated
-public interface Timed<I extends Instant<I>>
+public interface OldTimed<I extends OldInstant<I>>
 {
 
 	/** @return the current (possibly managed) time */

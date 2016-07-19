@@ -9,8 +9,7 @@ import io.coala.util.Comparison;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class Extreme<T extends Comparable<? super T>>
-	implements Comparable<Extreme<T>>
+public class Extreme<T extends Comparable<?>> implements Comparable<Extreme<T>>
 {
 
 	public enum Inclusiveness
@@ -152,35 +151,32 @@ public class Extreme<T extends Comparable<? super T>>
 		return Comparison.EQUIVALENT;
 	}
 
-	public static <T extends Comparable<? super T>> Extreme<T>
-		negativeInfinity()
+	public static <T extends Comparable<?>> Extreme<T> negativeInfinity()
 	{
 		return of( null, null, BoundaryPosition.LOWER );
 	}
 
-	public static <T extends Comparable<? super T>> Extreme<T>
-		positiveInfinity()
+	public static <T extends Comparable<?>> Extreme<T> positiveInfinity()
 	{
 		return of( null, null, BoundaryPosition.UPPER );
 	}
 
-	public static <T extends Comparable<? super T>> Extreme<T>
-		lower( final T value, final Boolean inclusive )
+	public static <T extends Comparable<?>> Extreme<T> lower( final T value,
+		final Boolean inclusive )
 	{
 		return of( value, Inclusiveness.of( inclusive ),
 				BoundaryPosition.LOWER );
 	}
 
-	public static <T extends Comparable<? super T>> Extreme<T>
-		upper( final T value, final Boolean inclusive )
+	public static <T extends Comparable<?>> Extreme<T> upper( final T value,
+		final Boolean inclusive )
 	{
 		return of( value, Inclusiveness.of( inclusive ),
 				BoundaryPosition.UPPER );
 	}
 
-	public static <T extends Comparable<? super T>> Extreme<T> of(
-		final T value, final Inclusiveness inclusiveness,
-		final BoundaryPosition position )
+	public static <T extends Comparable<?>> Extreme<T> of( final T value,
+		final Inclusiveness inclusiveness, final BoundaryPosition position )
 	{
 		return new Extreme<T>( value, inclusiveness, position );
 	}

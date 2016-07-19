@@ -15,13 +15,9 @@
  */
 package io.coala.math3;
 
-import static org.aeonbits.owner.util.Collections.entry;
-import static org.aeonbits.owner.util.Collections.map;
-
 import java.util.HashMap;
 import java.util.Map;
 
-import org.aeonbits.owner.ConfigFactory;
 import org.apache.commons.math3.random.ISAACRandom;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -36,13 +32,13 @@ import io.coala.random.PseudoRandom;
 import io.coala.util.Instantiator;
 
 /**
- * {@link Math3RandomNumberStream} decorates several commons-math3
+ * {@link Math3PseudoRandom} decorates several commons-math3
  * {@link RandomGenerator}s as {@link PseudoRandom}
  * 
  * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
  * @author Rick van Krevelen
  */
-public class Math3RandomNumberStream implements PseudoRandom
+public class Math3PseudoRandom implements PseudoRandom
 {
 
 	/**
@@ -52,9 +48,8 @@ public class Math3RandomNumberStream implements PseudoRandom
 	 */
 	public static RandomGenerator toRandomGenerator( final PseudoRandom rng )
 	{
-		return rng instanceof Math3RandomNumberStream
-				? ((Math3RandomNumberStream) rng).unwrap()
-				: new RandomGenerator()
+		return rng instanceof Math3PseudoRandom
+				? ((Math3PseudoRandom) rng).unwrap() : new RandomGenerator()
 				{
 					@Override
 					public void setSeed( final int seed )
@@ -128,36 +123,36 @@ public class Math3RandomNumberStream implements PseudoRandom
 	}
 
 	/** constructor */
-	public static Math3RandomNumberStream of( final Config config,
+	public static Math3PseudoRandom of( final Name id, final Long seed,
 		final RandomGenerator rng )
 	{
-		final Math3RandomNumberStream result = new Math3RandomNumberStream();
-		result.id = config.id();
-		result.seed = config.seed().longValue();
+		final Math3PseudoRandom result = new Math3PseudoRandom();
+		result.id = id;
+		result.seed = seed;
 		result.rng = rng;
 		return result;
 	}
 
 	private Name id;
 
-	private long seed;
+	private Long seed;
 
 	private RandomGenerator rng;
 
 	/** {@link Abstract} zero-arg bean constructor */
-	protected Math3RandomNumberStream()
+	protected Math3PseudoRandom()
 	{
 		//
 	}
 
 	@Override
-	public Number getSeed()
+	public Long seed()
 	{
 		return this.seed;
 	}
 
 	@Override
-	public Name getId()
+	public Name id()
 	{
 		return this.id;
 	}
@@ -216,112 +211,91 @@ public class Math3RandomNumberStream implements PseudoRandom
 	}
 
 	/**
-	 * {@link Factory} of {@link Math3RandomNumberStream}s
+	 * {@link Factory} of {@link Math3PseudoRandom}s
 	 * 
 	 * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
 	 * @author Rick van Krevelen
 	 */
-	public static class Factory<T extends RandomGenerator>
-		implements PseudoRandom.Factory
+	public static class Factory implements PseudoRandom.Factory
 	{
-
-		/** the FACTORY_CACHE */
-		private static final Map<Class<?>, Factory<?>> FACTORY_CACHE = new HashMap<>();
 
 		/**
 		 * @return the cached (new) {@link Factory} instance generating
 		 *         {@link MersenneTwister} streams
 		 */
-		public static Factory<MersenneTwister> ofMersenneTwister()
+		public static Factory ofMersenneTwister()
 		{
 			return of( MersenneTwister.class );
 		}
 
 		/** @return a {@link Factory} of {@link ISAACRandom} streams */
-		public static Factory<ISAACRandom> ISAACRandom()
+		public static Factory ISAACRandom()
 		{
 			return of( ISAACRandom.class );
 		}
 
 		/** @return a {@link Factory} of {@link Well19937a} streams */
-		public static Factory<Well19937a> ofWell19937a()
+		public static Factory ofWell19937a()
 		{
 			return of( Well19937a.class );
 		}
 
 		/** @return a {@link Factory} of {@link Well19937c} streams */
-		public static Factory<Well19937c> ofWell19937c()
+		public static Factory ofWell19937c()
 		{
 			return of( Well19937c.class );
 		}
 
 		/** @return a {@link Factory} of {@link Well44497a} streams */
-		public static Factory<Well44497a> ofWell44497a()
+		public static Factory ofWell44497a()
 		{
 			return of( Well44497a.class );
 		}
 
 		/** @return a {@link Factory} of {@link Well512a} streams */
-		public static Factory<Well512a> ofWell512a()
+		public static Factory ofWell512a()
 		{
 			return of( Well512a.class );
 		}
 
 		/** @return a {@link Factory} of {@link Well1024a} streams */
-		public static Factory<Well1024a> ofWell1024a()
+		public static Factory ofWell1024a()
 		{
 			return of( Well1024a.class );
 		}
+
+		/** the FACTORY_CACHE */
+		private static final Map<Class<?>, Factory> FACTORY_CACHE = new HashMap<>();
 
 		/**
 		 * @param rngType the type of {@link RandomGenerator} to create
 		 * @return the cached (new) {@link Factory} instance
 		 */
-		public static <T extends RandomGenerator> Factory<T>
-			of( final Class<T> rngType )
+		public synchronized static Factory
+			of( final Class<? extends RandomGenerator> rngType )
 		{
-			synchronized( FACTORY_CACHE )
+			Factory result = FACTORY_CACHE.get( rngType );
+			if( result == null )
 			{
-				@SuppressWarnings( "unchecked" )
-				Factory<T> result = (Factory<T>) FACTORY_CACHE.get( rngType );
-				if( result == null )
-				{
-					result = new Factory<T>(
-							Instantiator.of( rngType, long.class ) );
-					FACTORY_CACHE.put( rngType, result );
-				}
-				return result;
+				result = new Factory( Instantiator.of( rngType, long.class ) );
+				FACTORY_CACHE.put( rngType, result );
 			}
+			return result;
 		}
 
-		private final Instantiator<T> instantiator;
+		private final Instantiator<? extends RandomGenerator> instantiator;
 
-		public Factory( final Instantiator<T> instantiator )
+		public Factory(
+			final Instantiator<? extends RandomGenerator> instantiator )
 		{
 			this.instantiator = instantiator;
 		}
 
 		@Override
-		public Math3RandomNumberStream create()
+		public Math3PseudoRandom create( final Name id, final Number seed )
 		{
-			return create( ConfigFactory.create( Config.class ) );
-		}
-
-		@Override
-		public Math3RandomNumberStream create( final Config config )
-		{
-			return Math3RandomNumberStream.of( config, this.instantiator
-					.instantiate( config.seed().longValue() ) );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		@Override
-		public PseudoRandom create( final CharSequence id, final Number seed )
-		{
-			return create( ConfigFactory.create( Config.class,
-					map( new Map.Entry[]
-			{ entry( Config.NAME_KEY, id.toString() ),
-					entry( Config.SEED_KEY, seed.toString() ) } ) ) );
+			return Math3PseudoRandom.of( id, seed.longValue(),
+					this.instantiator.instantiate( seed.longValue() ) );
 		}
 
 	}

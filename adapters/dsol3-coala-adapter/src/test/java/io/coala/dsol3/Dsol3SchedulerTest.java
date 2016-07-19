@@ -55,6 +55,7 @@ public class Dsol3SchedulerTest
 							{
 								LOG.trace( "atEach handled, t={}",
 										s.now().prettify( NonSI.DAY, 2 ) );
+								// FIXME: should halt sim
 								throw new RuntimeException();
 							} ).subscribe( exp ->
 							{

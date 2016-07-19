@@ -20,19 +20,15 @@
 package io.coala.bind;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Converter;
-import org.aeonbits.owner.Mutable;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.bind.LocalBinder.Config;
-import io.coala.config.ConfigUtil;
+import io.coala.bind.LocalBinder.BinderConfig;
 import io.coala.config.GlobalConfig;
 import io.coala.json.Contextual;
 import io.coala.name.Identified;
@@ -75,7 +71,7 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 	 * @see ConfigFactory#create(Class, Map[])
 	 * @see ConfigCache#getOrCreate(Class, Map[])
 	 */
-	interface LocalConfig extends GlobalConfig, Mutable
+	interface LocalConfig extends GlobalConfig
 	{
 
 		String ID_KEY = "id";
@@ -84,84 +80,40 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 
 		String ID_PREFIX = "${" + ID_KEY + "}";
 
-		/**
-		 * @param id the {@link #id()} value to set
-		 * @param type the type of {@link LocalConfig} to create
-		 * @param imports additional property key-value {@link Map}
-		 * @return the (cached) {@link Config} instance
-		 * @see ConfigCache#getOrCreate(Class, Map[])
-		 */
-		static <T extends LocalConfig> T create( final String id,
-			final Class<T> type, final Map<?, ?>... imports )
-		{
-			return ConfigFactory.create( type, ConfigUtil.join(
-					Collections.singletonMap( Config.ID_KEY, id ), imports ) );
-		}
-
-		/**
-		 * @param id the {@link #id()} value to set
-		 * @param type the type of {@link LocalConfig} to get/create
-		 * @param imports additional property key-value {@link Map}
-		 * @return the (cached) {@link Config} instance
-		 * @see ConfigCache#getOrCreate(Class, Map[])
-		 */
-		static <T extends LocalConfig> T getOrCreate( final String id,
-			final Class<T> type, final Map<?, ?>... imports )
-		{
-			return ConfigCache.getOrCreate( id, type, ConfigUtil.join(
-					Collections.singletonMap( Config.ID_KEY, id ), imports ) );
-		}
-
-		/**
-		 * @param base the key prefix key {@link String} to filter
-		 * @param expansions transforms: <code>"${x}" &rarr; "y"</code>
-		 * @return a {@link Collection} of unique {@link String} sub-keys
-		 */
-		default Collection<String> enumerate( final String base,
-			final Map<String, String> expansions )
-		{
-			String prefix = base.replace( ID_PREFIX, id() ) + KEY_SEP;
-			if( expansions != null )
-				for( Map.Entry<String, String> entry : expansions.entrySet() )
-				prefix = prefix.replace( "${" + entry.getKey() + "}", entry.getValue() );
-			return ConfigUtil.enumerate( this, prefix, null );
-		}
-
 		@Key( ID_KEY )
 		@DefaultValue( ID_DEFAULT )
 		@ConverterClass( AnonymousConverter.class )
 		String id();
-
-		/** the (relative) {@link #EXTENDS_KEY} */
-		String EXTENDS_PREFIX = ID_PREFIX + KEY_SEP + "extend";
-
-		default Collection<String> extendsKeys()
-		{
-			return enumerate( EXTENDS_PREFIX, null );
-		}
-
-		String EXTENDS_INDEX_KEY = "extendsIndex";
-
-		@Key( EXTENDS_INDEX_KEY )
-		String extendsIndex();
-
-		@Key( EXTENDS_PREFIX + KEY_SEP + "${" + EXTENDS_INDEX_KEY + "}" )
-		String extend();
-
-		String CONTEXT_KEY = "context";
-
-		@Key( ID_PREFIX + CONTEXT_KEY )
-		@ConverterClass( Context.ConfigConverter.class )
-		Context context();
 
 		class AnonymousConverter implements Converter<String>
 		{
 			@Override
 			public String convert( final Method method, final String input )
 			{
-				return input == null || input.isEmpty() ? "anon|" + (new UUID())
-						: input;
+				return input == null || input.isEmpty()
+						|| input.equals( ID_DEFAULT ) ? "anon|" + (new UUID())
+								: input;
 			}
 		}
+
+		String CONTEXT_KEY = "context";
+
+		@Key( CONTEXT_KEY )
+		@ConverterClass( Context.ConfigConverter.class )
+		Context context();
+
+		String BINDER_KEY = "binder";
+
+		/**
+		 * @param imports
+		 * @return the (cached) {@link BinderConfig} instance
+		 * @see ConfigCache#getOrCreate(Class, Map[])
+		 */
+		default BinderConfig binderConfig( final Map<?, ?>... imports )
+		{
+			return subConfig( BINDER_KEY, BinderConfig.class, imports );
+		}
+
+		// TODO add 'extends' key to inherit/import from other contexts
 	}
 }

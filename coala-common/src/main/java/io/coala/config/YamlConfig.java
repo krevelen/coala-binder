@@ -49,20 +49,19 @@ public interface YamlConfig extends Accessible
 	}
 
 	// default not (yet) supported in OWNER api proxy implementation
-	static String toYAML( final YamlConfig self, final String comment )
-		throws IOException
+	default String toYAML( final String comment ) throws IOException
 	{
 		return YamlUtil.toYAML( comment,
-				ConfigUtil.export( self, null, null ) );
+				ConfigUtil.export( this, null, null ) );
 	}
 
 	// default not (yet) supported in OWNER api proxy implementation
-	static void storeToYAML( final YamlConfig self, final OutputStream out,
-		final String comment ) throws IOException
+	default void storeToYAML( final OutputStream out, final String comment )
+		throws IOException
 	{
 		final Map<String, String> props = new HashMap<>();
-		for( String key : self.propertyNames() )
-			props.put( key, self.getProperty( key ) );
+		for( String key : propertyNames() )
+			props.put( key, getProperty( key ) );
 		YamlUtil.toYAML( comment, out, props );
 	}
 }

@@ -26,13 +26,13 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 /**
- * {@link Instant}
+ * {@link OldInstant}
  * 
  * @version $Id$
- * @param <THIS> the concrete type of {@link Instant} to compare/build
+ * @param <THIS> the concrete type of {@link OldInstant} to compare/build
  */
 @Deprecated
-public interface Instant<THIS extends Instant<THIS>>
+public interface OldInstant<THIS extends OldInstant<THIS>>
 	extends Serializable, Comparable<AbstractInstant<?>>
 {
 
@@ -56,7 +56,7 @@ public interface Instant<THIS extends Instant<THIS>>
 	/** @return ID of the source clock generating this time instant */
 	ClockID getClockID();
 
-	/** @return the value of this {@link Instant} as {@link Number} */
+	/** @return the value of this {@link OldInstant} as {@link Number} */
 	Number getValue();
 
 	/** @see Number#intValue() */
@@ -71,20 +71,20 @@ public interface Instant<THIS extends Instant<THIS>>
 	/** @see Number#doubleValue() */
 	double doubleValue();
 
-	/** @return the {@link TimeUnit} of this {@link Instant} */
+	/** @return the {@link TimeUnit} of this {@link OldInstant} */
 	TimeUnit getUnit();
 
 	THIS plus( Number value );
 
 	THIS plus( Number value, TimeUnit unit );
 
-	THIS plus( Instant<?> value );
+	THIS plus( OldInstant<?> value );
 
 	THIS minus( Number value );
 
 	THIS minus( Number value, TimeUnit unit );
 
-	THIS minus( Instant<?> value );
+	THIS minus( OldInstant<?> value );
 
 	THIS multipliedBy( Number factor );
 
@@ -100,34 +100,34 @@ public interface Instant<THIS extends Instant<THIS>>
 
 	boolean isBefore( Number value, TimeUnit unit );
 
-	boolean isBefore( Instant<?> value );
+	boolean isBefore( OldInstant<?> value );
 
 	boolean isOnOrBefore( Number value );
 
 	boolean isOnOrBefore( Number value, TimeUnit unit );
 
-	boolean isOnOrBefore( Instant<?> value );
+	boolean isOnOrBefore( OldInstant<?> value );
 
 	boolean isAfter( Number value );
 
 	boolean isAfter( Number value, TimeUnit unit );
 
-	boolean isAfter( Instant<?> value );
+	boolean isAfter( OldInstant<?> value );
 
 	boolean isOnOrAfter( Number value );
 
 	boolean isOnOrAfter( Number value, TimeUnit unit );
 
-	boolean isOnOrAfter( Instant<?> value );
+	boolean isOnOrAfter( OldInstant<?> value );
 
-	Number dividedBy( Instant<?> value );
+	Number dividedBy( OldInstant<?> value );
 
 	/**
-	 * Compare this {@link Instant} with another based on {@link ClockID}s and
+	 * Compare this {@link OldInstant} with another based on {@link ClockID}s and
 	 * values (in base {@link TimeUnit}s)
 	 * 
-	 * @param other the final concrete {@link Instant} of the same type
-	 * @return {@code x < 0} if this {@link Instant} is smaller, {@code x == 0}
+	 * @param other the final concrete {@link OldInstant} of the same type
+	 * @return {@code x < 0} if this {@link OldInstant} is smaller, {@code x == 0}
 	 *         if equal, and {@code x > 0} if greater than the specified
 	 *         {@code other}
 	 * 
@@ -157,45 +157,45 @@ public interface Instant<THIS extends Instant<THIS>>
 
 	THIS toWeeks();
 
-	/** @return the value of this {@link Instant} as {@link Date} */
+	/** @return the value of this {@link OldInstant} as {@link Date} */
 	Date toDate();
 
-	/** @return the value of this {@link Instant} as {@link Date} */
+	/** @return the value of this {@link OldInstant} as {@link Date} */
 	Date toDate( Date offset );
 
-	/** @return the value of this {@link Instant} as {@link DateTime} */
+	/** @return the value of this {@link OldInstant} as {@link DateTime} */
 	DateTime toDateTime();
 
-	/** @return the value of this {@link Instant} as {@link DateTime} */
+	/** @return the value of this {@link OldInstant} as {@link DateTime} */
 	DateTime toDateTime( DateTime offset );
 
-	/** @return the value of this {@link Instant} as {@link Calendar} */
+	/** @return the value of this {@link OldInstant} as {@link Calendar} */
 	Calendar toCalendar();
 
-	/** @return the value of this {@link Instant} as {@link Calendar} */
+	/** @return the value of this {@link OldInstant} as {@link Calendar} */
 	Calendar toCalendar( Date offset );
 
 	/**
 	 * @param interval the duration between iterations
 	 * @param max the (exclusive) limit, or {@code null} for unlimited
-	 * @return the {@link Iterable} range of {@link Instant}s starting with this
+	 * @return the {@link Iterable} range of {@link OldInstant}s starting with this
 	 *         {@link THIS}
 	 */
-	Iterable<THIS> getRange( Instant<?> interval, Instant<?> max );
+	Iterable<THIS> getRange( OldInstant<?> interval, OldInstant<?> max );
 
 	/**
 	 * {@link Range}
 	 *
 	 * @param <I>
 	 */
-	class Range<I extends Instant<?>> implements Iterator<I>
+	class Range<I extends OldInstant<?>> implements Iterator<I>
 	{
 
 		/** */
-		private final Instant<?> interval;
+		private final OldInstant<?> interval;
 
 		/** */
-		private final Instant<?> max;
+		private final OldInstant<?> max;
 
 		/** */
 		private I time;
@@ -207,8 +207,8 @@ public interface Instant<THIS extends Instant<THIS>>
 		 * @param interval
 		 * @param max the (exclusive) limit, or {@code null} for unlimited
 		 */
-		protected Range( final I start, final Instant<?> interval,
-			final Instant<?> max )
+		protected Range( final I start, final OldInstant<?> interval,
+			final OldInstant<?> max )
 		{
 			this.interval = interval;
 			this.max = max;
@@ -218,12 +218,12 @@ public interface Instant<THIS extends Instant<THIS>>
 		/**
 		 * {@link Range} constructor
 		 * 
-		 * @param start the start {@link Instant}
+		 * @param start the start {@link OldInstant}
 		 * @param interval the duration between iterations
 		 * @param max the (exclusive) limit, or {@code null} for unlimited
 		 */
-		public static <I extends Instant<?>> Range<I> of( final I start,
-			final Instant<?> interval, final Instant<?> max )
+		public static <I extends OldInstant<?>> Range<I> of( final I start,
+			final OldInstant<?> interval, final OldInstant<?> max )
 		{
 			return new Range<I>( start, interval, max );
 		}

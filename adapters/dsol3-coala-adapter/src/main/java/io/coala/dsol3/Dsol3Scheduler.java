@@ -20,7 +20,8 @@ import io.coala.time.Instant;
 import io.coala.time.Scheduler;
 import io.coala.util.Caller;
 import io.coala.util.Caller.ThrowingConsumer;
-import nl.tudelft.simulation.dsol.ModelInterface;
+import io.coala.util.Caller.ThrowingRunnable;
+import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEvent;
@@ -39,6 +40,22 @@ import rx.subjects.Subject;
  */
 public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 {
+
+	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+		final Instant start, final Duration duration,
+		final ThrowingRunnable<?> modelInitializer )
+	{
+		return of( id, start, duration, Caller.of( modelInitializer )::ignore );
+	}
+
+	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+		final Instant start, final Duration duration,
+		final ThrowingConsumer<Scheduler, ?> modelInitializer )
+	{
+		return new Dsol3Scheduler<Q>( id, start,
+				Duration.of( 0, start.unwrap().getUnit() ), duration,
+				Caller.rethrow( modelInitializer ) );
+	}
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Dsol3Scheduler.class );
@@ -70,7 +87,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			final DsolTime start = DsolTime.valueOf( startTime );
 			LOG.trace( "jscience: {} => dsol: {}", startTime, start );
 
-			final ModelInterface model = new ModelInterface()
+			final DSOLModel model = new DSOLModel()
 			{
 				@Override
 				public void constructModel( final SimulatorInterface simulator )
@@ -189,7 +206,8 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public Expectation schedule( final Instant when, final Runnable runner )
+	public Expectation schedule( final Instant when,
+		final ThrowingConsumer<Instant, ?> what )
 	{
 		synchronized( this.listeners )
 		{
@@ -216,38 +234,12 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 					{
 						try
 						{
-							runner.run();
-						} catch( final Exception e )
+							what.accept( t );
+						} catch( final Throwable e )
 						{
 							this.time.onError( e );
 						}
 					} ) );
 		}
 	}
-
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final Runnable modelInitializer )
-	{
-		return of( id, start, duration, Caller.of( modelInitializer )::ignore );
-	}
-
-//	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-//		final Instant start, final Duration length,
-//		final Consumer<Scheduler> modelInitializer )
-//	{
-//		return new Dsol3Scheduler<Q>( id, start,
-//				Duration.of( 0, start.unwrap().getUnit() ), length,
-//				modelInitializer );
-//	}
-
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final ThrowingConsumer<Scheduler, ?> modelInitializer )
-	{
-		return new Dsol3Scheduler<Q>( id, start,
-				Duration.of( 0, start.unwrap().getUnit() ), duration,
-				Caller.rethrow( modelInitializer ) );
-	}
-
 }
