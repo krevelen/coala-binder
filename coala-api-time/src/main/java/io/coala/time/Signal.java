@@ -27,7 +27,7 @@ public interface Signal<T> extends Timed
 	 * @return the evaluated result, or {@code null} if not in
 	 *         {@link #getInterval()}
 	 */
-	T getValue();
+	T current();
 
 	/** @return an {@link Observable} stream of {@link T} evaluations */
 	Observable<T> emitValues();
@@ -111,15 +111,15 @@ public interface Signal<T> extends Timed
 		@Override
 		public String toString()
 		{
-			final T value = getValue();
-			return value == null ? null : value.toString();
+			final T value = current();
+			return value == null ? super.toString() : value.toString();
 		}
 
 		@Override
 		public int hashCode()
 		{
-			final T value = getValue();
-			return value == null ? 0 : value.hashCode();
+			final T value = current();
+			return value == null ? super.hashCode() : value.hashCode();
 		}
 
 		@Override
@@ -141,15 +141,16 @@ public interface Signal<T> extends Timed
 		}
 
 		@Override
-		public T getValue()
+		public T current()
 		{
 			if( this.now == null || !this.now.equals( now() ) )
 			{
 				this.now = now();
-				if( this.domain.isGreaterThan( this.now ) )
+				if( this.now != null && this.domain.isGreaterThan( this.now ) )
 				{
 					this.value = null;
-				} else if( this.domain.isLessThan( this.now ) )
+				} else if( this.now != null
+						&& this.domain.isLessThan( this.now ) )
 				{
 					if( this.value == null ) this.values.onCompleted();
 					this.value = null;
@@ -210,7 +211,7 @@ public interface Signal<T> extends Timed
 		@Override
 		public int compareTo( final SimpleOrdinal<T> o )
 		{
-			return getValue().compareTo( o.getValue() );
+			return current().compareTo( o.current() );
 		}
 	}
 }

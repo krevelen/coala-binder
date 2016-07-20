@@ -35,13 +35,13 @@ import io.coala.util.Comparison;
  */
 public class Tuple implements Comparable<Tuple>
 {
-	public static <T extends Comparable<?>> Tuple of( final T o )
+	public static Tuple of( final Comparable<?> o )
 	{
 		return of( Collections.singletonList( o ) );
 	}
 
 	@SafeVarargs
-	public static <T extends Comparable<?>> Tuple of( final T... o )
+	public static Tuple of( final Comparable<?>... o )
 	{
 		return of( Arrays.asList( o ) );
 	}

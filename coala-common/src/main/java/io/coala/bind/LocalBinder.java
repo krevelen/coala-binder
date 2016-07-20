@@ -15,12 +15,9 @@
  */
 package io.coala.bind;
 
-import java.util.Map;
-
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import io.coala.config.GlobalConfig;
 import io.coala.name.Identified;
 import io.coala.util.Instantiator;
 import rx.Observable;
@@ -234,74 +231,5 @@ public interface LocalBinder extends LocalContextual
 				return this;
 			}
 		}
-	}
-
-	/**
-	 * {@link BinderConfig}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	interface BinderConfig extends GlobalConfig
-	{
-
-		String PROVIDERS_KEY = "providers";
-
-		default Map<String, ProviderConfig>
-			providerConfigs( final Map<?, ?>... imports )
-		{
-			return subConfigs( PROVIDERS_KEY, ProviderConfig.class, imports );
-		}
-	}
-
-	/**
-	 * {@link ProviderConfig}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	interface ProviderConfig extends GlobalConfig
-	{
-
-		String INITABLE_KEY = "init";
-
-		@Key( INITABLE_KEY )
-		@DefaultValue( "false" )
-		boolean initable();
-
-		String MUTABLE_KEY = "mutable";
-
-		@Key( MUTABLE_KEY )
-		@DefaultValue( "false" )
-		boolean mutable();
-
-		String IMPLEMENTATION_KEY = "impl";
-
-		@Key( IMPLEMENTATION_KEY )
-		Class<?> implementation();
-
-		String BINDINGS_KEY = "bindings";
-
-		default Map<String, BindingConfig>
-			injectableConfigs( final Map<?, ?>... imports )
-		{
-			return subConfigs( BINDINGS_KEY, BindingConfig.class,
-					imports );
-		}
-	}
-
-	/**
-	 * {@link BindingConfig}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	interface BindingConfig extends GlobalConfig
-	{
-
-		String TYPE_KEY = "type";
-
-		@Key( TYPE_KEY )
-		Class<?> type();
 	}
 }

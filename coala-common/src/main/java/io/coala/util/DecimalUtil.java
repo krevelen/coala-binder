@@ -42,8 +42,18 @@ public class DecimalUtil implements Util
 				.toPlainString();
 	}
 
-	// adopted from https://forum.processing.org/two/discussion/10384/bigdecimal-to-byte-array
-	public static byte[] toByte( final BigDecimal num )
+	/**
+	 * adopted from <a href=
+	 * "https://forum.processing.org/two/discussion/10384/bigdecimal-to-byte-array">
+	 * orthoptera (apr 2015)</a>
+	 * 
+	 * @param num the {@link BigDecimal} to encode
+	 * @return raw big-endian two's-complement binary representation with first
+	 *         4 bytes representing the scale
+	 * @see BigInteger#toByteArray()
+	 * @see BigDecimal#unscaledValue()
+	 */
+	public static byte[] toByteArray( final BigDecimal num )
 	{
 		// write scale to first 4 bytes
 		final int scale = num.scale();
@@ -59,7 +69,20 @@ public class DecimalUtil implements Util
 		return concat;
 	}
 
-	// adopted from https://forum.processing.org/two/discussion/10384/bigdecimal-to-byte-array
+	// 
+	/**
+	 * adopted from <a href=
+	 * "https://forum.processing.org/two/discussion/10384/bigdecimal-to-byte-array">
+	 * orthoptera (apr 2015)</a>
+	 * 
+	 * @param raw big-endian two's-complement binary representation with first 4
+	 *            bytes representing the scale. The value of the
+	 *            {@code BigDecimal} is
+	 *            <tt>(unscaledVal &times; 10<sup>-scale</sup>)</tt>.
+	 * @return a {@link BigDecimal}
+	 * @see BigInteger#BigInteger(byte[])
+	 * @see BigDecimal#BigDecimal(BigInteger,int)
+	 */
 	public static BigDecimal valueOf( final byte[] raw )
 	{
 		// read scale from first 4 bytes
@@ -89,9 +112,11 @@ public class DecimalUtil implements Util
 	{
 		return value instanceof BigDecimal ? valueOf( (BigDecimal) value )
 				: value instanceof Long || value instanceof Integer
-						? valueOf( value.longValue() )
-						: value instanceof BigInteger
-								? valueOf( (BigInteger) value )
-								: BigDecimal.valueOf( value.doubleValue() );
+						|| value instanceof Short || value instanceof Byte
+								? valueOf( value.longValue() )
+								: value instanceof BigInteger
+										? valueOf( (BigInteger) value )
+										: BigDecimal
+												.valueOf( value.doubleValue() );
 	}
 }

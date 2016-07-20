@@ -101,9 +101,9 @@ public class FileUtil // implements Util
 		try
 		{
 			return toInputStream( path.toURL() );
-		} catch( final MalformedURLException e )
+		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e, "Illegal URI {}", path );
+			return toInputStream( path.toASCIIString() );
 		}
 	}
 
@@ -164,23 +164,25 @@ public class FileUtil // implements Util
 			return new FileInputStream( userFile );
 		}
 
+		final URL resourcePath = cl.getResource( path );
+		if( resourcePath != null )
+		{
+			LOG.trace( "Found '" + path + "' in classpath: " + resourcePath );
+			return cl.getResourceAsStream( path );
+		}
+
 		try
 		{
 			final URL url = new URL( path );
-			LOG.trace( "Downloading file from " + path );
+			LOG.trace( "Attempting download from " + path );
 			return url.openStream();
 		} catch( final MalformedURLException e )
 		{
 			// ignore
 		}
 
-		// FileUtil.class.getClassLoader()
-		final URL resourcePath = cl.getResource( path );
-		if( resourcePath == null ) { throw new FileNotFoundException(
-				"File not found " + path + ", tried " + file.getAbsolutePath()
-						+ " and classpath" ); }
-		LOG.trace( "Found '" + path + "' in classpath: " + resourcePath );
-		return cl.getResourceAsStream( path );
+		throw new FileNotFoundException( "File not found " + path + ", tried "
+				+ file.getAbsolutePath() + " and classpath" );
 	}
 
 	/**
