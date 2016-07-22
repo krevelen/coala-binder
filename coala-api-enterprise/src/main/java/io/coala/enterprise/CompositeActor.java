@@ -27,7 +27,7 @@ import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
-import io.coala.time.Timed;
+import io.coala.time.Proactive;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
@@ -39,7 +39,7 @@ import rx.subjects.Subject;
  * @author Rick van Krevelen
  */
 public interface CompositeActor
-	extends Timed, Identified.Ordinal<CompositeActor.ID>
+	extends Proactive, Identified.Ordinal<CompositeActor.ID>
 {
 	/** @return the ownew {@link Organization.ID} */
 	Organization.ID ownerID();

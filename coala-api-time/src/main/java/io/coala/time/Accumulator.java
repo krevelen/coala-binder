@@ -42,7 +42,7 @@ import rx.subjects.Subject;
  * @version $Id: 3c1bb7eab4725ffbc8a549da6b73f785a96e3e42 $
  * @author Rick van Krevelen
  */
-public class Accumulator<Q extends Quantity> implements Timed
+public class Accumulator<Q extends Quantity> implements Proactive
 {
 
 	/** */

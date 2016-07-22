@@ -1,5 +1,6 @@
 package io.coala.time;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import io.coala.exception.ExceptionFactory;
@@ -14,18 +15,17 @@ import rx.subjects.Subject;
  * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
  * @author Rick van Krevelen
  */
-public interface Signal<T> extends Timed
+public interface Signal<T> extends Proactive
 {
 
 	/** @return the domain interval as {@link Range} of {@link Instant}s */
-	Range<Instant> getInterval();
+	Range<Instant> domain();
 
 	/** @return the {@link Function} generating the signaled values */
-	Function<Instant, T> getFunction();
+//	Function<Instant, T> getFunction();
 
 	/**
-	 * @return the evaluated result, or {@code null} if not in
-	 *         {@link #getInterval()}
+	 * @return the evaluated result, or {@code null} if not in {@link #domain()}
 	 */
 	T current();
 
@@ -34,8 +34,21 @@ public interface Signal<T> extends Timed
 
 	<U> Signal<U> transform( Function<T, U> transform );
 
+	default Observable<Signal<T>> on( final T target )
+	{
+		Objects.requireNonNull( target );
+		return emitValues().filter( value ->
+		{
+			return value.equals( target );
+		} ).map( v ->
+		{
+			return this;
+		} );
+	}
+
 	/**
-	 * {@link TimeInvariant}
+	 * {@link TimeInvariant} provides a time-invariant {@link Function}
+	 * {@code <T, Instant>} {@link #get(Instant)}
 	 * 
 	 * @param <T>
 	 * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
@@ -43,12 +56,13 @@ public interface Signal<T> extends Timed
 	 */
 	public static class TimeInvariant<T>
 	{
-
 		private T value;
 
-		public TimeInvariant( final T value )
+		public static <T> TimeInvariant<T> of( final T value )
 		{
-			set( value );
+			final TimeInvariant<T> result = new TimeInvariant<T>();
+			result.set( value );
+			return result;
 		}
 
 		public synchronized void set( final T value )
@@ -76,7 +90,7 @@ public interface Signal<T> extends Timed
 			final T constant )
 		{
 			return of( scheduler, Range.infinite(),
-					new TimeInvariant<T>( constant )::get );
+					TimeInvariant.of( constant )::get );
 		}
 
 		public static <T> Simple<T> of( final Scheduler scheduler,
@@ -95,7 +109,7 @@ public interface Signal<T> extends Timed
 
 		private volatile Instant now;
 
-		private volatile T value;
+		private volatile T cache;
 
 		public Simple( final Scheduler scheduler, final Range<Instant> domain,
 			final Function<Instant, T> function )
@@ -129,12 +143,12 @@ public interface Signal<T> extends Timed
 		}
 
 		@Override
-		public Range<Instant> getInterval()
+		public Range<Instant> domain()
 		{
 			return this.domain;
 		}
 
-		@Override
+//		@Override
 		public Function<Instant, T> getFunction()
 		{
 			return this.function;
@@ -146,27 +160,26 @@ public interface Signal<T> extends Timed
 			if( this.now == null || !this.now.equals( now() ) )
 			{
 				this.now = now();
-				if( this.now != null && this.domain.isGreaterThan( this.now ) )
+				if( this.now == null || this.domain.isGreaterThan( this.now ) )
 				{
-					this.value = null;
-				} else if( this.now != null
-						&& this.domain.isLessThan( this.now ) )
+					this.cache = null;
+				} else if( this.domain.isLessThan( this.now ) )
 				{
-					if( this.value == null ) this.values.onCompleted();
-					this.value = null;
+					if( this.cache == null ) this.values.onCompleted();
+					this.cache = null;
 				} else
 				{
 					final T newValue = this.function.apply( this.now );
-					if( (newValue == null && this.value != null)
+					if( (newValue == null && this.cache != null)
 							|| (newValue != null
-									&& !newValue.equals( this.value )) )
+									&& !newValue.equals( this.cache )) )
 					{
-						this.value = newValue;
-						this.values.onNext( this.value );
+						this.cache = newValue;
+						this.values.onNext( this.cache );
 					}
 				}
 			}
-			return this.value;
+			return this.cache;
 		}
 
 		@Override
@@ -178,7 +191,7 @@ public interface Signal<T> extends Timed
 		@Override
 		public <U> Signal<U> transform( Function<T, U> transform )
 		{
-			return of( scheduler(), getInterval(),
+			return of( scheduler(), domain(),
 					partialTransform( getFunction(), transform ) );
 		}
 

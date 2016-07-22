@@ -21,7 +21,7 @@ import io.coala.capability.CapabilityID;
 import io.coala.enterprise.fact.CoordinationFact;
 import io.coala.model.ModelComponent;
 import io.coala.time.SimTime;
-import io.coala.time.Timed;
+import io.coala.time.Proactive;
 import rx.Observable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @Deprecated
 public interface ActorRole<F extends CoordinationFact> extends
-	Capability<BasicCapabilityStatus>, ModelComponent<CapabilityID>, Timed
+	Capability<BasicCapabilityStatus>, ModelComponent<CapabilityID>, Proactive
 {
 
 	/**

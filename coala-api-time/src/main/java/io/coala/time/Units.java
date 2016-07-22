@@ -21,6 +21,11 @@ public class Units
 	public static final String DAYS_ALIAS = "days";
 
 	public static final String DAILY_ALIAS = "daily";
+	
+//	interface InverseArea extends Quantity
+//	{
+//	    Unit<InverseArea> UNIT = SI.METER.pow( -2 );
+//	}
 
 	public static final Unit<?> PER_KM2 = SI.KILOMETER.pow( -2 );
 
@@ -28,7 +33,7 @@ public class Units
 	public static final Unit<Frequency> DAILY = DAYS.inverse()
 			.asType( Frequency.class );
 
-	public static final String ANNUM_ALIAS = "annum";
+	public static final String ANNUM_ALIAS = "yr";
 
 	public static final String ANNUALLY_ALIAS = "annual";
 

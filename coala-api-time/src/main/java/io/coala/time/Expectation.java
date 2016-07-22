@@ -1,7 +1,7 @@
 package io.coala.time;
 
 import io.coala.json.Wrapper;
-import io.coala.time.Timed.FutureSelf;
+import io.coala.time.Proactive.FutureSelf;
 import rx.Subscription;
 
 /**
@@ -13,7 +13,7 @@ import rx.Subscription;
  */
 public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 {
-	Timed self;
+	Proactive self;
 
 	Subscription subscription;
 
@@ -22,7 +22,7 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 
 	}
 
-	public Expectation( final Timed self, final Instant when,
+	public Expectation( final Proactive self, final Instant when,
 		final Subscription subscription )
 	{
 		wrap( when );
@@ -52,7 +52,7 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 		return FutureSelf.of( this.self, unwrap().add( delay ) );
 	}
 
-	public static Expectation of( final Timed self, final Instant when,
+	public static Expectation of( final Proactive self, final Instant when,
 		final Subscription subscription )
 	{
 		return new Expectation( self, when, subscription );

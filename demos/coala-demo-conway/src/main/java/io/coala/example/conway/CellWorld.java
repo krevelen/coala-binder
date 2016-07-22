@@ -30,7 +30,7 @@ import io.coala.capability.embody.GroundingCapability;
 import io.coala.model.ModelID;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
-import io.coala.time.Timed;
+import io.coala.time.Proactive;
 import rx.Observable;
 
 /**
@@ -71,7 +71,7 @@ public interface CellWorld extends GroundingCapability//, Timed<SimTime>
 	Observable<CellState> myStates( Observable<CellState> neighborStates );
 
 	/**
-	 * @return my {@link Timed} {@link CellState}, or {@code null} if not
+	 * @return my {@link Proactive} {@link CellState}, or {@code null} if not
 	 *         initialized
 	 */
 	CellState myState();

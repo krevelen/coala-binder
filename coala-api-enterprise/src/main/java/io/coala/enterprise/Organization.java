@@ -25,7 +25,7 @@ import java.util.Map;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Scheduler;
-import io.coala.time.Timed;
+import io.coala.time.Proactive;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
@@ -36,7 +36,7 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Organization extends Timed,
+public interface Organization extends Proactive,
 	Identified.Ordinal<Organization.ID>
 {
 

@@ -98,6 +98,19 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	}
 
 	@Override
+	public String toString()
+	{
+		return new StringBuilder()
+				.append( getMinimum().isInclusive() ? '[' : '<' )
+				.append( getMinimum().isInfinity() ? "←"
+						: getMinimum().getValue() )
+				.append( ", " )
+				.append( getMaximum().isInfinity() ? "→"
+						: getMaximum().getValue() )
+				.append( getMaximum().isInclusive() ? ']' : '>' ).toString();
+	}
+
+	@Override
 	public int compareTo( final Range<T> that )
 	{
 		final int minComparison = this.getMinimum()

@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.SortedMap;
 
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Converter;
@@ -121,7 +122,23 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	default <E> E nextElement( final List<E> elements )
 	{
 		if( elements == null || elements.isEmpty() ) return null;
-		return elements.get( nextInt( elements.size() ) );
+		if( elements.size() == 1 ) return elements.get( 0 );
+		return nextElement( elements, 0, elements.size() - 1 );
+	}
+
+	/**
+	 * @param elements
+	 * @return
+	 */
+	default <E> E nextElement( final List<E> elements, final int min,
+		final int max )
+	{
+		if( elements == null || elements.isEmpty() ) return null;
+		if( min < 0 || min >= elements.size() || max < min
+				|| max >= elements.size() )
+			throw new IllegalArgumentException();
+		if( elements.size() == 1 ) return elements.get( 0 );
+		return elements.get( 1 + min + nextInt( max ) );
 	}
 
 	/**
@@ -133,15 +150,41 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	 */
 	default <E> E nextElement( final Collection<E> elements )
 	{
+		if( elements instanceof List ) return nextElement( (List<E>) elements );
 		if( elements == null || elements.isEmpty() ) return null;
-		return nextElement( elements, elements.size() );
+		return nextElement( elements, elements.size() - 1 );
+	}
+
+	/**
+	 * NOTE that if the {@link Collection} is not ordered, e.g. a
+	 * {@link HashSet}, then results are not guaranteed reproducible
+	 * 
+	 * @param elements the {@link Collection}
+	 * @return the next random element
+	 */
+	default <E> E nextElement( final Collection<E> elements, final int cutoff )
+	{
+		if( elements instanceof List )
+			return nextElement( (List<E>) elements, 0, cutoff - 1 );
+		if( elements == null || elements.isEmpty() ) return null;
+		return nextElement( (Iterable<E>) elements, cutoff );
+	}
+
+	/**
+	 * @param elements the {@link SortedMap}
+	 * @return the next random element
+	 */
+	default <K, V> Map.Entry<K, V> nextEntry( final SortedMap<K, V> elements )
+	{
+		if( elements == null || elements.isEmpty() ) return null;
+		return nextElement( elements.entrySet(), elements.size() );
 	}
 
 	/**
 	 * NOTE that if the {@link Map} is not ordered, e.g. a {@link HashMap}, then
 	 * results are not guaranteed reproducible
 	 * 
-	 * @param elements the {@link Collection}
+	 * @param elements the {@link Map}
 	 * @return the next random element
 	 */
 	default <K, V> Map.Entry<K, V> nextEntry( final Map<K, V> elements )
@@ -155,14 +198,16 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	 * then results are not guaranteed reproducible
 	 * 
 	 * @param elements the {@link Iterable}
-	 * @param size the n
+	 * @param bound n
 	 * @return the next random element
 	 */
-	default <E> E nextElement( final Iterable<E> elements, final int size )
+	default <E> E nextElement( final Iterable<E> elements, final int bound )
 	{
-		if( elements == null || size < 1 ) return null;
+		if( elements instanceof List )
+			return nextElement( (List<E>) elements, 0, bound - 1 );
+		if( elements == null || bound < 1 ) return null;
 		final Iterator<E> it = elements.iterator();
-		for( int i = 0, n = nextInt( size ); it.hasNext(); i++ )
+		for( int i = 0, n = nextInt( bound ); it.hasNext(); i++ )
 			if( i == n )
 				return it.next();
 			else
