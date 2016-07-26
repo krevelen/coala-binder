@@ -153,6 +153,17 @@ public interface Proactive extends Timed
 		 * @param t arg0
 		 * @return the {@link Expectation} for potential cancellation
 		 */
+		default <E extends Exception> Expectation
+			call( final ThrowingConsumer<Instant, E> call )
+		{
+			return call( Caller.of( call, now() )::run );
+		}
+
+		/**
+		 * @param call the {@link Callable} (method) to call when time comes
+		 * @param t arg0
+		 * @return the {@link Expectation} for potential cancellation
+		 */
 		default <T, E extends Exception> Expectation
 			call( final ThrowingConsumer<T, E> call, final T t )
 		{
