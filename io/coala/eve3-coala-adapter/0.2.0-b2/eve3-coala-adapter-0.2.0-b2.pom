@@ -1,0 +1,154 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>io.coala</groupId>
+		<artifactId>coala</artifactId>
+		<version>0.2.0-b2</version>
+		<relativePath>../..</relativePath>
+	</parent>
+
+	<artifactId>eve3-coala-adapter</artifactId>
+
+	<name>${project.artifactId} ${project.version}</name>
+	<description>
+		Utility and demo code for the Eve3 agent platform
+		$Id: f549a0bbf2d7d0922b91436920459833dc8a5257 $
+	</description>
+	<url>https://eve.almende.com/</url>
+
+	<properties>
+		<!-- <eve.version>3.2.0-SNAPSHOT</eve.version> atomic scheduler/messaging 
+			not released -->
+		<eve.version>3.1.1</eve.version>
+		<!-- <jetty.version>9.3.3.v20150827</jetty.version> causes java.lang.UnsupportedClassVersionError: 
+			org/eclipse/jetty/jndi/InitialContextFactory : Unsupported major.minor version 
+			52.0 -->
+		<jetty.version>9.2.10.v20150310</jetty.version>
+		<jackson.version>2.4.0</jackson.version>
+		<javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+		<guice.version>3.0</guice.version>
+	</properties>
+
+	<repositories>
+		<!-- COALA public Maven repository -->
+		<repository>
+			<name>COALA Public Maven Repository</name>
+			<id>coala-public</id>
+			<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>${javax.servlet-api.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>coala-api-capability</artifactId>
+		</dependency>
+
+		<dependency>
+			<!-- JSON <-> Java object mapping -->
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-joda</artifactId>
+			<version>${jackson.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>joda-time</groupId>
+					<artifactId>joda-time</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<!-- JSON <-> Java object mapping -->
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>javax-websocket-server-impl</artifactId>
+			<version>${jetty.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.almende.eve</groupId>
+			<artifactId>eve-transport-http-jetty</artifactId>
+			<version>${eve.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-maven-plugin</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-databind</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.datatype</groupId>
+					<artifactId>jackson-datatype-joda</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.dataformat</groupId>
+					<artifactId>jackson-dataformat-yaml</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-jdk14</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.almende.eve</groupId>
+			<artifactId>eve-scheduling-persistent</artifactId>
+			<version>${eve.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.almende.eve</groupId>
+			<artifactId>eve-deploy</artifactId>
+			<version>${eve.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>guice3-coala-adapter</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-assistedinject</artifactId>
+			<version>${guice.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+</project>

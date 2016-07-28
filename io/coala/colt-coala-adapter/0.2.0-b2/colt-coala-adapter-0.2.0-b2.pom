@@ -1,0 +1,66 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>io.coala</groupId>
+		<artifactId>coala</artifactId>
+		<version>0.2.0-b2</version>
+	</parent>
+	<artifactId>colt-coala-adapter</artifactId>
+
+	<name>${project.artifactId} ${project.version}</name>
+	<url>http://coala.io/</url>
+	<description>
+		COALA adapter for (parallel) COLT toolkit
+		$Id: 1f6ff860cf0b8015486eaedf7bf8098b983e3d12 $
+	</description>
+
+	<properties>
+		<parallelcolt.version>0.10.0</parallelcolt.version>
+	</properties>
+
+	<repositories>
+		<repository>
+			<name>COALA Public Maven Repository</name>
+			<id>coala-public</id>
+			<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<name>UUID Repository</name>
+			<id>eaio.com</id>
+			<url>http://eaio.com/maven2</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>io.coala</groupId>
+			<artifactId>coala-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sourceforge.parallelcolt</groupId>
+			<artifactId>parallelcolt</artifactId>
+			<version>${parallelcolt.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<!-- Used as unit testing framework, supports test-driven development -->
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
