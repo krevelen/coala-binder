@@ -19,6 +19,7 @@ package io.coala.json;
  * {@link JSONConvertible} tags POJOs that have a JSON representation,
  * {@link #toSL()}
  */
+@Deprecated
 public interface JSONConvertible<THIS extends JSONConvertible<?>>
 {
 

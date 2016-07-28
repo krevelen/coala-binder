@@ -40,6 +40,7 @@ import nl.tudelft.simulation.jstats.streams.StreamInterface;
  * @version $Id: ef2f5743ead6eb81e64b6a19925cad9b9418bb1d $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class AbstractDsolModelComponent<S extends SimulatorInterface, M extends DsolModel<S, M>>
 	extends EventProducer implements DsolModelComponent<S, M>
 {

@@ -15,32 +15,21 @@
  */
 package io.coala.random;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Callable;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javax.inject.Provider;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 
-import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
-import io.coala.log.LogUtil;
 import io.coala.math.FrequencyDistribution;
-import io.coala.math.MeasureUtil;
 import io.coala.math.WeightedValue;
-import io.coala.util.InstanceParser;
 import io.coala.util.Instantiator;
 import rx.functions.Func0;
-import rx.functions.Func1;
 
 /**
  * {@link ProbabilityDistribution} is similar to a {@link javax.inject.Provider}
@@ -51,33 +40,17 @@ import rx.functions.Func1;
  * @version $Id$
  * @author Rick van Krevelen
  */
-@SuppressWarnings( "serial" )
-public abstract class ProbabilityDistribution<T> implements Serializable
+public interface ProbabilityDistribution<T> //extends Serializable
 {
-
-	protected PseudoRandom stream = null;
-
-	protected List<?> params = Collections.emptyList();
-
-	public PseudoRandom getStream()
-	{
-		return this.stream;
-	}
-
-	public List<?> getParams()
-	{
-		return this.params;
-	}
 
 	/**
 	 * @return the next pseudo-random sample
 	 */
-	public abstract T draw();
+	T draw();
 
 	// continuous: https://www.wikiwand.com/en/Probability_density_function
 	// discrete: https://www.wikiwand.com/en/Probability_mass_function
-	// TODO probabilityOf(T value)
-	// TODO cumulativeProbabilityOf(T value)
+	// TODO probabilityOf(T value), cumulativeProbabilityOf(T value)
 
 	/**
 	 * From
@@ -102,35 +75,22 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @param value the constant to be returned on each draw
 	 * @return a degenerate or deterministic {@link ProbabilityDistribution}
 	 */
-	public static <T> ProbabilityDistribution<T>
-		createDeterministic( final T value )
+	static <T> ProbabilityDistribution<T> createDeterministic( final T value )
 	{
-		final ProbabilityDistribution<T> result = new ProbabilityDistribution<T>()
+		return () ->
 		{
-			@Override
-			public T draw()
-			{
-				return value;
-			}
+			return value;
 		};
-		result.params = Collections.singletonList( value );
-		return result;
 	}
 
-	public static ProbabilityDistribution<Boolean>
+	static ProbabilityDistribution<Boolean>
 		createBernoulli( final PseudoRandom rng, final Number probability )
 	{
-		final ProbabilityDistribution<Boolean> result = new ProbabilityDistribution<Boolean>()
+		final double p = probability.doubleValue();
+		return () ->
 		{
-			@Override
-			public Boolean draw()
-			{
-				return rng.nextDouble() < probability.doubleValue();
-			}
+			return rng.nextDouble() < p;
 		};
-		result.stream = rng;
-		result.params = Collections.singletonList( probability );
-		return result;
 	}
 
 	/**
@@ -139,22 +99,20 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @return a decorator {@link ProbabilityDistribution}
 	 * @see https://github.com/orfjackal/retrolambda
 	 */
-	public static <T> ProbabilityDistribution<T>
-		of( final Callable<T> callable )
+	static <T> ProbabilityDistribution<T> of( final Callable<T> callable )
 	{
-		return new ProbabilityDistribution<T>()
+		return () ->
 		{
-			@Override
-			public T draw()
+			try
 			{
-				try
-				{
-					return callable.call();
-				} catch( final Exception e )
-				{
-					throw ExceptionFactory.createUnchecked( e,
-							"Problem drawing new value from {}", callable );
-				}
+				return callable.call();
+			} catch( final RuntimeException e )
+			{
+				throw e;
+			} catch( final Exception e )
+			{
+				throw ExceptionFactory.createUnchecked( e,
+						"Problem drawing new value from {}", callable );
 			}
 		};
 	}
@@ -164,16 +122,11 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @param provider the {@link Provider} providing values
 	 * @return a decorator {@link ProbabilityDistribution}
 	 */
-	public static <T> ProbabilityDistribution<T>
-		of( final Provider<T> provider )
+	static <T> ProbabilityDistribution<T> of( final Provider<T> provider )
 	{
-		return new ProbabilityDistribution<T>()
+		return () ->
 		{
-			@Override
-			public T draw()
-			{
-				return provider.get();
-			}
+			return provider.get();
 		};
 	}
 
@@ -182,28 +135,20 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @param func the {@link Func0} providing values, for rxJava
 	 * @return a decorator {@link ProbabilityDistribution}
 	 */
-	public static <T> ProbabilityDistribution<T> of( final Func0<T> func )
+	static <T> ProbabilityDistribution<T> of( final Supplier<T> func )
 	{
-		return new ProbabilityDistribution<T>()
+		return () ->
 		{
-			@Override
-			public T draw()
-			{
-				return func.call();
-			}
+			return func.get();
 		};
 	}
 
-	public <R> ProbabilityDistribution<R> apply( final Func1<T, R> transform )
+	default <R> ProbabilityDistribution<R>
+		apply( final Function<T, R> transform )
 	{
-		final ProbabilityDistribution<T> self = this;
-		return new ProbabilityDistribution<R>()
+		return () ->
 		{
-			@Override
-			public R draw()
-			{
-				return transform.call( self.draw() );
-			}
+			return transform.apply( this.draw() );
 		};
 	}
 
@@ -216,16 +161,12 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @return a uniform categorical {@link ProbabilityDistribution} of
 	 *         {@link E} values
 	 */
-	public <E extends Enum<E>> ProbabilityDistribution<E>
+	default <E extends Enum<E>> ProbabilityDistribution<E>
 		toEnum( final Class<E> enumType )
 	{
-		return apply( new Func1<T, E>()
+		return apply( n ->
 		{
-			@Override
-			public E call( final T n )
-			{
-				return enumType.getEnumConstants()[((Number) n).intValue()];
-			}
+			return enumType.getEnumConstants()[((Number) n).intValue()];
 		} );
 	}
 
@@ -237,623 +178,41 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * @param valueType the {@link Class} to instantiate
 	 * @return a {@link ProbabilityDistribution} of {@link S} values
 	 */
-	public <S> ProbabilityDistribution<S>
+	default <S> ProbabilityDistribution<S>
 		toInstancesOf( final Class<S> valueType )
 	{
-		return apply( new Func1<T, S>()
+		return apply( arg ->
 		{
-			@Override
-			public S call( final T arg )
-			{
-				return Instantiator.instantiate( valueType, arg );
-			}
+			return Instantiator.instantiate( valueType, arg );
 		} );
 	}
 
 	/**
 	 * @param <Q> the measurement {@link Quantity} to assign
-	 * @param dist the {@link ProbabilityDistribution} to wrap
-	 * @param unit the {@link Unit} of measurement to assign
-	 * @return an {@link ArithmeticDistribution} {@link ProbabilityDistribution}
-	 *         for measure {@link Amount}s from drawn {@link Number}s, with an
+	 * @return an {@link AmountDistribution} {@link ProbabilityDistribution} for
+	 *         measure {@link Amount}s from drawn {@link Number}s, with an
 	 *         attempt to maintain exactness
 	 */
 	@SuppressWarnings( "unchecked" )
-	public <Q extends Quantity> ArithmeticDistribution<Q>
+	default <Q extends Quantity> AmountDistribution<Q> toAmounts()
+	{
+		return AmountDistribution
+				.of( (ProbabilityDistribution<Amount<Q>>) this );
+	}
+
+	/**
+	 * @param <Q> the measurement {@link Quantity} to assign
+	 * @param unit the {@link Unit} of measurement to assign
+	 * @return an {@link AmountDistribution} {@link ProbabilityDistribution} for
+	 *         measure {@link Amount}s from drawn {@link Number}s, with an
+	 *         attempt to maintain exactness
+	 */
+	@SuppressWarnings( "unchecked" )
+	default <Q extends Quantity> AmountDistribution<Q>
 		toAmounts( final Unit<Q> unit )
 	{
-		return ArithmeticDistribution
+		return AmountDistribution
 				.of( (ProbabilityDistribution<? extends Number>) this, unit );
-	}
-
-	/**
-	 * {@link ArithmeticDistribution} is a {@link ProbabilityDistribution} for
-	 * {@link Amount}s of some {@link Quantity}, decorated with arithmetic
-	 * transforms of e.g. {@link Amount#times(double)} etc.
-	 * 
-	 * @param <Q> the type of {@link Quantity} for produced {@link Amount}s
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	public static abstract class ArithmeticDistribution<Q extends Quantity>
-		extends ProbabilityDistribution<Amount<Q>>
-	{
-		public static <Q extends Quantity> ArithmeticDistribution<Q>
-			of( final ProbabilityDistribution<Amount<Q>> dist )
-		{
-			return new ArithmeticDistribution<Q>()
-			{
-				@Override
-				public Amount<Q> draw()
-				{
-					return dist.draw();
-				}
-			};
-		}
-
-		/**
-		 * @param <N> the measurement value {@link Number} type
-		 * @param <Q> the measurement {@link Quantity} to assign
-		 * @param dist the {@link ProbabilityDistribution} to wrap
-		 * @param unit the {@link Unit} of measurement to assign
-		 * @return an {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution} for measure {@link Amount}s
-		 *         from drawn {@link Number}s, with an attempt to maintain
-		 *         exactness
-		 */
-		public static <N extends Number, Q extends Quantity>
-			ArithmeticDistribution<Q>
-			of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
-		{
-			return of( new ProbabilityDistribution<Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> draw()
-				{
-					return MeasureUtil.toAmount( dist.draw(), unit );
-				}
-			} );
-		}
-
-		/**
-		 * @param <N> the type of {@link Number} value
-		 * @param value the constant to be returned on each draw
-		 * @return a degenerate or deterministic {@link ProbabilityDistribution}
-		 */
-		public static <N extends Number, Q extends Quantity>
-			ArithmeticDistribution<Q> of( final N value, final Unit<Q> unit )
-		{
-			final Amount<Q> constant = MeasureUtil.toAmount( value, unit );
-			return of( createDeterministic( constant ) );
-		}
-
-		/**
-		 * @param <R> the new type of {@link Quantity} after transformation
-		 * @param transform a unary {@link Func1} to transform {@link Amount}s
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
-			transform( final Func1<Amount<Q>, Amount<R>> transform )
-		{
-			final ArithmeticDistribution<Q> self = this;
-			return of( new ProbabilityDistribution<Amount<R>>()
-			{
-				@Override
-				public Amount<R> draw()
-				{
-					return transform.call( self.draw() );
-				}
-			} );
-		}
-
-		/**
-		 * @param that the {@link Amount} to be added
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#plus(Amount)
-		 */
-		public ArithmeticDistribution<Q> plus( final Amount<?> that )
-		{
-			return transform( new Func1<Amount<Q>, Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> call( final Amount<Q> t )
-				{
-					return t.plus( that );
-				}
-			} );
-		}
-
-		/**
-		 * @param that the {@link Amount} to be subtracted
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#minus(Amount)
-		 */
-		public ArithmeticDistribution<Q> minus( final Amount<?> that )
-		{
-			return transform( new Func1<Amount<Q>, Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> call( final Amount<Q> t )
-				{
-					return t.minus( that );
-				}
-			} );
-		}
-
-		/**
-		 * @param factor the exact scaling factor
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#times(long)
-		 */
-		public ArithmeticDistribution<Q> times( final long factor )
-		{
-			return transform( new Func1<Amount<Q>, Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> call( final Amount<Q> t )
-				{
-					return t.times( factor );
-				}
-			} );
-		}
-
-		/**
-		 * @param factor the approximate scaling factor
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#times(double)
-		 */
-		public ArithmeticDistribution<Q> times( final double factor )
-		{
-			return transform( new Func1<Amount<Q>, Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> call( final Amount<Q> t )
-				{
-					return t.times( factor );
-				}
-			} );
-		}
-
-		/**
-		 * @param <R> the new type of {@link Quantity} after transformation
-		 * @param factor the measure multiplier {@link Amount}
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#times(Amount)
-		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
-			times( final Amount<?> factor )
-		{
-			return transform( new Func1<Amount<Q>, Amount<R>>()
-			{
-				@SuppressWarnings( "unchecked" )
-				@Override
-				public Amount<R> call( final Amount<Q> t )
-				{
-					return (Amount<R>) t.times( factor );
-				}
-			} );
-		}
-
-		/**
-		 * @param divisor the exact divisor
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#divide(long)
-		 */
-		public ArithmeticDistribution<Q> divide( final long divisor )
-		{
-			return transform( new Func1<Amount<Q>, Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> call( final Amount<Q> t )
-				{
-					return t.divide( divisor );
-				}
-			} );
-		}
-
-		/**
-		 * @param divisor the approximate divisor
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#divide(double)
-		 */
-		public ArithmeticDistribution<Q> divide( final double divisor )
-		{
-			return transform( new Func1<Amount<Q>, Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> call( final Amount<Q> t )
-				{
-					return t.divide( divisor );
-				}
-			} );
-		}
-
-		/**
-		 * @param <R> the new type of {@link Quantity} after transformation
-		 * @param divisor the divisor {@link Amount}
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#divide(Amount)
-		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
-			divide( final Amount<?> divisor )
-		{
-			return transform( new Func1<Amount<Q>, Amount<R>>()
-			{
-				@SuppressWarnings( "unchecked" )
-				@Override
-				public Amount<R> call( final Amount<Q> t )
-				{
-					return (Amount<R>) t.divide( divisor );
-				}
-			} );
-		}
-
-		/**
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#inverse()
-		 */
-		public <R extends Quantity> ArithmeticDistribution<R> inverse()
-		{
-			return transform( new Func1<Amount<Q>, Amount<R>>()
-			{
-				@SuppressWarnings( "unchecked" )
-				@Override
-				public Amount<R> call( final Amount<Q> t )
-				{
-					return (Amount<R>) t.inverse();
-				}
-			} );
-		}
-
-		/**
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#abs()
-		 */
-		public ArithmeticDistribution<Q> abs()
-		{
-			return transform( new Func1<Amount<Q>, Amount<Q>>()
-			{
-				@Override
-				public Amount<Q> call( final Amount<Q> t )
-				{
-					return t.abs();
-				}
-			} );
-		}
-
-		/**
-		 * @param <R> the new type of {@link Quantity} after transformation
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#sqrt()
-		 */
-		public <R extends Quantity> ArithmeticDistribution<R> sqrt()
-		{
-			return transform( new Func1<Amount<Q>, Amount<R>>()
-			{
-				@SuppressWarnings( "unchecked" )
-				@Override
-				public Amount<R> call( final Amount<Q> t )
-				{
-					return (Amount<R>) t.sqrt();
-				}
-			} );
-		}
-
-		/**
-		 * @param <R> the new type of {@link Quantity} after transformation
-		 * @param n the root's order (n != 0)
-		 * @return a chained {@link ArithmeticDistribution}
-		 *         {@link ProbabilityDistribution}
-		 * @see Amount#root(int)
-		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
-			root( final int n )
-		{
-			return transform( new Func1<Amount<Q>, Amount<R>>()
-			{
-				@SuppressWarnings( "unchecked" )
-				@Override
-				public Amount<R> call( final Amount<Q> t )
-				{
-					return (Amount<R>) t.root( n );
-				}
-			} );
-		}
-
-		/**
-		 * @param <R> the new type of {@link Quantity} after transformation
-		 * @param exp the exponent
-		 * @return <code>this<sup>exp</sup></code>
-		 * @see Amount#pow(int)
-		 */
-		public <R extends Quantity> ArithmeticDistribution<R>
-			pow( final int exp )
-		{
-			return transform( new Func1<Amount<Q>, Amount<R>>()
-			{
-				@SuppressWarnings( "unchecked" )
-				@Override
-				public Amount<R> call( final Amount<Q> t )
-				{
-					return (Amount<R>) t.pow( exp );
-				}
-			} );
-		}
-	}
-
-	/**
-	 * {@link Parser} generates {@link ProbabilityDistribution}s of specific
-	 * shapes or probability mass (discrete) or density (continuous) functions
-	 */
-	public static class Parser
-	{
-		/** */
-		private static final Logger LOG = LogUtil.getLogger( Parser.class );
-
-		/**
-		 * the PARAM_SEPARATORS exclude comma character <code>','</code> due to
-		 * its common use as separator of decimals (e.g. <code>XX,X</code>) or
-		 * of thousands (e.g. <code>n,nnn,nnn.nn</code>)
-		 */
-		public static final String PARAM_SEPARATORS = "[;]";
-
-		public static final String WEIGHT_SEPARATORS = "[:]";
-
-		public static final String DIST_GROUP = "dist";
-
-		public static final String PARAMS_GROUP = "params";
-
-		/**
-		 * matches string representations like:
-		 * <code>dist(arg1; arg2; &hellip;)</code> or
-		 * <code>dist(v1:w1; v2:w2; &hellip;)</code>
-		 */
-		public static final Pattern DISTRIBUTION_FORMAT = Pattern
-				.compile( "^(?<" + DIST_GROUP + ">[^\\(]+)\\((?<" + PARAMS_GROUP
-						+ ">[^)]*)\\)$" );
-
-		private final Factory factory;
-
-		public Parser( final Factory factory )
-		{
-			this.factory = factory;
-		}
-
-		/** @return a {@link Factory} of {@link ProbabilityDistribution}s */
-		public Factory getFactory()
-		{
-			return this.factory;
-		}
-
-		/**
-		 * @param <P> the type of argument to parse
-		 * @param dist the {@link String} representation
-		 * @param parser the {@link Parser}
-		 * @param argType the concrete argument {@link Class}
-		 * @return a {@link ProbabilityDistribution} of {@link T} values
-		 * @throws Exception
-		 */
-		public <T, P> ProbabilityDistribution<T> parse( final String dist,
-			final Class<P> argType ) throws Exception
-		{
-			final Matcher m = DISTRIBUTION_FORMAT.matcher( dist.trim() );
-			if( !m.find() ) throw ExceptionFactory.createChecked(
-					"Problem parsing probability distribution: {}", dist );
-			final List<WeightedValue<P, ?>> params = new ArrayList<>();
-			for( String valuePair : m.group( PARAMS_GROUP )
-					.split( PARAM_SEPARATORS ) )
-			{
-				if( valuePair.trim().isEmpty() ) continue; // empty parentheses
-				final String[] valueWeights = valuePair
-						.split( WEIGHT_SEPARATORS );
-				if( valueWeights.length == 1 )
-				{
-					params.add( WeightedValue.of( InstanceParser.of( argType )
-							.parseOrTrimmed( valuePair ), 1 ) );
-				} else
-					params.add( WeightedValue.of(
-							InstanceParser.of( argType )
-									.parseOrTrimmed( valueWeights[0] ),
-							new BigDecimal( valueWeights[1] ) ) );
-			}
-			final Integer one = Integer.valueOf( 1 );
-			if( params.isEmpty() && argType.isEnum() )
-				for( P constant : argType.getEnumConstants() )
-				params.add( WeightedValue.of( constant, one ) );
-			return parse( m.group( DIST_GROUP ), params );
-		}
-
-		/**
-		 * @param <T> the type of value in the {@link ProbabilityDistribution}
-		 * @param <V> the type of arguments
-		 * @param name the symbol of the {@link ProbabilityDistribution}
-		 * @param args the arguments as a {@link List} of {@link WeightedValue}
-		 *            pairs with at least a value of type {@link T} and possibly
-		 *            some numeric weight (as necessary for e.g. }
-		 * @return a {@link ProbabilityDistribution}
-		 */
-		@SuppressWarnings( "unchecked" )
-		public <T, V> ProbabilityDistribution<T> parse( final String label,
-			final List<WeightedValue<V, ?>> args )
-		{
-			if( args.isEmpty() ) throw ExceptionFactory.createUnchecked(
-					"Missing distribution parameters: {}", label );
-
-			if( getFactory() == null )
-			{
-				final T value = (T) args.get( 0 ).getValue();
-				LOG.warn( "No {} set, creating deterministic {}: {}",
-						Factory.class.getSimpleName(),
-						value.getClass().getSimpleName(), value );
-				return createDeterministic( value );
-			}
-
-			switch( label.toLowerCase( Locale.ROOT ) )
-			{
-			case "const":
-			case "constant":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createDeterministic( args.get( 0 ).getValue() );
-
-			case "enum":
-			case "enumerated":
-			case "categorical":
-			case "multinoulli":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createCategorical( args );
-
-			case "geom":
-			case "geometric":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createGeometric( (Number) args.get( 0 ).getValue() );
-
-			case "hypergeom":
-			case "hypergeometric":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createHypergeometric(
-								(Number) args.get( 0 ).getValue(),
-								(Number) args.get( 1 ).getValue(),
-								(Number) args.get( 2 ).getValue() );
-
-			case "pascal":
-				return (ProbabilityDistribution<T>) getFactory().createPascal(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "poisson":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createPoisson( (Number) args.get( 0 ).getValue() );
-
-			case "zipf":
-				return (ProbabilityDistribution<T>) getFactory().createZipf(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "beta":
-				return (ProbabilityDistribution<T>) getFactory().createBeta(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "cauchy":
-			case "cauchy-lorentz":
-			case "lorentz":
-			case "lorentzian":
-			case "breit-wigner":
-				return (ProbabilityDistribution<T>) getFactory().createCauchy(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "chi":
-			case "chisquare":
-			case "chisquared":
-			case "chi-square":
-			case "chi-squared":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createChiSquared( (Number) args.get( 0 ).getValue() );
-
-			case "exp":
-			case "exponent":
-			case "exponential":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createExponential( (Number) args.get( 0 ).getValue() );
-
-			case "pearson6":
-			case "beta-prime":
-			case "inverted-beta":
-			case "f":
-				return (ProbabilityDistribution<T>) getFactory().createF(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "pearson3":
-			case "erlang": // where arg1 is an integer)
-			case "gamma":
-				return (ProbabilityDistribution<T>) getFactory().createGamma(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "levy":
-				return (ProbabilityDistribution<T>) getFactory().createLevy(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "lognormal":
-			case "log-normal":
-			case "gibrat":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createLogNormal( (Number) args.get( 0 ).getValue(),
-								(Number) args.get( 1 ).getValue() );
-
-			case "gauss":
-			case "gaussian":
-			case "normal":
-				return (ProbabilityDistribution<T>) getFactory().createNormal(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "pareto":
-			case "pareto1":
-				return (ProbabilityDistribution<T>) getFactory().createPareto(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-
-			case "students-t":
-			case "t":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createT( (Number) args.get( 0 ).getValue() );
-
-			case "tria":
-			case "triangular":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createTriangular( (Number) args.get( 0 ).getValue(),
-								(Number) args.get( 1 ).getValue(),
-								(Number) args.get( 2 ).getValue() );
-
-			case "uniform-discrete":
-			case "uniform-integer":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createUniformDiscrete(
-								(Number) args.get( 0 ).getValue(),
-								(Number) args.get( 1 ).getValue() );
-
-			case "uniform":
-			case "uniform-real":
-			case "uniform-continuous":
-				return (ProbabilityDistribution<T>) getFactory()
-						.createUniformContinuous(
-								(Number) args.get( 0 ).getValue(),
-								(Number) args.get( 1 ).getValue() );
-
-			case "uniform-enum":
-			case "uniform-enumerated":
-			case "uniform-categorical":
-				final List<T> values = new ArrayList<>();
-				for( WeightedValue<V, ?> pair : args )
-					values.add( (T) pair.getValue() );
-				return (ProbabilityDistribution<T>) getFactory()
-						.createUniformCategorical( values.toArray() );
-
-			case "frechet":
-			case "weibull":
-				return (ProbabilityDistribution<T>) getFactory().createWeibull(
-						(Number) args.get( 0 ).getValue(),
-						(Number) args.get( 1 ).getValue() );
-			}
-			throw ExceptionFactory.createUnchecked(
-					"Unknown distribution symbol: {}", label );
-		}
 	}
 
 	/**
@@ -862,11 +221,11 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 	 * <a href="https://www.wikiwand.com/en/List_of_probability_distributions">
 	 * Wikipedia</a>
 	 */
-	public static interface Factory
+	interface Factory
 	{
 
 		/**
-		 * @return the {@link RandomNumberStream} used in creating
+		 * @return the {@link PseudoRandom} used in creating
 		 *         {@link ProbabilityDistribution}s
 		 */
 		PseudoRandom getStream();
@@ -877,6 +236,12 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 * @return a degenerate or deterministic {@link ProbabilityDistribution}
 		 */
 		<T> ProbabilityDistribution<T> createDeterministic( T value );
+
+		/**
+		 * @param p
+		 * @return a binomial distribution with n=1
+		 */
+		ProbabilityDistribution<Boolean> createBernoulli( Number p );
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -893,7 +258,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		ProbabilityDistribution<Long> createBinomial( Number trials, Number p );
 
 		/**
-		 * multinoulli
+		 * &ldquo;Multi-noulli&rdquo;
 		 * 
 		 * <img alt="Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/2D-simplex.svg/440px-2D-simplex.svg.png"/>
@@ -907,14 +272,8 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 		 *      "https://www.wolframalpha.com/input/?i=bernoulli+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		<T, WV extends WeightedValue<T, ?>> ProbabilityDistribution<T>
-			createCategorical( List<WV> probabilities );
-
-		/**
-		 * @param p
-		 * @return
-		 */
-		ProbabilityDistribution<Boolean> createBernoulli( Number p );
+		<T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
+			createCategorical( Iterable<WV> probabilities );
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -1267,7 +626,7 @@ public abstract class ProbabilityDistribution<T> implements Serializable
 
 		Factory getFactory();
 
-		<Q extends Quantity> ArithmeticDistribution<Q> fitNormal(
+		<Q extends Quantity> AmountDistribution<Q> fitNormal(
 			FrequencyDistribution.Interval<Q, ?> values, Unit<Q> unit );
 
 		// wavelets, e.g.https://github.com/cscheiblich/JWave  => pdf?

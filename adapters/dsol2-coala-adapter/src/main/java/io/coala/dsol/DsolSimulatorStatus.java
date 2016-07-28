@@ -15,14 +15,13 @@
  */
 package io.coala.dsol;
 
-import io.coala.capability.plan.ClockStatus;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventType;
 
 /**
  * {@link DsolSimulatorStatus}
  */
-public enum DsolSimulatorStatus implements ClockStatus
+public enum DsolSimulatorStatus //implements ClockStatus
 {
 	/** constructed */
 	CREATED,
@@ -71,17 +70,17 @@ public enum DsolSimulatorStatus implements ClockStatus
 				"Unknown event type: " + eventType );
 	}
 
-	/** @see ClockStatus#isRunning() */
-	@Override
-	public boolean isRunning()
-	{
-		return this == STARTED;
-	}
-
-	@Override
-	public boolean isFinished()
-	{
-		return this == FINISHED || this == FAILED;
-	}
+//	/** @see ClockStatus#isRunning() */
+//	@Override
+//	public boolean isRunning()
+//	{
+//		return this == STARTED;
+//	}
+//
+//	@Override
+//	public boolean isFinished()
+//	{
+//		return this == FINISHED || this == FAILED;
+//	}
 
 }

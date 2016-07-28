@@ -37,6 +37,7 @@ import io.coala.util.Util;
  * @version $Id: 50bd7f4b3ac22839bfca867cec8e97edd1e904da $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class GuiceUtil implements Util
 {
 

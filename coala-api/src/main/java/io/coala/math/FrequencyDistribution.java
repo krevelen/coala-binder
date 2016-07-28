@@ -31,33 +31,73 @@ import io.coala.util.Compare;
 public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, THIS>>
 {
 
+	Map<T, Amount<Dimensionless>> getFrequencies();
+
 	Amount<Dimensionless> getSumFrequency();
 
 	T getMode();
 
-	Iterable<T> uniqueValues();
-
-	Map<T, Amount<Dimensionless>> getFrequencies();
-
-	Amount<Dimensionless> frequencyOf( T phenomenon );
-
-	Amount<Dimensionless> proportionOf( T phenomenon,
-		Unit<Dimensionless> unit );
-
-	Map<T, Amount<Dimensionless>> toProportions( Unit<Dimensionless> unit );
-
-	THIS add( T phenomenon, long count );
-
 	THIS add( T phenomenon, Amount<Dimensionless> count );
 
-	THIS add( T phenomenon );
+	default THIS add( final T phenomenon, final long count )
+	{
+		return add( phenomenon, Amount.valueOf( count, Unit.ONE ) );
+	}
+
+	default THIS add( final T phenomenon )
+	{
+		return add( phenomenon, Amount.ONE );
+	}
 
 	@SuppressWarnings( "unchecked" )
-	THIS add( T... phenomena );
+	default THIS add( final T... phenomena )
+	{
+		for( T phenomenon : phenomena )
+			add( phenomenon );
+		return (THIS) this;
+	}
 
-	THIS add( Iterable<T> phenomena );
+	@SuppressWarnings( "unchecked" )
+	default THIS add( final Iterable<T> phenomena )
+	{
+		for( T phenomenon : phenomena )
+			add( phenomenon );
+		return (THIS) this;
+	}
 
-	THIS add( FrequencyDistribution<T, ?> phenomena );
+	@SuppressWarnings( "unchecked" )
+	default THIS add( final FrequencyDistribution<T, ?> frequencies )
+	{
+		for( Entry<T, Amount<Dimensionless>> entry : frequencies
+				.getFrequencies().entrySet() )
+			add( entry.getKey(), entry.getValue() );
+		return (THIS) this;
+	}
+
+	default Iterable<T> uniqueValues()
+	{
+		return getFrequencies().keySet();
+	}
+
+	default Amount<Dimensionless> frequencyOf( final T phenomenon )
+	{
+		return getFrequencies().get( phenomenon );
+	}
+
+	default Amount<Dimensionless> proportionOf( final T phenomenon,
+		final Unit<Dimensionless> unit )
+	{
+		return frequencyOf( phenomenon ).divide( getSumFrequency() ).to( unit );
+	}
+
+	default Map<T, Amount<Dimensionless>>
+		toProportions( final Unit<Dimensionless> unit )
+	{
+		final Map<T, Amount<Dimensionless>> result = new HashMap<>();
+		for( T value : uniqueValues() )
+			result.put( value, proportionOf( value, unit ) );
+		return result;
+	}
 
 	/**
 	 * {@link Ordinal}-type {@link FrequencyDistribution} counts
@@ -112,7 +152,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		extends Ordinal<Amount<Q>, THIS>
 	{
 
-		NavigableMap<Amount<Q>, Bin<Q>> getBins();
+		NavigableMap<Amount<Q>, Bin<Amount<Q>>> getBins();
 
 		Amount<Q> getMean();
 
@@ -135,48 +175,6 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		Amount<Q> getSum();
 
-	}
-
-	/**
-	 * {@link Bin}
-	 * 
-	 * @param <Q> the {@link Quantity} of extreme {@link Amount} values
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	class Bin<Q extends Quantity> extends Range<Amount<Q>>
-		implements Comparable<Bin<Q>>
-	{
-		private final Amount<Q> kernel;
-
-		public Bin( final Extreme<Amount<Q>> minimum,
-			final Extreme<Amount<Q>> maximum )
-		{
-			super( minimum, maximum );
-			this.kernel = minimum.isInfinity()
-					? (maximum.isInfinity() ? null : maximum.getValue())
-					: maximum.isInfinity() ? minimum.getValue()
-							: minimum.getValue().plus( maximum.getValue() )
-									.divide( 2 );
-		}
-
-		@Override
-		public int compareTo( final Bin<Q> o )
-		{
-			return getKernel().compareTo( o.getKernel() );
-		}
-
-		public Amount<Q> getKernel()
-		{
-			return this.kernel;
-		}
-
-		public static <Q extends Quantity> Bin<Q> of( final Amount<Q> minIncl,
-			final Amount<Q> maxExcl )
-		{
-			return new Bin<Q>( Extreme.lower( minIncl, minIncl != null ),
-					Extreme.upper( maxExcl, false ) );
-		}
 	}
 
 	/**
@@ -211,12 +209,11 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 			this.frequencies = frequencies;
 
 			// initialize mode
-			for( Entry<T, Amount<Dimensionless>> entry : frequencies
-					.entrySet() )
+			frequencies.forEach( ( key, value ) ->
 			{
-				updateMode( entry.getKey(), entry.getValue() );
-				updateSum( entry.getValue() );
-			}
+				updateMode( key, value );
+				updateSum( value );
+			} );
 		}
 
 		@Override
@@ -235,36 +232,6 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		public Map<T, Amount<Dimensionless>> getFrequencies()
 		{
 			return this.frequencies;
-		}
-
-		@Override
-		public Amount<Dimensionless> frequencyOf( final T phenomenon )
-		{
-			return getFrequencies().get( phenomenon );
-		}
-
-		@Override
-		public Amount<Dimensionless> proportionOf( final T phenomenon,
-			final Unit<Dimensionless> unit )
-		{
-			return frequencyOf( phenomenon ).divide( getSumFrequency() )
-					.to( unit );
-		}
-
-		@Override
-		public Map<T, Amount<Dimensionless>>
-			toProportions( final Unit<Dimensionless> unit )
-		{
-			final Map<T, Amount<Dimensionless>> result = new HashMap<>();
-			for( T value : uniqueValues() )
-				result.put( value, proportionOf( value, unit ) );
-			return result;
-		}
-
-		@Override
-		public Iterable<T> uniqueValues()
-		{
-			return getFrequencies().keySet();
 		}
 
 		protected void updateMode( final T phenomenon,
@@ -286,7 +253,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		{
 			synchronized( getFrequencies() )
 			{
-				this.frequencies.put( phenomenon, frequency );
+				getFrequencies().put( phenomenon, frequency );
 				updateMode( phenomenon, frequency );
 				updateSum( delta );
 			}
@@ -301,50 +268,13 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 						.createUnchecked( "Can't add count {} (< 0) of {}",
 								count, phenomenon );
 
-				final Amount<Dimensionless> oldFreq = this.frequencies
+				final Amount<Dimensionless> oldFreq = getFrequencies()
 						.get( phenomenon );
 				final Amount<Dimensionless> newFreq = oldFreq == null ? count
 						: count.plus( oldFreq );
 				put( phenomenon, newFreq, count );
 				return (THIS) this;
 			}
-		}
-
-		@Override
-		public THIS add( final T phenomenon, final long count )
-		{
-			return add( phenomenon, Amount.valueOf( count, Unit.ONE ) );
-		}
-
-		@Override
-		public THIS add( final T phenomenon )
-		{
-			return add( phenomenon, Amount.ONE );
-		}
-
-		@Override
-		public THIS add( final T... phenomena )
-		{
-			for( T phenomenon : phenomena )
-				add( phenomenon );
-			return (THIS) this;
-		}
-
-		@Override
-		public THIS add( final Iterable<T> phenomena )
-		{
-			for( T phenomenon : phenomena )
-				add( phenomenon );
-			return (THIS) this;
-		}
-
-		@Override
-		public THIS add( final FrequencyDistribution<T, ?> frequencies )
-		{
-			for( Entry<T, Amount<Dimensionless>> entry : frequencies
-					.getFrequencies().entrySet() )
-				add( entry.getKey(), entry.getValue() );
-			return (THIS) this;
 		}
 
 		public static <T, THIS extends Simple<T, THIS>> Simple<T, ?>
@@ -558,7 +488,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		extends SimpleOrdinal<Amount<Q>, THIS> implements Interval<Q, THIS>
 	{
 
-		private NavigableMap<Amount<Q>, Bin<Q>> bins;
+		private NavigableMap<Amount<Q>, Bin<Amount<Q>>> bins;
 
 		private Amount<Q> median;
 
@@ -595,11 +525,12 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 			return prev.getKey();
 		}
 
-		protected Bin<Q> resolveBin( final Amount<Q> amount )
+		protected Bin<Amount<Q>> resolveBin( final Amount<Q> amount )
 		{
 			// FIXME initialize and resolve bins, incl infinite extremes?
 
-			final Entry<?, Bin<Q>> floor = getBins().floorEntry( amount );
+			final Entry<?, Bin<Amount<Q>>> floor = getBins()
+					.floorEntry( amount );
 //			Objects.requireNonNull( floor, "Amount out of range: " + amount );
 			if( floor != null ) return floor.getValue();
 //			final Entry<?, Bin<Q>> ceil = getBins().ceilingEntry( amount );
@@ -615,7 +546,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		{
 			synchronized( getFrequencies() )
 			{
-				final Bin<Q> bin = resolveBin( value );
+				final Bin<Amount<Q>> bin = resolveBin( value );
 				super.add( bin.getKernel(), count );
 				this.sum = this.sum.plus( value.times( count ) );
 				this.mean = this.sum.divide( getSumFrequency() )
@@ -636,7 +567,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public NavigableMap<Amount<Q>, Bin<Q>> getBins()
+		public NavigableMap<Amount<Q>, Bin<Amount<Q>>> getBins()
 		{
 			return this.bins;
 		}

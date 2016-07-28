@@ -25,6 +25,7 @@ import io.coala.capability.CapabilityFactory;
  * environment or scenario in order to connect sensors (via publish-subscribe
  * pattern) and actuators/effectors
  */
+@Deprecated
 public interface GroundingCapability extends Capability<BasicCapabilityStatus>
 {
 

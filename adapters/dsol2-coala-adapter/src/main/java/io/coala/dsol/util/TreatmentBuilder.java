@@ -41,6 +41,7 @@ import nl.tudelft.simulation.dsol.experiment.Treatment;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
+@Deprecated
 public class TreatmentBuilder extends Treatment
 {
 

@@ -29,6 +29,7 @@ import io.coala.model.ModelComponent;
  * 
  * @param <T>
  */
+@Deprecated
 class JULMembersInjector<T> implements MembersInjector<T>
 {
 	/** */

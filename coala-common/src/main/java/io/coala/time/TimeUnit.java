@@ -20,6 +20,7 @@ import io.coala.exception.ExceptionFactory;
 /**
  * {@link TimeUnit}
  */
+@Deprecated
 public enum TimeUnit
 {
 	/** */
@@ -82,7 +83,7 @@ public enum TimeUnit
 	 * @param unit
 	 * @return
 	 */
-	public Number convertFrom( final Instant<?> fromInstant )
+	public Number convertFrom( final OldInstant<?> fromInstant )
 	{
 		return convertFrom( fromInstant.getValue(), fromInstant.getUnit() );
 	}

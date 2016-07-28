@@ -19,7 +19,7 @@ import java.io.Serializable;
 
 import io.coala.agent.AgentID;
 import io.coala.name.Identifiable;
-import io.coala.time.Instant;
+import io.coala.time.AbstractInstant;
 
 /**
  * {@link ModelComponent}
@@ -40,7 +40,7 @@ public interface ModelComponent<ID extends ModelComponentID<?>>
 	/**
 	 * @return
 	 */
-	Instant<?> getTime();
+	AbstractInstant<?> getTime();
 
 	/**
 	 * {@link Builder}

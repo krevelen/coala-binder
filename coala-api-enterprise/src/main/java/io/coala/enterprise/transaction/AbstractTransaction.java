@@ -21,7 +21,6 @@ import io.coala.agent.AgentID;
 import io.coala.bind.Binder;
 import io.coala.capability.AbstractCapability;
 import io.coala.capability.CapabilityID;
-import io.coala.capability.plan.TimingCapability;
 import io.coala.enterprise.fact.CoordinationFact;
 import io.coala.enterprise.service.FactPersisterService;
 import io.coala.time.SimTime;
@@ -35,6 +34,7 @@ import rx.Observable;
  * @param <F> the (super)type of {@link CoordinationFact}
  * @param <THIS> the concrete type of {@link AbstractTransaction}
  */
+@Deprecated
 public class AbstractTransaction<F extends CoordinationFact, THIS extends AbstractTransaction<F, THIS>>
 	extends AbstractCapability<CapabilityID> implements Transaction<F>
 {
@@ -73,7 +73,7 @@ public class AbstractTransaction<F extends CoordinationFact, THIS extends Abstra
 	@Override
 	public SimTime getTime()
 	{
-		return (SimTime) getBinder().inject( TimingCapability.class ).getTime();
+		return (SimTime) null;
 	}
 
 }

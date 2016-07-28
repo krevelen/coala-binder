@@ -43,6 +43,7 @@ import rx.subjects.Subject;
  * @version $Id: e4b0c8b2f193027454030f4c994a666b6713110c $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class GuiceBinderFactory implements BinderFactory
 {
 

@@ -28,6 +28,7 @@ import rx.Observer;
  * 
  * @version $Id$
  */
+@Deprecated
 public interface SendingCapability extends Capability<BasicCapabilityStatus>
 {
 

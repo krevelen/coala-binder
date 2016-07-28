@@ -38,6 +38,7 @@ import rx.schedulers.Schedulers;
  * {@link BasicCreatingCapability} generates some fake wrapper/container agent
  * life cycle behavior
  */
+@Deprecated
 public class BasicCreatingCapability extends BasicCapability
 	implements CreatingCapability
 {

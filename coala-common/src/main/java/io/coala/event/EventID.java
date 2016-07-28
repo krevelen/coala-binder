@@ -27,6 +27,7 @@ import io.coala.model.ModelID;
  * 
  * @param <T> the {@link Serializable} and {@link Comparable} value type
  */
+@Deprecated
 public class EventID<T extends Serializable & Comparable<T>>
 	extends ModelComponentID<T>
 {

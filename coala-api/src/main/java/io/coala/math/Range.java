@@ -1,11 +1,12 @@
 package io.coala.math;
 
+import java.util.Objects;
+
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.util.Compare;
 import io.coala.util.Comparison;
 
@@ -16,22 +17,26 @@ import io.coala.util.Comparison;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class Range<T extends Comparable<? super T>>
+public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 {
 
 	private Extreme<T> maximum;
 
 	private Extreme<T> minimum;
 
+	protected Range()
+	{
+
+	}
+
 	public Range( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
-		if( minimum == null || maximum == null
-				|| maximum.compareTo( minimum ) < 0 )
-			throw ExceptionFactory.createUnchecked(
-					"minimum {} greater than maximum {}", minimum, maximum );
+		// sanity check
+		Objects.requireNonNull( minimum );
+		Objects.requireNonNull( maximum );
 
-		this.minimum = minimum;
-		this.maximum = maximum;
+		this.minimum = Compare.min( minimum, maximum );
+		this.maximum = Compare.max( minimum, maximum );
 	}
 
 	/** @return the minimum value, or {@code null} for (negative) infinity */
@@ -53,12 +58,10 @@ public class Range<T extends Comparable<? super T>>
 	 */
 	public boolean isGreaterThan( final T value )
 	{
-		if( this.minimum.isNegativeInfinity() ) return false;
-		return getMinimum().isInclusive()
-				? Comparison.of( value,
-						getMinimum().getValue() ) == Comparison.LESSER
-				: Comparison.of( value,
-						getMinimum().getValue() ) != Comparison.GREATER;
+		final T min = getMinimum().getValue();
+		if( min == null ) return false;
+		return getMinimum().isInclusive() ? Comparison.lt( value, min )
+				: Comparison.le( value, min );
 	}
 
 	/**
@@ -68,12 +71,10 @@ public class Range<T extends Comparable<? super T>>
 	 */
 	public boolean isLessThan( final T value )
 	{
-		if( getMaximum() == null ) return false;
-		return getMaximum().isInclusive()
-				? Comparison.of( value,
-						getMaximum().getValue() ) == Comparison.GREATER
-				: Comparison.of( value,
-						getMaximum().getValue() ) != Comparison.LESSER;
+		final T max = getMaximum().getValue();
+		if( max == null ) return false;
+		return getMaximum().isInclusive() ? Comparison.gt( value, max )
+				: Comparison.ge( value, max );
 	}
 
 	/**
@@ -96,7 +97,29 @@ public class Range<T extends Comparable<? super T>>
 				Compare.min( this.getMaximum(), that.getMaximum() ) );
 	}
 
-	public static <T extends Comparable<? super T>> Range<T> infinite()
+	@Override
+	public String toString()
+	{
+		return new StringBuilder()
+				.append( getMinimum().isInclusive() ? '[' : '<' )
+				.append( getMinimum().isInfinity() ? "←"
+						: getMinimum().getValue() )
+				.append( ", " )
+				.append( getMaximum().isInfinity() ? "→"
+						: getMaximum().getValue() )
+				.append( getMaximum().isInclusive() ? ']' : '>' ).toString();
+	}
+
+	@Override
+	public int compareTo( final Range<T> that )
+	{
+		final int minComparison = this.getMinimum()
+				.compareTo( that.getMinimum() );
+		return minComparison != 0 ? minComparison
+				: this.getMaximum().compareTo( that.getMaximum() );
+	}
+
+	public static <T extends Comparable<?>> Range<T> infinite()
 	{
 		return of( null, null, null, null );
 	}
@@ -105,7 +128,7 @@ public class Range<T extends Comparable<? super T>>
 	 * @param minimum
 	 * @return a {@link Range} representing <code>[x,&rarr;)</code>
 	 */
-	public static <T extends Comparable<? super T>> Range<T>
+	public static <T extends Comparable<?>> Range<T>
 		upFromAndIncluding( final T minimum )
 	{
 		return upFrom( minimum, true );
@@ -118,8 +141,8 @@ public class Range<T extends Comparable<? super T>>
 	 *         <code>(x,&rarr;)</code>
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <T extends Comparable<? super T>> Range<T>
-		upFrom( final T minimum, final Boolean minimumInclusive )
+	public static <T extends Comparable<?>> Range<T> upFrom( final T minimum,
+		final Boolean minimumInclusive )
 	{
 		return of( Extreme.lower( minimum, minimumInclusive ),
 				(Extreme<T>) Extreme.positiveInfinity() );
@@ -129,7 +152,7 @@ public class Range<T extends Comparable<? super T>>
 	 * @param maximum
 	 * @return a {@link Range} representing <code>(&larr;,x]</code>
 	 */
-	public static <T extends Comparable<? super T>> Range<T>
+	public static <T extends Comparable<?>> Range<T>
 		upToAndIncluding( final T maximum )
 	{
 		return upFrom( maximum, true );
@@ -142,8 +165,8 @@ public class Range<T extends Comparable<? super T>>
 	 *         <code>(&larr;,x)</code>
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <T extends Comparable<? super T>> Range<T>
-		upTo( final T maximum, final Boolean maximumInclusive )
+	public static <T extends Comparable<?>> Range<T> upTo( final T maximum,
+		final Boolean maximumInclusive )
 	{
 		return of( (Extreme<T>) Extreme.negativeInfinity(),
 				Extreme.upper( maximum, maximumInclusive ) );
@@ -153,7 +176,7 @@ public class Range<T extends Comparable<? super T>>
 	 * @param value the value (inclusive) or {@code null} for infinite range
 	 * @return the {@link Range} instance
 	 */
-	public static <T extends Comparable<? super T>> Range<T> of( final T value )
+	public static <T extends Comparable<?>> Range<T> of( final T value )
 	{
 		return of( value, true, value, true );
 	}
@@ -163,10 +186,10 @@ public class Range<T extends Comparable<? super T>>
 	 * @param maximum the upper bound (inclusive) or {@code null} for infinite
 	 * @return the {@link Range} instance
 	 */
-	public static <T extends Comparable<? super T>> Range<T>
-		of( final T minimum, final T maximum )
+	public static <T extends Comparable<?>> Range<T> of( final T minimum,
+		final T maximum )
 	{
-		return of( minimum, true, maximum, true );
+		return of( minimum, minimum != null, maximum, maximum != null );
 	}
 
 	/**
@@ -176,8 +199,8 @@ public class Range<T extends Comparable<? super T>>
 	 * @param maximumInclusive whether the upper bound is inclusive
 	 * @return the {@link Range} instance
 	 */
-	public static <T extends Comparable<? super T>> Range<T> of(
-		final T minimum, final Boolean minimumInclusive, final T maximum,
+	public static <T extends Comparable<?>> Range<T> of( final T minimum,
+		final Boolean minimumInclusive, final T maximum,
 		final Boolean maximumInclusive )
 	{
 		return of( Extreme.lower( minimum, minimumInclusive ),
@@ -189,7 +212,7 @@ public class Range<T extends Comparable<? super T>>
 	 * @param maximum the upper {@link Extreme}
 	 * @return the {@link Range} instance
 	 */
-	public static <T extends Comparable<? super T>> Range<T>
+	public static <T extends Comparable<?>> Range<T>
 		of( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
 		return new Range<T>( minimum, maximum );
@@ -198,7 +221,7 @@ public class Range<T extends Comparable<? super T>>
 	public static <Q extends Quantity> Range<Amount<Q>> of( final Number min,
 		final Number max, final Unit<Q> unit )
 	{
-		return of( MeasureUtil.toAmount( min, unit ),
-				MeasureUtil.toAmount( max, unit ) );
+		return of( min == null ? null : MeasureUtil.toAmount( min, unit ),
+				max == null ? null : MeasureUtil.toAmount( max, unit ) );
 	}
 }

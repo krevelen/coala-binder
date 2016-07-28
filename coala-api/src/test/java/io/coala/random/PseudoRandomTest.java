@@ -1,6 +1,7 @@
 package io.coala.random;
 
 import org.aeonbits.owner.ConfigFactory;
+import org.aeonbits.owner.util.Collections;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
@@ -23,8 +24,13 @@ public class PseudoRandomTest
 	public void testConfig()
 	{
 		LOG.trace( "Testing {}", Config.class );
-		final Config conf = ConfigFactory.create( Config.class );
-		LOG.trace( "Got config: {}; name={}; seeds={}", conf, conf.id(),
+		final long seed = 3L;
+		final Config conf = ConfigFactory.create( Config.class,
+				Collections.map( Config.SEED_KEY, Long.toString( seed ) ) );
+		LOG.trace( "Got config: {}; name={}; seed={}", conf, conf.id(),
 				conf.seed() );
+		final PseudoRandom rnd = JavaRandom.Factory.instance().create( conf );
+		LOG.trace( "Next BigInteger: {}", rnd.nextBigInteger() );
+		LOG.trace( "Next BigDecimal: {}", rnd.nextBigDecimal() );
 	}
 }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link ModelID}
  */
+@Deprecated
 public class ModelID extends ModelComponentID<String>
 {
 

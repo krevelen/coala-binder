@@ -44,6 +44,7 @@ import nl.tudelft.simulation.jstats.streams.StreamInterface;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
+@Deprecated
 public class ReplicationBuilder extends Replication
 {
 

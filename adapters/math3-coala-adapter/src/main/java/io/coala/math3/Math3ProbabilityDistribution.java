@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
+import javax.inject.Inject;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
@@ -62,6 +64,7 @@ import org.jscience.physics.amount.Amount;
 import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.WeightedValue;
+import io.coala.random.AmountDistribution;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.PseudoRandom;
 
@@ -72,16 +75,16 @@ import io.coala.random.PseudoRandom;
  * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
  * @author Rick van Krevelen
  */
-@SuppressWarnings( "serial" )
 public abstract class Math3ProbabilityDistribution<S>
-	extends ProbabilityDistribution<S>
+	implements ProbabilityDistribution<S>
 {
 
 	@SafeVarargs
 	public static <T, S> Math3ProbabilityDistribution<T> of(
-		final EnumeratedDistribution<T> dist, final PseudoRandom stream,
+		final EnumeratedDistribution<T> dist, //final PseudoRandom stream,
 		final S... args )
 	{
+		Objects.requireNonNull( dist );
 		final Math3ProbabilityDistribution<T> result = new Math3ProbabilityDistribution<T>()
 		{
 			@Override
@@ -90,16 +93,17 @@ public abstract class Math3ProbabilityDistribution<S>
 				return dist.sample();
 			}
 		};
-		result.stream = stream;
-		result.params = Arrays.asList( args );
+//		result.stream = stream;
+//		result.params = Arrays.asList( args );
 		return result;
 	}
 
 	@SafeVarargs
 	public static <S> Math3ProbabilityDistribution<Long> of(
-		final IntegerDistribution dist, final PseudoRandom stream,
+		final IntegerDistribution dist, //final PseudoRandom stream,
 		final S... args )
 	{
+		Objects.requireNonNull( dist );
 		final Math3ProbabilityDistribution<Long> result = new Math3ProbabilityDistribution<Long>()
 		{
 			@Override
@@ -108,15 +112,16 @@ public abstract class Math3ProbabilityDistribution<S>
 				return Long.valueOf( dist.sample() );
 			}
 		};
-		result.stream = stream;
+//		result.stream = stream;
 		return result;
 	}
 
 	@SafeVarargs
 	public static <S> Math3ProbabilityDistribution<Double> of(
-		final RealDistribution dist, final PseudoRandom stream,
+		final RealDistribution dist, // final PseudoRandom stream,
 		final S... args )
 	{
+		Objects.requireNonNull( dist );
 		final Math3ProbabilityDistribution<Double> result = new Math3ProbabilityDistribution<Double>()
 		{
 			@Override
@@ -125,15 +130,16 @@ public abstract class Math3ProbabilityDistribution<S>
 				return Double.valueOf( dist.sample() );
 			}
 		};
-		result.stream = stream;
+//		result.stream = stream;
 		return result;
 	}
 
 	@SafeVarargs
 	public static <S> Math3ProbabilityDistribution<double[]> of(
-		final MultivariateRealDistribution dist, final PseudoRandom stream,
+		final MultivariateRealDistribution dist, //final PseudoRandom stream,
 		final S... args )
 	{
+		Objects.requireNonNull( dist );
 		final Math3ProbabilityDistribution<double[]> result = new Math3ProbabilityDistribution<double[]>()
 		{
 			@Override
@@ -142,7 +148,7 @@ public abstract class Math3ProbabilityDistribution<S>
 				return dist.sample();
 			}
 		};
-		result.stream = stream;
+//		result.stream = stream;
 		return result;
 	}
 
@@ -150,15 +156,15 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * @param valueWeights the {@link List} of {@link WeightedValue}s
 	 * @return a probability mass function as {@link List} of {@link Pair}s
 	 */
-	public static <T, WV extends WeightedValue<T, ?>> List<Pair<T, Double>>
-		toPropabilityMassFunction( final List<WV> valueWeights )
+	public static <T, WV extends WeightedValue<T>> List<Pair<T, Double>>
+		toPropabilityMassFunction( final Iterable<WV> valueWeights )
 	{
-		final List<Pair<T, Double>> pmf = new ArrayList<>();
-		if( valueWeights == null || valueWeights.isEmpty() )
-			throw ExceptionFactory.createUnchecked( "Must have some value(s)" );
-		for( WeightedValue<T, ?> p : valueWeights )
-			pmf.add( Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
-		return pmf;
+		Objects.requireNonNull( valueWeights );
+		final List<Pair<T, Double>> result = new ArrayList<>();
+		for( WeightedValue<T> p : valueWeights )
+			result.add(
+					Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
+		return result;
 	}
 
 	/**
@@ -201,10 +207,7 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		public static Factory of( final PseudoRandom stream )
 		{
-			final Factory result = new Factory();
-			result.stream = stream;
-			result.rng = Math3RandomNumberStream.toRandomGenerator( stream );
-			return result;
+			return new Factory( stream );
 		}
 
 		/** the {@link PseudoRandom} wrapping {@link #rng} */
@@ -212,6 +215,19 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		/** the Math3 {@link RandomGenerator} */
 		private RandomGenerator rng;
+
+		public Factory()
+		{
+
+		}
+
+		@Inject
+		public Factory( final PseudoRandom stream )
+		{
+			Objects.requireNonNull( stream );
+			this.stream = stream;
+			this.rng = Math3PseudoRandom.toRandomGenerator( stream );
+		}
 
 		@Override
 		public PseudoRandom getStream()
@@ -245,21 +261,23 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public <T, WV extends WeightedValue<T, ?>> ProbabilityDistribution<T>
-			createCategorical( final List<WV> probabilities )
+		public <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
+			createCategorical( final Iterable<WV> probabilities )
 		{
-			return Math3ProbabilityDistribution.of(
-					new EnumeratedDistribution<T>( this.rng,
-							toPropabilityMassFunction( probabilities ) ),
-					this.stream, probabilities );
+			return Math3ProbabilityDistribution
+					.of( new EnumeratedDistribution<T>( this.rng,
+							toPropabilityMassFunction( probabilities ) )
+			//, this.stream, probabilities
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Long> createGeometric( final Number p )
 		{
-			return Math3ProbabilityDistribution.of(
-					new GeometricDistribution( this.rng, p.doubleValue() ),
-					this.stream, p );
+			return Math3ProbabilityDistribution
+					.of( new GeometricDistribution( this.rng, p.doubleValue() )
+			//, this.stream, p
+			);
 		}
 
 		@Override
@@ -267,32 +285,34 @@ public abstract class Math3ProbabilityDistribution<S>
 			final Number populationSize, final Number numberOfSuccesses,
 			final Number sampleSize )
 		{
-			return Math3ProbabilityDistribution.of(
-					new HypergeometricDistribution( this.rng,
+			return Math3ProbabilityDistribution
+					.of( new HypergeometricDistribution( this.rng,
 							populationSize.intValue(),
 							numberOfSuccesses.intValue(),
-							sampleSize.intValue() ),
-					this.stream, populationSize, numberOfSuccesses,
-					sampleSize );
+							sampleSize.intValue() )
+//					, this.stream, populationSize, numberOfSuccesses, sampleSize 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Long> createPascal( final Number r,
 			final Number p )
 		{
-			return Math3ProbabilityDistribution
-					.of( new PascalDistribution( this.rng, r.intValue(),
-							p.doubleValue() ), this.stream, r, p );
+			return Math3ProbabilityDistribution.of( new PascalDistribution(
+					this.rng, r.intValue(), p.doubleValue() )
+			//, this.stream, r, p
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Long> createPoisson( final Number mean )
 		{
-			return Math3ProbabilityDistribution.of(
-					new PoissonDistribution( this.rng, mean.doubleValue(),
+			return Math3ProbabilityDistribution
+					.of( new PoissonDistribution( this.rng, mean.doubleValue(),
 							PoissonDistribution.DEFAULT_EPSILON,
-							PoissonDistribution.DEFAULT_MAX_ITERATIONS ),
-					this.stream, mean );
+							PoissonDistribution.DEFAULT_MAX_ITERATIONS )
+			//, this.stream, mean 
+			);
 		}
 
 		@Override
@@ -301,36 +321,39 @@ public abstract class Math3ProbabilityDistribution<S>
 		{
 			return Math3ProbabilityDistribution.of(
 					new ZipfDistribution( this.rng, numberOfElements.intValue(),
-							exponent.doubleValue() ),
-					this.stream, numberOfElements, exponent );
+							exponent.doubleValue() )
+//					, this.stream, numberOfElements, exponent
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double> createBeta( final Number alpha,
 			final Number beta )
 		{
-			return Math3ProbabilityDistribution
-					.of( new BetaDistribution( this.rng, alpha.doubleValue(),
-							beta.doubleValue() ), this.stream, alpha, beta );
+			return Math3ProbabilityDistribution.of( new BetaDistribution(
+					this.rng, alpha.doubleValue(), beta.doubleValue() )
+//							, this.stream, alpha, beta 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double>
 			createCauchy( final Number median, final Number scale )
 		{
-			return Math3ProbabilityDistribution
-					.of( new CauchyDistribution( this.rng, median.doubleValue(),
-							scale.doubleValue() ), this.stream, median, scale );
+			return Math3ProbabilityDistribution.of( new CauchyDistribution(
+					this.rng, median.doubleValue(), scale.doubleValue() )
+//							, this.stream, median, scale 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double>
 			createChiSquared( final Number degreesOfFreedom )
 		{
-			return Math3ProbabilityDistribution.of(
-					new ChiSquaredDistribution( this.rng,
-							degreesOfFreedom.doubleValue() ),
-					this.stream, degreesOfFreedom );
+			return Math3ProbabilityDistribution.of( new ChiSquaredDistribution(
+					this.rng, degreesOfFreedom.doubleValue() )
+//					, this.stream, degreesOfFreedom
+			);
 		}
 
 		@Override
@@ -338,8 +361,9 @@ public abstract class Math3ProbabilityDistribution<S>
 			createExponential( final Number mean )
 		{
 			return Math3ProbabilityDistribution.of(
-					new ExponentialDistribution( this.rng, mean.doubleValue() ),
-					this.stream, mean );
+					new ExponentialDistribution( this.rng, mean.doubleValue() )
+//					, this.stream, mean
+			);
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -350,8 +374,9 @@ public abstract class Math3ProbabilityDistribution<S>
 			final EmpiricalDistribution result = new EmpiricalDistribution(
 					values.length / 10, this.rng );
 			result.load( toDoubles( values ) );
-			return Math3ProbabilityDistribution.of( result, this.stream,
-					values );
+			return Math3ProbabilityDistribution.of( result
+//					, this.stream, values 
+			);
 		}
 
 		@Override
@@ -359,49 +384,52 @@ public abstract class Math3ProbabilityDistribution<S>
 			final Number numeratorDegreesOfFreedom,
 			final Number denominatorDegreesOfFreedom )
 		{
-			return Math3ProbabilityDistribution.of(
-					new FDistribution( this.rng,
-							numeratorDegreesOfFreedom.doubleValue(),
-							denominatorDegreesOfFreedom.doubleValue() ),
-					this.stream, numeratorDegreesOfFreedom,
-					denominatorDegreesOfFreedom );
+			return Math3ProbabilityDistribution.of( new FDistribution( this.rng,
+					numeratorDegreesOfFreedom.doubleValue(),
+					denominatorDegreesOfFreedom.doubleValue() )
+//					, this.stream, numeratorDegreesOfFreedom,
+//					denominatorDegreesOfFreedom 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double> createGamma( final Number shape,
 			final Number scale )
 		{
-			return Math3ProbabilityDistribution
-					.of( new GammaDistribution( this.rng, shape.doubleValue(),
-							scale.doubleValue() ), this.stream, shape, scale );
+			return Math3ProbabilityDistribution.of( new GammaDistribution(
+					this.rng, shape.doubleValue(), scale.doubleValue() )
+//							, this.stream, shape, scale 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double> createLevy( final Number mu,
 			final Number c )
 		{
-			return Math3ProbabilityDistribution
-					.of( new LevyDistribution( this.rng, mu.doubleValue(),
-							c.doubleValue() ), this.stream, mu, c );
+			return Math3ProbabilityDistribution.of( new LevyDistribution(
+					this.rng, mu.doubleValue(), c.doubleValue() )
+//							, this.stream, mu, c 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double>
 			createLogNormal( final Number scale, final Number shape )
 		{
-			return Math3ProbabilityDistribution.of(
-					new LogNormalDistribution( this.rng, scale.doubleValue(),
-							shape.doubleValue() ),
-					this.stream, scale, shape );
+			return Math3ProbabilityDistribution.of( new LogNormalDistribution(
+					this.rng, scale.doubleValue(), shape.doubleValue() )
+//					, this.stream, scale, shape 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double> createNormal( final Number mean,
 			final Number sd )
 		{
-			return Math3ProbabilityDistribution
-					.of( new NormalDistribution( this.rng, mean.doubleValue(),
-							sd.doubleValue() ), this.stream, mean, sd );
+			return Math3ProbabilityDistribution.of( new NormalDistribution(
+					this.rng, mean.doubleValue(), sd.doubleValue() )
+//							, this.stream, mean, sd
+			);
 		}
 
 		@Override
@@ -410,65 +438,71 @@ public abstract class Math3ProbabilityDistribution<S>
 		{
 			return Math3ProbabilityDistribution
 					.of( new MultivariateNormalDistribution( this.rng, means,
-							covariances ), this.stream, means, covariances );
+							covariances )
+//							, this.stream, means, covariances
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double> createPareto( final Number scale,
 			final Number shape )
 		{
-			return Math3ProbabilityDistribution
-					.of( new ParetoDistribution( this.rng, scale.doubleValue(),
-							shape.doubleValue() ), this.stream, scale, shape );
+			return Math3ProbabilityDistribution.of( new ParetoDistribution(
+					this.rng, scale.doubleValue(), shape.doubleValue() )
+//							, this.stream, scale, shape 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double>
 			createT( final Number degreesOfFreedom )
 		{
-			return Math3ProbabilityDistribution.of(
-					new TDistribution( this.rng,
-							degreesOfFreedom.doubleValue() ),
-					this.stream, degreesOfFreedom );
+			return Math3ProbabilityDistribution.of( new TDistribution( this.rng,
+					degreesOfFreedom.doubleValue() )
+//					, this.stream, degreesOfFreedom 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double> createTriangular( final Number a,
 			final Number b, final Number c )
 		{
-			return Math3ProbabilityDistribution.of(
-					new TriangularDistribution( this.rng, a.doubleValue(),
-							b.doubleValue(), c.doubleValue() ),
-					this.stream, a, b, c );
+			return Math3ProbabilityDistribution
+					.of( new TriangularDistribution( this.rng, a.doubleValue(),
+							b.doubleValue(), c.doubleValue() )
+//					, this.stream, a, b, c 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double>
 			createUniformContinuous( final Number lower, final Number upper )
 		{
-			return Math3ProbabilityDistribution.of(
-					new UniformRealDistribution( this.rng, lower.doubleValue(),
-							upper.doubleValue() ),
-					this.stream, lower, upper );
+			return Math3ProbabilityDistribution.of( new UniformRealDistribution(
+					this.rng, lower.doubleValue(), upper.doubleValue() )
+//					, this.stream, lower, upper 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Double>
 			createWeibull( final Number alpha, final Number beta )
 		{
-			return Math3ProbabilityDistribution
-					.of( new WeibullDistribution( this.rng, alpha.doubleValue(),
-							beta.doubleValue() ), this.stream, alpha, beta );
+			return Math3ProbabilityDistribution.of( new WeibullDistribution(
+					this.rng, alpha.doubleValue(), beta.doubleValue() )
+//							, this.stream, alpha, beta 
+			);
 		}
 
 		@Override
 		public ProbabilityDistribution<Long>
 			createUniformDiscrete( final Number lower, final Number upper )
 		{
-			return Math3ProbabilityDistribution.of(
-					new UniformIntegerDistribution( this.rng, lower.intValue(),
-							upper.intValue() ),
-					this.stream, lower, upper );
+			return Math3ProbabilityDistribution
+					.of( new UniformIntegerDistribution( this.rng,
+							lower.intValue(), upper.intValue() )
+//					, this.stream, lower, upper 
+			);
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -476,10 +510,11 @@ public abstract class Math3ProbabilityDistribution<S>
 		public <T> ProbabilityDistribution<T>
 			createUniformCategorical( final T... values )
 		{
-			return Math3ProbabilityDistribution.of(
-					new EnumeratedDistribution<T>( this.rng,
-							toPropabilityMassFunction( values ) ),
-					this.stream, values );
+			return Math3ProbabilityDistribution
+					.of( new EnumeratedDistribution<T>( this.rng,
+							toPropabilityMassFunction( values ) )
+//					, this.stream, values 
+			);
 		}
 	}
 
@@ -516,7 +551,7 @@ public abstract class Math3ProbabilityDistribution<S>
 			return this.factory;
 		}
 
-		public <Q extends Quantity> ArithmeticDistribution<Q> fitNormal(
+		public <Q extends Quantity> AmountDistribution<Q> fitNormal(
 			final FrequencyDistribution.Interval<Q, ?> freq,
 			final Unit<Q> unit )
 		{

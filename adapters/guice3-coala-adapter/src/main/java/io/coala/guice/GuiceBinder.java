@@ -50,8 +50,6 @@ import io.coala.log.LogUtil;
 import io.coala.model.ModelComponentIDFactory;
 import io.coala.model.ModelID;
 import io.coala.name.AbstractIdentifiable;
-import io.coala.time.SimTime;
-import io.coala.time.SimTimeFactory;
 import rx.Observable;
 
 /**
@@ -171,12 +169,12 @@ public class GuiceBinder extends AbstractIdentifiable<AgentID> implements Binder
 						.getInstantServiceTypes().entrySet() )
 					bindService( entry.getKey(), entry.getValue() );
 
-				install( new FactoryModuleBuilder()
-						.implement( SimTime.class, GuiceSimTime.class )
-						.build( SimTimeFactory.class ) );
-				install( new FactoryModuleBuilder()
-						.implement( SimTime.class, GuiceSimTime.class )
-						.build( SimTime.Factory.class ) );
+//				install( new FactoryModuleBuilder()
+//						.implement( SimTime.class, GuiceSimTime.class )
+//						.build( SimTimeFactory.class ) );
+//				install( new FactoryModuleBuilder()
+//						.implement( SimTime.class, GuiceSimTime.class )
+//						.build( SimTime.Factory.class ) );
 
 				install( new FactoryModuleBuilder()
 						.implement( Agent.class,

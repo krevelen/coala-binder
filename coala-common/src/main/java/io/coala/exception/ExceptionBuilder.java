@@ -29,9 +29,10 @@ import org.apache.logging.log4j.message.StringFormattedMessage;
 import com.eaio.uuid.UUID;
 
 import io.coala.exception.ExceptionBuilder.CheckedException;
-import io.coala.json.Contextualized;
-import io.coala.json.Contextualized.Context;
+import io.coala.json.Contextual;
+import io.coala.json.Contextual.Context;
 import io.coala.log.LogUtil;
+import io.coala.name.Identified;
 
 /**
  * {@link ExceptionBuilder} creates {@link CheckedException.Builder}s and
@@ -219,14 +220,33 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	 * @author Rick van Krevelen
 	 */
 	public static class CheckedException extends Exception
-		implements Contextualized
+		implements Contextual, Identified<UUID>
 	{
+
+		/**
+		 * {@link CheckedException} factory method
+		 * 
+		 * @param context the {@link Context} or {@code null}
+		 * @param message the {@link Message} or {@code null}
+		 * @param cause the cause {@link Throwable} or {@code null}
+		 * @return a new {@link CheckedException}
+		 */
+		public static CheckedException of( final Context context,
+			final Message message, final Throwable cause )
+		{
+			final CheckedException result = cause == null
+					? new CheckedException() : new CheckedException( cause );
+			result.id = new UUID();
+			result.message = message;
+			result.context = context;
+			return result;
+		}
 
 		/** */
 		private static final long serialVersionUID = 1L;
 
 		/** */
-		private UUID uuid = null;
+		private UUID id = null;
 
 		/** */
 		private Message message = null;
@@ -235,55 +255,31 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		private Context context = null;
 
 		/**
-		 * {@link Checked} zero-arg bean constructor for JSON-RPC
+		 * {@link CheckedException} zero-arg bean constructor for JSON-RPC
 		 */
-		public CheckedException()
+		protected CheckedException()
 		{
 			// empty
 		}
 
 		/**
-		 * {@link Checked} constructor
+		 * {@link CheckedException} constructor
 		 */
-		public CheckedException( final Context context, final Message message )
-		{
-			this.uuid = new UUID();
-			this.message = message;
-			this.context = context;
-		}
-
-		/**
-		 * {@link Checked} constructor
-		 */
-		public CheckedException( final Context context, final Message message,
-			final Throwable cause )
+		protected CheckedException( final Throwable cause )
 		{
 			super( cause );
-			this.uuid = new UUID();
-			this.context = context;
 		}
 
 		@Override
-		public UUID getUuid()
+		public UUID id()
 		{
-			return this.uuid;
+			return this.id;
 		}
 
 		@Override
-		public Context getContext()
+		public Context context()
 		{
 			return this.context;
-		}
-
-		@Override
-		public int compareTo( final Contextualized o )
-		{
-			return Util.compare( this, o );
-		}
-
-		protected void setMessage( final String message )
-		{
-			this.message = new StringFormattedMessage( message );
 		}
 
 		@Override
@@ -317,14 +313,9 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			@Override
 			public CheckedException build()
 			{
-				final CheckedException ex = this.cause == null
-						? new CheckedException(
-								this.context == null ? null : this.context,
-								this.message )
-						: new CheckedException(
-								this.context == null ? null : this.context,
-								this.message, this.cause );
-				return ExceptionStream.toPublished( ex );
+				return ExceptionStream.toPublished( CheckedException.of(
+						this.context == null ? null : this.context,
+						this.message, this.cause ) );
 			}
 		}
 	}
@@ -336,14 +327,34 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	 * @author Rick van Krevelen
 	 */
 	public static class UncheckedException extends RuntimeException
-		implements Contextualized
+		implements Contextual, Identified<UUID>
 	{
+
+		/**
+		 * {@link UncheckedException} factory method
+		 * 
+		 * @param context the {@link Context} or {@code null}
+		 * @param message the {@link Message} or {@code null}
+		 * @param cause the cause {@link Throwable} or {@code null}
+		 * @return a new {@link UncheckedException}
+		 */
+		public static UncheckedException of( final Context context,
+			final Message message, final Throwable cause )
+		{
+			final UncheckedException result = cause == null
+					? new UncheckedException()
+					: new UncheckedException( cause );
+			result.id = new UUID();
+			result.message = message;
+			result.context = context;
+			return result;
+		}
 
 		/** */
 		private static final long serialVersionUID = 1L;
 
 		/** */
-		private UUID uuid;
+		private UUID id;
 
 		/** */
 		private Message message = null;
@@ -352,56 +363,33 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		private Context context = null;
 
 		/**
-		 * {@link Unchecked} zero-arg bean constructor for JSON-RPC
+		 * {@link UncheckedException} zero-arg bean constructor for JSON-RPC
 		 */
-		public UncheckedException()
+		protected UncheckedException()
 		{
-			// empty
+			super();
 		}
 
 		/**
-		 * {@link Unchecked} constructor
+		 * {@link UncheckedException} constructor
+		 * 
+		 * @param cause
 		 */
-		public UncheckedException( final Context context,
-			final Message message )
-		{
-			this.uuid = new UUID();
-			this.message = message;
-			this.context = context;
-		}
-
-		/**
-		 * {@link Unchecked} constructor
-		 */
-		public UncheckedException( final Context context, final Message message,
-			final Throwable cause )
+		protected UncheckedException( final Throwable cause )
 		{
 			super( cause );
-			this.uuid = new UUID();
-			this.context = context;
 		}
 
 		@Override
-		public UUID getUuid()
+		public UUID id()
 		{
-			return this.uuid;
+			return this.id;
 		}
 
 		@Override
-		public Context getContext()
+		public Context context()
 		{
 			return this.context;
-		}
-
-		@Override
-		public int compareTo( final Contextualized o )
-		{
-			return Util.compare( this, o );
-		}
-
-		protected void setMessage( final String message )
-		{
-			this.message = new StringFormattedMessage( message );
 		}
 
 		@Override
@@ -443,16 +431,20 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			@Override
 			public UncheckedException build()
 			{
-				final UncheckedException ex = this.cause == null
-						? new UncheckedException( this.context == null ? null
-								: this.context.locked(), this.message )
-						: new UncheckedException(
-								this.context == null ? null
-										: this.context.locked(),
-								this.message, this.cause );
-				return ExceptionStream.toPublished( ex );
+				return ExceptionStream.toPublished( UncheckedException.of(
+						this.context == null ? null : this.context.locked(),
+						this.message, this.cause ) );
 			}
 		}
+	}
+
+	public static <T extends Identified<?> & Contextual> String
+		format( final T self, final String message )
+	{
+		return self.context() == null
+				? String.format( "%s [%s] %s", message, self.id() )
+				: String.format( "%s [%s] %s", message, self.id(),
+						self.context() );
 	}
 
 	/** */
@@ -491,8 +483,8 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	}
 
 	/**
-	 * @return the new immutable {@link Contextualized} {@link Exception}
+	 * @return the new immutable {@link Contextual} {@link Exception}
 	 */
-	public abstract Contextualized build();
+	public abstract Contextual build();
 
 }

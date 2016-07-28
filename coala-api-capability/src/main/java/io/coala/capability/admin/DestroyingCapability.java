@@ -27,6 +27,7 @@ import io.coala.lifecycle.LifeCycleHooks;
  * 
  * @version $Id$
  */
+@Deprecated
 public interface DestroyingCapability extends Capability<BasicCapabilityStatus>
 {
 

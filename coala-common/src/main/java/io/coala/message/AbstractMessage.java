@@ -29,6 +29,7 @@ import io.coala.model.ModelComponentID;
  * 
  * @param <ID> the {@link MessageID} type
  */
+@Deprecated
 public abstract class AbstractMessage<ID extends MessageID<?, ?>>
 	extends AbstractTimedEvent<ID> implements Message<ID>
 {

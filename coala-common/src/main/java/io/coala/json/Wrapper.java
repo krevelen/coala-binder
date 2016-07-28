@@ -51,7 +51,8 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
-import io.coala.name.x.Id;
+import io.coala.json.DynaBean.ProxyProvider;
+import io.coala.name.Id;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;
 
@@ -80,7 +81,7 @@ public interface Wrapper<T>
 	/**
 	 * @param value the value to wrap
 	 */
-	void wrap( T value );
+	Wrapper<T> wrap( T value );
 
 	/**
 	 * {@linkplain JavaPolymorph} indicates that a certain {@linkplain Wrapper}
@@ -160,9 +161,10 @@ public interface Wrapper<T>
 		/**
 		 * @param value the new value to wrap
 		 */
-		public void wrap( final T value )
+		public Wrapper<T> wrap( final T value )
 		{
 			this.value = value;
+			return this;
 		}
 
 		/** @return the wrapped value */
@@ -374,8 +376,7 @@ public interface Wrapper<T>
 						LOG.trace( "parsing {} as {}", jp.getText(),
 								type.getName() );
 						value = jp.readValueAs( valueType );
-					}
-					else
+					} else
 					{
 						final Class<? extends S> valueSubtype = resolveAnnotType(
 								annot, valueType, jp.getCurrentToken() );
@@ -459,7 +460,7 @@ public interface Wrapper<T>
 
 			// FIXME assumes Wrapper<String> for now, determine actual @class
 			return (T) JsonUtil.valueOf( json,
-					new TypeReference<Wrapper.Simple<String>>()
+					new TypeReference<Wrapper.SimpleOrdinal<String>>()
 					{
 					} );
 		}
@@ -475,7 +476,7 @@ public interface Wrapper<T>
 			final Class<T> type )
 		{
 			if( type.isInterface() )
-				return valueOf( json, DynaBeanProxyProvider.of( type ).get() );
+				return valueOf( json, ProxyProvider.of( type ).get() );
 			return valueOf( json, Instantiator.of( type ) );
 		}
 
@@ -538,10 +539,21 @@ public interface Wrapper<T>
 		 * @return the updated {@link Wrapper} object
 		 */
 		public static <S, T extends Wrapper<S>> T of( final S value,
-			final T result )
+			final Class<T> type )
 		{
-			result.wrap( value );
-			return result;
+			return of( value, Instantiator.instantiate( type ) );
+		}
+
+		/**
+		 * @param value the wrapped value
+		 * @param wrapper the {@link Wrapper} object to (re)use
+		 * @return the updated {@link Wrapper} object
+		 */
+		@SuppressWarnings( "unchecked" )
+		public static <S, T extends Wrapper<S>> T of( final S value,
+			final T wrapper )
+		{
+			return (T) wrapper.wrap( value );
 		}
 
 		/**

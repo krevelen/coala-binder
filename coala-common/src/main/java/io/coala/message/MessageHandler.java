@@ -20,6 +20,7 @@ import io.coala.invoke.Schedulable;
 /**
  * {@link MessageHandler}
  */
+@Deprecated
 public interface MessageHandler
 {
 
