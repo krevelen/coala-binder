@@ -18,6 +18,7 @@ package io.coala.enterprise.fact;
 /**
  * {@link CancellationFact}
  */
+@Deprecated
 public interface CancellationFact extends CoordinationFact
 {
 

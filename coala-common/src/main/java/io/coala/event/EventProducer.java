@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @param <ID> the type of {@link ModelComponentID}
  * @param <E> the (super)type of {@link Event}s being produced
  */
+@Deprecated
 public interface EventProducer<ID extends ModelComponentID<?>, E extends Event<?>>
 	extends Identifiable<ID>
 {

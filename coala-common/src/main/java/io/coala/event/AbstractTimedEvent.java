@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.coala.agent.AgentID;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
-import io.coala.time.Instant;
+import io.coala.time.AbstractInstant;
 
 /**
  * {@link AbstractTimedEvent}
@@ -69,7 +69,7 @@ public abstract class AbstractTimedEvent<ID extends TimedEventID<?, ?>>
 
 	@JsonIgnore
 	@Override
-	public Instant<?> getTime()
+	public AbstractInstant<?> getTime()
 	{
 		return getID().getTime();
 	}

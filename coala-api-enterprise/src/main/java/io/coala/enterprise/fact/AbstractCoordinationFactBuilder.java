@@ -30,6 +30,7 @@ import io.coala.time.SimTime;
 /**
  * {@link AbstractCoordinationFactBuilder}
  */
+@Deprecated
 public abstract class AbstractCoordinationFactBuilder<F extends CoordinationFact, THIS extends AbstractCoordinationFactBuilder<F, THIS>>
 	implements Builder<F, THIS>
 {

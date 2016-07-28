@@ -51,6 +51,7 @@ import rx.Observer;
  * @version $Id: ecf6f2e95f2cde727b947aa35aa3708c1fa2adaf $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class EveWrapperAgent extends com.almende.eve.agent.Agent
 	implements Observer<AgentStatusUpdate>, EveSenderAgent, EveReceiverAgent,
 	EveExposingAgent

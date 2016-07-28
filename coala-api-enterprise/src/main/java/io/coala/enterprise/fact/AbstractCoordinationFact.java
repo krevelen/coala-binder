@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link AbstractCoordinationFact}
  */
+@Deprecated
 public abstract class AbstractCoordinationFact extends AbstractMessage<FactID>
 	implements CoordinationFact
 {

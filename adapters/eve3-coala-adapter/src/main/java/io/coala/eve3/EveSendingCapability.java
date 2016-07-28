@@ -24,6 +24,7 @@ import rx.Observer;
  * @version $Id: 288edfd6500c6985c85605d9e941c65f4a510340 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class EveSendingCapability extends BasicCapability
 	implements SendingCapability
 {

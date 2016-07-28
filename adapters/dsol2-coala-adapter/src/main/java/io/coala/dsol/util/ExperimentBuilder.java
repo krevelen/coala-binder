@@ -44,6 +44,7 @@ import nl.tudelft.simulation.event.EventType;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
+@Deprecated
 public class ExperimentBuilder extends Experiment
 {
 	/** */

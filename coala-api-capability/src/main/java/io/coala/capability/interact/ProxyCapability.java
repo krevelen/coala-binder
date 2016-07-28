@@ -24,6 +24,7 @@ import io.coala.capability.CapabilityFactory;
 /**
  * {@link ProxyCapability}
  */
+@Deprecated
 public interface ProxyCapability extends Capability<BasicCapabilityStatus>
 {
 

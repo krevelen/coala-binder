@@ -19,6 +19,7 @@ package io.coala.factory;
  * {@link Factory} tags a factory that provides (static) helper methods for
  * object instantiation, e.g. from properties files or database schemes
  */
+@Deprecated
 public interface Factory
 {
 

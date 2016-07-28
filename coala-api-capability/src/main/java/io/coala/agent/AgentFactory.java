@@ -20,6 +20,7 @@ import io.coala.factory.Factory;
 /**
  * {@link AgentFactory}
  */
+@Deprecated
 public interface AgentFactory extends Factory
 {
 

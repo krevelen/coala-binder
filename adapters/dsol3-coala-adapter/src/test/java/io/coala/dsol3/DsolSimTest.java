@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
-import nl.tudelft.simulation.dsol.ModelInterface;
+import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.Executable;
@@ -55,7 +55,7 @@ public class DsolSimTest
 	/** */
 	@SuppressWarnings( { "serial", "rawtypes" } )
 	public static class TestModel<Q extends Quantity> extends EventProducer
-		implements ModelInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>
+		implements DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>>
 	{
 		/** the scheduler {@link DEVSSimulator} */
 		private DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>> scheduler;

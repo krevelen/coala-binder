@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * {@link ReceivingCapability}
  */
+@Deprecated
 public interface ReceivingCapability extends Capability<BasicCapabilityStatus>
 {
 

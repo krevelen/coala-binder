@@ -38,6 +38,7 @@ import io.coala.exception.ExceptionFactory;
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.METHOD )
+@Deprecated
 public @interface Schedulable
 {
 

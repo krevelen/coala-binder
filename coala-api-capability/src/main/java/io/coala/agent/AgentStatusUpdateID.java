@@ -20,6 +20,7 @@ import io.coala.name.AbstractIdentifier;
 /**
  * {@link AgentStatusUpdateID}
  */
+@Deprecated
 public class AgentStatusUpdateID extends AbstractIdentifier<Long>
 {
 

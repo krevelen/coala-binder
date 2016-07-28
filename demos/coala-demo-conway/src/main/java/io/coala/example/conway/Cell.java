@@ -16,8 +16,6 @@
 package io.coala.example.conway;
 
 import io.coala.agent.Agent;
-import io.coala.time.SimTime;
-import io.coala.time.Timed;
 
 /**
  * {@link Cell} simply exchanges with the cell's environment its own state
@@ -25,7 +23,8 @@ import io.coala.time.Timed;
  * 
  * @version $Id$
  */
-public interface Cell extends Agent, Timed<SimTime>
+@Deprecated
+public interface Cell extends Agent//, Timed<SimTime>
 {
 
 	/**

@@ -35,6 +35,7 @@ import io.coala.exception.ExceptionFactory;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class EveAgentManager extends AbstractAgentManager
 {
 

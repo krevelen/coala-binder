@@ -24,6 +24,7 @@ import io.coala.enterprise.fact.CoordinationFact;
  * 
  * @param <F> the {@link CoordinationFact} type being handled
  */
+@Deprecated
 public interface Initiator<F extends CoordinationFact> extends ActorRole<F>
 {
 

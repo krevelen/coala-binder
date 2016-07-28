@@ -24,7 +24,6 @@ import io.coala.agent.AgentID;
 import io.coala.message.AbstractMessage;
 import io.coala.message.MessageID;
 import io.coala.model.ModelID;
-import io.coala.time.SimDuration;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 
@@ -34,6 +33,7 @@ import io.coala.time.TimeUnit;
  * @version $Id$
  */
 @SuppressWarnings( "serial" )
+@Deprecated
 public class CellState extends AbstractMessage<CellState.ID>
 {
 
@@ -147,7 +147,7 @@ public class CellState extends AbstractMessage<CellState.ID>
 	 * @param myNeighborStateCount neighborhood values
 	 * @return new value for this {@link CellState} after transition
 	 */
-	public CellState next( final SimDuration delta,
+	public CellState next( final Number delta,
 		final Map<LifeStatus, Integer> myNeighborStateCount )
 	{
 		final LifeStatus toState = getState()

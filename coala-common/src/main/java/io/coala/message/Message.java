@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
  */
 @JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = As.PROPERTY,
 	property = "class" )
+@Deprecated
 public interface Message<ID extends MessageID<?, ?>> extends TimedEvent<ID>
 {
 

@@ -23,6 +23,7 @@ import com.eaio.uuid.UUID;
 /**
  * {@link TransactionID}
  */
+@Deprecated
 public class TransactionID extends ModelComponentID<UUID>
 {
 

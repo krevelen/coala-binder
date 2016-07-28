@@ -24,15 +24,13 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
+import javax.measure.unit.SI;
 import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
-import io.coala.capability.plan.ClockStatusUpdate;
-import io.coala.capability.plan.ClockStatusUpdateImpl;
-import io.coala.capability.plan.SchedulingCapability;
 import io.coala.capability.replicate.RandomizingCapability;
 import io.coala.capability.replicate.ReplicatingCapability;
 import io.coala.capability.replicate.ReplicationConfig;
@@ -49,7 +47,7 @@ import io.coala.time.ClockID;
 import io.coala.time.Instant;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
-import io.coala.time.Trigger;
+import io.coala.time.Timing;
 import nl.tudelft.simulation.dsol.ModelInterface;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEvent;
@@ -60,7 +58,6 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventInterface;
 import nl.tudelft.simulation.event.EventListenerInterface;
 import nl.tudelft.simulation.event.EventType;
-import rx.Observable;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.subjects.BehaviorSubject;
@@ -73,8 +70,8 @@ import rx.subjects.Subject;
  * @author Rick van Krevelen
  */
 @Deprecated
-public class DsolSimulatorService extends BasicCapability implements
-	ReplicatingCapability, SchedulingCapability<SimTime>, RandomizingCapability
+public class DsolSimulatorService extends BasicCapability
+	implements ReplicatingCapability, RandomizingCapability
 {
 
 	/** */
@@ -114,7 +111,7 @@ public class DsolSimulatorService extends BasicCapability implements
 	private transient Subject<SimTime, SimTime> timeUpdates;
 
 	/** */
-	private transient Subject<ClockStatusUpdate, ClockStatusUpdate> statusUpdates;
+//	private transient Subject<ClockStatusUpdate, ClockStatusUpdate> statusUpdates;
 
 	/**
 	 * @param clockID
@@ -210,9 +207,9 @@ public class DsolSimulatorService extends BasicCapability implements
 		this.clockID = this.config.getClockID();
 		this.baseTimeUnit = this.config.getBaseTimeUnit();
 		this.newTime = this.config.newTime();
-		this.statusUpdates = BehaviorSubject.create(
-				(ClockStatusUpdate) new ClockStatusUpdateImpl( getClockID(),
-						DsolSimulatorStatus.CREATED ) );
+//		this.statusUpdates = BehaviorSubject.create(
+//				(ClockStatusUpdate) new ClockStatusUpdateImpl( getClockID(),
+//						DsolSimulatorStatus.CREATED ) );
 		this.timeUpdates = BehaviorSubject
 				.create( this.newTime.create( Double.NaN, this.baseTimeUnit ) );
 
@@ -238,10 +235,10 @@ public class DsolSimulatorService extends BasicCapability implements
 						@Override
 						public void notify( final EventInterface event )
 						{
-							final DsolSimulatorStatus status = DsolSimulatorStatus
-									.of( event.getType() );
-							statusUpdates.onNext( new ClockStatusUpdateImpl(
-									getClockID(), status ) );
+//							final DsolSimulatorStatus status = DsolSimulatorStatus
+//									.of( event.getType() );
+//							statusUpdates.onNext( new ClockStatusUpdateImpl(
+//									getClockID(), status ) );
 						}
 					}, type );
 				} catch( final RemoteException e )
@@ -355,7 +352,7 @@ public class DsolSimulatorService extends BasicCapability implements
 		// notifyAll();
 	}
 
-	@Override
+//	@Override
 	public synchronized SimTime getTime()
 	{
 		// while (this.time == null)
@@ -372,7 +369,7 @@ public class DsolSimulatorService extends BasicCapability implements
 		return this.time;
 	}
 
-	@Override
+//	@Override
 	public ClockID getClockID()
 	{
 		return this.clockID;
@@ -411,10 +408,11 @@ public class DsolSimulatorService extends BasicCapability implements
 		 * @param absTime
 		 * @param job
 		 */
+		@SuppressWarnings( "unchecked" )
 		public CallableSimEvent( final TimeUnit baseTimeUnit,
-			final Instant<?> absTime, final Callable<Void> job )
+			final Instant absTime, final Callable<Void> job )
 		{
-			super( baseTimeUnit.convertFrom( absTime ).doubleValue(),
+			super( absTime.toMeasure().doubleValue( SI.MILLI( SI.SECOND ) ),
 					SimEventInterface.MIN_PRIORITY, job, job, "call", null );
 		}
 
@@ -446,8 +444,8 @@ public class DsolSimulatorService extends BasicCapability implements
 
 	}
 
-	@Override
-	public void schedule( final Job<?> job, final Trigger<?> trigger )
+//	@Override
+	public void schedule( final Job<?> job, final Timing trigger )
 	{
 		if( isComplete() ) throw new IllegalStateException(
 				"Can't schedule, already complete!" );
@@ -473,74 +471,78 @@ public class DsolSimulatorService extends BasicCapability implements
 			// @Override
 			// public void call()
 			// {
-			trigger.getInstants().all( new Func1<Instant<?>, Boolean>()
-			{
-				@SuppressWarnings( "unchecked" )
-				@Override
-				public Boolean call( final Instant<?> time )
-				{
-					// TODO extend SimEvent to await any local prior
-					// grant from
-					// parent/root simulator still pending
-
-					try
+			trigger.asObservable( config.getOffset().toDate() )
+					.all( new Func1<Instant, Boolean>()
 					{
-						LOG.trace( "Scheduling " + job.getID() + " @ " + time );
-						// System.err.println(-1);
-						final SimEvent event = new CallableSimEvent(
-								baseTimeUnit, time, (Callable<Void>) job );
-						// System.err.println(0);
-						simulator.scheduleEvent( event );
-						// System.err.println(1);
-						simEvents.add( event );
-						// System.err.println(2);
-						simulator.scheduleEvent(
-								new SimEvent( event.getAbsoluteExecutionTime(),
+						@SuppressWarnings( "unchecked" )
+						@Override
+						public Boolean call( final Instant time )
+						{
+							// TODO extend SimEvent to await any local prior
+							// grant from
+							// parent/root simulator still pending
+
+							try
+							{
+								LOG.trace( "Scheduling " + job.getID() + " @ "
+										+ time );
+								// System.err.println(-1);
+								final SimEvent event = new CallableSimEvent(
+										baseTimeUnit, time,
+										(Callable<Void>) job );
+								// System.err.println(0);
+								simulator.scheduleEvent( event );
+								// System.err.println(1);
+								simEvents.add( event );
+								// System.err.println(2);
+								simulator.scheduleEvent( new SimEvent(
+										event.getAbsoluteExecutionTime(),
 										SimEventInterface.MIN_PRIORITY, this,
 										this, "removeEvent",
 										new Object[]
 										{ job.getID(), event } ) );
-						// System.err.println(3);
-						return Boolean.TRUE;
-					} catch( final Throwable t )
+								// System.err.println(3);
+								return Boolean.TRUE;
+							} catch( final Throwable t )
+							{
+								LOG.error( "Problem scheduling " + job + " @ "
+										+ time, t );
+								return Boolean.FALSE;
+							}
+						}
+
+						/**
+						 * remove pending event from cache after it was called
+						 * by the simulator
+						 * 
+						 * @param jobID
+						 * @param event
+						 */
+						@SuppressWarnings( "unused" )
+						public void removeEvent( final Identifier<?, ?> jobID,
+							final SimEvent event )
+						{
+							final List<SimEvent> jobEvents = pendingEvents
+									.get( job.getID() );
+
+							if( jobEvents == null ) return;
+
+							jobEvents.remove( event );
+
+							if( jobEvents.isEmpty() )
+								pendingEvents.remove( jobID );
+						}
+					} ).subscribe( new Action1<Boolean>()
 					{
-						LOG.error( "Problem scheduling " + job + " @ " + time,
-								t );
-						return Boolean.FALSE;
-					}
-				}
-
-				/**
-				 * remove pending event from cache after it was called by the
-				 * simulator
-				 * 
-				 * @param jobID
-				 * @param event
-				 */
-				@SuppressWarnings( "unused" )
-				public void removeEvent( final Identifier<?, ?> jobID,
-					final SimEvent event )
-				{
-					final List<SimEvent> jobEvents = pendingEvents
-							.get( job.getID() );
-
-					if( jobEvents == null ) return;
-
-					jobEvents.remove( event );
-
-					if( jobEvents.isEmpty() ) pendingEvents.remove( jobID );
-				}
-			} ).subscribe( new Action1<Boolean>()
-			{
-				@Override
-				public void call( final Boolean success )
-				{
-					if( !success ) LOG
-							.error( "Not all trigger events were scheduled for job: "
-									+ job.getID() );
-					// latch.countDown();
-				}
-			} );
+						@Override
+						public void call( final Boolean success )
+						{
+							if( !success ) LOG
+									.error( "Not all trigger events were scheduled for job: "
+											+ job.getID() );
+							// latch.countDown();
+						}
+					} );
 
 			// }
 			// });
@@ -558,24 +560,24 @@ public class DsolSimulatorService extends BasicCapability implements
 					+ job.getClass().getName() );
 	}
 
-	@Override
-	public boolean unschedule( final Job<?> job )
-	{
-		final List<SimEvent> events = this.pendingEvents.remove( job.getID() );
-
-		if( events == null ) return false;
-
-		final DEVSSimulatorInterface simulator = getSimulator();
-		for( SimEvent event : events )
-			try
-			{
-				simulator.cancelEvent( event );
-			} catch( final RemoteException e )
-			{
-				throw new IllegalStateException( "UNEXPECTED", e );
-			}
-		return true;
-	}
+//	@Override
+//	public boolean unschedule( final Job<?> job )
+//	{
+//		final List<SimEvent> events = this.pendingEvents.remove( job.getID() );
+//
+//		if( events == null ) return false;
+//
+//		final DEVSSimulatorInterface simulator = getSimulator();
+//		for( SimEvent event : events )
+//			try
+//			{
+//				simulator.cancelEvent( event );
+//			} catch( final RemoteException e )
+//			{
+//				throw new IllegalStateException( "UNEXPECTED", e );
+//			}
+//		return true;
+//	}
 
 	@Override
 	public boolean isRunning()
@@ -618,51 +620,51 @@ public class DsolSimulatorService extends BasicCapability implements
 						.getLong( System.currentTimeMillis() ) );
 	}
 
-	@Override
-	public Observable<ClockStatusUpdate> getStatusUpdates()
-	{
-		return this.statusUpdates.asObservable();
-	}
-
-	@Override
-	public Observable<SimTime> getTimeUpdates()
-	{
-		return this.timeUpdates.asObservable();
-	}
-
-	@Override
-	public SimTime getVirtualOffset()
-	{
-		// TODO implement
-		throw new IllegalStateException( "NOT IMPLEMENTED" );
-	}
-
-	@Override
-	public SimTime toActualTime( final SimTime virtualTime )
-	{
-		// TODO implement
-		throw new IllegalStateException( "NOT IMPLEMENTED" );
-	}
-
-	@Override
-	public SimTime getActualOffset()
-	{
-		// TODO implement
-		throw new IllegalStateException( "NOT IMPLEMENTED" );
-	}
-
-	@Override
-	public SimTime toVirtualTime( final SimTime actualTime )
-	{
-		// TODO implement
-		throw new IllegalStateException( "NOT IMPLEMENTED" );
-	}
-
-	@Override
-	public Number getApproximateSpeedFactor()
-	{
-		// TODO implement
-		throw new IllegalStateException( "NOT IMPLEMENTED" );
-	}
+//	@Override
+//	public Observable<ClockStatusUpdate> getStatusUpdates()
+//	{
+//		return this.statusUpdates.asObservable();
+//	}
+//
+//	@Override
+//	public Observable<SimTime> getTimeUpdates()
+//	{
+//		return this.timeUpdates.asObservable();
+//	}
+//
+//	@Override
+//	public SimTime getVirtualOffset()
+//	{
+//		// TODO implement
+//		throw new IllegalStateException( "NOT IMPLEMENTED" );
+//	}
+//
+//	@Override
+//	public SimTime toActualTime( final SimTime virtualTime )
+//	{
+//		// TODO implement
+//		throw new IllegalStateException( "NOT IMPLEMENTED" );
+//	}
+//
+//	@Override
+//	public SimTime getActualOffset()
+//	{
+//		// TODO implement
+//		throw new IllegalStateException( "NOT IMPLEMENTED" );
+//	}
+//
+//	@Override
+//	public SimTime toVirtualTime( final SimTime actualTime )
+//	{
+//		// TODO implement
+//		throw new IllegalStateException( "NOT IMPLEMENTED" );
+//	}
+//
+//	@Override
+//	public Number getApproximateSpeedFactor()
+//	{
+//		// TODO implement
+//		throw new IllegalStateException( "NOT IMPLEMENTED" );
+//	}
 
 }

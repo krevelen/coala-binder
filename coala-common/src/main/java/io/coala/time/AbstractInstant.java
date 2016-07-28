@@ -43,7 +43,7 @@ import io.coala.log.InjectLogger;
 @Deprecated
 public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 // extends Number
-	implements Instant<THIS>, JSONConvertible<THIS>
+	implements OldInstant<THIS>, JSONConvertible<THIS>
 {
 
 	/** */
@@ -152,7 +152,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public int compareTo( final Instant<?> other )
+	public int compareTo( final AbstractInstant<?> other )
 	{
 		final int compareClockID = getClockID().compareTo( other.getClockID() );
 		if( compareClockID != 0 ) return compareClockID;
@@ -321,7 +321,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public THIS plus( final Instant<?> value )
+	public THIS plus( final OldInstant<?> value )
 	{
 		return plus( value.toUnit( getUnit() ).doubleValue() );
 	}
@@ -339,7 +339,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public THIS minus( final Instant<?> value )
+	public THIS minus( final OldInstant<?> value )
 	{
 		return minus( value.toUnit( getUnit() ).doubleValue() );
 	}
@@ -357,7 +357,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public Number dividedBy( final Instant<?> value )
+	public Number dividedBy( final OldInstant<?> value )
 	{
 		return doubleValue() / value.toUnit( getUnit() ).doubleValue();
 	}
@@ -396,7 +396,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public boolean isBefore( final Instant<?> value )
+	public boolean isBefore( final OldInstant<?> value )
 	{
 		return isBefore( value.getValue(), value.getUnit() );
 	}
@@ -414,7 +414,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public boolean isOnOrBefore( final Instant<?> value )
+	public boolean isOnOrBefore( final OldInstant<?> value )
 	{
 		return !isAfter( value );
 	}
@@ -432,7 +432,7 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public boolean isOnOrAfter( final Instant<?> value )
+	public boolean isOnOrAfter( final OldInstant<?> value )
 	{
 		return !isBefore( value );
 	}
@@ -457,14 +457,14 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	}
 
 	@Override
-	public boolean isAfter( final Instant<?> value )
+	public boolean isAfter( final OldInstant<?> value )
 	{
 		return isAfter( value.getValue(), value.getUnit() );
 	}
 
 	@Override
-	public Iterable<THIS> getRange( final Instant<?> interval,
-		final Instant<?> max )
+	public Iterable<THIS> getRange( final OldInstant<?> interval,
+		final OldInstant<?> max )
 	{
 		@SuppressWarnings( "unchecked" )
 		final Iterator<THIS> iterator = Range.of( (THIS) this, interval, max );

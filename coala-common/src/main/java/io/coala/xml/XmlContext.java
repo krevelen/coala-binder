@@ -30,6 +30,7 @@ import io.coala.util.Instantiator;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class XmlContext<T>
 {
 

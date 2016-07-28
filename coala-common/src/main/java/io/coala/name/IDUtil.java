@@ -15,11 +15,10 @@
  */
 package io.coala.name;
 
-import io.coala.util.Util;
-
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import io.coala.util.Util;
 
 /**
  * {@link IDUtil} provides identifier helpr methods

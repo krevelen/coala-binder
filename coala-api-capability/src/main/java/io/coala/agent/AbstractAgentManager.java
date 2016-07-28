@@ -49,6 +49,7 @@ import rx.subjects.Subject;
  * @version $Id: b91c041718d534ddb7ce5f43c5a6878fa50389a0 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public abstract class AbstractAgentManager implements AgentManager
 {
 

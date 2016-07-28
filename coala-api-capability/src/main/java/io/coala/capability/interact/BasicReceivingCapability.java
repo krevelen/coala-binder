@@ -26,6 +26,7 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class BasicReceivingCapability extends BasicCapability
 	implements ReceivingCapability, MessageHandler
 {

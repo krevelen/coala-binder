@@ -32,7 +32,6 @@ import io.coala.capability.BasicCapability;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.example.conway.CellLink.CellLinkStatus;
 import io.coala.log.InjectLogger;
-import io.coala.time.SimDuration;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import rx.Observable;
@@ -48,6 +47,7 @@ import rx.subjects.Subject;
  * @version $Id: 63676befb954be9786f5fef1d1afd34c82facfc7 $
  * @author Rick van Krevelen
  */
+@Deprecated
 public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 {
 
@@ -61,10 +61,10 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 					.getNumber( CYCLE_TOTAL_DEFAULT ), TimeUnit.TICKS );
 
 	/** */
-	private final transient SimDuration cycleDuration = new SimDuration(
+	private final transient Number cycleDuration = //new SimDuration(
 			getProperty( CYCLE_DURATION_CONFIG_KEY )
-					.getNumber( CYCLE_DURATION_DEFAULT ),
-			TimeUnit.TICKS );
+					.getNumber( CYCLE_DURATION_DEFAULT );
+			//TimeUnit.TICKS );
 
 	/** */
 	private final transient Subject<CellState, CellState> myStates = PublishSubject
@@ -195,11 +195,11 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 			if( sub != null ) sub.unsubscribe();
 	}
 
-	@Override
-	public SimTime getTime()
-	{
-		return this.myState == null ? null : this.myState.getGeneration();
-	}
+//	@Override
+//	public SimTime getTime()
+//	{
+//		return this.myState == null ? null : this.myState.getGeneration();
+//	}
 
 	@Override
 	public Observable<CellState>

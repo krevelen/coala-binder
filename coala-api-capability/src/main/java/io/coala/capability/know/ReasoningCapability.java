@@ -27,6 +27,7 @@ import rx.Observable;
 /**
  * {@link ReasoningCapability} e.g. based on OWLIM?
  */
+@Deprecated
 public interface ReasoningCapability extends Capability<BasicCapabilityStatus>
 {
 

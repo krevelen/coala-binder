@@ -1,15 +1,21 @@
 package io.coala.math;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import io.coala.json.Wrapper;
+import io.coala.util.DecimalUtil;
 
 /**
  * {@link WeightedValue}
@@ -19,15 +25,35 @@ import io.coala.json.Wrapper;
  * @version $Id: a7842c5dc1c8963fe6c9721cdcda6c3b21980bb0 $
  * @author Rick van Krevelen
  */
-public class WeightedValue<V, W extends Number> extends Wrapper.Simple<V>
-	implements Serializable
+public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 {
 
 	/** */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * @param key
+	 * @param value
+	 * @return a {@link WeightedValue} instance
+	 */
+	public static <V> WeightedValue<V> of( final V key, final Number value )
+	{
+		return new WeightedValue<V>( key, value );
+	}
+
+	public static <V> Set<WeightedValue<V>>
+		of( final Map<V, ? extends Number> values )
+	{
+		final Set<WeightedValue<V>> result = new HashSet<>();
+		values.forEach( ( key, value ) ->
+		{
+			result.add( of( key, value ) );
+		} );
+		return result;
+	}
+
 	/** */
-	private W weight;
+	private Number weight;
 
 	/**
 	 * {@link WeightedValue} zero-arg bean constructor
@@ -42,7 +68,7 @@ public class WeightedValue<V, W extends Number> extends Wrapper.Simple<V>
 	 * @param value
 	 * @param weight
 	 */
-	public WeightedValue( final V value, final W weight )
+	public WeightedValue( final V value, final Number weight )
 	{
 		Objects.requireNonNull( value );
 		wrap( value );
@@ -59,9 +85,9 @@ public class WeightedValue<V, W extends Number> extends Wrapper.Simple<V>
 	@Override
 	public boolean equals( final Object that )
 	{
-		return super.equals( that ) && (getWeight() == null
-				? ((WeightedValue<V, W>) that).getWeight() == null
-				: getWeight().equals( ((WeightedValue<V, W>) that).getWeight() ));
+		return super.equals( that ) && getWeight() == null
+				? ((WeightedValue<V>) that).getWeight() == null
+				: getWeight().equals( ((WeightedValue<V>) that).getWeight() );
 	}
 
 	/**
@@ -75,22 +101,48 @@ public class WeightedValue<V, W extends Number> extends Wrapper.Simple<V>
 	/**
 	 * @return the weight
 	 */
-	public W getWeight()
+	public Number getWeight()
 	{
 		return this.weight;
 	}
 
-	@SuppressWarnings( "serial" )
-	public static class Ordinal<V extends Comparable<? super V>, W extends Number>
-		extends WeightedValue<V, W> implements Comparable<WeightedValue<V, W>>
+	protected void apply( final Function<Number, Number> func )
 	{
-		public Ordinal( final V key, final W value )
+		this.weight = func.apply( this.weight );
+	}
+
+	public static BigDecimal sum( final Collection<WeightedValue<?>> wvs )
+	{
+		BigDecimal result = BigDecimal.ZERO;
+		for( WeightedValue<?> wv : wvs )
+			result = result.add( DecimalUtil.valueOf( wv.getWeight() ) );
+		return result;
+	}
+
+	public static void normalize( final Collection<WeightedValue<?>> weights )
+	{
+		final BigDecimal sum = sum( weights );
+		weights.forEach( weight ->
+		{
+			weight.apply( w ->
+			{
+				return DecimalUtil.valueOf( w ).divide( sum,
+						DecimalUtil.DEFAULT_CONTEXT );
+			} );
+		} );
+	}
+
+	@SuppressWarnings( "serial" )
+	public static class Ordinal<V extends Comparable<? super V>>
+		extends WeightedValue<V> implements Comparable<WeightedValue<V>>
+	{
+		public Ordinal( final V key, final Number value )
 		{
 			super( key, value );
 		}
 
 		@Override
-		public int compareTo( final WeightedValue<V, W> o )
+		public int compareTo( final WeightedValue<V> o )
 		{
 			return Util.compare( getValue(), o.getValue() );
 		}
@@ -99,40 +151,155 @@ public class WeightedValue<V, W extends Number> extends Wrapper.Simple<V>
 	/**
 	 * @param key
 	 * @param value
-	 * @return a {@link WeightedValue} instance
-	 */
-	public static <V, M extends Number> WeightedValue<V, M> of( final V key,
-		final M value )
-	{
-		return new WeightedValue<V, M>( key, value );
-	}
-
-	public static <V, M extends Number> Set<WeightedValue<V, M>>
-		of( final Map<V, M> values )
-	{
-		final Set<WeightedValue<V, M>> result = new HashSet<>();
-		for( Entry<V, M> entry : values.entrySet() )
-			result.add( of( entry.getKey(), entry.getValue() ) );
-		return result;
-	}
-
-	/**
-	 * @param key
-	 * @param value
 	 * @return an {@link Ordinal} instance
 	 */
-	public static <V extends Comparable<? super V>, M extends Number>
-		WeightedValue<V, M> ofOrdinal( final V key, final M value )
+	public static <V extends Comparable<? super V>> WeightedValue<V>
+		ofOrdinal( final V key, final Number value )
 	{
-		return new Ordinal<V, M>( key, value );
+		return new Ordinal<V>( key, value );
 	}
 
-	public static <V extends Comparable<? super V>, M extends Number>
-		NavigableSet<WeightedValue<V, M>> ofOrdinal( final Map<V, M> values )
+	public static <V extends Comparable<? super V>>
+		NavigableSet<WeightedValue<V>>
+		ofOrdinal( final Map<V, ? extends Number> values )
 	{
-		final NavigableSet<WeightedValue<V, M>> result = new ConcurrentSkipListSet<>();
-		for( Entry<V, M> entry : values.entrySet() )
-			result.add( ofOrdinal( entry.getKey(), entry.getValue() ) );
+		final NavigableSet<WeightedValue<V>> result = new ConcurrentSkipListSet<>();
+		values.forEach( ( key, value ) ->
+		{
+			result.add( ofOrdinal( key, value ) );
+		} );
 		return result;
 	}
+
+	public static <
+		V extends Comparable<? super V>, WV extends WeightedValue<? extends V>>
+		NavigableSet<WeightedValue<Bin<V>>> stratify(
+			final Iterable<WV> weights, final Iterable<Bin<V>> exclusiveRanges )
+	{
+		final Collection<WV> remaining = new ArrayList<>();
+		weights.forEach( weight ->
+		{
+			remaining.add( weight );
+		} );
+		final NavigableSet<WeightedValue<Bin<V>>> result = new ConcurrentSkipListSet<>();
+		exclusiveRanges.forEach( range ->
+		{
+			BigDecimal weight = BigDecimal.ZERO;
+			WV i;
+			for( Iterator<WV> it = remaining.iterator(); it.hasNext(); )
+			{
+				if( range.contains( (i = it.next()).getValue() ) )
+				{
+					weight = weight.add( DecimalUtil.valueOf( i.getWeight() ),
+							DecimalUtil.DEFAULT_CONTEXT );
+					it.remove();
+				}
+			}
+			if( weight.compareTo( BigDecimal.ZERO ) != 0 )
+				result.add( of( range, weight ) );
+		} );
+		return result;
+	}
+
+	interface Join<L, R>
+	{
+		L left();
+
+		R right();
+
+		static <L, R> Join<L, R> of( final L left, final R right )
+		{
+			return new Join<L, R>()
+			{
+				@Override
+				public L left()
+				{
+					return left;
+				}
+
+				@Override
+				public R right()
+				{
+					return right;
+				}
+			};
+		}
+	}
+
+	interface JoinOrdinal<L extends Comparable<? super L>, R extends Comparable<? super R>>
+		extends Join<L, R>, Comparable<JoinOrdinal<L, R>>
+	{
+
+		static <
+			L extends Comparable<? super L>, R extends Comparable<? super R>>
+			JoinOrdinal<L, R> of( final L left, final R right )
+		{
+			return new JoinOrdinal<L, R>()
+			{
+				@Override
+				public L left()
+				{
+					return left;
+				}
+
+				@Override
+				public R right()
+				{
+					return right;
+				}
+
+				@Override
+				public int compareTo( final JoinOrdinal<L, R> o )
+				{
+					final int compareLeft = left().compareTo( o.left() );
+					return compareLeft != 0 ? compareLeft
+							: right().compareTo( o.right() );
+				}
+			};
+		}
+	}
+
+	public static <V, W, R> NavigableSet<WeightedValue<R>> join(
+		final Iterable<WeightedValue<V>> left,
+		final Iterable<WeightedValue<W>> right,
+		final BiFunction<V, W, R> joiner, final boolean ignoreZeroes )
+	{
+		final NavigableSet<WeightedValue<R>> result = new ConcurrentSkipListSet<>();
+		left.forEach( v ->
+		{
+			right.forEach( w ->
+			{
+				final BigDecimal weight = DecimalUtil.valueOf( v.getWeight() )
+						.multiply( DecimalUtil.valueOf( w.getWeight() ),
+								DecimalUtil.DEFAULT_CONTEXT );
+				if( ignoreZeroes && weight.compareTo( BigDecimal.ZERO ) != 0 )
+					result.add( of( joiner.apply( v.getValue(), w.getValue() ),
+							weight ) );
+			} );
+		} );
+		return result;
+	}
+
+	public static <V, W> NavigableSet<WeightedValue<Join<V, W>>> join(
+		final Iterable<WeightedValue<V>> left,
+		final Iterable<WeightedValue<W>> right, final boolean ignoreZeroes )
+	{
+		return join( left, right, ( l, r ) ->
+		{
+			return Join.of( l, r );
+		}, ignoreZeroes );
+	}
+
+	public static <
+		V extends Comparable<? super V>, W extends Comparable<? super W>>
+		NavigableSet<WeightedValue<JoinOrdinal<V, W>>>
+		joinOrdinal( final Iterable<WeightedValue<V>> left,
+			final Iterable<WeightedValue<W>> right, final boolean ignoreZeroes )
+	{
+		return join( left, right, ( l, r ) ->
+		{
+			return JoinOrdinal.of( l, r );
+		}, ignoreZeroes );
+	}
+
 }

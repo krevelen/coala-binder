@@ -25,6 +25,7 @@ import com.google.inject.MembersInjector;
 import io.coala.log.LogUtil;
 import io.coala.model.ModelComponent;
 
+@Deprecated
 public class SLF4JMembersInjector<T> implements MembersInjector<T>
 {
 

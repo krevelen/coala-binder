@@ -34,6 +34,7 @@ import io.coala.util.TypeArguments;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Deprecated
 public class TransactionTypeID<F extends CoordinationFact, T extends Transaction<F>>
 	extends CapabilityID
 {

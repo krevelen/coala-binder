@@ -30,7 +30,7 @@ import io.coala.exception.ExceptionFactory;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
 import io.coala.process.BasicProcessStatus;
-import io.coala.time.Instant;
+import io.coala.time.AbstractInstant;
 
 /**
  * {@link ProcedureCall}
@@ -172,7 +172,7 @@ public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 	}
 
 	@Override
-	public Instant<?> getTime()
+	public AbstractInstant<?> getTime()
 	{
 		return null;
 	}

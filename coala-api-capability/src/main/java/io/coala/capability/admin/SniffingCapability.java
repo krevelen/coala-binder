@@ -23,6 +23,7 @@ import rx.Observable;
 /**
  * {@link SniffingCapability}
  */
+@Deprecated
 public interface SniffingCapability extends Capability<BasicCapabilityStatus>
 {
 

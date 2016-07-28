@@ -1,6 +1,8 @@
 package io.coala.util;
 
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
@@ -9,7 +11,7 @@ import javax.inject.Provider;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.json.DynaBean;
-import io.coala.json.DynaBeanProxyProvider;
+import io.coala.json.DynaBean.ProxyProvider;
 import io.coala.json.JsonUtil;
 
 /**
@@ -22,42 +24,75 @@ import io.coala.json.JsonUtil;
 public class Instantiator<T>
 {
 
-	/** the {@link Instantiator}s cached per type */
+	/** the {@link Instantiator} cache by type */
 	private static final Map<Class<?>, Instantiator<?>> INSTANTIATOR_CACHE = new WeakHashMap<>();
 
 	/**
-	 * @param valueType the type of the stored property value
-	 * @param args the arguments for construction
-	 * @return the property value's class instantiated
+	 * @param valueType the type to instantiate
+	 * @param args the constructor arguments
+	 * @return the instance
 	 */
 	public static <T> T instantiate( final Class<T> valueType,
 		final Object... args )
 	{
-		final Class<?>[] argTypes = new Class<?>[args.length];
-		for( int i = 0; i < args.length; i++ )
-			argTypes[i] = args[i] == null ? null : args[i].getClass();
-
-		return of( valueType, argTypes ).instantiate( args );
+		return providerOf( valueType, args ).get();
 	}
 
 	/**
-	 * @param type the {@link Class} to instantiate/proxy
-	 * @return the new {@link Provider}
+	 * @param valueType the {@link Class} to instantiate/proxy
+	 * @param args the constructor arguments (constant for each instantiation)
+	 * @return a new {@link Provider}
 	 */
-	public static <T> Instantiator<T> of( final Class<T> type,
+	public static <T> Provider<T> providerOf( final Class<T> valueType,
+		final Object... args )
+	{
+		final Class<?>[] argTypes = new Class<?>[args == null ? 0
+				: args.length];
+		for( int i = 0; args != null && i < args.length; i++ )
+			argTypes[i] = args[i] == null ? null : args[i].getClass();
+		final Instantiator<T> instantiator = of( valueType, argTypes );
+
+		return new Provider<T>()
+		{
+			@Override
+			public T get()
+			{
+				return instantiator.instantiate( args );
+			}
+
+			@Override
+			public String toString()
+			{
+				return valueType.getName() + (args == null
+						? Collections.emptyList() : Arrays.asList( args ));
+			}
+		};
+	}
+
+	/**
+	 * @param valueType the {@link Class} to instantiate/proxy
+	 * @return a new or cached {@link Instantiator}
+	 */
+	public static <T> Instantiator<T> of( final Class<T> valueType,
 		final Class<?>... argTypes )
 	{
-		return of( INSTANTIATOR_CACHE, type, argTypes );
+		return of( INSTANTIATOR_CACHE, valueType, argTypes );
 	}
 
 	/**
-	 * @param type the {@link Class} to instantiate/proxy
-	 * @return the new {@link Provider} instance
+	 * FIXME caching ignores argument types!
+	 * 
+	 * @param cache a {@link Map} of reusable {@link Instantiator}s, or null
+	 * @param type the {@link Class} to provide instances of
+	 * @param argTypes the constructor argument types
+	 * @return a new or cached {@link Instantiator} instance
 	 */
 	public static <T> Instantiator<T> of(
 		final Map<Class<?>, Instantiator<?>> cache, final Class<T> type,
 		final Class<?>... argTypes )
 	{
+		if( cache == null ) return new Instantiator<T>( type, argTypes );
+
 		synchronized( cache )
 		{
 			@SuppressWarnings( "unchecked" )
@@ -105,10 +140,12 @@ public class Instantiator<T>
 						: new Properties[args.length];
 				for( int i = 0; i < args.length; i++ )
 					imports[i] = (Properties) args[i];
-				return DynaBeanProxyProvider
-						.of( JsonUtil.getJOM(), this.type, imports ).get();
+				return ProxyProvider.of( JsonUtil.getJOM(), this.type, imports )
+						.get();
 			}
-			return this.constructor.newInstance( args );
+			return this.constructor != null
+					? this.constructor.newInstance( args )
+					: this.type.newInstance();
 		} catch( final Throwable t )
 		{
 			throw ExceptionFactory.createUnchecked( t,

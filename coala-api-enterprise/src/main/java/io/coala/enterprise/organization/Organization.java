@@ -24,6 +24,7 @@ import io.coala.time.SimTime;
 /**
  * {@link Organization}
  */
+@Deprecated
 public interface Organization extends Agent, ModelComponent<AgentID>
 {
 

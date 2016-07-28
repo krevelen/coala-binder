@@ -33,6 +33,7 @@ import javax.inject.Inject;
  * 
  * @version $Id$
  */
+@Deprecated
 public class BasicOnlineCapability extends BasicCapability
 		implements OnlineCapability
 {

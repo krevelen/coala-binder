@@ -15,7 +15,6 @@
  */
 package io.coala.invoke;
 
-import io.coala.agent.AgentID;
 import io.coala.event.TimedEventID;
 import io.coala.message.Message;
 import io.coala.message.MessageID;
@@ -25,6 +24,7 @@ import io.coala.message.MessageID;
  * 
  * @param <ID> the type of {@link TimedEventID} for time-ordered event identity
  */
+@Deprecated
 public abstract class TimedRemoteProcedureCall<ID extends MessageID<?, ?>>
 	extends TimedProcedureCall<ID> implements Message<ID>
 {
