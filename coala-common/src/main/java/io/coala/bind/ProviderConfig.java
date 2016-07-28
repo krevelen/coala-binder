@@ -52,7 +52,7 @@ public interface ProviderConfig extends GlobalConfig
 	String BINDINGS_KEY = "bindings";
 
 	default Map<String, BindingConfig>
-		injectableConfigs( final Map<?, ?>... imports )
+		bindingConfigs( final Map<?, ?>... imports )
 	{
 		return subConfigs( BINDINGS_KEY, BindingConfig.class,
 				imports );

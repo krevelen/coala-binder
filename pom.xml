@@ -101,22 +101,21 @@
 		<persistence-api.version>1.0.2</persistence-api.version>
 
 		<!-- set maven mojo execution plugin versions -->
+		<!-- <xmlbeans-maven-plugin.version>2.3.3</xmlbeans-maven-plugin.version> -->
 		<lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-		<maven-eclipse-plugin.version>2.9</maven-eclipse-plugin.version>
-		<maven-clean-plugin.version>2.5</maven-clean-plugin.version>
-		<maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
-		<maven-surefire-plugin.version>2.15</maven-surefire-plugin.version>
-		<maven-source-plugin.version>2.3</maven-source-plugin.version>
-		<maven-antrun-plugin.version>1.7</maven-antrun-plugin.version>
-		<xmlbeans-maven-plugin.version>2.3.3</xmlbeans-maven-plugin.version>
-		<maven-war-plugin.version>2.4</maven-war-plugin.version>
-		<maven-dependency-plugin.version>2.8</maven-dependency-plugin.version>
-		<maven-deploy-plugin.version>2.8.1</maven-deploy-plugin.version>
-		<maven-resources-plugin.version>2.6</maven-resources-plugin.version>
-		<maven-jar-plugin.version>2.4</maven-jar-plugin.version>
-		<exec-maven-plugin.version>1.3.2</exec-maven-plugin.version>
-		<maven-assembly-plugin.version>2.4</maven-assembly-plugin.version>
-		<build-helper-maven-plugin.version>1.8</build-helper-maven-plugin.version>
+		<maven-clean-plugin.version>3.0.0</maven-clean-plugin.version>
+		<maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+		<maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+		<maven-source-plugin.version>3.0.0</maven-source-plugin.version>
+		<maven-antrun-plugin.version>1.8</maven-antrun-plugin.version>
+		<maven-war-plugin.version>2.6</maven-war-plugin.version>
+		<maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
+		<maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+		<maven-resources-plugin.version>3.0.1</maven-resources-plugin.version>
+		<maven-jar-plugin.version>3.0.0</maven-jar-plugin.version>
+		<exec-maven-plugin.version>1.5.0</exec-maven-plugin.version>
+		<maven-assembly-plugin.version>2.6</maven-assembly-plugin.version>
+		<build-helper-maven-plugin.version>1.10</build-helper-maven-plugin.version>
 	</properties>
 
 	<distributionManagement>
@@ -209,10 +208,6 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
-					<artifactId>maven-eclipse-plugin</artifactId>
-					<version>${maven-eclipse-plugin.version}</version>
-				</plugin>
-				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>${maven-compiler-plugin.version}</version>
 					<configuration>
@@ -296,11 +291,6 @@
 					<artifactId>exec-maven-plugin</artifactId>
 					<version>${exec-maven-plugin.version}</version>
 				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>xmlbeans-maven-plugin</artifactId>
-					<version>${xmlbeans-maven-plugin.version}</version>
-				</plugin>
 
 				<plugin>
 					<!-- Configure the Maven2 Eclipse IDE Integration (m2e) for non-standard 
@@ -354,16 +344,6 @@
 		</pluginManagement>
 
 		<plugins>
-			<!-- Have Eclipse IDE's Maven integration (specified in <pluginManagement/>) 
-				download sources and javadoc -->
-			<plugin>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<configuration>
-					<downloadSources>true</downloadSources>
-					<downloadJavadocs>true</downloadJavadocs>
-				</configuration>
-			</plugin>
-
 			<!-- Set Java compiler configuration -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
