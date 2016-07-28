@@ -93,7 +93,7 @@ public class Guice4LocalBinder implements LocalBinder
 					final boolean mutable = binding.mutable();
 					final boolean initable = binding.initable();
 					final Collection<BindingConfig> typeKeys = binding
-							.injectableConfigs().values();
+							.bindingConfigs().values();
 
 					LocalProvider<?> provider = null;
 					if( initable ) binder.initable.add( impl );
@@ -122,6 +122,9 @@ public class Guice4LocalBinder implements LocalBinder
 			private <T> void bindImpl( final Class<T> type,
 				final Class<?> impl )
 			{
+				if( type == impl ) throw new IllegalArgumentException(
+						"Can't bind to self: " + type );
+
 				bind( type ).to( impl.asSubclass( type ) );
 				LOG.trace( "Bound {} <- {}", type, impl );
 			}
@@ -143,7 +146,7 @@ public class Guice4LocalBinder implements LocalBinder
 			 * @param type the {@link Provider}, {@link Inject} or other type
 			 */
 			private <T> LocalProvider<?> bindLocal( final Class<?> impl,
-				final boolean mutable, final Class<? super T> type )
+				final boolean mutable, final Class<T> type )
 			{
 				Objects.requireNonNull( impl, "impl can't be null" );
 				Objects.requireNonNull( type, "type can't be null" );
