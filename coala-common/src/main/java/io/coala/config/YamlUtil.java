@@ -79,9 +79,11 @@ public class YamlUtil implements Util
 				baseKeys );
 	}
 
+	private static final String nl = "\r\n", hash = "# ";
+
 	public static String toComment( final String comment )
 	{
-		return "# " + comment + "\r\n";
+		return hash + comment.replace( nl, nl + hash ) + nl;
 	}
 
 	/**

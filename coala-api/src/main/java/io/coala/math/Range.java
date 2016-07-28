@@ -58,10 +58,10 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	 */
 	public boolean isGreaterThan( final T value )
 	{
-		if( this.minimum.isNegativeInfinity() ) return false;
-		return getMinimum().isInclusive()
-				? Comparison.lt( value, getMinimum().getValue() )
-				: Comparison.le( value, getMinimum().getValue() );
+		final T min = getMinimum().getValue();
+		if( min == null ) return false;
+		return getMinimum().isInclusive() ? Comparison.lt( value, min )
+				: Comparison.le( value, min );
 	}
 
 	/**
@@ -71,10 +71,10 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	 */
 	public boolean isLessThan( final T value )
 	{
-		if( getMaximum() == null ) return false;
-		return getMaximum().isInclusive()
-				? Comparison.gt( value, getMaximum().getValue() )
-				: Comparison.ge( value, getMaximum().getValue() );
+		final T max = getMaximum().getValue();
+		if( max == null ) return false;
+		return getMaximum().isInclusive() ? Comparison.gt( value, max )
+				: Comparison.ge( value, max );
 	}
 
 	/**
@@ -95,6 +95,19 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	{
 		return of( Compare.max( this.getMinimum(), that.getMinimum() ),
 				Compare.min( this.getMaximum(), that.getMaximum() ) );
+	}
+
+	@Override
+	public String toString()
+	{
+		return new StringBuilder()
+				.append( getMinimum().isInclusive() ? '[' : '<' )
+				.append( getMinimum().isInfinity() ? "←"
+						: getMinimum().getValue() )
+				.append( ", " )
+				.append( getMaximum().isInfinity() ? "→"
+						: getMaximum().getValue() )
+				.append( getMaximum().isInclusive() ? ']' : '>' ).toString();
 	}
 
 	@Override
@@ -176,7 +189,7 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	public static <T extends Comparable<?>> Range<T> of( final T minimum,
 		final T maximum )
 	{
-		return of( minimum, true, maximum, true );
+		return of( minimum, minimum != null, maximum, maximum != null );
 	}
 
 	/**
@@ -208,7 +221,7 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	public static <Q extends Quantity> Range<Amount<Q>> of( final Number min,
 		final Number max, final Unit<Q> unit )
 	{
-		return of( MeasureUtil.toAmount( min, unit ),
-				MeasureUtil.toAmount( max, unit ) );
+		return of( min == null ? null : MeasureUtil.toAmount( min, unit ),
+				max == null ? null : MeasureUtil.toAmount( max, unit ) );
 	}
 }

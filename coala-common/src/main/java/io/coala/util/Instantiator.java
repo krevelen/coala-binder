@@ -80,6 +80,8 @@ public class Instantiator<T>
 	}
 
 	/**
+	 * FIXME caching ignores argument types!
+	 * 
 	 * @param cache a {@link Map} of reusable {@link Instantiator}s, or null
 	 * @param type the {@link Class} to provide instances of
 	 * @param argTypes the constructor argument types

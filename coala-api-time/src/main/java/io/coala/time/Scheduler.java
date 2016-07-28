@@ -18,7 +18,7 @@ import rx.subjects.Subject;
  * @version $Id: d60e554b08ebba3a7b59f0924ecbdd8910988d7a $
  * @author Rick van Krevelen
  */
-public interface Scheduler extends Timed
+public interface Scheduler extends Proactive
 {
 
 	@Override

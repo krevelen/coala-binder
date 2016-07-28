@@ -16,7 +16,7 @@ import io.coala.exception.ExceptionFactory;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
-import io.coala.time.Timed;
+import io.coala.time.Proactive;
 import io.coala.time.Timing;
 
 /**
@@ -32,7 +32,7 @@ public class Dsol3SchedulerTest
 	private static final Logger LOG = LogManager
 			.getLogger( Dsol3SchedulerTest.class );
 
-	private void logTime( final Timed t )
+	private void logTime( final Proactive t )
 	{
 		LOG.trace( "logging, t={}", t.now() );
 	}

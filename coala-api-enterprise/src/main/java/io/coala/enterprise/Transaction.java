@@ -30,7 +30,7 @@ import io.coala.name.Identified;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
-import io.coala.time.Timed;
+import io.coala.time.Proactive;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
@@ -43,7 +43,7 @@ import rx.subjects.Subject;
  * @author Rick van Krevelen
  */
 public interface Transaction<F extends CoordinationFact>
-	extends Timed, Identified.Ordinal<Transaction.ID>
+	extends Proactive, Identified.Ordinal<Transaction.ID>
 {
 	/** @return */
 	Organization.ID initiatorID();

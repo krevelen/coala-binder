@@ -20,6 +20,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.util.Map;
 
 import org.aeonbits.owner.ConfigCache;
 
@@ -41,7 +43,7 @@ public @interface InjectConfig
 	/**
 	 * @return the {@link Scope} for sharing injected {@link Config} instances
 	 */
-	Scope scope() default Scope.CONFIG;
+	Scope scope() default Scope.CLASSLOADER;
 
 	/**
 	 * {@link Scope} determines which key to use for
@@ -53,14 +55,15 @@ public @interface InjectConfig
 	enum Scope
 	{
 		/**
-		 * use the {@link Config} sub-type as caching key (i.e. {@link Config}
-		 * instance shared across current ClassLoader)
+		 * use the {@link Config} sub-type as caching key: get the
+		 * {@link Config} instance shared across current ClassLoader (also the
+		 * default key in {@link ConfigCache#getOrCreate(Class, Map...)})
 		 */
-		CONFIG,
+		CLASSLOADER,
 
 		/**
-		 * use the injectable field as caching key (i.e. share {@link Config}
-		 * instance for this {@link Field} across current ClassLoader)
+		 * use the injectable field as caching key: get the {@link Config}
+		 * instance shared for this {@link Field} across current ClassLoader
 		 */
 		FIELD,
 

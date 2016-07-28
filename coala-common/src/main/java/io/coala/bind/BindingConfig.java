@@ -1,5 +1,7 @@
 /* $Id$
  * 
+ * Part of ZonMW project no. 50-53000-98-156
+ * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy
@@ -12,15 +14,26 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ * 
+ * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.factory;
+package io.coala.bind;
+
+import io.coala.config.GlobalConfig;
 
 /**
- * {@link Factory} tags a factory that provides (static) helper methods for
- * object instantiation, e.g. from properties files or database schemes
+ * {@link BindingConfig}
+ * 
+ * @version $Id$
+ * @author Rick van Krevelen
  */
-@Deprecated
-public interface Factory
+public interface BindingConfig extends GlobalConfig
 {
 
+	String TYPE_KEY = "type";
+
+	@Key( TYPE_KEY )
+	Class<?> type();
+	
+	// TODO add constructor parameters?
 }

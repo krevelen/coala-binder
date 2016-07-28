@@ -19,36 +19,42 @@
  */
 package io.coala.bind;
 
-import io.coala.json.Contextual;
-import io.coala.name.Identified;
+import java.util.Map;
+
+import io.coala.config.GlobalConfig;
 
 /**
- * {@link LocalContextual}
+ * {@link ProviderConfig}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface LocalContextual extends Contextual, Identified.Ordinal<String>
+public interface ProviderConfig extends GlobalConfig
 {
 
-	static int hashCode( final LocalContextual self )
-	{
-		return self.id().hashCode();
-	}
+	String INITABLE_KEY = "init";
 
-	static boolean equals( final LocalContextual self, final Object other )
-	{
-		return self.id().equals( other );
-	}
+	@Key( INITABLE_KEY )
+	@DefaultValue( "false" )
+	boolean initable();
 
-	static String toString( final String id )
-	{
-		return '(' + id.toString() + ')';
-	}
+	String MUTABLE_KEY = "mutable";
 
-	static String toString( final LocalContextual self )
+	@Key( MUTABLE_KEY )
+	@DefaultValue( "false" )
+	boolean mutable();
+
+	String IMPLEMENTATION_KEY = "impl";
+
+	@Key( IMPLEMENTATION_KEY )
+	Class<?> implementation();
+
+	String BINDINGS_KEY = "bindings";
+
+	default Map<String, BindingConfig>
+		injectableConfigs( final Map<?, ?>... imports )
 	{
-		return self.getClass().getName() + toString( self.id() )
-				+ self.context();
+		return subConfigs( BINDINGS_KEY, BindingConfig.class,
+				imports );
 	}
 }

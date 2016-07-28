@@ -71,7 +71,7 @@ public class Guice4InjectConfigTypeListener implements TypeListener
 									? ((Identified<?>) t).id() : t;
 							break;
 						default:
-						case CONFIG:
+						case CLASSLOADER:
 							key = type;
 							break;
 						}

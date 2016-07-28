@@ -25,8 +25,6 @@ import java.util.Map;
 
 import org.aeonbits.owner.ConfigCache;
 
-import io.coala.bind.LocalBinder.BinderConfig;
-import io.coala.bind.LocalContextual.LocalConfig;
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 

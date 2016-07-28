@@ -209,6 +209,20 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	public Expectation schedule( final Instant when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
+		if( now().equals( when ) )
+		{
+			try
+			{
+				this.scheduler.scheduleEvent( new SimEvent<DsolTime<Q>>(
+						this.scheduler.getSimulatorTime(), this, what, "accept",
+						new Object[]
+						{ when } ) );
+			} catch( final Exception e )
+			{
+				this.time.onError( e );
+			}
+			return null; // TODO provide a way to cancel instantaneous events?
+		}
 		synchronized( this.listeners )
 		{
 			return Expectation.of( this, when,

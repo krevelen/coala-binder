@@ -16,7 +16,6 @@
 package io.coala.time;
 
 import javax.measure.DecimalMeasure;
-import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
@@ -28,8 +27,8 @@ import org.jscience.physics.amount.Amount;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.json.Wrapper;
+import io.coala.math.MeasureUtil;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.time.TimeSpan.Prettifier;
 
@@ -229,17 +228,39 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 		return of( unwrap().to( unit ) );
 	}
 
-	@JsonIgnore
+	public int intValue( final Unit unit )
+	{
+		return unwrap().intValue( unit );
+	}
+
 	public long longValue( final Unit unit )
 	{
-		try
-		{
-			return unwrap().longValue( unit );
-		} catch( final Throwable t )
-		{
-			throw ExceptionFactory.createUnchecked(
-					"Could not convert {} to {}", unwrap().getUnit(), unit, t );
-		}
+		return unwrap().longValue( unit );
+	}
+
+	public float floatValue( final Unit unit )
+	{
+		return unwrap().floatValue( unit );
+	}
+
+	public double doubleValue( final Unit unit )
+	{
+		return unwrap().doubleValue( unit );
+	}
+
+	public Duration pow( final double exponent )
+	{
+		return of( MeasureUtil.pow( unwrap(), exponent ) );
+	}
+
+	public Duration floor()
+	{
+		return of( MeasureUtil.floor( unwrap() ) );
+	}
+
+	public Duration ceil()
+	{
+		return of( MeasureUtil.ceil( unwrap() ) );
 	}
 
 	@JsonIgnore
@@ -276,13 +297,12 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	@JsonIgnore
 	public Amount toAmount()
 	{
-		return Amount.valueOf( unwrap().doubleValue( unwrap().getUnit() ),
-				unwrap().getUnit() );
+		return MeasureUtil.toAmount( unwrap() );
 	}
 
-	/** @return the JSR-275 {@link Measurable} implementation of a time span */
+	/** @return the JSR-275 {@link Measure} implementation of a time span */
 	@JsonIgnore
-	public Measurable toMeasure()
+	public Measure toMeasure()
 	{
 		return unwrap();
 	}

@@ -9,11 +9,11 @@ import org.aeonbits.owner.Mutable;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import io.coala.bind.BinderConfig;
 import io.coala.bind.Launcher.LaunchConfig;
 import io.coala.bind.LocalBinder;
-import io.coala.bind.LocalBinder.BinderConfig;
-import io.coala.bind.LocalBinder.ProviderConfig;
-import io.coala.bind.LocalContextual.LocalConfig;
+import io.coala.bind.LocalConfig;
+import io.coala.bind.ProviderConfig;
 import io.coala.config.InjectConfig;
 import io.coala.config.InjectConfig.Scope;
 import io.coala.config.YamlUtil;

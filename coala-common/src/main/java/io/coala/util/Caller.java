@@ -67,6 +67,7 @@ public interface Caller<T, U, R, E extends Throwable>
 	{
 		try
 		{
+			// final Object ignore = 
 			get();
 		} catch( final RuntimeException e )
 		{

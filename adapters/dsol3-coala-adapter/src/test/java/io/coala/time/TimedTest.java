@@ -52,7 +52,7 @@ public class TimedTest
 					LOG.trace( "Scheduler initialized, t={}",
 							s.now().prettify( 3 ) );
 				} );
-		final Timed model = new Timed()
+		final Proactive model = new Proactive()
 		{
 			@Override
 			public Scheduler scheduler()

@@ -1,6 +1,7 @@
 package io.coala.guice4;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,9 +19,15 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.matcher.Matchers;
 
+import io.coala.bind.BinderConfig;
+import io.coala.bind.BindingConfig;
 import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalConfig;
 import io.coala.bind.LocalContextual;
+import io.coala.bind.ProviderConfig;
+import io.coala.config.InjectConfig;
 import io.coala.exception.ExceptionFactory;
+import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.util.Instantiator;
 import rx.Observable;
@@ -36,8 +43,7 @@ import rx.subjects.Subject;
 public class Guice4LocalBinder implements LocalBinder
 {
 	/** */
-	static final Logger LOG = LogUtil
-			.getLogger( Guice4LocalBinder.class );
+	static final Logger LOG = LogUtil.getLogger( Guice4LocalBinder.class );
 
 	/**
 	 * @param binder
@@ -64,9 +70,18 @@ public class Guice4LocalBinder implements LocalBinder
 				emit( LocalBinder.class, binder );
 
 				if( imports != null ) for( Map<?, ?> imported : imports )
-					for( Map.Entry<?, ?> entry : imported.entrySet() )
-						bindProvider( (Class<?>) entry.getKey(),
-								LocalProvider.of( binder, entry.getValue() ) );
+					imported.forEach( ( key, value ) ->
+					{
+						if( value instanceof Class )
+							bindImpl( (Class<?>) key, (Class<?>) value );
+						else
+							bindProvider( (Class<?>) key,
+									value instanceof Provider
+											? LocalProvider.of( binder,
+													(Provider<?>) value, false )
+											: LocalProvider.of( binder,
+													value ) );
+					} );
 
 				final BinderConfig conf = binder.config;
 				for( ProviderConfig binding : conf.providerConfigs().values() )
@@ -104,11 +119,22 @@ public class Guice4LocalBinder implements LocalBinder
 			/**
 			 * @param type the {@link Provider}, {@link Inject} or other type
 			 */
+			private <T> void bindImpl( final Class<T> type,
+				final Class<?> impl )
+			{
+				bind( type ).to( impl.asSubclass( type ) );
+				LOG.trace( "Bound {} <- {}", type, impl );
+			}
+
+			/**
+			 * @param type the {@link Provider}, {@link Inject} or other type
+			 */
 			@SuppressWarnings( "unchecked" )
 			private <T> void bindProvider( final Class<T> type,
 				final Provider<?> provider )
 			{
 				bind( type ).toProvider( (Provider<T>) provider );
+				LOG.trace( "Bound {} <- {}", type, provider );
 			}
 
 			/**
@@ -116,7 +142,6 @@ public class Guice4LocalBinder implements LocalBinder
 			 * 
 			 * @param type the {@link Provider}, {@link Inject} or other type
 			 */
-			@SuppressWarnings( "unchecked" )
 			private <T> LocalProvider<?> bindLocal( final Class<?> impl,
 				final boolean mutable, final Class<? super T> type )
 			{
@@ -139,30 +164,44 @@ public class Guice4LocalBinder implements LocalBinder
 					bindProvider( type, provider );
 				} else
 				{
-					Constructor<?> injectableConstructor = null;
-					for( Constructor<?> constructor : type.getConstructors() )
+					boolean injectAnnotated = false;
+					for( Field field : impl.getDeclaredFields() )
+						injectAnnotated |= field
+								.isAnnotationPresent( Inject.class )
+								|| field.isAnnotationPresent(
+										InjectLogger.class )
+								|| field.isAnnotationPresent(
+										InjectConfig.class );
+					for( Constructor<?> constructor : impl.getConstructors() )
 						if( constructor.isAnnotationPresent( Inject.class ) )
 						{
-							injectableConstructor = constructor;
-							bind( type ).toConstructor(
-									(Constructor<T>) constructor );
+							injectAnnotated = true;
+//							bind( type ).toConstructor(
+//									(Constructor<T>) constructor );
+//							LOG.trace( "Bound {} <- {}", type, constructor );
 							break;
 						}
-					if( injectableConstructor != null )
+					if( injectAnnotated )
 						provider = null;//LocalProvider.of( binder, getProvider( type ), false );
 					else
 						provider = LocalProvider.of( binder, impl );
-					if( provider != null ) bindProvider( type, provider );
+					if( provider != null )
+						bindProvider( type, provider );
+					else
+						bindImpl( type, impl );
 				}
 
 				if( mutable )
 				{
-					if( binder.mutables.put( type,
+					if( provider == null )
+						LOG.warn( "Mutable @Inject not (yet) supported for {}",
+								impl );
+					else if( binder.mutables.put( type,
 							MutableProvider.of( provider ) ) != null )
-						LOG.info( "{}::{} now mutable",
+						LOG.warn( "{}::{} now mutable",
 								LocalContextual.toString( binder.id ), type );
 				} else if( binder.mutables.remove( type ) != null )
-					LOG.info( "{}::{} no longer mutable!",
+					LOG.warn( "{}::{} no longer mutable!",
 							LocalContextual.toString( binder.id ), type );
 				emit( type, provider );
 				return provider;
@@ -199,7 +238,18 @@ public class Guice4LocalBinder implements LocalBinder
 
 	/**
 	 * @param config the {@link BinderConfig}
-	 * @return
+	 * @return a {@link Guice4LocalBinder}
+	 */
+	public static Guice4LocalBinder of( final LocalConfig config )
+	{
+		return of( config, null );
+	}
+
+	/**
+	 * @param config the {@link BinderConfig}
+	 * @param bindImports bindings to import as {@link Map} of: type &rArr;
+	 *            implementation (object or type)
+	 * @return a {@link Guice4LocalBinder}
 	 */
 	public static Guice4LocalBinder of( final LocalConfig config,
 		final Map<Class<?>, ?> bindImports )

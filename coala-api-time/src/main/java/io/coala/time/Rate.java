@@ -121,9 +121,9 @@ public class Rate extends DecimalMeasure<Frequency>
 	/**
 	 * {@link Rate} static factory method
 	 */
-	public static Rate of( final double value, final Unit<Frequency> amount )
+	public static Rate of( final Number value, final Unit<Frequency> amount )
 	{
-		return of( BigDecimal.valueOf( value ), amount );
+		return of( BigDecimal.valueOf( value.doubleValue() ), amount );
 	}
 
 	/**
@@ -140,12 +140,11 @@ public class Rate extends DecimalMeasure<Frequency>
 	 * 
 	 * @param measure
 	 */
-	public static <V extends Number> Rate
-		of( final Measure<V, Frequency> measure )
+	public static Rate of( final Measure<? extends Number, Frequency> measure )
 	{
 		return measure.getValue() instanceof BigDecimal
 				? of( (BigDecimal) measure.getValue(), measure.getUnit() )
-				: of( measure.getValue().doubleValue(), measure.getUnit() );
+				: of( measure.getValue(), measure.getUnit() );
 	}
 
 	/**
