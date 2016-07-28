@@ -23,6 +23,7 @@ import javax.measure.quantity.Quantity;
 
 import org.jscience.physics.amount.Amount;
 
+import io.coala.math.MeasureUtil;
 import io.coala.math.Range;
 
 /**
@@ -54,5 +55,13 @@ public class Indicator<Q extends Quantity>
 	public void setValue( final Amount<Q> amount )
 	{
 		this.timeInvariant.set( amount );
+	}
+
+	/**
+	 * @param size
+	 */
+	public void add( final Number value )
+	{
+		setValue( current().plus( MeasureUtil.toAmount( value ) ) );
 	}
 }
