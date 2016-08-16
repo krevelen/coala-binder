@@ -28,6 +28,7 @@ Configuration:
           ref: Console
       - name: org.hibernate
         level: warn
+        additivity: false
         AppenderRef:
           ref: Console
           

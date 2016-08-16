@@ -106,7 +106,7 @@ public class PersistTest
 		} );
 	}
 
-	interface MyHibernateConfig extends KunderaJPAConfig, MyHypersonicConfig
+	interface MyHibernateConfig extends KunderaJPAConfig
 	{
 		@DefaultValue( "kundera_test_pu" )
 		String[] persistenceUnitNames();
@@ -151,6 +151,10 @@ public class PersistTest
 		@Column( name = "ID" )
 		public int id;
 
+//		@Version
+//		@Column( name = "version" )
+//		private int version = 0;
+
 		@Column( name = "FIRST", length = 255 )
 		public String first;
 
@@ -178,20 +182,20 @@ public class PersistTest
 				.getOrCreate( MyHibernateConfig.class );
 		LOG.trace( "Testing JPA config: {}", ConfigUtil.export( conf ) );
 		final EntityManagerFactory emf = conf.createEntityManagerFactory();
-		conf.transact( emf, em ->
+		JPAUtil.transact( emf, em ->
 		{
 			final int res0 = em
 					.createQuery( "DELETE FROM " + TABLE_NAME + " r" )
 					.executeUpdate();
 			LOG.trace( "Removed records: {}", res0 );
 		} );
-		conf.transact( emf, em ->
+		JPAUtil.transact( emf, em ->
 		{
 			em.persist( MyRegistration.of( "Rick", "van Krevelen" ) );
 			em.persist( MyRegistration.of( "Joram", "Hoogink" ) );
 			LOG.trace( "Filled table" );
 		} );
-		conf.transact( emf, em ->
+		JPAUtil.transact( emf, em ->
 		{
 			LOG.trace( "Read table, result: {}",
 					em.createQuery( "SELECT r FROM " + TABLE_NAME + " r",

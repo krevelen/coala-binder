@@ -15,6 +15,8 @@
  */
 package io.coala.persist;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * {@link HibernateJPAConfig}
  * 
@@ -24,13 +26,13 @@ package io.coala.persist;
 public interface HibernateJPAConfig extends JPAConfig
 {
 
-	@DefaultValue( "org.hibernate.ejb.HibernatePersistence" )
-	Class<?> provider();
+//	@DefaultValue( "org.hibernate.ejb.HibernatePersistence" )
+//	Class<?> provider();
 
-	@Key( "hibernate.dialect" )
+//	@Key( "hibernate.dialect" )
 //	@DefaultValue( "org.hibernate.dialect.HSQLDialect" )
-	// TODO add defaults for MySQL, Oracle, PostgreSQL, etc.
-	String hibernateDialect();
+//	// TODO add defaults for MySQL, Oracle, PostgreSQL, etc.
+//	String hibernateDialect();
 
 	/**
 	 * {@link SchemaPolicy} NOTE: don't use "update" in production, see
@@ -41,33 +43,75 @@ public interface HibernateJPAConfig extends JPAConfig
 	 */
 	enum SchemaPolicy
 	{
-		/** */
-		validate,
-		/** */
-		update,
+
 		/** */
 		create,
+
 		/** */
-		create_drop;
+		create_drop( "create-drop" ),
+
+		/** */
+		update,
+
+		/** */
+		none,
+
+		/** */
+		validate;
+
+		private final String value;
+
+		private SchemaPolicy()
+		{
+			this( null );
+		}
+
+		private SchemaPolicy( final String value )
+		{
+			this.value = value;
+		}
+
+		@Override
+		@JsonValue
+		public String toString()
+		{
+			return this.value == null ? name() : this.value;
+		}
 	}
 
-	@Key( "hibernate.hbm2ddl.auto" )
+	String SCHEMA_POLICY_KEY = "hibernate.hbm2ddl.auto";
+
+	String DEFAULT_SCHEMA_KEY = "hibernate.default_schema";
+
+	String SHOW_SQL_KEY = "hibernate.show_sql";
+	
+	String USE_SQL_COMMENTS_KEY = "hibernate.use_sql_comments";
+
+	String FORMAT_SQL_KEY = "hibernate.format_sql";
+
+	String CONNECTION_PROVIDER_CLASS_KEY = "hibernate.connection.provider_class";
+
+	@Key( SCHEMA_POLICY_KEY )
 	@DefaultValue( "update" )
 	SchemaPolicy hibernateSchemaPolicy();
 
-	@Key( "hibernate.default_schema" )
+	@Key( DEFAULT_SCHEMA_KEY )
 //	@DefaultValue( "MY_SCHEMA" )
 	String hibernateDefaultSchema();
 
-	@Key( "hibernate.show_sql" )
+	@Key( SHOW_SQL_KEY )
 	@DefaultValue( "true" )
 	boolean hibernateShowSQL();
 
-	@Key( "hibernate.format_sql" )
+	@Key( USE_SQL_COMMENTS_KEY )
+	@DefaultValue( "true" )
+	boolean hibernateUseSQLComments();
+
+	@Key( FORMAT_SQL_KEY )
 	@DefaultValue( "true" )
 	boolean hibernateFormatSQL();
 
-	@Key( "hibernate.connection.provider_class" )
+	@Key( CONNECTION_PROVIDER_CLASS_KEY )
 	@DefaultValue( "org.hibernate.connection.C3P0ConnectionProvider" )
 	String hibernateConnectionProviderClass();
 

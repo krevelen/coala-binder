@@ -16,11 +16,8 @@
 package io.coala.persist;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import io.coala.config.ConfigUtil;
@@ -52,8 +49,8 @@ public interface JPAConfig extends GlobalConfig
 	@Separator( NAME_DELIMITER )
 	String[] persistenceUnitNames();
 
-	@Key( "javax.persistence.provider" )
-	Class<?> provider();
+//	@Key( "javax.persistence.provider" )
+//	Class<?> provider();
 
 	/**
 	 * @param imports additional configuration
@@ -77,27 +74,6 @@ public interface JPAConfig extends GlobalConfig
 	{
 		return Persistence.createEntityManagerFactory( persistenceUnitNames,
 				ConfigUtil.export( this, imports ) );
-	}
-
-	/**
-	 * @param emf the (expensive) {@link EntityManagerFactory}
-	 * @param consumer the transaction's {@link EntityManager} {@link Consumer}
-	 */
-	default void transact( final EntityManagerFactory emf,
-		final Consumer<EntityManager> consumer )
-	{
-		final EntityManager em = emf.createEntityManager();
-		final EntityTransaction tran = em.getTransaction();
-		try
-		{
-			tran.begin();
-			consumer.accept( em );
-			if( tran.isActive() ) tran.commit();
-		} finally
-		{
-			if( tran.isActive() ) tran.rollback();
-			em.close();
-		}
 	}
 
 }
