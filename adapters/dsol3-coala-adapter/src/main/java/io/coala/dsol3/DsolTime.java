@@ -43,6 +43,7 @@ import nl.tudelft.simulation.dsol.simtime.SimTime;
 import nl.tudelft.simulation.dsol.simtime.TimeUnit;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulatorInterface;
+import nl.tudelft.simulation.dsol.simulators.Simulator;
 
 /**
  * {@link DsolTime} extends a DSOL {@link SimTime} to become a {@link Wrapper}
@@ -268,7 +269,12 @@ public class DsolTime<Q extends Quantity> extends
 	public static <T extends DEVSSimulatorInterface> T
 		createDEVSSimulator( final Class<T> simType )
 	{
-		return Instantiator.instantiate( simType );
+		final T result = Instantiator.instantiate( simType );
+		Runtime.getRuntime().addShutdownHook( new Thread( () ->
+		{
+			((Simulator) result).cleanUp();
+		} ) );
+		return result;
 	}
 
 	/**

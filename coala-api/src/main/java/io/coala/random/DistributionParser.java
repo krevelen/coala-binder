@@ -26,6 +26,8 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.inject.Inject;
+
 import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 
@@ -69,6 +71,7 @@ public class DistributionParser
 
 	private final ProbabilityDistribution.Factory factory;
 
+	@Inject
 	public DistributionParser( final ProbabilityDistribution.Factory factory )
 	{
 		this.factory = factory;

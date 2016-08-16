@@ -301,9 +301,24 @@ public class ConfigUtil implements Util
 	}
 
 	/**
+	 * @param maps
+	 * @return the joined String-to-String mapping
+	 */
+	public static Map<String, String> export( final Accessible config,
+		final Map<?, ?>... maps )
+	{
+		final Map<String, String> result = export( config, (Pattern) null );
+		if( maps != null ) for( Map<?, ?> map : maps )
+			map.forEach( ( key, value ) ->
+			{
+				result.put( key.toString(), value.toString() );
+			} );
+		return result;
+	}
+
+	/**
 	 * @param config the {@link Accessible} config to export
 	 * @param keyFilter (optional) the {@link Pattern} to match keys against
-	 * @param replacement (optional) the key replacement pattern
 	 * @return the (matched) keys and values
 	 */
 	public static Map<String, String> export( final Accessible config,
@@ -334,14 +349,8 @@ public class ConfigUtil implements Util
 					final String replace = replacement != null
 							? m.replaceFirst( replacement )
 							: m.groupCount() > 1 ? m.group( 1 ) : m.group( 0 );
-//					LogUtil.getLogger( ConfigUtil.class ).trace(
-//							"Matched {} with {} => {}", keyFilter, key,
-//							replace );
 					result.put( replace, config.getProperty( key ) );
 				}
-//				else
-//					LogUtil.getLogger( ConfigUtil.class )
-//							.trace( "Match failed {} with {}", keyFilter, key );
 			}
 		return result;
 	}
