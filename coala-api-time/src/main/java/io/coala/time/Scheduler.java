@@ -137,7 +137,7 @@ public interface Scheduler extends Proactive
 					result.onNext( what.call() );
 				} catch( final Throwable e )
 				{
-					result.onError( e );
+					ThrowableUtil.throwAsUnchecked( e );
 				}
 			}
 
