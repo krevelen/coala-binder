@@ -10,8 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.exception.ExceptionFactory;
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
@@ -59,7 +58,7 @@ public class Dsol3SchedulerTest
 										t.prettify( NonSI.DAY, 2 ) );
 
 								if( Compare.ge( t, throwTime ) )
-									ExceptionFactory.throwNew(
+									Thrower.throwNew(
 											IllegalStateException.class,
 											"Throwing beyond t={}", throwTime );
 							} ).subscribe( exp ->
@@ -69,7 +68,7 @@ public class Dsol3SchedulerTest
 							{
 								LOG.warn( "atEach failed, t={}",
 										s.now().prettify( NonSI.DAY, 2 ), e );
-								ThrowableUtil.throwAsUnchecked( e );
+								Thrower.rethrowUnchecked( e );
 							}, () ->
 							{
 								LOG.trace( "atEach done, t={}",

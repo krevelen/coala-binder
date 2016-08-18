@@ -8,7 +8,7 @@ import java.util.Collections;
 
 import javax.inject.Inject;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 
 /**
  * {@link ReflectUtil}
@@ -32,7 +32,7 @@ public class ReflectUtil implements Util
 	{
 		final Method result = valueType.getMethod( name, argTypes );
 		if( !Modifier.isStatic( result.getModifiers() ) )
-			return ExceptionFactory.throwNew( IllegalAccessException.class,
+			return Thrower.throwNew( IllegalAccessException.class,
 					"{}({}) not static", name, Arrays.asList( argTypes ) );
 		if( !result.isAccessible() ) result.setAccessible( true );
 		return result;
@@ -80,7 +80,7 @@ public class ReflectUtil implements Util
 				if( constructor.isAnnotationPresent( Inject.class ) )
 					return null;
 
-			return ExceptionFactory.throwNew( NoSuchMethodException.class,
+			return Thrower.throwNew( NoSuchMethodException.class,
 					"No matching public constructor found for {}{}", valueType,
 					argTypes == null ? Collections.emptyList()
 							: Arrays.asList( argTypes ) );

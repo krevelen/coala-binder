@@ -17,7 +17,7 @@ package io.coala.agent;
 
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 
 /**
  * {@link BasicAgentManager}
@@ -55,7 +55,7 @@ public class BasicAgentManager extends AbstractAgentManager
 					BinderFactory.Builder.fromFile( configPath ) );
 		} catch( final Exception e )
 		{
-			ThrowableUtil.throwAsUnchecked(  e );
+			Thrower.rethrowUnchecked(  e );
 		}
 
 		return INSTANCE;

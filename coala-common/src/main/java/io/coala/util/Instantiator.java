@@ -9,7 +9,7 @@ import java.util.WeakHashMap;
 
 import javax.inject.Provider;
 
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.json.DynaBean;
 import io.coala.json.DynaBean.ProxyProvider;
 import io.coala.json.JsonUtil;
@@ -127,7 +127,7 @@ public class Instantiator<T>
 					: ReflectUtil.getAccessibleConstructor( type, argTypes );
 		} catch( final NoSuchMethodException e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 		}
 		this.constructor = c;
 	}
@@ -155,7 +155,7 @@ public class Instantiator<T>
 					: this.type.newInstance();
 		} catch( final Throwable t )
 		{
-			ThrowableUtil.throwAsUnchecked( t );
+			Thrower.rethrowUnchecked( t );
 			return null;
 		}
 	}

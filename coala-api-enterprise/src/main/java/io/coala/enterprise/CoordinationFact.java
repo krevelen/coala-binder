@@ -29,7 +29,7 @@ import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
@@ -102,7 +102,7 @@ public interface CoordinationFact
 						{
 							if( callObserver != null )
 								callObserver.onError( e );
-							return ThrowableUtil.throwAsUnchecked( e );
+							return Thrower.rethrowUnchecked( e );
 						}
 					}
 				} );

@@ -8,8 +8,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.coala.exception.ExceptionFactory;
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
 
 /**
@@ -104,7 +103,7 @@ public abstract class InstanceParser<T>
 										CharSequence.class ) );
 					} catch( final Exception e3 )
 					{
-						ThrowableUtil.throwAsUnchecked( e );
+						Thrower.rethrowUnchecked( e );
 						return null;
 					}
 				}
@@ -124,7 +123,7 @@ public abstract class InstanceParser<T>
 	/**
 	 * @param value the {@link String} representation to parse
 	 * @return the parsed instance
-	 * @throws ParseException 
+	 * @throws ParseException
 	 * @throws Exception when no parsing method is available
 	 */
 	public T parseOrTrimmed( final String value ) throws Exception
@@ -139,9 +138,10 @@ public abstract class InstanceParser<T>
 				return parse( value.trim() );
 			} catch( final Exception e1 )
 			{
-				return ExceptionFactory.throwNew( Exception.class,
+				return Thrower.throwNew( Exception.class,
 						"Problem parsing type: {} from (trimmed) value: %s, errors: [{}; {}]",
-						this.valueType, value, e.getMessage(), e1.getMessage() );
+						this.valueType, value, e.getMessage(),
+						e1.getMessage() );
 			}
 		}
 	}

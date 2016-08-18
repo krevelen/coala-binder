@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
@@ -82,7 +82,7 @@ public class JsonUtil
 			return om.writer().writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -110,7 +110,7 @@ public class JsonUtil
 					.writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			return ThrowableUtil.throwAsUnchecked( e );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -128,7 +128,7 @@ public class JsonUtil
 //			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -145,7 +145,7 @@ public class JsonUtil
 			return json == null ? null : getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			return ThrowableUtil.throwAsUnchecked( e );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -162,7 +162,7 @@ public class JsonUtil
 					: getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -205,7 +205,7 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -242,7 +242,7 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Throwable e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -276,7 +276,7 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -314,7 +314,7 @@ public class JsonUtil
 
 		} catch( final Exception e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}

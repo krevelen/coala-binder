@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 
+import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 
 /**
@@ -179,8 +180,14 @@ public class ClassUtil implements Util
 	public static <T> T deserialize( final String serializable,
 		final Class<T> returnType )
 	{
-		return (T) SerializableUtil.deserialize( serializable,
-				returnType.asSubclass( Serializable.class ) );
+		try
+		{
+			return (T) SerializableUtil.deserialize( serializable,
+					returnType.asSubclass( Serializable.class ) );
+		} catch( final Throwable e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
 	}
 
 	/**
@@ -193,7 +200,13 @@ public class ClassUtil implements Util
 	 */
 	public static String serialize( final Serializable object )
 	{
-		return SerializableUtil.serialize( object );
+		try
+		{
+			return SerializableUtil.serialize( object );
+		} catch( final Throwable e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
 	}
 
 	/**

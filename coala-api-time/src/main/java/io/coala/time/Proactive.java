@@ -22,6 +22,7 @@ package io.coala.time;
 import java.util.concurrent.Callable;
 
 import javax.measure.Measurable;
+import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.unit.Unit;
 
@@ -31,6 +32,7 @@ import javax.measure.unit.Unit;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.function.Caller;
 import io.coala.function.ThrowingBiConsumer;
 import io.coala.function.ThrowingConsumer;
@@ -133,6 +135,21 @@ public interface Proactive extends Timed
 		} );
 	}
 
+	default void atEach( final Observable<Instant> when,
+		final ThrowingConsumer<Instant, ?> call )
+	{
+		atEach( when ).subscribe( self ->
+		{
+			try
+			{
+				call.accept( self.now() );
+			} catch( final Throwable e )
+			{
+				Thrower.rethrowUnchecked( e );
+			}
+		} );
+	}
+
 	/**
 	 * {@link FutureSelf} is a decorator of a {@link Proactive} object that is
 	 * itself {@link Proactive} but with its {@link #now()} at a fixed (future)
@@ -174,27 +191,26 @@ public interface Proactive extends Timed
 		 * @param t arg0
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default <E extends Exception> Expectation
-			call( final ThrowingConsumer<Instant, E> call )
+		default Expectation call( final ThrowingConsumer<Instant, ?> call )
 		{
 			return call( Caller.of( call, now() )::run );
 		}
 
 		/**
 		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
+		 * @param t constant arg0
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default <T, E extends Exception> Expectation
-			call( final ThrowingConsumer<T, E> call, final T t )
+		default <T> Expectation call( final ThrowingConsumer<T, ?> call,
+			final T t )
 		{
 			return call( Caller.of( call, t )::run );
 		}
 
 		/**
 		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
-		 * @param u arg1
+		 * @param t constant arg0
+		 * @param u constant arg1
 		 * @return the {@link Expectation} for potential cancellation
 		 */
 		default <T, U, E extends Exception> Expectation

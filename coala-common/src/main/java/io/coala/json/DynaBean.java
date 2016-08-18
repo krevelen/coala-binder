@@ -72,7 +72,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import io.coala.exception.ExceptionFactory;
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
 
@@ -897,7 +897,7 @@ public class DynaBean implements Cloneable
 						this.imports );
 			} catch( final Throwable e )
 			{
-				ThrowableUtil.throwAsUnchecked( e );
+				Thrower.rethrowUnchecked( e );
 				return null;
 			}
 		}

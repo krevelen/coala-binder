@@ -24,8 +24,6 @@
 		<uuid.version>3.4.0</uuid.version>
 		<jackson.version>2.8.1</jackson.version>
 		<rxjava.version>1.1.9</rxjava.version>
-		<commons-codec.version>1.10</commons-codec.version>
-		<commons-io.version>2.5</commons-io.version>
 		<owner.version>1.0.9</owner.version>
 		<log4j2.version>2.6.2</log4j2.version>
 
@@ -91,20 +89,6 @@
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-jul</artifactId>
 			<version>${log4j2.version}</version>
-		</dependency>
-
-		<dependency>
-			<!-- used for deserialization by ClassUtil, ConfigUtil -->
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>${commons-codec.version}</version>
-		</dependency>
-
-		<dependency>
-			<!-- used for ResourceStream -->
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>${commons-io.version}</version>
 		</dependency>
 
 		<dependency>

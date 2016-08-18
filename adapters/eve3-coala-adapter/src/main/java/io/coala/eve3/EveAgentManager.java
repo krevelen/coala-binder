@@ -27,7 +27,7 @@ import io.coala.agent.AgentID;
 import io.coala.agent.AgentStatus;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 
 /**
  * {@link EveAgentManager}
@@ -69,7 +69,7 @@ public class EveAgentManager extends AbstractAgentManager
 					BinderFactory.Builder.fromFile( configPath ) );
 		} catch( final Exception e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 		}
 		return INSTANCE;
 	}

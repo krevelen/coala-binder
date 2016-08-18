@@ -24,7 +24,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.name.Identified;
@@ -67,19 +67,15 @@ public class Guice4InjectLoggerTypeListener implements TypeListener
 							logger = LogUtil.getJavaLogger(
 									t.getClass().getName() + postfix );
 						} else
-							throw ExceptionFactory.createUnchecked(
+							Thrower.throwNew( IllegalArgumentException.class,
 									"@{} unknown logger type for field: {}",
 									InjectLogger.class.getSimpleName(), field );
 
 						field.setAccessible( true );
 						field.set( t, logger );
-					} catch( final RuntimeException e )
-					{
-						throw e;
 					} catch( final Exception e )
 					{
-						throw ExceptionFactory.createUnchecked( e,
-								"Problem injecting Logger" );
+						Thrower.rethrowUnchecked( e );
 					}
 				}
 			} );

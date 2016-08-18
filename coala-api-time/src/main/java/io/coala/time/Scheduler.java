@@ -4,7 +4,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
@@ -97,7 +97,7 @@ public interface Scheduler extends Proactive
 					what.accept( t );
 				} catch( final Throwable e )
 				{
-					ThrowableUtil.throwAsUnchecked( e );
+					Thrower.rethrowUnchecked( e );
 				}
 			}
 
@@ -137,7 +137,7 @@ public interface Scheduler extends Proactive
 					result.onNext( what.call() );
 				} catch( final Throwable e )
 				{
-					ThrowableUtil.throwAsUnchecked( e );
+					Thrower.rethrowUnchecked( e );
 				}
 			}
 

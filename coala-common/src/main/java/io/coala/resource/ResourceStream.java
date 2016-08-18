@@ -23,14 +23,14 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.JAXBIntrospector;
 import javax.xml.transform.stream.StreamSource;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.coala.function.ThrowableUtil;
+import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
+import io.coala.util.FileUtil;
 import io.coala.xml.XmlContext;
 
 /**
@@ -111,7 +111,7 @@ public class ResourceStream
 			stream = getStream();
 			return String.format( "[source: %s%s >>> %s]", getPath(),
 					getType() == null ? "" : ", type: " + getType(),
-					IOUtils.toString( stream ) );
+					FileUtil.toString( stream ) );
 		} catch( final Throwable e )
 		{
 			LOG.error( "Problem while streaming from " + getPath(), e );
@@ -135,10 +135,10 @@ public class ResourceStream
 	{
 		try
 		{
-			return JsonUtil.toTree( IOUtils.toString( getStream() ) );
+			return JsonUtil.toTree( FileUtil.toString( getStream() ) );
 		} catch( final IOException e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -153,12 +153,12 @@ public class ResourceStream
 	{
 		try
 		{
-			return JsonUtil.valueOf( IOUtils.toString( getStream() ),
+			return JsonUtil.valueOf( FileUtil.toString( getStream() ),
 					resultType );
 			// valueOf(getStream(), resultType);
 		} catch( final IOException e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
@@ -178,7 +178,7 @@ public class ResourceStream
 					.unmarshal( new StreamSource( getStream() ), resultType ) );
 		} catch( final JAXBException e )
 		{
-			ThrowableUtil.throwAsUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 			return null;
 		}
 	}
