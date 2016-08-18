@@ -54,9 +54,8 @@ public class CryptoTest
 				key, initVector, original, encrypted );
 
 		final String decrypted = conf.decrypt( key, initVector, encrypted );
-		CryptoTest.LOG.trace(
-				"Decrypted, key: {}, init-vector: {}, encrypted: {} -> {}", key,
-				initVector, encrypted, decrypted );
+		LOG.trace( "Decrypted, key: {}, init-vector: {}, encrypted: {} -> {}",
+				key, initVector, encrypted, decrypted );
 
 		assertThat( "Should decrypt the same", decrypted, equalTo( original ) );
 	}

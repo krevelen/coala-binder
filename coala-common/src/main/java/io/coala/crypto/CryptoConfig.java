@@ -54,7 +54,7 @@ public interface CryptoConfig extends GlobalConfig
 
 	@Key( ALGORITHM_KEY )
 	@DefaultValue( ALGORITHM_DEFAULT )
-	String algorithm();
+	String algorithm(); // TODO enumerate
 
 	@Key( TRANSFORMATION_KEY )
 	@DefaultValue( TRANSFORMATION_DEFAULT )
