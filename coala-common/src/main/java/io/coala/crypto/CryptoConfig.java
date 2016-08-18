@@ -32,7 +32,15 @@ import org.aeonbits.owner.Converter;
 import io.coala.config.GlobalConfig;
 import io.coala.exception.Thrower;
 
-/** */
+/**
+ * {@link CryptoConfig} provides simple cipher transform operations
+ * 
+ * TODO add public/private key pairs; unlimited strength (requires jurisdiction
+ * policy files from http://www.oracle.com/technetwork/java/javase/downloads/)
+ * 
+ * @version $Id$
+ * @author Rick van Krevelen
+ */
 public interface CryptoConfig extends GlobalConfig
 {
 	String CHARSET_KEY = "crypto.charset";
@@ -54,7 +62,7 @@ public interface CryptoConfig extends GlobalConfig
 
 	@Key( ALGORITHM_KEY )
 	@DefaultValue( ALGORITHM_DEFAULT )
-	String algorithm(); // TODO enumerate
+	String algorithm(); // TODO enumerate with respective *KeySpec types
 
 	@Key( TRANSFORMATION_KEY )
 	@DefaultValue( TRANSFORMATION_DEFAULT )
