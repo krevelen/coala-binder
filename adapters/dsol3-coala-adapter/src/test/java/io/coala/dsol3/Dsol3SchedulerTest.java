@@ -67,7 +67,7 @@ public class Dsol3SchedulerTest
 								LOG.trace( "atEach next: {}", exp );
 							}, e ->
 							{
-								LOG.trace( "atEach failed, t={}",
+								LOG.warn( "atEach failed, t={}",
 										s.now().prettify( NonSI.DAY, 2 ), e );
 								ThrowableUtil.throwAsUnchecked( e );
 							}, () ->
@@ -85,6 +85,7 @@ public class Dsol3SchedulerTest
 			LOG.trace( "t={}", time.prettify( NonSI.DAY, 2 ) );
 		}, error ->
 		{
+			LOG.error( "error at \r\n t=" + sched.now(), error );
 			waiter.rethrow( error );
 		}, () ->
 		{
@@ -92,6 +93,7 @@ public class Dsol3SchedulerTest
 		} );
 		sched.resume();
 		waiter.await( 1, TimeUnit.SECONDS );
+		LOG.error( "failed: error expected, t={}", sched.now() );
 	}
 
 }

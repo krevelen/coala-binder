@@ -17,6 +17,7 @@ package io.coala.time;
 
 import java.math.BigDecimal;
 import java.time.temporal.ChronoField;
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.measure.DecimalMeasure;
@@ -37,9 +38,8 @@ import org.jscience.physics.amount.Amount;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.Wrapper;
-import io.coala.random.ProbabilityDistribution;
+import io.coala.math.MeasureUtil;
 import io.coala.time.TimeSpan.Prettifier;
-import io.coala.util.DecimalUtil;
 
 /**
  * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
@@ -220,29 +220,6 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return Util.of( value, Instant.class );
 	}
 
-	public static <N extends Number, Q extends Quantity>
-		ProbabilityDistribution<Instant>
-		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
-	{
-		return new ProbabilityDistribution<Instant>()
-		{
-			@Override
-			public Instant draw()
-			{
-				// FIXME use MeasureUtil?
-				final Number value = dist.draw();
-				return value instanceof BigDecimal
-						? Instant.of( DecimalMeasure
-								.valueOf( (BigDecimal) value, unit ) )
-						: value instanceof Long || value instanceof Integer
-								? Instant.of( DecimalMeasure
-										.valueOf( value.longValue(), unit ) )
-								: Instant.of( DecimalMeasure
-										.valueOf( value.doubleValue(), unit ) );
-			}
-		};
-	}
-
 	/** the ZERO */
 	public static final Instant ZERO = of( TimeSpan.ZERO );
 
@@ -255,50 +232,22 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return Util.compare( this, that );
 	}
 
-	@Deprecated
 	public Instant multiply( final Measurable<Dimensionless> multiplicand )
 	{
 		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	@Deprecated
-	public Instant multiply( final long multiplicand )
-	{
-		return of( unwrap().multiply( multiplicand ) );
-	}
-
-	@Deprecated
 	public Instant multiply( final Number multiplicand )
 	{
 		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	@Deprecated
-	public Instant multiply( final BigDecimal multiplicand )
-	{
-		return of( unwrap().multiply( multiplicand ) );
-	}
-
-	@Deprecated
 	public Instant divide( final Measurable<Dimensionless> divisor )
 	{
 		return of( unwrap().divide( divisor ) );
 	}
 
-	@Deprecated
-	public Instant divide( final long divisor )
-	{
-		return of( unwrap().divide( divisor ) );
-	}
-
-	@Deprecated
 	public Instant divide( final Number divisor )
-	{
-		return of( unwrap().divide( divisor ) );
-	}
-
-	@Deprecated
-	public Instant divide( final BigDecimal divisor )
 	{
 		return of( unwrap().divide( divisor ) );
 	}
@@ -313,17 +262,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return of( unwrap().add( augend ) );
 	}
 
-	public Instant add( final long augend )
-	{
-		return of( unwrap().add( augend ) );
-	}
-
 	public Instant add( final Number augend )
-	{
-		return of( unwrap().add( augend ) );
-	}
-
-	public Instant add( final BigDecimal augend )
 	{
 		return of( unwrap().add( augend ) );
 	}
@@ -343,17 +282,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return of( unwrap().subtract( subtrahend ) );
 	}
 
-	public Instant subtract( final long subtrahend )
-	{
-		return of( unwrap().subtract( subtrahend ) );
-	}
-
 	public Instant subtract( final Number subtrahend )
-	{
-		return of( unwrap().subtract( subtrahend ) );
-	}
-
-	public Instant subtract( final BigDecimal subtrahend )
 	{
 		return of( unwrap().subtract( subtrahend ) );
 	}
@@ -373,8 +302,15 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return new Date( offset.getTime() + toMillisLong() );
 	}
 
+	public Calendar toDate( final Calendar offset )
+	{
+		final Calendar result = Calendar.getInstance( offset.getTimeZone() );
+		result.setTimeInMillis( offset.getTimeInMillis() + toMillisLong() );
+		return result;
+	}
+
 	/** @return the Joda {@link ReadableInstant} implementation of an instant */
-	public DateTime toJoda( final ReadableInstant offset )
+	public DateTime toDate( final ReadableInstant offset )
 	{
 		return new DateTime( offset.getMillis() + toMillisLong(),
 				offset.getZone() );
@@ -384,10 +320,9 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 * @return the JSR-310 {@link java.time.Instant} implementation of an
 	 *         instant
 	 */
-	public java.time.Instant toJSR310( final Date offset )
+	public java.time.Instant toDate( final java.time.Instant offset )
 	{
-		return java.time.Instant
-				.ofEpochMilli( offset.getTime() + toMillisLong() );
+		return offset.plusNanos( toNanosLong() );
 	}
 
 	/** @return the JSR-275 {@link Measurable} implementation of an instant */
@@ -404,11 +339,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	@JsonIgnore
 	public Amount toAmount()
 	{
-		return DecimalUtil.isExact( unwrap().getValue() )
-				? Amount.valueOf( unwrap().getValue().longValue(),
-						unwrap().getUnit() )
-				: Amount.valueOf( unwrap().getValue().doubleValue(),
-						unwrap().getUnit() );
+		return MeasureUtil.toAmount( unwrap() );
 	}
 
 	/**
@@ -418,13 +349,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 */
 	public Duration toDuration( final Instant offset )
 	{
-		return Duration.of( offset == null ? unwrap().getValue()
-				: unwrap().getValue()
-						.subtract( offset.unwrap()
-								.to( unwrap().getUnit(),
-										DecimalUtil.DEFAULT_CONTEXT )
-								.getValue() ),
-				unwrap().getUnit() );
+		return Duration.of( unwrap().subtract( offset.unwrap() ) );
 	}
 
 	public Prettifier prettify( final int scale )

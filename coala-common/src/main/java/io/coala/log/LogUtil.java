@@ -145,6 +145,10 @@ public class LogUtil implements Util
 					.printStackTrace();
 			return getLogger( fqcn );
 		}
+//		else if(source instanceof Identified)
+//		{
+//			LogManager.getFactory().g
+//		}
 
 		return LogManager//((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
 				.getLogger( fqcn );

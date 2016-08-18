@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
 
 import javax.measure.Measurable;
 import javax.measure.quantity.Dimensionless;
+import javax.measure.unit.Unit;
 
 //import javax.measure.quantity.Dimensionless;
 //import javax.measure.quantity.Duration;
@@ -56,17 +57,36 @@ public interface Proactive extends Timed
 	}
 
 	/**
-	 * @param delay the {@link Amount} of delay, in ({@link Duration} or
-	 *            {@link Dimensionless} units
+	 * @param delay the {@link Duration} of delay
 	 * @return the {@link FutureSelf}
 	 */
 	default FutureSelf after( final Duration delay )
 	{
-		return FutureSelf.of( this, now().add( delay ) );
+		return after( delay.unwrap() );
 	}
 
 	/**
-	 * @param delay the {@link Amount} of delay, in ({@link Duration} or
+	 * @param delay the {@link Number} of delay, in default units
+	 * @return the {@link FutureSelf}
+	 */
+	default FutureSelf after( final Number delay )
+	{
+		return after( delay, now().unwrap().getUnit() );
+	}
+
+	/**
+	 * @param delay the delay amount {@link Number}
+	 * @param delay the delay amount {@link Unit}
+	 * @return the {@link FutureSelf}
+	 */
+	default FutureSelf after( final Number delay, final Unit<?> unit )
+	{
+		return after( Duration.of( delay, unit ) );
+	}
+
+	/**
+	 * @param delay the {@link Amount} or {@link Measure} of delay, in (
+	 *            {@link javax.measure.quantity.Duration} or
 	 *            {@link Dimensionless} units
 	 * @return the {@link FutureSelf}
 	 */
@@ -181,31 +201,6 @@ public interface Proactive extends Timed
 		{
 			return call( Caller.of( call, t, u )::run );
 		}
-
-		/**
-		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
-		 * @return the {@link Expectation} for potential cancellation
-		 */
-		// FIXME make result R observable?
-//		default <T, R, E extends Exception> Expectation
-//			call( final ThrowingFunction<T, R, E> call, final T t )
-//		{
-//			return call( Caller.of( call, t )::run );
-//		}
-
-		/**
-		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
-		 * @param u arg1
-		 * @return the {@link Expectation} for potential cancellation
-		 */
-		// FIXME make result R observable?
-//		default <T, U, R, E extends Exception> Expectation call(
-//			final ThrowingBiFunction<T, U, R, E> call, final T t, final U u )
-//		{
-//			return call( Caller.of( call, t, u )::run );
-//		}
 
 		/**
 		 * {@link FutureSelf} factory method
