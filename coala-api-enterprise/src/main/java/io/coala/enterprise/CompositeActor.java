@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;

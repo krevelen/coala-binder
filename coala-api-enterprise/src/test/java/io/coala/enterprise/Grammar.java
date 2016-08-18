@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.coala.enterprise.grammar;
+package io.coala.enterprise;
 
 /**
  * {@link Grammar}

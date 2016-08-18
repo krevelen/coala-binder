@@ -26,8 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 
-import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.function.ThrowableUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
@@ -63,7 +64,14 @@ public interface CoordinationFact
 	ID causeID();
 
 	/** @return */
-	Map<?, ?> params();
+	@JsonAnyGetter
+	Map<String, Object> params();
+
+	@JsonAnySetter
+	default void set( final String name, final Object value )
+	{
+		params().put( name, value );
+	}
 
 	/**
 	 * @param subtype
@@ -94,8 +102,7 @@ public interface CoordinationFact
 						{
 							if( callObserver != null )
 								callObserver.onError( e );
-							ThrowableUtil.throwAsUnchecked(  e );
-							return null;
+							return ThrowableUtil.throwAsUnchecked( e );
 						}
 					}
 				} );
@@ -140,8 +147,12 @@ public interface CoordinationFact
 			Instant expiration, CoordinationFact.ID causeID,
 			Map<?, ?>... params );
 
-		/** @return */
-		static CoordinationFact.Factory ofSimpleProxy()
+		/**
+		 * @return a {@link Factory} that generates the desired
+		 *         {@link CoordinationFact} sub-type as proxy decorating a new
+		 *         {@link Simple} instance
+		 */
+		static Factory ofSimpleProxy()
 		{
 			return new Factory()
 			{
@@ -233,7 +244,7 @@ public interface CoordinationFact
 
 		private CoordinationFact.ID causeID;
 
-		private Map<?, ?> params = new HashMap<>();
+		private Map<String, Object> params = new HashMap<>();
 
 		/**
 		 * {@link Simple} zero-arg bean constructor
@@ -243,7 +254,6 @@ public interface CoordinationFact
 
 		}
 
-		@SuppressWarnings( { "unchecked", "rawtypes" } )
 		protected Simple( final Class<?> kind, final CoordinationFact.ID id,
 			final Instant time, final Transaction.ID tranID,
 			final Organization.ID creatorID, final CoordinationFactType type,
@@ -258,8 +268,11 @@ public interface CoordinationFact
 			this.type = type;
 			this.expiration = expiration;
 			this.causeID = causeID;
-			if( params != null ) for( Map param : params )
-				this.params.putAll( param );
+			if( params != null ) for( Map<?, ?> param : params )
+				param.forEach( ( key, value ) ->
+				{
+					this.params.put( key.toString(), value );
+				} );
 		}
 
 		@Override
@@ -318,7 +331,7 @@ public interface CoordinationFact
 		}
 
 		@Override
-		public Map<?, ?> params()
+		public Map<String, Object> params()
 		{
 			return this.params;
 		}

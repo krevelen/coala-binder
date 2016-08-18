@@ -11,7 +11,6 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Scheduler;
-import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
@@ -57,7 +56,7 @@ public class EnterpriseTest
 		scheduler.time().subscribe( t ->
 		{
 			LOG.trace( "t={}, date: {}", t.prettify( Units.DAYS, 2 ),
-					t.toJoda( offset ) );
+					t.toDate( offset ) );
 		} );
 
 		// create organization
@@ -68,7 +67,7 @@ public class EnterpriseTest
 		// add business rule(s)
 		sales.on( TestFact.class, org1.id(), fact ->
 		{
-			sales.after( Duration.of( 1, NonSI.WEEK ) ).call( t ->
+			sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
 			{
 				final TestFact response = sales.createResponse( fact,
 						CoordinationFactType.STATED, true, null,
@@ -82,19 +81,23 @@ public class EnterpriseTest
 		// observe generated facts
 		org1.outgoing().subscribe( fact ->
 		{
-			LOG.trace( "t={}, observed outgoing fact: {}", org1.now(), fact );
+			LOG.trace( "t={}, outgoing: {}", org1.now(), fact );
 		} );
+
+		org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
+				.doOnNext( f ->
+				{
+					org1.consume( f );
+				} ).subscribe();
 
 		// spawn initial transactions with self
 		scheduler.schedule(
 				Timing.of( "0 0 0 14 * ? *" ).asObservable( offset.toDate() ),
 				t ->
 				{
-					final TestFact fact = sales.createRequest( TestFact.class,
-							org1.id(), null, null, Collections
-									.singletonMap( "myParam2", "myValue2" ) );
-					LOG.trace( "t={}, handle own outgoing fact: {}", t, fact );
-					org1.on( fact );
+					sales.createRequest( TestFact.class, org1.id(), null,
+							t.add( 1 ), Collections.singletonMap( "myParam2",
+									"myValue2" ) );
 				} );
 
 		// TODO test fact expiration handling

@@ -24,7 +24,6 @@ import java.util.Map;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Expectation;
