@@ -46,8 +46,9 @@ public abstract class ExceptionFactory
 	{
 		try
 		{
-			throw type.getConstructor( String.class ).newInstance(
-					ExceptionBuilder.format( messageFormat, args ) );
+			throw type.getConstructor( String.class )
+					.newInstance( ExceptionBuilder.format( messageFormat, args )
+							.getFormattedMessage() );
 		} catch( final Throwable e )
 		{
 			ThrowableUtil.throwAsUnchecked( e );
