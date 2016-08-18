@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
@@ -82,9 +82,8 @@ public class JsonUtil
 			return om.writer().writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem JSONifying rawtype: {}",
-					object == null ? null : object.getClass() );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -111,7 +110,7 @@ public class JsonUtil
 					.writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionFactory.createUnchecked( "Problem JSONifying", e );
+			return ThrowableUtil.throwAsUnchecked( e );
 		}
 	}
 
@@ -129,8 +128,8 @@ public class JsonUtil
 //			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e, "Problem serializing {}",
-					object.getClass().getSimpleName() );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -146,8 +145,7 @@ public class JsonUtil
 			return json == null ? null : getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( "Problem deserializing",
-					e );
+			return ThrowableUtil.throwAsUnchecked( e );
 		}
 	}
 
@@ -164,8 +162,8 @@ public class JsonUtil
 					: getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing JSON: {}", json );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -207,8 +205,8 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem unmarshalling {} from JSON stream", resultType );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -242,14 +240,10 @@ public class JsonUtil
 									&& resultType == String.class
 											? "\"" + json + "\"" : json,
 							checkRegistered( om, resultType, imports ) );
-		} catch( final RuntimeException e )
-		{
-			throw e;
 		} catch( final Throwable e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from JSON: {}", resultType,
-					json );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -282,9 +276,8 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from JSON: {}", resultType,
-					tree );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -321,9 +314,8 @@ public class JsonUtil
 
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from JSON: {}", typeReference,
-					json );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 

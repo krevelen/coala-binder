@@ -1,11 +1,8 @@
 package io.coala.enterprise;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -19,6 +16,7 @@ import io.coala.time.Instant;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
 import io.coala.time.Units;
+import net.jodah.concurrentunit.Waiter;
 
 /**
  * {@link EnterpriseTest}
@@ -58,8 +56,6 @@ public class EnterpriseTest
 		{
 			LOG.trace( "t={} ({})", t.prettify( Units.DAYS, 2 ),
 					t.toJoda( offset ) );
-		}, e ->
-		{
 		} );
 
 		// create organization
@@ -68,7 +64,7 @@ public class EnterpriseTest
 		final CompositeActor sales = org1.actor( "sales" );
 
 		// add business rule(s)
-		sales.on( TestFact.class, org1.id() ).subscribe( fact ->
+		sales.on( TestFact.class, org1.id(), fact ->
 		{
 			final TestFact response = sales.createResponse( fact,
 					CoordinationFactType.STATED, true, null,
@@ -88,15 +84,21 @@ public class EnterpriseTest
 				Timing.of( "0 0 0 14 * ? *" ).asObservable( offset.toDate() ),
 				t ->
 				{
-					final TestFact fact = sales.createRequest( TestFact.class,
-							org1.id(), null, null, Collections
-									.singletonMap( "myParam2", "myValue2" ) );
+					try
+					{
+						// FIXME hold outgoing fact until this lambda returns?
+						LOG.trace( "time to generate fact, causing excepion" );
 
-					// FIXME hold outgoing fact until this lambda returns?
-
-					LOG.trace( "generated fact: {}", fact );
-					org1.on( fact );
-					throw new Exception(); // FIXME fail on error?
+						throw new Exception(); // FIXME fail on error?
+					} finally
+					{
+						final TestFact fact = sales.createRequest(
+								TestFact.class, org1.id(), null, null,
+								Collections.singletonMap( "myParam2",
+										"myValue2" ) );
+						LOG.trace( "generated fact: {}", fact );
+						org1.on( fact );
+					}
 				} );
 
 		// TODO test fact expiration handling
@@ -119,30 +121,26 @@ public class EnterpriseTest
 	}
 
 	@Test
-	public void testDemo() throws InterruptedException
+	public void testDemo() throws TimeoutException
 	{
 		// initialize replication
 		final Scheduler scheduler = Dsol3Scheduler.of( "demoTest",
 				Instant.of( "5 h" ), Duration.of( "500 day" ),
 				EnterpriseTest::initScenario );
 
-		// track progress
-		final CountDownLatch latch = new CountDownLatch( 1 );
-		scheduler.time().subscribe( t ->
+		final Waiter waiter = new Waiter();
+		scheduler.time().subscribe( time ->
 		{
 			// virtual time passes...
-		}, e ->
+		}, error ->
 		{
-			fail( e.getMessage() );
+			waiter.rethrow( error );
 		}, () ->
 		{
-			latch.countDown();
+			waiter.resume();
 		} );
 		scheduler.resume();
-
-		// await completion
-		latch.await( 1, TimeUnit.SECONDS );
-		assertEquals( "Scheduler not completed in time", 0, latch.getCount() );
+		waiter.await( 1, TimeUnit.SECONDS );
 
 		LOG.trace( "completed, t={}", scheduler.now() );
 	}

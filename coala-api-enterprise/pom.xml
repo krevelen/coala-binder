@@ -7,7 +7,7 @@
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
 		<version>0.2.0-b3-SNAPSHOT</version>
-		<relativePath>..</relativePath>
+		<relativePath>../..</relativePath>
 	</parent>
 
 	<artifactId>coala-api-enterprise</artifactId>
@@ -20,7 +20,8 @@
 	<url>https://demo.nl/</url>
 
 	<properties>
-		<quartz.version>2.2.3</quartz.version>
+
+		<!-- testing -->
 		<woodstox.version>4.4.1</woodstox.version>
 		<jaxb-api.version>2.2.12</jaxb-api.version>
 		<cxf-xjc-plugin.version>3.1.6</cxf-xjc-plugin.version>
@@ -81,20 +82,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Quartz implementation of CRON-like scheduler -->
-		<dependency>
-			<groupId>org.quartz-scheduler</groupId>
-			<artifactId>quartz</artifactId>
-			<version>${quartz.version}</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
 		<dependency>
 			<!-- Replace Java's StAX API with Woodstox -->
 			<groupId>org.codehaus.woodstox</groupId>
@@ -147,6 +134,11 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.jodah</groupId>
+			<artifactId>concurrentunit</artifactId>
 			<scope>test</scope>
 		</dependency>
 

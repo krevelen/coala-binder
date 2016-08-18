@@ -22,14 +22,13 @@ package io.coala.enterprise;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.eaio.uuid.UUID;
 
 import io.coala.enterprise.fact.CoordinationFactType;
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
@@ -95,9 +94,8 @@ public interface CoordinationFact
 						{
 							if( callObserver != null )
 								callObserver.onError( e );
-							throw ExceptionFactory.createUnchecked( e,
-									"Problem invoking {}{}", method,
-									Arrays.asList( args ) );
+							ThrowableUtil.throwAsUnchecked(  e );
+							return null;
 						}
 					}
 				} );

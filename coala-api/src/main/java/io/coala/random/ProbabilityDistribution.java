@@ -25,7 +25,7 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.WeightedValue;
 import io.coala.util.Instantiator;
@@ -106,13 +106,10 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			try
 			{
 				return callable.call();
-			} catch( final RuntimeException e )
+			} catch( final Throwable e )
 			{
-				throw e;
-			} catch( final Exception e )
-			{
-				throw ExceptionFactory.createUnchecked( e,
-						"Problem drawing new value from {}", callable );
+				ThrowableUtil.throwAsUnchecked( e );
+				return null;
 			}
 		};
 	}

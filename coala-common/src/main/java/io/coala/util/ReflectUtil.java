@@ -27,12 +27,13 @@ public class ReflectUtil implements Util
 	}
 
 	public static Method getAccessibleMethod( final Class<?> valueType,
-		final String name, final Class<?>... argTypes ) throws Exception
+		final String name, final Class<?>... argTypes )
+		throws IllegalAccessException, SecurityException, NoSuchMethodException
 	{
 		final Method result = valueType.getMethod( name, argTypes );
 		if( !Modifier.isStatic( result.getModifiers() ) )
-			throw new IllegalAccessException(
-					name + "(" + Arrays.asList( argTypes ) + ") not static" );
+			return ExceptionFactory.throwNew( IllegalAccessException.class,
+					"{}({}) not static", name, Arrays.asList( argTypes ) );
 		if( !result.isAccessible() ) result.setAccessible( true );
 		return result;
 	}
@@ -40,6 +41,7 @@ public class ReflectUtil implements Util
 	@SuppressWarnings( "unchecked" )
 	public static <T> Constructor<T> getAccessibleConstructor(
 		final Class<T> valueType, final Class<?>... argTypes )
+		throws NoSuchMethodException
 	{
 		if( valueType.getConstructors().length == 0
 				&& (argTypes == null || argTypes.length == 0) )
@@ -78,7 +80,7 @@ public class ReflectUtil implements Util
 				if( constructor.isAnnotationPresent( Inject.class ) )
 					return null;
 
-			throw ExceptionFactory.createUnchecked( e,
+			return ExceptionFactory.throwNew( NoSuchMethodException.class,
 					"No matching public constructor found for {}{}", valueType,
 					argTypes == null ? Collections.emptyList()
 							: Arrays.asList( argTypes ) );

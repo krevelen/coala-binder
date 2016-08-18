@@ -1,10 +1,8 @@
 package io.coala.dsol3;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.Date;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.measure.unit.NonSI;
 
@@ -12,12 +10,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
-import io.coala.time.Scheduler;
 import io.coala.time.Proactive;
+import io.coala.time.Scheduler;
 import io.coala.time.Timing;
+import io.coala.util.Compare;
+import net.jodah.concurrentunit.Waiter;
 
 /**
  * {@link Dsol3SchedulerTest}
@@ -37,8 +37,8 @@ public class Dsol3SchedulerTest
 		LOG.trace( "logging, t={}", t.now() );
 	}
 
-	@Test
-	public void testScheduler() throws InterruptedException
+	@Test( expected = IllegalStateException.class )
+	public void testScheduler() throws TimeoutException
 	{
 		final Instant h5 = Instant.of( "5 h" );
 		LOG.trace( "start t={}", h5 );
@@ -50,13 +50,16 @@ public class Dsol3SchedulerTest
 					s.at( h5.add( 2 ) ).call( this::logTime, s );
 					s.at( h5.add( 2 ) ).call( this::logTime, s );
 
-					s.schedule( Timing.valueOf( "0 0 0 14 * ? *" )// + DateTime.now().getYear() ) // 0 30 9,12,15 * * ?
-							.asObservable( new Date() ), () ->
+					final Instant throwTime = Instant.of( 200, NonSI.DAY );
+					s.schedule( Timing.valueOf( "0 0 0 14 * ? *" )
+							.asObservable( new Date() ), t ->
 							{
 								LOG.trace( "atEach handled, t={}",
-										s.now().prettify( NonSI.DAY, 2 ) );
-								// FIXME: should halt sim
-								throw new RuntimeException();
+										t.prettify( NonSI.DAY, 2 ) );
+
+								if( Compare.ge( t, throwTime ) )
+									throw new IllegalStateException(
+											"Throwing beyond t=" + throwTime );
 							} ).subscribe( exp ->
 							{
 								LOG.trace( "atEach next: {}", exp );
@@ -64,8 +67,7 @@ public class Dsol3SchedulerTest
 							{
 								LOG.trace( "atEach failed, t={}",
 										s.now().prettify( NonSI.DAY, 2 ), e );
-								throw ExceptionFactory
-										.createUnchecked( "<kill app>", e );
+								ThrowableUtil.throwAsUnchecked( e );
 							}, () ->
 							{
 								LOG.trace( "atEach done, t={}",
@@ -75,24 +77,19 @@ public class Dsol3SchedulerTest
 					LOG.trace( "initialized, t={}", s.now() );
 				} );
 
-		final CountDownLatch latch = new CountDownLatch( 1 );
-		sched.time().subscribe( t ->
+		final Waiter waiter = new Waiter();
+		sched.time().subscribe( time ->
 		{
-			LOG.trace( "t={}", t.prettify( NonSI.DAY, 2 ) );
-		}, e ->
+			LOG.trace( "t={}", time.prettify( NonSI.DAY, 2 ) );
+		}, error ->
 		{
-			LOG.trace( "problem, t=" + sched.now().prettify( NonSI.DAY, 2 ),
-					e );
-			latch.countDown();
+			waiter.rethrow( error );
 		}, () ->
 		{
-			LOG.trace( "completed, t={}", sched.now() );
-			latch.countDown();
+			waiter.resume();
 		} );
 		sched.resume();
-
-		latch.await( 1, TimeUnit.SECONDS );
-		assertEquals( "Scheduler not completed in time", 0, latch.getCount() );
+		waiter.await( 1, TimeUnit.SECONDS );
 	}
 
 }

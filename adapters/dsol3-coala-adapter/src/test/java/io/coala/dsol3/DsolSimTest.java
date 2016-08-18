@@ -15,13 +15,10 @@
  */
 package io.coala.dsol3;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.measure.Measurable;
 import javax.measure.quantity.Quantity;
@@ -31,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
+import net.jodah.concurrentunit.Waiter;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
@@ -54,7 +52,7 @@ public class DsolSimTest
 
 	/** */
 	@SuppressWarnings( { "serial", "rawtypes" } )
-	public static class TestModel<Q extends Quantity> extends EventProducer
+	public static class MyModel<Q extends Quantity> extends EventProducer
 		implements DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>>
 	{
 		/** the scheduler {@link DEVSSimulator} */
@@ -99,7 +97,7 @@ public class DsolSimTest
 			return getSimulator().getSimulatorTime();
 		}
 
-		public TestModel withJobCount( final int jobCount )
+		public MyModel withJobCount( final int jobCount )
 		{
 			this.jobCount += jobCount;
 			return this;
@@ -108,14 +106,11 @@ public class DsolSimTest
 
 	@Test
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public void testDEVSSimulator()
-		throws SimRuntimeException, RemoteException, NamingException
+	public void testDEVSSimulator() throws SimRuntimeException, RemoteException,
+		NamingException, TimeoutException
 	{
-		// create test condition
-		final CountDownLatch latch = new CountDownLatch( 1 );
-
 		LOG.trace( "Create model" );
-		final TestModel model = new TestModel().withJobCount( 10 );
+		final MyModel model = new MyModel().withJobCount( 10 );
 
 		LOG.trace( "Initialize sim" );
 		final DEVSSimulator sim = DsolTime
@@ -125,42 +120,34 @@ public class DsolSimTest
 				BigDecimal.valueOf( 100.0 ), model ),
 				ReplicationMode.TERMINATING );
 
-		// register listeners
+		final Waiter waiter = new Waiter();
 		new DsolEventObservable().subscribeTo( model, DsolEvent.class ).events()
 				.ofType( DsolEvent.class ).subscribe( new Observer<DsolEvent>()
 				{
 					@Override
 					public void onCompleted()
 					{
-						LOG.trace( "Simulation complete" );
-						latch.countDown();
+						waiter.resume();
 					}
 
 					@Override
 					public void onError( final Throwable e )
 					{
-						LOG.error( "Simulation failed", e );
-						fail( e.getMessage() );
+						waiter.rethrow( e );
 					}
 
 					@Override
 					public void onNext( final DsolEvent t )
 					{
-						LOG.trace( "Observed event at t="
-								+ model.getSimulator().getSimulatorTime() );
+						LOG.trace( "Observed {}, t={}", t,
+								model.getSimulator().getSimulatorTime() );
 					}
 				} );
 
 		LOG.trace( "Starting sim" );
 		sim.start();
-		try
-		{
-			latch.await( 10, TimeUnit.SECONDS );
-		} catch( final InterruptedException e )
-		{
-			fail( "Unexpected interrupt" );
-		}
-		assertEquals( "Simulation hasn't finished yet", 0, latch.getCount() );
+		waiter.await( 1, TimeUnit.SECONDS );
+		LOG.trace( "Simulation complete" );
 	}
 
 }

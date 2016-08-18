@@ -26,7 +26,7 @@ import com.eaio.uuid.UUID;
 
 import io.coala.event.AbstractEvent;
 import io.coala.event.EventID;
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
 import io.coala.process.BasicProcessStatus;
@@ -133,9 +133,7 @@ public class ProcedureCall<ID extends EventID<?>> extends AbstractEvent<ID>
 					getArguments() );
 		} catch( final Throwable t )
 		{
-			throw ExceptionFactory.createUnchecked( t,
-					"Problem invoking {} at {} with {}",
-					this.procedureID.getValue(), getTarget(), this.arguments );
+			ThrowableUtil.throwAsUnchecked( t );
 		}
 	}
 

@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 
 import io.coala.exception.ExceptionFactory;
-import io.coala.util.Caller;
+import io.coala.function.Caller;
 
 /**
  * {@link Schedule} is a mapping of values occurring from some {@link Instant}s

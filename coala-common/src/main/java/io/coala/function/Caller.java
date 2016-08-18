@@ -1,4 +1,4 @@
-package io.coala.util;
+package io.coala.function;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -560,48 +560,6 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	@FunctionalInterface
-	public interface ThrowingConsumer<T, E extends Throwable>
-	{
-		void accept( T t ) throws E;
-	}
-
-	@FunctionalInterface
-	public interface ThrowingBiConsumer<T, U, E extends Throwable>
-	{
-		void accept( T t, U u ) throws E;
-	}
-
-	@FunctionalInterface
-	public interface ThrowingPredicate<T, E extends Throwable>
-	{
-		Boolean test( T t ) throws E;
-	}
-
-	@FunctionalInterface
-	public interface ThrowingBiPredicate<T, U, E extends Throwable>
-	{
-		Boolean test( T t, U u ) throws E;
-	}
-
-	@FunctionalInterface
-	public interface ThrowingFunction<T, R, E extends Throwable>
-	{
-		R apply( T t ) throws E;
-	}
-
-	@FunctionalInterface
-	public interface ThrowingBiFunction<T, U, R, E extends Throwable>
-	{
-		R apply( T t, U u ) throws E;
-	}
-
-	@FunctionalInterface
-	public interface ThrowingRunnable<E extends Throwable>
-	{
-		void run() throws E;
-	}
-
 	/**
 	 * .forEach(rethrowConsumer(name ->
 	 * System.out.println(Class.forName(name)))); or
@@ -617,7 +575,7 @@ public interface Caller<T, U, R, E extends Throwable>
 				consumer.accept( t );
 			} catch( final Throwable exception )
 			{
-				throwAsUnchecked( exception );
+				ThrowableUtil.throwAsUnchecked( exception );
 			}
 		};
 	}
@@ -632,7 +590,7 @@ public interface Caller<T, U, R, E extends Throwable>
 				biConsumer.accept( t, u );
 			} catch( final Throwable exception )
 			{
-				throwAsUnchecked( exception );
+				ThrowableUtil.throwAsUnchecked( exception );
 			}
 		};
 	}
@@ -651,7 +609,7 @@ public interface Caller<T, U, R, E extends Throwable>
 				return function.apply( t );
 			} catch( final Throwable exception )
 			{
-				throwAsUnchecked( exception );
+				ThrowableUtil.throwAsUnchecked( exception );
 				return null;
 			}
 		};
@@ -671,7 +629,7 @@ public interface Caller<T, U, R, E extends Throwable>
 				return function.get();
 			} catch( final Throwable exception )
 			{
-				throwAsUnchecked( exception );
+				ThrowableUtil.throwAsUnchecked( exception );
 				return null;
 			}
 		};
@@ -685,7 +643,7 @@ public interface Caller<T, U, R, E extends Throwable>
 			t.run();
 		} catch( final Throwable exception )
 		{
-			throwAsUnchecked( exception );
+			ThrowableUtil.throwAsUnchecked( exception );
 		}
 	}
 
@@ -698,7 +656,7 @@ public interface Caller<T, U, R, E extends Throwable>
 			return supplier.get();
 		} catch( final Throwable exception )
 		{
-			throwAsUnchecked( exception );
+			ThrowableUtil.throwAsUnchecked( exception );
 			return null;
 		}
 	}
@@ -712,16 +670,9 @@ public interface Caller<T, U, R, E extends Throwable>
 			return function.apply( t );
 		} catch( final Throwable exception )
 		{
-			throwAsUnchecked( exception );
+			ThrowableUtil.throwAsUnchecked( exception );
 			return null;
 		}
-	}
-
-	@SuppressWarnings( "unchecked" )
-	static <E extends Throwable> void
-		throwAsUnchecked( final Throwable exception ) throws E
-	{
-		throw (E) exception;
 	}
 
 }

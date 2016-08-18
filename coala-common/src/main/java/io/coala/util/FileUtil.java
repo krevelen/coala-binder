@@ -28,6 +28,7 @@ import java.net.URL;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.log.LogUtil;
 
 /**
@@ -76,8 +77,8 @@ public class FileUtil implements Util
 			throw e;
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e, "Illegal path: {}",
-					path );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 

@@ -37,12 +37,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.inject.Provider;
-
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+
+import javax.inject.Provider;
 
 import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
@@ -73,6 +72,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
 
@@ -449,9 +449,9 @@ public class DynaBean implements Cloneable
 				if( method.getParameterTypes().length == 1
 						&& method.getParameterTypes()[0]
 								.isAssignableFrom( args[0].getClass() )
-						//&& method.getName().startsWith( "set" ) )
-						//&& method.getReturnType().equals( Void.TYPE ) 
-						)
+				//&& method.getName().startsWith( "set" ) )
+				//&& method.getReturnType().equals( Void.TYPE ) 
+				)
 				{
 					this.bean.set( beanProp, args[0] );
 					return null; // setters return void
@@ -895,11 +895,10 @@ public class DynaBean implements Cloneable
 						: this.proxyType;
 				return DynaBean.proxyOf( this.om, proxyType, this.bean,
 						this.imports );
-			} catch( final Throwable t )
+			} catch( final Throwable e )
 			{
-				throw ExceptionFactory.createUnchecked( t,
-						"Problem providing proxy instance for {}",
-						this.proxyType );
+				ThrowableUtil.throwAsUnchecked( e );
+				return null;
 			}
 		}
 	}

@@ -13,14 +13,14 @@ import javax.naming.NamingException;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.function.Caller;
+import io.coala.function.ThrowingConsumer;
+import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
-import io.coala.util.Caller;
-import io.coala.util.Caller.ThrowingConsumer;
-import io.coala.util.Caller.ThrowingRunnable;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
@@ -82,10 +82,11 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 		final Consumer<Scheduler> onInitialize )
 	{
 		this.scheduler = DsolTime.createDEVSSimulator( DEVSSimulator.class );
+//		this.scheduler.setPauseOnError( false );
 		try
 		{
 			final DsolTime start = DsolTime.valueOf( startTime );
-			LOG.trace( "jscience: {} => dsol: {}", startTime, start );
+//			LOG.trace( "jscience: {} => dsol: {}", startTime, start );
 
 			final DSOLModel model = new DSOLModel()
 			{
@@ -194,6 +195,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			}
 		} catch( final SimRuntimeException e )
 		{
+			e.printStackTrace();
 			this.time.onError( e );
 		}
 	}

@@ -30,9 +30,9 @@ import javax.measure.quantity.Dimensionless;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
-import io.coala.util.Caller;
-import io.coala.util.Caller.ThrowingBiConsumer;
-import io.coala.util.Caller.ThrowingConsumer;
+import io.coala.function.Caller;
+import io.coala.function.ThrowingBiConsumer;
+import io.coala.function.ThrowingConsumer;
 import io.coala.util.Comparison;
 import rx.Observable;
 import rx.Observer;

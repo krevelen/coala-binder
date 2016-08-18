@@ -21,14 +21,16 @@ package io.coala.enterprise;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
-import io.coala.time.Scheduler;
 import io.coala.time.Proactive;
+import io.coala.time.Scheduler;
 import rx.Observable;
+import rx.Subscription;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
@@ -57,6 +59,23 @@ public interface CompositeActor
 	 */
 	<F extends CoordinationFact> Observable<F> on( Class<F> factKind,
 		Organization.ID creatorID );
+
+	/**
+	 * @param factKind the type of {@link CoordinationFact} to filter for
+	 * @param creatorID the origin {@link Organization.ID} to filter for
+	 * @param handler a {@link Consumer} for handling fact instances
+	 * @return the handler's {@link Subscription} for future cancellation
+	 */
+	default <F extends CoordinationFact> Subscription on( Class<F> factKind,
+		Organization.ID creatorID, final Consumer<F> handler )
+	{
+		return on( factKind, creatorID ).subscribe( fact ->
+		{
+			handler.accept( fact );
+		}, error ->
+		{
+		} );
+	}
 
 	/**
 	 * @param factKind the type of {@link CoordinationFact} to transact

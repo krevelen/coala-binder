@@ -2,12 +2,14 @@ package io.coala.util;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.json.JsonUtil;
 
 /**
@@ -102,8 +104,8 @@ public abstract class InstanceParser<T>
 										CharSequence.class ) );
 					} catch( final Exception e3 )
 					{
-						throw ExceptionFactory.createUnchecked( e3,
-								"Problem parsing type: {}", valueType );
+						ThrowableUtil.throwAsUnchecked( e );
+						return null;
 					}
 				}
 			}
@@ -122,9 +124,10 @@ public abstract class InstanceParser<T>
 	/**
 	 * @param value the {@link String} representation to parse
 	 * @return the parsed instance
+	 * @throws ParseException 
 	 * @throws Exception when no parsing method is available
 	 */
-	public T parseOrTrimmed( String value )
+	public T parseOrTrimmed( final String value ) throws Exception
 	{
 		try
 		{
@@ -136,9 +139,9 @@ public abstract class InstanceParser<T>
 				return parse( value.trim() );
 			} catch( final Exception e1 )
 			{
-				throw ExceptionFactory.createUnchecked( e1,
-						"Problem parsing type: {} from (trimmed) value: %s",
-						this.valueType, value );
+				return ExceptionFactory.throwNew( Exception.class,
+						"Problem parsing type: {} from (trimmed) value: %s, errors: [{}; {}]",
+						this.valueType, value, e.getMessage(), e1.getMessage() );
 			}
 		}
 	}

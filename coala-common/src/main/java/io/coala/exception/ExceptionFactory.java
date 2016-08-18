@@ -19,6 +19,7 @@ import java.text.MessageFormat;
 
 import io.coala.exception.ExceptionBuilder.CheckedException;
 import io.coala.exception.ExceptionBuilder.UncheckedException;
+import io.coala.function.ThrowableUtil;
 
 /**
  * {@link ExceptionFactory} has shorthand utility methods to create
@@ -30,6 +31,29 @@ import io.coala.exception.ExceptionBuilder.UncheckedException;
  */
 public abstract class ExceptionFactory
 {
+
+	/**
+	 * @param type the {@link Exception} to throw using its {@code (String)}
+	 *            {@link Constructor}
+	 * @param messageFormat following {@link MessageFormat} syntax
+	 * @param args stringifiable arguments as referenced in
+	 *            {@code messageFormat}
+	 * @param <R> the dynamic return type
+	 * @param <E> the {@link Exception} type thrown
+	 */
+	public static <R, E extends Exception> R throwNew( final Class<E> type,
+		final String messageFormat, final Object... args ) throws E
+	{
+		try
+		{
+			throw type.getConstructor( String.class ).newInstance(
+					ExceptionBuilder.format( messageFormat, args ) );
+		} catch( final Throwable e )
+		{
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
+		}
+	}
 
 	/**
 	 * @param message the message this {@link CheckedException}

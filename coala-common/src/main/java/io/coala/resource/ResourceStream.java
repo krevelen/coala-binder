@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.xml.XmlContext;
@@ -138,8 +138,8 @@ public class ResourceStream
 			return JsonUtil.toTree( IOUtils.toString( getStream() ) );
 		} catch( final IOException e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from {}", getType(), getPath() );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -158,8 +158,8 @@ public class ResourceStream
 			// valueOf(getStream(), resultType);
 		} catch( final IOException e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from {}", resultType, getPath() );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 
@@ -178,8 +178,8 @@ public class ResourceStream
 					.unmarshal( new StreamSource( getStream() ), resultType ) );
 		} catch( final JAXBException e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from {}", resultType, getPath() );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 

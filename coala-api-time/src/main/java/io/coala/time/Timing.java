@@ -53,7 +53,8 @@ import rx.functions.Func1;
  * <ul>
  * <li>a {@link CronExpression} (e.g. {@code "0 0 0 14 * ? *"} for
  * <em>&ldquo;midnight of every 14th day
- *            of the month&rdquo;</em> );</li>
+ *            of the month&rdquo;</em> or {@code "0 30 9,12,15 * * ?"} for
+ * <em>&ldquo;every day at 9:30am, 12:30pm and 3:30pm&rdquo;</em>);</li>
  * <li>a {@link DateTimeIteratorFactory iCal RRULE or RDATE} pattern (e.g.
  * {@code "DTSTART;TZID=US-Eastern:19970902T090000\r\nRRULE:FREQ=DAILY;UNTIL=20130430T083000Z;INTERVAL=1;"}
  * );</li>
@@ -179,9 +180,8 @@ public class Timing extends Wrapper.Simple<String>
 						return Observable.just( Instant.valueOf( pattern ) );
 					} catch( final Exception e3 )
 					{
-
 						throw ExceptionFactory.createUnchecked( e,
-								"Problem parsing `{0}`, errors: \n\t{1}\n\t{2}\n\t{3}",
+								"Problem parsing `{}`, errors: \n\t{}\n\t{}\n\t{}",
 								pattern, e.getMessage(), e1.getMessage(),
 								e2.getMessage() );
 					}

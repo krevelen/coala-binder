@@ -31,7 +31,7 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.log.LogUtil;
 
 /**
@@ -214,8 +214,8 @@ public class FileUtil // implements Util
 			return new FileOutputStream( file, append );
 		} catch( final IOException e )
 		{
-			throw ExceptionFactory.createUnchecked( e, "Problem opening {}",
-					file );
+			ThrowableUtil.throwAsUnchecked( e );
+			return null;
 		}
 	}
 

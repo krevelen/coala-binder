@@ -9,7 +9,7 @@ import java.util.WeakHashMap;
 
 import javax.inject.Provider;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.json.DynaBean;
 import io.coala.json.DynaBean.ProxyProvider;
 import io.coala.json.JsonUtil;
@@ -119,10 +119,17 @@ public class Instantiator<T>
 	public Instantiator( final Class<T> type, final Class<?>... argTypes )
 	{
 		this.type = type;
-		// test bean property of having an accessible public
-		// zero-arg constructor
-		this.constructor = ClassUtil.isAbstract( type ) ? null
-				: ReflectUtil.getAccessibleConstructor( type, argTypes );
+		// test bean has an accessible public zero-arg constructor
+		Constructor<T> c = null;
+		try
+		{
+			c = ClassUtil.isAbstract( type ) ? null
+					: ReflectUtil.getAccessibleConstructor( type, argTypes );
+		} catch( final NoSuchMethodException e )
+		{
+			ThrowableUtil.throwAsUnchecked( e );
+		}
+		this.constructor = c;
 	}
 
 	/**
@@ -132,24 +139,24 @@ public class Instantiator<T>
 	 */
 	public T instantiate( final Object... args )
 	{
+		if( ClassUtil.isAbstract( this.type ) )
+		{
+			final Properties[] imports = args == null ? null
+					: new Properties[args.length];
+			for( int i = 0; i < args.length; i++ )
+				imports[i] = (Properties) args[i];
+			return ProxyProvider.of( JsonUtil.getJOM(), this.type, imports )
+					.get();
+		}
 		try
 		{
-			if( ClassUtil.isAbstract( this.type ) )
-			{
-				final Properties[] imports = args == null ? null
-						: new Properties[args.length];
-				for( int i = 0; i < args.length; i++ )
-					imports[i] = (Properties) args[i];
-				return ProxyProvider.of( JsonUtil.getJOM(), this.type, imports )
-						.get();
-			}
 			return this.constructor != null
 					? this.constructor.newInstance( args )
 					: this.type.newInstance();
 		} catch( final Throwable t )
 		{
-			throw ExceptionFactory.createUnchecked( t,
-					"Problem instantiating {}", this.type );
+			ThrowableUtil.throwAsUnchecked( t );
+			return null;
 		}
 	}
 

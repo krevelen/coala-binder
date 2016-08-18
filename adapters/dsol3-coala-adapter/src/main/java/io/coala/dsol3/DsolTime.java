@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
 import io.coala.time.Instant;
@@ -109,10 +110,9 @@ public class DsolTime<Q extends Quantity> extends
 		try
 		{
 			return valueOf( TimeSpan.of( (Number) time.get(), unit ) );
-		} catch( final Throwable t )
+		} catch( final Throwable e )
 		{
-			throw ExceptionFactory.createUnchecked( t,
-					"Problem converting time: ", time );
+			return ThrowableUtil.throwAsUnchecked( e );
 		}
 	}
 

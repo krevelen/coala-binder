@@ -5,8 +5,9 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowableUtil;
+import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
-import io.coala.util.Caller.ThrowingConsumer;
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.BehaviorSubject;
@@ -49,7 +50,8 @@ public interface Scheduler extends Proactive
 	/**
 	 * @param when the {@link Instant} of execution
 	 * @param what the {@link Runnable}
-	 * @return the occurrence {@link Expectation}, for optional cancellation
+	 * @return the occurrence {@link Expectation}, for optional cancellation, or
+	 *         {@code null} if event is instantaneous
 	 */
 	Expectation schedule( Instant when, ThrowingConsumer<Instant, ?> what );
 
@@ -92,13 +94,9 @@ public interface Scheduler extends Proactive
 				try
 				{
 					what.accept( t );
-				} catch( final RuntimeException e )
-				{
-					throw e;
 				} catch( final Throwable e )
 				{
-					throw ExceptionFactory.createUnchecked( e,
-							"Problem calling {}", what );
+					ThrowableUtil.throwAsUnchecked( e );
 				}
 			}
 
@@ -200,25 +198,9 @@ public interface Scheduler extends Proactive
 				} catch( final Throwable e )
 				{
 					// failed first() Instant, interrupt recursion
-					LogUtil.getLogger( getClass() )
-							.error( "Problem in event, canceled remaining", e );
-					try
-					{
-						result.onError( e );
-//						what.onError( e );
-					} catch( final Throwable e1 )
-					{
-						LogUtil.getLogger( getClass() ).error(
-								"Problem in error propagation/handling", e1 );
-					}
-					// FIXME kill sim
-//					time().doOnNext( t1 ->
-//					{
-//						throw e instanceof RuntimeException
-//								? (RuntimeException) e
-//								: ExceptionFactory
-//										.createUnchecked( "<kill sim>", e );
-//					} );
+					LogUtil.getLogger( Scheduler.class )
+							.error( "Problem in event, canceled remaining" );
+					throw e;
 				}
 			} );
 			result.onNext( exp );
