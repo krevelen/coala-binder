@@ -86,7 +86,6 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 		try
 		{
 			final DsolTime start = DsolTime.valueOf( startTime );
-//			LOG.trace( "jscience: {} => dsol: {}", startTime, start );
 
 			final DSOLModel model = new DSOLModel()
 			{
@@ -137,6 +136,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 				this.last = t;
 				synchronized( this.listeners )
 				{
+					this.time.onNext( t );
 					this.listeners.computeIfPresent( t, ( t1, timeProxy ) ->
 					{
 						try
@@ -150,7 +150,6 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 						timeProxy.onCompleted();
 						return null; // i.e. remove
 					} );
-					this.time.onNext( t );
 				}
 			}, SimulatorInterface.TIME_CHANGED_EVENT );
 
@@ -195,7 +194,6 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			}
 		} catch( final SimRuntimeException e )
 		{
-			e.printStackTrace();
 			this.time.onError( e );
 		}
 	}
@@ -211,20 +209,20 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	public Expectation schedule( final Instant when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		if( now().equals( when ) )
-		{
-			try
-			{
-				this.scheduler.scheduleEvent( new SimEvent<DsolTime<Q>>(
-						this.scheduler.getSimulatorTime(), this, what, "accept",
-						new Object[]
-						{ when } ) );
-			} catch( final Exception e )
-			{
-				this.time.onError( e );
-			}
-			return null; // TODO provide a way to cancel instantaneous events?
-		}
+//		if( now().equals( when ) )
+//		{
+//			try
+//			{
+//				this.scheduler.scheduleEvent( new SimEvent<DsolTime<Q>>(
+//						this.scheduler.getSimulatorTime(), this, what, "accept",
+//						new Object[]
+//						{ when } ) );
+//			} catch( final Exception e )
+//			{
+//				this.time.onError( e );
+//			}
+//			return null; // TODO provide a way to cancel instantaneous events?
+//		}
 		synchronized( this.listeners )
 		{
 			return Expectation.of( this, when,

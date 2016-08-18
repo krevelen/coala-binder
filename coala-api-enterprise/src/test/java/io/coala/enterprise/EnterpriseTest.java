@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.measure.unit.NonSI;
+
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -54,7 +56,7 @@ public class EnterpriseTest
 		final DateTime offset = DateTime.now().withTimeAtStartOfDay();
 		scheduler.time().subscribe( t ->
 		{
-			LOG.trace( "t={} ({})", t.prettify( Units.DAYS, 2 ),
+			LOG.trace( "t={}, date: {}", t.prettify( Units.DAYS, 2 ),
 					t.toJoda( offset ) );
 		} );
 
@@ -66,17 +68,21 @@ public class EnterpriseTest
 		// add business rule(s)
 		sales.on( TestFact.class, org1.id(), fact ->
 		{
-			final TestFact response = sales.createResponse( fact,
-					CoordinationFactType.STATED, true, null,
-					Collections.singletonMap( "myParam1", "myValue1" ) );
-			LOG.trace( "{} responded: {} for incoming: {}", sales.id(),
-					response, fact );
+			sales.after( Duration.of( 1, NonSI.WEEK ) ).call( t ->
+			{
+				final TestFact response = sales.createResponse( fact,
+						CoordinationFactType.STATED, true, null,
+						Collections.singletonMap( "myParam1", "myValue1" ) );
+				LOG.trace( "t={}, {} responded: {} for incoming: {}", t,
+						sales.id(), response, fact );
+
+			} );
 		} );
 
 		// observe generated facts
 		org1.outgoing().subscribe( fact ->
 		{
-			LOG.trace( "observed outgoing fact: {}", fact );
+			LOG.trace( "t={}, observed outgoing fact: {}", org1.now(), fact );
 		} );
 
 		// spawn initial transactions with self
@@ -84,21 +90,11 @@ public class EnterpriseTest
 				Timing.of( "0 0 0 14 * ? *" ).asObservable( offset.toDate() ),
 				t ->
 				{
-					try
-					{
-						// FIXME hold outgoing fact until this lambda returns?
-						LOG.trace( "time to generate fact, causing excepion" );
-
-						throw new Exception(); // FIXME fail on error?
-					} finally
-					{
-						final TestFact fact = sales.createRequest(
-								TestFact.class, org1.id(), null, null,
-								Collections.singletonMap( "myParam2",
-										"myValue2" ) );
-						LOG.trace( "generated fact: {}", fact );
-						org1.on( fact );
-					}
+					final TestFact fact = sales.createRequest( TestFact.class,
+							org1.id(), null, null, Collections
+									.singletonMap( "myParam2", "myValue2" ) );
+					LOG.trace( "t={}, handle own outgoing fact: {}", t, fact );
+					org1.on( fact );
 				} );
 
 		// TODO test fact expiration handling
