@@ -55,7 +55,7 @@
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
 			<version>${quartz.version}</version>
-			<scope>provided</scope>
+			<!-- <scope>provided</scope> -->
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -69,7 +69,7 @@
 			<groupId>org.scala-saddle</groupId>
 			<artifactId>google-rfc-2445</artifactId>
 			<version>${google-rfc-2445.version}</version>
-			<scope>provided</scope>
+			<!-- <scope>provided</scope> -->
 			<exclusions>
 				<!-- use a more recent implementation of joda-time -->
 				<exclusion>
@@ -90,6 +90,7 @@
 			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.hamcrest</groupId>
