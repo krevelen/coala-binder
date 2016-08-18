@@ -117,18 +117,6 @@ public interface CoordinationFact
 	interface Factory
 	{
 
-//			default <F extends CoordinationFact> F create(
-//				final Transaction<F> tran, final CompositeActor.ID creatorID,
-//				final CoordinationFactType type, final CoordinationFact cause,
-//				final Instant expiration, final Map<?, ?>... params )
-//			{
-//				return create( tran.scheduler(),
-//						TypeArguments.of( Transaction.class, tran.getClass() )
-//								.get( 0 ).asSubclass( CoordinationFact.class ),
-//						ID.of(), tran.id(), creatorID, type, expiration,
-//						cause.id(), params );
-//			}
-
 		/**
 		 * @param scheduler
 		 * @param factKind
@@ -146,31 +134,6 @@ public interface CoordinationFact
 			Organization.ID creatorID, CoordinationFactType type,
 			Instant expiration, CoordinationFact.ID causeID,
 			Map<?, ?>... params );
-
-		/**
-		 * @return a {@link Factory} that generates the desired
-		 *         {@link CoordinationFact} sub-type as proxy decorating a new
-		 *         {@link Simple} instance
-		 */
-		static Factory ofSimpleProxy()
-		{
-			return new Factory()
-			{
-				@Override
-				public <F extends CoordinationFact> F create(
-					final Scheduler scheduler, final Class<F> factKind,
-					final CoordinationFact.ID id, final Transaction.ID tranID,
-					final Organization.ID creatorID,
-					final CoordinationFactType type, final Instant expiration,
-					final CoordinationFact.ID causeID,
-					final Map<?, ?>... params )
-				{
-					return new Simple( factKind, id, scheduler.now(), tranID,
-							creatorID, type, expiration, causeID, params )
-									.proxyAs( factKind, null );
-				}
-			};
-		}
 	}
 
 	interface Persister
@@ -334,6 +297,25 @@ public interface CoordinationFact
 		public Map<String, Object> params()
 		{
 			return this.params;
+		}
+	}
+
+	/**
+	 * {@link SimpleFactory} generates the desired {@link CoordinationFact}
+	 * sub-type as proxy decorating a new {@link Simple} instance
+	 */
+	class SimpleFactory implements Factory
+	{
+		@Override
+		public <F extends CoordinationFact> F create( final Scheduler scheduler,
+			final Class<F> factKind, final CoordinationFact.ID id,
+			final Transaction.ID tranID, final Organization.ID creatorID,
+			final CoordinationFactType type, final Instant expiration,
+			final CoordinationFact.ID causeID, final Map<?, ?>... params )
+		{
+			return new Simple( factKind, id, scheduler.now(), tranID, creatorID,
+					type, expiration, causeID, params ).proxyAs( factKind,
+							null );
 		}
 	}
 }

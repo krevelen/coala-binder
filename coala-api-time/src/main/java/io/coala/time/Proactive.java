@@ -34,6 +34,7 @@ import io.coala.exception.ExceptionFactory;
 import io.coala.function.Caller;
 import io.coala.function.ThrowingBiConsumer;
 import io.coala.function.ThrowingConsumer;
+import io.coala.function.ThrowingRunnable;
 import io.coala.util.Comparison;
 import rx.Observable;
 import rx.Observer;
@@ -154,7 +155,7 @@ public interface Proactive extends Timed
 		 * @param runner the {@link Runnable} (method) to call when time comes
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default Expectation call( final Runnable runner )
+		default Expectation call( final ThrowingRunnable<?> runner )
 		{
 			return scheduler().schedule( now(), runner );
 		}

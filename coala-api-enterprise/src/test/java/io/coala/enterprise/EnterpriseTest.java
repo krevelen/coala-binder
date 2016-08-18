@@ -31,8 +31,7 @@ public class EnterpriseTest
 	/** TODO specialized logging adding e.g. Timed#now() and Identified#id() */
 	private static final Logger LOG = LogUtil.getLogger( EnterpriseTest.class );
 
-	private static final CoordinationFact.Factory factFactory = CoordinationFact.Factory
-			.ofSimpleProxy();
+	private static final CoordinationFact.Factory factFactory = new CoordinationFact.SimpleFactory();
 
 	/**
 	 * {@link TestFact} custom fact kind

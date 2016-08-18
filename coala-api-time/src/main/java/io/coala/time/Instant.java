@@ -24,7 +24,6 @@ import javax.measure.DecimalMeasure;
 import javax.measure.Measurable;
 import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
-import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -204,8 +203,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 * 
 	 * @param units the amount of time units
 	 */
-	public static <Q extends Quantity> Instant of( final Number value,
-		final Unit<Q> unit )
+	public static Instant of( final Number value, final Unit<?> unit )
 	{
 		return of( TimeSpan.of( value, unit ) );
 	}

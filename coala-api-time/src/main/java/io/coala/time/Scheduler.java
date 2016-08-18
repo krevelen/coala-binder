@@ -4,9 +4,9 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.function.ThrowableUtil;
 import io.coala.function.ThrowingConsumer;
+import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
 import rx.Observable;
 import rx.Observer;
@@ -39,7 +39,8 @@ public interface Scheduler extends Proactive
 	 * @param what the {@link Runnable}
 	 * @return the occurrence {@link Expectation}, for optional cancellation
 	 */
-	default Expectation schedule( Instant when, Runnable what )
+	default Expectation schedule( final Instant when,
+		final ThrowingRunnable<?> what )
 	{
 		return schedule( when, t ->
 		{
@@ -64,8 +65,8 @@ public interface Scheduler extends Proactive
 	 *         next {@link Instant}, until completion of simulation time or
 	 *         observed instants or an error occurs
 	 */
-	default <T> Observable<Expectation>
-		schedule( final Observable<Instant> when, final Runnable what )
+	default <T> Observable<Expectation> schedule(
+		final Observable<Instant> when, final ThrowingRunnable<?> what )
 	{
 		return schedule( when, t ->
 		{
@@ -133,14 +134,10 @@ public interface Scheduler extends Proactive
 			{
 				try
 				{
-					what.call();
-				} catch( final RuntimeException e )
-				{
-					throw e;
+					result.onNext( what.call() );
 				} catch( final Throwable e )
 				{
-					throw ExceptionFactory.createUnchecked( e,
-							"Problem calling " + what );
+					result.onError( e );
 				}
 			}
 

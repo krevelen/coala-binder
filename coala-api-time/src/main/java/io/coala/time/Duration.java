@@ -17,7 +17,6 @@ package io.coala.time;
 
 import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
-import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -29,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.Wrapper;
 import io.coala.math.MeasureUtil;
-import io.coala.random.ProbabilityDistribution;
 import io.coala.time.TimeSpan.Prettifier;
 
 /**
@@ -111,7 +109,6 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	 *    "-P-6H+3M"  -> parses as "+6 hours and -3 minutes"
 	 *            </pre>
 	 * 
-	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
 	 * @see org.threeten.bp.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
@@ -121,6 +118,11 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 		return of( TimeSpan.valueOf( value ) );
 	}
 
+	/**
+	 * @param value
+	 * @return
+	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
+	 */
 	public static Duration valueOf( final String value )
 	{
 		return of( value );
@@ -184,20 +186,6 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	public static Duration of( final TimeSpan value )
 	{
 		return Util.of( value, new Duration() );
-	}
-
-	public static <N extends Number, Q extends Quantity>
-		ProbabilityDistribution<Duration>
-		of( final ProbabilityDistribution<N> dist, final Unit<Q> unit )
-	{
-		return new ProbabilityDistribution<Duration>()
-		{
-			@Override
-			public Duration draw()
-			{
-				return Duration.of( dist.draw(), unit );
-			}
-		};
 	}
 
 	/**
