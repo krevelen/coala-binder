@@ -49,12 +49,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		try
 		{
 			return get();
-		} catch( final Exception e )
+		} catch( final Throwable e )
 		{
-			throw e;
-		} catch( final Throwable t )
-		{
-			throw ExceptionFactory.createChecked( t, "rethrow" );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -68,12 +65,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		{
 			// final Object ignore = 
 			get();
-		} catch( final RuntimeException e )
+		} catch( final Throwable e )
 		{
-			throw e;
-		} catch( final Throwable t )
-		{
-			throw ExceptionFactory.createUnchecked( t, "rethrow" );
+			Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -113,9 +107,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		try
 		{
 			return get();
-		} catch( final Throwable t )
+		} catch( final Throwable e )
 		{
-			throw ExceptionFactory.createUnchecked( t, "rethrow" );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -131,9 +125,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		try
 		{
 			return get();
-		} catch( final Throwable t )
+		} catch( final Throwable e )
 		{
-			throw ExceptionFactory.createUnchecked( t, "rethrow" );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -147,29 +141,18 @@ public interface Caller<T, U, R, E extends Throwable>
 	 * @version $Id: 2d65cc65d254385fb7416a8ed713ae80ed7aadf2 $
 	 * @author Rick van Krevelen
 	 */
-	class Simple<T, U, R, E extends Throwable> implements Caller<T, U, R, E>
+	static <T, U, R, E extends Throwable> Caller<T, U, R, E>
+		of( final ThrowingSupplier<R, ? extends E> supplier )
 	{
-
-		public static <T, U, R, E extends Throwable> Simple<T, U, R, E>
-			of( final ThrowingSupplier<R, ? extends E> supplier )
+		Objects.requireNonNull( supplier );
+		return new Caller<T, U, R, E>()
 		{
-			return new Simple<T, U, R, E>( supplier::get );
-		}
-
-		private final ThrowingSupplier<R, E> callable;
-
-		public Simple( final ThrowingSupplier<R, E> callable )
-		{
-			Objects.requireNonNull( callable );
-			this.callable = callable;
-		}
-
-		@Override
-		public ThrowingSupplier<R, E> getCallable()
-		{
-			return this.callable;
-		}
-
+			@Override
+			public ThrowingSupplier<R, E> getCallable()
+			{
+				return supplier::get;
+			}
+		};
 	}
 
 	/**
@@ -179,14 +162,14 @@ public interface Caller<T, U, R, E extends Throwable>
 	static <R> Caller<Object, Object, R, Exception>
 		of( final Callable<R> callable )
 	{
-		return Simple.of( callable::call );
+		return of( (ThrowingSupplier<R, Exception>) callable::call );
 	}
 
 	static <R> Caller<Object, Object, R, Exception>
 		of( final Constructor<R> constructor, final Object... argConstants )
 	{
 		// redirect constructor::newInstance?
-		return Simple.of( new ThrowingSupplier<R, Exception>()
+		return of( new ThrowingSupplier<R, Exception>()
 		{
 			@Override
 			public R get() throws Exception
@@ -202,7 +185,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final Callable<Object[]> argsSupplier )
 	{
 		// redirect constructor::newInstance?
-		return Simple.of( new ThrowingSupplier<R, Exception>()
+		return of( new ThrowingSupplier<R, Exception>()
 		{
 			@Override
 			public R get() throws Exception
@@ -217,7 +200,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final Object target, final Object... argsConstant )
 	{
 		// redirect method::invoke?
-		return Simple.of( new ThrowingSupplier<Object, Exception>()
+		return of( new ThrowingSupplier<Object, Exception>()
 		{
 			@Override
 			public Object get() throws Exception
@@ -233,7 +216,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingSupplier<Object[], ? extends E> argsSupplier )
 	{
 		// redirect method::invoke?
-		return Simple.of( new ThrowingSupplier<Object, Exception>()
+		return of( new ThrowingSupplier<Object, Exception>()
 		{
 			@Override
 			public Object get() throws Exception
@@ -256,19 +239,19 @@ public interface Caller<T, U, R, E extends Throwable>
 //	static <R> Caller<Object, Object, R, Throwable>
 //		of( final Supplier<R> supplier )
 //	{
-//		return Simple.of( supplier::get );
+//		return of( supplier::get );
 //	}
 
-	static <R, E extends Throwable> Caller<Object, Object, R, E>
-		of( final ThrowingSupplier<R, ? extends E> supplier )
-	{
-		return Simple.of( supplier::get );
-	}
+//	static <R, E extends Throwable> Caller<Object, Object, R, E>
+//		of( final ThrowingSupplier<R, ? extends E> supplier )
+//	{
+//		return of( supplier::get );
+//	}
 
 //	static Caller<Object, Object, Void, Throwable> of( final Runnable runnable )
 //	{
 //		// <void> incompatible with <Void>
-//		return Simple.of( new ThrowingSupplier<Void, Throwable>()
+//		return of( new ThrowingSupplier<Void, Throwable>()
 //		{
 //			@Override
 //			public Void get()
@@ -298,7 +281,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		of( final ThrowingConsumer<T, ? extends E> consumer, final T constant )
 	{
 		// must wrap to prevent cycles
-		return Simple.of( new ThrowingSupplier<Void, E>()
+		return of( new ThrowingSupplier<Void, E>()
 		{
 			@Override
 			public Void get() throws E
@@ -313,7 +296,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		of( final Consumer<T> consumer, final T constant )
 	{
 		// must wrap to prevent cycles
-		return Simple.of( new ThrowingSupplier<Void, Throwable>()
+		return of( new ThrowingSupplier<Void, Throwable>()
 		{
 			@Override
 			public Void get()
@@ -328,7 +311,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingConsumer<T, ? extends E> consumer,
 		final ThrowingSupplier<T, ? extends E> supplier )
 	{
-		return Simple.of( new ThrowingSupplier<Void, E>()
+		return of( new ThrowingSupplier<Void, E>()
 		{
 			@Override
 			public Void get() throws E
@@ -343,7 +326,7 @@ public interface Caller<T, U, R, E extends Throwable>
 //		final T constant1, final U constant2 )
 //	{
 //		// must wrap to prevent cycles
-//		return Simple.of( new ThrowingSupplier<Void, Throwable>()
+//		return of( new ThrowingSupplier<Void, Throwable>()
 //		{
 //			@Override
 //			public Void get()
@@ -359,7 +342,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final U constant2 )
 	{
 		// must wrap to prevent cycles
-		return Simple.of( new ThrowingSupplier<Void, E>()
+		return of( new ThrowingSupplier<Void, E>()
 		{
 			@Override
 			public Void get() throws E
@@ -375,7 +358,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingSupplier<T, ? extends E> supplier1,
 		final ThrowingSupplier<U, ? extends E> supplier2 )
 	{
-		return Simple.of( new ThrowingSupplier<Void, E>()
+		return of( new ThrowingSupplier<Void, E>()
 		{
 			@Override
 			public Void get() throws E
@@ -390,7 +373,7 @@ public interface Caller<T, U, R, E extends Throwable>
 //		of( final Predicate<T> predicate, final T constant )
 //	{
 //		// must wrap to prevent cycles
-//		return Simple.of( new ThrowingSupplier<Boolean, Throwable>()
+//		return of( new ThrowingSupplier<Boolean, Throwable>()
 //		{
 //			@Override
 //			public Boolean get()
@@ -404,7 +387,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingPredicate<T, ? extends E> predicate, final T constant )
 	{
 		// must wrap to prevent cycles
-		return Simple.of( new ThrowingSupplier<Boolean, E>()
+		return of( new ThrowingSupplier<Boolean, E>()
 		{
 			@Override
 			public Boolean get() throws E
@@ -418,7 +401,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingPredicate<T, ? extends E> predicate,
 		final ThrowingSupplier<T, ? extends E> supplier )
 	{
-		return Simple.of( new ThrowingSupplier<Boolean, E>()
+		return of( new ThrowingSupplier<Boolean, E>()
 		{
 			@Override
 			public Boolean get() throws E
@@ -433,7 +416,7 @@ public interface Caller<T, U, R, E extends Throwable>
 //		final U constant2 )
 //	{
 //		// must wrap to reroute and prevent cycles
-//		return Simple.of( new ThrowingSupplier<Boolean, Throwable>()
+//		return of( new ThrowingSupplier<Boolean, Throwable>()
 //		{
 //			@Override
 //			public Boolean get()
@@ -448,7 +431,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final T constant1, final U constant2 )
 	{
 		// must wrap to reroute and prevent cycles
-		return Simple.of( new ThrowingSupplier<Boolean, E>()
+		return of( new ThrowingSupplier<Boolean, E>()
 		{
 			@Override
 			public Boolean get() throws E
@@ -463,7 +446,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingSupplier<T, ? extends E> supplier1,
 		final ThrowingSupplier<U, ? extends E> supplier2 )
 	{
-		return Simple.of( new ThrowingSupplier<Boolean, E>()
+		return of( new ThrowingSupplier<Boolean, E>()
 		{
 			@Override
 			public Boolean get() throws E
@@ -477,7 +460,7 @@ public interface Caller<T, U, R, E extends Throwable>
 //		final T constant )
 //	{
 //		// must wrap to prevent cycles
-//		return Simple.of( new ThrowingSupplier<R, Throwable>()
+//		return of( new ThrowingSupplier<R, Throwable>()
 //		{
 //			@Override
 //			public R get()
@@ -491,7 +474,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		of( final ThrowingFunction<T, R, ? extends E> f, final T constant )
 	{
 		// must wrap to prevent cycles
-		return Simple.of( new ThrowingSupplier<R, E>()
+		return of( new ThrowingSupplier<R, E>()
 		{
 			@Override
 			public R get() throws E
@@ -505,7 +488,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingFunction<T, R, ? extends E> f,
 		final ThrowingSupplier<T, ? extends E> supplier )
 	{
-		return Simple.of( new ThrowingSupplier<R, E>()
+		return of( new ThrowingSupplier<R, E>()
 		{
 			@Override
 			public R get() throws E
@@ -519,7 +502,7 @@ public interface Caller<T, U, R, E extends Throwable>
 //		final T constant1, final U constant2 )
 //	{
 //		// must wrap to prevent cycles
-//		return Simple.of( new ThrowingSupplier<R, Throwable>()
+//		return of( new ThrowingSupplier<R, Throwable>()
 //		{
 //			@Override
 //			public R get()
@@ -534,7 +517,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final U constant2 )
 	{
 		// must wrap to prevent cycles
-		return Simple.of( new ThrowingSupplier<R, E>()
+		return of( new ThrowingSupplier<R, E>()
 		{
 			@Override
 			public R get() throws E
@@ -549,7 +532,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		final ThrowingSupplier<T, ? extends E> supplier1,
 		final ThrowingSupplier<U, ? extends E> supplier2 )
 	{
-		return Simple.of( new ThrowingSupplier<R, E>()
+		return of( new ThrowingSupplier<R, E>()
 		{
 			@Override
 			public R get() throws E
