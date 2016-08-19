@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.Wrapper;
 import io.coala.math.MeasureUtil;
-import io.coala.time.TimeSpan.Prettifier;
 
 /**
  * {@linkplain Duration} wraps an {@linkplain TimeSpan} that is
@@ -254,13 +253,13 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	@JsonIgnore
 	public long toMillisLong()
 	{
-		return longValue( TimeSpan.MILLIS );
+		return longValue( Units.MILLIS );
 	}
 
 	@JsonIgnore
 	public long toNanosLong()
 	{
-		return longValue( TimeSpan.NANOS );
+		return longValue( Units.NANOS );
 	}
 
 	/**
@@ -295,12 +294,12 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 		return unwrap();
 	}
 
-	public Prettifier prettify( final int scale )
+	public Object prettify( final int scale )
 	{
 		return unwrap().prettify( scale );
 	}
 
-	public Prettifier prettify( final Unit<?> unit, final int scale )
+	public Object prettify( final Unit<?> unit, final int scale )
 	{
 		return unwrap().prettify( unit, scale );
 	}

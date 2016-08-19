@@ -16,12 +16,12 @@
 package io.coala.time;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import javax.measure.DecimalMeasure;
-import javax.measure.unit.SI;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,7 +32,6 @@ import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.TriggerBuilder;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,11 +44,10 @@ import com.google.ical.compat.jodatime.DateTimeIteratorFactory;
 import io.coala.exception.ExceptionFactory;
 import io.coala.json.Wrapper;
 import rx.Observable;
-import rx.functions.Func1;
 
 /**
  * {@link Timing} wraps a {@link String} representation of some calendar-based
- * pattern or period since the EPOCH, like:
+ * recurrence pattern or duration relative to some calendar-based offset, like:
  * <ul>
  * <li>a {@link CronExpression} (e.g. {@code "0 0 0 14 * ? *"} for
  * <em>&ldquo;midnight of every 14th day
@@ -65,6 +63,7 @@ import rx.functions.Func1;
  * @version $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
  * @author Rick van Krevelen
  */
+// FIXME split into 3 separate types ?
 // FIXME use generic Wrapper de/serializers ?
 @JsonSerialize( using = Timing.JsonSerializer.class )
 @JsonDeserialize( using = Timing.JsonDeserializer.class )
@@ -83,9 +82,29 @@ public class Timing extends Wrapper.Simple<String>
 			.compile( "TZID=([^:;]*)" );
 
 	/**
-	 * @return
+	 * @return an {@link Observable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 *         {@link java.time.Instant}
 	 */
-	@JsonIgnore
+	public Observable<Instant> asObservable( final java.time.Instant offset )
+	{
+		return asObservable( new Date( offset.toEpochMilli() ) );
+	}
+
+	/**
+	 * @return an {@link Observable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 *         {@link DateTime}
+	 */
+	public Observable<Instant> asObservable( final DateTime offset )
+	{
+		return asObservable( offset.toDate() );
+	}
+
+	/**
+	 * @return an {@link Observable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset {@link Date}
+	 */
 	public Observable<Instant> asObservable( final Date offset )
 	{
 		final String pattern = unwrap();
@@ -97,36 +116,31 @@ public class Timing extends Wrapper.Simple<String>
 			final CronTrigger trigger = TriggerBuilder.newTrigger()
 					.withSchedule( CronScheduleBuilder.cronSchedule( pattern ) )
 					.build();
-			return Observable.from( new Iterable<Instant>()
+			return Observable.from( () ->
 			{
-				@Override
-				public Iterator<Instant> iterator()
+				return new Iterator<Instant>()
 				{
-					return new Iterator<Instant>()
+					private Date current = trigger.getFireTimeAfter( offset );
+
+					@Override
+					public boolean hasNext()
 					{
-						private Date current = trigger
-								.getFireTimeAfter( offset );
+						return this.current != null;
+					}
 
-						@Override
-						public boolean hasNext()
-						{
-							return this.current != null;
-						}
-
-						@Override
-						public Instant next()
-						{
-							final long millis = this.current.getTime()
-									- offset.getTime();
-
-							this.current = trigger
-									.getFireTimeAfter( this.current );
-							return Instant.of( DecimalMeasure
-									.valueOf( millis, SI.MILLI( SI.SECOND ) )
-									.to( Units.DAYS ) );
-						}
-					};
-				}
+					@Override
+					public Instant next()
+					{
+						this.current = trigger.getFireTimeAfter( this.current );
+						final Instant next = Instant
+								.of( DecimalMeasure.valueOf(
+										BigDecimal
+												.valueOf( this.current.getTime()
+														- offset.getTime() ),
+										Units.MILLIS ) );
+						return next;
+					}
+				};
 			} );
 		} catch( final Exception e )
 		{
@@ -151,18 +165,13 @@ public class Timing extends Wrapper.Simple<String>
 				return Observable
 						.from( DateTimeIteratorFactory.createDateTimeIterable(
 								pattern, start, zone, strict ) )
-						.map( new Func1<DateTime, Instant>()
+						.map( ( dt ) ->
 						{
-							@Override
-							public Instant call( final DateTime dt )
-							{
-								final Instant t = Instant
-										.of( org.joda.time.Duration
-												.millis( dt.getMillis()
-														- offset.getTime() ) );
-								LOG.trace( "ical {}: {}: {}", pattern, dt, t );
-								return t;
-							}
+							final Instant t = Instant.of( org.joda.time.Duration
+									.millis( dt.getMillis()
+											- offset.getTime() ) );
+							LOG.trace( "ical {}: {}: {}", pattern, dt, t );
+							return t;
 						} );
 			} catch( final Exception e1 )
 			{

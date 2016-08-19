@@ -20,8 +20,10 @@
 package io.coala.time;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.number.OrderingComparison.comparesEqualTo;
+
+import java.util.concurrent.TimeoutException;
 
 import javax.measure.unit.Unit;
 
@@ -29,58 +31,45 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.dsol3.Dsol3Scheduler;
-
 /**
- * {@link TimedTest}
+ * {@link ProactiveTest}
  * 
  * @version $Id: ded717d12ec0e332fc68d22797ac203f45f182d6 $
  * @author Rick van Krevelen
  */
-public class TimedTest
+public class ProactiveTest
 {
 
 	/** */
-	static final Logger LOG = LogManager.getLogger( TimedTest.class );
+	static final Logger LOG = LogManager.getLogger( ProactiveTest.class );
 
 	@Test
-	public void test() throws InterruptedException
+	public void testFutureSelf() throws TimeoutException
 	{
-		final Scheduler sched = Dsol3Scheduler.of( "dsol3Test", Instant.ZERO,
-				Duration.of( 10, Unit.ONE ), s ->
-				{
-					LOG.trace( "Scheduler initialized, t={}",
-							s.now().prettify( 3 ) );
-				} );
 		final Proactive model = new Proactive()
 		{
 			@Override
 			public Scheduler scheduler()
 			{
-				return sched;
+				return null;
+			}
+
+			@Override
+			public Instant now()
+			{
+				return Instant.of( 0 );
 			}
 		};
 
-		LOG.trace( "testing t=0: " + Instant.ZERO );
-		assertThat( "default start time is zero", model.now(),
-				equalTo( Instant.ZERO ) );
-
 		LOG.trace( "testing t+1 == " + Instant.ONE );
 		assertThat( "FutureSelf#after(t) time is added to Timed#now()",
-				model.after( TimeSpan.ONE ).now(), equalTo( Instant.ONE ) );
+				model.after( TimeSpan.ONE ).now(),
+				comparesEqualTo( Instant.ONE ) );
 
 		LOG.trace( "testing t+3 != " + Instant.of( 2, Unit.ONE ) );
 		assertThat( "FutureSelf#after(t) time is added to Timed#now()",
 				model.after( TimeSpan.of( 3, Unit.ONE ) ).now(),
-				not( equalTo( Instant.of( 2, Unit.ONE ) ) ) );
-/*
- * final CountDownLatch latch = new CountDownLatch( 1 ); model.after(
- * TimeSpan.of( 3 ) ).call( new Runnable() {
- * 
- * @Override public void run() { latch.countDown(); } } );
- * model.scheduler().resume(); latch.await( 1, TimeUnit.SECONDS ); assertThat(
- * "testing Callable executed and counted down in <1000ms", latch.getCount(),
- * equalTo( 0 ) );
- */ }
+				not( comparesEqualTo( Instant.of( 2, Unit.ONE ) ) ) );
+	}
 
 }

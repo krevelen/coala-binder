@@ -16,6 +16,7 @@
 package io.coala.time;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
 import java.time.temporal.ChronoField;
 import java.util.Calendar;
 import java.util.Date;
@@ -32,13 +33,12 @@ import org.aeonbits.owner.Converter;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableDuration;
 import org.joda.time.ReadableInstant;
+import org.joda.time.format.DateTimeFormatter;
 import org.jscience.physics.amount.Amount;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import io.coala.json.Wrapper;
+import io.coala.log.LogUtil;
 import io.coala.math.MeasureUtil;
-import io.coala.time.TimeSpan.Prettifier;
 
 /**
  * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
@@ -140,12 +140,12 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	public static Instant of( final ReadableInstant date,
 		final ReadableInstant offset )
 	{
-		return of( date.getMillis() - offset.getMillis(), TimeSpan.MILLIS );
+		return of( date.getMillis() - offset.getMillis(), Units.MILLIS );
 	}
 
 	public static Instant of( final ReadableDuration joda )
 	{
-		return of( joda.getMillis(), TimeSpan.MILLIS );
+		return of( joda.getMillis(), Units.MILLIS );
 	}
 
 	/**
@@ -161,7 +161,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 								.valueOf( value
 										.get( ChronoField.INSTANT_SECONDS ) )
 								.multiply( BigDecimal.TEN.pow( 9 ) ) ),
-				TimeSpan.NANOS ) ) );
+				Units.NANOS ) ) );
 	}
 
 	/**
@@ -287,12 +287,12 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 
 	public long toMillisLong()
 	{
-		return unwrap().longValue( TimeSpan.MILLIS );
+		return unwrap().longValue( Units.MILLIS );
 	}
 
 	public long toNanosLong()
 	{
-		return unwrap().longValue( TimeSpan.NANOS );
+		return unwrap().longValue( Units.NANOS );
 	}
 
 	public Date toDate( final Date offset )
@@ -324,7 +324,6 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	}
 
 	/** @return the JSR-275 {@link Measurable} implementation of an instant */
-	@JsonIgnore
 	public TimeSpan toMeasure()
 	{
 		return unwrap();
@@ -334,7 +333,6 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 * @return the JScience {@link Amount} precision implementation of an
 	 *         instant
 	 */
-	@JsonIgnore
 	public Amount toAmount()
 	{
 		return MeasureUtil.toAmount( unwrap() );
@@ -350,14 +348,78 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return Duration.of( unwrap().subtract( offset.unwrap() ) );
 	}
 
-	public Prettifier prettify( final int scale )
+	/**
+	 * @param unit
+	 * @return
+	 */
+	public Instant to( final Unit unit )
+	{
+		return of( MeasureUtil.toUnit( toMeasure(), unit ) );
+	}
+
+	public Object prettify( final int scale )
 	{
 		return unwrap().prettify( scale );
 	}
 
-	public Prettifier prettify( final Unit<?> unit, final int scale )
+	public Object prettify( final Unit<?> unit, final int scale )
 	{
 		return unwrap().prettify( unit, scale );
+	}
+
+	public Object prettify( final Date offset )
+	{
+		return LogUtil.toString( () ->
+		{
+			return toDate( offset ).toString();
+		} );
+	}
+
+	public Object prettify( final Date offset, final DateFormat formatter )
+	{
+		return LogUtil.toString( () ->
+		{
+			return formatter.format( toDate( offset ) );
+		} );
+	}
+
+	public Object prettify( final java.time.Instant offset )
+	{
+		return LogUtil.toString( () ->
+		{
+			return toDate( offset ).toString();
+		} );
+	}
+
+	public Object prettify( final java.time.Instant offset,
+		final java.time.format.DateTimeFormatter formatter )
+	{
+		return LogUtil.toString( () ->
+		{
+			return formatter.format( toDate( offset ) );
+		} );
+	}
+
+	public Object prettify( final DateTime offset )
+	{
+		return LogUtil.toString( () ->
+		{
+			return toDate( offset ).toString();
+		} );
+	}
+
+	/**
+	 * @param offset
+	 * @param formatter
+	 * @return
+	 */
+	public Object prettify( final DateTime offset,
+		final DateTimeFormatter formatter )
+	{
+		return LogUtil.toString( () ->
+		{
+			return formatter.print( toDate( offset ) );
+		} );
 	}
 
 }

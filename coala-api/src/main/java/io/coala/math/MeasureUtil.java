@@ -353,4 +353,15 @@ public class MeasureUtil implements Util
 										.doubleValue( measure.getUnit() ) ) ),
 								measure.getUnit() );
 	}
+
+	/**
+	 * @param measure
+	 * @param unit
+	 * @return
+	 */
+	public static <Q extends Quantity> DecimalMeasure<Q>
+		toUnit( final DecimalMeasure<Q> measure, final Unit<Q> unit )
+	{
+		return measure.to( unit, DecimalUtil.DEFAULT_CONTEXT );
+	}
 }

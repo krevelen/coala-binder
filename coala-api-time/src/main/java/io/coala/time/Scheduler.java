@@ -159,6 +159,8 @@ public interface Scheduler extends Proactive
 	/**
 	 * Schedule a stream of {@link Instant}s and their {@link Expectation}s
 	 * 
+	 * FIXME don't split recursively into first( and skip(1), but use async join
+	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s, to be
 	 *            scheduled immediately
 	 * @param what the {@link Observer} of the same {@link Instant}s but delayed

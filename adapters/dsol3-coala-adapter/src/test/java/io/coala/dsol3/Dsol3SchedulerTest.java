@@ -11,13 +11,14 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.exception.Thrower;
-import io.coala.time.Duration;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
 import io.coala.util.Compare;
 import net.jodah.concurrentunit.Waiter;
+
+import static org.aeonbits.owner.util.Collections.entry;
 
 /**
  * {@link Dsol3SchedulerTest}
@@ -40,43 +41,43 @@ public class Dsol3SchedulerTest
 	@Test( expected = IllegalStateException.class )
 	public void testScheduler() throws TimeoutException
 	{
-		final Instant h5 = Instant.of( "5 h" );
-		LOG.trace( "start t={}", h5 );
-		final Scheduler sched = Dsol3Scheduler.of( "dsol3Test", h5,
-				Duration.of( "500 day" ), s ->
-				{
-					// initialize the model
-					s.at( h5.add( 1 ) ).call( this::logTime, s );
-					s.at( h5.add( 2 ) ).call( this::logTime, s );
-					s.at( h5.add( 2 ) ).call( this::logTime, s );
+		final Dsol3Config config = Dsol3Config.of(
+				entry( Dsol3Config.ID_KEY, "dsolTest" ),
+				entry( Dsol3Config.RUN_LENGTH_KEY, "500" ) );
+		LOG.info( "Starting DSOL test, config: {}", config );
+		final Scheduler sched = config.create( s ->
+		{
+			// initialize the model
+			s.at( s.now().add( 1 ) ).call( this::logTime, s );
+			s.at( s.now().add( 2 ) ).call( this::logTime, s );
+			s.at( s.now().add( 2 ) ).call( this::logTime, s );
 
-					final Instant throwTime = Instant.of( 200, NonSI.DAY );
-					s.schedule( Timing.valueOf( "0 0 0 14 * ? *" )
-							.asObservable( new Date() ), t ->
-							{
-								LOG.trace( "atEach handled, t={}",
-										t.prettify( NonSI.DAY, 2 ) );
+			final Instant throwTime = Instant.of( 200, NonSI.DAY );
+			s.schedule( Timing.valueOf( "0 0 0 14 * ? *" )
+					.asObservable( new Date() ), t ->
+					{
+						LOG.trace( "atEach handled, t={}",
+								t.prettify( NonSI.DAY, 2 ) );
 
-								// generate scheduled error
-								if( Compare.ge( t, throwTime ) )
-									Thrower.throwNew(
-											IllegalStateException.class,
-											"Throwing beyond t={}", throwTime );
-							} ).subscribe( exp ->
-							{
-								LOG.trace( "atEach next: {}", exp );
-							}, e ->
-							{
-								LOG.warn( "atEach failed, t={}",
-										s.now().prettify( NonSI.DAY, 2 ), e );
-							}, () ->
-							{
-								LOG.trace( "atEach done, t={}",
-										s.now().prettify( NonSI.DAY, 2 ) );
-							} );
+						// generate scheduled error
+						if( Compare.ge( t, throwTime ) )
+							Thrower.throwNew( IllegalStateException.class,
+									"Throwing beyond t={}", throwTime );
+					} ).subscribe( exp ->
+					{
+						LOG.trace( "atEach next: {}", exp );
+					}, e ->
+					{
+						LOG.warn( "atEach failed, t={}",
+								s.now().prettify( NonSI.DAY, 2 ) );
+					}, () ->
+					{
+						LOG.trace( "atEach done, t={}",
+								s.now().prettify( NonSI.DAY, 2 ) );
+					} );
 
-					LOG.trace( "initialized, t={}", s.now() );
-				} );
+			LOG.trace( "initialized, t={}", s.now() );
+		} );
 
 		final Waiter waiter = new Waiter();
 		sched.time().subscribe( time ->
@@ -84,7 +85,7 @@ public class Dsol3SchedulerTest
 			LOG.trace( "t={}", time.prettify( NonSI.DAY, 2 ) );
 		}, error ->
 		{
-			LOG.error( "error at \r\n t=" + sched.now(), error );
+			LOG.error( "error at t=" + sched.now(), error );
 			waiter.rethrow( error );
 		}, () ->
 		{

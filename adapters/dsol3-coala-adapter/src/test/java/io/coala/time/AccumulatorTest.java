@@ -19,15 +19,12 @@
  */
 package io.coala.time;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
+import static org.aeonbits.owner.util.Collections.entry;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.measure.quantity.DataAmount;
 import javax.measure.unit.SI;
@@ -37,13 +34,16 @@ import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
-import io.coala.dsol3.Dsol3Scheduler;
+import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
 import io.coala.time.Accumulator.Integrator;
+import net.jodah.concurrentunit.Waiter;
 import rx.Observer;
 
 /**
  * {@link AccumulatorTest} tests the {@link Accumulator}
+ * 
+ * FIXME performance leak: multiple events remain scheduled when target reached
  * 
  * @version $Id: ee51d7b3461fc7668d04f2bc014c4b52c598462d $
  * @author Rick van Krevelen
@@ -68,53 +68,53 @@ public class AccumulatorTest
 	 * , {@link Accumulator#at(Amount, Observer)},
 	 * {@link Accumulator#emitAmounts()} and {@link Accumulator#getAmount()}.
 	 * 
-	 * @throws InterruptedException
+	 * @throws TimeoutException
 	 */
 	@Test
-	public void test() throws InterruptedException
+	public void tesAccumulator() throws TimeoutException
 	{
-
 		final Unit<?> bps = SI.BIT.divide( SI.SECOND );
-		final Scheduler scheduler = Dsol3Scheduler.of( "dsol3Test",
-				Instant.of( "5 s" ), Duration.of( "100 s" ), s ->
-				{
-					LOG.trace( "initialized, t={}", s.now() );
-				} );
-		final Accumulator<DataAmount> acc = Accumulator.of( scheduler,
-				Amount.valueOf( 120.4, SI.BIT ), Amount.valueOf( 2, bps ) );
-
-		final TimeSpan delay = TimeSpan.valueOf( "1 s" );
-		scheduler.after( delay ).call( this::logPoint, acc, delay );
-
-		// schedule event at target level
-		final Amount<DataAmount> target = Amount.valueOf( 40, SI.BIT );
-		acc.at( target, t ->
+		final Dsol3Config config = Dsol3Config.of(
+				entry( Dsol3Config.ID_KEY, "accumTest" ),
+				entry( Dsol3Config.START_TIME_KEY, "5 s" ),
+				entry( Dsol3Config.RUN_LENGTH_KEY, "100" ) );
+		LOG.info( "Starting DSOL test, config: {}", config.toYAML() );
+		final Scheduler scheduler = config.create( s ->
 		{
-			LOG.trace( "reached a={} at t={}", target, t );
+			final Accumulator<DataAmount> acc = Accumulator.of( s,
+					Amount.valueOf( 120.4, SI.BIT ), Amount.valueOf( 2, bps ) );
+
+			final TimeSpan delay = TimeSpan.valueOf( "1 s" );
+			s.at( s.now() ).call( this::logPoint, acc, delay );
+
+			// schedule event at target level
+			final Amount<DataAmount> target = Amount.valueOf( 500, SI.BIT );
+			acc.at( target, t ->
+			{
+				LOG.info( "reached a={} at t={}", target, t );
+			} );
+
+			// double the rate
+			acc.setIntegrator( Integrator.ofRate( Amount.valueOf( 4, bps ) ) );
+//			assertThat( "Can't be null", acc, not( nullValue() ) );
+			LOG.info( "initialized, t={}", s.now() );
 		} );
 
-		// double the rate
-		acc.setIntegrator( Integrator.ofRate( Amount.valueOf( 4, bps ) ) );
-		assertThat( "Can't be null", acc, not( nullValue() ) );
-
-		final CountDownLatch latch = new CountDownLatch( 1 );
-		scheduler.time().subscribe( t ->
+		final Waiter waiter = new Waiter();
+		scheduler.time().subscribe( time ->
 		{
-			LOG.trace( "new time, t={}", t );
-		}, e ->
+			LOG.trace( "t={}", time.prettify( SI.SECOND, 2 ) );
+		}, error ->
 		{
-			LOG.trace( "problem, t=" + scheduler.now(), e );
+			LOG.error( "error at t=" + scheduler.now(), error );
+			waiter.rethrow( error );
 		}, () ->
 		{
-			LOG.trace( "completed, t={}", scheduler.now() );
-			latch.countDown();
+			waiter.resume();
 		} );
 		scheduler.resume();
-
-		latch.await( 1, TimeUnit.SECONDS );
-		assertEquals( "Scheduler never completed", 0, latch.getCount() );
-
-		LOG.trace( "Got total: " + acc );
+		waiter.await( 1, TimeUnit.SECONDS );
+		LOG.info( "Accumulator test complete, t={}", scheduler.now() );
 	}
 
 }

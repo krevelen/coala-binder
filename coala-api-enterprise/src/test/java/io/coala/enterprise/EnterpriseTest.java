@@ -1,5 +1,11 @@
 package io.coala.enterprise;
 
+import static org.aeonbits.owner.util.Collections.entry;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -7,13 +13,11 @@ import java.util.concurrent.TimeoutException;
 import javax.measure.unit.NonSI;
 
 import org.apache.logging.log4j.Logger;
-import org.joda.time.DateTime;
 import org.junit.Test;
 
-import io.coala.dsol3.Dsol3Scheduler;
+import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
-import io.coala.time.Instant;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
 import io.coala.time.Units;
@@ -51,11 +55,18 @@ public class EnterpriseTest
 	{
 		LOG.trace( "initializing..." );
 
-		final DateTime offset = DateTime.now().withTimeAtStartOfDay();
+		final DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME
+				.withZone( ZoneId.systemDefault() );
+		final Instant offset = java.time.Instant.now()
+				.truncatedTo( ChronoUnit.DAYS );
+//		final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 		scheduler.time().subscribe( t ->
 		{
 			LOG.trace( "t={}, date: {}", t.prettify( Units.DAYS, 2 ),
-					t.toDate( offset ) );
+					formatter.format( t.toDate( offset ) ) );
+		}, e ->
+		{
+			LOG.error( "Time logging problem", e );
 		} );
 
 		// create organization
@@ -80,19 +91,22 @@ public class EnterpriseTest
 		// observe generated facts
 		org1.outgoing().subscribe( fact ->
 		{
-			LOG.trace( "t={}, outgoing: {}", org1.now(), fact );
+			LOG.trace( "t={}, outgoing: {}",
+					org1.now().prettify( offset ), fact );
 		} );
 
 		org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
-				.doOnNext( f ->
+				.subscribe( f ->
 				{
 					org1.consume( f );
-				} ).subscribe();
+				}, e ->
+				{
+					LOG.error( "Problem redirecting TestFact", e );
+				} );
 
 		// spawn initial transactions with self
 		scheduler.schedule(
-				Timing.of( "0 0 0 14 * ? *" ).asObservable( offset.toDate() ),
-				t ->
+				Timing.of( "0 0 0 14 * ? *" ).asObservable( offset ), t ->
 				{
 					sales.createRequest( TestFact.class, org1.id(), null,
 							t.add( 1 ), Collections.singletonMap( "myParam2",
@@ -119,12 +133,16 @@ public class EnterpriseTest
 	}
 
 	@Test
-	public void testDemo() throws TimeoutException
+	public void testEnterpriseOntology() throws TimeoutException
 	{
 		// initialize replication
-		final Scheduler scheduler = Dsol3Scheduler.of( "demoTest",
-				Instant.of( "5 h" ), Duration.of( "500 day" ),
-				EnterpriseTest::initScenario );
+		final Dsol3Config config = Dsol3Config.of(
+				entry( Dsol3Config.ID_KEY, "eoTest" ),
+				entry( Dsol3Config.START_TIME_KEY, "0 day" ),
+				entry( Dsol3Config.RUN_LENGTH_KEY, "500" ) );
+		LOG.info( "Starting signal test, config: {}", config.toYAML() );
+		final Scheduler scheduler = config
+				.create( EnterpriseTest::initScenario );
 
 		final Waiter waiter = new Waiter();
 		scheduler.time().subscribe( time ->
@@ -140,7 +158,7 @@ public class EnterpriseTest
 		scheduler.resume();
 		waiter.await( 1, TimeUnit.SECONDS );
 
-		LOG.trace( "completed, t={}", scheduler.now() );
+		LOG.info( "completed, t={}", scheduler.now() );
 	}
 
 }

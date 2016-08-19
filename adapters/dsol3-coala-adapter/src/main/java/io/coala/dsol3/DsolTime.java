@@ -33,8 +33,10 @@ import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
+import io.coala.math.MeasureUtil;
 import io.coala.time.Instant;
 import io.coala.time.TimeSpan;
+import io.coala.time.Units;
 import io.coala.util.Instantiator;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
@@ -62,25 +64,20 @@ public class DsolTime<Q extends Quantity> extends
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( DsolTime.class );
 
-	/** the ZERO constant */
-//	public static final DsolTime ZERO = valueOf( 0d );
-
-	/** the DEFAULT_UNIT - TODO read from config */
-//	public static final TimeUnit DEFAULT_UNIT = TimeUnit.DAY;
-
-//	private static final Unit<?> DEFAULT_QUANTITY_UNIT = resolve(
-//			DEFAULT_UNIT );
-
+	/**
+	 * @param unit
+	 * @return
+	 */
 	public static Unit<?> resolve( final TimeUnit unit )
 	{
 		switch( unit )
 		{
 		case DAY:
-			return NonSI.DAY;
+			return Units.DAYS;
 		case HOUR:
 			return NonSI.HOUR;
 		case MILLISECOND:
-			return TimeSpan.MILLIS;
+			return Units.MILLIS;
 		case MINUTE:
 			return NonSI.MINUTE;
 		case SECOND:
@@ -97,19 +94,23 @@ public class DsolTime<Q extends Quantity> extends
 		}
 	}
 
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	public static DsolTime valueOf( final String value )
+	{
+		return valueOf( Instant.valueOf( value ) );
+	}
+
 	/**
-	 * TODO infer unit or apply {@link #resolve( unit )}
-	 * 
 	 * @param time
 	 * @return
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <Q extends Quantity> DsolTime<Q>
-		valueOf( final SimTime<?, ?, ?> time, final Unit<Q> unit )
+	public static <N extends Number & Comparable<N>, Q extends Quantity>
+		DsolTime<Q> valueOf( final SimTime<N, ?, ?> time, final Unit<Q> unit )
 	{
 		try
 		{
-			return valueOf( TimeSpan.of( (Number) time.get(), unit ) );
+			return valueOf( TimeSpan.of( time.get(), unit ) );
 		} catch( final Throwable e )
 		{
 			return Thrower.rethrowUnchecked( e );
@@ -223,16 +224,15 @@ public class DsolTime<Q extends Quantity> extends
 	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> subtract( final DsolTime<Q> relativeTime )
 	{
-		return minus(
-				relativeTime.unwrap().to( unwrap().getUnit() ).getValue() );
+		return minus( MeasureUtil.toBigDecimal( relativeTime.unwrap() ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
 	@Override
 	public BigDecimal minus( final DsolTime<Q> absoluteTime )
 	{
-		return unwrap().getValue().subtract(
-				absoluteTime.unwrap().to( unwrap().getUnit() ).getValue() );
+		return unwrap().getValue()
+				.subtract( MeasureUtil.toBigDecimal( absoluteTime.unwrap() ) );
 	}
 
 	@Override

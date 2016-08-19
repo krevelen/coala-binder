@@ -2,25 +2,23 @@ package io.coala.dsol3;
 
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.function.Consumer;
 
 import javax.measure.Measurable;
 import javax.measure.quantity.Quantity;
-import javax.naming.NamingException;
 
+import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionFactory;
-import io.coala.function.Caller;
+import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
-import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
-import io.coala.time.Duration;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
+import io.coala.util.Compare;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
@@ -41,40 +39,64 @@ import rx.subjects.Subject;
 public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 {
 
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Duration duration, final ThrowingRunnable<?> modelInitializer )
+//	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+//		final Duration duration, final boolean pauseOnError,
+//		final ReplicationMode mode, final ThrowingRunnable<?> modelInitializer )
+//	{
+//		return of( id, Instant.of( 0, duration.unwrap().getUnit() ), duration,
+//				pauseOnError, mode, modelInitializer );
+//	}
+//
+//	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+//		final Duration duration, final boolean pauseOnError,
+//		final ReplicationMode mode,
+//		final ThrowingConsumer<Scheduler, ?> modelInitializer )
+//	{
+//		return of( id, Instant.of( 0, duration.unwrap().getUnit() ), duration,
+//				pauseOnError, mode, modelInitializer );
+//	}
+//
+//	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+//		final Instant start, final Duration duration,
+//		final boolean pauseOnError, final ReplicationMode mode,
+//		final ThrowingRunnable<?> modelInitializer )
+//	{
+//		return of( id, start, duration, pauseOnError, mode,
+//				Caller.of( modelInitializer )::ignore );
+//	}
+//
+//	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
+//		final Instant start, final Duration duration,
+//		final boolean pauseOnError, final ReplicationMode mode,
+//		final ThrowingConsumer<Scheduler, ?> modelInitializer )
+//	{
+//		return new Dsol3Scheduler<Q>( id, start,
+//				Duration.of( 0, start.unwrap().getUnit() ), duration,
+//				pauseOnError, mode, Caller.rethrow( modelInitializer ) );
+//	}
+
+	public static <Q extends Quantity> Dsol3Scheduler<Q> of(
+		final ThrowingConsumer<Scheduler, ?> modelInitializer,
+		final Map<?, ?>... imports )
 	{
-		return of( id, Instant.of( 0, duration.unwrap().getUnit() ), duration,
+		return of( ConfigCache.getOrCreate( Dsol3Config.class, imports ),
 				modelInitializer );
 	}
 
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Duration duration,
+	public static <Q extends Quantity> Dsol3Scheduler<Q> of(
+		final Dsol3Config config,
 		final ThrowingConsumer<Scheduler, ?> modelInitializer )
 	{
-		return of( id, Instant.of( 0, duration.unwrap().getUnit() ), duration,
-				modelInitializer );
-	}
-
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final ThrowingRunnable<?> modelInitializer )
-	{
-		return of( id, start, duration, Caller.of( modelInitializer )::ignore );
-	}
-
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final ThrowingConsumer<Scheduler, ?> modelInitializer )
-	{
-		return new Dsol3Scheduler<Q>( id, start,
-				Duration.of( 0, start.unwrap().getUnit() ), duration,
-				Caller.rethrow( modelInitializer ) );
+		return new Dsol3Scheduler<Q>( config, modelInitializer );
 	}
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Dsol3Scheduler.class );
 
+	/** the start time and unit */
+	private final Instant first;
+
+	/** the current time */
 	private Instant last = null;
 
 	/** the time */
@@ -88,20 +110,33 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 
 	/**
 	 * {@link Dsol3Scheduler} constructor
+	 */
+	public Dsol3Scheduler( final Dsol3Config config,
+		final ThrowingConsumer<Scheduler, ?> onInitialize )
+	{
+		this( config.id(), config.startTime(), config.warmUpLength(),
+				config.runLength(), config.simulatorType(),
+				config.replicationMode(), config.pauseOnError(), onInitialize );
+	}
+
+	/**
+	 * {@link Dsol3Scheduler} constructor
 	 * 
 	 * @param threadName
 	 */
-	@SuppressWarnings( { "unchecked", "serial", "rawtypes" } )
-	public Dsol3Scheduler( final String id, final Instant startTime,
-		final Duration warmUp, final Duration length,
-		final Consumer<Scheduler> onInitialize )
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	public Dsol3Scheduler( final String id, final DsolTime startTime,
+		final BigDecimal warmUp, final BigDecimal length,
+		final Class<? extends DEVSSimulator> type, final ReplicationMode mode,
+		final boolean pauseOnError,
+		final ThrowingConsumer<Scheduler, ?> onInitialize )
 	{
-		this.scheduler = DsolTime.createDEVSSimulator( DEVSSimulator.class );
-//		this.scheduler.setPauseOnError( false );
+		this.last = this.first = startTime.toInstant();
+		this.scheduler = DsolTime.createDEVSSimulator( type );
+		this.scheduler.setPauseOnError( pauseOnError );
 		try
 		{
-			final DsolTime start = DsolTime.valueOf( startTime );
-
+			@SuppressWarnings( "serial" )
 			final DSOLModel model = new DSOLModel()
 			{
 				@Override
@@ -110,8 +145,8 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 				{
 					// schedule first event to rename the worker thread
 					((DEVSSimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>) simulator)
-							.scheduleEvent( new SimEvent<DsolTime<Q>>( start,
-									simulator, new Runnable()
+							.scheduleEvent( new SimEvent<DsolTime<Q>>(
+									startTime, simulator, new Runnable()
 									{
 										@Override
 										public void run()
@@ -122,7 +157,13 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 									}, "run", null ) );
 
 					// trigger onInitialize function
-					onInitialize.accept( Dsol3Scheduler.this );
+					try
+					{
+						onInitialize.accept( Dsol3Scheduler.this );
+					} catch( final Throwable e )
+					{
+						Thrower.rethrowUnchecked( e );
+					}
 				}
 
 				@Override
@@ -133,25 +174,21 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			};
 
 			// initialize the simulator
-			this.scheduler.initialize(
-					DsolTime.createReplication( id, start,
-							warmUp.unwrap().to( startTime.unwrap().getUnit() )
-									.getValue(),
-							length.unwrap().to( startTime.unwrap().getUnit() )
-									.getValue(),
-							model ),
-					ReplicationMode.TERMINATING );
+			this.scheduler.initialize( DsolTime.createReplication( id,
+					startTime, warmUp, length, model ), mode );
 
 			// observe time changes
 			this.scheduler.addListener( event ->
 			{
 				final Instant t = ((DsolTime) event.getContent()).toInstant();
-				if( t.equals( this.last ) ) return;
+				if( this.last != null && Compare.eq( t, this.last ) ) return;
 
 				this.last = t;
 				synchronized( this.listeners )
 				{
-					this.time.onNext( t );
+					// publish time externally
+					this.time.onNext( this.last );
+					// publish to registered listeners
 					this.listeners.computeIfPresent( t, ( t1, timeProxy ) ->
 					{
 						try
@@ -159,7 +196,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 							timeProxy.onNext( t );
 						} catch( final Throwable e )
 						{
-							// errors already propagated
+							// execution errors already propagated
 						}
 						timeProxy.onCompleted();
 						return null; // i.e. remove proxy for current instant
@@ -178,21 +215,21 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 						return true;
 					} );
 					this.time.onCompleted();
+					this.scheduler.cleanUp();
 				}
 			}, SimulatorInterface.END_OF_REPLICATION_EVENT );
-		} catch( final RemoteException | SimRuntimeException
-				| NamingException e )
+		} catch( final Exception e )
 		{
 			this.time.onError( e );
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem creating scheduler" );
+			this.scheduler.cleanUp();
+			Thrower.rethrowUnchecked( e );
 		}
 	}
 
 	@Override
 	public Instant now()
 	{
-		return this.scheduler.getSimulatorTime().toInstant();
+		return this.last;
 	}
 
 	@Override
@@ -204,10 +241,12 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			{
 				LOG.trace( "resuming, t={}, #events={}", now(),
 						this.scheduler.getEventList().size() );
+				this.time.onNext( this.last );
 				this.scheduler.start();
 			}
 		} catch( final SimRuntimeException e )
 		{
+			// propagate scheduling error
 			this.time.onError( e );
 		}
 	}
@@ -223,12 +262,14 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	public Expectation schedule( final Instant when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
+		final Instant time = when.to( this.first.unwrap().getUnit() );
+//		LOG.trace( "Converted {} to {}", when, time );
 		synchronized( this.listeners )
 		{
-			return Expectation.of( this, when,
-					this.listeners.computeIfAbsent( when, t ->
+			return Expectation.of( this, time,
+					this.listeners.computeIfAbsent( time, t ->
 					{
-						// create proxy and schedule the actual invocation of "onNext"
+						// create missing proxy and schedule the "onNext" call
 						final Subject<Instant, Instant> result = PublishSubject
 								.create();
 						try
@@ -239,8 +280,9 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 											this, result, "onNext",
 											new Object[]
 											{ t } ) );
-						} catch( final Exception e )
+						} catch( final SimRuntimeException e )
 						{
+							// propagate scheduling error
 							this.time.onError( e );
 						}
 						return result;
@@ -251,6 +293,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 							what.accept( t );
 						} catch( final Throwable e )
 						{
+							// propagate execution error
 							this.time.onError( e );
 						}
 					} ) );

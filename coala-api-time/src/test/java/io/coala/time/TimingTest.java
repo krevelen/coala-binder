@@ -1,8 +1,10 @@
 package io.coala.time;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Iterator;
 
+import javax.measure.DecimalMeasure;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
@@ -13,7 +15,11 @@ import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.TriggerBuilder;
 
+import io.coala.math.MeasureUtil;
 import rx.Observable;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.number.OrderingComparison.comparesEqualTo;
 
 /**
  * {@link TimingTest}
@@ -26,6 +32,18 @@ public class TimingTest
 
 	/** */
 	private static final Logger LOG = LogManager.getLogger( TimingTest.class );
+
+	@Test
+	public void testInstant()
+	{
+		final DecimalMeasure<javax.measure.quantity.Duration> millis = DecimalMeasure
+				.valueOf( BigDecimal.valueOf( System.currentTimeMillis() ),
+						Units.MILLIS );
+		assertThat( "should be equal",
+				MeasureUtil.toUnit( MeasureUtil.toUnit( millis, Units.DAYS ),
+						Units.MILLIS ),
+				comparesEqualTo( millis ) );
+	}
 
 	@Test
 	public void testCron()

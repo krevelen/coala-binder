@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.message.Message;
@@ -252,5 +253,17 @@ public class LogUtil implements Util
 		final Object... parameters )
 	{
 		return new ParameterizedMessage( messagePattern, parameters );
+	}
+
+	public static Object toString( final Supplier<String> supplier )
+	{
+		return new Object()
+		{
+			@Override
+			public String toString()
+			{
+				return supplier.get();
+			}
+		};
 	}
 }

@@ -16,12 +16,21 @@ import javax.measure.unit.UnitFormat;
 public class Units
 {
 
+	/** */
+	public static final Unit<Duration> MILLIS = SI.MILLI( SI.SECOND );
+
+	/** */
+	public static final Unit<Duration> NANOS = SI.NANO( SI.SECOND );
+
+	/** */
 	public static final Unit<Duration> DAYS = NonSI.DAY;
 
+	/** */
 	public static final String DAYS_ALIAS = "days";
 
+	/** */
 	public static final String DAILY_ALIAS = "daily";
-	
+
 //	interface InverseArea extends Quantity
 //	{
 //	    Unit<InverseArea> UNIT = SI.METER.pow( -2 );

@@ -136,13 +136,13 @@ public interface Proactive extends Timed
 	}
 
 	default void atEach( final Observable<Instant> when,
-		final ThrowingConsumer<Instant, ?> call )
+		final ThrowingConsumer<Instant, ?> what )
 	{
 		atEach( when ).subscribe( self ->
 		{
 			try
 			{
-				call.accept( self.now() );
+				what.accept( self.now() );
 			} catch( final Throwable e )
 			{
 				Thrower.rethrowUnchecked( e );
