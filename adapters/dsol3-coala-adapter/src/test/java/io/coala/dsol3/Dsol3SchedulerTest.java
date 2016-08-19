@@ -57,6 +57,7 @@ public class Dsol3SchedulerTest
 								LOG.trace( "atEach handled, t={}",
 										t.prettify( NonSI.DAY, 2 ) );
 
+								// generate scheduled error
 								if( Compare.ge( t, throwTime ) )
 									Thrower.throwNew(
 											IllegalStateException.class,
@@ -68,7 +69,6 @@ public class Dsol3SchedulerTest
 							{
 								LOG.warn( "atEach failed, t={}",
 										s.now().prettify( NonSI.DAY, 2 ), e );
-								Thrower.rethrowUnchecked( e );
 							}, () ->
 							{
 								LOG.trace( "atEach done, t={}",
