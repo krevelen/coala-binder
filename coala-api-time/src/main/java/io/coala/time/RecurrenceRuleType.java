@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonParser;
  * @date $Date$
  * @version $Id: 31d0ce9187af30ae8ffb082f4def62f55ad5f386 $
  */
+@Deprecated
 public enum RecurrenceRuleType
 {
 	/** an absolute virtual time of occurrence */

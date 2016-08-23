@@ -36,6 +36,14 @@ public interface Scheduler extends Proactive
 	/**
 	 * @param when the {@link Instant} of execution
 	 * @param what the {@link Runnable}
+	 * @return the occurrence {@link Expectation}, for optional cancellation, or
+	 *         {@code null} if event is instantaneous
+	 */
+	Expectation schedule( Instant when, ThrowingConsumer<Instant, ?> what );
+
+	/**
+	 * @param when the {@link Instant} of execution
+	 * @param what the {@link Runnable}
 	 * @return the occurrence {@link Expectation}, for optional cancellation
 	 */
 	default Expectation schedule( final Instant when,
@@ -53,10 +61,17 @@ public interface Scheduler extends Proactive
 	 * @return the occurrence {@link Expectation}, for optional cancellation, or
 	 *         {@code null} if event is instantaneous
 	 */
-	Expectation schedule( Instant when, ThrowingConsumer<Instant, ?> what );
+	default <R> Observable<R> schedule( final Instant when,
+		final Callable<R> what )
+	{
+		return schedule( Observable.just( when ), what );
+	}
 
 	/**
 	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed lazily in
+	 * {@link #schedule(Iterable)} and eagerly in {@link #schedule(Observable)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @return an {@link Observable} stream of delayed {@link Instant}s
@@ -68,18 +83,11 @@ public interface Scheduler extends Proactive
 	}
 
 	/**
-	 * @param when the {@link Instant} of execution
-	 * @param what the {@link Runnable}
-	 * @return the occurrence {@link Expectation}, for optional cancellation, or
-	 *         {@code null} if event is instantaneous
-	 */
-	default <R> Observable<R> schedule( Instant when, Callable<R> what )
-	{
-		return schedule( Observable.just( when ), what );
-	}
-
-	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed lazily in
+	 * {@link #schedule(Iterable, ThrowingRunnable)} and eagerly in
+	 * {@link #schedule(Observable, ThrowingRunnable)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @param what the {@link Runnable} to execute upon each {@link Instant}
@@ -98,6 +106,10 @@ public interface Scheduler extends Proactive
 
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed lazily in
+	 * {@link #schedule(Iterable, ThrowingConsumer)} and eagerly in
+	 * {@link #schedule(Observable, ThrowingConsumer)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @param what the {@link Consumer} to execute upon each {@link Instant}
@@ -128,6 +140,10 @@ public interface Scheduler extends Proactive
 
 	/**
 	 * Schedule a stream of values resulting from executing a {@link Callable}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed lazily in
+	 * {@link #schedule(Iterable, Callable)} and eagerly in
+	 * {@link #schedule(Observable, Callable)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @param what the {@link Callable} to execute upon each {@link Instant}
@@ -153,6 +169,10 @@ public interface Scheduler extends Proactive
 	/**
 	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
 	 * and optionally observe each {@link Expectation}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed lazily in
+	 * {@link #schedule(Iterable, Observer)} and eagerly in
+	 * {@link #schedule(Observable, Observer)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @param what (optional) {@link Observer} of {@link Expectation}s for each
@@ -182,6 +202,10 @@ public interface Scheduler extends Proactive
 
 	/**
 	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed eagerly in
+	 * {@link #schedule(Observable, Observer)} and lazily in
+	 * {@link #schedule(Iterable, Observer)}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
@@ -194,6 +218,10 @@ public interface Scheduler extends Proactive
 
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed eagerly in
+	 * {@link #schedule(Observer, Observer)} and lazily in
+	 * {@link #schedule(Iterable, Observer)}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @param what the {@link Runnable} to execute upon each {@link Instant}
@@ -212,6 +240,10 @@ public interface Scheduler extends Proactive
 
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed eagerly in
+	 * {@link #schedule(Observable, ThrowingConsumer)} and lazily in
+	 * {@link #schedule(Iterable, ThrowingConsumer)}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @param what the {@link Consumer} to execute upon each {@link Instant}
@@ -243,11 +275,15 @@ public interface Scheduler extends Proactive
 
 	/**
 	 * Schedule a stream of values resulting from executing a {@link Callable}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed eagerly in
+	 * {@link #schedule(Observable, Callable)} and lazily in
+	 * {@link #schedule(Iterable, Callable)}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @param what the {@link Callable} to execute upon each {@link Instant}
 	 * @return an {@link Observable} stream of results, until completion of
-	 *         simulation time or observed instants or an error occurs
+	 *         simulation time or observed of instants or an error occurs
 	 */
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default <R> Observable<R> schedule( final Observable<Instant> when,
@@ -268,6 +304,10 @@ public interface Scheduler extends Proactive
 	/**
 	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
 	 * and optionally observe each {@link Expectation}
+	 * <p>
+	 * NOTE that the {@link Instant} stream is consumed eagerly in
+	 * {@link #schedule(Observable, Observer)} and lazily in
+	 * {@link #schedule(Iterable, Observer)}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @param what (optional) {@link Observer} of {@link Expectation}s for each
