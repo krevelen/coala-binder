@@ -30,7 +30,7 @@ public interface Scheduler extends Proactive
 	/** @return an {@link Observable} stream of {@link Instant}s */
 	Observable<Instant> time();
 
-	/** */
+	/** continue executing scheduled events */
 	void resume();
 
 	/**
@@ -152,18 +152,6 @@ public interface Scheduler extends Proactive
 
 	/**
 	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
-	 * 
-	 * @param when the {@link Observable} stream of {@link Instant}s
-	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
-	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
-	default Observable<Instant> schedule( final Observable<Instant> when )
-	{
-		return schedule( when, (Observer) null );
-	}
-
-	/**
-	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
 	 * and optionally observe each {@link Expectation}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
@@ -190,6 +178,18 @@ public interface Scheduler extends Proactive
 			if( what != null ) what.onNext( exp );
 			return t;
 		} );
+	}
+
+	/**
+	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
+	 * 
+	 * @param when the {@link Observable} stream of {@link Instant}s
+	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> schedule( final Observable<Instant> when )
+	{
+		return schedule( when, (Observer) null );
 	}
 
 	/**

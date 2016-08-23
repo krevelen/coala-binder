@@ -69,13 +69,32 @@ import rx.Observable;
 public interface Timing extends Wrapper.Ordinal<String>
 {
 
+	/**
+	 * @param offset the absolute epoch {@link Date} start date
+	 * @param max the maximum number of iterations to generate (if possible)
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset {@link Date}
+	 * @throws Exception for instance a {@link ParseException}
+	 */
 	Iterable<Instant> asIterable( Date offset, Long max ) throws Exception;
 
+	/**
+	 * @param offset the absolute epoch {@link Date} start date
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset {@link Date}
+	 * @throws Exception for instance a {@link ParseException}
+	 */
 	default Iterable<Instant> asIterable( Date offset ) throws Exception
 	{
 		return asIterable( offset, null );
 	}
 
+	/**
+	 * @param offset the {@link LocalDateTime} start date in default time zone
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
 	default Iterable<Instant> asIterable( final LocalDateTime offset )
 		throws Exception
 	{
@@ -83,16 +102,68 @@ public interface Timing extends Wrapper.Ordinal<String>
 				offset.atZone( ZoneId.systemDefault() ).toInstant() );
 	}
 
+	/**
+	 * @param offset the {@link LocalDateTime} start date in default time zone
+	 * @param max the maximum number of iterations to generate (if possible)
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
+	default Iterable<Instant> asIterable( final LocalDateTime offset,
+		final Long max ) throws Exception
+	{
+		return asIterable( offset.atZone( ZoneId.systemDefault() ).toInstant(),
+				max );
+	}
+
+	/**
+	 * @param offset the absolute epoch {@link java.time.Instant} start date
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
 	default Iterable<Instant> asIterable( final java.time.Instant offset )
 		throws Exception
 	{
 		return asIterable( Date.from( offset ) );
 	}
 
+	/**
+	 * @param offset the absolute epoch {@link java.time.Instant} start date
+	 * @param max the maximum number of iterations to generate (if possible)
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
+	default Iterable<Instant> asIterable( final java.time.Instant offset,
+		final Long max ) throws Exception
+	{
+		return asIterable( Date.from( offset ), max );
+	}
+
+	/**
+	 * @param offset the absolute epoch {@link ReadableInstant} start date
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
 	default Iterable<Instant> asIterable( final ReadableInstant offset )
 		throws Exception
 	{
 		return asIterable( new Date( offset.getMillis() ) );
+	}
+
+	/**
+	 * @param offset the absolute epoch {@link ReadableInstant} start date
+	 * @param max the maximum number of iterations to generate (if possible)
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
+	default Iterable<Instant> asIterable( final ReadableInstant offset,
+		final Long max ) throws Exception
+	{
+		return asIterable( new Date( offset.getMillis() ), max );
 	}
 
 	/**
