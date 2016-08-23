@@ -17,6 +17,7 @@ package io.coala.time;
 
 import javax.measure.DecimalMeasure;
 import javax.measure.Measure;
+import javax.measure.quantity.Dimensionless;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -171,6 +172,8 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	 * {@link Duration} static factory method
 	 * 
 	 * @param value the number of milliseconds
+	 * @param unit {@link javax.measure.quantity.Duration} or
+	 *            {@link Dimensionless}
 	 */
 	public static Duration of( final Number value, final Unit<?> unit )
 	{
@@ -203,13 +206,14 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	@Override
 	public int compareTo( final Duration that )
 	{
-		return unwrap().compareTo( that.unwrap() );
+		return Util.compare( this, that );
 	}
 
-	/**
-	 * @param unit
-	 * @return
-	 */
+	public Unit<?> unit()
+	{
+		return unwrap().getUnit();
+	}
+
 	public Duration to( final Unit unit )
 	{
 		return of( unwrap().to( unit ) );

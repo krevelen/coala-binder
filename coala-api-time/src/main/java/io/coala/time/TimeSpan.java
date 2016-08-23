@@ -330,6 +330,12 @@ public class TimeSpan extends DecimalMeasure
 		super( DecimalUtil.valueOf( value ), unit );
 	}
 
+//	@Override
+//	public int compareTo( final Measurable that )
+//	{
+//		return MeasureUtil.compareTo( this, that );
+//	}
+
 	/**
 	 * @param augend the {@link Measurable}, e.g. another {@link TimeSpan},
 	 *            {@link Measure} or {@link Amount}
@@ -487,7 +493,7 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public Object prettify( final Unit<?> unit, final int scale )
 	{
-		return LogUtil.toString( () ->
+		return LogUtil.wrapToString( () ->
 		{
 			return DecimalUtil
 					.setScale( MeasureUtil.toUnit( this, unit ).getValue(),

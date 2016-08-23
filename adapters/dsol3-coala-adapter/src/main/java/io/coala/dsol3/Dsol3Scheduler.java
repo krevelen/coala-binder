@@ -181,13 +181,14 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			this.scheduler.addListener( event ->
 			{
 				final Instant t = ((DsolTime) event.getContent()).toInstant();
-				if( this.last != null && Compare.eq( t, this.last ) ) return;
 
-				this.last = t;
 				synchronized( this.listeners )
 				{
+					if( this.last != null && Compare.eq( t, this.last ) )
+						return;
+					this.last = t;
 					// publish time externally
-					this.time.onNext( this.last );
+					this.time.onNext( this.last.to( this.first.unit() ) );
 					// publish to registered listeners
 					this.listeners.computeIfPresent( t, ( t1, timeProxy ) ->
 					{
@@ -239,7 +240,8 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 		{
 			if( !this.scheduler.isRunning() )
 			{
-				LOG.trace( "resuming, t={}, #events={}", now(),
+				LOG.trace( "resuming, t={}, #events={}",
+						now().to( this.first.unit() ),
 						this.scheduler.getEventList().size() );
 				this.time.onNext( this.last );
 				this.scheduler.start();
@@ -262,12 +264,10 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	public Expectation schedule( final Instant when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		final Instant time = when.to( this.first.unwrap().getUnit() );
-//		LOG.trace( "Converted {} to {}", when, time );
 		synchronized( this.listeners )
 		{
-			return Expectation.of( this, time,
-					this.listeners.computeIfAbsent( time, t ->
+			return Expectation.of( this, when,
+					this.listeners.computeIfAbsent( when, t ->
 					{
 						// create missing proxy and schedule the "onNext" call
 						final Subject<Instant, Instant> result = PublishSubject

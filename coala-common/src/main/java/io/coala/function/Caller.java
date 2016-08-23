@@ -618,7 +618,7 @@ public interface Caller<T, U, R, E extends Throwable>
 	}
 
 	/** uncheck(() -> Class.forName("xxx")); */
-	public static void uncheck( ThrowingRunnable<?> t )
+	public static void uncheck( final ThrowingRunnable<?> t )
 	{
 		try
 		{
@@ -638,8 +638,7 @@ public interface Caller<T, U, R, E extends Throwable>
 			return supplier.get();
 		} catch( final Throwable exception )
 		{
-			Thrower.rethrowUnchecked( exception );
-			return null;
+			return Thrower.rethrowUnchecked( exception );
 		}
 	}
 

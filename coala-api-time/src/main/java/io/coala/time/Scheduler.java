@@ -1,16 +1,15 @@
 package io.coala.time;
 
-import java.util.NoSuchElementException;
+import java.util.Iterator;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
-import io.coala.log.LogUtil;
 import rx.Observable;
 import rx.Observer;
-import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
 /**
@@ -57,6 +56,143 @@ public interface Scheduler extends Proactive
 	Expectation schedule( Instant when, ThrowingConsumer<Instant, ?> what );
 
 	/**
+	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
+	 * 
+	 * @param when the {@link Iterable} stream of {@link Instant}s
+	 * @return an {@link Observable} stream of delayed {@link Instant}s
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> schedule( final Iterable<Instant> when )
+	{
+		return schedule( when, (Observer) null );
+	}
+
+	/**
+	 * @param when the {@link Instant} of execution
+	 * @param what the {@link Runnable}
+	 * @return the occurrence {@link Expectation}, for optional cancellation, or
+	 *         {@code null} if event is instantaneous
+	 */
+	default <R> Observable<R> schedule( Instant when, Callable<R> what )
+	{
+		return schedule( Observable.just( when ), what );
+	}
+
+	/**
+	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * 
+	 * @param when the {@link Iterable} stream of {@link Instant}s
+	 * @param what the {@link Runnable} to execute upon each {@link Instant}
+	 * @return an {@link Observable} stream of {@link Expectation}s for each
+	 *         next {@link Instant}, until completion of simulation time or
+	 *         observed instants or an error occurs
+	 */
+	default <T> Observable<Expectation> schedule( final Iterable<Instant> when,
+		final ThrowingRunnable<?> what )
+	{
+		return schedule( when, t ->
+		{
+			what.run();
+		} );
+	}
+
+	/**
+	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
+	 * 
+	 * @param when the {@link Iterable} stream of {@link Instant}s
+	 * @param what the {@link Consumer} to execute upon each {@link Instant}
+	 * @return an {@link Observable} stream of {@link Expectation}s for each
+	 *         next {@link Instant}, until completion of simulation time or
+	 *         observed instants or an error occurs
+	 */
+	default <T> Observable<Expectation> schedule( final Iterable<Instant> when,
+		final ThrowingConsumer<Instant, ?> what )
+	{
+		final Subject<Expectation, Expectation> result = PublishSubject
+				.create();
+		schedule( when, result ).subscribe( t ->
+		{
+			try
+			{
+				what.accept( t );
+			} catch( final Throwable e )
+			{
+				Thrower.rethrowUnchecked( e );
+			}
+		}, e ->
+		{
+			// ignore errors, already passed to result Observable
+		} );
+		return result.asObservable();
+	}
+
+	/**
+	 * Schedule a stream of values resulting from executing a {@link Callable}
+	 * 
+	 * @param when the {@link Iterable} stream of {@link Instant}s
+	 * @param what the {@link Callable} to execute upon each {@link Instant}
+	 * @return an {@link Observable} stream of results, until completion of
+	 *         simulation time or observed instants or an error occurs
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default <R> Observable<R> schedule( final Iterable<Instant> when,
+		final Callable<R> what )
+	{
+		return schedule( when ).map( t ->
+		{
+			try
+			{
+				return what.call();
+			} catch( final Throwable e )
+			{
+				return Thrower.rethrowUnchecked( e );
+			}
+		} );
+	}
+
+	/**
+	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
+	 * 
+	 * @param when the {@link Observable} stream of {@link Instant}s
+	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> schedule( final Observable<Instant> when )
+	{
+		return schedule( when, (Observer) null );
+	}
+
+	/**
+	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
+	 * and optionally observe each {@link Expectation}
+	 * 
+	 * @param when the {@link Iterable} stream of {@link Instant}s
+	 * @param what (optional) {@link Observer} of {@link Expectation}s for each
+	 *            upcoming {@link Instant}
+	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
+	 */
+	default Observable<Instant> schedule( final Iterable<Instant> when,
+		final Observer<Expectation> what )
+	{
+		final Subject<Instant, Instant> delayedCopy = PublishSubject.create();
+		// schedule first element from iterator
+		final Iterator<Instant> it = when.iterator();
+		if( !it.hasNext() ) return Observable.empty();
+		final Expectation exp0 = schedule( it.next(), delayedCopy::onNext );
+		if( what != null ) what.onNext( exp0 );
+		// schedule each following element upon merge with delayed previous
+		return delayedCopy.zipWith( () ->
+		{
+			return it;
+		}, ( t, t_next ) ->
+		{
+			final Expectation exp = schedule( t_next, delayedCopy::onNext );
+			if( what != null ) what.onNext( exp );
+			return t;
+		} );
+	}
+
+	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
@@ -87,32 +223,22 @@ public interface Scheduler extends Proactive
 		final Observable<Instant> when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		return schedule( when, new Observer<Instant>()
+		final Subject<Expectation, Expectation> result = PublishSubject
+				.create();
+		schedule( when, result ).subscribe( t ->
 		{
-			@Override
-			public void onNext( final Instant t )
+			try
 			{
-				try
-				{
-					what.accept( t );
-				} catch( final Throwable e )
-				{
-					Thrower.rethrowUnchecked( e );
-				}
-			}
-
-			@Override
-			public void onError( final Throwable e )
+				what.accept( t );
+			} catch( final Throwable e )
 			{
-				// ignore errors, already passed to result Observable
+				Thrower.rethrowUnchecked( e );
 			}
-
-			@Override
-			public void onCompleted()
-			{
-				// ignore complete, result Observable also completes
-			}
+		}, e ->
+		{
+			// ignore errors, already passed to result Observable
 		} );
+		return result.asObservable();
 	}
 
 	/**
@@ -123,102 +249,45 @@ public interface Scheduler extends Proactive
 	 * @return an {@link Observable} stream of results, until completion of
 	 *         simulation time or observed instants or an error occurs
 	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default <R> Observable<R> schedule( final Observable<Instant> when,
 		final Callable<R> what )
 	{
-		final Subject<R, R> result = BehaviorSubject.create();
-		schedule( when, new Observer<Instant>()
+		return schedule( when ).map( t ->
 		{
-			@Override
-			public void onNext( final Instant t )
+			try
 			{
-				try
-				{
-					result.onNext( what.call() );
-				} catch( final Throwable e )
-				{
-					Thrower.rethrowUnchecked( e );
-				}
-			}
-
-			@Override
-			public void onError( final Throwable e )
+				return what.call();
+			} catch( final Throwable e )
 			{
-				result.onError( e );
-			}
-
-			@Override
-			public void onCompleted()
-			{
-				result.onCompleted();
+				return Thrower.rethrowUnchecked( e );
 			}
 		} );
-		return result.asObservable();
 	}
 
 	/**
-	 * Schedule a stream of {@link Instant}s and their {@link Expectation}s
+	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
+	 * and optionally observe each {@link Expectation}
 	 * 
-	 * FIXME don't split recursively into first( and skip(1), but use async join
-	 * 
-	 * @param when the {@link Observable} stream of {@link Instant}s, to be
-	 *            scheduled immediately
-	 * @param what the {@link Observer} of the same {@link Instant}s but delayed
-	 *            until they occur in simulation time
-	 * @return an {@link Observable} stream of {@link Expectation}s, until
-	 *         completion of simulation time or of observed instants or an error
-	 *         occurs
+	 * @param when the {@link Observable} stream of {@link Instant}s
+	 * @param what (optional) {@link Observer} of {@link Expectation}s for each
+	 *            upcoming {@link Instant}
+	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
 	 */
-	default <T> Observable<Expectation>
-		schedule( final Observable<Instant> when, final Observer<Instant> what )
+	default Observable<Instant> schedule( final Observable<Instant> when,
+		final Observer<Expectation> what )
 	{
-		final Subject<Expectation, Expectation> result = BehaviorSubject
-				.create();
-
-		time().subscribe( t ->
+		final Subject<Instant, Instant> delayedCopy = PublishSubject.create();
+		return when.map( t ->
 		{
-			// ignore passage of time
-		}, e ->
+			final Expectation exp = schedule( t, delayedCopy::onNext );
+			if( what != null ) what.onNext( exp );
+			return t;
+		} ).zipWith( delayedCopy, ( t, t0 ) ->
 		{
-			result.onError( e );
-		}, () ->
-		{
-			result.onCompleted();
+			// merge "when" (observed eagerly) with "delayed" by scheduler
+			return t;
 		} );
-		when.first().subscribe( t ->
-		{
-			final Expectation exp = scheduler().schedule( t, () ->
-			{
-				try
-				{
-					what.onNext( t );
-					// completed first() Instant, recurse remaining: skip(1)
-					schedule( when.skip( 1 ), what ).subscribe( result );
-				} catch( final Throwable e )
-				{
-					// failed first() Instant, interrupt recursion
-					LogUtil.getLogger( Scheduler.class )
-							.error( "Problem in event, canceled remaining" );
-					throw e;
-				}
-			} );
-			result.onNext( exp );
-		}, e ->
-		{
-			// recursion complete
-			if( e instanceof NoSuchElementException )
-			{
-				// no elements remain
-				result.onCompleted();
-				what.onCompleted();
-			} else
-			{
-				// problem observing Instants
-				result.onError( e );
-				what.onError( e );
-			}
-		} );
-		return result.asObservable();
 	}
 
 }

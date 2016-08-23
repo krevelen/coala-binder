@@ -359,9 +359,30 @@ public class MeasureUtil implements Util
 	 * @param unit
 	 * @return
 	 */
+	@SuppressWarnings( "unchecked" )
 	public static <Q extends Quantity> DecimalMeasure<Q>
-		toUnit( final DecimalMeasure<Q> measure, final Unit<Q> unit )
+		toUnit( final DecimalMeasure<Q> measure, final Unit<?> unit )
 	{
-		return measure.to( unit, DecimalUtil.DEFAULT_CONTEXT );
+		return measure.to( (Unit<Q>) unit, DecimalUtil.DEFAULT_CONTEXT );
 	}
+
+	/**
+	 * apply {@link BigDecimal#compareTo(BigDecimal)} in stead of default
+	 * {@link Double#compareTo(Double)} of {@link Measure#compareTo(Measurable)}
+	 * or {@link Amount#compareTo(Measurable)}
+	 * 
+	 * @param timeSpan
+	 * @param that
+	 * @return
+	 */
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	public static int compareTo( final DecimalMeasure self,
+//		final Measurable that )
+//	{
+//		LogUtil.getLogger( MeasureUtil.class ).trace( "Compare {} with {}",
+//				self, that );
+//		if( that instanceof DecimalMeasure ) return self.getValue().compareTo(
+//				toUnit( (DecimalMeasure<?>) that, self.getUnit() ).getValue() );
+//		return self.compareTo( that );
+//	}
 }

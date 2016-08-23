@@ -37,6 +37,15 @@ public class Thrower
 
 	}
 
+	/**
+	 * @param <R> the phantom return type (determined at runtime)
+	 * @param <E> the type of {@link Throwable} (determined at runtime)
+	 * @param exception the (checked) {@link Throwable} to sneak by unchecked
+	 * @return phantom value, never returns
+	 * @throws E the sneaked {@link Throwable}
+	 * @see rx.exceptions.Exceptions#propagate(Throwable)
+	 * @see net.jodah.concurrentunit.Waiter#rethrow(Throwable)
+	 */
 	@SuppressWarnings( "unchecked" )
 	public static <R, E extends Throwable> R
 		rethrowUnchecked( final Throwable exception ) throws E

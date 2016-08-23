@@ -31,7 +31,6 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
 import io.coala.function.Caller;
 import io.coala.function.ThrowingBiConsumer;
@@ -74,12 +73,14 @@ public interface Proactive extends Timed
 	 */
 	default FutureSelf after( final Number delay )
 	{
-		return after( delay, now().unwrap().getUnit() );
+		return after( delay, now().unit() );
 	}
 
 	/**
 	 * @param delay the delay amount {@link Number}
-	 * @param delay the delay amount {@link Unit}
+	 * @param delay the delay amount {@link Unit} (
+	 *            {@link javax.measure.quantity.Duration} or
+	 *            {@link Dimensionless})
 	 * @return the {@link FutureSelf}
 	 */
 	default FutureSelf after( final Number delay, final Unit<?> unit )
@@ -88,10 +89,10 @@ public interface Proactive extends Timed
 	}
 
 	/**
-	 * @param delay the {@link Amount} or {@link Measure} of delay, in (
+	 * @param delay the {@link Amount} or {@link Measure} of delay (units of
 	 *            {@link javax.measure.quantity.Duration} or
-	 *            {@link Dimensionless} units
-	 * @return the {@link FutureSelf}
+	 *            {@link Dimensionless})
+	 * @return the {@link FutureSelf} wrapper to allow chaining
 	 */
 	default FutureSelf after( final Measurable<?> delay )
 	{
@@ -100,41 +101,32 @@ public interface Proactive extends Timed
 
 	/**
 	 * @param delay the future {@link Instant}
-	 * @return the {@link FutureSelf}
+	 * @return a {@link FutureSelf} wrapper to allow chaining
 	 */
 	default FutureSelf at( final Instant when )
 	{
 		return FutureSelf.of( this, when );
 	}
 
+	/**
+	 * @param when
+	 * @return an {@link Observable} stream of {@link FutureSelf} wrappers
+	 *         pushed after each {@link Instant} has been scheduled to occur
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<FutureSelf> atEach( final Observable<Instant> when )
 	{
 		final Proactive self = this;
-		return Observable.create( sub ->
+		return scheduler().schedule( when, (Observer) null ).map( t ->
 		{
-			scheduler().schedule( when, new Observer<Instant>()
-			{
-				@Override
-				public void onCompleted()
-				{
-					sub.onCompleted();
-				}
-
-				@Override
-				public void onError( final Throwable e )
-				{
-					sub.onError( e );
-				}
-
-				@Override
-				public void onNext( final Instant t )
-				{
-					sub.onNext( FutureSelf.of( self, t ) );
-				}
-			} );
+			return FutureSelf.of( self, t );
 		} );
 	}
 
+	/**
+	 * @param when the {@link Observable} stream of {@link Instant}s to schedule
+	 * @param what the {@link ThrowingConsumer} function to call each time
+	 */
 	default void atEach( final Observable<Instant> when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
@@ -229,9 +221,10 @@ public interface Proactive extends Timed
 		 */
 		static FutureSelf of( final Proactive self, final Instant when )
 		{
-			if( Comparison.is( when ).lt( self.now() ) ) throw ExceptionFactory
-					.createUnchecked( "Can't schedule in past: {} < now({})",
-							when, self.now() );
+			if( Comparison.is( when ).lt( self.now() ) )
+				Thrower.throwNew( IllegalArgumentException.class,
+						"Can't schedule in past: {} < now({})", when,
+						self.now() );
 			return new FutureSelf()
 			{
 				@Override

@@ -17,6 +17,8 @@ package io.coala.time;
 
 import java.math.BigDecimal;
 import java.text.DateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoField;
 import java.util.Calendar;
 import java.util.Date;
@@ -88,8 +90,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 {
 
 	/**
-	 * for {@link Config}'s "natural" value conversion for a {@link Duration}
-	 * (i.e. {@link TimeSpan}).
+	 * for {@link Config}'s "natural" value conversion for an {@link Instant}
 	 * 
 	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
 	 * @see of(String)
@@ -218,6 +219,11 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return Util.of( value, Instant.class );
 	}
 
+	public Unit<?> unit()
+	{
+		return unwrap().getUnit();
+	}
+
 	/** the ZERO */
 	public static final Instant ZERO = of( TimeSpan.ZERO );
 
@@ -315,6 +321,24 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	}
 
 	/**
+	 * @return the JSR-310 {@link LocalTime} implementation of a (zone and
+	 *         date-less) instant
+	 */
+	public LocalTime toDate( final LocalTime offset )
+	{
+		return offset.plusNanos( toNanosLong() );
+	}
+
+	/**
+	 * @return the JSR-310 {@link LocalDateTime} implementation of a (zone-less)
+	 *         instant
+	 */
+	public LocalDateTime toDate( final LocalDateTime offset )
+	{
+		return offset.plusNanos( toNanosLong() );
+	}
+
+	/**
 	 * @return the JSR-310 {@link java.time.Instant} implementation of an
 	 *         instant
 	 */
@@ -369,7 +393,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 
 	public Object prettify( final Date offset )
 	{
-		return LogUtil.toString( () ->
+		return LogUtil.wrapToString( () ->
 		{
 			return toDate( offset ).toString();
 		} );
@@ -377,15 +401,23 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 
 	public Object prettify( final Date offset, final DateFormat formatter )
 	{
-		return LogUtil.toString( () ->
+		return LogUtil.wrapToString( () ->
 		{
 			return formatter.format( toDate( offset ) );
 		} );
 	}
 
+	public Object prettify( final LocalDateTime offset )
+	{
+		return LogUtil.wrapToString( () ->
+		{
+			return toDate( offset ).toString();
+		} );
+	}
+
 	public Object prettify( final java.time.Instant offset )
 	{
-		return LogUtil.toString( () ->
+		return LogUtil.wrapToString( () ->
 		{
 			return toDate( offset ).toString();
 		} );
@@ -394,7 +426,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	public Object prettify( final java.time.Instant offset,
 		final java.time.format.DateTimeFormatter formatter )
 	{
-		return LogUtil.toString( () ->
+		return LogUtil.wrapToString( () ->
 		{
 			return formatter.format( toDate( offset ) );
 		} );
@@ -402,7 +434,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 
 	public Object prettify( final DateTime offset )
 	{
-		return LogUtil.toString( () ->
+		return LogUtil.wrapToString( () ->
 		{
 			return toDate( offset ).toString();
 		} );
@@ -416,7 +448,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	public Object prettify( final DateTime offset,
 		final DateTimeFormatter formatter )
 	{
-		return LogUtil.toString( () ->
+		return LogUtil.wrapToString( () ->
 		{
 			return formatter.print( toDate( offset ) );
 		} );

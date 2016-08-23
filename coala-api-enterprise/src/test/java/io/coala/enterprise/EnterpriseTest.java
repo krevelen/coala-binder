@@ -50,8 +50,10 @@ public class EnterpriseTest
 
 	/**
 	 * @param scheduler
+	 * @throws Exception
 	 */
 	private static void initScenario( final Scheduler scheduler )
+		throws Exception
 	{
 		LOG.trace( "initializing..." );
 
@@ -91,8 +93,8 @@ public class EnterpriseTest
 		// observe generated facts
 		org1.outgoing().subscribe( fact ->
 		{
-			LOG.trace( "t={}, outgoing: {}",
-					org1.now().prettify( offset ), fact );
+			LOG.trace( "t={}, outgoing: {}", org1.now().prettify( offset ),
+					fact );
 		} );
 
 		org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
@@ -106,7 +108,7 @@ public class EnterpriseTest
 
 		// spawn initial transactions with self
 		scheduler.schedule(
-				Timing.of( "0 0 0 14 * ? *" ).asObservable( offset ), t ->
+				Timing.valueOf( "0 0 0 14 * ? *" ).asIterable( offset ), t ->
 				{
 					sales.createRequest( TestFact.class, org1.id(), null,
 							t.add( 1 ), Collections.singletonMap( "myParam2",

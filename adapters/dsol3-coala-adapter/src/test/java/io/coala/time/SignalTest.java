@@ -30,13 +30,11 @@ public class SignalTest
 			final DateTime offset = DateTime.now().withTimeAtStartOfDay();
 			final Signal<BigDecimal> signal = Signal.Simple.of( s,
 					BigDecimal.valueOf( 1.2 ) );
-			signal.atEach( Timing.of( "0 0 13 * * ?" ).asObservable( offset ),
-					t ->
-					{
-						LOG.trace( "t={}, dt={}, v={}",
-								t.prettify( Units.DAYS, 2 ), t.toDate( offset ),
-								signal.current() );
-					} );
+			signal.atEach( Timing.stream( "0 0 13 * * ?", offset ), t ->
+			{
+				LOG.trace( "t={}, dt={}, v={}", t.prettify( Units.DAYS, 2 ),
+						t.toDate( offset ), signal.current() );
+			} );
 			LOG.trace( "scheduler initialized" );
 		} );
 

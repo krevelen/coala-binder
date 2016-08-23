@@ -1,6 +1,7 @@
 package io.coala.dsol3;
 
-import java.util.Date;
+import static org.aeonbits.owner.util.Collections.entry;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -17,8 +18,6 @@ import io.coala.time.Scheduler;
 import io.coala.time.Timing;
 import io.coala.util.Compare;
 import net.jodah.concurrentunit.Waiter;
-
-import static org.aeonbits.owner.util.Collections.entry;
 
 /**
  * {@link Dsol3SchedulerTest}
@@ -53,28 +52,26 @@ public class Dsol3SchedulerTest
 			s.at( s.now().add( 2 ) ).call( this::logTime, s );
 
 			final Instant throwTime = Instant.of( 200, NonSI.DAY );
-			s.schedule( Timing.valueOf( "0 0 0 14 * ? *" )
-					.asObservable( new Date() ), t ->
-					{
-						LOG.trace( "atEach handled, t={}",
-								t.prettify( NonSI.DAY, 2 ) );
+			s.schedule( Timing.stream( "0 0 0 14 * ? *" ), t ->
+			{
+				LOG.trace( "atEach handled, t={}", t.prettify( NonSI.DAY, 2 ) );
 
-						// generate scheduled error
-						if( Compare.ge( t, throwTime ) )
-							Thrower.throwNew( IllegalStateException.class,
-									"Throwing beyond t={}", throwTime );
-					} ).subscribe( exp ->
-					{
-						LOG.trace( "atEach next: {}", exp );
-					}, e ->
-					{
-						LOG.warn( "atEach failed, t={}",
-								s.now().prettify( NonSI.DAY, 2 ) );
-					}, () ->
-					{
-						LOG.trace( "atEach done, t={}",
-								s.now().prettify( NonSI.DAY, 2 ) );
-					} );
+				// generate scheduled error
+				if( Compare.ge( t, throwTime ) )
+					Thrower.throwNew( IllegalStateException.class,
+							"Throwing beyond t={}", throwTime );
+			} ).subscribe( exp ->
+			{
+				LOG.trace( "atEach next: {}", exp );
+			}, e ->
+			{
+				LOG.warn( "atEach failed, t={}",
+						s.now().prettify( NonSI.DAY, 2 ) );
+			}, () ->
+			{
+				LOG.trace( "atEach done, t={}",
+						s.now().prettify( NonSI.DAY, 2 ) );
+			} );
 
 			LOG.trace( "initialized, t={}", s.now() );
 		} );

@@ -193,6 +193,12 @@ public class DsolTime<Q extends Quantity> extends
 		return this;
 	}
 
+	@SuppressWarnings( "unchecked" )
+	public Unit<Q> unit()
+	{
+		return unwrap().getUnit();
+	}
+
 	/**
 	 * @deprecated please use {@link #plus(Number))}
 	 */
@@ -206,8 +212,7 @@ public class DsolTime<Q extends Quantity> extends
 	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> plus( final DsolTime<Q> relativeTime )
 	{
-		return plus(
-				relativeTime.unwrap().to( unwrap().getUnit() ).getValue() );
+		return plus( relativeTime.unwrap().to( unit() ).getValue() );
 	}
 
 	/**
@@ -258,8 +263,7 @@ public class DsolTime<Q extends Quantity> extends
 	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> setZero()
 	{
-		return DsolTime
-				.valueOf( TimeSpan.of( BigDecimal.ZERO, unwrap().getUnit() ) );
+		return DsolTime.valueOf( TimeSpan.of( BigDecimal.ZERO, unit() ) );
 	}
 
 	/**
