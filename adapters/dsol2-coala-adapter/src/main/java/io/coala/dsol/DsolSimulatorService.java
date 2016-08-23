@@ -471,7 +471,7 @@ public class DsolSimulatorService extends BasicCapability
 			// @Override
 			// public void call()
 			// {
-			trigger.stream( config.getOffset() )
+			trigger.offset( config.getOffset() ).stream()
 					.all( new Func1<Instant, Boolean>()
 					{
 						@SuppressWarnings( "unchecked" )

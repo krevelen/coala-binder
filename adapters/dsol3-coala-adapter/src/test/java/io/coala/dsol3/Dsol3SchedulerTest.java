@@ -40,6 +40,19 @@ public class Dsol3SchedulerTest
 	@Test( expected = IllegalStateException.class )
 	public void testScheduler() throws TimeoutException
 	{
+//		final long seed = 1234L; // FIXME put in some replicator config somehow
+//		@SuppressWarnings( "serial" )
+//		final LocalBinder binder = Guice4LocalBinder.of( LocalConfig.builder()
+//				.withProvider( Scenario.class, Geard2011Scenario.class )
+//				.withProvider( ProbabilityDistribution.Factory.class,
+//						Math3ProbabilityDistribution.Factory.class )
+//				.build(), new HashMap<Class<?>, Object>()
+//				{
+//					{
+//						put( PseudoRandom.class, Math3PseudoRandom.Factory
+//								.ofMersenneTwister().create( "rng", seed ) );
+//					}
+//				} );
 		final Dsol3Config config = Dsol3Config.of(
 				entry( Dsol3Config.ID_KEY, "dsolTest" ),
 				entry( Dsol3Config.RUN_LENGTH_KEY, "500" ) );
@@ -52,7 +65,7 @@ public class Dsol3SchedulerTest
 			s.at( s.now().add( 2 ) ).call( this::logTime, s );
 
 			final Instant throwTime = Instant.of( 200, NonSI.DAY );
-			s.schedule( Timing.stream( "0 0 0 14 * ? *" ), t ->
+			s.schedule( Timing.of( "0 0 0 14 * ? *").iterate(), t ->
 			{
 				LOG.trace( "atEach handled, t={}", t.prettify( NonSI.DAY, 2 ) );
 

@@ -108,7 +108,8 @@ public class EnterpriseTest
 
 		// spawn initial transactions with self
 		scheduler.schedule(
-				Timing.valueOf( "0 0 0 14 * ? *" ).asIterable( offset ), t ->
+				Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset ).iterate(),
+				t ->
 				{
 					sales.createRequest( TestFact.class, org1.id(), null,
 							t.add( 1 ), Collections.singletonMap( "myParam2",

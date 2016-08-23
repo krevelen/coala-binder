@@ -19,6 +19,7 @@
  */
 package io.coala.time;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 import javax.measure.Measurable;
@@ -38,7 +39,6 @@ import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
 import io.coala.util.Comparison;
 import rx.Observable;
-import rx.Observer;
 
 /**
  * {@link Proactive}
@@ -110,36 +110,58 @@ public interface Proactive extends Timed
 
 	/**
 	 * @param when
+	 * @return an {@link Iterable} stream of {@link FutureSelf} wrappers pushed
+	 *         after each {@link Instant} has been scheduled to occur
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> atEach( final Instant... when )
+	{
+		if( when == null || when.length == 0 ) return Observable.empty();
+		return atEach( Arrays.asList( when ) );
+	}
+
+	/**
+	 * @param when
+	 * @return an {@link Iterable} stream of {@link FutureSelf} wrappers pushed
+	 *         after each {@link Instant} has been scheduled to occur
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> atEach( final Iterable<Instant> when )
+	{
+		return scheduler().schedule( when );
+	}
+
+	/**
+	 * @param when the {@link Iterable} stream of {@link Instant}s to schedule
+	 * @param what the {@link ThrowingConsumer} function to call each time
+	 * @return
+	 */
+	default Observable<Expectation> atEach( final Iterable<Instant> when,
+		final ThrowingConsumer<Instant, ?> what )
+	{
+		return scheduler().schedule( when, what );
+	}
+
+	/**
+	 * @param when
 	 * @return an {@link Observable} stream of {@link FutureSelf} wrappers
 	 *         pushed after each {@link Instant} has been scheduled to occur
 	 */
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
-	default Observable<FutureSelf> atEach( final Observable<Instant> when )
+	default Observable<Instant> atEach( final Observable<Instant> when )
 	{
-		final Proactive self = this;
-		return scheduler().schedule( when, (Observer) null ).map( t ->
-		{
-			return FutureSelf.of( self, t );
-		} );
+		return scheduler().schedule( when );
 	}
 
 	/**
 	 * @param when the {@link Observable} stream of {@link Instant}s to schedule
 	 * @param what the {@link ThrowingConsumer} function to call each time
+	 * @return
 	 */
-	default void atEach( final Observable<Instant> when,
+	default Observable<Expectation> atEach( final Observable<Instant> when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		atEach( when ).subscribe( self ->
-		{
-			try
-			{
-				what.accept( self.now() );
-			} catch( final Throwable e )
-			{
-				Thrower.rethrowUnchecked( e );
-			}
-		} );
+		return scheduler().schedule( when, what );
 	}
 
 	/**

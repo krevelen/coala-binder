@@ -48,7 +48,7 @@ public class TimingTest
 				.parse( "2016-08-22T11:55:12" );
 		LOG.info( "Testing Timing pattern: {} with offset: {}", pattern,
 				offset );
-		Timing.valueOf( pattern ).stream( offset ).subscribe( t ->
+		Timing.of( pattern ).offset( offset ).stream().subscribe( t ->
 		{
 			LOG.trace( "pattern includes t: {} == {}",
 					t.prettify( Units.DAYS, 2 ), t.prettify( offset ) );

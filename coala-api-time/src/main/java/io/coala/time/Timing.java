@@ -19,7 +19,6 @@ import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,10 +38,8 @@ import org.quartz.TriggerBuilder;
 
 import com.google.ical.compat.jodatime.DateTimeIteratorFactory;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
 import io.coala.json.Wrapper;
-import io.coala.log.LogUtil;
 import rx.Observable;
 
 /**
@@ -66,149 +63,145 @@ import rx.Observable;
  * @version $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
  * @author Rick van Krevelen
  */
-public interface Timing extends Wrapper.Ordinal<String>
+public interface Timing extends Wrapper<String>
 {
 
 	/**
-	 * @param offset the absolute epoch {@link Date} start date
-	 * @param max the maximum number of iterations to generate (if possible)
-	 * @return an {@link Iterable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset {@link Date}
-	 * @throws Exception for instance a {@link ParseException}
-	 */
-	Iterable<Instant> asIterable( Date offset, Long max ) throws Exception;
-
-	/**
-	 * @param offset the absolute epoch {@link Date} start date
-	 * @return an {@link Iterable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset {@link Date}
-	 * @throws Exception for instance a {@link ParseException}
-	 */
-	default Iterable<Instant> asIterable( Date offset ) throws Exception
-	{
-		return asIterable( offset, null );
-	}
-
-	/**
-	 * @param offset the {@link LocalDateTime} start date in default time zone
-	 * @return an {@link Iterable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 * @throws Exception for instance a {@link ParseException}
-	 */
-	default Iterable<Instant> asIterable( final LocalDateTime offset )
-		throws Exception
-	{
-		return asIterable(
-				offset.atZone( ZoneId.systemDefault() ).toInstant() );
-	}
-
-	/**
-	 * @param offset the {@link LocalDateTime} start date in default time zone
-	 * @param max the maximum number of iterations to generate (if possible)
-	 * @return an {@link Iterable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 * @throws Exception for instance a {@link ParseException}
-	 */
-	default Iterable<Instant> asIterable( final LocalDateTime offset,
-		final Long max ) throws Exception
-	{
-		return asIterable( offset.atZone( ZoneId.systemDefault() ).toInstant(),
-				max );
-	}
-
-	/**
-	 * @param offset the absolute epoch {@link java.time.Instant} start date
-	 * @return an {@link Iterable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 * @throws Exception for instance a {@link ParseException}
-	 */
-	default Iterable<Instant> asIterable( final java.time.Instant offset )
-		throws Exception
-	{
-		return asIterable( Date.from( offset ) );
-	}
-
-	/**
 	 * @param offset the absolute epoch {@link java.time.Instant} start date
 	 * @param max the maximum number of iterations to generate (if possible)
 	 * @return an {@link Iterable} stream of {@link Instant}s following this
 	 *         {@link Timing} pattern calculated from given offset
 	 * @throws Exception for instance a {@link ParseException}
 	 */
-	default Iterable<Instant> asIterable( final java.time.Instant offset,
-		final Long max ) throws Exception
+	Iterable<Instant> iterate( java.time.Instant offset, Long max )
+		throws ParseException;
+
+	/**
+	 * @return an {@link Iterable} stream of {@link Instant}s calculated from
+	 *         {@link #unwrap() pattern}, {@link #offset()} and {@link #max()}
+	 * @throws ParseException
+	 */
+	default Iterable<Instant> iterate() throws ParseException
 	{
-		return asIterable( Date.from( offset ), max );
+		return iterate( offset(), max() );
+	}
+
+	/**
+	 * @param offset the {@link LocalDateTime} start date in default time zone
+	 * @return this {@link Timing} to allow chaining
+	 */
+	default Timing offset( final LocalDateTime offset )
+	{
+		return offset( offset.atZone( ZoneId.systemDefault() ).toInstant() );
+	}
+
+	/**
+	 * @param offset the absolute epoch {@link java.time.Instant} start date
+	 * @return this {@link Timing} to allow chaining
+	 */
+	default Timing offset( final Date offset )
+	{
+		return offset( offset.toInstant() );
 	}
 
 	/**
 	 * @param offset the absolute epoch {@link ReadableInstant} start date
-	 * @return an {@link Iterable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 * @throws Exception for instance a {@link ParseException}
+	 * @return this {@link Timing} to allow chaining
 	 */
-	default Iterable<Instant> asIterable( final ReadableInstant offset )
-		throws Exception
+	default Timing offset( final ReadableInstant offset )
 	{
-		return asIterable( new Date( offset.getMillis() ) );
+		return offset( new Date( offset.getMillis() ) );
+	}
+
+	default Timing offset( final java.time.Instant offset )
+	{
+		final Timing self = this;
+		return new Timing()
+		{
+			@Override
+			public String unwrap()
+			{
+				return self.unwrap();
+			}
+
+			@Override
+			public Wrapper<String> wrap( final String value )
+			{
+				return self.wrap( value );
+			}
+
+			@Override
+			public java.time.Instant offset()
+			{
+				return offset;
+			}
+
+			@Override
+			public Iterable<Instant> iterate( final java.time.Instant offset,
+				final Long max ) throws ParseException
+			{
+				return self.iterate( offset, max );
+			}
+		};
 	}
 
 	/**
-	 * @param offset the absolute epoch {@link ReadableInstant} start date
-	 * @param max the maximum number of iterations to generate (if possible)
-	 * @return an {@link Iterable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 * @throws Exception for instance a {@link ParseException}
+	 * @return the offset {@link Date}
 	 */
-	default Iterable<Instant> asIterable( final ReadableInstant offset,
-		final Long max ) throws Exception
+	default java.time.Instant offset()
 	{
-		return asIterable( new Date( offset.getMillis() ), max );
+		return java.time.Instant.now();
+	}
+
+	default Timing max( final Long max )
+	{
+		final Timing self = this;
+		return new Timing()
+		{
+			@Override
+			public String unwrap()
+			{
+				return self.unwrap();
+			}
+
+			@Override
+			public Wrapper<String> wrap( final String value )
+			{
+				return self.wrap( value );
+			}
+
+			@Override
+			public Long max()
+			{
+				return max;
+			}
+
+			@Override
+			public Iterable<Instant> iterate( final java.time.Instant offset,
+				final Long max ) throws ParseException
+			{
+				return self.iterate( offset, max );
+			}
+		};
 	}
 
 	/**
-	 * @param offset the absolute epoch {@link LocalDateTime} start date
-	 * @return an {@link Observable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 *         {@link java.time.Instant}
+	 * @return the maximum total iterations
 	 */
-	default Observable<Instant> stream( final LocalDateTime offset )
+	default Long max()
 	{
-		return stream( offset.atZone( ZoneId.systemDefault() ).toInstant() );
+		return null;
 	}
 
 	/**
-	 * @param offset the absolute epoch {@link Date} start date
-	 * @return an {@link Observable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 *         {@link java.time.Instant}
+	 * @return an {@link Observable} stream of {@link Instant}s calculated from
+	 *         {@link #unwrap() pattern}, {@link #offset()} and {@link #max()}
 	 */
-	default Observable<Instant> stream( final java.time.Instant offset )
-	{
-		return stream( Date.from( offset ) );
-	}
-
-	/**
-	 * @param offset the absolute {@link ReadableInstant} start date
-	 * @return an {@link Observable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset
-	 *         {@link DateTime}
-	 */
-	default Observable<Instant> stream( final ReadableInstant offset )
-	{
-		return stream( new Date( offset.getMillis() ) );
-	}
-
-	/**
-	 * @param offset the absolute epoch {@link Date} start date
-	 * @return an {@link Observable} stream of {@link Instant}s following this
-	 *         {@link Timing} pattern calculated from given offset {@link Date}
-	 */
-	default Observable<Instant> stream( final Date offset )
+	default Observable<Instant> stream()
 	{
 		try
 		{
-			return Observable.from( asIterable( offset ) );
+			return Observable.from( iterate() );
 		} catch( final Throwable e )
 		{
 			return Observable.error( e );
@@ -216,78 +209,31 @@ public interface Timing extends Wrapper.Ordinal<String>
 	}
 
 	/**
+	 * natural converter
+	 * 
 	 * @param pattern a formatted string, either {@link CronExpression CRON},
 	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
 	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
-	 * @param offset the absolute epoch {@link LocalDateTime} start date
-	 * @return an {@link Observable} stream of {@link Instant}s
+	 * @return the new {@link Timing} pattern wrapper
 	 */
-	static Observable<Instant> stream( final String pattern,
-		final LocalDateTime offset )
-	{
-		return stream( pattern,
-				offset.atZone( ZoneId.systemDefault() ).toInstant() );
-	}
-
-	/**
-	 * @param pattern a formatted string, either {@link CronExpression CRON},
-	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
-	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
-	 * @param offset the absolute epoch {@link java.time.Instant} start date
-	 * @return an {@link Observable} stream of {@link Instant}s
-	 */
-	static Observable<Instant> stream( final String pattern,
-		final java.time.Instant offset )
-	{
-		return stream( pattern, Date.from( offset ) );
-	}
-
-	/**
-	 * @param pattern a formatted string, either {@link CronExpression CRON},
-	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
-	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
-	 * @param offset the absolute {@link ReadableInstant} start date
-	 * @return an {@link Observable} stream of {@link Instant}s
-	 */
-	static Observable<Instant> stream( final String pattern,
-		final ReadableInstant offset )
-	{
-		return stream( pattern, new Date( offset.getMillis() ) );
-	}
-
-	/**
-	 * @return an {@link Observable} stream of {@link Instant}s from now
-	 */
-	static Observable<Instant> stream( final String pattern )
-	{
-		return stream( pattern, new Date() );
-	}
-
-	/**
-	 * @param pattern a formatted string, either {@link CronExpression CRON},
-	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
-	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
-	 * @param offset the absolute epoch {@link Date} start date
-	 * @return an {@link Observable} stream of {@link Instant}s
-	 */
-	static Observable<Instant> stream( final String pattern, final Date offset )
+	static Timing valueOf( final String pattern )
 	{
 		try
 		{
-			return of( pattern, CronTiming.class ).stream( offset );
+			return of( pattern, CronTiming.class );
 		} catch( final Exception e )
 		{
 			try
 			{
-				return of( pattern, ICalTiming.class ).stream( offset );
+				return of( pattern, ICalTiming.class );
 			} catch( final Exception e1 )
 			{
 				try
 				{
-					return of( pattern, InstantTiming.class ).stream( offset );
+					return of( pattern, InstantTiming.class );
 				} catch( final Exception e2 )
 				{
-					throw ExceptionFactory.createUnchecked( e,
+					return Thrower.throwNew( IllegalArgumentException.class,
 							"Problem parsing `{}`, errors:"
 									+ "\n\tCron: {}\n\tiCal: {}\n\t Instant: {}",
 							pattern, e.getMessage(), e1.getMessage(),
@@ -295,6 +241,17 @@ public interface Timing extends Wrapper.Ordinal<String>
 				}
 			}
 		}
+	}
+
+	/**
+	 * @param pattern a formatted string, either {@link CronExpression CRON},
+	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
+	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
+	 * @return the new {@link Timing} pattern wrapper
+	 */
+	static Timing of( final String pattern )
+	{
+		return valueOf( pattern );
 	}
 
 	/**
@@ -310,29 +267,19 @@ public interface Timing extends Wrapper.Ordinal<String>
 	}
 
 	/**
-	 * @param pattern a formatted string, either {@link CronExpression CRON},
-	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
-	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
-	 * @return the new {@link Timing} pattern wrapper
-	 */
-	static Timing valueOf( final String pattern )
-	{
-		return of( pattern, CronTiming.class );
-	}
-
-	/**
 	 * {@link CronTiming}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class CronTiming extends SimpleOrdinal<String> implements Timing
+	class CronTiming extends Simple<String> implements Timing
 	{
 
 		private final static Map<String, CronTrigger> TRIGGERS = new HashMap<>();
 
 		@Override
-		public Iterable<Instant> asIterable( final Date offset, final Long max )
+		public Iterable<Instant> iterate( final java.time.Instant offset,
+			final Long max )
 		{
 			final CronTrigger trigger = TRIGGERS.computeIfAbsent( unwrap(),
 					pattern ->
@@ -341,36 +288,12 @@ public interface Timing extends Wrapper.Ordinal<String>
 								CronScheduleBuilder.cronSchedule( pattern ) )
 								.build();
 					} );
-//			return Observable
-//			.create( SyncOnSubscribe.<Date, Date> createStateful( () ->
-//			{
-//				return trigger.getFireTimeAfter( offset );
-//			}, ( state, observer ) ->
-//			{
-//				if( state == null )
-//				{
-//					observer.onCompleted();
-//					return null;
-//				}
-//				try
-//				{
-//					final Date next = trigger.getFireTimeAfter( state );
-//					if( next == null )
-//						observer.onCompleted();
-//					else
-//						observer.onNext( next );
-//					return next;
-//				} catch( final Throwable e )
-//				{
-//					observer.onError( e );
-//					return Thrower.rethrowUnchecked( e );
-//				}
-//			} );
 			return () ->
 			{
 				return new Iterator<Instant>()
 				{
-					private Date current = trigger.getFireTimeAfter( offset );
+					private Date current = trigger
+							.getFireTimeAfter( Date.from( offset ) );
 					private long count = 0;
 
 					@Override
@@ -385,15 +308,10 @@ public interface Timing extends Wrapper.Ordinal<String>
 					{
 						final Date next = this.current;
 						this.current = trigger.getFireTimeAfter( this.current );
-						final Instant t = Instant.of(
-								next.getTime() - offset.getTime(),
-								Units.MILLIS );
-						LogUtil.getLogger( CronTiming.class ).trace(
-								"Generated {}",
-								t.prettify( java.time.Instant.now()
-										.truncatedTo( ChronoUnit.DAYS ) ) );
 						this.count++;
-						return t;
+						return Instant.of(
+								next.getTime() - offset.toEpochMilli(),
+								Units.MILLIS );
 					}
 				};
 			};
@@ -416,7 +334,7 @@ public interface Timing extends Wrapper.Ordinal<String>
 	 * @author Rick van Krevelen
 	 * @see http://www.kanzaki.com/docs/ical/rrule.html
 	 */
-	class ICalTiming extends SimpleOrdinal<String> implements Timing
+	class ICalTiming extends Simple<String> implements Timing
 	{
 		/** */
 		private static final Pattern dtStartTimePattern = Pattern
@@ -427,8 +345,8 @@ public interface Timing extends Wrapper.Ordinal<String>
 				.compile( "TZID=([^:;]*)" );
 
 		@Override
-		public Iterable<Instant> asIterable( final Date offset, final Long max )
-			throws ParseException
+		public Iterable<Instant> iterate( final java.time.Instant offset,
+			final Long max ) throws ParseException
 		{
 			return () ->
 			{
@@ -459,8 +377,10 @@ public interface Timing extends Wrapper.Ordinal<String>
 						public Instant next()
 						{
 							this.count++;
-							return Instant.of( this.it.next().getMillis()
-									- offset.getTime(), Units.MILLIS );
+							return Instant.of(
+									this.it.next().getMillis()
+											- offset.toEpochMilli(),
+									Units.MILLIS );
 						}
 					};
 				} catch( final Exception e )
@@ -478,10 +398,11 @@ public interface Timing extends Wrapper.Ordinal<String>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class InstantTiming extends SimpleOrdinal<String> implements Timing
+	class InstantTiming extends Simple<String> implements Timing
 	{
 		@Override
-		public Iterable<Instant> asIterable( final Date offset, final Long max )
+		public Iterable<Instant> iterate( final java.time.Instant offset,
+			final Long max )
 		{
 			final long absMax = max == null ? 1L : Math.max( max, 1L );
 			return () ->
