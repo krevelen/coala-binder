@@ -28,6 +28,8 @@ import java.util.Map;
 import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.ConfigCache;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 /**
  * {@link YamlConfig}
  * 
@@ -48,6 +50,11 @@ public interface YamlConfig extends Accessible
 		return ConfigCache.getOrCreate( configType, total );
 	}
 
+	default JsonNode toJSON( final String... baseKeys )
+	{
+		return ConfigUtil.expand( ConfigUtil.export( this ), baseKeys );
+	}
+
 	// default not (yet) supported in OWNER api proxy implementation
 	default String toYAML()
 	{
@@ -55,10 +62,9 @@ public interface YamlConfig extends Accessible
 	}
 
 	// default not (yet) supported in OWNER api proxy implementation
-	default String toYAML( final String comment )
+	default String toYAML( final String comment, final String... baseKeys )
 	{
-		return YamlUtil.toYAML( comment,
-				ConfigUtil.export( this, null, null ) );
+		return YamlUtil.toYAML( comment, toJSON( baseKeys ) );
 	}
 
 	// default not (yet) supported in OWNER api proxy implementation

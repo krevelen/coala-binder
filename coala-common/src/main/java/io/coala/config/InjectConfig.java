@@ -24,26 +24,31 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 import org.aeonbits.owner.ConfigCache;
+import org.aeonbits.owner.ConfigFactory;
 
 import io.coala.bind.LocalBinder;
 import io.coala.name.Identified;
 
 /**
- * {@link InjectConfig} inspired by
+ * {@link InjectConfig} marks fields, parameters or (setter) methods that should
+ * inject a {@link org.aeonbits.config.Config} sub-type dependency using e.g.
+ * the {@link ConfigFactory} or {@link ConfigCache}, depending on the specified
+ * {@link #cache()} {@link Scope} value. See also the <a
+ * href=http://owner.aeonbits.org/>OWNER API</a>.
+ * <p>
+ * Inspired by
  * <a href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html" >
  * here</a>
- * 
- * See also OWNER API at http://owner.aeonbits.org/
  */
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
-@Target( ElementType.FIELD )
+@Target( { ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD } )
 public @interface InjectConfig
 {
 	/**
-	 * @return the {@link Scope} for sharing injected {@link Config} instances
+	 * @return the cache {@link Scope} of the injected {@link Config} instance
 	 */
-	Scope scope() default Scope.CLASSLOADER;
+	Scope cache() default Scope.CLASSLOADER;
 
 	/**
 	 * {@link Scope} determines which key to use for
@@ -78,5 +83,10 @@ public @interface InjectConfig
 		 * {@link Config} instance for the {@link Identified#id()} value)
 		 */
 		ID,
+
+		/**
+		 * inject a new {@link Config} instance, don't cache/share
+		 */
+		NONE,
 	}
 }

@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigCache;
+import org.aeonbits.owner.ConfigFactory;
 
 import com.google.inject.MembersInjector;
 import com.google.inject.TypeLiteral;
@@ -26,7 +27,7 @@ import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 
 import io.coala.config.InjectConfig;
-import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.name.Identified;
 
 /**
@@ -44,47 +45,43 @@ public class Guice4InjectConfigTypeListener implements TypeListener
 					.getAnnotation( InjectConfig.class );
 			if( annot == null ) continue;
 			if( !Config.class.isAssignableFrom( field.getType() ) )
-				throw ExceptionFactory.createUnchecked(
+				Thrower.throwNew( IllegalArgumentException.class,
 						"@{} not annotating subtype of {} at field: {}",
-						InjectConfig.class.getSimpleName(),
-						Config.class.getName(), field );
-			typeEncounter.register( new MembersInjector<T>()
+						InjectConfig.class.getSimpleName(), Config.class,
+						field );
+			typeEncounter.register( (MembersInjector<T>) t ->
 			{
-				@Override
-				public void injectMembers( final T t )
+				try
 				{
-					try
+					final Class<? extends Config> type = field.getType()
+							.asSubclass( Config.class );
+					field.setAccessible( true );
+					final Object key;
+					switch( annot.cache() )
 					{
-						final Class<? extends Config> type = field.getType()
-								.asSubclass( Config.class );
-						final Object key;
-						switch( annot.scope() )
-						{
-						case BINDER:
-							key = Guice4InjectConfigTypeListener.this;
-							break;
-						case FIELD:
-							key = field;
-							break;
-						case ID:
-							key = t instanceof Identified<?>
-									? ((Identified<?>) t).id() : t;
-							break;
-						default:
-						case CLASSLOADER:
-							key = type;
-							break;
-						}
-						field.setAccessible( true );
-						field.set( t, ConfigCache.getOrCreate( key, type ) );
-					} catch( final RuntimeException e )
-					{
-						throw e;
-					} catch( final Exception e )
-					{
-						throw ExceptionFactory.createUnchecked( e,
-								"Problem injecting Config" );
+					case BINDER:
+						key = this;
+						break;
+					case FIELD:
+						key = field;
+						break;
+					case ID:
+						key = t instanceof Identified<?>
+								? ((Identified<?>) t).id() : t;
+						break;
+					case NONE:
+						key = null;
+						break;
+					default:
+					case CLASSLOADER:
+						key = type;
+						break;
 					}
+					field.set( t, key == null ? ConfigFactory.create( type )
+							: ConfigCache.getOrCreate( key, type ) );
+				} catch( final Throwable e )
+				{
+					Thrower.rethrowUnchecked( e );
 				}
 			} );
 		}

@@ -6,8 +6,10 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import io.coala.exception.ExceptionFactory;
@@ -132,7 +134,7 @@ public interface Caller<T, U, R, E extends Throwable>
 	}
 
 	/**
-	 * {@link Simple} implementation of a {@link Caller} decoration
+	 * {@link Caller} go-to decorator
 	 * 
 	 * @param <T>
 	 * @param <U>
@@ -145,13 +147,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		of( final ThrowingSupplier<R, ? extends E> supplier )
 	{
 		Objects.requireNonNull( supplier );
-		return new Caller<T, U, R, E>()
+		return () ->
 		{
-			@Override
-			public ThrowingSupplier<R, E> getCallable()
-			{
-				return supplier::get;
-			}
+			return supplier::get;
 		};
 	}
 
@@ -165,8 +163,8 @@ public interface Caller<T, U, R, E extends Throwable>
 		return of( (ThrowingSupplier<R, Exception>) callable::call );
 	}
 
-	static <R> Caller<Object, Object, R, Exception>
-		of( final Constructor<R> constructor, final Object... argConstants )
+	static <R> Caller<Object, Object, R, Exception> ofConstructor(
+		final Constructor<R> constructor, final Object... argConstants )
 	{
 		// redirect constructor::newInstance?
 		return of( new ThrowingSupplier<R, Exception>()
@@ -180,7 +178,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <R> Caller<Object, Object, R, Exception> of(
+	static <R> Caller<Object, Object, R, Exception> ofConstructor(
 		final Constructor<R> constructor,
 		final Callable<Object[]> argsSupplier )
 	{
@@ -196,8 +194,8 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static Caller<Object, Object, Object, Exception> of( final Method method,
-		final Object target, final Object... argsConstant )
+	static Caller<Object, Object, Object, Exception> ofMethod(
+		final Method method, final Object target, final Object... argsConstant )
 	{
 		// redirect method::invoke?
 		return of( new ThrowingSupplier<Object, Exception>()
@@ -211,9 +209,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <E extends Throwable> Caller<Object, Object, Object, Exception> of(
-		final Method method, final Object target,
-		final ThrowingSupplier<Object[], ? extends E> argsSupplier )
+	static <E extends Throwable> Caller<Object, Object, Object, Exception>
+		ofMethod( final Method method, final Object target,
+			final ThrowingSupplier<Object[], ? extends E> argsSupplier )
 	{
 		// redirect method::invoke?
 		return of( new ThrowingSupplier<Object, Exception>()
@@ -236,34 +234,35 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-//	static <R> Caller<Object, Object, R, Throwable>
-//		of( final Supplier<R> supplier )
-//	{
-//		return of( supplier::get );
-//	}
+	static <R> Caller<Object, Object, R, Throwable>
+		ofSupplier( final Supplier<R> supplier )
+	{
+		return of( supplier::get );
+	}
 
-//	static <R, E extends Throwable> Caller<Object, Object, R, E>
-//		of( final ThrowingSupplier<R, ? extends E> supplier )
-//	{
-//		return of( supplier::get );
-//	}
+	static <R, E extends Throwable> Caller<Object, Object, R, E>
+		ofThrowingSupplier( final ThrowingSupplier<R, ? extends E> supplier )
+	{
+		return of( supplier::get );
+	}
 
-//	static Caller<Object, Object, Void, Throwable> of( final Runnable runnable )
-//	{
-//		// <void> incompatible with <Void>
-//		return of( new ThrowingSupplier<Void, Throwable>()
-//		{
-//			@Override
-//			public Void get()
-//			{
-//				runnable.run();
-//				return null;
-//			}
-//		} );
-//	}
+	static Caller<Object, Object, Void, Throwable>
+		of( final Runnable runnable )
+	{
+		// <void> incompatible with <Void>
+		return of( new ThrowingSupplier<Void, Throwable>()
+		{
+			@Override
+			public Void get()
+			{
+				runnable.run();
+				return null;
+			}
+		} );
+	}
 
 	static <E extends Throwable> Caller<Object, Object, Void, E>
-		of( final ThrowingRunnable<? extends E> runnable )
+		ofThrowing( final ThrowingRunnable<? extends E> runnable )
 	{
 		// <void> incompatible with <Void>
 		return of( new ThrowingSupplier<Void, E>()
@@ -278,7 +277,8 @@ public interface Caller<T, U, R, E extends Throwable>
 	}
 
 	static <T, E extends Throwable> Caller<T, Object, Void, E>
-		of( final ThrowingConsumer<T, ? extends E> consumer, final T constant )
+		ofThrowingConsumer( final ThrowingConsumer<T, ? extends E> consumer,
+			final T constant )
 	{
 		// must wrap to prevent cycles
 		return of( new ThrowingSupplier<Void, E>()
@@ -293,7 +293,7 @@ public interface Caller<T, U, R, E extends Throwable>
 	}
 
 	static <T> Caller<T, Object, Void, Throwable>
-		of( final Consumer<T> consumer, final T constant )
+		ofConsumer( final Consumer<T> consumer, final T constant )
 	{
 		// must wrap to prevent cycles
 		return of( new ThrowingSupplier<Void, Throwable>()
@@ -307,9 +307,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <T, E extends Throwable> Caller<T, Object, Void, E> of(
-		final ThrowingConsumer<T, ? extends E> consumer,
-		final ThrowingSupplier<T, ? extends E> supplier )
+	static <T, E extends Throwable> Caller<T, Object, Void, E>
+		ofThrowingConsumer( final ThrowingConsumer<T, ? extends E> consumer,
+			final ThrowingSupplier<T, ? extends E> supplier )
 	{
 		return of( new ThrowingSupplier<Void, E>()
 		{
@@ -337,9 +337,9 @@ public interface Caller<T, U, R, E extends Throwable>
 //		} );
 //	}
 
-	static <T, U, E extends Throwable> Caller<T, U, Void, E> of(
-		final ThrowingBiConsumer<T, U, ? extends E> b, final T constant1,
-		final U constant2 )
+	static <T, U, E extends Throwable> Caller<T, U, Void, E>
+		ofThrowingBiConsumer( final ThrowingBiConsumer<T, U, ? extends E> b,
+			final T constant1, final U constant2 )
 	{
 		// must wrap to prevent cycles
 		return of( new ThrowingSupplier<Void, E>()
@@ -353,10 +353,10 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <T, U, E extends Throwable> Caller<T, U, Void, E> of(
-		final ThrowingBiConsumer<T, U, ? extends E> b,
-		final ThrowingSupplier<T, ? extends E> supplier1,
-		final ThrowingSupplier<U, ? extends E> supplier2 )
+	static <T, U, E extends Throwable> Caller<T, U, Void, E>
+		ofThrowingBiConsumer( final ThrowingBiConsumer<T, U, ? extends E> b,
+			final ThrowingSupplier<T, ? extends E> supplier1,
+			final ThrowingSupplier<U, ? extends E> supplier2 )
 	{
 		return of( new ThrowingSupplier<Void, E>()
 		{
@@ -369,22 +369,23 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-//	static <T> Caller<T, Object, Boolean, Throwable>
-//		of( final Predicate<T> predicate, final T constant )
-//	{
-//		// must wrap to prevent cycles
-//		return of( new ThrowingSupplier<Boolean, Throwable>()
-//		{
-//			@Override
-//			public Boolean get()
-//			{
-//				return predicate.test( constant );
-//			}
-//		} );
-//	}
+	static <T> Caller<T, Object, Boolean, Throwable>
+		ofPredicate( final Predicate<T> predicate, final T constant )
+	{
+		// must wrap to prevent cycles
+		return of( new ThrowingSupplier<Boolean, Throwable>()
+		{
+			@Override
+			public Boolean get()
+			{
+				return predicate.test( constant );
+			}
+		} );
+	}
 
-	static <T, E extends Throwable> Caller<T, Object, Boolean, E> of(
-		final ThrowingPredicate<T, ? extends E> predicate, final T constant )
+	static <T, E extends Throwable> Caller<T, Object, Boolean, E>
+		ofThrowingSupplier( final ThrowingPredicate<T, ? extends E> predicate,
+			final T constant )
 	{
 		// must wrap to prevent cycles
 		return of( new ThrowingSupplier<Boolean, E>()
@@ -397,9 +398,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <T, E extends Throwable> Caller<T, Object, Boolean, E> of(
-		final ThrowingPredicate<T, ? extends E> predicate,
-		final ThrowingSupplier<T, ? extends E> supplier )
+	static <T, E extends Throwable> Caller<T, Object, Boolean, E>
+		ofThrowingPredicate( final ThrowingPredicate<T, ? extends E> predicate,
+			final ThrowingSupplier<T, ? extends E> supplier )
 	{
 		return of( new ThrowingSupplier<Boolean, E>()
 		{
@@ -411,24 +412,25 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-//	static <T, U> Caller<T, U, Boolean, Throwable> of(
-//		final BiPredicate<T, U> predicate, final T constant1,
-//		final U constant2 )
-//	{
-//		// must wrap to reroute and prevent cycles
-//		return of( new ThrowingSupplier<Boolean, Throwable>()
-//		{
-//			@Override
-//			public Boolean get()
-//			{
-//				return predicate.test( constant1, constant2 );
-//			}
-//		} );
-//	}
+	static <T, U> Caller<T, U, Boolean, Throwable> ofBiPredicate(
+		final BiPredicate<T, U> predicate, final T constant1,
+		final U constant2 )
+	{
+		// must wrap to reroute and prevent cycles
+		return of( new ThrowingSupplier<Boolean, Throwable>()
+		{
+			@Override
+			public Boolean get()
+			{
+				return predicate.test( constant1, constant2 );
+			}
+		} );
+	}
 
-	static <T, U, E extends Throwable> Caller<T, U, Boolean, E> of(
-		final ThrowingBiPredicate<T, U, ? extends E> predicate,
-		final T constant1, final U constant2 )
+	static <T, U, E extends Throwable> Caller<T, U, Boolean, E>
+		ofThrowingBiPredicate(
+			final ThrowingBiPredicate<T, U, ? extends E> predicate,
+			final T constant1, final U constant2 )
 	{
 		// must wrap to reroute and prevent cycles
 		return of( new ThrowingSupplier<Boolean, E>()
@@ -441,10 +443,11 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <T, U, E extends Throwable> Caller<T, U, Boolean, E> of(
-		final ThrowingBiPredicate<T, U, ? extends E> predicate,
-		final ThrowingSupplier<T, ? extends E> supplier1,
-		final ThrowingSupplier<U, ? extends E> supplier2 )
+	static <T, U, E extends Throwable> Caller<T, U, Boolean, E>
+		ofThrowingBiPredicate(
+			final ThrowingBiPredicate<T, U, ? extends E> predicate,
+			final ThrowingSupplier<T, ? extends E> supplier1,
+			final ThrowingSupplier<U, ? extends E> supplier2 )
 	{
 		return of( new ThrowingSupplier<Boolean, E>()
 		{
@@ -456,22 +459,23 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-//	static <T, R> Caller<T, Object, R, Throwable> of( final Function<T, R> f,
-//		final T constant )
-//	{
-//		// must wrap to prevent cycles
-//		return of( new ThrowingSupplier<R, Throwable>()
-//		{
-//			@Override
-//			public R get()
-//			{
-//				return f.apply( constant );
-//			}
-//		} );
-//	}
+	static <T, R> Caller<T, Object, R, Throwable>
+		ofFunction( final Function<T, R> f, final T constant )
+	{
+		// must wrap to prevent cycles
+		return of( new ThrowingSupplier<R, Throwable>()
+		{
+			@Override
+			public R get()
+			{
+				return f.apply( constant );
+			}
+		} );
+	}
 
 	static <T, R, E extends Throwable> Caller<T, Object, R, E>
-		of( final ThrowingFunction<T, R, ? extends E> f, final T constant )
+		ofThrowingFunction( final ThrowingFunction<T, R, ? extends E> f,
+			final T constant )
 	{
 		// must wrap to prevent cycles
 		return of( new ThrowingSupplier<R, E>()
@@ -484,9 +488,9 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <T, R, E extends Throwable> Caller<T, Object, R, E> of(
-		final ThrowingFunction<T, R, ? extends E> f,
-		final ThrowingSupplier<T, ? extends E> supplier )
+	static <T, R, E extends Throwable> Caller<T, Object, R, E>
+		ofThrowingFunction( final ThrowingFunction<T, R, ? extends E> f,
+			final ThrowingSupplier<T, ? extends E> supplier )
 	{
 		return of( new ThrowingSupplier<R, E>()
 		{
@@ -498,23 +502,23 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-//	static <T, U, R> Caller<T, U, R, Throwable> of( final BiFunction<T, U, R> f,
-//		final T constant1, final U constant2 )
-//	{
-//		// must wrap to prevent cycles
-//		return of( new ThrowingSupplier<R, Throwable>()
-//		{
-//			@Override
-//			public R get()
-//			{
-//				return f.apply( constant1, constant2 );
-//			}
-//		} );
-//	}
+	static <T, U, R> Caller<T, U, R, Throwable> ofBiFunction(
+		final BiFunction<T, U, R> f, final T constant1, final U constant2 )
+	{
+		// must wrap to prevent cycles
+		return of( new ThrowingSupplier<R, Throwable>()
+		{
+			@Override
+			public R get()
+			{
+				return f.apply( constant1, constant2 );
+			}
+		} );
+	}
 
-	static <T, U, R, E extends Throwable> Caller<T, U, R, E> of(
-		final ThrowingBiFunction<T, U, R, ? extends E> f, final T constant1,
-		final U constant2 )
+	static <T, U, R, E extends Throwable> Caller<T, U, R, E>
+		ofThrowingBiFunction( final ThrowingBiFunction<T, U, R, ? extends E> f,
+			final T constant1, final U constant2 )
 	{
 		// must wrap to prevent cycles
 		return of( new ThrowingSupplier<R, E>()
@@ -527,10 +531,10 @@ public interface Caller<T, U, R, E extends Throwable>
 		} );
 	}
 
-	static <T, U, R, E extends Throwable> Caller<T, U, R, E> of(
-		final ThrowingBiFunction<T, U, R, ? extends E> f,
-		final ThrowingSupplier<T, ? extends E> supplier1,
-		final ThrowingSupplier<U, ? extends E> supplier2 )
+	static <T, U, R, E extends Throwable> Caller<T, U, R, E>
+		ofThrowingBiFunction( final ThrowingBiFunction<T, U, R, ? extends E> f,
+			final ThrowingSupplier<T, ? extends E> supplier1,
+			final ThrowingSupplier<U, ? extends E> supplier2 )
 	{
 		return of( new ThrowingSupplier<R, E>()
 		{

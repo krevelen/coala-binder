@@ -110,12 +110,29 @@ public interface LocalConfig extends GlobalConfig
 	{
 		private ObjectNode tree = JsonUtil.getJOM().createObjectNode();
 
+		public JsonBuilder withId( final String id )
+		{
+			this.tree.put( ID_KEY, id );
+			return this;
+		}
+
+		/**
+		 * @param type the type to bind
+		 * @param impl the implementation type to provide (immutable, lazy)
+		 * @return this builder for chaining
+		 */
 		public JsonBuilder withProvider( final Class<?> type,
 			final Class<?> impl )
 		{
-			return withProvider( type, impl, true );
+			return withProvider( type, impl, false );
 		}
 
+		/**
+		 * @param type
+		 * @param impl
+		 * @param mutable
+		 * @return
+		 */
 		public JsonBuilder withProvider( final Class<?> type,
 			final Class<?> impl, final boolean mutable )
 		{

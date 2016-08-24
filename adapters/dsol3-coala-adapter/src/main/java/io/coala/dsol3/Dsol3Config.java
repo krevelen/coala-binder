@@ -33,6 +33,7 @@ import io.coala.config.GlobalConfig;
 import io.coala.config.YamlConfig;
 import io.coala.function.ThrowingConsumer;
 import io.coala.time.Scheduler;
+import io.coala.util.Instantiator;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 
@@ -97,6 +98,12 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 		}
 	}
 
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	static Dsol3Config get()
+	{
+		return of( (Map) null );
+	}
+
 	@SafeVarargs
 	static Dsol3Config of( final Map<String, String>... imports )
 	{
@@ -109,9 +116,29 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 		return of( Collections.map( entries ) );
 	}
 
+	default <Q extends Quantity> Dsol3Scheduler<Q> create()
+	{
+		return Dsol3Scheduler.of( this );
+	}
+
 	default <Q extends Quantity> Dsol3Scheduler<Q>
 		create( final ThrowingConsumer<Scheduler, ?> modelInitializer )
 	{
 		return Dsol3Scheduler.of( this, modelInitializer );
+	}
+
+	interface Initer
+	{
+		void init( Scheduler scheduler );
+	}
+
+	Class<? extends Initer> initerType();
+
+	/**
+	 * @return
+	 */
+	default ThrowingConsumer<Scheduler, ?> initer()
+	{
+		return Instantiator.instantiate( initerType() )::init;
 	}
 }

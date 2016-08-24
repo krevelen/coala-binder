@@ -85,23 +85,15 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Quartz implementation of CRON-like scheduler -->
-		<dependency>
-			<groupId>org.quartz-scheduler</groupId>
-			<artifactId>quartz</artifactId>
-			<version>${quartz.version}</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>guice3-coala-adapter</artifactId>
+			<artifactId>math3-coala-adapter</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>guice4-coala-adapter</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>

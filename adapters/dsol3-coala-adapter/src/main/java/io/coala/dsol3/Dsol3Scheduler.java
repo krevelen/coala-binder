@@ -13,7 +13,9 @@ import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.Thrower;
+import io.coala.function.Caller;
 import io.coala.function.ThrowingConsumer;
+import io.coala.config.InjectConfig;
 import io.coala.log.LogUtil;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
@@ -75,19 +77,23 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 //				pauseOnError, mode, Caller.rethrow( modelInitializer ) );
 //	}
 
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of(
-		final ThrowingConsumer<Scheduler, ?> modelInitializer,
-		final Map<?, ?>... imports )
+	public static <Q extends Quantity> Dsol3Scheduler<Q>
+		of( final Map<?, ?>... imports )
 	{
-		return of( ConfigCache.getOrCreate( Dsol3Config.class, imports ),
-				modelInitializer );
+		return of( ConfigCache.getOrCreate( Dsol3Config.class, imports ) );
+	}
+
+	public static <Q extends Quantity> Dsol3Scheduler<Q>
+		of( final Dsol3Config config )
+	{
+		return new Dsol3Scheduler<Q>( config );
 	}
 
 	public static <Q extends Quantity> Dsol3Scheduler<Q> of(
 		final Dsol3Config config,
-		final ThrowingConsumer<Scheduler, ?> modelInitializer )
+		final ThrowingConsumer<Scheduler, ?> onInitialize )
 	{
-		return new Dsol3Scheduler<Q>( config, modelInitializer );
+		return new Dsol3Scheduler<Q>( config, onInitialize );
 	}
 
 	/** */
@@ -107,6 +113,22 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 
 	/** the scheduler */
 	private final DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>> scheduler;
+
+	/**
+	 * {@link Dsol3Scheduler} constructor
+	 */
+	public Dsol3Scheduler()
+	{
+		this( Dsol3Config.get() );
+	}
+
+	/**
+	 * {@link Dsol3Scheduler} constructor
+	 */
+	public Dsol3Scheduler( @InjectConfig final Dsol3Config config )
+	{
+		this( config, config.initer() );
+	}
 
 	/**
 	 * {@link Dsol3Scheduler} constructor
@@ -136,42 +158,8 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 		this.scheduler.setPauseOnError( pauseOnError );
 		try
 		{
-			@SuppressWarnings( "serial" )
-			final DSOLModel model = new DSOLModel()
-			{
-				@Override
-				public void constructModel( final SimulatorInterface simulator )
-					throws RemoteException, SimRuntimeException
-				{
-					// schedule first event to rename the worker thread
-					((DEVSSimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>) simulator)
-							.scheduleEvent( new SimEvent<DsolTime<Q>>(
-									startTime, simulator, new Runnable()
-									{
-										@Override
-										public void run()
-										{
-											Thread.currentThread()
-													.setName( id );
-										}
-									}, "run", null ) );
-
-					// trigger onInitialize function
-					try
-					{
-						onInitialize.accept( Dsol3Scheduler.this );
-					} catch( final Throwable e )
-					{
-						Thrower.rethrowUnchecked( e );
-					}
-				}
-
-				@Override
-				public SimulatorInterface getSimulator()
-				{
-					return scheduler;
-				}
-			};
+			final DSOLModel model = of( id, startTime,
+					Caller.ofThrowingConsumer( onInitialize, this ) );
 
 			// initialize the simulator
 			this.scheduler.initialize( DsolTime.createReplication( id,
@@ -189,11 +177,11 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 					this.last = t;
 					// publish time externally
 					this.time.onNext( this.last.to( this.first.unit() ) );
-					// publish to registered listeners
 					this.listeners.computeIfPresent( t, ( t1, timeProxy ) ->
 					{
 						try
 						{
+							// publish to registered listeners
 							timeProxy.onNext( t );
 						} catch( final Throwable e )
 						{
@@ -298,5 +286,41 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 						}
 					} ) );
 		}
+	}
+
+	@SuppressWarnings( "serial" )
+	private static <Q extends Quantity>
+		DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>> of( final String id,
+			final DsolTime<Q> startTime, final Runnable callback )
+	{
+		return new DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>>()
+		{
+			private SimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>> simulator = null;
+
+			@Override
+			public SimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>
+				getSimulator()
+			{
+				return this.simulator;
+			}
+
+			@SuppressWarnings( "unchecked" )
+			@Override
+			public void constructModel(
+				final SimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>> simulator )
+				throws RemoteException, SimRuntimeException
+			{
+				this.simulator = simulator;
+				// schedule first event to rename the worker thread
+				((DEVSSimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>) simulator)
+						.scheduleEvent( new SimEvent<DsolTime<Q>>( startTime,
+								simulator, Caller.of( () ->
+								{
+									Thread.currentThread().setName( id );
+								} ), "run", null ) );
+
+				callback.run();
+			}
+		};
 	}
 }

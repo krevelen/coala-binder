@@ -5,18 +5,23 @@ import static org.aeonbits.owner.util.Collections.entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.measure.unit.NonSI;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.exception.Thrower;
-import io.coala.time.Instant;
+import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalConfig;
+import io.coala.guice4.Guice4LocalBinder;
+import io.coala.math3.Math3ProbabilityDistribution;
+import io.coala.math3.Math3PseudoRandom;
+import io.coala.random.ProbabilityDistribution;
+import io.coala.random.PseudoRandom;
 import io.coala.time.Proactive;
 import io.coala.time.Scheduler;
-import io.coala.time.Timing;
-import io.coala.util.Compare;
+import io.coala.time.Units;
 import net.jodah.concurrentunit.Waiter;
 
 /**
@@ -32,67 +37,54 @@ public class Dsol3SchedulerTest
 	private static final Logger LOG = LogManager
 			.getLogger( Dsol3SchedulerTest.class );
 
-	private void logTime( final Proactive t )
+	public static interface Model extends Proactive
 	{
-		LOG.trace( "logging, t={}", t.now() );
+		void init( Scheduler scheduler );
 	}
 
-	@Test( expected = IllegalStateException.class )
+	public static class ModelImpl implements Model
+	{
+		@Inject
+		private Scheduler scheduler;
+
+		@Inject
+		@Named
+		private PseudoRandom rng;
+
+		@Override
+		public void init( final Scheduler scheduler )
+		{
+			this.scheduler = scheduler;
+		}
+
+		@Override
+		public Scheduler scheduler()
+		{
+			return this.scheduler;
+		}
+	}
+
+	@Test //( expected = IllegalStateException.class )
 	public void testScheduler() throws TimeoutException
 	{
-//		final long seed = 1234L; // FIXME put in some replicator config somehow
-//		@SuppressWarnings( "serial" )
-//		final LocalBinder binder = Guice4LocalBinder.of( LocalConfig.builder()
-//				.withProvider( Scenario.class, Geard2011Scenario.class )
-//				.withProvider( ProbabilityDistribution.Factory.class,
-//						Math3ProbabilityDistribution.Factory.class )
-//				.build(), new HashMap<Class<?>, Object>()
-//				{
-//					{
-//						put( PseudoRandom.class, Math3PseudoRandom.Factory
-//								.ofMersenneTwister().create( "rng", seed ) );
-//					}
-//				} );
+		final LocalBinder binder = Guice4LocalBinder.of( LocalConfig.builder()
+				.withId( "dsolTest" )
+				.withProvider( Scheduler.class, Dsol3Scheduler.class )
+				.withProvider( PseudoRandom.Factory.class,
+						Math3PseudoRandom.MersenneTwisterFactory.class )
+				.withProvider( ProbabilityDistribution.Factory.class,
+						Math3ProbabilityDistribution.Factory.class )
+				.build() );
 		final Dsol3Config config = Dsol3Config.of(
 				entry( Dsol3Config.ID_KEY, "dsolTest" ),
 				entry( Dsol3Config.RUN_LENGTH_KEY, "500" ) );
 		LOG.info( "Starting DSOL test, config: {}", config );
-		final Scheduler sched = config.create( s ->
-		{
-			// initialize the model
-			s.at( s.now().add( 1 ) ).call( this::logTime, s );
-			s.at( s.now().add( 2 ) ).call( this::logTime, s );
-			s.at( s.now().add( 2 ) ).call( this::logTime, s );
-
-			final Instant throwTime = Instant.of( 200, NonSI.DAY );
-			s.schedule( Timing.of( "0 0 0 14 * ? *").iterate(), t ->
-			{
-				LOG.trace( "atEach handled, t={}", t.prettify( NonSI.DAY, 2 ) );
-
-				// generate scheduled error
-				if( Compare.ge( t, throwTime ) )
-					Thrower.throwNew( IllegalStateException.class,
-							"Throwing beyond t={}", throwTime );
-			} ).subscribe( exp ->
-			{
-				LOG.trace( "atEach next: {}", exp );
-			}, e ->
-			{
-				LOG.warn( "atEach failed, t={}",
-						s.now().prettify( NonSI.DAY, 2 ) );
-			}, () ->
-			{
-				LOG.trace( "atEach done, t={}",
-						s.now().prettify( NonSI.DAY, 2 ) );
-			} );
-
-			LOG.trace( "initialized, t={}", s.now() );
-		} );
+		final Scheduler sched = binder.inject( Model.class ).scheduler();
 
 		final Waiter waiter = new Waiter();
 		sched.time().subscribe( time ->
 		{
-			LOG.trace( "t={}", time.prettify( NonSI.DAY, 2 ) );
+			LOG.trace( "t={}", time.prettify( Units.DAYS, 2 ) );
 		}, error ->
 		{
 			LOG.error( "error at t=" + sched.now(), error );

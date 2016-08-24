@@ -26,7 +26,7 @@ import io.coala.bind.LocalConfig;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.ProviderConfig;
 import io.coala.config.InjectConfig;
-import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.util.Instantiator;
@@ -67,10 +67,10 @@ public class Guice4LocalBinder implements LocalBinder
 
 				// binds itself, how nice :-)
 				bind( LocalBinder.class ).toInstance( binder );
-				emit( LocalBinder.class, binder );
+				emit( LocalBinder.class );
 
 				if( imports != null ) for( Map<?, ?> imported : imports )
-					imported.forEach( ( key, value ) ->
+					if( imported != null ) imported.forEach( ( key, value ) ->
 					{
 						if( value instanceof Class )
 							bindImpl( (Class<?>) key, (Class<?>) value );
@@ -111,9 +111,35 @@ public class Guice4LocalBinder implements LocalBinder
 				}
 			}
 
-			private void emit( final Class<?> type, final Object impl )
+			private void emit( final Class<?> type )
 			{
-				binder.bindings.onNext( LocalBinder.class );
+				binder.bindings.onNext( type );
+			}
+
+			/**
+			 * @param type the {@link Provider}, {@link Inject} or other type
+			 */
+			@SuppressWarnings( "unchecked" )
+			private <T> void bindConstructor( final Class<T> type )
+			{
+				for( Constructor<?> constructor : type.getConstructors() )
+					if( constructor.isAnnotationPresent( Inject.class ) )
+					{
+						bind( type )
+								.toConstructor( (Constructor<T>) constructor );
+						emit( type );
+						LOG.trace( "Bound {} <- {}", type, constructor );
+						return;
+					}
+				bind( type ).toProvider( (Provider<T>) () ->
+				{
+					final T result = ((Provider<T>) LocalProvider.of( binder,
+							type )).get();
+					requestInjection( result );
+					return result;
+				} );
+//				Thrower.throwNew( IllegalArgumentException.class,
+//						"Can't bind to self: {}", type );
 			}
 
 			/**
@@ -122,10 +148,8 @@ public class Guice4LocalBinder implements LocalBinder
 			private <T> void bindImpl( final Class<T> type,
 				final Class<?> impl )
 			{
-				if( type == impl ) throw new IllegalArgumentException(
-						"Can't bind to self: " + type );
-
 				bind( type ).to( impl.asSubclass( type ) );
+				emit( type );
 				LOG.trace( "Bound {} <- {}", type, impl );
 			}
 
@@ -137,6 +161,7 @@ public class Guice4LocalBinder implements LocalBinder
 				final Provider<?> provider )
 			{
 				bind( type ).toProvider( (Provider<T>) provider );
+				emit( type );
 				LOG.trace( "Bound {} <- {}", type, provider );
 			}
 
@@ -167,29 +192,15 @@ public class Guice4LocalBinder implements LocalBinder
 					bindProvider( type, provider );
 				} else
 				{
-					boolean injectAnnotated = false;
-					for( Field field : impl.getDeclaredFields() )
-						injectAnnotated |= field
-								.isAnnotationPresent( Inject.class )
-								|| field.isAnnotationPresent(
-										InjectLogger.class )
-								|| field.isAnnotationPresent(
-										InjectConfig.class );
-					for( Constructor<?> constructor : impl.getConstructors() )
-						if( constructor.isAnnotationPresent( Inject.class ) )
-						{
-							injectAnnotated = true;
-//							bind( type ).toConstructor(
-//									(Constructor<T>) constructor );
-//							LOG.trace( "Bound {} <- {}", type, constructor );
-							break;
-						}
-					if( injectAnnotated )
+					// FIXME
+					if( hasInjectAnnotation( impl ) )
 						provider = null;//LocalProvider.of( binder, getProvider( type ), false );
 					else
 						provider = LocalProvider.of( binder, impl );
 					if( provider != null )
 						bindProvider( type, provider );
+					else if( type == impl )
+						bindConstructor( type );
 					else
 						bindImpl( type, impl );
 				}
@@ -206,7 +217,7 @@ public class Guice4LocalBinder implements LocalBinder
 				} else if( binder.mutables.remove( type ) != null )
 					LOG.warn( "{}::{} no longer mutable!",
 							LocalContextual.toString( binder.id ), type );
-				emit( type, provider );
+				emit( type );
 				return provider;
 			}
 		} );
@@ -313,8 +324,8 @@ public class Guice4LocalBinder implements LocalBinder
 		final Provider<T> provider )
 	{
 		final MutableProvider<?> mutable = this.mutables.get( type );
-		if( mutable == null ) throw ExceptionFactory.createUnchecked(
-				"{} is not configured to have a {}", type,
+		if( mutable == null ) Thrower.throwNew( IllegalStateException.class,
+				"Can't reset binding for {} without a {}", type,
 				MutableProvider.class.getSimpleName() );
 
 		((MutableProvider<T>) mutable)
@@ -326,6 +337,18 @@ public class Guice4LocalBinder implements LocalBinder
 	@Override
 	public String toString()
 	{
-		return LocalContextual.toString( this );
+		return getClass().getSimpleName()+'['+this.id+']'+this.config.toJSON();
+	}
+
+	private static boolean hasInjectAnnotation( final Class<?> impl )
+	{
+		for( Field field : impl.getDeclaredFields() )
+			if( field.isAnnotationPresent( Inject.class )
+					|| field.isAnnotationPresent( InjectLogger.class )
+					|| field.isAnnotationPresent( InjectConfig.class ) )
+				return true;
+		for( Constructor<?> constructor : impl.getConstructors() )
+			if( constructor.isAnnotationPresent( Inject.class ) ) return true;
+		return false;
 	}
 }

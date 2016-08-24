@@ -207,7 +207,7 @@ public interface Proactive extends Timed
 		 */
 		default Expectation call( final ThrowingConsumer<Instant, ?> call )
 		{
-			return call( Caller.of( call, now() )::run );
+			return call( Caller.ofThrowingConsumer( call, now() )::run );
 		}
 
 		/**
@@ -218,7 +218,7 @@ public interface Proactive extends Timed
 		default <T> Expectation call( final ThrowingConsumer<T, ?> call,
 			final T t )
 		{
-			return call( Caller.of( call, t )::run );
+			return call( Caller.ofThrowingConsumer( call, t )::run );
 		}
 
 		/**
@@ -230,7 +230,7 @@ public interface Proactive extends Timed
 		default <T, U, E extends Exception> Expectation
 			call( final ThrowingBiConsumer<T, U, E> call, final T t, final U u )
 		{
-			return call( Caller.of( call, t, u )::run );
+			return call( Caller.ofThrowingBiConsumer( call, t, u )::run );
 		}
 
 		/**
