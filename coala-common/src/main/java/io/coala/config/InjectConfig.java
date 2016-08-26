@@ -23,6 +23,8 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.Map;
 
+import javax.inject.Qualifier;
+
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 
@@ -30,25 +32,31 @@ import io.coala.bind.LocalBinder;
 import io.coala.name.Identified;
 
 /**
- * {@link InjectConfig} marks fields, parameters or (setter) methods that should
- * inject a {@link org.aeonbits.config.Config} sub-type dependency using e.g.
- * the {@link ConfigFactory} or {@link ConfigCache}, depending on the specified
- * {@link #cache()} {@link Scope} value. See also the <a
- * href=http://owner.aeonbits.org/>OWNER API</a>.
+ * {@link InjectConfig} marks an {@link Inject}able type's member field(s) which
+ * extend(s) {@link org.aeonbits.config.Config}, and controls the caching
+ * behavior of injection using e.g. the {@link ConfigFactory} or
+ * {@link ConfigCache}, depending on the {@link Scope} value specified by
+ * {@link #value()}.
+ * <p>
+ * See also the <a href=http://owner.aeonbits.org/>OWNER API</a>.
  * <p>
  * Inspired by
  * <a href="http://java-taste.blogspot.nl/2011/10/guiced-configuration.html" >
  * here</a>
  */
+@Qualifier
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
-@Target( { ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD } )
+@Target( { ElementType.FIELD } )
 public @interface InjectConfig
 {
+
 	/**
 	 * @return the cache {@link Scope} of the injected {@link Config} instance
 	 */
-	Scope cache() default Scope.CLASSLOADER;
+	Scope value() default Scope.DEFAULT;
+
+	String[] yamlURI() default {};
 
 	/**
 	 * {@link Scope} determines which key to use for
@@ -64,7 +72,7 @@ public @interface InjectConfig
 		 * {@link Config} instance shared across current ClassLoader (also the
 		 * default key in {@link ConfigCache#getOrCreate(Class, Map...)})
 		 */
-		CLASSLOADER,
+		DEFAULT,
 
 		/**
 		 * use the injectable field as caching key: get the {@link Config}

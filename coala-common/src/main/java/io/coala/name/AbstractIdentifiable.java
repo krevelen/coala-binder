@@ -17,6 +17,8 @@ package io.coala.name;
 
 import java.io.Serializable;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
 import io.coala.json.JsonUtil;
-import io.coala.log.InjectLogger;
 
 /**
  * {@link AbstractIdentifiable}
@@ -48,7 +49,7 @@ public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 	private static final long serialVersionUID = 1L;
 
 	/** the injected {@link Logger} */
-	@InjectLogger
+	@Inject
 	private transient Logger LOG;
 
 	/** */

@@ -51,7 +51,9 @@ public class Guice4LocalBinderTest
 		private Logger LOG;
 
 		/** should be injected */
-		@InjectConfig( cache = Scope.FIELD )
+		@InjectConfig( value = Scope.FIELD,
+			yamlURI =
+		{ "classpath:log4j2-test.yaml" } )
 		private MyConfig config;
 
 		@Inject
@@ -62,9 +64,9 @@ public class Guice4LocalBinderTest
 
 		void doLog()
 		{
+			this.config.setProperty( MyConfig.MY_VALUE_KEY, "newValue" );
 			LOG.trace( "{} instantiated with binder: {} and config: {}",
 					getClass().getSimpleName(), this.binder, this.config );
-			this.config.setProperty( MyConfig.MY_VALUE_KEY, "newValue" );
 		}
 	}
 
@@ -74,7 +76,7 @@ public class Guice4LocalBinderTest
 		private final LocalBinder binder;
 
 		/** should be injected */
-		@InjectLogger
+		@Inject
 		private Logger LOG;
 
 		@Inject

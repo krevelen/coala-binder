@@ -59,6 +59,8 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 
 	String SIMULATOR_TYPE_KEY = "dsol3.replication.simulator.class";
 
+	String INITER_TYPE_KEY = "dsol3.replication.model.class";
+
 	@Key( ID_KEY )
 	@DefaultValue( "repl0" )
 	String id();
@@ -88,6 +90,9 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 	@Key( PAUSE_ON_ERROR_KEY )
 	@DefaultValue( "true" )
 	boolean pauseOnError();
+
+	@Key( INITER_TYPE_KEY )
+	Class<? extends Initer> initerType();
 
 	class DsolTimeConverter implements Converter<DsolTime<?>>
 	{
@@ -131,8 +136,6 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 	{
 		void init( Scheduler scheduler );
 	}
-
-	Class<? extends Initer> initerType();
 
 	/**
 	 * @return

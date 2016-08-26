@@ -15,18 +15,14 @@
  */
 package io.coala.eve3;
 
+import javax.inject.Inject;
+
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
 import io.coala.agent.AgentStatusUpdate;
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.capability.admin.CreatingCapability;
-import io.coala.log.InjectLogger;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-
 import rx.Observable;
 
 /**
@@ -43,8 +39,8 @@ public class EveCreatingCapability extends BasicCapability
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
-	private Logger LOG;
+//	@Inject
+//	private Logger LOG;
 
 	/**
 	 * {@link EveCreatingCapability} CDI constructor

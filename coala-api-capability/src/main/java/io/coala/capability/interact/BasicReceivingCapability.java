@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import io.coala.agent.Agent;
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
-import io.coala.log.InjectLogger;
 import io.coala.message.Message;
 import io.coala.message.MessageHandler;
 import rx.Observable;
@@ -35,7 +34,7 @@ public class BasicReceivingCapability extends BasicCapability
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	/** type of {@link Agent} owning the {@link Binder} */

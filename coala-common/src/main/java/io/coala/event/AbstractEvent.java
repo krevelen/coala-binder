@@ -15,12 +15,9 @@
  */
 package io.coala.event;
 
-import org.slf4j.Logger;
-
 import io.coala.agent.AgentID;
 import io.coala.lifecycle.ActivationType;
 import io.coala.lifecycle.LifeCycleHooks;
-import io.coala.log.InjectLogger;
 import io.coala.model.ModelComponent;
 import io.coala.model.ModelComponentID;
 import io.coala.process.AbstractJob;
@@ -41,8 +38,8 @@ public abstract class AbstractEvent<ID extends EventID<?>>
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
-	private transient Logger log;
+//	@Inject
+//	private transient Logger log;
 
 	/** */
 	private ModelComponentID<?> producerID;

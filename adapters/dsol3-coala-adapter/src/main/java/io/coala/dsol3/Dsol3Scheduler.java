@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import javax.inject.Inject;
 import javax.measure.Measurable;
 import javax.measure.quantity.Quantity;
 
@@ -15,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 import io.coala.exception.Thrower;
 import io.coala.function.Caller;
 import io.coala.function.ThrowingConsumer;
-import io.coala.config.InjectConfig;
 import io.coala.log.LogUtil;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
@@ -117,6 +117,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	/**
 	 * {@link Dsol3Scheduler} constructor
 	 */
+	@Inject
 	public Dsol3Scheduler()
 	{
 		this( Dsol3Config.get() );
@@ -125,7 +126,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	/**
 	 * {@link Dsol3Scheduler} constructor
 	 */
-	public Dsol3Scheduler( @InjectConfig final Dsol3Config config )
+	public Dsol3Scheduler( final Dsol3Config config )
 	{
 		this( config, config.initer() );
 	}

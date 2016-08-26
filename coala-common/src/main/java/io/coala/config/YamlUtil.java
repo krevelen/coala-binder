@@ -17,6 +17,7 @@ package io.coala.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Map;
@@ -75,9 +76,19 @@ public class YamlUtil implements Util
 	public static Properties flattenYaml( final File yamlPath,
 		final CharSequence... baseKeys ) throws IOException
 	{
-		return ConfigUtil.flatten(
-				getYamlMapper().readTree( FileUtil.toInputStream( yamlPath ) ),
-				baseKeys );
+		return flattenYaml( FileUtil.toInputStream( yamlPath ), baseKeys );
+	}
+
+	/**
+	 * @param yamlPath the (relative, absolute, or class-path) YAML location
+	 * @param baseKeys the base keys for all imported property keys
+	 * @return a flat {@link Properties} mapping
+	 * @throws IOException
+	 */
+	public static Properties flattenYaml( final InputStream is,
+		final CharSequence... baseKeys ) throws IOException
+	{
+		return ConfigUtil.flatten( getYamlMapper().readTree( is ), baseKeys );
 	}
 
 	private static final String nl = "\r\n", hash = "# ";

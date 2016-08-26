@@ -15,6 +15,8 @@
  */
 package io.coala.eve3;
 
+import javax.inject.Inject;
+
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
@@ -22,7 +24,6 @@ import io.coala.agent.BasicAgent;
 import io.coala.bind.Binder;
 import io.coala.capability.admin.DestroyingCapability;
 import io.coala.capability.interact.ReceivingCapability;
-import io.coala.log.InjectLogger;
 import io.coala.message.AbstractMessage;
 import io.coala.message.MessageID;
 import io.coala.time.NanoInstant;
@@ -51,7 +52,7 @@ public class CleanupTestAgent extends BasicAgent
 		}
 	}
 
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	/**
@@ -59,7 +60,7 @@ public class CleanupTestAgent extends BasicAgent
 	 * 
 	 * @param binder the {@link Binder}
 	 */
-	public CleanupTestAgent( )
+	public CleanupTestAgent()
 	{
 		getBinder().inject( ReceivingCapability.class ).getIncoming()
 				.ofType( Harakiri.class )// .observeOn(Schedulers.trampoline())

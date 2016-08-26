@@ -84,7 +84,7 @@ public interface LocalConfig extends GlobalConfig
 	@Key( ID_KEY )
 	@DefaultValue( ID_DEFAULT )
 	@ConverterClass( LocalConfig.AnonymousConverter.class )
-	String id();
+	String rawId();
 
 	// TODO add 'extends' key to inherit/import from other contexts
 
@@ -158,9 +158,8 @@ public interface LocalConfig extends GlobalConfig
 		public LocalConfig build()
 		{
 			final Properties props = ConfigUtil.flatten( this.tree );
-			LogUtil.getLogger( LocalConfig.class ).trace(
-					"flattened: {} into: {}", JsonUtil.toJSON( this.tree ),
-					props );
+			LogUtil.getLogger( this ).trace( "flattened: {} into: {}",
+					JsonUtil.toJSON( this.tree ), props );
 			return LocalConfig.create( props );
 		}
 	}

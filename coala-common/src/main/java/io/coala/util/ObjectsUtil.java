@@ -1,4 +1,6 @@
-/* $Id: 78aec19c5642407975198ddbf792739c70842b11 $
+/* $Id$
+ * 
+ * Part of ZonMW project no. 50-53000-98-156
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,29 +14,37 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ * 
+ * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.log;
+package io.coala.util;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import javax.inject.Qualifier;
+import java.util.function.Consumer;
 
 /**
- * {@link InjectLogger} follows this <a
- * href=https://github.com/google/guice/wiki/CustomInjections>guice example</a>
+ * {@link ObjectsUtil}
  * 
- * @version $Id: 78aec19c5642407975198ddbf792739c70842b11 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
-@Qualifier
-@Documented
-@Retention( RetentionPolicy.RUNTIME )
-@Target( ElementType.FIELD )
-public @interface InjectLogger
+public class ObjectsUtil
 {
 
+	/**
+	 * {@link ObjectsUtil} singleton constructor
+	 */
+	private ObjectsUtil()
+	{
+
+	}
+
+	public static <T> void doIfNotNull( final T t, final Consumer<T> consumer )
+	{
+		if( t != null ) consumer.accept( t );
+	}
+
+	public static <T> T defaultIfNull( final T t, final T defaultT )
+	{
+		return t == null ? defaultT : t;
+	}
 }

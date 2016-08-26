@@ -46,7 +46,6 @@ import io.coala.enterprise.organization.Organization;
 import io.coala.exception.ExceptionFactory;
 import io.coala.invoke.ProcedureCall;
 import io.coala.invoke.Schedulable;
-import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.message.Message;
 import io.coala.model.ModelComponent;
@@ -78,7 +77,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	/** */

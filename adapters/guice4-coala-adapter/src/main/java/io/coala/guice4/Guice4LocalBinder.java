@@ -12,12 +12,19 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+import org.aeonbits.owner.Config;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.MembersInjector;
+import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
+import com.google.inject.spi.InjectionListener;
+import com.google.inject.spi.TypeEncounter;
+import com.google.inject.spi.TypeListener;
 
 import io.coala.bind.BinderConfig;
 import io.coala.bind.BindingConfig;
@@ -25,6 +32,7 @@ import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.ProviderConfig;
+import io.coala.config.ConfigUtil;
 import io.coala.config.InjectConfig;
 import io.coala.exception.Thrower;
 import io.coala.log.InjectLogger;
@@ -59,15 +67,59 @@ public class Guice4LocalBinder implements LocalBinder
 			@Override
 			public void configure()
 			{
-				bindListener( Matchers.any(),
-						new Guice4InjectLoggerTypeListener() );
-
-				bindListener( Matchers.any(),
-						new Guice4InjectConfigTypeListener() );
+				bindListener( Matchers.any(), new TypeListener()
+				{
+					@Override
+					public <T> void hear( final TypeLiteral<T> typeLiteral,
+						final TypeEncounter<T> typeEncounter )
+					{
+						for( Class<?> clazz = typeLiteral
+								.getRawType(); clazz != Object.class; clazz = clazz
+										.getSuperclass() )
+						{
+							for( Field field : clazz.getDeclaredFields() )
+							{
+								if( field.getType() == Logger.class )
+								{
+									if( field.isAnnotationPresent(
+											Inject.class ) )
+										typeEncounter.register(
+												(InjectionListener<T>) t ->
+												{
+													// replace default logger
+													LogUtil.injectLogger( t,
+															field );
+												} );
+									else if( field.isAnnotationPresent(
+											InjectLogger.class ) )
+										typeEncounter.register(
+												(MembersInjector<T>) t ->
+												{
+													// inject for first time
+													LogUtil.injectLogger( t,
+															field );
+												} );
+								} else if( Config.class
+										.isAssignableFrom( field.getType() )
+										&& field.isAnnotationPresent(
+												InjectConfig.class ) )
+									typeEncounter
+											.register( (MembersInjector<T>) t ->
+											{
+												ConfigUtil.injectConfig( t,
+														field, binder );
+											} );
+							}
+						}
+					}
+				} );
 
 				// binds itself, how nice :-)
 				bind( LocalBinder.class ).toInstance( binder );
 				emit( LocalBinder.class );
+
+				bind( Logger.class )//.annotatedWith( InjectLogger.class )
+						.toInstance( LogManager.getRootLogger() );
 
 				if( imports != null ) for( Map<?, ?> imported : imports )
 					if( imported != null ) imported.forEach( ( key, value ) ->
@@ -270,7 +322,7 @@ public class Guice4LocalBinder implements LocalBinder
 	{
 		final Guice4LocalBinder result = new Guice4LocalBinder();
 		result.config = config.binderConfig();
-		result.id = config.id();
+		result.id = config.rawId();
 		result.context = config.context();
 		if( result.context == null ) result.context = new Context();
 		result.injector = cachedInjectorFor( result, bindImports );
@@ -337,18 +389,19 @@ public class Guice4LocalBinder implements LocalBinder
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName()+'['+this.id+']'+this.config.toJSON();
+		return getClass().getSimpleName() + '[' + this.id + ']'
+				+ this.config.toJSON();
 	}
 
 	private static boolean hasInjectAnnotation( final Class<?> impl )
 	{
+		for( Constructor<?> constructor : impl.getConstructors() )
+			if( constructor.isAnnotationPresent( Inject.class ) ) return true;
 		for( Field field : impl.getDeclaredFields() )
 			if( field.isAnnotationPresent( Inject.class )
 					|| field.isAnnotationPresent( InjectLogger.class )
 					|| field.isAnnotationPresent( InjectConfig.class ) )
 				return true;
-		for( Constructor<?> constructor : impl.getConstructors() )
-			if( constructor.isAnnotationPresent( Inject.class ) ) return true;
 		return false;
 	}
 }

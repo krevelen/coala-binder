@@ -2,6 +2,7 @@ package io.coala.dsol3;
 
 import static org.aeonbits.owner.util.Collections.entry;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -37,9 +38,9 @@ public class Dsol3SchedulerTest
 	private static final Logger LOG = LogManager
 			.getLogger( Dsol3SchedulerTest.class );
 
-	public static interface Model extends Proactive
+	public static interface Model extends Proactive, Dsol3Config.Initer
 	{
-		void init( Scheduler scheduler );
+
 	}
 
 	public static class ModelImpl implements Model
@@ -48,13 +49,22 @@ public class Dsol3SchedulerTest
 		private Scheduler scheduler;
 
 		@Inject
-		@Named
-		private PseudoRandom rng;
+//		@Named
+//		FIXME private PseudoRandom rng;
+		private ProbabilityDistribution.Factory distFact;
 
 		@Override
 		public void init( final Scheduler scheduler )
 		{
 			this.scheduler = scheduler;
+			// TODO test parser;
+			Objects.requireNonNull( this.scheduler );
+			Objects.requireNonNull( this.distFact );
+			final ProbabilityDistribution<Boolean> dist = this.distFact
+					.createBernoulli( 0.5 );
+			for( int i = 0; i < 10; i++ )
+				LOG.trace( "coin toss #{}: {}", i + 1,
+						dist.draw() ? "heads" : "tails" );
 		}
 
 		@Override
@@ -69,15 +79,19 @@ public class Dsol3SchedulerTest
 	{
 		final LocalBinder binder = Guice4LocalBinder.of( LocalConfig.builder()
 				.withId( "dsolTest" )
+				.withProvider( Model.class, ModelImpl.class )
 				.withProvider( Scheduler.class, Dsol3Scheduler.class )
 				.withProvider( PseudoRandom.Factory.class,
 						Math3PseudoRandom.MersenneTwisterFactory.class )
 				.withProvider( ProbabilityDistribution.Factory.class,
 						Math3ProbabilityDistribution.Factory.class )
 				.build() );
+		// TODO generalize to replication config
 		final Dsol3Config config = Dsol3Config.of(
 				entry( Dsol3Config.ID_KEY, "dsolTest" ),
-				entry( Dsol3Config.RUN_LENGTH_KEY, "500" ) );
+				entry( Dsol3Config.RUN_LENGTH_KEY, "500" ),
+				entry( Dsol3Config.INITER_TYPE_KEY, // FIXME remove usage
+						ModelImpl.class.getName() ) );
 		LOG.info( "Starting DSOL test, config: {}", config );
 		final Scheduler sched = binder.inject( Model.class ).scheduler();
 

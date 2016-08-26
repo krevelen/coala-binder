@@ -15,6 +15,8 @@
  */
 package io.coala.config;
 
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,11 +35,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.aeonbits.owner.Accessible;
+import org.aeonbits.owner.Config;
+import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.coala.bind.LocalBinder;
+import io.coala.config.InjectConfig.Scope;
+import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
+import io.coala.name.Identified;
+import io.coala.util.FileUtil;
+import io.coala.util.ObjectsUtil;
 import io.coala.util.Util;
 
 /**
@@ -374,5 +385,98 @@ public class ConfigUtil implements Util
 			if( m.find() ) unique.add( m.group( 1 ) );
 		}
 		return unique;
+	}
+
+	private static final String CLASSPATH_PROTOCOL = "classpath:";
+	private static final String KEY_GROUP = "key";
+	private static final Pattern VARIABLE_PATTERN = Pattern
+			.compile( Pattern.quote( "${" ) + "(?<" + KEY_GROUP + ">[^}]*)"
+					+ Pattern.quote( "}" ) );
+
+	/**
+	 * @param source the path to expand using System and Environment variables
+	 * @return the expanded path
+	 * @see org.aeonbits.owner.ConfigURIFactory
+	 */
+	private static String expand( final String source )
+	{
+		String path = source.replaceAll( "\\\\", "/" );
+		final StringBuffer sb = new StringBuffer();
+		final Matcher matcher = VARIABLE_PATTERN.matcher( path );
+		while( matcher.find() )
+		{
+			final String key = matcher.group( KEY_GROUP );
+			Object value = System.getProperties().get( key );
+			if( value == null ) value = System.getenv().get( key );
+			if( value == null ) Thrower.throwNew( NullPointerException.class,
+					"Can't expand system/environment variable: {}", key );
+			matcher.appendReplacement( sb,
+					value.toString().replaceAll( "\\\\", "/" ) );
+		}
+		matcher.appendTail( sb );
+		path = sb.toString();
+		if( path.startsWith( CLASSPATH_PROTOCOL ) )
+			path = path.substring( CLASSPATH_PROTOCOL.length() );
+		return path;
+	}
+
+	public static <T> boolean injectConfig( final T t, final Field field,
+		final LocalBinder binder )
+	{
+		if( !Config.class.isAssignableFrom( field.getType() ) ) return false;
+		final InjectConfig annot = field.getAnnotation( InjectConfig.class );
+		final List<Map<?, ?>> imports = new ArrayList<>();
+		if( annot != null && annot.yamlURI().length != 0 )
+		{
+			for( String yamlURI : annot.yamlURI() )
+				try
+				{
+					LogUtil.getLogger( ConfigUtil.class )
+							.trace( "Import YAML from {}", yamlURI );
+					final InputStream is = FileUtil
+							.toInputStream( expand( yamlURI ) );
+					if( is != null ) imports.add( YamlUtil.flattenYaml( is ) );
+				} catch( final Exception e )
+				{
+					return Thrower.rethrowUnchecked( e );
+				}
+		}
+		final Map<?, ?>[] importsArray = imports
+				.toArray( new Map[imports.size()] );
+		final Scope scope = annot != null ? annot.value() : Scope.DEFAULT;
+		try
+		{
+			final Class<? extends Config> type = field.getType()
+					.asSubclass( Config.class );
+			field.setAccessible( true );
+			final Object key;
+			switch( scope )
+			{
+			case BINDER:
+				key = binder;
+				break;
+			case FIELD:
+				key = field;
+				break;
+			case ID:
+				key = t instanceof Identified<?> ? ObjectsUtil
+						.defaultIfNull( ((Identified<?>) t).id(), t ) : t;
+				break;
+			case NONE:
+				key = null;
+				break;
+			default:
+			case DEFAULT:
+				key = type;
+				break;
+			}
+			field.set( t, key == null
+					? ConfigFactory.create( type, importsArray )
+					: ConfigCache.getOrCreate( key, type, importsArray ) );
+			return true;
+		} catch( final Throwable e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
 	}
 }

@@ -31,7 +31,6 @@ import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.example.conway.CellLink.CellLinkStatus;
-import io.coala.log.InjectLogger;
 import io.coala.time.SimTime;
 import io.coala.time.TimeUnit;
 import rx.Observable;
@@ -74,7 +73,7 @@ public class CellWorldFixedLattice extends BasicCapability implements CellWorld
 	private final transient Map<CellID, Subscription> myNeighbors = new HashMap<>();
 
 	/** */
-	@InjectLogger
+	@Inject
 	private transient Logger LOG;
 
 	/** TODO use persistence capability? */

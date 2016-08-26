@@ -38,7 +38,6 @@ import io.coala.config.CoalaProperty;
 import io.coala.dsol.util.ExperimentBuilder;
 import io.coala.dsol.util.ReplicationBuilder;
 import io.coala.exception.ExceptionFactory;
-import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.name.Identifier;
 import io.coala.process.Job;
@@ -86,7 +85,7 @@ public class DsolSimulatorService extends BasicCapability
 					new HashMap<RandomNumberStream.ID, RandomNumberStream>() );
 
 	/** */
-	@InjectLogger // not useful if logging occurs during construction
+	@Inject // not useful if logging occurs during construction
 	private transient Logger LOG;
 
 	/** */
