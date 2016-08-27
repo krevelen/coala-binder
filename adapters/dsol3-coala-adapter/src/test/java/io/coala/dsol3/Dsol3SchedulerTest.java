@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,10 +47,10 @@ public class Dsol3SchedulerTest
 		@Inject
 		private Scheduler scheduler;
 
-		@Inject
+//		@Inject
 //		@Named
 //		FIXME private PseudoRandom rng;
-		private ProbabilityDistribution.Factory distFact;
+//		private ProbabilityDistribution.Factory distFact;
 
 		@Override
 		public void init( final Scheduler scheduler )
@@ -59,12 +58,12 @@ public class Dsol3SchedulerTest
 			this.scheduler = scheduler;
 			// TODO test parser;
 			Objects.requireNonNull( this.scheduler );
-			Objects.requireNonNull( this.distFact );
-			final ProbabilityDistribution<Boolean> dist = this.distFact
-					.createBernoulli( 0.5 );
-			for( int i = 0; i < 10; i++ )
-				LOG.trace( "coin toss #{}: {}", i + 1,
-						dist.draw() ? "heads" : "tails" );
+//			Objects.requireNonNull( this.distFact );
+//			final ProbabilityDistribution<Boolean> dist = this.distFact
+//					.createBernoulli( 0.5 );
+//			for( int i = 0; i < 10; i++ )
+//				LOG.trace( "coin toss #{}: {}", i + 1,
+//						dist.draw() ? "heads" : "tails" );
 		}
 
 		@Override
@@ -109,7 +108,7 @@ public class Dsol3SchedulerTest
 		} );
 		sched.resume();
 		waiter.await( 1, TimeUnit.SECONDS );
-		LOG.error( "failed: error expected, t={}", sched.now() );
+//		LOG.error( "failed: error expected, t={}", sched.now() );
 	}
 
 }

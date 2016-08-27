@@ -63,8 +63,6 @@ import org.jscience.physics.amount.Amount;
 
 import io.coala.bind.LocalBinder;
 import io.coala.exception.ExceptionFactory;
-import io.coala.function.Caller;
-import io.coala.log.LogUtil;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.WeightedValue;
 import io.coala.random.AmountDistribution;
@@ -213,17 +211,6 @@ public abstract class Math3ProbabilityDistribution<S>
 			return new Factory( stream );
 		}
 
-		/** */
-		private static final Logger LOG = LogUtil
-				.getLogger( Math3ProbabilityDistribution.Factory.class );
-
-		private static final <T> T returnAfterCall( final T t,
-			final Runnable call )
-		{
-			call.run();
-			return t;
-		}
-
 		/** the {@link PseudoRandom} wrapping {@link #rng} */
 		private PseudoRandom stream;
 
@@ -240,8 +227,7 @@ public abstract class Math3ProbabilityDistribution<S>
 			final PseudoRandom.Factory rngFactory )
 		{
 			this( rngFactory.create( PseudoRandom.Config.NAME_DEFAULT,
-					returnAfterCall( binder.id().hashCode(),
-							Caller.ofConsumer( LOG::trace, "sdf" ) ) ) );
+					binder.id().hashCode() ) );
 		}
 
 		public Factory( final PseudoRandom stream )
