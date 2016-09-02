@@ -22,14 +22,14 @@ package io.coala.enterprise;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 
-import io.coala.enterprise.fact.CoordinationFactType;
-import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
@@ -64,7 +64,14 @@ public interface CoordinationFact
 	ID causeID();
 
 	/** @return */
-	Map<?, ?> params();
+	@JsonAnyGetter
+	Map<String, Object> params();
+
+	@JsonAnySetter
+	default void set( final String name, final Object value )
+	{
+		params().put( name, value );
+	}
 
 	/**
 	 * @param subtype
@@ -95,9 +102,7 @@ public interface CoordinationFact
 						{
 							if( callObserver != null )
 								callObserver.onError( e );
-							throw ExceptionFactory.createUnchecked( e,
-									"Problem invoking {}{}", method,
-									Arrays.asList( args ) );
+							return Thrower.rethrowUnchecked( e );
 						}
 					}
 				} );
@@ -111,18 +116,6 @@ public interface CoordinationFact
 	 */
 	interface Factory
 	{
-
-//			default <F extends CoordinationFact> F create(
-//				final Transaction<F> tran, final CompositeActor.ID creatorID,
-//				final CoordinationFactType type, final CoordinationFact cause,
-//				final Instant expiration, final Map<?, ?>... params )
-//			{
-//				return create( tran.scheduler(),
-//						TypeArguments.of( Transaction.class, tran.getClass() )
-//								.get( 0 ).asSubclass( CoordinationFact.class ),
-//						ID.of(), tran.id(), creatorID, type, expiration,
-//						cause.id(), params );
-//			}
 
 		/**
 		 * @param scheduler
@@ -141,27 +134,6 @@ public interface CoordinationFact
 			Organization.ID creatorID, CoordinationFactType type,
 			Instant expiration, CoordinationFact.ID causeID,
 			Map<?, ?>... params );
-
-		/** @return */
-		static CoordinationFact.Factory ofSimpleProxy()
-		{
-			return new Factory()
-			{
-				@Override
-				public <F extends CoordinationFact> F create(
-					final Scheduler scheduler, final Class<F> factKind,
-					final CoordinationFact.ID id, final Transaction.ID tranID,
-					final Organization.ID creatorID,
-					final CoordinationFactType type, final Instant expiration,
-					final CoordinationFact.ID causeID,
-					final Map<?, ?>... params )
-				{
-					return new Simple( factKind, id, scheduler.now(), tranID,
-							creatorID, type, expiration, causeID, params )
-									.proxyAs( factKind, null );
-				}
-			};
-		}
 	}
 
 	interface Persister
@@ -235,7 +207,7 @@ public interface CoordinationFact
 
 		private CoordinationFact.ID causeID;
 
-		private Map<?, ?> params = new HashMap<>();
+		private Map<String, Object> params = new HashMap<>();
 
 		/**
 		 * {@link Simple} zero-arg bean constructor
@@ -245,7 +217,6 @@ public interface CoordinationFact
 
 		}
 
-		@SuppressWarnings( { "unchecked", "rawtypes" } )
 		protected Simple( final Class<?> kind, final CoordinationFact.ID id,
 			final Instant time, final Transaction.ID tranID,
 			final Organization.ID creatorID, final CoordinationFactType type,
@@ -260,8 +231,11 @@ public interface CoordinationFact
 			this.type = type;
 			this.expiration = expiration;
 			this.causeID = causeID;
-			if( params != null ) for( Map param : params )
-				this.params.putAll( param );
+			if( params != null ) for( Map<?, ?> param : params )
+				param.forEach( ( key, value ) ->
+				{
+					this.params.put( key.toString(), value );
+				} );
 		}
 
 		@Override
@@ -320,9 +294,28 @@ public interface CoordinationFact
 		}
 
 		@Override
-		public Map<?, ?> params()
+		public Map<String, Object> params()
 		{
 			return this.params;
+		}
+	}
+
+	/**
+	 * {@link SimpleFactory} generates the desired {@link CoordinationFact}
+	 * sub-type as proxy decorating a new {@link Simple} instance
+	 */
+	class SimpleFactory implements Factory
+	{
+		@Override
+		public <F extends CoordinationFact> F create( final Scheduler scheduler,
+			final Class<F> factKind, final CoordinationFact.ID id,
+			final Transaction.ID tranID, final Organization.ID creatorID,
+			final CoordinationFactType type, final Instant expiration,
+			final CoordinationFact.ID causeID, final Map<?, ?>... params )
+		{
+			return new Simple( factKind, id, scheduler.now(), tranID, creatorID,
+					type, expiration, causeID, params ).proxyAs( factKind,
+							null );
 		}
 	}
 }

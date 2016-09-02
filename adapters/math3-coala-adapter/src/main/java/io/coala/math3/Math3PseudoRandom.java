@@ -18,6 +18,8 @@ package io.coala.math3;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Singleton;
+
 import org.apache.commons.math3.random.ISAACRandom;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -274,13 +276,10 @@ public class Math3PseudoRandom implements PseudoRandom
 		public synchronized static Factory
 			of( final Class<? extends RandomGenerator> rngType )
 		{
-			Factory result = FACTORY_CACHE.get( rngType );
-			if( result == null )
+			return FACTORY_CACHE.computeIfAbsent( rngType, key ->
 			{
-				result = new Factory( Instantiator.of( rngType, long.class ) );
-				FACTORY_CACHE.put( rngType, result );
-			}
-			return result;
+				return new Factory( Instantiator.of( rngType, long.class ) );
+			} );
 		}
 
 		private final Instantiator<? extends RandomGenerator> instantiator;
@@ -296,6 +295,29 @@ public class Math3PseudoRandom implements PseudoRandom
 		{
 			return Math3PseudoRandom.of( id, seed.longValue(),
 					this.instantiator.instantiate( seed.longValue() ) );
+		}
+
+	}
+
+	/**
+	 * {@link MersenneTwisterFactory} implements a {@link Factory} for
+	 * {@link MersenneTwister} instances decorated as {@link PseudoRandom}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@Singleton
+	public static class MersenneTwisterFactory extends Factory
+	{
+
+		/**
+		 * {@link MersenneTwisterFactory} constructor
+		 * 
+		 * @param instantiator
+		 */
+		public MersenneTwisterFactory()
+		{
+			super( Instantiator.of( MersenneTwister.class, long.class ) );
 		}
 
 	}

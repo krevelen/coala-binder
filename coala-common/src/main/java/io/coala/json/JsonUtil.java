@@ -18,6 +18,7 @@ package io.coala.json;
 import java.beans.PropertyEditorSupport;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -34,7 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
@@ -82,9 +83,8 @@ public class JsonUtil
 			return om.writer().writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem JSONifying rawtype: {}",
-					object == null ? null : object.getClass() );
+			Thrower.rethrowUnchecked( e );
+			return null;
 		}
 	}
 
@@ -111,7 +111,7 @@ public class JsonUtil
 					.writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
-			throw ExceptionFactory.createUnchecked( "Problem JSONifying", e );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -129,8 +129,8 @@ public class JsonUtil
 //			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e, "Problem serializing {}",
-					object.getClass().getSimpleName() );
+			Thrower.rethrowUnchecked( e );
+			return null;
 		}
 	}
 
@@ -146,8 +146,7 @@ public class JsonUtil
 			return json == null ? null : getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( "Problem deserializing",
-					e );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -164,8 +163,8 @@ public class JsonUtil
 					: getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing JSON: {}", json );
+			Thrower.rethrowUnchecked( e );
+			return null;
 		}
 	}
 
@@ -207,8 +206,8 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem unmarshalling {} from JSON stream", resultType );
+			Thrower.rethrowUnchecked( e );
+			return null;
 		}
 	}
 
@@ -242,14 +241,10 @@ public class JsonUtil
 									&& resultType == String.class
 											? "\"" + json + "\"" : json,
 							checkRegistered( om, resultType, imports ) );
-		} catch( final RuntimeException e )
-		{
-			throw e;
 		} catch( final Throwable e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from JSON: {}", resultType,
-					json );
+			Thrower.rethrowUnchecked( e );
+			return null;
 		}
 	}
 
@@ -275,6 +270,12 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final TreeNode tree,
 		final Class<T> resultType, final Properties... imports )
 	{
+		// TODO add work-around for Wrapper sub-types?
+		if( resultType.isMemberClass()
+				&& !Modifier.isStatic( resultType.getModifiers() ) )
+			Thrower.throwNew( IllegalArgumentException.class,
+					"Unable to deserialize non-static member: {}", resultType );
+
 		try
 		{
 			return tree == null ? null
@@ -282,9 +283,7 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from JSON: {}", resultType,
-					tree );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -321,9 +320,8 @@ public class JsonUtil
 
 		} catch( final Exception e )
 		{
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem deserializing {} from JSON: {}", typeReference,
-					json );
+			Thrower.rethrowUnchecked( e );
+			return null;
 		}
 	}
 
@@ -386,8 +384,14 @@ public class JsonUtil
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
+//			LOG.trace( "Checking JSON conversion for type: {}", type );
 			if( type.isAnnotationPresent( BeanProxy.class ) )
 			{
+				if( !type.isInterface() )
+					Thrower.throwNew( IllegalArgumentException.class,
+							"@{} must target an interface, but annotates: {}",
+							BeanProxy.class.getSimpleName(), type );
+
 				DynaBean.registerType( om, type, imports );
 
 				for( Method method : type.getDeclaredMethods() )

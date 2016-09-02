@@ -2,13 +2,10 @@ package io.coala.capability.configure;
 
 import javax.inject.Inject;
 
-import org.apache.logging.log4j.Logger;
-
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.config.CoalaPropertyGetter;
 import io.coala.config.PropertyGetter;
-import io.coala.log.InjectLogger;
 import io.coala.message.Message;
 
 /**
@@ -23,8 +20,8 @@ public class BasicConfiguringCapability extends BasicCapability
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
-	private Logger LOG;
+//	@Inject
+//	private Logger LOG;
 
 	/**
 	 * {@link BasicConfiguringCapability} CDI constructor

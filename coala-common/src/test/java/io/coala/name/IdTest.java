@@ -126,7 +126,7 @@ public class IdTest
 	@Test
 	public void equalsTest()
 	{
-		LOG.trace( "Testing " + Id.class + "<" + Id.class.getSimpleName() + "<"
+		LOG.info( "Testing " + Id.class + "<" + Id.class.getSimpleName() + "<"
 				+ Object.class.getSimpleName() + ">>" );
 		final Object valueObject = "myValue";
 		final MyId valueWrap = MyId.valueOf( valueObject );
@@ -146,7 +146,7 @@ public class IdTest
 	@Test
 	public void toStringTest()
 	{
-		LOG.trace( "Testing " + Id.class + "<" + Object.class.getSimpleName()
+		LOG.info( "Testing " + Id.class + "<" + Object.class.getSimpleName()
 				+ ">" );
 		final Object valueObject = "myValue";
 		final MyId valueWrap = MyId.valueOf( valueObject );
@@ -168,7 +168,7 @@ public class IdTest
 	@Test
 	public void hashCodeTest()
 	{
-		LOG.trace( "Testing " + Id.class + "<" + Id.class.getSimpleName() + "<"
+		LOG.info( "Testing " + Id.class + "<" + Id.class.getSimpleName() + "<"
 				+ Object.class.getSimpleName() + ">>" );
 		final Object valueObject = "myValue";
 		final MyId valueWrap = MyId.valueOf( valueObject );

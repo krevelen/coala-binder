@@ -21,6 +21,8 @@ package io.coala.random;
 
 import java.util.Random;
 
+import javax.inject.Singleton;
+
 /**
  * {@link JavaRandom} decorates a standard Java {@link Random} generator as
  * {@link PseudoRandom}
@@ -66,6 +68,7 @@ public class JavaRandom extends Random implements PseudoRandom
 		return this.seed;
 	}
 
+	@Singleton
 	public static class Factory implements PseudoRandom.Factory
 	{
 		private final static Factory INSTANCE = new Factory();

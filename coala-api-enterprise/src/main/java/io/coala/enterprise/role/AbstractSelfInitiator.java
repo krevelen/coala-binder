@@ -15,13 +15,10 @@
  */
 package io.coala.enterprise.role;
 
-import io.coala.bind.Binder;
-import io.coala.enterprise.fact.CoordinationFact;
-import io.coala.log.InjectLogger;
-
 import javax.inject.Inject;
 
-import org.slf4j.Logger;
+import io.coala.bind.Binder;
+import io.coala.enterprise.fact.CoordinationFact;
 
 /**
  * {@link AbstractSelfInitiator}
@@ -39,8 +36,8 @@ public abstract class AbstractSelfInitiator<F extends CoordinationFact>
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
-	private Logger LOG;
+//	@Inject
+//	private Logger LOG;
 
 	/**
 	 * {@link AbstractSelfInitiator} CDI constructor

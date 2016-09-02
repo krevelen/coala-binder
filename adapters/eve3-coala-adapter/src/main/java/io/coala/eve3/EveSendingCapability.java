@@ -14,7 +14,6 @@ import io.coala.capability.BasicCapability;
 import io.coala.capability.interact.SendingCapability;
 import io.coala.exception.ExceptionFactory;
 import io.coala.json.JsonUtil;
-import io.coala.log.InjectLogger;
 import io.coala.message.Message;
 import rx.Observer;
 
@@ -33,7 +32,7 @@ public class EveSendingCapability extends BasicCapability
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	/**

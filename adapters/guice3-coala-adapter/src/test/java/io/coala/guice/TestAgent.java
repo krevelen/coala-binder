@@ -15,10 +15,11 @@
  */
 package io.coala.guice;
 
+import javax.inject.Inject;
+
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.BasicAgent;
-import io.coala.log.InjectLogger;
 
 /**
  * {@link TestAgent}
@@ -34,7 +35,7 @@ public class TestAgent extends BasicAgent
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	@Override

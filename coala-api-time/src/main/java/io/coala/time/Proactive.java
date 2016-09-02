@@ -19,23 +19,26 @@
  */
 package io.coala.time;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 import javax.measure.Measurable;
+import javax.measure.Measure;
 import javax.measure.quantity.Dimensionless;
+import javax.measure.unit.Unit;
 
 //import javax.measure.quantity.Dimensionless;
 //import javax.measure.quantity.Duration;
 
 import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.ExceptionFactory;
-import io.coala.util.Caller;
-import io.coala.util.Caller.ThrowingBiConsumer;
-import io.coala.util.Caller.ThrowingConsumer;
+import io.coala.exception.Thrower;
+import io.coala.function.Caller;
+import io.coala.function.ThrowingBiConsumer;
+import io.coala.function.ThrowingConsumer;
+import io.coala.function.ThrowingRunnable;
 import io.coala.util.Comparison;
 import rx.Observable;
-import rx.Observer;
 
 /**
  * {@link Proactive}
@@ -56,19 +59,40 @@ public interface Proactive extends Timed
 	}
 
 	/**
-	 * @param delay the {@link Amount} of delay, in ({@link Duration} or
-	 *            {@link Dimensionless} units
+	 * @param delay the {@link Duration} of delay
 	 * @return the {@link FutureSelf}
 	 */
 	default FutureSelf after( final Duration delay )
 	{
-		return FutureSelf.of( this, now().add( delay ) );
+		return after( delay.unwrap() );
 	}
 
 	/**
-	 * @param delay the {@link Amount} of delay, in ({@link Duration} or
-	 *            {@link Dimensionless} units
+	 * @param delay the {@link Number} of delay, in default units
 	 * @return the {@link FutureSelf}
+	 */
+	default FutureSelf after( final Number delay )
+	{
+		return after( delay, now().unit() );
+	}
+
+	/**
+	 * @param delay the delay amount {@link Number}
+	 * @param delay the delay amount {@link Unit} (
+	 *            {@link javax.measure.quantity.Duration} or
+	 *            {@link Dimensionless})
+	 * @return the {@link FutureSelf}
+	 */
+	default FutureSelf after( final Number delay, final Unit<?> unit )
+	{
+		return after( Duration.of( delay, unit ) );
+	}
+
+	/**
+	 * @param delay the {@link Amount} or {@link Measure} of delay (units of
+	 *            {@link javax.measure.quantity.Duration} or
+	 *            {@link Dimensionless})
+	 * @return the {@link FutureSelf} wrapper to allow chaining
 	 */
 	default FutureSelf after( final Measurable<?> delay )
 	{
@@ -77,39 +101,67 @@ public interface Proactive extends Timed
 
 	/**
 	 * @param delay the future {@link Instant}
-	 * @return the {@link FutureSelf}
+	 * @return a {@link FutureSelf} wrapper to allow chaining
 	 */
 	default FutureSelf at( final Instant when )
 	{
 		return FutureSelf.of( this, when );
 	}
 
-	default Observable<FutureSelf> atEach( final Observable<Instant> when )
+	/**
+	 * @param when
+	 * @return an {@link Iterable} stream of {@link FutureSelf} wrappers pushed
+	 *         after each {@link Instant} has been scheduled to occur
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> atEach( final Instant... when )
 	{
-		final Proactive self = this;
-		return Observable.create( sub ->
-		{
-			scheduler().schedule( when, new Observer<Instant>()
-			{
-				@Override
-				public void onCompleted()
-				{
-					sub.onCompleted();
-				}
+		if( when == null || when.length == 0 ) return Observable.empty();
+		return atEach( Arrays.asList( when ) );
+	}
 
-				@Override
-				public void onError( final Throwable e )
-				{
-					sub.onError( e );
-				}
+	/**
+	 * @param when
+	 * @return an {@link Iterable} stream of {@link FutureSelf} wrappers pushed
+	 *         after each {@link Instant} has been scheduled to occur
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> atEach( final Iterable<Instant> when )
+	{
+		return scheduler().schedule( when );
+	}
 
-				@Override
-				public void onNext( final Instant t )
-				{
-					sub.onNext( FutureSelf.of( self, t ) );
-				}
-			} );
-		} );
+	/**
+	 * @param when the {@link Iterable} stream of {@link Instant}s to schedule
+	 * @param what the {@link ThrowingConsumer} function to call each time
+	 * @return
+	 */
+	default Observable<Expectation> atEach( final Iterable<Instant> when,
+		final ThrowingConsumer<Instant, ?> what )
+	{
+		return scheduler().schedule( when, what );
+	}
+
+	/**
+	 * @param when
+	 * @return an {@link Observable} stream of {@link FutureSelf} wrappers
+	 *         pushed after each {@link Instant} has been scheduled to occur
+	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	default Observable<Instant> atEach( final Observable<Instant> when )
+	{
+		return scheduler().schedule( when );
+	}
+
+	/**
+	 * @param when the {@link Observable} stream of {@link Instant}s to schedule
+	 * @param what the {@link ThrowingConsumer} function to call each time
+	 * @return
+	 */
+	default Observable<Expectation> atEach( final Observable<Instant> when,
+		final ThrowingConsumer<Instant, ?> what )
+	{
+		return scheduler().schedule( when, what );
 	}
 
 	/**
@@ -134,7 +186,7 @@ public interface Proactive extends Timed
 		 * @param runner the {@link Runnable} (method) to call when time comes
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default Expectation call( final Runnable runner )
+		default Expectation call( final ThrowingRunnable<?> runner )
 		{
 			return scheduler().schedule( now(), runner );
 		}
@@ -153,59 +205,33 @@ public interface Proactive extends Timed
 		 * @param t arg0
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default <E extends Exception> Expectation
-			call( final ThrowingConsumer<Instant, E> call )
+		default Expectation call( final ThrowingConsumer<Instant, ?> call )
 		{
-			return call( Caller.of( call, now() )::run );
+			return call( Caller.ofThrowingConsumer( call, now() )::run );
 		}
 
 		/**
 		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
+		 * @param t constant arg0
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default <T, E extends Exception> Expectation
-			call( final ThrowingConsumer<T, E> call, final T t )
+		default <T> Expectation call( final ThrowingConsumer<T, ?> call,
+			final T t )
 		{
-			return call( Caller.of( call, t )::run );
+			return call( Caller.ofThrowingConsumer( call, t )::run );
 		}
 
 		/**
 		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
-		 * @param u arg1
+		 * @param t constant arg0
+		 * @param u constant arg1
 		 * @return the {@link Expectation} for potential cancellation
 		 */
 		default <T, U, E extends Exception> Expectation
 			call( final ThrowingBiConsumer<T, U, E> call, final T t, final U u )
 		{
-			return call( Caller.of( call, t, u )::run );
+			return call( Caller.ofThrowingBiConsumer( call, t, u )::run );
 		}
-
-		/**
-		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
-		 * @return the {@link Expectation} for potential cancellation
-		 */
-		// FIXME make result R observable?
-//		default <T, R, E extends Exception> Expectation
-//			call( final ThrowingFunction<T, R, E> call, final T t )
-//		{
-//			return call( Caller.of( call, t )::run );
-//		}
-
-		/**
-		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t arg0
-		 * @param u arg1
-		 * @return the {@link Expectation} for potential cancellation
-		 */
-		// FIXME make result R observable?
-//		default <T, U, R, E extends Exception> Expectation call(
-//			final ThrowingBiFunction<T, U, R, E> call, final T t, final U u )
-//		{
-//			return call( Caller.of( call, t, u )::run );
-//		}
 
 		/**
 		 * {@link FutureSelf} factory method
@@ -217,9 +243,10 @@ public interface Proactive extends Timed
 		 */
 		static FutureSelf of( final Proactive self, final Instant when )
 		{
-			if( Comparison.is( when ).lt( self.now() ) ) throw ExceptionFactory
-					.createUnchecked( "Can't schedule in past: {} < now({})",
-							when, self.now() );
+			if( Comparison.is( when ).lt( self.now() ) )
+				Thrower.throwNew( IllegalArgumentException.class,
+						"Can't schedule in past: {} < now({})", when,
+						self.now() );
 			return new FutureSelf()
 			{
 				@Override

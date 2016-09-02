@@ -44,6 +44,12 @@ public interface ProviderConfig extends GlobalConfig
 	@DefaultValue( "false" )
 	boolean mutable();
 
+	String SINGLETON_KEY = "singleton";
+
+	@Key( SINGLETON_KEY )
+	@DefaultValue( "false" )
+	boolean singleton();
+
 	String IMPLEMENTATION_KEY = "impl";
 
 	@Key( IMPLEMENTATION_KEY )
@@ -54,7 +60,6 @@ public interface ProviderConfig extends GlobalConfig
 	default Map<String, BindingConfig>
 		bindingConfigs( final Map<?, ?>... imports )
 	{
-		return subConfigs( BINDINGS_KEY, BindingConfig.class,
-				imports );
+		return subConfigs( BINDINGS_KEY, BindingConfig.class, imports );
 	}
 }

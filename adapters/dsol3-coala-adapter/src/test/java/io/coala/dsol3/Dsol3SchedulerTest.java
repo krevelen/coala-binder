@@ -1,23 +1,34 @@
 package io.coala.dsol3;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.Date;
-import java.util.concurrent.CountDownLatch;
+import java.text.ParseException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import javax.measure.unit.NonSI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.measure.quantity.Duration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.exception.ExceptionFactory;
-import io.coala.time.Duration;
-import io.coala.time.Instant;
-import io.coala.time.Scheduler;
+import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalConfig;
+import io.coala.config.InjectConfig;
+import io.coala.guice4.Guice4LocalBinder;
+import io.coala.math3.Math3ProbabilityDistribution;
+import io.coala.math3.Math3PseudoRandom;
+import io.coala.random.AmountDistribution;
+import io.coala.random.DistributionConverter;
+import io.coala.random.DistributionParsable;
+import io.coala.random.DistributionParser;
+import io.coala.random.InjectDist;
+import io.coala.random.ProbabilityDistribution;
+import io.coala.random.PseudoRandom;
 import io.coala.time.Proactive;
-import io.coala.time.Timing;
+import io.coala.time.Scheduler;
+import io.coala.time.Units;
+import net.jodah.concurrentunit.Waiter;
 
 /**
  * {@link Dsol3SchedulerTest}
@@ -32,67 +43,133 @@ public class Dsol3SchedulerTest
 	private static final Logger LOG = LogManager
 			.getLogger( Dsol3SchedulerTest.class );
 
-	private void logTime( final Proactive t )
+	public static interface Model extends Proactive//, Dsol3Config.Initer
 	{
-		LOG.trace( "logging, t={}", t.now() );
+		void init() throws Exception;
+
+		enum HML
+		{
+			HI, Mid, lo
+		}
+
+		String BERNOULLI_DIST_DEFAULT = " BERNOULLI (  0.5 )";
+
+		String GAUSS_DIST_DEFAULT = " nOrMaL (10 ;.5 )";
+
+		String CATEGORICAL_DIST_DEFAULT = " eNUM (hi:4 ; miD: 3 ;LO :.91 )";
+
+		interface Config extends LocalConfig
+		{
+			@DefaultValue( BERNOULLI_DIST_DEFAULT )
+			@ConverterClass( DistributionConverter.class )
+			DistributionParsable<Boolean> bernoulli();
+
+			@DefaultValue( GAUSS_DIST_DEFAULT )
+			@ConverterClass( DistributionConverter.class )
+			DistributionParsable<Double> gaussAmount();
+
+			@DefaultValue( CATEGORICAL_DIST_DEFAULT )
+			@ConverterClass( DistributionConverter.class )
+			DistributionParsable<HML> categoricalEnum();
+		}
 	}
 
-	@Test
-	public void testScheduler() throws InterruptedException
+	@Singleton
+	public static class ModelImpl implements Model
 	{
-		final Instant h5 = Instant.of( "5 h" );
-		LOG.trace( "start t={}", h5 );
-		final Scheduler sched = Dsol3Scheduler.of( "dsol3Test", h5,
-				Duration.of( "500 day" ), s ->
-				{
-					// initialize the model
-					s.at( h5.add( 1 ) ).call( this::logTime, s );
-					s.at( h5.add( 2 ) ).call( this::logTime, s );
-					s.at( h5.add( 2 ) ).call( this::logTime, s );
+		@InjectConfig
+		private Config config;
 
-					s.schedule( Timing.valueOf( "0 0 0 14 * ? *" )// + DateTime.now().getYear() ) // 0 30 9,12,15 * * ?
-							.asObservable( new Date() ), () ->
-							{
-								LOG.trace( "atEach handled, t={}",
-										s.now().prettify( NonSI.DAY, 2 ) );
-								// FIXME: should halt sim
-								throw new RuntimeException();
-							} ).subscribe( exp ->
-							{
-								LOG.trace( "atEach next: {}", exp );
-							}, e ->
-							{
-								LOG.trace( "atEach failed, t={}",
-										s.now().prettify( NonSI.DAY, 2 ), e );
-								throw ExceptionFactory
-										.createUnchecked( "<kill app>", e );
-							}, () ->
-							{
-								LOG.trace( "atEach done, t={}",
-										s.now().prettify( NonSI.DAY, 2 ) );
-							} );
+		@Inject
+		private Scheduler scheduler;
 
-					LOG.trace( "initialized, t={}", s.now() );
-				} );
+		@Inject
+		private ProbabilityDistribution.Parser distParser;
 
-		final CountDownLatch latch = new CountDownLatch( 1 );
-		sched.time().subscribe( t ->
+//		@InjectConfig( configType = Config.class, methodName = "bernoulli" )
+		@InjectDist( BERNOULLI_DIST_DEFAULT )
+		private ProbabilityDistribution<Boolean> bernoulli;
+
+		@InjectDist( value = GAUSS_DIST_DEFAULT, unit = "h" )
+		private AmountDistribution<Duration> gaussAmount;
+
+		@InjectDist( value = CATEGORICAL_DIST_DEFAULT, paramType = HML.class )
+		private ProbabilityDistribution<HML> categoricalEnum;
+
+		@Override
+		public Scheduler scheduler()
 		{
-			LOG.trace( "t={}", t.prettify( NonSI.DAY, 2 ) );
-		}, e ->
+			return this.scheduler;
+		}
+
+		@Override
+		public void init() throws ParseException
 		{
-			LOG.trace( "problem, t=" + sched.now().prettify( NonSI.DAY, 2 ),
-					e );
-			latch.countDown();
+			if( this.bernoulli == null )
+			{
+				LOG.warn( "bernoulli not injected!" );
+				this.bernoulli = this.config.bernoulli()
+						.parse( this.distParser );
+			}
+			for( int i = 0; i < 10; i++ )
+				LOG.trace( "coin toss #{}: {}", i + 1,
+						this.bernoulli.draw() ? "heads" : "tails" );
+
+			if( this.gaussAmount == null )
+			{
+				LOG.warn( "gaussAmount not injected!" );
+				this.gaussAmount = this.config.gaussAmount()
+						.parse( this.distParser ).toAmounts();
+			}
+			for( int i = 0; i < 10; i++ )
+				LOG.trace( "gauss Amount #{}: {}", i + 1,
+						this.gaussAmount.draw() );
+
+			if( this.categoricalEnum == null )
+			{
+				LOG.warn( "categoricalEnum not injected!" );
+				this.categoricalEnum = this.config.categoricalEnum()
+						.parse( this.distParser );
+			}
+			for( int i = 0; i < 10; i++ )
+				LOG.trace( "cat enum #{}: {}", i + 1,
+						this.categoricalEnum.draw() );
+		}
+	}
+
+	@Test //( expected = IllegalStateException.class )
+	public void testScheduler() throws TimeoutException
+	{
+		final LocalConfig config = LocalConfig.builder().withId( "dsolTest" )
+				.withProvider( Scheduler.class, Dsol3Scheduler.class )
+				.withProvider( PseudoRandom.Factory.class,
+						Math3PseudoRandom.MersenneTwisterFactory.class )
+				.withProvider( ProbabilityDistribution.Factory.class,
+						Math3ProbabilityDistribution.Factory.class )
+				.withProvider( ProbabilityDistribution.Parser.class,
+						DistributionParser.class )
+				.build();
+		LOG.info( "Starting DSOL test, config: {}", config );
+		final LocalBinder binder = Guice4LocalBinder.of( config );
+		final Model model = binder.inject( ModelImpl.class );
+		final Scheduler sched = binder.inject( Scheduler.class );
+		model.scheduler().onReset( model::init );
+
+		final Waiter waiter = new Waiter();
+		sched.time().subscribe( time ->
+		{
+			LOG.trace( "t={}", time.prettify( Units.DAYS, 2 ) );
+		}, error ->
+		{
+			LOG.error( "error at t=" + sched.now(), error );
+			waiter.rethrow( error );
 		}, () ->
 		{
-			LOG.trace( "completed, t={}", sched.now() );
-			latch.countDown();
+			waiter.resume();
 		} );
 		sched.resume();
-
-		latch.await( 1, TimeUnit.SECONDS );
-		assertEquals( "Scheduler not completed in time", 0, latch.getCount() );
+		waiter.await( 1, TimeUnit.SECONDS );
+//		LOG.error( "failed: error expected, t={}", sched.now() );
 	}
 
 }

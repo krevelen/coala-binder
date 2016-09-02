@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +38,7 @@ import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper.Util;
 import io.coala.name.Id;
 import io.coala.name.Identified;
+import io.coala.util.ArrayUtil;
 import io.coala.util.DecimalUtil;
 
 /**
@@ -257,7 +259,7 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		@Key( SEED_KEY )
 		@DefaultValue( SEED_DEFAULT )
 		@ConverterClass( SystemMillisConverter.class )
-		BigDecimal seed();
+		BigInteger seed();
 
 		class NameConverter implements Converter<Name>
 		{
@@ -271,22 +273,26 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 			}
 		}
 
-		class SystemMillisConverter implements Converter<BigDecimal>
+		class SystemMillisConverter implements Converter<BigInteger>
 		{
-			private static Long DEFAULT = null;
+			private static final ByteBuffer BYTE_BUFFER = ByteBuffer
+					.allocate( 2 * Long.BYTES );
 
 			@Override
-			public BigDecimal convert( final Method method, final String input )
+			public BigInteger convert( final Method method, final String input )
 			{
 				try
 				{
-					final BigDecimal result = new BigDecimal( input );
-					DEFAULT = result.longValue();
-					return result;
+					return new BigInteger( input );
 				} catch( final Throwable t )
 				{
-					return BigDecimal.valueOf( DEFAULT == null
-							? new UUID().getTime() : ++DEFAULT );
+					final UUID uuid = new UUID();
+					// with help from http://stackoverflow.com/a/4485196
+					BYTE_BUFFER.putLong( 0, uuid.getTime() );
+					BYTE_BUFFER.putLong( 8, uuid.getClockSeqAndNode() );
+					// for int/long conversion: most dynamic bytes last
+					ArrayUtil.reverse( BYTE_BUFFER.array() );
+					return new BigInteger( BYTE_BUFFER.array() );
 				}
 			}
 		}

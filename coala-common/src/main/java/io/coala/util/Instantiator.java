@@ -1,6 +1,7 @@
 package io.coala.util;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.WeakHashMap;
 
 import javax.inject.Provider;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.json.DynaBean;
 import io.coala.json.DynaBean.ProxyProvider;
 import io.coala.json.JsonUtil;
@@ -119,10 +120,19 @@ public class Instantiator<T>
 	public Instantiator( final Class<T> type, final Class<?>... argTypes )
 	{
 		this.type = type;
-		// test bean property of having an accessible public
-		// zero-arg constructor
-		this.constructor = ClassUtil.isAbstract( type ) ? null
-				: ReflectUtil.getAccessibleConstructor( type, argTypes );
+		// test bean has an accessible public zero-arg constructor
+		Constructor<T> c = null;
+		try
+		{
+			c = ClassUtil.isAbstract( type ) ? null
+					: ReflectUtil.getAccessibleConstructor( type, argTypes );
+		} catch( final NoSuchMethodException cause )
+		{
+			Thrower.throwNew( IllegalArgumentException.class, cause,
+					"Missing 'static' 'public' constructor {}({})",
+					type.getName(), argTypes == null ? "" : argTypes );
+		}
+		this.constructor = c;
 	}
 
 	/**
@@ -132,24 +142,43 @@ public class Instantiator<T>
 	 */
 	public T instantiate( final Object... args )
 	{
+		if( ClassUtil.isAbstract( this.type ) )
+		{
+			final Properties[] imports = args == null ? null
+					: new Properties[args.length];
+			for( int i = 0; i < args.length; i++ )
+				imports[i] = (Properties) args[i];
+			return ProxyProvider.of( JsonUtil.getJOM(), this.type, imports )
+					.get();
+		}
+		if( this.constructor != null ) try
+		{
+			return this.constructor.newInstance( args );
+		} catch( final Throwable e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
+
+		if( this.type.isMemberClass()
+				&& !Modifier.isStatic( this.type.getModifiers() )
+				&& (args == null || args.length == 0 || args[0] == null
+						|| args[0].getClass() != this.type
+								.getEnclosingClass()) )
+			return Thrower.throwNew( IllegalArgumentException.class,
+					"First argument should be an instance of enclosing {} "
+							+ "for instantiating a non-static member: {}",
+					this.type.getEnclosingClass(), this.type );
 		try
 		{
-			if( ClassUtil.isAbstract( this.type ) )
-			{
-				final Properties[] imports = args == null ? null
-						: new Properties[args.length];
-				for( int i = 0; i < args.length; i++ )
-					imports[i] = (Properties) args[i];
-				return ProxyProvider.of( JsonUtil.getJOM(), this.type, imports )
-						.get();
-			}
-			return this.constructor != null
-					? this.constructor.newInstance( args )
-					: this.type.newInstance();
-		} catch( final Throwable t )
+			return this.type
+					.getConstructor( this.type.isMemberClass()
+							? new Class<?>[]
+							{ args[0].getClass() }
+							: new Class<?>[0] )
+					.newInstance( args );
+		} catch( final Throwable e )
 		{
-			throw ExceptionFactory.createUnchecked( t,
-					"Problem instantiating {}", this.type );
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 

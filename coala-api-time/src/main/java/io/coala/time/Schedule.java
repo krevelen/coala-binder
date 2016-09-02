@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 
 import io.coala.exception.ExceptionFactory;
-import io.coala.util.Caller;
+import io.coala.function.ThrowingConsumer;
 
 /**
  * {@link Schedule} is a mapping of values occurring from some {@link Instant}s
@@ -62,12 +62,12 @@ public class Schedule<T>
 	 * @param handler the {@link Consumer} of new values to call
 	 */
 	// FIXME make Throwable's observable, e.g. using scheduler::atEach?
-	public void handle( final Scheduler scheduler, final Consumer<T> handler )
+	public void handle( final Scheduler scheduler,
+		final ThrowingConsumer<T, ?> handler )
 	{
 		for( Entry<Instant, T> entry : this.function.tailMap( scheduler.now() )
 				.entrySet() )
-			scheduler.at( entry.getKey() )
-					.call( Caller.of( handler, entry.getValue() )::run );
+			scheduler.at( entry.getKey() ).call( handler, entry.getValue() );
 	}
 
 	public void put( final Instant when, final T value )
