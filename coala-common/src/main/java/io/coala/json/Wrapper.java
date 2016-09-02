@@ -1,4 +1,4 @@
-/* $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -60,7 +60,7 @@ import io.coala.util.TypeArguments;
  * {@link Wrapper} is a tag for decorator types that are (or should be)
  * automatically un/wrapped upon JSON de/serialization
  * 
- * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
@@ -96,7 +96,7 @@ public interface Wrapper<T>
 	 * values must be deserialized as custom defined {@code MyNumber} instances
 	 * (which also extend the default {@link Number} value type)
 	 * 
-	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@Documented
@@ -134,7 +134,7 @@ public interface Wrapper<T>
 		/**
 		 * {@link Empty}
 		 * 
-		 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+		 * @version $Id$
 		 * @author Rick van Krevelen
 		 */
 		class Empty
@@ -149,7 +149,7 @@ public interface Wrapper<T>
 	 * {@link #equals(Object)}, and {@link #toString()} methods
 	 *
 	 * @param <T> the type of wrapped objects
-	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	class Simple<T> implements Wrapper<T>
@@ -198,7 +198,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -214,7 +214,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -231,7 +231,7 @@ public interface Wrapper<T>
 	/**
 	 * {@link Util} provides global utility functions
 	 * 
-	 * @version $Id: f519dca709e4f14eb36cde567ed53b4c146ff337 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	class Util

@@ -19,7 +19,7 @@ import io.coala.util.TypeArguments;
 /**
  * {@link DynaBeanTest} tests various {@link DynaBean} usages
  * 
- * @version $Id: 20a533399b4b4e3055bdb44d7a92137e63ea1c6f $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class DynaBeanTest

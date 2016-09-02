@@ -1,4 +1,4 @@
-/* $Id: 2070bb85b6ee8891e4612011dac89dfe69f9fa38 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -31,7 +31,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link ClassUtil}
  * 
- * @version $Id: 2070bb85b6ee8891e4612011dac89dfe69f9fa38 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class ClassUtil implements Util

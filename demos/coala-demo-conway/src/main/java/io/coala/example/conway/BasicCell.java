@@ -1,4 +1,4 @@
-/* $Id: 6906eff0d90d13e4805e609859895520fb71412a $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -26,7 +26,7 @@ import rx.Observer;
 /**
  * {@link BasicCell}
  * 
- * @version $Id: 6906eff0d90d13e4805e609859895520fb71412a $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @Deprecated

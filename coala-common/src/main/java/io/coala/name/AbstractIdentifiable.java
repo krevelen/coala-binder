@@ -1,4 +1,4 @@
-/* $Id: 085b1d59df3a766cd999a63acdcc4dd091ce409b $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -138,7 +138,7 @@ public abstract class AbstractIdentifiable<ID extends Identifier<?, ?>>
 	 * {@link AbstractBuilder} is an example approach to implementing builders
 	 * for your {@link Identifiable} objects
 	 * 
-	 * @version $Id: 085b1d59df3a766cd999a63acdcc4dd091ce409b $
+	 * @version $Id$
 	 * @author <a href="mailto:rick.van.krevelen@rivm.nl">Rick van Krevelen</a>
 	 *
 	 * @param <T> the concrete {@link AbstractIdentifiable} result type

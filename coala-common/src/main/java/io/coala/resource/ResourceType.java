@@ -1,4 +1,4 @@
-/* $Id: 75529159efc9fd6916c54b629f96931c305e7d38 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -22,7 +22,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link ResourceType} TODO use some common library for MIMETypes
  * 
- * @version $Id: 75529159efc9fd6916c54b629f96931c305e7d38 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public enum ResourceType

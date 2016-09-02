@@ -1,4 +1,4 @@
-/* $Id: 159ef9e618c1d99cb8ef0ad10548596a3f3afff6 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -216,7 +216,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	/**
 	 * {@link CheckedException}
 	 * 
-	 * @version $Id: 9c42376aeeee3ec696a8eccb1de02b006d538881 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	public static class CheckedException extends Exception

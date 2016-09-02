@@ -1,4 +1,4 @@
-/* $Id: 63676befb954be9786f5fef1d1afd34c82facfc7 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -44,7 +44,7 @@ import rx.subjects.Subject;
 /**
  * {@link CellWorldFixedLattice}
  * 
- * @version $Id: 63676befb954be9786f5fef1d1afd34c82facfc7 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @Deprecated

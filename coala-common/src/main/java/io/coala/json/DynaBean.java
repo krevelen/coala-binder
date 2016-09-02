@@ -1,4 +1,4 @@
-/* $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -908,7 +908,7 @@ public class DynaBean implements Cloneable
 //	 * 
 //	 * @param <T> the result type
 //	 * @param <THIS> the builder type
-//	 * @version $Id: b8e162f77e6c4ce590cbea66e7dcdd105ed93a5e $
+//	 * @version $Id$
 //	 * @author Rick van Krevelen
 //	 */
 //	public static class Builder<T, THIS extends Builder<T, THIS>>

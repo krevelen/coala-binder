@@ -1,4 +1,4 @@
-/* $Id: 34cb0fcc5b4ad7f7fb2f5f5e43fadf1efcd2bdfe $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.log.InjectLogger;
 /**
  * {@link AbstractInstant}
  * 
- * @version $Id: 34cb0fcc5b4ad7f7fb2f5f5e43fadf1efcd2bdfe $
+ * @version $Id$
  * 
  * @param <THIS> the concrete {@link AbstractInstant} type
  */

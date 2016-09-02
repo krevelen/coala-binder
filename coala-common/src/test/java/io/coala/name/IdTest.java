@@ -1,4 +1,4 @@
-/* $Id: e6295c63830424b277a9bdd125218a9c849801e8 $
+/* $Id$
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -39,7 +39,7 @@ import rx.Observer;
 /**
  * {@link IdTest}
  * 
- * @version $Id: e6295c63830424b277a9bdd125218a9c849801e8 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class IdTest

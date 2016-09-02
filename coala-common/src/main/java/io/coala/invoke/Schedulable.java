@@ -1,4 +1,4 @@
-/* $Id: b5d07783b03c0c681e94f8c1ba83d98fdd8ed441 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -32,7 +32,7 @@ import io.coala.exception.ExceptionFactory;
 /**
  * {@link Schedulable}
  * 
- * @version $Id: b5d07783b03c0c681e94f8c1ba83d98fdd8ed441 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @Documented

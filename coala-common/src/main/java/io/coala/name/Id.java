@@ -1,4 +1,4 @@
-/* $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -38,7 +38,7 @@ import io.coala.log.LogUtil;
  * Jackson Polymorphic Deserialization</a>
  * 
  * @param <T> the wrapped type of reference value
- * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
@@ -65,7 +65,7 @@ public class Id<T> extends Wrapper.Simple<T>
 	/**
 	 * {@link IdConfig}
 	 * 
-	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	public static interface IdConfig extends GlobalConfig, Mutable
@@ -86,7 +86,7 @@ public class Id<T> extends Wrapper.Simple<T>
 	 * {@link #compareTo(Object)} method implementation
 	 * 
 	 * @param <T> the concrete {@link Comparable} type of value
-	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "rawtypes" )
@@ -107,7 +107,7 @@ public class Id<T> extends Wrapper.Simple<T>
 	 * 
 	 * @param <T> the concrete {@link Comparable} type of value
 	 * @param <P> the concrete {@link Comparable} type of parent
-	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "rawtypes" )
