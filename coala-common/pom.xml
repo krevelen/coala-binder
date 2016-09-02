@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-b3-SNAPSHOT</version>
+		<version>0.2.0-b3</version>
 		<relativePath>..</relativePath>
 	</parent>
 
@@ -64,6 +64,12 @@
 			<artifactId>javax.inject</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
 		<!-- javax.transaction needed BEFORE Hibernate (in Kundera RDBMS) -->
 		<dependency>
 			<groupId>javax.transaction</groupId>
@@ -119,13 +125,8 @@
 			<version>${joda-time.version}</version>
 		</dependency>
 
-<!-- 		<dependency>
-			<groupId>com.googlecode.gentyref</groupId>
-			<artifactId>gentyref</artifactId>
-			<version>1.2.0</version>
-			<scope>test</scope>
-		</dependency>
- -->
+		<!-- <dependency> <groupId>com.googlecode.gentyref</groupId> <artifactId>gentyref</artifactId> 
+			<version>1.2.0</version> <scope>test</scope> </dependency> -->
 		<!-- Joda DateTime, Interval, Duration etc. standard implementations -->
 
 		<!-- Jackson JSON <-> Java object mapping -->
