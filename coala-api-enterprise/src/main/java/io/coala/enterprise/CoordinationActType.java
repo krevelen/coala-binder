@@ -1,4 +1,4 @@
-package io.coala.enterprise.fact;
+package io.coala.enterprise;
 
 import io.coala.enterprise.role.ActorRoleType;
 

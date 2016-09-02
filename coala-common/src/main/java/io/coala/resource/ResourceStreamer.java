@@ -28,7 +28,6 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.xml.bind.JAXBElement;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Node;
 
@@ -39,7 +38,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.rx.RxUtil;
-import io.coala.rx.RxUtil.ThrowingFunc1;
 import io.coala.util.FileUtil;
 import io.coala.xml.XmlContext;
 import io.coala.xml.XmlUtil;
@@ -196,16 +194,10 @@ public class ResourceStreamer
 	 */
 	public Observable<String> toStrings()
 	{
-		return RxUtil.map( getStreams(),
-				new ThrowingFunc1<ResourceStream, String>()
-				{
-					@Override
-					public String call( final ResourceStream stream )
-						throws Throwable
-					{
-						return IOUtils.toString( stream.getStream() );
-					}
-				} );
+		return RxUtil.map( getStreams(), stream ->
+		{
+			return FileUtil.toString( stream.getStream() );
+		} );
 	}
 
 	/**
@@ -214,13 +206,9 @@ public class ResourceStreamer
 	 */
 	public <T> Observable<T> toJSON( final Class<T> resultType )
 	{
-		return RxUtil.map( getStreams(), new ThrowingFunc1<ResourceStream, T>()
+		return RxUtil.map( getStreams(), stream ->
 		{
-			@Override
-			public T call( final ResourceStream stream ) throws Throwable
-			{
-				return stream.toJSON( resultType );
-			}
+			return stream.toJSON( resultType );
 		} );
 	}
 
@@ -232,13 +220,9 @@ public class ResourceStreamer
 	public <T> Observable<T> toXML( final XmlContext<?> context,
 		final Class<T> resultType )
 	{
-		return RxUtil.map( getStreams(), new ThrowingFunc1<ResourceStream, T>()
+		return RxUtil.map( getStreams(), stream ->
 		{
-			@Override
-			public T call( final ResourceStream stream ) throws Throwable
-			{
-				return stream.toXML( context, resultType );
-			}
+			return stream.toXML( context, resultType );
 		} );
 	}
 

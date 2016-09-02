@@ -11,7 +11,6 @@ import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.capability.admin.DestroyingCapability;
 import io.coala.lifecycle.MachineUtil;
-import io.coala.log.InjectLogger;
 import rx.functions.Action0;
 import rx.schedulers.Schedulers;
 
@@ -30,7 +29,7 @@ public class EveDestroyingCapability extends BasicCapability
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	/**

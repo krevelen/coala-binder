@@ -46,10 +46,13 @@ public class Bin<V extends Comparable<?>> extends Range<V>
 	public static <Q extends Quantity> Bin<Amount<Q>>
 		of( final Amount<Q> minIncl, final Amount<Q> maxExcl )
 	{
-		return of( minIncl, maxExcl, ( a, b ) ->
-		{
-			return a.plus( b ).divide( 2 );
-		} );
+		return of( minIncl, maxExcl,
+				(BiFunction<Amount<Q>, Amount<Q>, Amount<Q>>)
+				// disambiguated
+				( a, b ) ->
+				{
+					return a.plus( b ).divide( 2 );
+				} );
 	}
 
 	public static <V extends Comparable<?>> Bin<V> of( final V minIncl,

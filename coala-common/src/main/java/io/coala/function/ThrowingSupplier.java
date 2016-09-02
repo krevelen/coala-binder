@@ -1,4 +1,4 @@
-package io.coala.util;
+package io.coala.function;
 
 /**
  * {@link ThrowingSupplier}

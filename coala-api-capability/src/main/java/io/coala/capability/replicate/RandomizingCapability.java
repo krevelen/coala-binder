@@ -21,15 +21,12 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.apache.logging.log4j.Logger;
-
 import io.coala.bind.Binder;
 import io.coala.capability.BasicCapability;
 import io.coala.capability.BasicCapabilityStatus;
 import io.coala.capability.Capability;
 import io.coala.capability.CapabilityFactory;
 import io.coala.config.CoalaProperty;
-import io.coala.log.InjectLogger;
 import io.coala.random.RandomNumberStream;
 
 /**
@@ -79,8 +76,8 @@ public interface RandomizingCapability extends Capability<BasicCapabilityStatus>
 				.synchronizedMap(
 						new HashMap<RandomNumberStream.ID, RandomNumberStream>() );
 
-		@InjectLogger
-		private Logger LOG;
+//		@Inject
+//		private Logger LOG;
 
 		/**
 		 * {@link Math3RandomizingCapability} CDI constructor

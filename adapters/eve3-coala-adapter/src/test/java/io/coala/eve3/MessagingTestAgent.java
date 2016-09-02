@@ -15,6 +15,8 @@
  */
 package io.coala.eve3;
 
+import javax.inject.Inject;
+
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.AgentID;
@@ -22,7 +24,6 @@ import io.coala.agent.BasicAgent;
 import io.coala.agent.BasicAgentStatus;
 import io.coala.capability.interact.ReceivingCapability;
 import io.coala.capability.interact.SendingCapability;
-import io.coala.log.InjectLogger;
 import io.coala.message.AbstractMessage;
 import io.coala.message.MessageID;
 import io.coala.model.ModelID;
@@ -115,7 +116,7 @@ public class MessagingTestAgent extends BasicAgent
 	/** */
 	private static final long serialVersionUID = 1L;
 
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	/**

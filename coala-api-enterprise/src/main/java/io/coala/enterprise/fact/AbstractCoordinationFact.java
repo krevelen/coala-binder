@@ -16,6 +16,7 @@
 package io.coala.enterprise.fact;
 
 import io.coala.agent.AgentID;
+import io.coala.enterprise.CoordinationFactType;
 import io.coala.enterprise.transaction.TransactionID;
 import io.coala.message.AbstractMessage;
 import io.coala.model.ModelComponentID;

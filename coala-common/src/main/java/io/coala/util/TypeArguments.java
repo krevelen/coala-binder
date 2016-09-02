@@ -96,6 +96,24 @@ public class TypeArguments
 //										"super {} not parameterized, extensions {}",
 //										intf, Arrays.asList( ((Class) intf)
 //												.getInterfaces() ) );
+								if( intf == genericAncestorType )
+								{
+									// FIXME causes infinite loop; use gentyref?
+//									if( ((Class)intf).getTypeParameters().length > 0 )
+//										return of( (Class)intf, concreteDescendantType );
+									final Class<?> intfRaw = (Class<?>) intf;
+									LOG.warn(
+											"Not (yet) parameterized: generic "
+													+ "{}<{}> = null for {}",
+											intfRaw,
+											intfRaw.getTypeParameters(),
+											typeClass );
+									final List<Class<?>> result = new ArrayList<Class<?>>();
+									for( int i = intfRaw
+											.getTypeParameters().length; i > 0; i-- )
+										result.add( null );
+									return result;
+								}
 								for( Type extIntf : ((Class<?>) intf)
 										.getGenericInterfaces() )
 									if( extIntf instanceof ParameterizedType
@@ -138,7 +156,7 @@ public class TypeArguments
 						}
 						superClass = (Class<? super S>) superClass
 								.getSuperclass();
-						if( superClass == null ) break;
+//						if( superClass == null ) break;
 					}
 					// if (intfType == null)
 					// type = typeClass.getGenericSuperclass();
