@@ -55,8 +55,11 @@ public class Units
 	public static final Unit<Frequency> ANNUAL = ANNUM.inverse()
 			.asType( Frequency.class );
 
-	static
+	private static boolean registered = false;
+
+	public static void registerAliases()
 	{
+		if( registered ) return;
 		UnitFormat.getInstance().alias( DAYS, DAYS_ALIAS );
 		UnitFormat.getInstance().label( DAYS, DAYS_ALIAS );
 		UnitFormat.getInstance().alias( DAILY, DAILY_ALIAS );
@@ -65,6 +68,7 @@ public class Units
 		UnitFormat.getInstance().label( ANNUM, ANNUM_ALIAS );
 		UnitFormat.getInstance().alias( ANNUAL, ANNUALLY_ALIAS );
 		UnitFormat.getInstance().label( ANNUAL, ANNUALLY_ALIAS );
+		registered = true;
 	}
 
 }

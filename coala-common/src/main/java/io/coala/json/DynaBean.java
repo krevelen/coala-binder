@@ -55,6 +55,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -70,6 +71,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ValueNode;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
@@ -673,6 +675,24 @@ public class DynaBean implements Cloneable
 						if( !attributes.contains( fieldName ) )
 							bean.set( fieldName, tree.get( fieldName ) );
 					}
+				} else if( tree.isValueNode() )
+				{
+					for( Class<?> type : resultType.getInterfaces() )
+						for( Method method : type.getDeclaredMethods() )
+						{
+//							LOG.trace( "Scanning {}", method );
+							if( method
+									.isAnnotationPresent( JsonProperty.class ) )
+							{
+								final String property = method
+										.getAnnotation( JsonProperty.class )
+										.value();
+//								LOG.trace( "Setting {}: {}", property,
+//										((ValueNode) tree).textValue() );
+								bean.set( property,
+										((ValueNode) tree).textValue() );
+							}
+						}
 				} else
 					throw ExceptionFactory.createUnchecked(
 							"Expected {} but parsed: {}", resultType,

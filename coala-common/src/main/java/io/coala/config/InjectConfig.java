@@ -25,10 +25,12 @@ import java.util.Map;
 
 import javax.inject.Qualifier;
 
+import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 
 import io.coala.bind.LocalBinder;
+import io.coala.exception.Thrower;
 import io.coala.name.Identified;
 
 /**
@@ -57,6 +59,20 @@ public @interface InjectConfig
 	Scope value() default Scope.DEFAULT;
 
 	String[] yamlURI() default {};
+
+	Class<? extends Config> configType() default VoidConfig.class;
+
+	String methodName() default "fail";
+
+	interface VoidConfig extends Config
+	{
+		default void fail()
+		{
+			Thrower.throwNew( UnsupportedOperationException.class,
+					"@{} missing valid configType attribute: {}",
+					InjectConfig.class.getSimpleName(), VoidConfig.class );
+		}
+	}
 
 	/**
 	 * {@link Scope} determines which key to use for

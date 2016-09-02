@@ -1,12 +1,13 @@
 package io.coala.random;
 
+import java.math.BigInteger;
+
 import org.aeonbits.owner.ConfigFactory;
-import org.aeonbits.owner.util.Collections;
+import org.aeonbits.owner.Mutable;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
-import io.coala.random.PseudoRandom.Config;
 
 /**
  * {@link PseudoRandomTest}
@@ -20,15 +21,29 @@ public class PseudoRandomTest
 	private static final Logger LOG = LogUtil
 			.getLogger( PseudoRandomTest.class );
 
+	private interface Config extends PseudoRandom.Config, Mutable
+	{
+
+	}
+
 	@Test
 	public void testConfig()
 	{
-		LOG.trace( "Testing {}", Config.class );
+		final Config conf = ConfigFactory.create( Config.class );
+		LOG.info( "Testing {}, defaults: {}", Config.class.getSimpleName(),
+				conf );
+		for( int i = 0; i < 10; i++ )
+		{
+			final BigInteger seed = conf.seed();
+			LOG.trace( "Got seed={}, long: {}, int: {}", seed, seed.longValue(),
+					seed.intValue() );
+		}
 		final long seed = 3L;
-		final Config conf = ConfigFactory.create( Config.class,
-				Collections.map( Config.SEED_KEY, Long.toString( seed ) ) );
-		LOG.trace( "Got config: {}; name={}; seed={}", conf, conf.id(),
-				conf.seed() );
+		conf.setProperty( Config.SEED_KEY, Long.toString( seed ) );
+		LOG.trace( "Got seed={}", conf.seed() );
+		LOG.trace( "Got seed={}", conf.seed() );
+		LOG.trace( "Got seed={}", conf.seed() );
+		LOG.trace( "Got seed={}", conf.seed() );
 		final PseudoRandom rnd = JavaRandom.Factory.instance().create( conf );
 		LOG.trace( "Next BigInteger: {}", rnd.nextBigInteger() );
 		LOG.trace( "Next BigDecimal: {}", rnd.nextBigDecimal() );

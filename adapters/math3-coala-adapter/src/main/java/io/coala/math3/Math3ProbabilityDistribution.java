@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
@@ -203,6 +204,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
 	 * @author Rick van Krevelen
 	 */
+	@Singleton
 	public static class Factory implements ProbabilityDistribution.Factory
 	{
 
@@ -532,6 +534,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
+	@Singleton
 	public static class Fitter implements ProbabilityDistribution.Fitter
 	{
 

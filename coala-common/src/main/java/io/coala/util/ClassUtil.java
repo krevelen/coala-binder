@@ -24,10 +24,7 @@ import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.List;
 
-import org.apache.logging.log4j.Logger;
-
 import io.coala.exception.Thrower;
-import io.coala.log.LogUtil;
 
 /**
  * {@link ClassUtil}
@@ -39,7 +36,7 @@ public class ClassUtil implements Util
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger( ClassUtil.class );
+//	private static final Logger LOG = LogUtil.getLogger( ClassUtil.class );
 
 	/**
 	 * {@link ClassUtil} singleton constructor
@@ -129,7 +126,7 @@ public class ClassUtil implements Util
 	 * description</a>
 	 * 
 	 * @param type the type
-	 * @return the underlying class
+	 * @return the underlying class, or {@code null} if the type is a variable
 	 */
 	public static Class<?> toClass( final Type type )
 	{
@@ -154,7 +151,7 @@ public class ClassUtil implements Util
 			if( componentClass != null )
 				return Array.newInstance( componentClass, 0 ).getClass();
 		}
-		LOG.warn( "Type is a variable type: {}", type.toString() );
+//		LOG.trace( "Type is a variable: {}", type.toString() );
 		return null;
 	}
 

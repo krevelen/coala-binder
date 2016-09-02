@@ -17,49 +17,31 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.bind;
+package io.coala.config;
 
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.Objects;
 
-import io.coala.config.GlobalConfig;
+import org.aeonbits.owner.Converter;
+
+import io.coala.json.JsonUtil;
+import io.coala.util.TypeArguments;
 
 /**
- * {@link ProviderConfig}
+ * {@link JsonConverter}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface ProviderConfig extends GlobalConfig
+public class JsonConverter<T> implements Converter<T>
 {
-
-	String INITABLE_KEY = "init";
-
-	@Key( INITABLE_KEY )
-	@DefaultValue( "false" )
-	boolean initable();
-
-	String MUTABLE_KEY = "mutable";
-
-	@Key( MUTABLE_KEY )
-	@DefaultValue( "false" )
-	boolean mutable();
-
-	String SINGLETON_KEY = "singleton";
-
-	@Key( SINGLETON_KEY )
-	@DefaultValue( "false" )
-	boolean singleton();
-
-	String IMPLEMENTATION_KEY = "impl";
-
-	@Key( IMPLEMENTATION_KEY )
-	Class<?> implementation();
-
-	String BINDINGS_KEY = "bindings";
-
-	default Map<String, BindingConfig>
-		bindingConfigs( final Map<?, ?>... imports )
+	@SuppressWarnings( "unchecked" )
+	@Override
+	public T convert( final Method method, final String input )
 	{
-		return subConfigs( BINDINGS_KEY, BindingConfig.class, imports );
+		final Class<T> returnType = (Class<T>) TypeArguments
+				.of( JsonConverter.class, getClass() ).get( 0 );
+		Objects.requireNonNull( returnType );
+		return JsonUtil.valueOf( "\"" + input + "\"", returnType );
 	}
 }

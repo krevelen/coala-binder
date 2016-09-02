@@ -1,8 +1,8 @@
 package io.coala.util;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,9 +29,15 @@ public abstract class InstanceParser<T>
 		return new InstanceParser<T>( valueType )
 		{
 			@Override
-			public T parse( final String value ) throws Exception
+			public T parse( final String value ) throws Throwable
 			{
-				return valueType.cast( method.invoke( valueType, value ) );
+				try
+				{
+					return valueType.cast( method.invoke( valueType, value ) );
+				} catch( final InvocationTargetException e )
+				{
+					throw e.getCause();
+				}
 			}
 		};
 	}
@@ -63,10 +69,34 @@ public abstract class InstanceParser<T>
 		};
 	}
 
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	protected static <E extends Enum> InstanceParser<E>
+		ofEnum( final Class<E> valueType )
+	{
+		return new InstanceParser<E>( valueType )
+		{
+			@Override
+			public E parse( final String value ) throws Exception
+			{
+				try
+				{
+					return (E) Enum.valueOf( valueType, value );
+				} catch( final Exception e )
+				{
+					for( E constant : valueType.getEnumConstants() )
+						if( constant.toString().equalsIgnoreCase( value ) )
+							return constant;
+					throw e;
+				}
+			}
+		};
+	}
+
 	/**
 	 * @param valueType the {@link Class} to parse
 	 * @return the cached (new) {@link InstanceParser} instance
 	 */
+	@SuppressWarnings( "unchecked" )
 	public static <T> InstanceParser<T> of( final Class<T> valueType )
 	{
 		@SuppressWarnings( "unchecked" )
@@ -78,6 +108,9 @@ public abstract class InstanceParser<T>
 		{
 			if( valueType.isInterface() )
 				result = of( valueType, JsonUtil.getJOM() );
+			else if( valueType.isEnum() )
+				result = (InstanceParser<T>) ofEnum(
+						valueType.asSubclass( Enum.class ) );
 			else
 				result = of( valueType, ReflectUtil.getAccessibleMethod(
 						valueType, "valueOf", String.class ) );
@@ -123,7 +156,6 @@ public abstract class InstanceParser<T>
 	/**
 	 * @param value the {@link String} representation to parse
 	 * @return the parsed instance
-	 * @throws ParseException
 	 * @throws Exception when no parsing method is available
 	 */
 	public T parseOrTrimmed( final String value ) throws Exception
@@ -131,17 +163,16 @@ public abstract class InstanceParser<T>
 		try
 		{
 			return parse( value );
-		} catch( final Exception e )
+		} catch( final Throwable e )
 		{
 			try
 			{
 				return parse( value.trim() );
-			} catch( final Exception e1 )
+			} catch( final Throwable e1 )
 			{
-				return Thrower.throwNew( Exception.class,
-						"Problem parsing type: {} from (trimmed) value: %s, errors: [{}; {}]",
-						this.valueType, value, e.getMessage(),
-						e1.getMessage() );
+				return Thrower.throwNew( IllegalArgumentException.class, e,
+						"Problem parsing {} from un/trimmed value: '{}'",
+						this.valueType, value );
 			}
 		}
 	}
@@ -151,6 +182,6 @@ public abstract class InstanceParser<T>
 	 * @return the parsed instance
 	 * @throws Exception when no parsing method is available
 	 */
-	public abstract T parse( String value ) throws Exception;
+	public abstract T parse( String value ) throws Throwable;
 
 }

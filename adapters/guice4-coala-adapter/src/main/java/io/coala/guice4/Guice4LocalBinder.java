@@ -11,8 +11,8 @@ import java.util.Objects;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
-import org.aeonbits.owner.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,6 +37,9 @@ import io.coala.config.InjectConfig;
 import io.coala.exception.Thrower;
 import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
+import io.coala.random.DistributionParser;
+import io.coala.random.InjectDist;
+import io.coala.random.ProbabilityDistribution;
 import io.coala.util.Instantiator;
 import rx.Observable;
 import rx.subjects.PublishSubject;
@@ -67,6 +70,8 @@ public class Guice4LocalBinder implements LocalBinder
 			@Override
 			public void configure()
 			{
+				final com.google.inject.Provider<DistributionParser> parser = getProvider(
+						DistributionParser.class );
 				bindListener( Matchers.any(), new TypeListener()
 				{
 					@Override
@@ -79,41 +84,49 @@ public class Guice4LocalBinder implements LocalBinder
 						{
 							for( Field field : clazz.getDeclaredFields() )
 							{
-								if( field.getType() == Logger.class )
+								if( field.isAnnotationPresent(
+										InjectLogger.class )
+										// also provide @Inject fields of Logger 
+										|| (field.isAnnotationPresent(
+												Inject.class )
+												&& (field
+														.getType() == Logger.class
+														|| field.getType() == org.slf4j.Logger.class
+														|| field.getType() == java.util.logging.Logger.class)) )
 								{
-									if( field.isAnnotationPresent(
-											Inject.class ) )
-										typeEncounter.register(
-												(InjectionListener<T>) t ->
-												{
-													// replace default logger
-													LogUtil.injectLogger( t,
-															field );
-												} );
-									else if( field.isAnnotationPresent(
-											InjectLogger.class ) )
-										typeEncounter.register(
-												(MembersInjector<T>) t ->
-												{
-													// inject for first time
-													LogUtil.injectLogger( t,
-															field );
-												} );
-								} else if( Config.class
-										.isAssignableFrom( field.getType() )
-										&& field.isAnnotationPresent(
-												InjectConfig.class ) )
+									typeEncounter.register(
+											(InjectionListener<T>) t ->
+											{
+												// replace default logger
+												LogUtil.injectLogger( t,
+														field );
+											} );
+								} else if( field.isAnnotationPresent(
+										InjectConfig.class ) )
+								{
 									typeEncounter
 											.register( (MembersInjector<T>) t ->
 											{
 												ConfigUtil.injectConfig( t,
 														field, binder );
 											} );
+								} else if( field.isAnnotationPresent(
+										InjectDist.class ) )
+								{
+									typeEncounter
+											.register( (MembersInjector<T>) t ->
+											{
+												ProbabilityDistribution
+														.injectDistribution( t,
+																field,
+																parser.get() );
+											} );
+								}
 							}
 						}
 					}
 				} );
-
+				this.
 				// binds itself, how nice :-)
 				bind( LocalBinder.class ).toInstance( binder );
 				emit( LocalBinder.class );
@@ -142,12 +155,15 @@ public class Guice4LocalBinder implements LocalBinder
 					Objects.requireNonNull( impl,
 							ProviderConfig.IMPLEMENTATION_KEY + " not set for "
 									+ " for " + binding.base() );
+					final boolean singleton = binding.singleton();
 					final boolean mutable = binding.mutable();
 					final boolean initable = binding.initable();
 					final Collection<BindingConfig> typeKeys = binding
 							.bindingConfigs().values();
 
 					LocalProvider<?> provider = null;
+
+					// make sure any "initable" implementation is initialized
 					if( initable ) binder.initable.add( impl );
 					if( initable || typeKeys.isEmpty() )
 						provider = bindLocal( impl, mutable, impl );
@@ -155,7 +171,9 @@ public class Guice4LocalBinder implements LocalBinder
 					for( BindingConfig inject : typeKeys )
 					{
 						final Class<?> type = inject.type();
-						if( provider == null )
+						if( singleton )
+							bindSingleton( type, impl );
+						else if( provider == null )
 							provider = bindLocal( impl, mutable, type );
 						else // reuse
 							bindProvider( type, provider );
@@ -180,18 +198,19 @@ public class Guice4LocalBinder implements LocalBinder
 						bind( type )
 								.toConstructor( (Constructor<T>) constructor );
 						emit( type );
-						LOG.trace( "Bound {} <- {}", type, constructor );
+						LOG.trace( "Bound constructor: {} <- {}", type,
+								constructor );
 						return;
 					}
-				bind( type ).toProvider( (Provider<T>) () ->
+				final LocalProvider<T> localProvider = LocalProvider.of( binder,
+						type );
+				bind( type ).toProvider( () ->
 				{
-					final T result = ((Provider<T>) LocalProvider.of( binder,
-							type )).get();
+					final T result = localProvider.get();
 					requestInjection( result );
 					return result;
 				} );
-//				Thrower.throwNew( IllegalArgumentException.class,
-//						"Can't bind to self: {}", type );
+				LOG.trace( "Bound default constructor: {} <- {}", type );
 			}
 
 			/**
@@ -202,7 +221,19 @@ public class Guice4LocalBinder implements LocalBinder
 			{
 				bind( type ).to( impl.asSubclass( type ) );
 				emit( type );
-				LOG.trace( "Bound {} <- {}", type, impl );
+				LOG.trace( "Bound implementation: {} <- {}", type, impl );
+			}
+
+			/**
+			 * @param type the {@link Provider}, {@link Inject} or other type
+			 */
+			private <T> void bindSingleton( final Class<T> type,
+				final Class<?> impl )
+			{
+				bind( type ).to( impl.asSubclass( type ) )
+						.in( Singleton.class );
+				emit( type );
+				LOG.trace( "Bound singleton: {} <- {}", type, impl );
 			}
 
 			/**
@@ -214,11 +245,11 @@ public class Guice4LocalBinder implements LocalBinder
 			{
 				bind( type ).toProvider( (Provider<T>) provider );
 				emit( type );
-				LOG.trace( "Bound {} <- {}", type, provider );
+				LOG.trace( "Bound provider: {} <- {}", type, provider );
 			}
 
 			/**
-			 * assumes zero-arg constructors TODO apply config/args?
+			 * assumes zero-arg constructors
 			 * 
 			 * @param type the {@link Provider}, {@link Inject} or other type
 			 */

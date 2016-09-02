@@ -17,49 +17,32 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.bind;
-
-import java.util.Map;
-
-import io.coala.config.GlobalConfig;
+package io.coala.util;
 
 /**
- * {@link ProviderConfig}
+ * {@link ArrayUtil}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface ProviderConfig extends GlobalConfig
+public class ArrayUtil
 {
 
-	String INITABLE_KEY = "init";
-
-	@Key( INITABLE_KEY )
-	@DefaultValue( "false" )
-	boolean initable();
-
-	String MUTABLE_KEY = "mutable";
-
-	@Key( MUTABLE_KEY )
-	@DefaultValue( "false" )
-	boolean mutable();
-
-	String SINGLETON_KEY = "singleton";
-
-	@Key( SINGLETON_KEY )
-	@DefaultValue( "false" )
-	boolean singleton();
-
-	String IMPLEMENTATION_KEY = "impl";
-
-	@Key( IMPLEMENTATION_KEY )
-	Class<?> implementation();
-
-	String BINDINGS_KEY = "bindings";
-
-	default Map<String, BindingConfig>
-		bindingConfigs( final Map<?, ?>... imports )
+	private ArrayUtil()
 	{
-		return subConfigs( BINDINGS_KEY, BindingConfig.class, imports );
+		// singleton constructor
 	}
+
+	// see http://www.geeksforgeeks.org/write-a-program-to-reverse-an-array-or-string/
+	public static void reverse( final byte[] arr )
+	{
+		byte temp;
+		for( int start = 0, end = arr.length - 1; start < end; start++, end-- )
+		{
+			temp = arr[start];
+			arr[start] = arr[end];
+			arr[end] = temp;
+		}
+	}
+
 }

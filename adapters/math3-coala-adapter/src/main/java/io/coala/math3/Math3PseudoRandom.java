@@ -18,6 +18,8 @@ package io.coala.math3;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Singleton;
+
 import org.apache.commons.math3.random.ISAACRandom;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -304,6 +306,7 @@ public class Math3PseudoRandom implements PseudoRandom
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
+	@Singleton
 	public static class MersenneTwisterFactory extends Factory
 	{
 

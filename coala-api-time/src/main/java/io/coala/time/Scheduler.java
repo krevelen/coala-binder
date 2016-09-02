@@ -9,6 +9,7 @@ import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
 import rx.Observable;
 import rx.Observer;
+import rx.Subscription;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
@@ -32,6 +33,12 @@ public interface Scheduler extends Proactive
 
 	/** continue executing scheduled events */
 	void resume();
+
+	Observable<Scheduler> onReset();
+
+	Subscription onReset( ThrowingRunnable<?> runnable );
+
+	Subscription onReset( ThrowingConsumer<Scheduler, ?> consumer );
 
 	/**
 	 * @param when the {@link Instant} of execution

@@ -214,35 +214,39 @@ public class LogUtil implements Util
 		return result;
 	}
 
-	public static <T> boolean injectLogger( final T t, final Field field )
+	public static void injectLogger( final Object encloser, final Field field )
 	{
-		final String postfix = t instanceof Identified
-				? "." + ((Identified<?>) t).id() : "";
+		final String postfix = encloser instanceof Identified
+				? "." + ((Identified<?>) encloser).id() : "";
 		Object logger = null;
 		try
 		{
 			// Log4j2
 			if( field.getType() == Logger.class )
-				logger = getLogger( t.getClass(), t );
+				logger = getLogger( encloser.getClass(), encloser );
 			else // SLF4J
 			if( field.getType() == org.slf4j.Logger.class )
 			{
 				logger = LoggerFactory
-						.getLogger( t.getClass().getName() + postfix );
+						.getLogger( encloser.getClass().getName() + postfix );
 			} else // java.util.logging
 			if( field.getType() == java.util.logging.Logger.class )
 			{
-				logger = LogUtil
-						.getJavaLogger( t.getClass().getName() + postfix );
+				logger = LogUtil.getJavaLogger(
+						encloser.getClass().getName() + postfix );
 			} else
-				return false;
+				Thrower.throwNew( UnsupportedOperationException.class,
+						"@{} only injects {}, {} or {}",
+						InjectLogger.class.getSimpleName(),
+						Logger.class.getName(),
+						org.slf4j.Logger.class.getName(),
+						java.util.logging.Logger.class.getName() );
 
 			field.setAccessible( true );
-			field.set( t, logger );
-			return true;
+			field.set( encloser, logger );
 		} catch( final Exception e )
 		{
-			return Thrower.rethrowUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 		}
 	}
 

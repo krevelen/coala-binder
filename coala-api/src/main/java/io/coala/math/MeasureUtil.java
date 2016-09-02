@@ -225,8 +225,7 @@ public class MeasureUtil implements Util
 	 * @param measure
 	 * @return
 	 */
-	public static <Q extends Quantity> BigDecimal
-		toBigDecimal( final Measure<?, Q> measure )
+	public static BigDecimal toBigDecimal( final Measure<?, ?> measure )
 	{
 		return toBigDecimal( measure, measure.getUnit() );
 	}
@@ -237,11 +236,11 @@ public class MeasureUtil implements Util
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <Q extends Quantity> BigDecimal
-		toBigDecimal( final Measure<?, Q> measure, final Unit<Q> unit )
+		toBigDecimal( final Measure<?, Q> measure, final Unit<?> unit )
 	{
 		return measure instanceof DecimalMeasure
-				? ((DecimalMeasure<Q>) measure).to( unit ).getValue()
-				: BigDecimal.valueOf( measure.doubleValue( unit ) );
+				? ((DecimalMeasure<Q>) measure).to( (Unit<Q>) unit ).getValue()
+				: BigDecimal.valueOf( measure.doubleValue( (Unit<Q>) unit ) );
 	}
 
 	/**

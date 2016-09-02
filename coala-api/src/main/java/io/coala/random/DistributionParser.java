@@ -20,6 +20,7 @@
 package io.coala.random;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.math.WeightedValue;
 import io.coala.random.ProbabilityDistribution.Factory;
@@ -42,7 +44,7 @@ import io.coala.util.InstanceParser;
  * specific shapes or probability mass (discrete) or density (continuous)
  * functions
  */
-public class DistributionParser
+public class DistributionParser implements ProbabilityDistribution.Parser
 {
 	/** */
 	private static final Logger LOG = LogUtil
@@ -66,8 +68,9 @@ public class DistributionParser
 	 * <code>dist(arg1; arg2; &hellip;)</code> or
 	 * <code>dist(v1:w1; v2:w2; &hellip;)</code>
 	 */
-	public static final Pattern DISTRIBUTION_FORMAT = Pattern.compile( "^(?<"
-			+ DIST_GROUP + ">[^\\(]+)\\((?<" + PARAMS_GROUP + ">[^)]*)\\)$" );
+	public static final Pattern DISTRIBUTION_FORMAT = Pattern
+			.compile( "^(?<" + DIST_GROUP + ">[^\\(]+)\\s*\\((?<" + PARAMS_GROUP
+					+ ">[^)]*)\\)$" );
 
 	private final ProbabilityDistribution.Factory factory;
 
@@ -78,6 +81,7 @@ public class DistributionParser
 	}
 
 	/** @return a {@link Factory} of {@link ProbabilityDistribution}s */
+	@Override
 	public ProbabilityDistribution.Factory getFactory()
 	{
 		return this.factory;
@@ -92,26 +96,38 @@ public class DistributionParser
 	 * @throws Exception
 	 */
 	@SuppressWarnings( "unchecked" )
+	@Override
 	public <T, P> ProbabilityDistribution<T> parse( final String dist,
-		final Class<P> argType ) throws Exception
+		final Class<P> argType ) throws ParseException
 	{
 		final Matcher m = DISTRIBUTION_FORMAT.matcher( dist.trim() );
-		if( !m.find() ) throw ExceptionFactory.createChecked(
-				"Problem parsing probability distribution: {}", dist );
+		if( !m.find() ) throw new ParseException(
+				"Incorrect format, expected <dist>(p0;p1;p2), was: " + dist,
+				0 );
 		final List<WeightedValue<P>> params = new ArrayList<>();
 		final InstanceParser<P> argParser = InstanceParser.of( argType );
 		for( String valuePair : m.group( PARAMS_GROUP )
 				.split( PARAM_SEPARATORS ) )
-		{
-			if( valuePair.trim().isEmpty() ) continue; // empty parentheses
-			final String[] valueWeights = valuePair.split( WEIGHT_SEPARATORS );
-			params.add( valueWeights.length == 1 // no weight given
-					? WeightedValue.of( argParser.parseOrTrimmed( valuePair ),
-							BigDecimal.ONE )
-					: WeightedValue.of(
-							argParser.parseOrTrimmed( valueWeights[0] ),
-							new BigDecimal( valueWeights[1] ) ) );
-		}
+			try
+			{
+				if( valuePair.trim().isEmpty() ) continue; // empty parentheses
+				final String[] valueWeights = valuePair
+						.split( WEIGHT_SEPARATORS );
+				params.add(
+						valueWeights.length == 1 // no weight given
+								? WeightedValue.of(
+										argParser.parseOrTrimmed( valuePair ),
+										BigDecimal.ONE )
+								: WeightedValue.of(
+										argParser.parseOrTrimmed(
+												valueWeights[0] ),
+										new BigDecimal( valueWeights[1].trim() ) ) );
+			} catch( final Throwable t )
+			{
+//				throw new ParseException( "Could not parse '" + dist.trim()
+//						+ "': " + t.getMessage(), m.start() );
+				Thrower.rethrowUnchecked( t );
+			}
 		if( params.isEmpty() && argType.isEnum() )
 			for( P constant : argType.getEnumConstants() )
 			params.add( WeightedValue.of( constant, BigDecimal.ONE ) );
@@ -138,26 +154,29 @@ public class DistributionParser
 	 * @param name the symbol of the {@link ProbabilityDistribution}
 	 * @param args the arguments as a {@link List} of {@link WeightedValue}
 	 *            pairs with at least a value of type {@link T} and possibly
-	 *            some numeric weight (as necessary for e.g. }
+	 *            some numeric weight
 	 * @return a {@link ProbabilityDistribution}
 	 */
 	@SuppressWarnings( "unchecked" )
+	@Override
 	public <T, V> ProbabilityDistribution<T> parse( final String label,
-		final List<WeightedValue<V>> args )
+		final List<WeightedValue<V>> args ) throws ParseException
 	{
-		if( args.isEmpty() ) throw ExceptionFactory.createUnchecked(
-				"Missing distribution parameters: {}", label );
+		if( args.isEmpty() )
+			throw new ParseException( "Missing distribution parameters",
+					label.length() );
 
 		if( getFactory() == null )
 		{
 			final T value = (T) args.get( 0 ).getValue();
-			LOG.warn( "No {} set, creating Deterministic<{}>: {}",
+			LOG.warn( "No {} set, creating Deterministic<{}> -> {}",
 					ProbabilityDistribution.Factory.class.getSimpleName(),
 					value.getClass().getSimpleName(), value );
 			return ProbabilityDistribution.createDeterministic( value );
 		}
 
-		switch( label.toLowerCase( Locale.ROOT ) )
+		// FIXME use some singleton/modular registration of types and labels
+		switch( label.trim().toLowerCase( Locale.ROOT ) )
 		{
 		case "const":
 		case "constant":
@@ -319,7 +338,6 @@ public class DistributionParser
 					(Number) args.get( 0 ).getValue(),
 					(Number) args.get( 1 ).getValue() );
 		}
-		throw ExceptionFactory
-				.createUnchecked( "Unknown distribution symbol: {}", label );
+		throw new ParseException( "Unknown distribution symbol: " + label, 0 );
 	}
 }

@@ -106,6 +106,23 @@ public class DsolTime<Q extends Quantity> extends
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <N extends Number & Comparable<N>, Q extends Quantity>
+		DsolTime<Q> valueOf( final N time, final Unit<Q> unit )
+	{
+		try
+		{
+			return valueOf( TimeSpan.of( time, unit ) );
+		} catch( final Throwable e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
+	}
+
+	/**
+	 * @param time
+	 * @return
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <N extends Number & Comparable<N>, Q extends Quantity>
 		DsolTime<Q> valueOf( final SimTime<N, ?, ?> time, final Unit<Q> unit )
 	{
 		try

@@ -18,6 +18,7 @@ package io.coala.json;
 import java.beans.PropertyEditorSupport;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -269,6 +270,12 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final TreeNode tree,
 		final Class<T> resultType, final Properties... imports )
 	{
+		// TODO add work-around for Wrapper sub-types?
+		if( resultType.isMemberClass()
+				&& !Modifier.isStatic( resultType.getModifiers() ) )
+			Thrower.throwNew( IllegalArgumentException.class,
+					"Unable to deserialize non-static member: {}", resultType );
+
 		try
 		{
 			return tree == null ? null
@@ -276,8 +283,7 @@ public class JsonUtil
 							checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -378,8 +384,14 @@ public class JsonUtil
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
+//			LOG.trace( "Checking JSON conversion for type: {}", type );
 			if( type.isAnnotationPresent( BeanProxy.class ) )
 			{
+				if( !type.isInterface() )
+					Thrower.throwNew( IllegalArgumentException.class,
+							"@{} must target an interface, but annotates: {}",
+							BeanProxy.class.getSimpleName(), type );
+
 				DynaBean.registerType( om, type, imports );
 
 				for( Method method : type.getDeclaredMethods() )

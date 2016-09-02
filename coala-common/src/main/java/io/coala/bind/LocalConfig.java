@@ -35,7 +35,6 @@ import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 import io.coala.json.Contextual.Context;
 import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
 
 /**
  * {@link LocalConfig}
@@ -117,6 +116,28 @@ public interface LocalConfig extends GlobalConfig
 		}
 
 		/**
+		 * @param class1
+		 * @param class2
+		 * @return
+		 */
+		public JsonBuilder withSingleton( final Class<?> type,
+			final Class<?> impl )
+		{
+			// TODO implement recursively?
+			final ObjectNode provider = JsonUtil.getJOM().createObjectNode()
+					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
+					.put( ProviderConfig.SINGLETON_KEY, true )
+					.put( ProviderConfig.MUTABLE_KEY, false )
+					.put( ProviderConfig.INITABLE_KEY, false );
+			provider.withArray( ProviderConfig.BINDINGS_KEY )
+					.add( JsonUtil.getJOM().createObjectNode()
+							.put( BindingConfig.TYPE_KEY, type.getName() ) );
+			this.tree.with( BINDER_KEY ).withArray( BinderConfig.PROVIDERS_KEY )
+					.add( provider );
+			return this;
+		}
+
+		/**
 		 * @param type the type to bind
 		 * @param impl the implementation type to provide (immutable, lazy)
 		 * @return this builder for chaining
@@ -136,7 +157,7 @@ public interface LocalConfig extends GlobalConfig
 		public JsonBuilder withProvider( final Class<?> type,
 			final Class<?> impl, final boolean mutable )
 		{
-			return withProvider( type, impl, true, false );
+			return withProvider( type, impl, mutable, false );
 		}
 
 		public JsonBuilder withProvider( final Class<?> type,
@@ -158,8 +179,8 @@ public interface LocalConfig extends GlobalConfig
 		public LocalConfig build()
 		{
 			final Properties props = ConfigUtil.flatten( this.tree );
-			LogUtil.getLogger( this ).trace( "flattened: {} into: {}",
-					JsonUtil.toJSON( this.tree ), props );
+//			LogUtil.getLogger( this ).trace( "flattened: {} into: {}",
+//					JsonUtil.toJSON( this.tree ), props );
 			return LocalConfig.create( props );
 		}
 	}

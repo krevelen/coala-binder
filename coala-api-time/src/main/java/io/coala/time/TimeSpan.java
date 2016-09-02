@@ -38,9 +38,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.math.MeasureUtil;
 import io.coala.util.DecimalUtil;
@@ -63,10 +62,14 @@ import io.coala.util.DecimalUtil;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
-@JsonSerialize( using = TimeSpan.JsonSerializer.class )
-@JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
+//@JsonSerialize( using = TimeSpan.JsonSerializer.class )
+//@JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
 public class TimeSpan extends DecimalMeasure
 {
+	static
+	{
+		Units.registerAliases();
+	}
 
 	/** */
 	private static final long serialVersionUID = 1L;
@@ -94,11 +97,16 @@ public class TimeSpan extends DecimalMeasure
 	 *            </pre>
 	 * 
 	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
-	 * @see org.threeten.bp.Duration#parse(String)
+	 * @see java.time.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
 	 */
 	public static TimeSpan valueOf( final String value )
+	{
+		return of( value );
+	}
+
+	public static TimeSpan of( final String value )
 	{
 		return new TimeSpan( value );
 	}
@@ -219,7 +227,7 @@ public class TimeSpan extends DecimalMeasure
 		DecimalMeasure<Duration> result;
 		try
 		{
-			result = DecimalMeasure.valueOf( measure );
+			result = DecimalMeasure.valueOf( measure + " " );
 			// LOG.trace("Parsed '{}' as JSR-275 measure/unit: {}", measure,
 			// result);
 			return result;
@@ -250,15 +258,25 @@ public class TimeSpan extends DecimalMeasure
 			} catch( final Exception e )
 			{
 				// LOG.trace("JSR-275 and JSR-310 failed, try Joda", e);
-				final Period joda = Period.parse( measure );
-				result = DecimalMeasure.valueOf(
-						BigDecimal.valueOf(
-								joda.toStandardDuration().getMillis() ),
-						Units.MILLIS );
-				// LOG.trace(
-				// "Parsed '{}' using Joda to JSR-275 measure/unit: {}",
-				// measure, result);
-				return result;
+				try
+				{
+					final Period joda = Period.parse( measure );
+					result = DecimalMeasure.valueOf(
+							BigDecimal.valueOf(
+									joda.toStandardDuration().getMillis() ),
+							Units.MILLIS );
+					// LOG.trace(
+					// "Parsed '{}' using Joda to JSR-275 measure/unit: {}",
+					// measure, result);
+					return result;
+				} catch( final Exception j )
+				{
+					return Thrower.throwNew( IllegalArgumentException.class,
+							"Could not parse duration or period from: {}"
+									+ ", JSR-275: {}, JSR-310: {}, Joda-time: {}",
+							measure, a.getMessage(), e.getMessage(),
+							j.getMessage() );
+				}
 			}
 		}
 	}
@@ -282,7 +300,7 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public TimeSpan( final double millis )
 	{
-		this( millis, Units.MILLIS );
+		this( millis, Unit.ONE );
 	}
 
 	/**
@@ -293,7 +311,7 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public TimeSpan( final int millis )
 	{
-		this( millis, Units.MILLIS );
+		this( millis, Unit.ONE );
 	}
 
 	/**

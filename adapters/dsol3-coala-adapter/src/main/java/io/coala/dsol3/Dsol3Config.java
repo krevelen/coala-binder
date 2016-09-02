@@ -32,8 +32,10 @@ import org.aeonbits.owner.util.Collections;
 import io.coala.config.GlobalConfig;
 import io.coala.config.YamlConfig;
 import io.coala.function.ThrowingConsumer;
+import io.coala.math.MeasureUtil;
+import io.coala.time.Duration;
+import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
-import io.coala.util.Instantiator;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 
@@ -58,8 +60,6 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 	String REPLICATION_MODE_KEY = "dsol3.replication.simulator.mode";
 
 	String SIMULATOR_TYPE_KEY = "dsol3.replication.simulator.class";
-
-	String INITER_TYPE_KEY = "dsol3.replication.model.class";
 
 	@Key( ID_KEY )
 	@DefaultValue( "repl0" )
@@ -91,9 +91,6 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 	@DefaultValue( "true" )
 	boolean pauseOnError();
 
-	@Key( INITER_TYPE_KEY )
-	Class<? extends Initer> initerType();
-
 	class DsolTimeConverter implements Converter<DsolTime<?>>
 	{
 		@Override
@@ -121,6 +118,21 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 		return of( Collections.map( entries ) );
 	}
 
+	/**
+	 * @param replConfig the {@link ReplicateConfig}
+	 * @return a cached {@link Dsol3Config}
+	 */
+	static Dsol3Config of( final ReplicateConfig replConfig )
+	{
+		final Duration duration = replConfig.duration();
+
+		return of( Collections.entry( ID_KEY, replConfig.rawId() ),
+				Collections.entry( START_TIME_KEY,
+						DsolTime.valueOf( 0, duration.unit() ).toString() ),
+				Collections.entry( RUN_LENGTH_KEY, MeasureUtil
+						.toBigDecimal( duration.unwrap() ).toString() ) );
+	}
+
 	default <Q extends Quantity> Dsol3Scheduler<Q> create()
 	{
 		return Dsol3Scheduler.of( this );
@@ -130,18 +142,5 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 		create( final ThrowingConsumer<Scheduler, ?> modelInitializer )
 	{
 		return Dsol3Scheduler.of( this, modelInitializer );
-	}
-
-	interface Initer
-	{
-		void init( Scheduler scheduler );
-	}
-
-	/**
-	 * @return
-	 */
-	default ThrowingConsumer<Scheduler, ?> initer()
-	{
-		return Instantiator.instantiate( initerType() )::init;
 	}
 }

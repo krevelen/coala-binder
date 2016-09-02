@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.Collections;
 
 import javax.inject.Inject;
 
@@ -81,8 +80,8 @@ public class ReflectUtil implements Util
 					return null;
 
 			return Thrower.throwNew( NoSuchMethodException.class,
-					"No matching public constructor found for {}{}", valueType,
-					argTypes == null ? Collections.emptyList()
+					"No matching public constructor found for {}({})",
+					valueType, argTypes == null || argTypes.length == 0 ? ""
 							: Arrays.asList( argTypes ) );
 		}
 	}

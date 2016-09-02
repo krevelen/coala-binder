@@ -420,11 +420,15 @@ public class ConfigUtil implements Util
 		return path;
 	}
 
-	public static <T> boolean injectConfig( final T t, final Field field,
+	public static void injectConfig( final Object encloser, final Field field,
 		final LocalBinder binder )
 	{
-		if( !Config.class.isAssignableFrom( field.getType() ) ) return false;
 		final InjectConfig annot = field.getAnnotation( InjectConfig.class );
+		if( !Config.class.isAssignableFrom( field.getType() )
+				&& annot.configType() == null )
+			Thrower.throwNew( UnsupportedOperationException.class,
+					"@{} only injects extensions of {}",
+					InjectConfig.class.getSimpleName(), Config.class );
 		final List<Map<?, ?>> imports = new ArrayList<>();
 		if( annot != null && annot.yamlURI().length != 0 )
 		{
@@ -438,7 +442,7 @@ public class ConfigUtil implements Util
 					if( is != null ) imports.add( YamlUtil.flattenYaml( is ) );
 				} catch( final Exception e )
 				{
-					return Thrower.rethrowUnchecked( e );
+					Thrower.rethrowUnchecked( e );
 				}
 		}
 		final Map<?, ?>[] importsArray = imports
@@ -446,8 +450,11 @@ public class ConfigUtil implements Util
 		final Scope scope = annot != null ? annot.value() : Scope.DEFAULT;
 		try
 		{
-			final Class<? extends Config> type = field.getType()
-					.asSubclass( Config.class );
+			final boolean direct = annot
+					.configType() == InjectConfig.VoidConfig.class;
+			final Class<? extends Config> configType = direct
+					? field.getType().asSubclass( Config.class )
+					: annot.configType();
 			field.setAccessible( true );
 			final Object key;
 			switch( scope )
@@ -459,24 +466,29 @@ public class ConfigUtil implements Util
 				key = field;
 				break;
 			case ID:
-				key = t instanceof Identified<?> ? ObjectsUtil
-						.defaultIfNull( ((Identified<?>) t).id(), t ) : t;
+				key = encloser instanceof Identified<?>
+						? ObjectsUtil.defaultIfNull(
+								((Identified<?>) encloser).id(), encloser )
+						: encloser;
 				break;
 			case NONE:
 				key = null;
 				break;
 			default:
 			case DEFAULT:
-				key = type;
+				key = configType;
 				break;
 			}
-			field.set( t, key == null
-					? ConfigFactory.create( type, importsArray )
-					: ConfigCache.getOrCreate( key, type, importsArray ) );
-			return true;
+			final Config config = key == null
+					? ConfigFactory.create( configType, importsArray )
+					: ConfigCache.getOrCreate( key, configType, importsArray );
+			final Object value = direct ? config
+					: configType.getDeclaredMethod( annot.methodName() )
+							.invoke( config );
+			field.set( encloser, value );
 		} catch( final Throwable e )
 		{
-			return Thrower.rethrowUnchecked( e );
+			Thrower.rethrowUnchecked( e );
 		}
 	}
 }
