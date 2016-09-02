@@ -234,7 +234,7 @@ public class XmlUtil implements Util
 
 	/** */
 	private static final XMLInputFactory inputFactory = XMLInputFactory
-			.newFactory();
+			.newInstance();
 	{
 		inputFactory.setProperty(
 				XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, Boolean.FALSE );

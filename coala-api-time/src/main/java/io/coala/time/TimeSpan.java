@@ -17,7 +17,6 @@ package io.coala.time;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 
@@ -39,9 +38,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import io.coala.exception.Thrower;
+import io.coala.log.LogUtil;
 import io.coala.math.MeasureUtil;
 import io.coala.util.DecimalUtil;
 
@@ -63,10 +62,14 @@ import io.coala.util.DecimalUtil;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
-@JsonSerialize( using = TimeSpan.JsonSerializer.class )
-@JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
+//@JsonSerialize( using = TimeSpan.JsonSerializer.class )
+//@JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
 public class TimeSpan extends DecimalMeasure
 {
+	static
+	{
+		Units.registerAliases();
+	}
 
 	/** */
 	private static final long serialVersionUID = 1L;
@@ -94,11 +97,16 @@ public class TimeSpan extends DecimalMeasure
 	 *            </pre>
 	 * 
 	 * @see org.aeonbits.owner.Converters.CLASS_WITH_VALUE_OF_METHOD
-	 * @see org.threeten.bp.Duration#parse(String)
+	 * @see java.time.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 * @see DecimalMeasure
 	 */
 	public static TimeSpan valueOf( final String value )
+	{
+		return of( value );
+	}
+
+	public static TimeSpan of( final String value )
 	{
 		return new TimeSpan( value );
 	}
@@ -115,7 +123,7 @@ public class TimeSpan extends DecimalMeasure
 						.add( BigDecimal
 								.valueOf( temporal.get( ChronoUnit.MILLIS ) )
 								.multiply( BigDecimal.TEN.pow( 6 ) ) ),
-				NANOS );
+				Units.NANOS );
 	}
 
 	/**
@@ -126,7 +134,8 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public static TimeSpan of( final ReadableDuration value )
 	{
-		return new TimeSpan( BigDecimal.valueOf( value.getMillis() ), MILLIS );
+		return new TimeSpan( BigDecimal.valueOf( value.getMillis() ),
+				Units.MILLIS );
 	}
 
 	/**
@@ -179,12 +188,6 @@ public class TimeSpan extends DecimalMeasure
 	/** */
 	// private static final Logger LOG = LogManager.getLogger(TimeSpan.class);
 
-	/** */
-	public static final Unit<Duration> MILLIS = SI.MILLI( SI.SECOND );
-
-	/** */
-	public static final Unit<Duration> NANOS = SI.NANO( SI.SECOND );
-
 	/** the ZERO */
 	public static final TimeSpan ZERO = of( 0, Unit.ONE );
 
@@ -224,7 +227,7 @@ public class TimeSpan extends DecimalMeasure
 		DecimalMeasure<Duration> result;
 		try
 		{
-			result = DecimalMeasure.valueOf( measure );
+			result = DecimalMeasure.valueOf( measure + " " );
 			// LOG.trace("Parsed '{}' as JSR-275 measure/unit: {}", measure,
 			// result);
 			return result;
@@ -247,7 +250,7 @@ public class TimeSpan extends DecimalMeasure
 														.pow( 9 ) )
 												.add( BigDecimal.valueOf(
 														temp.getNano() ) ),
-										NANOS );
+										Units.NANOS );
 				// LOG.trace(
 				// "Parsed '{}' using JSR-310 to JSR-275 measure/unit: {}",
 				// measure, result);
@@ -255,15 +258,25 @@ public class TimeSpan extends DecimalMeasure
 			} catch( final Exception e )
 			{
 				// LOG.trace("JSR-275 and JSR-310 failed, try Joda", e);
-				final Period joda = Period.parse( measure );
-				result = DecimalMeasure.valueOf(
-						BigDecimal.valueOf(
-								joda.toStandardDuration().getMillis() ),
-						MILLIS );
-				// LOG.trace(
-				// "Parsed '{}' using Joda to JSR-275 measure/unit: {}",
-				// measure, result);
-				return result;
+				try
+				{
+					final Period joda = Period.parse( measure );
+					result = DecimalMeasure.valueOf(
+							BigDecimal.valueOf(
+									joda.toStandardDuration().getMillis() ),
+							Units.MILLIS );
+					// LOG.trace(
+					// "Parsed '{}' using Joda to JSR-275 measure/unit: {}",
+					// measure, result);
+					return result;
+				} catch( final Exception j )
+				{
+					return Thrower.throwNew( IllegalArgumentException.class,
+							"Could not parse duration or period from: {}"
+									+ ", JSR-275: {}, JSR-310: {}, Joda-time: {}",
+							measure, a.getMessage(), e.getMessage(),
+							j.getMessage() );
+				}
 			}
 		}
 	}
@@ -287,7 +300,7 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public TimeSpan( final double millis )
 	{
-		this( millis, MILLIS );
+		this( millis, Unit.ONE );
 	}
 
 	/**
@@ -298,7 +311,7 @@ public class TimeSpan extends DecimalMeasure
 	 */
 	public TimeSpan( final int millis )
 	{
-		this( millis, MILLIS );
+		this( millis, Unit.ONE );
 	}
 
 	/**
@@ -335,6 +348,12 @@ public class TimeSpan extends DecimalMeasure
 		super( DecimalUtil.valueOf( value ), unit );
 	}
 
+//	@Override
+//	public int compareTo( final Measurable that )
+//	{
+//		return MeasureUtil.compareTo( this, that );
+//	}
+
 	/**
 	 * @param augend the {@link Measurable}, e.g. another {@link TimeSpan},
 	 *            {@link Measure} or {@link Amount}
@@ -344,8 +363,7 @@ public class TimeSpan extends DecimalMeasure
 	public TimeSpan add( final Measurable<?> augend )
 	{
 		return augend instanceof DecimalMeasure
-				? add( (BigDecimal) ((DecimalMeasure) augend)
-						.to( getUnit(), DecimalUtil.DEFAULT_CONTEXT )
+				? add( MeasureUtil.toUnit( (DecimalMeasure) augend, getUnit() )
 						.getValue() )
 				: add( augend instanceof Amount && ((Amount) augend).isExact()
 						? augend.longValue( getUnit() )
@@ -369,8 +387,8 @@ public class TimeSpan extends DecimalMeasure
 	public TimeSpan subtract( final Measurable<?> subtrahend )
 	{
 		return subtrahend instanceof DecimalMeasure
-				? subtract( (BigDecimal) ((DecimalMeasure) subtrahend)
-						.to( getUnit(), DecimalUtil.DEFAULT_CONTEXT )
+				? subtract( MeasureUtil
+						.toUnit( (DecimalMeasure) subtrahend, getUnit() )
 						.getValue() )
 				: subtrahend instanceof Amount
 						&& ((Amount) subtrahend).isExact()
@@ -396,10 +414,9 @@ public class TimeSpan extends DecimalMeasure
 	@SuppressWarnings( "unchecked" )
 	public TimeSpan divide( final Measurable<Dimensionless> divisor )
 	{
-		// FIXME generate more exact Measure for discrete divisor values?
 		return divide( divisor instanceof DecimalMeasure
-				? ((DecimalMeasure) divisor)
-						.to( Unit.ONE, DecimalUtil.DEFAULT_CONTEXT ).getValue()
+				? MeasureUtil.toUnit( (DecimalMeasure) divisor, Unit.ONE )
+						.getValue()
 				: BigDecimal.valueOf( divisor.doubleValue( Unit.ONE ) ) );
 	}
 
@@ -445,8 +462,8 @@ public class TimeSpan extends DecimalMeasure
 	public TimeSpan multiply( final Measurable<Dimensionless> multiplier )
 	{
 		return multiply( multiplier instanceof DecimalMeasure
-				? ((DecimalMeasure) multiplier)
-						.to( Unit.ONE, DecimalUtil.DEFAULT_CONTEXT ).getValue()
+				? MeasureUtil.toUnit( (DecimalMeasure) multiplier, Unit.ONE )
+						.getValue()
 				: BigDecimal.valueOf( multiplier.doubleValue( Unit.ONE ) ) );
 	}
 
@@ -486,14 +503,21 @@ public class TimeSpan extends DecimalMeasure
 				DecimalUtil.DEFAULT_CONTEXT ), getUnit() );
 	}
 
-	public Prettifier prettify( final int scale )
+	public Object prettify( final int scale )
 	{
-		return Prettifier.of( this, getUnit(), scale );
+		return prettify( getUnit(), scale );
 	}
 
-	public Prettifier prettify( final Unit<?> unit, final int scale )
+	@SuppressWarnings( "unchecked" )
+	public Object prettify( final Unit<?> unit, final int scale )
 	{
-		return Prettifier.of( this, unit, scale );
+		return LogUtil.wrapToString( () ->
+		{
+			return DecimalUtil
+					.setScale( MeasureUtil.toUnit( this, unit ).getValue(),
+							scale )
+					.toString() + unit;
+		} );
 	}
 
 	public static class JsonSerializer
@@ -538,38 +562,4 @@ public class TimeSpan extends DecimalMeasure
 			return result;
 		}
 	}
-
-	public static class Prettifier
-	{
-		public static Prettifier of( final TimeSpan span, final Unit<?> unit,
-			final int scale )
-		{
-			return new Prettifier( span, unit, scale );
-		}
-
-		private final TimeSpan span;
-		private final Unit<?> unit;
-		private final int scale;
-		private String result = null;
-
-		protected Prettifier( final TimeSpan span, final Unit<?> unit,
-			final int scale )
-		{
-			this.span = span;
-			this.unit = unit;
-			this.scale = scale;
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public String toString()
-		{
-			return this.result != null ? this.result
-					: (this.result = this.span
-							.to( this.unit, DecimalUtil.DEFAULT_CONTEXT )
-							.getValue()
-							.setScale( this.scale, RoundingMode.HALF_UP )
-							.toString() + this.unit);
-		}
-	}
-
 }

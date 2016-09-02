@@ -76,11 +76,13 @@ public interface Wrapper<T>
 	/**
 	 * @return the wrapped value
 	 */
+//	@JsonGetter( "value" )
 	T unwrap();
 
 	/**
 	 * @param value the value to wrap
 	 */
+//	@JsonSetter( "value" )
 	Wrapper<T> wrap( T value );
 
 	/**
@@ -161,6 +163,8 @@ public interface Wrapper<T>
 		/**
 		 * @param value the new value to wrap
 		 */
+		@Override
+//		@JsonSetter( "value" )
 		public Wrapper<T> wrap( final T value )
 		{
 			this.value = value;
@@ -168,6 +172,7 @@ public interface Wrapper<T>
 		}
 
 		/** @return the wrapped value */
+		@Override
 		public T unwrap()
 		{
 			return this.value;
@@ -373,8 +378,8 @@ public interface Wrapper<T>
 
 					if( annot == null )
 					{
-						LOG.trace( "parsing {} as {}", jp.getText(),
-								type.getName() );
+//						LOG.trace( "parsing {} as {}", jp.getText(),
+//								type.getName() );
 						value = jp.readValueAs( valueType );
 					} else
 					{

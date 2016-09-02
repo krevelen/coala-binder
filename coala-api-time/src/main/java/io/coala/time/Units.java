@@ -16,12 +16,21 @@ import javax.measure.unit.UnitFormat;
 public class Units
 {
 
+	/** */
+	public static final Unit<Duration> MILLIS = SI.MILLI( SI.SECOND );
+
+	/** */
+	public static final Unit<Duration> NANOS = SI.NANO( SI.SECOND );
+
+	/** */
 	public static final Unit<Duration> DAYS = NonSI.DAY;
 
+	/** */
 	public static final String DAYS_ALIAS = "days";
 
+	/** */
 	public static final String DAILY_ALIAS = "daily";
-	
+
 //	interface InverseArea extends Quantity
 //	{
 //	    Unit<InverseArea> UNIT = SI.METER.pow( -2 );
@@ -46,8 +55,11 @@ public class Units
 	public static final Unit<Frequency> ANNUAL = ANNUM.inverse()
 			.asType( Frequency.class );
 
-	static
+	private static boolean registered = false;
+
+	public static void registerAliases()
 	{
+		if( registered ) return;
 		UnitFormat.getInstance().alias( DAYS, DAYS_ALIAS );
 		UnitFormat.getInstance().label( DAYS, DAYS_ALIAS );
 		UnitFormat.getInstance().alias( DAILY, DAILY_ALIAS );
@@ -56,6 +68,7 @@ public class Units
 		UnitFormat.getInstance().label( ANNUM, ANNUM_ALIAS );
 		UnitFormat.getInstance().alias( ANNUAL, ANNUALLY_ALIAS );
 		UnitFormat.getInstance().label( ANNUAL, ANNUALLY_ALIAS );
+		registered = true;
 	}
 
 }

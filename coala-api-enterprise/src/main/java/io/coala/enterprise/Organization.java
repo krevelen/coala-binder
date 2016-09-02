@@ -36,24 +36,54 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Organization extends Proactive,
-	Identified.Ordinal<Organization.ID>
+public interface Organization
+	extends Proactive, Identified.Ordinal<Organization.ID>
 {
 
 	/** @return */
 	Observable<CoordinationFact> incoming();
 
+	default <F extends CoordinationFact> Observable<F>
+		incoming( final Class<F> factKind )
+	{
+		return incoming().ofType( factKind );
+	}
+
+	default <F extends CoordinationFact> Observable<F>
+		incoming( final Class<F> factKind, final CoordinationFactType type )
+	{
+		return incoming( factKind ).filter( f ->
+		{
+			return f.type() == type;
+		} );
+	}
+
 	/** @return */
 	Observable<CoordinationFact> outgoing();
+
+	default <F extends CoordinationFact> Observable<F>
+		outgoing( final Class<F> factKind )
+	{
+		return outgoing().ofType( factKind );
+	}
+
+	default <F extends CoordinationFact> Observable<F>
+		outgoing( final Class<F> factKind, final CoordinationFactType type )
+	{
+		return outgoing( factKind ).filter( f ->
+		{
+			return f.type() == type;
+		} );
+	}
 
 	/**
 	 * @param actorID
 	 * @return
 	 */
 	CompositeActor actor( CompositeActor.ID actorID );
-	
+
 	/** @param incoming */
-	void on(CoordinationFact incoming);
+	void consume( CoordinationFact incoming );
 
 	/**
 	 * @param actorID
@@ -118,15 +148,15 @@ public interface Organization extends Proactive,
 			{
 				return actorMap.computeIfAbsent( actorID, id ->
 				{
-					final CompositeActor result = CompositeActor.of( id,
-							this, factFactory );
+					final CompositeActor result = CompositeActor.of( id, this,
+							factFactory );
 					result.outgoing().subscribe( outgoing );
 					return result;
 				} );
 			}
 
 			@Override
-			public void on( final CoordinationFact fact )
+			public void consume( final CoordinationFact fact )
 			{
 				incoming.onNext( fact );
 			}

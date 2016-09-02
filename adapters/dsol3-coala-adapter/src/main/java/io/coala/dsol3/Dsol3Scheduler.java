@@ -2,25 +2,27 @@ package io.coala.dsol3;
 
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.function.Consumer;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.measure.Measurable;
 import javax.measure.quantity.Quantity;
-import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.exception.ExceptionFactory;
+import io.coala.config.InjectConfig;
+import io.coala.exception.Thrower;
+import io.coala.function.ThrowingConsumer;
+import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
-import io.coala.time.Duration;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
+import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
-import io.coala.util.Caller;
-import io.coala.util.Caller.ThrowingConsumer;
-import io.coala.util.Caller.ThrowingRunnable;
+import io.coala.util.Compare;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
@@ -29,6 +31,7 @@ import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulatorInterface;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import rx.Observable;
+import rx.Subscription;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
@@ -38,118 +41,112 @@ import rx.subjects.Subject;
  * @version $Id: 5b42b06bdc16c0e0c750f6c8cc214f6e8860fbf8 $
  * @author Rick van Krevelen
  */
+@Singleton
 public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 {
 
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final ThrowingRunnable<?> modelInitializer )
+	@SafeVarargs
+	public static <Q extends Quantity> Dsol3Scheduler<Q>
+		of( final Map<String, String>... imports )
 	{
-		return of( id, start, duration, Caller.of( modelInitializer )::ignore );
+		return of( Dsol3Config.of( imports ) );
 	}
 
-	public static <Q extends Quantity> Dsol3Scheduler<Q> of( final String id,
-		final Instant start, final Duration duration,
-		final ThrowingConsumer<Scheduler, ?> modelInitializer )
+	public static <Q extends Quantity> Dsol3Scheduler<Q>
+		of( final Dsol3Config config )
 	{
-		return new Dsol3Scheduler<Q>( id, start,
-				Duration.of( 0, start.unwrap().getUnit() ), duration,
-				Caller.rethrow( modelInitializer ) );
+		return new Dsol3Scheduler<Q>( config );
+	}
+
+	public static <Q extends Quantity> Dsol3Scheduler<Q> of(
+		final Dsol3Config config,
+		final ThrowingConsumer<Scheduler, ?> onInitialize )
+	{
+		final Dsol3Scheduler<Q> result = of( config );
+		result.onReset( onInitialize );
+		return result;
 	}
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Dsol3Scheduler.class );
 
-	private Instant last = null;
-
 	/** the time */
 	private final Subject<Instant, Instant> time = PublishSubject.create();
+
+	/** the time */
+	private final Observable<Scheduler> reset = time.first().map( t ->
+	{
+		return this;
+	} );
 
 	/** the listeners */
 	private final NavigableMap<Instant, Subject<Instant, Instant>> listeners = new ConcurrentSkipListMap<>();
 
+//	@InjectConfig
+	private Dsol3Config config;
+
+	@InjectConfig
+	private ReplicateConfig replConfig;
+
+	private boolean initialized = false;
+
+	/** the start time and unit */
+	private Instant first;
+
+	/** the current time */
+	private Instant last = null;
+
 	/** the scheduler */
-	private final DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>> scheduler;
+	private DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>> scheduler;
 
 	/**
 	 * {@link Dsol3Scheduler} constructor
-	 * 
-	 * @param threadName
 	 */
-	@SuppressWarnings( { "unchecked", "serial", "rawtypes" } )
-	public Dsol3Scheduler( final String id, final Instant startTime,
-		final Duration warmUp, final Duration length,
-		final Consumer<Scheduler> onInitialize )
+	@Inject
+	public Dsol3Scheduler()
 	{
-		this.scheduler = DsolTime.createDEVSSimulator( DEVSSimulator.class );
+	}
+
+	public Dsol3Scheduler( final Dsol3Config config )
+	{
+		this.config = config;
+	}
+
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	private void initialize()
+	{
+		if( this.config == null ) this.config = this.replConfig == null
+				? Dsol3Config.get() : Dsol3Config.of( this.replConfig );
+		LOG.trace( "Using config: {}", this.config );
+		final Class<? extends DEVSSimulator> type = this.config.simulatorType();
+		this.scheduler = DsolTime.createDEVSSimulator( type );
 		try
 		{
-			final DsolTime start = DsolTime.valueOf( startTime );
-			LOG.trace( "jscience: {} => dsol: {}", startTime, start );
-
-			final DSOLModel model = new DSOLModel()
-			{
-				@Override
-				public void constructModel( final SimulatorInterface simulator )
-					throws RemoteException, SimRuntimeException
-				{
-					// schedule first event to rename the worker thread
-					((DEVSSimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>) simulator)
-							.scheduleEvent( new SimEvent<DsolTime<Q>>( start,
-									simulator, new Runnable()
-									{
-										@Override
-										public void run()
-										{
-											Thread.currentThread()
-													.setName( id );
-										}
-									}, "run", null ) );
-
-					// trigger onInitialize function
-					onInitialize.accept( Dsol3Scheduler.this );
-				}
-
-				@Override
-				public SimulatorInterface getSimulator()
-				{
-					return scheduler;
-				}
-			};
-
-			// initialize the simulator
-			this.scheduler.initialize(
-					DsolTime.createReplication( id, start,
-							warmUp.unwrap().to( startTime.unwrap().getUnit() )
-									.getValue(),
-							length.unwrap().to( startTime.unwrap().getUnit() )
-									.getValue(),
-							model ),
-					ReplicationMode.TERMINATING );
-
 			// observe time changes
 			this.scheduler.addListener( event ->
 			{
 				final Instant t = ((DsolTime) event.getContent()).toInstant();
-				if( t.equals( this.last ) ) return;
 
-				this.last = t;
 				synchronized( this.listeners )
 				{
+					if( this.last != null && Compare.eq( t, this.last ) )
+						return;
+					this.last = t;
+					// publish time externally
+					this.time.onNext( this.last.to( this.first.unit() ) );
 					this.listeners.computeIfPresent( t, ( t1, timeProxy ) ->
 					{
 						try
 						{
+							// publish to registered listeners
 							timeProxy.onNext( t );
 						} catch( final Throwable e )
 						{
-//							timeProxy.onError( e );
-//							this.time.onError( e );
+							// execution errors already propagated
 						}
 						timeProxy.onCompleted();
-						return null; // i.e. remove
+						return null; // i.e. remove proxy for current instant
 					} );
-					this.time.onNext( t );
 				}
 			}, SimulatorInterface.TIME_CHANGED_EVENT );
 
@@ -164,38 +161,104 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 						return true;
 					} );
 					this.time.onCompleted();
+					this.scheduler.cleanUp();
+					this.scheduler = null;
 				}
 			}, SimulatorInterface.END_OF_REPLICATION_EVENT );
-		} catch( final RemoteException | SimRuntimeException
-				| NamingException e )
+
+			this.scheduler.setPauseOnError( this.config.pauseOnError() );
+			final String id = this.config.id();
+			final DsolTime startTime = this.config.startTime();
+			final BigDecimal warmUp = this.config.warmUpLength();
+			final BigDecimal length = this.config.runLength();
+			final ReplicationMode mode = this.config.replicationMode();
+//			final ThrowingConsumer<Scheduler, ?> onInitialize = config.initer();
+
+			this.last = this.first = startTime.toInstant();
+			final ObservableDSOLModel model = ObservableDSOLModel.of( id );
+
+			// initialize the simulator
+			((DEVSSimulator) this.scheduler).initialize( DsolTime
+					.createReplication( id, startTime, warmUp, length, model ),
+					mode );
+			this.initialized = true;
+		} catch( final Exception e )
 		{
+			// propagate initialization error
 			this.time.onError( e );
-			throw ExceptionFactory.createUnchecked( e,
-					"Problem creating scheduler" );
+			this.scheduler.cleanUp();
+			Thrower.rethrowUnchecked( e );
 		}
 	}
 
 	@Override
 	public Instant now()
 	{
-		return this.scheduler.getSimulatorTime().toInstant();
+		return this.last;
 	}
 
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	@Override
 	public void resume()
 	{
 		try
 		{
+			if( !this.initialized ) this.initialize();
 			if( !this.scheduler.isRunning() )
 			{
-				LOG.trace( "resuming, t={}, #events={}", now(),
-						this.scheduler.getEventList().size() );
-				this.scheduler.start();
+//				this.scheduler.scheduleEventNow(
+//						DEVSSimulatorInterface.FIRST_POSITION, () ->
+//						{
+				this.time.onNext( this.last );
+				try
+				{
+					LOG.trace( "resuming, t={}, #events={}",
+							now().to( this.first.unit() ),
+							this.scheduler.getEventList().size() );
+					this.scheduler.start();
+				} catch( final Throwable e )
+				{
+					this.time.onError( e );
+				}
+//						} );
 			}
-		} catch( final SimRuntimeException e )
+		} catch( final Throwable e )
 		{
+			// propagate scheduling error
 			this.time.onError( e );
 		}
+	}
+
+	@Override
+	public Observable<Scheduler> onReset()
+	{
+		return this.reset.asObservable();
+	}
+
+	@Override
+	public Subscription onReset( final ThrowingRunnable<?> runnable )
+	{
+		return onReset( s ->
+		{
+			runnable.run();
+		} );
+	}
+
+	@Override
+	public Subscription onReset( final ThrowingConsumer<Scheduler, ?> consumer )
+	{
+		return onReset().subscribe( s ->
+		{
+			try
+			{
+				consumer.accept( s );
+			} catch( final Throwable e )
+			{
+				this.time.onError( e );
+			}
+		}, e ->
+		{
+		} );
 	}
 
 	@Override
@@ -209,26 +272,12 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	public Expectation schedule( final Instant when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		if( now().equals( when ) )
-		{
-			try
-			{
-				this.scheduler.scheduleEvent( new SimEvent<DsolTime<Q>>(
-						this.scheduler.getSimulatorTime(), this, what, "accept",
-						new Object[]
-						{ when } ) );
-			} catch( final Exception e )
-			{
-				this.time.onError( e );
-			}
-			return null; // TODO provide a way to cancel instantaneous events?
-		}
 		synchronized( this.listeners )
 		{
 			return Expectation.of( this, when,
 					this.listeners.computeIfAbsent( when, t ->
 					{
-						// create proxy and schedule the actual invocation of "onNext"
+						// create missing proxy and schedule the "onNext" call
 						final Subject<Instant, Instant> result = PublishSubject
 								.create();
 						try
@@ -239,8 +288,9 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 											this, result, "onNext",
 											new Object[]
 											{ t } ) );
-						} catch( final Exception e )
+						} catch( final SimRuntimeException e )
 						{
+							// propagate scheduling error
 							this.time.onError( e );
 						}
 						return result;
@@ -251,9 +301,49 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 							what.accept( t );
 						} catch( final Throwable e )
 						{
+							// propagate execution error
 							this.time.onError( e );
 						}
 					} ) );
+		}
+	}
+
+	interface ObservableDSOLModel<Q extends Quantity>
+		extends DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>>
+	{
+		@SuppressWarnings( { "serial", "rawtypes", "unchecked" } )
+		static <Q extends Quantity> ObservableDSOLModel<Q> of( final String id )
+		{
+			return new ObservableDSOLModel<Q>()
+			{
+				private SimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>> sim;
+
+				@Override
+				public
+					SimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>
+					getSimulator()
+				{
+					return this.sim;
+				}
+
+				@Override
+				public void constructModel(
+					final SimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>> simulator )
+					throws RemoteException, SimRuntimeException
+				{
+					this.sim = simulator;
+					final DEVSSimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>> devsSim = (DEVSSimulatorInterface<Measurable<Q>, BigDecimal, DsolTime<Q>>) simulator;
+					devsSim.scheduleEventNow(
+							DEVSSimulatorInterface.FIRST_POSITION, () ->
+							{
+								// first: rename the worker thread
+								Thread.currentThread().setName( id );
+							} );
+					LOG.trace( "initializing, t={}, #events={}",
+							simulator.getSimulatorTime(),
+							devsSim.getEventList().size() );
+				}
+			};
 		}
 	}
 }

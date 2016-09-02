@@ -15,6 +15,7 @@
  */
 package io.coala.enterprise.fact;
 
+import io.coala.enterprise.CoordinationFactType;
 import io.coala.enterprise.transaction.Transaction;
 import io.coala.enterprise.transaction.TransactionID;
 import io.coala.message.Message;

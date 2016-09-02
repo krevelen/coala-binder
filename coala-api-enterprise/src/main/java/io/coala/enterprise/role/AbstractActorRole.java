@@ -40,13 +40,12 @@ import io.coala.capability.know.ReasoningCapability;
 import io.coala.capability.replicate.RandomizingCapability;
 import io.coala.capability.replicate.ReplicatingCapability;
 import io.coala.config.PropertyGetter;
+import io.coala.enterprise.CoordinationFactType;
 import io.coala.enterprise.fact.CoordinationFact;
-import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.enterprise.organization.Organization;
 import io.coala.exception.ExceptionFactory;
 import io.coala.invoke.ProcedureCall;
 import io.coala.invoke.Schedulable;
-import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 import io.coala.message.Message;
 import io.coala.model.ModelComponent;
@@ -78,7 +77,7 @@ public abstract class AbstractActorRole<F extends CoordinationFact>
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
+	@Inject
 	private Logger LOG;
 
 	/** */
