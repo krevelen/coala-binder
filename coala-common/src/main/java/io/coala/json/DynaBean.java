@@ -37,12 +37,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.inject.Provider;
-
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+
+import javax.inject.Provider;
 
 import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
@@ -56,6 +55,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -71,8 +71,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ValueNode;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
 
@@ -449,9 +451,9 @@ public class DynaBean implements Cloneable
 				if( method.getParameterTypes().length == 1
 						&& method.getParameterTypes()[0]
 								.isAssignableFrom( args[0].getClass() )
-						//&& method.getName().startsWith( "set" ) )
-						//&& method.getReturnType().equals( Void.TYPE ) 
-						)
+				//&& method.getName().startsWith( "set" ) )
+				//&& method.getReturnType().equals( Void.TYPE ) 
+				)
 				{
 					this.bean.set( beanProp, args[0] );
 					return null; // setters return void
@@ -673,6 +675,24 @@ public class DynaBean implements Cloneable
 						if( !attributes.contains( fieldName ) )
 							bean.set( fieldName, tree.get( fieldName ) );
 					}
+				} else if( tree.isValueNode() )
+				{
+					for( Class<?> type : resultType.getInterfaces() )
+						for( Method method : type.getDeclaredMethods() )
+						{
+//							LOG.trace( "Scanning {}", method );
+							if( method
+									.isAnnotationPresent( JsonProperty.class ) )
+							{
+								final String property = method
+										.getAnnotation( JsonProperty.class )
+										.value();
+//								LOG.trace( "Setting {}: {}", property,
+//										((ValueNode) tree).textValue() );
+								bean.set( property,
+										((ValueNode) tree).textValue() );
+							}
+						}
 				} else
 					throw ExceptionFactory.createUnchecked(
 							"Expected {} but parsed: {}", resultType,
@@ -895,11 +915,10 @@ public class DynaBean implements Cloneable
 						: this.proxyType;
 				return DynaBean.proxyOf( this.om, proxyType, this.bean,
 						this.imports );
-			} catch( final Throwable t )
+			} catch( final Throwable e )
 			{
-				throw ExceptionFactory.createUnchecked( t,
-						"Problem providing proxy instance for {}",
-						this.proxyType );
+				Thrower.rethrowUnchecked( e );
+				return null;
 			}
 		}
 	}

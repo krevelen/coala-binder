@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
@@ -61,6 +62,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 
+import io.coala.bind.LocalBinder;
 import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.WeightedValue;
@@ -202,6 +204,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
 	 * @author Rick van Krevelen
 	 */
+	@Singleton
 	public static class Factory implements ProbabilityDistribution.Factory
 	{
 
@@ -222,6 +225,13 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Inject
+		public Factory( final LocalBinder binder,
+			final PseudoRandom.Factory rngFactory )
+		{
+			this( rngFactory.create( PseudoRandom.Config.NAME_DEFAULT,
+					binder.id().hashCode() ) );
+		}
+
 		public Factory( final PseudoRandom stream )
 		{
 			Objects.requireNonNull( stream );
@@ -524,6 +534,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
+	@Singleton
 	public static class Fitter implements ProbabilityDistribution.Fitter
 	{
 

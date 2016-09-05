@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 793ed58b1615e778bef02de7b8c357f8e45c374c $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -23,7 +23,7 @@ import io.coala.time.ClockID;
 /**
  * {@link BasicModelComponentIDFactory}
  * 
- * @version $Id$
+ * @version $Id: 793ed58b1615e778bef02de7b8c357f8e45c374c $
  * @author Rick van Krevelen
  */
 @Deprecated

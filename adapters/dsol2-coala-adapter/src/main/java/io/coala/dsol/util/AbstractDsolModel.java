@@ -1,4 +1,4 @@
-/* $Id: 377b527c6330b274d30426fff75988af0696cf6c $
+/* $Id: 1b993e308bdfba74cc238c6c2cd42e332197c917 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -35,7 +35,7 @@ import nl.tudelft.simulation.event.EventType;
  * 
  * @param <S>
  * @param <THIS>
- * @version $Id: 377b527c6330b274d30426fff75988af0696cf6c $
+ * @version $Id: 1b993e308bdfba74cc238c6c2cd42e332197c917 $
  * @author Rick van Krevelen
  */
 @Deprecated

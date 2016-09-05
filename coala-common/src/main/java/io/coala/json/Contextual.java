@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 7b03f4605b9de1906d7db36397987e919178a9c7 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,7 @@ import org.aeonbits.owner.Converter;
  * number information, e.g. UUIDs), time-stamps, number of retries, time-outs,
  * etc.
  * 
- * @version $Id$
+ * @version $Id: 7b03f4605b9de1906d7db36397987e919178a9c7 $
  * @author Rick van Krevelen
  */
 //@JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
@@ -48,7 +48,7 @@ public interface Contextual
 	 * {@link Context} exposes some protected methods inherited from
 	 * {@link DynaBean}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 7b03f4605b9de1906d7db36397987e919178a9c7 $
 	 * @author Rick van Krevelen
 	 */
 	public class Context extends DynaBean
@@ -79,7 +79,7 @@ public interface Contextual
 		/**
 		 * {@link ConfigConverter}
 		 * 
-		 * @version $Id$
+		 * @version $Id: 7b03f4605b9de1906d7db36397987e919178a9c7 $
 		 * @author Rick van Krevelen
 		 */
 		public static class ConfigConverter implements Converter<Context>

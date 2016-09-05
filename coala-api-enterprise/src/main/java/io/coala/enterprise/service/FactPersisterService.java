@@ -16,8 +16,8 @@
 package io.coala.enterprise.service;
 
 import io.coala.capability.know.PersistingCapability;
+import io.coala.enterprise.CoordinationFactType;
 import io.coala.enterprise.fact.CoordinationFact;
-import io.coala.enterprise.fact.CoordinationFactType;
 import io.coala.enterprise.fact.FactID;
 import rx.Observable;
 

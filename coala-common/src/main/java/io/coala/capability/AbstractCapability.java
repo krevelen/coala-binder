@@ -1,4 +1,4 @@
-/* $Id: d734db94d6d1556589a997095245ec215a4b4459 $
+/* $Id: b5dfe908d4dc243a853c7dade6a4cee64fc4008e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,7 +33,7 @@ import io.coala.log.LogUtil;
  * {@link AbstractCapability}
  * 
  * @param <ID> the type of {@link CapabilityID}
- * @version $Id: d734db94d6d1556589a997095245ec215a4b4459 $
+ * @version $Id: b5dfe908d4dc243a853c7dade6a4cee64fc4008e $
  * @author Rick van Krevelen
  */
 @Deprecated

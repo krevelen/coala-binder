@@ -1,4 +1,4 @@
-/* $Id: 3f011b4babff2b87680b2d779e59b6f218ecc685 $
+/* $Id: 06fdeb50ce15c9a8366dc2eb3c9c54e11a324794 $
  *  
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.log.LogUtil;
  * alternatives
  * 
  * @param <V> the type of option being compared
- * @version $Id$
+ * @version $Id: 06fdeb50ce15c9a8366dc2eb3c9c54e11a324794 $
  * @author Rick van Krevelen
  */
 public interface DecisionAnalyzer<A> extends Comparator<A>
@@ -61,7 +61,7 @@ public interface DecisionAnalyzer<A> extends Comparator<A>
 	 * 
 	 * @param <A> the type of weight {@link MultiCriteriaWeightedAlternative}
 	 * @param <C> the type of selection criterion
-	 * @version $Id$
+	 * @version $Id: 06fdeb50ce15c9a8366dc2eb3c9c54e11a324794 $
 	 * @author Rick van Krevelen
 	 */
 	interface MultiCriteriaDecisionAnalyzer<A extends MultiCriteriaWeightedAlternative<C>, C>
@@ -81,7 +81,7 @@ public interface DecisionAnalyzer<A> extends Comparator<A>
 	 * selection policies
 	 * 
 	 * @param <C> the type of weighing criterion
-	 * @version $Id$
+	 * @version $Id: 06fdeb50ce15c9a8366dc2eb3c9c54e11a324794 $
 	 * @author Rick van Krevelen
 	 */
 	public interface MultiCriteriaWeightedAlternative<C>
@@ -106,7 +106,7 @@ public interface DecisionAnalyzer<A> extends Comparator<A>
 	 * by Bridgman (1922) and Miller & Starr (1969)</a>)
 	 * 
 	 * @param <C>
-	 * @version $Id: 120c5197e02b88b84a7e00635af67656539fc770 $
+	 * @version $Id: 06fdeb50ce15c9a8366dc2eb3c9c54e11a324794 $
 	 * @author Rick van Krevelen
 	 */
 	class WeightedProduct<A extends MultiCriteriaWeightedAlternative<C>, C>

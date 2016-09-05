@@ -1,4 +1,4 @@
-/* $Id: bccd29307a7da5a675847b6052f4889324f568da $
+/* $Id: 77dbe877cf089bca725babbfa9f12877d05e27dc $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -44,7 +44,7 @@ import nl.tudelft.simulation.language.reflection.ClassUtil;
  * 
  * @author <a href="http://www.peter-jacobs.com">Peter Jacobs </a>
  * @author Rick van Krevelen
- * @version $Id: bccd29307a7da5a675847b6052f4889324f568da $
+ * @version $Id: 77dbe877cf089bca725babbfa9f12877d05e27dc $
  */
 @SuppressWarnings( "deprecation" )
 public class Logger

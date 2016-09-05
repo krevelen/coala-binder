@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 1adc229e95443d9387bfecbc84fb2f3a2194b924 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -32,7 +32,7 @@ import rx.Observer;
 /**
  * {@link StagedInjectorTest}
  * 
- * @version $Id$
+ * @version $Id: 1adc229e95443d9387bfecbc84fb2f3a2194b924 $
  * @author Rick van Krevelen
  */
 public class StagedInjectorTest

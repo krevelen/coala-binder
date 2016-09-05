@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 11fdb210b9731c946976369479741d6bcd781b56 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -18,7 +18,7 @@ package io.coala.name;
 /**
  * {@link Identifiable} owns an {@link AbstractIdentifier}
  * 
- * @version $Id$
+ * @version $Id: 11fdb210b9731c946976369479741d6bcd781b56 $
  * @author Rick van Krevelen
  * 
  * @param <ID> the {@link Identifier} type
@@ -38,7 +38,7 @@ public interface Identifiable<ID extends Identifier<?, ?>>
 	/**
 	 * {@link Builder}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 11fdb210b9731c946976369479741d6bcd781b56 $
 	 * 
 	 * @param <ID> the {@link Identifiable}'s {@link Identifier} type
 	 * @param <T> the {@link Identifiable} type

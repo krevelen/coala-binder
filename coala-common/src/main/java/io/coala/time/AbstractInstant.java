@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 
-import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.coala.json.JSONConvertible;
 import io.coala.json.JsonUtil;
-import io.coala.log.InjectLogger;
 
 /**
  * {@link AbstractInstant}
@@ -50,8 +48,8 @@ public abstract class AbstractInstant<THIS extends AbstractInstant<THIS>>
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
-	private static Logger LOG;
+//	@Inject
+//	private static Logger LOG;
 
 	/** */
 	// @Embedded

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 78c567fb2863e8dd31b4656a4f7cca82a3ffbccb $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -30,7 +30,7 @@ import io.coala.json.JsonUtil;
  * {@link AbstractIdentifier} contains some identifier content type
  * 
  * @param <T> the type of {@link Comparable} and {@link Serializable}
- * @version $Id$
+ * @version $Id: 78c567fb2863e8dd31b4656a4f7cca82a3ffbccb $
  * @author Rick van Krevelen
  * @deprecated please use {@link io.coala.name.Id}
  */

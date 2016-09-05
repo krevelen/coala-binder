@@ -17,7 +17,7 @@
 	<name>${project.artifactId}</name>
 	<description>
 		The JADE Semantics Add-on
-		$Id: 03082b4f7aa68e360c6c5ea93cc9cc45ab19efd6 $
+		$Id: 04a91856a73582e495ae8c7b623fec3a7691e45e $
 	</description>
 	<url>http://jade.tilab.com/</url>
 

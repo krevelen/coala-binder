@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.coala.enterprise.fact;
+package io.coala.enterprise;
 
 import io.coala.enterprise.role.ActorRoleType;
 import io.coala.lifecycle.MachineStatus;

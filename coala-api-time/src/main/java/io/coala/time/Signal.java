@@ -12,7 +12,7 @@ import rx.subjects.Subject;
 /**
  * {@link Signal} produces values over some (in)finite interval for some period
  * 
- * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
+ * @version $Id: b0f2643184ef6e9b992ec06d965b709a678c10de $
  * @author Rick van Krevelen
  */
 public interface Signal<T> extends Proactive
@@ -51,7 +51,7 @@ public interface Signal<T> extends Proactive
 	 * {@code <T, Instant>} {@link #get(Instant)}
 	 * 
 	 * @param <T>
-	 * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
+	 * @version $Id: b0f2643184ef6e9b992ec06d965b709a678c10de $
 	 * @author Rick van Krevelen
 	 */
 	public static class TimeInvariant<T>
@@ -80,7 +80,7 @@ public interface Signal<T> extends Proactive
 	 * {@link Simple} implementation of {@link Signal}
 	 * 
 	 * @param <T> the type of value being signaled
-	 * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
+	 * @version $Id: b0f2643184ef6e9b992ec06d965b709a678c10de $
 	 * @author Rick van Krevelen
 	 */
 	class Simple<T> implements Signal<T>
@@ -208,7 +208,7 @@ public interface Signal<T> extends Proactive
 	 * {@link Comparable} values
 	 * 
 	 * @param <T> the type of {@link Comparable} value being signaled
-	 * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
+	 * @version $Id: b0f2643184ef6e9b992ec06d965b709a678c10de $
 	 * @author Rick van Krevelen
 	 */
 	class SimpleOrdinal<T extends Comparable<? super T>> extends Simple<T>

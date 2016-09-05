@@ -17,6 +17,7 @@ package io.coala.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Map;
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
+import io.coala.exception.Thrower;
 import io.coala.util.FileUtil;
 import io.coala.util.Util;
 
@@ -74,9 +76,19 @@ public class YamlUtil implements Util
 	public static Properties flattenYaml( final File yamlPath,
 		final CharSequence... baseKeys ) throws IOException
 	{
-		return ConfigUtil.flatten(
-				getYamlMapper().readTree( FileUtil.toInputStream( yamlPath ) ),
-				baseKeys );
+		return flattenYaml( FileUtil.toInputStream( yamlPath ), baseKeys );
+	}
+
+	/**
+	 * @param yamlPath the (relative, absolute, or class-path) YAML location
+	 * @param baseKeys the base keys for all imported property keys
+	 * @return a flat {@link Properties} mapping
+	 * @throws IOException
+	 */
+	public static Properties flattenYaml( final InputStream is,
+		final CharSequence... baseKeys ) throws IOException
+	{
+		return ConfigUtil.flatten( getYamlMapper().readTree( is ), baseKeys );
 	}
 
 	private static final String nl = "\r\n", hash = "# ";
@@ -93,7 +105,7 @@ public class YamlUtil implements Util
 	 * @throws IOException
 	 */
 	public static String toYAML( final String comment, final Map<?, ?> props,
-		final String... baseKeys ) throws IOException
+		final String... baseKeys )
 	{
 		return toYAML( comment, ConfigUtil.expand( props, baseKeys ) );
 	}
@@ -104,12 +116,17 @@ public class YamlUtil implements Util
 	 * @throws IOException
 	 */
 	public static String toYAML( final String comment, final JsonNode tree )
-		throws IOException
 	{
 		final StringWriter writer = new StringWriter();
 		if( comment != null && !comment.isEmpty() )
 			writer.append( toComment( comment ) );
-		getYamlMapper().writer().writeValue( writer, tree );
+		try
+		{
+			getYamlMapper().writer().writeValue( writer, tree );
+		} catch( final IOException e )
+		{
+			Thrower.rethrowUnchecked( e );
+		}
 		return writer.toString();
 	}
 

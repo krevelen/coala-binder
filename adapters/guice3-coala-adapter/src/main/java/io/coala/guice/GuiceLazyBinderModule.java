@@ -1,4 +1,4 @@
-/* $Id: 16e93b291a86eb34cb5741299ec7df584b05abbf $
+/* $Id: 60882f08ede8abe741301ae26890e96b3517b675 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -38,7 +38,7 @@ import io.coala.util.TypeArguments;
 /**
  * {@link GuiceLazyBinderModule}
  * 
- * @version $Id: 16e93b291a86eb34cb5741299ec7df584b05abbf $
+ * @version $Id: 60882f08ede8abe741301ae26890e96b3517b675 $
  * @author Rick van Krevelen
  */
 @Deprecated

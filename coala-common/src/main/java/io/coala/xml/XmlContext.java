@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 870dc2365a18f415aaf8c103d3b040aa047792c9 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,7 @@ import io.coala.util.Instantiator;
  * {@link XmlContext}
  * 
  * @param <T>
- * @version $Id$
+ * @version $Id: 870dc2365a18f415aaf8c103d3b040aa047792c9 $
  * @author Rick van Krevelen
  */
 @Deprecated

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ebe93594e8299023d7bbd41b8f6a183ee72ef89b $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * {@link Identified} wraps an identifier *
  * 
- * @version $Id$
+ * @version $Id: ebe93594e8299023d7bbd41b8f6a183ee72ef89b $
  * @author Rick van Krevelen
  */
 //@JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
@@ -53,7 +53,7 @@ public interface Identified<T>
 	 * {@link Ordinal} kind of {@link Identified}
 	 * 
 	 * @param <T> the {@link Comparable} identifier value type
-	 * @version $Id$
+	 * @version $Id: ebe93594e8299023d7bbd41b8f6a183ee72ef89b $
 	 * @author Rick van Krevelen
 	 */
 	interface Ordinal<T extends Comparable<? super T>>

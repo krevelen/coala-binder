@@ -17,13 +17,14 @@ package io.coala.guice.log;
 
 import java.lang.reflect.Field;
 
+import javax.inject.Inject;
+
 import org.apache.logging.log4j.Logger;
 
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 
-import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 
 /**
@@ -42,7 +43,7 @@ public class InjectLoggerTypeListener implements TypeListener
 	{
 		for( Field field : typeLiteral.getRawType().getDeclaredFields() )
 		{
-			if( !field.isAnnotationPresent( InjectLogger.class ) ) continue;
+			if( !field.isAnnotationPresent( Inject.class ) ) continue;
 
 			if( field.getType() == org.apache.logging.log4j.Logger.class )
 				typeEncounter.register( new Log4JMembersInjector<T>( field ) );
@@ -51,7 +52,7 @@ public class InjectLoggerTypeListener implements TypeListener
 			else if( field.getType() == java.util.logging.Logger.class )
 				typeEncounter.register( new JULMembersInjector<T>( field ) );
 			else
-				LOG.warn( "@" + InjectLogger.class.getSimpleName()
+				LOG.warn( "@" + Inject.class.getSimpleName()
 						+ " annotated unknown logger type " + field.getType() );
 
 			// TODO add/inject other logger type implementations

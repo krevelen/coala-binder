@@ -1,4 +1,4 @@
-/* $Id: 9cbe509be2b6e1935de97413653e098ff7ddaa96 $
+/* $Id: 580d8add174355badf5903ef1582a0a3e550b434 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,7 +20,7 @@ import io.coala.capability.CapabilityFactory;
 /**
  * {@link ReplicatingCapability}
  * 
- * @version $Id: 9cbe509be2b6e1935de97413653e098ff7ddaa96 $
+ * @version $Id: 580d8add174355badf5903ef1582a0a3e550b434 $
  * @author Rick van Krevelen
  */
 public interface ReplicatingCapability
@@ -29,7 +29,7 @@ public interface ReplicatingCapability
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id: 9cbe509be2b6e1935de97413653e098ff7ddaa96 $
+	 * @version $Id: 580d8add174355badf5903ef1582a0a3e550b434 $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory extends CapabilityFactory<ReplicatingCapability>

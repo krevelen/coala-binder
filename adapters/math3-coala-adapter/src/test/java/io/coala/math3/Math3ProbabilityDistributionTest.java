@@ -23,9 +23,13 @@ import org.apache.logging.log4j.Logger;
 import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
+import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalConfig;
+import io.coala.guice4.Guice4LocalBinder;
 import io.coala.log.LogUtil;
 import io.coala.random.DistributionParser;
 import io.coala.random.ProbabilityDistribution;
+import io.coala.random.PseudoRandom;
 
 /**
  * {@link Math3ProbabilityDistributionTest}
@@ -49,10 +53,16 @@ public class Math3ProbabilityDistributionTest
 	@Test
 	public void testParser() throws Exception
 	{
-		final DistributionParser parser = new DistributionParser(
-				Math3ProbabilityDistribution.Factory
-						.of( Math3PseudoRandom.Factory.ofMersenneTwister()
-								.create( "rng", 0L ) ) );
+		final LocalBinder binder = Guice4LocalBinder.of( LocalConfig.builder()
+				.withId( "testMath3" ) // use fixed id for reproducible seeding
+				.withProvider( PseudoRandom.Factory.class,
+						Math3PseudoRandom.MersenneTwisterFactory.class )
+				.withProvider( ProbabilityDistribution.Factory.class,
+						Math3ProbabilityDistribution.Factory.class )
+				.build() );
+		LOG.info( "Starting Math3 parser test, binder: {}", binder );
+		final DistributionParser parser = binder
+				.inject( DistributionParser.class );
 
 		final ProbabilityDistribution<DecimalMeasure> dist2 = parser
 				.parse( "const(2.01 day)", DecimalMeasure.class );

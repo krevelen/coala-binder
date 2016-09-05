@@ -1,4 +1,4 @@
-/* $Id: b82e5b2a4df66af46d627c6b303ac414bc6bad47 $
+/* $Id: dd63d6b56903dc30a2e35f9c325821cae9d29b53 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -26,7 +26,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link BasicAgentStatus}
  * 
- * @version $Id: b82e5b2a4df66af46d627c6b303ac414bc6bad47 $
+ * @version $Id: dd63d6b56903dc30a2e35f9c325821cae9d29b53 $
  * @author Rick van Krevelen
  */
 @Deprecated

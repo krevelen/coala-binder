@@ -1,4 +1,4 @@
-/* $Id: 4259632ca380360a9d22d3b6af187595e2fa2781 $
+/* $Id: afe9a7b234da166e7988b5764339080329067849 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -40,7 +40,7 @@ import nl.tudelft.simulation.jstats.streams.StreamInterface;
 /**
  * {@link ReplicationBuilder}
  * 
- * @version $Id: 4259632ca380360a9d22d3b6af187595e2fa2781 $
+ * @version $Id: afe9a7b234da166e7988b5764339080329067849 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )

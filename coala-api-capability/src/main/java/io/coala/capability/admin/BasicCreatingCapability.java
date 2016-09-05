@@ -17,8 +17,6 @@ package io.coala.capability.admin;
 
 import javax.inject.Inject;
 
-import org.slf4j.Logger;
-
 import io.coala.agent.AbstractAgentManager;
 import io.coala.agent.Agent;
 import io.coala.agent.AgentID;
@@ -28,7 +26,6 @@ import io.coala.agent.BasicAgentStatus;
 import io.coala.bind.Binder;
 import io.coala.bind.BinderFactory;
 import io.coala.capability.BasicCapability;
-import io.coala.log.InjectLogger;
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Action0;
@@ -47,8 +44,8 @@ public class BasicCreatingCapability extends BasicCapability
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
-	private Logger LOG;
+//	@Inject
+//	private Logger LOG;
 
 	/** */
 	private AgentManager agentManager;

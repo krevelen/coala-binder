@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ff90f816f2a5cf7b581f446c3a75486fafbde312 $
  *  
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import rx.functions.Function;
  * {@link RxUtil} provides some
  * <a href="https://github.com/Netflix/RxJava/wiki">RxJava</a>-related utilities
  * 
- * @version $Id$
+ * @version $Id: ff90f816f2a5cf7b581f446c3a75486fafbde312 $
  * @author Rick van Krevelen
  */
 public class RxUtil implements Util
@@ -57,7 +57,7 @@ public class RxUtil implements Util
 	 * 
 	 * @param <S> the source type
 	 * @param <T> the result type
-	 * @version $Id$
+	 * @version $Id: ff90f816f2a5cf7b581f446c3a75486fafbde312 $
 	 * @author Rick van Krevelen
 	 */
 	public static interface ThrowingFunc1<S, T> extends Function

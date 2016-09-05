@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: d1b35f09adba41f7876e7733178352b2b5fd900e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,7 @@ import io.coala.log.LogUtil;
  * {@link SimTime} is an {@link AbstractInstant} with a particular base unit and
  * implementing {@link JSONConvertible}
  * 
- * @version $Id$
+ * @version $Id: d1b35f09adba41f7876e7733178352b2b5fd900e $
  * @author Rick van Krevelen
  */
 @Deprecated
@@ -37,7 +37,7 @@ public class SimTime extends AbstractInstant<SimTime>
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id$
+	 * @version $Id: d1b35f09adba41f7876e7733178352b2b5fd900e $
 	 * @author Rick van Krevelen
 	 */
 	public interface Factory extends io.coala.factory.Factory

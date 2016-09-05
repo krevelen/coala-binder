@@ -5,6 +5,8 @@ import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.Arrays;
 
+import org.aeonbits.owner.ConfigCache;
+
 /**
  * {@link DecimalUtil}
  * 
@@ -14,8 +16,9 @@ import java.util.Arrays;
 public class DecimalUtil implements Util
 {
 
-	/** TODO from config? */
-	public static final MathContext DEFAULT_CONTEXT = MathContext.DECIMAL128;
+	/** */
+	public static final MathContext DEFAULT_CONTEXT = ConfigCache
+			.getOrCreate( DecimalConfig.class ).createMathContext();
 
 	/**
 	 * {@link DecimalUtil} inaccessible singleton constructor
@@ -118,5 +121,15 @@ public class DecimalUtil implements Util
 										? valueOf( (BigInteger) value )
 										: BigDecimal
 												.valueOf( value.doubleValue() );
+	}
+
+	/**
+	 * @param value
+	 * @param scale
+	 * @return
+	 */
+	public static BigDecimal setScale( final BigDecimal value, final int scale )
+	{
+		return value.setScale( scale, DEFAULT_CONTEXT.getRoundingMode() );
 	}
 }

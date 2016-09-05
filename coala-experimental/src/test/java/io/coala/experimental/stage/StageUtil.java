@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 1ee12291a4f37aa3235547ac54195dc1d0e9bdaa $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -47,7 +47,7 @@ import rx.Observer;
  * {@link StageUtil} utility class for interception and extension of an injected
  * object's life cycle
  * 
- * @version $Id$
+ * @version $Id: 1ee12291a4f37aa3235547ac54195dc1d0e9bdaa $
  * @author Rick van Krevelen
  */
 public class StageUtil implements Util
@@ -593,7 +593,7 @@ public class StageUtil implements Util
 	/**
 	 * {@link StageChangeImpl}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 1ee12291a4f37aa3235547ac54195dc1d0e9bdaa $
 	 */
 	private static class StageChangeImpl implements StageChange
 	{
@@ -667,7 +667,7 @@ public class StageUtil implements Util
 	/**
 	 * {@link FinalizeDecorator}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 1ee12291a4f37aa3235547ac54195dc1d0e9bdaa $
 	 *
 	 * @param <T>
 	 */

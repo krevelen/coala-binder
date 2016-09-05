@@ -1,4 +1,4 @@
-/* $Id: ce8c886bca9c714da6e4ca68f23aed05c49be5e5 $
+/* $Id: d37c758f99f8c078cf7dcaa6d4844e70f7846a4c $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,7 +33,7 @@ import rx.subjects.PublishSubject;
 /**
  * {@link BinderFactory}
  * 
- * @version $Id$
+ * @version $Id: d37c758f99f8c078cf7dcaa6d4844e70f7846a4c $
  * @author Rick van Krevelen
  */
 @Deprecated

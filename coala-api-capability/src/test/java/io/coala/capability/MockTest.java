@@ -1,4 +1,4 @@
-/* $Id: 0e622dad3deb3816cd3129b7f24bc3029b752d3c $
+/* $Id: 92891ce7ae462a87c19999a1dacc36aee07a6ea1 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link MockTest} TODO compare JMock 2 (based on Hamcrest) vs EasyMock 2
  * 
- * @version $Id: 0e622dad3deb3816cd3129b7f24bc3029b752d3c $
+ * @version $Id: 92891ce7ae462a87c19999a1dacc36aee07a6ea1 $
  * @author Rick van Krevelen
  */
 public class MockTest

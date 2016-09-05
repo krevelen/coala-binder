@@ -1,4 +1,4 @@
-/* $Id: 477f095b595d0f93e71a36218aa6e217cb8e6daa $
+/* $Id: 9c6d65f39ad4cf473e2ee3048d87bec94a384765 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -35,7 +35,7 @@ import io.coala.util.SerializableUtil;
 /**
  * {@link AbstractPropertyGetter}
  * 
- * @version $Id: 477f095b595d0f93e71a36218aa6e217cb8e6daa $
+ * @version $Id: 9c6d65f39ad4cf473e2ee3048d87bec94a384765 $
  * @author Rick van Krevelen
  */
 @Deprecated

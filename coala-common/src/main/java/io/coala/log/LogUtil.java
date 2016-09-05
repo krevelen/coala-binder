@@ -15,18 +15,26 @@
  */
 package io.coala.log;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.Locale;
-import java.util.Properties;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.slf4j.LoggerFactory;
 
-import io.coala.util.FileUtil;
+import io.coala.exception.Thrower;
+import io.coala.name.Identified;
 import io.coala.util.Util;
 
+/**
+ * {@link LogUtil}
+ * 
+ * @version $Id$
+ * @author Rick van Krevelen
+ */
 /**
  * {@link LogUtil}
  * 
@@ -36,163 +44,125 @@ import io.coala.util.Util;
 public class LogUtil implements Util
 {
 
-	/** */
-//	private static final String CONFIG_PROPERTY_KEY = "log4j.configuration";
-
-	/** */
-//	private static final String CONFIG_PROPERTY_DEFAULT = "log4j.properties";
-
-	/** */
-	private static final String LOCALE_PROPERTY_KEY = "locale";
-
-	/** */
-	private static final String LOCALE_PROPERTY_DEFAULT = "en";
-
 	static
 	{
-		// redirect JUL to Log4J2
-		System.setProperty( "java.util.logging.manager",
-				org.apache.logging.log4j.jul.LogManager.class.getName() );
-
-		// FIXME allow override from COALA config
-		Locale.setDefault( Locale.forLanguageTag( System.getProperty(
-				LOCALE_PROPERTY_KEY, LOCALE_PROPERTY_DEFAULT ) ) );
-/*
- * // divert java.util.logging.Logger LogRecords to SLF4J
- * SLF4JBridgeHandler.removeHandlersForRootLogger();
- * SLF4JBridgeHandler.install();
- * 
- * // load log4j properties using #getFile() from file system or class path //
- * PropertyConfigurator.configure(loadProperties(System.getProperty( //
- * CONFIG_PROPERTY_KEY, CONFIG_PROPERTY_DEFAULT)));
- * 
- * LogManager .setRepositorySelector( new DefaultRepositorySelector( new
- * CoalaLog4jHierarchy( new RootLogger( Level.INFO ) ) ), LogUtil.class );
- * 
- * // FIXME allow override from COALA config new
- * CoalaLog4jPropertyConfigurator().doConfigure( loadProperties(
- * System.getProperty( CONFIG_PROPERTY_KEY, CONFIG_PROPERTY_DEFAULT ) ),
- * LogManager.getLoggerRepository() );
- */ }
-
-	/**
-	 * @param file the properties file location in the classpath
-	 * @return the properties loaded from specified location
-	 */
-	public static Properties loadProperties( final String file )
-	{
-
-		final Properties result = new Properties();
-
-		InputStream is = null;
-		try
-		{
-			is = FileUtil.toInputStream( file );
-			result.load( is );
-		} catch( final Exception e )
-		{
-			System.err
-					.println( "Problem loading properties from file: " + file );
-			e.printStackTrace();
-		} finally
-		{
-			if( is != null ) try
-			{
-				is.close();
-			} catch( final IOException e )
-			{
-				System.err
-						.println( "Problem closing properties file: " + file );
-				e.printStackTrace();
-			}
-		}
-		return result;
+		final LogConfig conf = LogConfig.getOrCreate();
+		System.setProperty( LogConfig.JUL_MANAGER_KEY,
+				conf.julManagerType().getName() );
+		Locale.setDefault( conf.locale() );
 	}
 
 	/**
 	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.logging.log4j.Logger} instance for
-	 *         specified {@code clazz}
+	 * @return the {@link Logger} instance for specified {@code clazz}
 	 */
-	public static org.apache.logging.log4j.Logger
-		getLogger( final Class<?> clz )
+	public static Logger getLogger( final Class<?> clz )
 	{
 		return getLogger( clz, clz );
 	}
 
 	/**
-	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.logging.log4j.Logger} instance for
-	 *         specified {@code clazz}
+	 * @param source the {@link Object} requesting log messages
+	 * @return the {@link Logger} instance for specified {@code clazz}
 	 */
-	public static org.apache.logging.log4j.Logger getLogger( final Class<?> clz,
-		final Object source )
+	public static Logger getLogger( final Object source )
+	{
+		return getLogger( source.getClass(), source );
+	}
+
+	/**
+	 * @param clazz the object type generating the log messages
+	 * @param source the {@link Object} requesting log messages
+	 * @return the {@link Logger} instance for specified {@code clazz}
+	 */
+	public static Logger getLogger( final Class<?> clz, final Object source )
 	{
 		return getLogger( clz.getName(), source );
 	}
 
 	/**
-	 * @param clazz the object type generating the log messages
-	 * @return the {@link org.apache.logging.log4j.Logger} instance for
-	 *         specified {@code FQCN}
+	 * @param clazz the client logger's (fully qualified class) name
+	 * @param source the {@link Object} requesting log messages
+	 * @return the {@link Logger} instance for specified {@code FQCN}
 	 */
-	public static org.apache.logging.log4j.Logger getLogger( final String fqcn,
-		final Object source )
+	public static Logger getLogger( final String fqcn, final Object source )
 	{
 		if( source == null )
 		{
-			new NullPointerException( "Omitting logger for null object" )
-					.printStackTrace();
+			LogManager.getRootLogger()
+					.warn( "Omitting null source for logger: {}", fqcn );
 			return getLogger( fqcn );
 		}
+//		else if(source instanceof Identified)
+//		{
+//			LogManager.getFactory().g
+//		}
 
-		return LogManager//((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
-				.getLogger( fqcn );
-		/* TODO add time/id from source to message */
+		return LogManager.getLogger( fqcn );
+		/* TODO add time/id from source to message, using log4j2 formatters ? */
 	}
 
 	/**
-	 * this method is preferred over
-	 * {@link org.apache.logging.log4j.Logger#getLogger} so as to initialize the
-	 * Log4j2 system correctly via this {@link LogUtil} class
+	 * this method is preferred over {@link Logger#getLogger} so as to
+	 * initialize the Log4j2 system correctly via this {@link LogUtil} class
 	 * 
 	 * @param name
 	 * @return
 	 */
-	public static org.apache.logging.log4j.Logger getLogger( final String name )
+	public static Logger getLogger( final String name )
 	{
-		return LogManager//((CoalaLog4jHierarchy) LogManager.getLoggerRepository())
-				.getLogger( name );
+		return LogManager.getLogger( name );
 	}
 
-	public ParameterizedMessage messageOf( final String pattern,
+	/**
+	 * @param pattern
+	 * @param arg
+	 * @return a {@link ParameterizedMessage} for delayed parameterized
+	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 */
+	public static ParameterizedMessage messageOf( final String pattern,
 		final Object arg )
 	{
 		return new ParameterizedMessage( pattern, arg );
 	}
 
-	public ParameterizedMessage messageOf( final String pattern,
-		final Object... arg )
-	{
-		return new ParameterizedMessage( pattern, arg );
-	}
-
-	public ParameterizedMessage messageOf( final String pattern,
+	/**
+	 * @param pattern
+	 * @param arg1
+	 * @param arg2
+	 * @return a {@link ParameterizedMessage} for delayed parameterized
+	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 */
+	public static ParameterizedMessage messageOf( final String pattern,
 		final Object arg1, Object arg2 )
 	{
 		return new ParameterizedMessage( pattern, arg1, arg2 );
 	}
 
-	public ParameterizedMessage messageOf( final Throwable throwable,
+	/**
+	 * @param pattern
+	 * @param args
+	 * @return a {@link ParameterizedMessage} for delayed parameterized
+	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 */
+	public static ParameterizedMessage messageOf( final String pattern,
+		final Object... args )
+	{
+		return new ParameterizedMessage( pattern, args );
+	}
+
+	/**
+	 * @param throwable
+	 * @param pattern
+	 * @param args
+	 * @return a {@link ParameterizedMessage} for delayed parameterized
+	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 */
+	public static ParameterizedMessage messageOf( final Throwable throwable,
 		final String pattern, final Object... args )
 	{
 		return new ParameterizedMessage( pattern, args, throwable );
 	}
-
-//	public static org.apache.logging.log4j.Logger getLogger2(final Class<?> type)
-//	{
-//		return org.apache.logging.log4j.LogManager.getLogger(type);
-//	}
 
 	/**
 	 * @param clazz the object type generating the log messages
@@ -244,9 +214,56 @@ public class LogUtil implements Util
 		return result;
 	}
 
-	public static Message toMessage( final String messagePattern,
-		final Object... parameters )
+	public static void injectLogger( final Object encloser, final Field field )
 	{
-		return new ParameterizedMessage( messagePattern, parameters );
+		final String postfix = encloser instanceof Identified
+				? "." + ((Identified<?>) encloser).id() : "";
+		Object logger = null;
+		try
+		{
+			// Log4j2
+			if( field.getType() == Logger.class )
+				logger = getLogger( encloser.getClass(), encloser );
+			else // SLF4J
+			if( field.getType() == org.slf4j.Logger.class )
+			{
+				logger = LoggerFactory
+						.getLogger( encloser.getClass().getName() + postfix );
+			} else // java.util.logging
+			if( field.getType() == java.util.logging.Logger.class )
+			{
+				logger = LogUtil.getJavaLogger(
+						encloser.getClass().getName() + postfix );
+			} else
+				Thrower.throwNew( UnsupportedOperationException.class,
+						"@{} only injects {}, {} or {}",
+						InjectLogger.class.getSimpleName(),
+						Logger.class.getName(),
+						org.slf4j.Logger.class.getName(),
+						java.util.logging.Logger.class.getName() );
+
+			field.setAccessible( true );
+			field.set( encloser, logger );
+		} catch( final Exception e )
+		{
+			Thrower.rethrowUnchecked( e );
+		}
+	}
+
+	/**
+	 * @param supplier the function to decorate in {@link #toString()} calls
+	 * @return a decorator {@link Object} to help delay {@link #toString()} call
+	 *         until absolutely necessary (e.g. for logging at a desired level)
+	 */
+	public static Object wrapToString( final Supplier<String> supplier )
+	{
+		return new Object()
+		{
+			@Override
+			public String toString()
+			{
+				return supplier.get();
+			}
+		};
 	}
 }

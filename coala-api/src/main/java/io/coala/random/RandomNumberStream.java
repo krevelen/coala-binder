@@ -1,4 +1,4 @@
-/* $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+/* $Id: 71227a30c5d511730960fa977a1b0713ac99b7ec $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -26,7 +26,7 @@ import io.coala.name.Identifiable;
  * an API similar to the standard Java {@link Random} generator (which is
  * wrapped accordingly in the {@link JURStream} decorator)
  * 
- * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+ * @version $Id: 71227a30c5d511730960fa977a1b0713ac99b7ec $
  * @author Rick van Krevelen
  * @deprecated please use {@link PseudoRandom}
  */
@@ -61,7 +61,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	/**
 	 * {@link RandomNumberStreamID}
 	 * 
-	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+	 * @version $Id: 71227a30c5d511730960fa977a1b0713ac99b7ec $
 	 * @author Rick van Krevelen
 	 */
 	public static class ID extends AbstractIdentifier<String>
@@ -89,7 +89,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 71227a30c5d511730960fa977a1b0713ac99b7ec $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory
@@ -113,7 +113,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	/**
 	 * {@link AbstractRandomNumberStream}
 	 * 
-	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+	 * @version $Id: 71227a30c5d511730960fa977a1b0713ac99b7ec $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "serial" )
@@ -137,7 +137,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	 * {@link JURStream} decorates a standard Java {@link Random} generator as
 	 * {@link RandomNumberStream}
 	 * 
-	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+	 * @version $Id: 71227a30c5d511730960fa977a1b0713ac99b7ec $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "serial" )
@@ -228,7 +228,7 @@ public interface RandomNumberStream extends Identifiable<RandomNumberStream.ID>
 	/**
 	 * {@link JURStreamFactory} creates {@link JURStream} instances
 	 * 
-	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+	 * @version $Id: 71227a30c5d511730960fa977a1b0713ac99b7ec $
 	 * @author Rick van Krevelen
 	 */
 	class JURStreamFactory implements Factory

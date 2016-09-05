@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.function.ThrowingSupplier;
 
 /**
  * {@link Caller} decorates a (checked) {@link Callable} (method) and provides

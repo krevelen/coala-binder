@@ -21,15 +21,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.inject.Qualifier;
+
 /**
- * {@link InjectLogger} does not work on abstract super-types, perhaps a
- * solution may be distilled from <a href=
- * "https://bitbucket.org/noctarius/guiceidentityinjection/src/014f6cb8fcc0/src/main/java/com/google/inject/identityinjection/IdentityProviderFactory.java"
- * >here</a>
+ * {@link InjectLogger} follows this <a
+ * href=https://github.com/google/guice/wiki/CustomInjections>guice example</a>
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Qualifier
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.FIELD )

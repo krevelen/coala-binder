@@ -1,4 +1,4 @@
-/* $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
+/* $Id: e7d2765cd025b36c26aa7a65a3393c2776298a45 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -47,7 +47,7 @@ import io.coala.util.FileUtil;
 /**
  * {@link EveAgentConfig}
  * 
- * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
+ * @version $Id: e7d2765cd025b36c26aa7a65a3393c2776298a45 $
  * @author Rick van Krevelen
  */
 @Deprecated

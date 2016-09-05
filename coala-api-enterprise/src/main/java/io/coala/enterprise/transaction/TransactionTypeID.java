@@ -1,4 +1,4 @@
-/* $Id: ce69ef0e4d5d608cd33e74ddbf22ff8ca8be7ec6 $
+/* $Id: b7c00753c8a916dfd8cc2f8fd82ea6324b70cb41 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -31,7 +31,7 @@ import io.coala.util.TypeArguments;
  * 
  * @param <F>
  * @param <T>
- * @version $Id$
+ * @version $Id: b7c00753c8a916dfd8cc2f8fd82ea6324b70cb41 $
  * @author Rick van Krevelen
  */
 @Deprecated

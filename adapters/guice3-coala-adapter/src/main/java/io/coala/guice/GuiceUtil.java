@@ -1,4 +1,4 @@
-/* $Id: 50bd7f4b3ac22839bfca867cec8e97edd1e904da $
+/* $Id: f00323e1d2db4aaa71f1e9fdffb9b40189f5eccd $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -34,7 +34,7 @@ import io.coala.util.Util;
 /**
  * {@link GuiceUtil}
  * 
- * @version $Id: 50bd7f4b3ac22839bfca867cec8e97edd1e904da $
+ * @version $Id: f00323e1d2db4aaa71f1e9fdffb9b40189f5eccd $
  * @author Rick van Krevelen
  */
 @Deprecated

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 6aa3f4291d8f2041583096030a529f619f7b4e09 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -40,7 +40,7 @@ import io.coala.name.Identified;
  * {@link #build()} via the {@link ExceptionStream}
  * 
  * @param <THIS>
- * @version $Id$
+ * @version $Id: 6aa3f4291d8f2041583096030a529f619f7b4e09 $
  * @author Rick van Krevelen
  */
 public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
@@ -216,7 +216,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	/**
 	 * {@link CheckedException}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 6aa3f4291d8f2041583096030a529f619f7b4e09 $
 	 * @author Rick van Krevelen
 	 */
 	public static class CheckedException extends Exception
@@ -291,7 +291,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		/**
 		 * {@link Builder}
 		 * 
-		 * @version $Id$
+		 * @version $Id: 6aa3f4291d8f2041583096030a529f619f7b4e09 $
 		 * @author Rick van Krevelen
 		 */
 		public static class Builder extends ExceptionBuilder<Builder>
@@ -323,7 +323,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	/**
 	 * {@link UncheckedException}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 6aa3f4291d8f2041583096030a529f619f7b4e09 $
 	 * @author Rick van Krevelen
 	 */
 	public static class UncheckedException extends RuntimeException
@@ -409,7 +409,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		/**
 		 * {@link CheckedExceptionBuilder}
 		 * 
-		 * @version $Id$
+		 * @version $Id: 6aa3f4291d8f2041583096030a529f619f7b4e09 $
 		 * @author Rick van Krevelen
 		 */
 		public static class Builder extends ExceptionBuilder<Builder>

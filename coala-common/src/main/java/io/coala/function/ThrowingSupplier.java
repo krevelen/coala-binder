@@ -1,11 +1,11 @@
-package io.coala.util;
+package io.coala.function;
 
 /**
  * {@link ThrowingSupplier}
  * 
  * @param <T>
  * @param <E>
- * @version $Id$
+ * @version $Id: e26122353351dff082b1d0e4d4e438a338aa9a2d $
  * @author Rick van Krevelen
  */
 @FunctionalInterface

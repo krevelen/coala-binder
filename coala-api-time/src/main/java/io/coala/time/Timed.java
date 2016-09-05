@@ -1,4 +1,4 @@
-/* $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+/* $Id: cf0038bff6e479a23fb41b955d12ed8d0e69daf5 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -22,7 +22,7 @@ package io.coala.time;
 /**
  * {@link Timed}
  * 
- * @version $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+ * @version $Id: cf0038bff6e479a23fb41b955d12ed8d0e69daf5 $
  * @author Rick van Krevelen
  */
 public interface Timed

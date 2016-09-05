@@ -1,4 +1,4 @@
-/* $Id: e42549e700538f16d8f674479730cfa47380bc5a $
+/* $Id: 80e4eafd9724cda8737180c653b37962fbdb72f0 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -29,7 +29,7 @@ import nl.tudelft.simulation.event.EventType;
 /**
  * {@link DsolEvent}
  * 
- * @version $Id: e42549e700538f16d8f674479730cfa47380bc5a $
+ * @version $Id: 80e4eafd9724cda8737180c653b37962fbdb72f0 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )

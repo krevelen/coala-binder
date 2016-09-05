@@ -1,4 +1,4 @@
-/* $Id: b91c041718d534ddb7ce5f43c5a6878fa50389a0 $
+/* $Id: 4f95b210d67bfc3bb00070f0cf224dfa8747a3e1 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -46,7 +46,7 @@ import rx.subjects.Subject;
  * {@link AbstractAgentManager} manages the {@link LifeCycle}s of the deployed
  * {@link Agent}s
  * 
- * @version $Id: b91c041718d534ddb7ce5f43c5a6878fa50389a0 $
+ * @version $Id: 4f95b210d67bfc3bb00070f0cf224dfa8747a3e1 $
  * @author Rick van Krevelen
  */
 @Deprecated

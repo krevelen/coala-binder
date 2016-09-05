@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 4de302d5a1078a2f0aab37f4bf63f38409672c1b $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -38,7 +38,7 @@ import rx.schedulers.Schedulers;
  * {@link MachineUtil} utility class, e.g. to manage the {@link MachineStatus}
  * in {@link Machine}s
  * 
- * @version $Id$
+ * @version $Id: 4de302d5a1078a2f0aab37f4bf63f38409672c1b $
  * @author Rick van Krevelen
  */
 @Deprecated

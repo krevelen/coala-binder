@@ -1,4 +1,4 @@
-/* $Id: e4b0c8b2f193027454030f4c994a666b6713110c $
+/* $Id: df0578bb3f0fd9137a7df7cc17130e073dfd3b95 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -40,7 +40,7 @@ import rx.subjects.Subject;
 /**
  * {@link GuiceBinderFactory}
  * 
- * @version $Id: e4b0c8b2f193027454030f4c994a666b6713110c $
+ * @version $Id: df0578bb3f0fd9137a7df7cc17130e073dfd3b95 $
  * @author Rick van Krevelen
  */
 @Deprecated

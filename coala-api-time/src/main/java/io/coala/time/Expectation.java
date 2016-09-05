@@ -8,7 +8,7 @@ import rx.Subscription;
  * {@link Expectation} or anticipation confirms that an event is scheduled
  * to occur at some future {@link Instant}
  * 
- * @version $Id: 3d3e16811192f8231b89032b459eab02371a877f $
+ * @version $Id: 24b01969be1b094edb9970208e7ddf7116067105 $
  * @author Rick van Krevelen
  */
 public class Expectation extends Wrapper.SimpleOrdinal<Instant>

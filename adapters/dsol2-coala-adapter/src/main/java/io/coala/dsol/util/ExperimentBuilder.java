@@ -1,4 +1,4 @@
-/* $Id: e0c8a84d41d68dd1c5901c1dccbf68602368e92d $
+/* $Id: 8d399940ef4c7d17cf9e203706ddf1f52c6dfb69 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -40,7 +40,7 @@ import nl.tudelft.simulation.event.EventType;
 /**
  * {@link ExperimentBuilder}
  * 
- * @version $Id: e0c8a84d41d68dd1c5901c1dccbf68602368e92d $
+ * @version $Id: 8d399940ef4c7d17cf9e203706ddf1f52c6dfb69 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )

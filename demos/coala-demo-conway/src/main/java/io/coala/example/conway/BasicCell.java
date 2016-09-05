@@ -15,11 +15,12 @@
  */
 package io.coala.example.conway;
 
+import javax.inject.Inject;
+
 import org.apache.logging.log4j.Logger;
 
 import io.coala.agent.BasicAgent;
 import io.coala.capability.interact.ReceivingCapability;
-import io.coala.log.InjectLogger;
 import rx.Observable;
 import rx.Observer;
 
@@ -37,7 +38,7 @@ public class BasicCell extends BasicAgent implements Cell
 	private static final long serialVersionUID = 1L;
 
 	/** */
-	@InjectLogger
+	@Inject
 	private transient Logger LOG;
 
 	@Override

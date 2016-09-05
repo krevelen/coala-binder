@@ -1,4 +1,4 @@
-/* $Id: e1229e134cce702980c1bafb06b65a648d3778be $
+/* $Id: 16fe7fb4b8acbf6c357bad5de9056cb334eb2435 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -41,7 +41,7 @@ import rx.subjects.Subject;
 /**
  * {@link DsolEventObservable}
  * 
- * @version $Id: e1229e134cce702980c1bafb06b65a648d3778be $
+ * @version $Id: 16fe7fb4b8acbf6c357bad5de9056cb334eb2435 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )

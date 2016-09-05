@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 75b1e90995911fb4010ec6e16594146eec42977a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -48,7 +48,7 @@ import io.coala.log.LogUtil;
  * compare (1) Quercus, (2) Microworkflow, (3) ORB (4) Groovy, (5) Apache
  * commons closure, (6) GStreamer; but not (7) LambdaJ
  * 
- * @version $Id$
+ * @version $Id: 75b1e90995911fb4010ec6e16594146eec42977a $
  * @author Rick van Krevelen
  */
 public class ClosureTest

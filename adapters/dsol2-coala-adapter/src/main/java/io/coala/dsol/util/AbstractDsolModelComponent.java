@@ -1,4 +1,4 @@
-/* $Id: ef2f5743ead6eb81e64b6a19925cad9b9418bb1d $
+/* $Id: 06a9b39ce45f677541972c1bcedf30be4f8f4625 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -37,7 +37,7 @@ import nl.tudelft.simulation.jstats.streams.StreamInterface;
  * 
  * @param <S> the type of {@link SimulatorInterface}
  * @param <M> the type of {@link DsolModel}
- * @version $Id: ef2f5743ead6eb81e64b6a19925cad9b9418bb1d $
+ * @version $Id: 06a9b39ce45f677541972c1bcedf30be4f8f4625 $
  * @author Rick van Krevelen
  */
 @Deprecated

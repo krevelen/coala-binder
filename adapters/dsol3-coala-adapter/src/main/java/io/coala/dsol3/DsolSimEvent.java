@@ -1,4 +1,4 @@
-/* $Id: 02eeac1c68425728db678e58488bef882bb4248b $
+/* $Id: 4459b5365360b464bc3ffbc612a3e5ce9c6969cb $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -35,7 +35,7 @@ import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEventInterface;
  * {@link DsolSimEvent} wraps a {@link Callable} (with {@link Void} return
  * value) inside a DSOL {@link SimEventInterface}
  * 
- * @version $Id: 02eeac1c68425728db678e58488bef882bb4248b $
+ * @version $Id: 4459b5365360b464bc3ffbc612a3e5ce9c6969cb $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )

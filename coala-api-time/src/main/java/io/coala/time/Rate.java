@@ -1,4 +1,4 @@
-/* $Id: bfdc8d8bb88fbee407229d510a7619daeed3b992 $
+/* $Id: 11bfe048c184d2e6e77f2866c9a98b7dc08e2f4f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -40,7 +40,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * <p>
  * Assumes {@linkplain Double#NaN} as value for illegal/empty value types
  * 
- * @version $Id: bfdc8d8bb88fbee407229d510a7619daeed3b992 $
+ * @version $Id: 11bfe048c184d2e6e77f2866c9a98b7dc08e2f4f $
  * @author Rick van Krevelen
  */
 @JsonSerialize( using = Rate.JsonSerializer.class )

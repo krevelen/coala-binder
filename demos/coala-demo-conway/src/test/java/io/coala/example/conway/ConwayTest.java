@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 271656870407385d9d1548b98b7639b6c3d129aa $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -46,7 +46,7 @@ import rx.functions.Action1;
 /**
  * {@link ConwayTest}
  * 
- * @version $Id$
+ * @version $Id: 271656870407385d9d1548b98b7639b6c3d129aa $
  * @author Rick van Krevelen
  */
 @Deprecated
