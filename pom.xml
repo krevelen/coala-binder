@@ -5,7 +5,7 @@
 
 	<groupId>io.coala</groupId>
 	<artifactId>coala</artifactId>
-	<version>0.2.0-b3</version>
+	<version>0.2.0-b4-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>${project.artifactId} ${project.version}</name>
