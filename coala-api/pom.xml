@@ -22,6 +22,8 @@
 	<properties>
 		<jscience.version>4.3.1</jscience.version>
 		<HdrHistogram.version>2.1.8</HdrHistogram.version>
+		
+		<easymock.version>3.2</easymock.version>
 	</properties>
 
 	<repositories>
@@ -52,22 +54,27 @@
 			<artifactId>coala-common</artifactId>
 		</dependency>
 
-		<!-- reference implementation of javax.measurement JSR-275 -->
+		<!-- reference implementation of javax.measurement JSR-363 -->
+		<!-- <dependency> <groupId>javax.measure</groupId> <artifactId>unit-api</artifactId> 
+			<version>1.0</version> </dependency> -->
+
+		<!-- DEPRECATE: reference implementation of javax.measurement JSR-275 -->
 		<dependency>
 			<groupId>org.jscience</groupId>
 			<artifactId>jscience</artifactId>
 			<version>${jscience.version}</version>
 		</dependency>
 
-		<!-- <dependency>
-			<groupId>org.hdrhistogram</groupId>
-			<artifactId>HdrHistogram</artifactId>
-			<version>${HdrHistogram.version}</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.hdrhistogram</groupId> <artifactId>HdrHistogram</artifactId> 
+			<version>${HdrHistogram.version}</version> </dependency> -->
 
 		<!-- used in unit testing to create mock dependency instances -->
-		<!-- <dependency> <groupId>org.easymock</groupId> <artifactId>easymock</artifactId> 
-			<version>${easymock.version}</version> <scope>test</scope> </dependency> -->
+		<dependency>
+			<groupId>org.easymock</groupId>
+			<artifactId>easymock</artifactId>
+			<version>${easymock.version}</version>
+			<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<!-- Used as unit testing framework, supports test-driven development -->

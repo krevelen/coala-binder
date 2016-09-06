@@ -42,7 +42,7 @@
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>guice3-coala-adapter</artifactId>
+			<artifactId>guice4-coala-adapter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
@@ -54,7 +54,7 @@
 
 		<dependency>
 			<groupId>io.coala</groupId>
-			<artifactId>dsol2-coala-adapter</artifactId>
+			<artifactId>dsol3-coala-adapter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 

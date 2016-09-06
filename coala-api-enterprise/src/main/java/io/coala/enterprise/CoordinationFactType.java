@@ -15,15 +15,14 @@
  */
 package io.coala.enterprise;
 
-import io.coala.enterprise.role.ActorRoleType;
-import io.coala.lifecycle.MachineStatus;
-
 import java.util.Arrays;
+
+import io.coala.machine.Status;
 
 /**
  * {@link CoordinationFactType}
  */
-public enum CoordinationFactType implements MachineStatus<CoordinationFactType>
+public enum CoordinationFactType implements Status<CoordinationFactType>
 {
 
 	/** the moment that a transaction's order phase is initiated */
@@ -336,7 +335,7 @@ public enum CoordinationFactType implements MachineStatus<CoordinationFactType>
 		return proceed ? this.proceedActs[0] : this.proceedActs[1];
 	}
 
-	/** @see MachineStatus#permitsTransitionFrom(MachineStatus) */
+	/** @see Status#permitsTransitionFrom(Status) */
 	@Override
 	public boolean permitsTransitionFrom( final CoordinationFactType factType )
 	{
@@ -350,7 +349,7 @@ public enum CoordinationFactType implements MachineStatus<CoordinationFactType>
 						.getDefaultResponse( ActorRoleType.EXECUTOR, false ) );
 	}
 
-	/** @see MachineStatus#permitsTransitionTo(MachineStatus) */
+	/** @see Status#permitsTransitionTo(Status) */
 	@Override
 	public boolean permitsTransitionTo( final CoordinationFactType status )
 	{

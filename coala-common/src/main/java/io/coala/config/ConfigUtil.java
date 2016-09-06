@@ -41,7 +41,6 @@ import org.aeonbits.owner.ConfigFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.coala.bind.LocalBinder;
 import io.coala.config.InjectConfig.Scope;
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
@@ -320,7 +319,7 @@ public class ConfigUtil implements Util
 	{
 		final Map<String, String> result = export( config, (Pattern) null );
 		if( maps != null ) for( Map<?, ?> map : maps )
-			map.forEach( ( key, value ) ->
+			if( map != null ) map.forEach( ( key, value ) ->
 			{
 				result.put( key.toString(), value.toString() );
 			} );
@@ -421,7 +420,7 @@ public class ConfigUtil implements Util
 	}
 
 	public static void injectConfig( final Object encloser, final Field field,
-		final LocalBinder binder )
+		final Object binder )
 	{
 		final InjectConfig annot = field.getAnnotation( InjectConfig.class );
 		if( !Config.class.isAssignableFrom( field.getType() )

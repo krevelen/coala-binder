@@ -18,7 +18,7 @@ Configuration:
         name: javax.management
         AppenderRef:
           ref: Console
-      - level: warn
-        name: org.eclipse.jetty
-        AppenderRef:
-          ref: Console
+#      - level: warn
+#        name: org.eclipse.jetty
+#        AppenderRef:
+#          ref: Console

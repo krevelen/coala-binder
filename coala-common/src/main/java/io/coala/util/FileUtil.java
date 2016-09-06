@@ -206,8 +206,9 @@ public class FileUtil // implements Util
 			// ignore
 		}
 
-		throw new FileNotFoundException( "File not found " + path + ", tried "
-				+ file.getAbsolutePath() + " and classpath" );
+		return Thrower.throwNew( FileNotFoundException.class,
+				"File not found {}, tried classpath and {}", path,
+				file.getAbsolutePath() );
 	}
 
 	/**
@@ -239,8 +240,7 @@ public class FileUtil // implements Util
 			return new FileOutputStream( file, append );
 		} catch( final IOException e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 

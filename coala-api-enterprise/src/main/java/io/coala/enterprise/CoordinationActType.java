@@ -1,7 +1,5 @@
 package io.coala.enterprise;
 
-import io.coala.enterprise.role.ActorRoleType;
-
 /**
  * The (coordination/production) act types that may occur in some transaction
  * 

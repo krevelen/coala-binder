@@ -19,7 +19,6 @@
  */
 package io.coala.enterprise;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -86,24 +85,18 @@ public interface CoordinationFact
 		return (F) Proxy.newProxyInstance(
 				Thread.currentThread().getContextClassLoader(),
 				new Class<?>[]
-				{ subtype }, new InvocationHandler()
+				{ subtype }, ( proxy, method, args ) ->
 				{
-					@Override
-					public Object invoke( final Object proxy,
-						final Method method, final Object[] args )
+					try
 					{
-						try
-						{
-							final Object result = method.invoke( self, args );
-							if( callObserver != null )
-								callObserver.onNext( method );
-							return result;
-						} catch( final Exception e )
-						{
-							if( callObserver != null )
-								callObserver.onError( e );
-							return Thrower.rethrowUnchecked( e );
-						}
+						final Object result = method.invoke( self, args );
+						if( callObserver != null )
+							callObserver.onNext( method );
+						return result;
+					} catch( final Exception e )
+					{
+						if( callObserver != null ) callObserver.onError( e );
+						return Thrower.rethrowUnchecked( e );
 					}
 				} );
 	}
