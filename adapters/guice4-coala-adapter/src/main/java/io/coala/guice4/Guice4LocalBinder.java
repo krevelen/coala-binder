@@ -71,8 +71,6 @@ public class Guice4LocalBinder implements LocalBinder
 			@Override
 			public void configure()
 			{
-//				final com.google.inject.Provider<ProbabilityDistribution.Parser> parser = getProvider(
-//						ProbabilityDistribution.Parser.class );
 				bindListener( Matchers.any(), new TypeListener()
 				{
 					@Override
