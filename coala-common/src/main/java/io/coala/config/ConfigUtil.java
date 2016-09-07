@@ -501,7 +501,7 @@ public class ConfigUtil implements Util
 					? ConfigFactory.create( configType, importsArray )
 					: ConfigCache.getOrCreate( key, configType, importsArray );
 			final Object value = direct ? config
-					: configType.getDeclaredMethod( annot.methodName() )
+					: configType.getDeclaredMethod( annot.key() )
 							.invoke( config );
 			field.set( encloser, value );
 		} catch( final Throwable e )

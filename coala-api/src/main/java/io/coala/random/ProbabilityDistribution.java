@@ -215,14 +215,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	{
 		if( this instanceof AmountDistribution )
 			return (AmountDistribution<Q>) this;
-		try
-		{
-			return AmountDistribution
-					.of( (ProbabilityDistribution<Amount<Q>>) this );
-		} catch( final Throwable ignore )
-		{
 
-		}
 //		final List<Class<?>> args = TypeArguments
 //				.of( ProbabilityDistribution.class, getClass() );
 //		if( !args.isEmpty() && args.get( 0 ) != null /* no runtime type yet */ )
@@ -237,7 +230,11 @@ public interface ProbabilityDistribution<T> //extends Serializable
 //		}
 		return AmountDistribution.of( () ->
 		{
-			return MeasureUtil.toAmount( (Number) draw(), unit );
+			final T result = draw();
+			if( !Amount.class.isAssignableFrom( result.getClass() ) )
+				return (Amount<Q>) MeasureUtil.toAmount( (Number) draw(),
+						unit );
+			return (Amount<Q>) result;
 		} );
 	}
 

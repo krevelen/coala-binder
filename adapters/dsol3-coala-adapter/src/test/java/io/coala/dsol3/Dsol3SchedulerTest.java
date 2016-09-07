@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.config.InjectConfig;
 import io.coala.guice4.Guice4LocalBinder;
@@ -80,8 +79,7 @@ public class Dsol3SchedulerTest
 		@InjectConfig
 		private Config config;
 
-		@Inject
-		private Scheduler scheduler;
+		private final Scheduler scheduler;
 
 		@Inject
 		private ProbabilityDistribution.Parser distParser;
@@ -95,6 +93,13 @@ public class Dsol3SchedulerTest
 
 		@InjectDist( value = CATEGORICAL_DIST_DEFAULT, paramType = HML.class )
 		private ProbabilityDistribution<HML> categoricalEnum;
+
+		@Inject
+		public ModelImpl( final Scheduler scheduler )
+		{
+			this.scheduler = scheduler;
+			scheduler().onReset( this::init );
+		}
 
 		@Override
 		public Scheduler scheduler()
@@ -150,10 +155,8 @@ public class Dsol3SchedulerTest
 						DistributionParser.class )
 				.build();
 		LOG.info( "Starting DSOL test, config: {}", config );
-		final LocalBinder binder = Guice4LocalBinder.of( config );
-		final Model model = binder.inject( ModelImpl.class );
-		final Scheduler sched = binder.inject( Scheduler.class );
-		model.scheduler().onReset( model::init );
+		final Scheduler sched = Guice4LocalBinder.of( config )
+				.inject( ModelImpl.class ).scheduler();
 
 		final Waiter waiter = new Waiter();
 		sched.time().subscribe( time ->

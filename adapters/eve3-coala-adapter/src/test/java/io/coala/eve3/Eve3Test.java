@@ -54,6 +54,8 @@ public class Eve3Test
 
 	public static interface MyExposableService //extends Remote
 	{
+		// TODO combine @Namespace("") method with @Sender URI param
+		
 		@Access( AccessType.PUBLIC )
 		String myName( @Name( "millis" ) int millis )
 			throws InterruptedException; //,TimeoutException
@@ -105,7 +107,8 @@ public class Eve3Test
 				new MyExposing() );
 		LOG.trace( "Exposed service at endpoints: {}", endpoints );
 
-		// TODO implement/test raw POST: http://eve.almende.com/implementations/java/getting_started.html#create_an_example_agent
+		// TODO implement/test raw POST, see: 
+		// http://eve.almende.com/implementations/java/getting_started.html#create_an_example_agent
 
 //		final String endpoint = endpoints.get( endpoints.size() - 1 )
 //				.toASCIIString();

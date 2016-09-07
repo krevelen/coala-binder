@@ -22,6 +22,9 @@ package io.coala.enterprise;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Scheduler;
@@ -163,4 +166,26 @@ public interface Organization
 		};
 	}
 
+	interface Factory
+	{
+		Organization create( String name );
+
+		@Singleton
+		class Simple implements Factory
+		{
+			@Inject
+			private Scheduler scheduler;
+
+			@Inject
+			private CoordinationFact.Factory factFactory;
+
+			@Override
+			public Organization create( final String name )
+			{
+				return Organization.of( this.scheduler, name,
+						this.factFactory );
+			}
+		}
+
+	}
 }

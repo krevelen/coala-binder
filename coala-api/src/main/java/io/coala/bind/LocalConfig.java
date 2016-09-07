@@ -20,10 +20,13 @@
 package io.coala.bind;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Converter;
@@ -109,10 +112,28 @@ public interface LocalConfig extends GlobalConfig
 	{
 		private ObjectNode tree = JsonUtil.getJOM().createObjectNode();
 
+		private List<Map<?, ?>> configs = new ArrayList<>();
+
 		public JsonBuilder withId( final String id )
 		{
 			this.tree.put( ID_KEY, id );
 			return this;
+		}
+
+		public JsonBuilder withConfig( final Map<?, ?> config )
+		{
+			this.configs.add( config );
+			return this;
+		}
+
+		public JsonBuilder withConfig( final String key, final String value )
+		{
+			return withConfig( Collections.singletonMap( key, value ) );
+		}
+
+		public JsonBuilder withConfig( final Accessible config )
+		{
+			return withConfig( ConfigUtil.export( config ) );
 		}
 
 		/**
@@ -181,7 +202,8 @@ public interface LocalConfig extends GlobalConfig
 			final Properties props = ConfigUtil.flatten( this.tree );
 //			LogUtil.getLogger( this ).trace( "flattened: {} into: {}",
 //					JsonUtil.toJSON( this.tree ), props );
-			return LocalConfig.create( props );
+			return LocalConfig.create( ConfigUtil.join( props,
+					this.configs.toArray( new Map[0] ) ) );
 		}
 	}
 }
