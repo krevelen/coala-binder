@@ -92,7 +92,7 @@ public interface Invoker
 		final Duration timeout, final Supplier<Invoker> invoker )
 	{
 		return (T) Proxy.newProxyInstance(
-				Thread.currentThread().getContextClassLoader(),
+				abstractType.getClassLoader(),
 				new Class[]
 				{ abstractType }, ( proxy, method, args ) ->
 				{
@@ -115,6 +115,7 @@ public interface Invoker
 							}, e ->
 							{
 								result[0] = e;
+								e.printStackTrace();
 								latch.countDown();
 							}, () ->
 							{

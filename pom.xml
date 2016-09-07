@@ -226,6 +226,11 @@
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>${maven-surefire-plugin.version}</version>
+					<configuration>
+						<systemPropertyVariables>
+							<java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+						</systemPropertyVariables>
+					</configuration>
 				</plugin>
 				<plugin>
 					<artifactId>maven-source-plugin</artifactId>

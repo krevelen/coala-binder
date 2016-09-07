@@ -53,7 +53,7 @@ public interface LogConfig extends GlobalConfig
 
 	@Key( LOCALE_KEY )
 	@DefaultValue( LOCALE_DEFAULT )
-	@ConverterClass( LogConfig.LocaleConverter.class )
+	@ConverterClass( LocaleConverter.class )
 	Locale locale();
 
 	@Key( JUL_MANAGER_KEY )

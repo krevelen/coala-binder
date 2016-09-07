@@ -12,7 +12,7 @@ templates:
          class: com.almende.eve.scheduling.SimpleSchedulerBuilder
 #      protocols:
 #      -  builder: com.almende.eve.algorithms.clustering.GlobalAddressProtocolBuilder
-      transports:
+      transport:
       -  class: com.almende.eve.transport.http.HttpTransportBuilder
          servletUrl: http://localhost:8081/agents/
          servletLauncher: JettyLauncher

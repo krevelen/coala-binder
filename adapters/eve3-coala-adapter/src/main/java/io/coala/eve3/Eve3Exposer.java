@@ -51,12 +51,11 @@ public class Eve3Exposer implements Exposer
 		return this.eve3.getAgent( id == null ? this.binder.id() : id ).expose(
 				// FIXME apply http://stackoverflow.com/a/30287201 to 
 				// annotate each method as Access(PUBLIC)  
-				Proxy.newProxyInstance(
-						Thread.currentThread().getContextClassLoader(),
+				Proxy.newProxyInstance( serviceIntf.getClassLoader(),
 						new Class[]
-						{ serviceIntf }, ( proxy, method, args ) ->
-						{
-							return method.invoke( serviceImpl, args );
-						} ) );
+				{ serviceIntf }, ( proxy, method, args ) ->
+				{
+					return method.invoke( serviceImpl, args );
+				} ) );
 	}
 }

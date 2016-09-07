@@ -25,6 +25,8 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 
+import org.apache.logging.log4j.Logger;
+
 import com.almende.eve.agent.Agent;
 import com.almende.eve.agent.AgentInterface;
 import com.almende.eve.instantiation.Initable;
@@ -36,6 +38,7 @@ import com.almende.eve.transport.Receiver;
 import com.almende.util.callback.AsyncCallback;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.coala.log.LogUtil;
 import rx.Observer;
 
 /**
@@ -64,7 +67,7 @@ public interface Eve3Container extends Receiver, Initable, AgentInterface
 	 * {@link Agent#call(URI, Method, Object[], AsyncCallback)} method
 	 * 
 	 * @param <T> the return type, e.g. {@link Void}
-	 * @param uri the remote procedure end-point
+	 * @param uri the remote procedure target end-point
 	 * @param method the remote procedure to call
 	 * @param params the remote procedure parameters
 	 * @param callback an {@link Observer} to call back (asynchronously)
@@ -80,8 +83,25 @@ public interface Eve3Container extends Receiver, Initable, AgentInterface
 	 */
 	class Simple extends Agent implements Eve3Container
 	{
+		/** */
+		private static final Logger LOG = LogUtil.getLogger( Simple.class );
+
 		/** the exposed referent */
 		private transient WeakReference<Object> exposed = null;
+
+		@Override
+		public String getType()
+		{
+			return getClass().getSimpleName() + "$Id$";
+		}
+
+		@Override
+		protected void onBoot()
+		{
+			super.onBoot();
+			LOG.trace( "Booted {} with transport protocols: {}", getId(),
+					getTransport().getProtocols() );
+		}
 
 		@Override
 		public Object exposed()
@@ -97,12 +117,15 @@ public interface Eve3Container extends Receiver, Initable, AgentInterface
 		}
 
 		@Override
-		public <T> void call( final URI url, final Method method,
+		public <T> void call( final URI target, final Method method,
 			final Object[] args, final Observer<T> observer )
 		{
 			try
 			{
-				call( url, NAMESPACE + "." + method.getName(),
+				final String addr = target.toASCIIString();
+				final URI uri = target.getScheme() == null//addr.indexOf( ':' ) < 0
+						? URI.create( "local:" + addr ) : target;
+				call( uri, NAMESPACE + "." + method.getName(),
 						new JSONRequest( method, args, null ).getParams(),
 						new AsyncCallback<T>()
 						{

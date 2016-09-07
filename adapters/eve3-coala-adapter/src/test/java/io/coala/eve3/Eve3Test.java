@@ -19,9 +19,7 @@
  */
 package io.coala.eve3;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -61,7 +59,7 @@ public class Eve3Test
 
 	public static class MyInvoking
 	{
-		@InjectProxy( value = "testAgent", timeout = "P1D" )
+		@InjectProxy( value = "testAgent", timeout = "PT60S" )
 		MyExposableService svc;
 	}
 
@@ -77,7 +75,7 @@ public class Eve3Test
 		}
 	}
 
-	@Test( expected = UndeclaredThrowableException.class )
+	@Test //( expected = UndeclaredThrowableException.class )
 	// TimeoutException undeclared in MyExposableService#myName(int)
 	public void testEve3() throws InterruptedException, TimeoutException
 	{
@@ -87,11 +85,11 @@ public class Eve3Test
 		LOG.info( "Starting Eve3 test, config: {}", config.toYAML() );
 		final LocalBinder binder = Guice4LocalBinder.of( config );
 
-		LOG.trace( "Loaded Eve3 agent config for '{}': {}", agentName, binder
-				.inject( Eve3Factory.class )
-				.getConfig( Collections.singletonMap(
-						Eve3Config.CONFIG_PATH_KEY, "eve-wrapper.yaml" ) )
-				.forAgent( agentName ).toYAML() );
+		LOG.trace( "Loaded Eve3 agent config for '{}': {}", agentName,
+				binder.inject( Eve3Factory.class ).getConfig(
+				//						Collections.singletonMap(
+				//						Eve3Config.CONFIG_PATH_KEY, "eve-wrapper.yaml" ) 
+				).forAgent( agentName ).toYAML() );
 
 		final Exposer exposer = binder.inject( Eve3Exposer.class );
 		LOG.trace( "Created @Singleton Exposer: {}", exposer );
@@ -105,10 +103,14 @@ public class Eve3Test
 		final MyExposableService proxy = invoker.svc;
 		LOG.trace( "Created @Singleton Invoker: {}",
 				binder.inject( Eve3Invoker.class ) );
-		LOG.trace( "Created proxy with @Singleton Invoker: {}", proxy );
+		LOG.trace( "Created @Singleton Invoker: {} (by proxy)", proxy );
 		LOG.trace( "test1: {}", proxy.myName( 500 ) );
 		LOG.trace( "test2: {}", proxy.myName( 900 ) );
 		LOG.trace( "test3: {}", proxy.myName( 1500 ) ); // should fail
-		Thread.sleep( Long.MAX_VALUE );
+	}
+	
+	public static void main(String[] args)
+	{
+		
 	}
 }

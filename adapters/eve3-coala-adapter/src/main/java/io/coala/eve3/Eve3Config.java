@@ -17,10 +17,14 @@ package io.coala.eve3;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+
+import javax.servlet.Filter;
 
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Mutable;
@@ -29,10 +33,13 @@ import org.apache.logging.log4j.Logger;
 import com.almende.eve.agent.Agent;
 import com.almende.eve.agent.AgentBuilder;
 import com.almende.eve.agent.AgentConfig;
+import com.almende.eve.capabilities.AbstractCapabilityBuilder;
 import com.almende.eve.protocol.Protocol;
 import com.almende.eve.scheduling.Scheduler;
 import com.almende.eve.state.State;
 import com.almende.eve.transport.Transport;
+import com.almende.eve.transport.http.EveServlet;
+import com.almende.eve.transport.http.HttpTransportBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -64,42 +71,42 @@ public interface Eve3Config extends GlobalConfig, Mutable
 	@DefaultValue( CONFIG_PATH_DEFAULT )
 	String yamlConfigPath();
 
-	default Map<String, Eve3AgentConfig>
+	default Map<String, AgentBuilderConfig>
 		agentConfigs( final Map<?, ?>... imports )
 	{
-		return subConfigs( AGENTS_KEY, Eve3AgentConfig.class, imports );
+		return subConfigs( AGENTS_KEY, AgentBuilderConfig.class, imports );
 	}
 
-	default Map<String, Eve3AgentConfig>
+	default Map<String, AgentBuilderConfig>
 		templateConfigs( final Map<?, ?>... imports )
 	{
-		return subConfigs( TEMPLATES_KEY, Eve3AgentConfig.class, imports );
+		return subConfigs( TEMPLATES_KEY, AgentBuilderConfig.class, imports );
 	}
 
-	default Eve3AgentConfig forAgent( final String id,
+	default AgentBuilderConfig forAgent( final String id,
 		final Map<?, ?>... imports )
 	{
-		final Eve3DefaultAgentConfig defaults = ConfigFactory.create(
-				Eve3DefaultAgentConfig.class,
+		final DefaultAgentBuilderConfig defaults = ConfigFactory.create(
+				DefaultAgentBuilderConfig.class,
 				ConfigUtil.join(
 						Collections.singletonMap( LocalConfig.ID_KEY, id ),
 						imports ) );
 		// try agent with given id
-		for( Map.Entry<String, Eve3AgentConfig> entry : agentConfigs( imports )
-				.entrySet() )
+		for( Map.Entry<String, AgentBuilderConfig> entry : agentConfigs(
+				imports ).entrySet() )
 		{
 			final ObjectNode agentConfig = (ObjectNode) entry.getValue()
 					.toJSON();
 			// match agent id
 			if( !id.equals(
-					agentConfig.get( Eve3AgentConfig.ID_KEY ).asText() ) )
+					agentConfig.get( AgentBuilderConfig.ID_KEY ).asText() ) )
 				continue;
 			// expand 'extends' from templates
-			if( agentConfig.has( Eve3AgentConfig.EXTENDS_KEY ) )
+			if( agentConfig.has( AgentBuilderConfig.EXTENDS_KEY ) )
 			{
 				final String tplName = agentConfig
-						.get( Eve3AgentConfig.EXTENDS_KEY ).asText();
-				final Eve3AgentConfig tpl = templateConfigs( imports )
+						.get( AgentBuilderConfig.EXTENDS_KEY ).asText();
+				final AgentBuilderConfig tpl = templateConfigs( imports )
 						.get( tplName );
 				if( tpl == null )
 					getLogger().warn( "Missing template '{}' for agent '{}'",
@@ -108,17 +115,17 @@ public interface Eve3Config extends GlobalConfig, Mutable
 			}
 			// add missing defaults
 			copyMissing( defaults.toJSON(), agentConfig );
-			return ConfigFactory.create( Eve3AgentConfig.class,
+			return ConfigFactory.create( AgentBuilderConfig.class,
 					ConfigUtil.flatten( agentConfig ) );
 		}
 		// no agent config, try template with given id
-		final Eve3AgentConfig tpl = templateConfigs( imports ).get( id );
+		final AgentBuilderConfig tpl = templateConfigs( imports ).get( id );
 		if( tpl != null )
 		{
 			getLogger().trace( "Using template for agent '{}'", id, id );
 			final ObjectNode agentConfig = (ObjectNode) tpl.toJSON();
 			copyMissing( defaults.toJSON(), agentConfig );
-			return ConfigFactory.create( Eve3AgentConfig.class,
+			return ConfigFactory.create( AgentBuilderConfig.class,
 					ConfigUtil.flatten( agentConfig ) );
 		}
 		// no agent or template of given id, return defaults
@@ -175,12 +182,12 @@ public interface Eve3Config extends GlobalConfig, Mutable
 	}
 
 	/**
-	 * {@link Eve3AgentConfig}
+	 * {@link AgentBuilderConfig}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Eve3AgentConfig extends LocalConfig
+	interface AgentBuilderConfig extends LocalConfig
 	{
 		String EXTENDS_KEY = "extends";
 
@@ -196,30 +203,41 @@ public interface Eve3Config extends GlobalConfig, Mutable
 		default Eve3Container buildAgent()
 		{
 			final AgentConfig config = builderConfig();
-			final Eve3Container result = (Eve3Container) new AgentBuilder()
-					.with( config ).build();
-			getLogger().trace( "Built agent, urls: {}", result.getUrls() );
-			return result;
+			final Agent result = new AgentBuilder().with( config ).onBoot()
+					.build();
+			Objects.requireNonNull( result );
+			getLogger().trace( "Booted agent: {}, urls: {}", result.getId(),
+					result.getUrls() );
+			return (Eve3Container) result;
 		}
 
 	}
 
 	/**
-	 * {@link Eve3DefaultAgentConfig}
+	 * {@link DefaultAgentBuilderConfig}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Eve3DefaultAgentConfig extends Eve3AgentConfig
+	interface DefaultAgentBuilderConfig extends AgentBuilderConfig
 	{
 		String CLASS_KEY = "class";
-		String STATE_BUILDER_KEY = "state.class";
+		String STATE_BUILDER_CLASS_KEY = "state.class";
 		String STATE_PATH_KEY = "state.path";
-		String SCHEDULER_BUILDER_KEY = "scheduler.class";
-		String HTTP_TRANSPORT_BUILDER_KEY = "transports.0.class";
-		String HTTP_TRANSPORT_SERVLET_URL_KEY = "transports.0.servletUrl";
-		String HTTP_TRANSPORT_AUTHENTICATE_KEY = "transports.0.doAuthentication";
-		String JSONRPC_PROTOCOL_BUILDER_KEY = "protocols.0.class";
+		String SCHEDULER_BUILDER_CLASS_KEY = "scheduler.class";
+		String HTTP_TRANSPORT_BUILDER_CLASS_KEY = "transport.0.class";
+		String HTTP_TRANSPORT_SERVLET_TYPE_KEY = "servletClass";
+		String HTTP_TRANSPORT_CORS_FILTER_TYPE_KEY = "transport.0.jetty.cors.class";
+		String HTTP_TRANSPORT_CORS_FILTER_PATH_KEY = "transport.0.jetty.cors.path";
+		String HTTP_TRANSPORT_SERVLET_SCHEME_KEY = "transport.0.jetty.scheme";
+		String HTTP_TRANSPORT_SERVLET_HOST_KEY = "transport.0.jetty.host";
+		String HTTP_TRANSPORT_SERVLET_PORT_KEY = "transport.0.jetty.port";
+		String HTTP_TRANSPORT_SERVLET_PATH_KEY = "transport.0.jetty.path";
+		String HTTP_TRANSPORT_SERVLET_URL_KEY = "transport.0.servletUrl";
+		String HTTP_TRANSPORT_SERVLET_LAUNCHER_KEY = "transport.0.servletLauncher";
+		String HTTP_TRANSPORT_AUTHENTICATE_KEY = "transport.0.doAuthentication";
+		String HTTP_TRANSPORT_SHORTCUT_KEY = "transport.0.doShortcut";
+		String JSONRPC_PROTOCOL_BUILDER_CLASS_KEY = "protocols.0.class";
 		String JSONRPC_PROTOCOL_TIMEOUT_SECS_KEY = "protocols.0.rpcTimeout";
 
 		@Key( EXTENDS_KEY )
@@ -229,36 +247,86 @@ public interface Eve3Config extends GlobalConfig, Mutable
 		@DefaultValue( "io.coala.eve3.Eve3Container$Simple" )
 		Class<? extends Agent> agentClass();
 
-		@Key( SCHEDULER_BUILDER_KEY )
+		@Key( SCHEDULER_BUILDER_CLASS_KEY )
 		@DefaultValue( "com.almende.eve.scheduling.SimpleSchedulerBuilder" )
-		Class<? extends Scheduler> schedulerBuilder();
+		Class<? extends AbstractCapabilityBuilder<Scheduler>>
+			schedulerBuilderType();
 
-		@Key( STATE_BUILDER_KEY )
+		@Key( STATE_BUILDER_CLASS_KEY )
 		@DefaultValue( "com.almende.eve.state.memory.MemoryStateBuilder" )
-		Class<? extends State> stateBuilder();
+		Class<? extends AbstractCapabilityBuilder<State>> stateBuilderType();
 
 		@Key( STATE_PATH_KEY )
-		@DefaultValue( ".eve_agents" )
+//		@DefaultValue( ".eve_agents" )
 		Class<? extends State> statePath();
 
-		@Key( HTTP_TRANSPORT_BUILDER_KEY )
+		@Key( HTTP_TRANSPORT_BUILDER_CLASS_KEY )
 		@DefaultValue( "com.almende.eve.transport.http.HttpTransportBuilder" )
-		Class<? extends Transport> httpBuilder();
+		Class<? extends AbstractCapabilityBuilder<Transport>> httpBuilderType();
+
+		@Key( HTTP_TRANSPORT_SERVLET_TYPE_KEY )
+		@DefaultValue( "com.almende.eve.transport.http.DebugServlet" )
+		Class<? extends EveServlet> httpServletType();
+
+		/**
+		 * @return {@link Filter} type for Cross-Origin Resource Sharing (CORS)
+		 */
+		@Key( HTTP_TRANSPORT_CORS_FILTER_TYPE_KEY )
+		@DefaultValue( "com.thetransactioncompany.cors.CORSFilter" )
+		Class<? extends Filter> httpCORSFilterType();
+
+		/**
+		 * @return the Cross-Origin Resource Sharing (CORS) filter path
+		 */
+		@Key( HTTP_TRANSPORT_CORS_FILTER_PATH_KEY )
+		@DefaultValue( "/*" )
+		String httpCORSFilterPath();
+
+		@Key( HTTP_TRANSPORT_SERVLET_SCHEME_KEY )
+		@DefaultValue( "https" )
+		String httpServletScheme();
+
+		@Key( HTTP_TRANSPORT_SERVLET_HOST_KEY )
+		@DefaultValue( "localhost" )
+		String httpServletHost();
+
+		@Key( HTTP_TRANSPORT_SERVLET_PORT_KEY )
+		@DefaultValue( "" + 8081 )
+		int httpServletPort();
+
+		/**
+		 * FIXME update the HttpService context in {@link HttpTransportBuilder}
+		 */
+		@Key( HTTP_TRANSPORT_SERVLET_PATH_KEY )
+		@DefaultValue( "/agents" )
+		String httpServletPath();
 
 		@Key( HTTP_TRANSPORT_SERVLET_URL_KEY )
-		@DefaultValue( "http://127.0.0.1:8080/agents/" )
-		String transportServletUrl();
+		@DefaultValue( "${" + HTTP_TRANSPORT_SERVLET_SCHEME_KEY + "}://${"
+				+ HTTP_TRANSPORT_SERVLET_HOST_KEY + "}:${"
+				+ HTTP_TRANSPORT_SERVLET_PORT_KEY + "}${"
+				+ HTTP_TRANSPORT_SERVLET_PATH_KEY + "}/" )
+		URI httpServletUrl();
+
+		@Key( HTTP_TRANSPORT_SERVLET_LAUNCHER_KEY )
+		@DefaultValue( "JettyLauncher" )
+		String httpServletLauncher();
 
 		@Key( HTTP_TRANSPORT_AUTHENTICATE_KEY )
 		@DefaultValue( "" + false )
-		boolean transportAuthenticate();
+		boolean httpAuthenticate();
 
-		@Key( JSONRPC_PROTOCOL_BUILDER_KEY )
+		@Key( HTTP_TRANSPORT_SHORTCUT_KEY )
+		@DefaultValue( "" + true )
+		boolean httpShortcut();
+
+		@Key( JSONRPC_PROTOCOL_BUILDER_CLASS_KEY )
 		@DefaultValue( "com.almende.eve.protocol.jsonrpc.JSONRpcProtocolBuilder" )
-		Class<? extends Protocol> jsonrpcBuilder();
+		Class<? extends AbstractCapabilityBuilder<Protocol>>
+			jsonrpcBuilderType();
 
 		@Key( JSONRPC_PROTOCOL_TIMEOUT_SECS_KEY )
-		@DefaultValue( "" + Integer.MAX_VALUE ) // Invoker proxy handles timeout
+		@DefaultValue( "" + Integer.MAX_VALUE ) // Invoker handles timeouts
 		int jsonrpcTimeout();
 	}
 }

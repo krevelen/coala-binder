@@ -47,8 +47,12 @@ public class LogUtil implements Util
 	static
 	{
 		final LogConfig conf = LogConfig.getOrCreate();
-		System.setProperty( LogConfig.JUL_MANAGER_KEY,
-				conf.julManagerType().getName() );
+		if( !LogConfig.JUL_MANAGER_DEFAULT
+				.equals( System.getProperty( LogConfig.JUL_MANAGER_KEY ) ) )
+			getLogger( LogUtil.class ).trace(
+					"java.util.logging not bridged; set system property (-D) {}={}",
+					LogConfig.JUL_MANAGER_KEY, LogConfig.JUL_MANAGER_DEFAULT );
+
 		Locale.setDefault( conf.locale() );
 	}
 

@@ -65,7 +65,15 @@ public class Thrower
 	public static <R, E extends Exception> R throwNew( final Class<E> type,
 		final String messageFormat, final Object... args ) throws E
 	{
-		return throwNew( type, null, messageFormat, args );
+		try
+		{
+			final String message = ExceptionBuilder
+					.format( messageFormat, args ).getFormattedMessage();
+			throw type.getConstructor( String.class ).newInstance( message );
+		} catch( final Throwable e )
+		{
+			return rethrowUnchecked( e );
+		}
 	}
 
 	/**
@@ -85,10 +93,8 @@ public class Thrower
 		{
 			final String message = ExceptionBuilder
 					.format( messageFormat, args ).getFormattedMessage();
-			throw cause == null
-					? type.getConstructor( String.class ).newInstance( message )
-					: type.getConstructor( String.class, Throwable.class )
-							.newInstance( message, cause );
+			throw type.getConstructor( String.class, Throwable.class )
+					.newInstance( message, cause );
 		} catch( final Throwable e )
 		{
 			return rethrowUnchecked( e );

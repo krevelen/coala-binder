@@ -46,15 +46,12 @@ public class Eve3Invoker implements Invoker
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public <T> Observable<T> invoke( final URI remoteAddress,
-		final Method method, final Object... args )
+	public <T> Observable<T> invoke( final URI target, final Method method,
+		final Object... args )
 	{
 		return Observable.create( subscriber ->
 		{
-			final String addr = remoteAddress.toASCIIString();
-			final URI uri = addr.indexOf( ':' ) < 0
-					? URI.create( "local:" + addr ) : remoteAddress;
-			this.eve3.getAgent( this.binder.id() ).call( uri, method, args,
+			this.eve3.getAgent( this.binder.id() ).call( target, method, args,
 					subscriber );
 		} );
 	}

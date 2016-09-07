@@ -83,7 +83,7 @@ public interface CoordinationFact
 	{
 		final CoordinationFact self = this;
 		return (F) Proxy.newProxyInstance(
-				Thread.currentThread().getContextClassLoader(),
+				subtype.getClassLoader(),
 				new Class<?>[]
 				{ subtype }, ( proxy, method, args ) ->
 				{

@@ -33,6 +33,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
@@ -362,6 +363,24 @@ public class ConfigUtil implements Util
 					result.put( replace, config.getProperty( key ) );
 				}
 			}
+		return result.entrySet().stream().collect( Collectors.toMap( e ->
+		{
+			return e.getKey();
+		}, e ->
+		{
+			return resolve( e.getValue(), result );
+		} ) );
+	}
+
+	static final Pattern KEY_PATTERN = Pattern.compile(
+			Pattern.quote( "${" ) + "([^}]*)" + Pattern.quote( "}" ) );
+
+	static String resolve( final String value, final Map<String, String> map )
+	{
+		String result = value;
+		Matcher m;
+		while( (m = KEY_PATTERN.matcher( result )).find() )
+			result = m.replaceFirst( map.get( m.group( 1 ) ) );
 		return result;
 	}
 
