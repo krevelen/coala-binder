@@ -26,7 +26,7 @@
 		<jetty.version>9.3.11.v20160721</jetty.version>
 		<cors.version>2.5</cors.version>
 		<javax.servlet-api.version>3.1.0</javax.servlet-api.version>
-		<guice.version>3.0</guice.version>
+		<httpcomponents.version>4.5.2</httpcomponents.version>
 	</properties>
 
 	<repositories>
@@ -125,9 +125,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.inject.extensions</groupId>
-			<artifactId>guice-assistedinject</artifactId>
-			<version>${guice.version}</version>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>fluent-hc</artifactId>
+			<version>${httpcomponents.version}</version>
 			<scope>test</scope>
 		</dependency>
 

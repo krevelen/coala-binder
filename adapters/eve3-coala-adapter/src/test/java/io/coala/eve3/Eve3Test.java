@@ -19,10 +19,12 @@
  */
 package io.coala.eve3;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.http.client.ClientProtocolException;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
@@ -60,7 +62,7 @@ public class Eve3Test
 	public static class MyInvoking
 	{
 		@InjectProxy( value = "testAgent", timeout = "PT60S" )
-		MyExposableService svc;
+		MyExposableService proxy;
 	}
 
 	public static class MyExposing implements MyExposableService
@@ -75,11 +77,13 @@ public class Eve3Test
 		}
 	}
 
+	private static final String agentName = "testAgent";
+
 	@Test //( expected = UndeclaredThrowableException.class )
 	// TimeoutException undeclared in MyExposableService#myName(int)
-	public void testEve3() throws InterruptedException, TimeoutException
+	public void testEve3() throws InterruptedException, TimeoutException,
+		ClientProtocolException, IOException
 	{
-		final String agentName = "testAgent";
 		final LocalConfig config = LocalConfig.builder().withId( agentName )
 				.withProvider( Invoker.class, Eve3Invoker.class ).build();
 		LOG.info( "Starting Eve3 test, config: {}", config.toYAML() );
@@ -87,30 +91,69 @@ public class Eve3Test
 
 		LOG.trace( "Loaded Eve3 agent config for '{}': {}", agentName,
 				binder.inject( Eve3Factory.class ).getConfig(
-				//						Collections.singletonMap(
-				//						Eve3Config.CONFIG_PATH_KEY, "eve-wrapper.yaml" ) 
+				//				 Collections.singletonMap(
+				//				 Eve3Config.CONFIG_PATH_KEY, "eve-wrapper.yaml" ) 
 				).forAgent( agentName ).toYAML() );
 
 		final Exposer exposer = binder.inject( Eve3Exposer.class );
 		LOG.trace( "Created @Singleton Exposer: {}", exposer );
 		LOG.trace( "Created @Singleton Exposer: {}",
 				binder.inject( Eve3Exposer.class ) );
+		exposer.exposeAs( "blaAgent", MyExposableService.class,
+				new MyExposing() );
 		final List<URI> endpoints = exposer.exposeAs( MyExposableService.class,
 				new MyExposing() );
 		LOG.trace( "Exposed service at endpoints: {}", endpoints );
 
+		// TODO implement/test raw POST: http://eve.almende.com/implementations/java/getting_started.html#create_an_example_agent
+
+//		final String endpoint = endpoints.get( endpoints.size() - 1 )
+//				.toASCIIString();
+//		final JSONRequest req = new JSONRequest( "getId",
+//				JsonUtil.getJOM().createObjectNode() );
+//		LOG.trace( "Raw POST {} <- {} response: {}", endpoint, req,
+//				Request.Post( endpoint )
+////				.addHeader( "X-Eve-Token", dunno )
+////				.addHeader( "X-Eve-SenderUrl", endpoint )
+//						.bodyByteArray( req.toString().getBytes() )
+//						.execute().returnContent().asString() );
+
+		// TODO implement/test secure HTTP: http://stackoverflow.com/a/14368588
+
 		final MyInvoking invoker = binder.inject( MyInvoking.class );
-		final MyExposableService proxy = invoker.svc;
+		final MyExposableService proxy = invoker.proxy;
 		LOG.trace( "Created @Singleton Invoker: {}",
-				binder.inject( Eve3Invoker.class ) );
+				binder.inject( Invoker.class ) );
 		LOG.trace( "Created @Singleton Invoker: {} (by proxy)", proxy );
+
 		LOG.trace( "test1: {}", proxy.myName( 500 ) );
 		LOG.trace( "test2: {}", proxy.myName( 900 ) );
-		LOG.trace( "test3: {}", proxy.myName( 1500 ) ); // should fail
+		LOG.trace( "test3: {}", proxy.myName( 1500 ) );
 	}
-	
-	public static void main(String[] args)
+
+	public static void main( String[] args )
 	{
-		
+		try
+		{
+			final LocalConfig config = LocalConfig.builder().withId( agentName )
+					.withProvider( Invoker.class, Eve3Invoker.class ).build();
+			final LocalBinder binder = Guice4LocalBinder.of( config );
+
+			final List<URI> endpoints = binder.inject( Eve3Exposer.class )
+					.exposeAs( MyExposableService.class, new MyExposing() );
+			LOG.trace( "Exposed {} at endpoints: {}",
+					MyExposableService.class.getSimpleName(), endpoints );
+
+			Runtime.getRuntime().addShutdownHook( new Thread( () ->
+			{
+				System.err.println( "SHUTTING DOWN EVE HTTP DAEMON" );
+			} ) );
+
+//			Runtime.getRuntime().exit( 0 );
+		} catch( final Exception e )
+		{
+			e.printStackTrace();
+			System.exit( e.hashCode() );
+		}
 	}
 }

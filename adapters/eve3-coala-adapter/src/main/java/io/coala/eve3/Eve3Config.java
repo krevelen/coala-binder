@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 import javax.servlet.Filter;
+import javax.servlet.Servlet;
 
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Mutable;
@@ -38,8 +39,8 @@ import com.almende.eve.protocol.Protocol;
 import com.almende.eve.scheduling.Scheduler;
 import com.almende.eve.state.State;
 import com.almende.eve.transport.Transport;
-import com.almende.eve.transport.http.EveServlet;
 import com.almende.eve.transport.http.HttpTransportBuilder;
+import com.almende.eve.transport.http.ServletLauncher;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -225,18 +226,19 @@ public interface Eve3Config extends GlobalConfig, Mutable
 		String STATE_BUILDER_CLASS_KEY = "state.class";
 		String STATE_PATH_KEY = "state.path";
 		String SCHEDULER_BUILDER_CLASS_KEY = "scheduler.class";
-		String HTTP_TRANSPORT_BUILDER_CLASS_KEY = "transport.0.class";
-		String HTTP_TRANSPORT_SERVLET_TYPE_KEY = "servletClass";
-		String HTTP_TRANSPORT_CORS_FILTER_TYPE_KEY = "transport.0.jetty.cors.class";
-		String HTTP_TRANSPORT_CORS_FILTER_PATH_KEY = "transport.0.jetty.cors.path";
-		String HTTP_TRANSPORT_SERVLET_SCHEME_KEY = "transport.0.jetty.scheme";
-		String HTTP_TRANSPORT_SERVLET_HOST_KEY = "transport.0.jetty.host";
-		String HTTP_TRANSPORT_SERVLET_PORT_KEY = "transport.0.jetty.port";
-		String HTTP_TRANSPORT_SERVLET_PATH_KEY = "transport.0.jetty.path";
-		String HTTP_TRANSPORT_SERVLET_URL_KEY = "transport.0.servletUrl";
-		String HTTP_TRANSPORT_SERVLET_LAUNCHER_KEY = "transport.0.servletLauncher";
-		String HTTP_TRANSPORT_AUTHENTICATE_KEY = "transport.0.doAuthentication";
-		String HTTP_TRANSPORT_SHORTCUT_KEY = "transport.0.doShortcut";
+		String HTTP_BUILDER_CLASS_KEY = "transport.0.class";
+		String HTTP_AUTHENTICATE_KEY = "transport.0.doAuthentication";
+		String HTTP_SHORTCUT_KEY = "transport.0.doShortcut";
+		String HTTP_JETTY_PORT_KEY = "transport.0.jetty.port";
+		String HTTP_JETTY_CORS_FILTER_TYPE_KEY = "transport.0.jetty.cors.class";
+		String HTTP_JETTY_CORS_FILTER_PATH_KEY = "transport.0.jetty.cors.path";
+		String HTTP_SERVLET_TYPE_KEY = "transport.0.servletClass";
+		String HTTP_LAUNCHER_TYPE_KEY = "transport.0.servletLauncher";
+		String HTTP_URL_KEY = "transport.0.servletUrl";
+		String HTTP_SCHEME_KEY = "transport.0.servlet.scheme";
+		String HTTP_HOST_KEY = "transport.0.servlet.host";
+		String HTTP_PORT_KEY = "transport.0.servlet.port";
+		String HTTP_CONTEXT_KEY = "transport.0.servlet.path";
 		String JSONRPC_PROTOCOL_BUILDER_CLASS_KEY = "protocols.0.class";
 		String JSONRPC_PROTOCOL_TIMEOUT_SECS_KEY = "protocols.0.rpcTimeout";
 
@@ -260,63 +262,65 @@ public interface Eve3Config extends GlobalConfig, Mutable
 //		@DefaultValue( ".eve_agents" )
 		Class<? extends State> statePath();
 
-		@Key( HTTP_TRANSPORT_BUILDER_CLASS_KEY )
+		@Key( HTTP_BUILDER_CLASS_KEY )
 		@DefaultValue( "com.almende.eve.transport.http.HttpTransportBuilder" )
 		Class<? extends AbstractCapabilityBuilder<Transport>> httpBuilderType();
 
-		@Key( HTTP_TRANSPORT_SERVLET_TYPE_KEY )
+		@Key( HTTP_SERVLET_TYPE_KEY )
 		@DefaultValue( "com.almende.eve.transport.http.DebugServlet" )
-		Class<? extends EveServlet> httpServletType();
+		Class<? extends Servlet> httpServletType();
 
 		/**
 		 * @return {@link Filter} type for Cross-Origin Resource Sharing (CORS)
 		 */
-		@Key( HTTP_TRANSPORT_CORS_FILTER_TYPE_KEY )
+		@Key( HTTP_JETTY_CORS_FILTER_TYPE_KEY )
 		@DefaultValue( "com.thetransactioncompany.cors.CORSFilter" )
 		Class<? extends Filter> httpCORSFilterType();
 
 		/**
 		 * @return the Cross-Origin Resource Sharing (CORS) filter path
 		 */
-		@Key( HTTP_TRANSPORT_CORS_FILTER_PATH_KEY )
+		@Key( HTTP_JETTY_CORS_FILTER_PATH_KEY )
 		@DefaultValue( "/*" )
 		String httpCORSFilterPath();
 
-		@Key( HTTP_TRANSPORT_SERVLET_SCHEME_KEY )
-		@DefaultValue( "https" )
-		String httpServletScheme();
+		@Key( HTTP_SCHEME_KEY )
+		@DefaultValue( "http" )
+		String httpScheme();
 
-		@Key( HTTP_TRANSPORT_SERVLET_HOST_KEY )
+		@Key( HTTP_HOST_KEY )
 		@DefaultValue( "localhost" )
-		String httpServletHost();
+		String httpHost();
 
-		@Key( HTTP_TRANSPORT_SERVLET_PORT_KEY )
+		@Key( HTTP_PORT_KEY )
 		@DefaultValue( "" + 8081 )
-		int httpServletPort();
+		int httpPort();
+
+		@Key( HTTP_JETTY_PORT_KEY )
+		@DefaultValue( "${" + HTTP_PORT_KEY + "}" )
+		int httpJettyPort();
 
 		/**
 		 * FIXME update the HttpService context in {@link HttpTransportBuilder}
 		 */
-		@Key( HTTP_TRANSPORT_SERVLET_PATH_KEY )
+		@Key( HTTP_CONTEXT_KEY )
 		@DefaultValue( "/agents" )
-		String httpServletPath();
+		String httpContext();
 
-		@Key( HTTP_TRANSPORT_SERVLET_URL_KEY )
-		@DefaultValue( "${" + HTTP_TRANSPORT_SERVLET_SCHEME_KEY + "}://${"
-				+ HTTP_TRANSPORT_SERVLET_HOST_KEY + "}:${"
-				+ HTTP_TRANSPORT_SERVLET_PORT_KEY + "}${"
-				+ HTTP_TRANSPORT_SERVLET_PATH_KEY + "}/" )
+		@Key( HTTP_URL_KEY )
+		@DefaultValue( "${" + HTTP_SCHEME_KEY + "}://${" + HTTP_HOST_KEY
+				+ "}:${" + HTTP_PORT_KEY + "}${" + HTTP_CONTEXT_KEY + "}/" )
 		URI httpServletUrl();
 
-		@Key( HTTP_TRANSPORT_SERVLET_LAUNCHER_KEY )
-		@DefaultValue( "JettyLauncher" )
-		String httpServletLauncher();
+		@Key( HTTP_LAUNCHER_TYPE_KEY )
+		@DefaultValue( "com.almende.eve.transport.http.embed.JettyLauncher" )
+		Class<? extends ServletLauncher> httpServletLauncher();
 
-		@Key( HTTP_TRANSPORT_AUTHENTICATE_KEY )
+		@Key( HTTP_AUTHENTICATE_KEY )
 		@DefaultValue( "" + false )
 		boolean httpAuthenticate();
 
-		@Key( HTTP_TRANSPORT_SHORTCUT_KEY )
+		@Key( HTTP_SHORTCUT_KEY )
 		@DefaultValue( "" + true )
 		boolean httpShortcut();
 
