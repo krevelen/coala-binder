@@ -52,6 +52,7 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Singleton
 public class Guice4LocalBinder implements LocalBinder
 {
 	/** */

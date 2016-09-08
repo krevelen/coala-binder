@@ -1,26 +1,30 @@
 package io.coala.enterprise;
 
-import static org.aeonbits.owner.util.Collections.entry;
-
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.measure.unit.NonSI;
+import javax.persistence.EntityManagerFactory;
 
+import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 import org.junit.Test;
 
-import io.coala.dsol3.Dsol3Config;
+import io.coala.bind.LocalConfig;
+import io.coala.dsol3.Dsol3Scheduler;
+import io.coala.guice4.Guice4LocalBinder;
 import io.coala.log.LogUtil;
+import io.coala.persist.HibernateJPAConfig;
 import io.coala.time.Duration;
+import io.coala.time.Proactive;
+import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
-import io.coala.time.Units;
 import net.jodah.concurrentunit.Waiter;
 
 /**
@@ -35,8 +39,6 @@ public class EnterpriseTest
 	/** TODO specialized logging adding e.g. Timed#now() and Identified#id() */
 	private static final Logger LOG = LogUtil.getLogger( EnterpriseTest.class );
 
-	private static final CoordinationFact.Factory factFactory = new CoordinationFact.SimpleFactory();
-
 	/**
 	 * {@link TestFact} custom fact kind
 	 * 
@@ -48,104 +50,176 @@ public class EnterpriseTest
 		// empty 
 	}
 
-	/**
-	 * @param scheduler
-	 * @throws Exception
-	 */
-	private static void initScenario( final Scheduler scheduler )
-		throws Exception
+	@Singleton
+	public class EnterpriseModel implements Proactive
 	{
-		LOG.trace( "initializing..." );
+		private final Scheduler scheduler;
 
-		final DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME
-				.withZone( ZoneId.systemDefault() );
-		final Instant offset = java.time.Instant.now()
-				.truncatedTo( ChronoUnit.DAYS );
-//		final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-		scheduler.time().subscribe( t ->
-		{
-			LOG.trace( "t={}, date: {}", t.prettify( Units.DAYS, 2 ),
-					formatter.format( t.toDate( offset ) ) );
-		}, e ->
-		{
-			LOG.error( "Time logging problem", e );
-		} );
+		@Inject
+		private Organization.Factory organizations;
 
-		// create organization
-		final Organization org1 = Organization.of( scheduler, "org1",
-				factFactory );
-		final CompositeActor sales = org1.actor( "sales" );
-
-		// add business rule(s)
-		sales.on( TestFact.class, org1.id(), fact ->
+		@Inject
+		public EnterpriseModel( final Scheduler scheduler )
 		{
-			sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
+			this.scheduler = scheduler;
+			scheduler.onReset( this::initScenario );
+		}
+
+		@Override
+		public Scheduler scheduler()
+		{
+			return this.scheduler;
+		}
+
+		/**
+		 * @param scheduler
+		 * @throws Exception
+		 */
+		public void initScenario() throws Exception
+		{
+			LOG.trace( "initializing..." );
+
+			final DateTime offset = DateTime.now().withTimeAtStartOfDay()
+					.withDayOfMonth( 1 ).withMonthOfYear( 1 );
+
+			// create organization
+			final Organization org1 = this.organizations.create( "org1" );
+			final CompositeActor sales = org1.actor( "sales" );
+
+			// add business rule(s)
+			sales.on( TestFact.class, org1.id(), fact ->
 			{
-				final TestFact response = sales.createResponse( fact,
-						CoordinationFactType.STATED, true, null,
-						Collections.singletonMap( "myParam1", "myValue1" ) );
-				LOG.trace( "t={}, {} responded: {} for incoming: {}", t,
-						sales.id(), response, fact );
+				sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
+				{
+					final TestFact response = sales.createResponse( fact,
+							CoordinationFactType.STATED, true, null, Collections
+									.singletonMap( "myParam1", "myValue1" ) );
+					LOG.trace( "t={}, {} responded: {} for incoming: {}", t,
+							sales.id(), response, fact );
 
+				} );
 			} );
-		} );
 
-		// observe generated facts
-		org1.outgoing().subscribe( fact ->
+			// observe generated facts
+			org1.outgoing().subscribe( fact ->
+			{
+				LOG.trace( "t={}, outgoing: {}", org1.now().prettify( offset ),
+						fact );
+			} );
+
+			org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
+					.subscribe( f ->
+					{
+						org1.consume( f );
+					}, e ->
+					{
+						LOG.error( "Problem redirecting TestFact", e );
+					} );
+
+			// spawn initial transactions with self
+			atEach( Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset )
+					.iterate(), t ->
+					{
+						sales.createRequest( TestFact.class, sales.id(), null,
+								t.add( 1 ), Collections.singletonMap(
+										"myParam2", "myValue2" ) );
+					} );
+
+			// TODO test fact expiration handling
+
+			// TODO test multilevel composition of business rules, e.g. via sub-goals?
+
+			// TODO test performance statistics aggregation
+
+			// TODO test on-the-fly adapting business rules
+			// e.g. parametric: "reorder-level: 300->400" 
+			// or compositional: "product-lines: a[demand push->pull]"
+
+			// TODO test Jason or GOAL scripts for business rules
+
+			// TODO test/implement JSON de/serialization (for UI interaction)
+
+			LOG.trace( "initialized!" );
+		}
+	}
+
+	interface PersistenceConfig extends HibernateJPAConfig
+	{
+		String DATASOURCE_CLASS_KEY = "hibernate.hikari.dataSourceClassName";
+
+		String DATASOURCE_URL_KEY = "hibernate.hikari.dataSource.url";
+
+		String DATASOURCE_USERNAME_KEY = "hibernate.hikari.dataSource.user";
+
+		String DATASOURCE_PASSWORD_KEY = "hibernate.hikari.dataSource.password";
+		
+		@DefaultValue( "create" )
+		SchemaPolicy hibernateSchemaPolicy();
+
+		@Key( DEFAULT_SCHEMA_KEY )
+		@DefaultValue( "PUBLIC" )
+		String hibernateDefaultSchema();
+
+		@Key( CONNECTION_PROVIDER_CLASS_KEY )
+		@DefaultValue( "org.hibernate.hikaricp.internal.HikariCPConnectionProvider" )
+		String hibernateConnectionProviderClass();
+
+		// see https://github.com/brettwooldridge/HikariCP/wiki/Configuration#popular-datasource-class-names
+		@Key( DATASOURCE_CLASS_KEY )
+		@DefaultValue( "org.hsqldb.jdbc.JDBCDataSource" )
+		String hikariDataSourceClass();
+
+		@Key( DATASOURCE_USERNAME_KEY )
+		@DefaultValue( "sa" )
+		String username();
+
+		@Key( DATASOURCE_PASSWORD_KEY )
+		@DefaultValue( "" )
+		String password();
+
+		@Key( DATASOURCE_URL_KEY )
+		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
+//		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
+//		@DefaultValue( "jdbc:mysql://localhost/testdb" )
+		String url();
+
+		/**
+		 * @param imports additional {@link EntityManagerFactory} configuration
+		 * @return the (expensive) {@link EntityManagerFactory}
+		 */
+		static EntityManagerFactory createEMF( final Map<?, ?>... imports )
 		{
-			LOG.trace( "t={}, outgoing: {}", org1.now().prettify( offset ),
-					fact );
-		} );
-
-		org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
-				.subscribe( f ->
-				{
-					org1.consume( f );
-				}, e ->
-				{
-					LOG.error( "Problem redirecting TestFact", e );
-				} );
-
-		// spawn initial transactions with self
-		scheduler.schedule(
-				Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset ).iterate(),
-				t ->
-				{
-					sales.createRequest( TestFact.class, org1.id(), null,
-							t.add( 1 ), Collections.singletonMap( "myParam2",
-									"myValue2" ) );
-				} );
-
-		// TODO test fact expiration handling
-
-		// TODO test multilevel composition of business rules, e.g. via sub-goals?
-
-		// TODO test performance statistics aggregation
-
-		// TODO test on-the-fly adapting business rules
-		// e.g. parametric: "reorder-level: 300->400" 
-		// or compositional: "product-lines: a[demand push->pull]"
-
-		// TODO test Jason or GOAL scripts for business rules
-
-		// TODO test/implement JSON de/serialization (for UI interaction)
-
-		// TODO test persistence (for database interaction)
-
-		LOG.trace( "initialized!" );
+			return ConfigCache.getOrCreate( PersistenceConfig.class, imports )
+					.createEntityManagerFactory();
+		}
 	}
 
 	@Test
 	public void testEnterpriseOntology() throws TimeoutException
 	{
-		// initialize replication
-		final Dsol3Config config = Dsol3Config.of(
-				entry( Dsol3Config.ID_KEY, "eoTest" ),
-				entry( Dsol3Config.START_TIME_KEY, "0 day" ),
-				entry( Dsol3Config.RUN_LENGTH_KEY, "500" ) );
-		LOG.info( "Starting signal test, config: {}", config.toYAML() );
-		final Scheduler scheduler = config
-				.create( EnterpriseTest::initScenario );
+		// configure replication FIXME via LocalConfig?
+		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
+				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 500 ) );
+
+		// configure tooling
+		final LocalConfig config = LocalConfig.builder().withId( "eoSim" )
+				.withProvider( Scheduler.class, Dsol3Scheduler.class )
+				.withProvider( Organization.Factory.class,
+						Organization.Factory.Simple.class )
+				.withProvider( Transaction.Factory.class,
+						Transaction.Factory.Simple.class )
+				.withProvider( CoordinationFact.Factory.class,
+						CoordinationFact.Factory.Simple.class )
+				.withProvider( CoordinationFact.Persister.class,
+						CoordinationFact.Persister.SimpleJPA.class )
+				.build();
+
+		LOG.info( "Starting EO test, config: {}", config.toYAML() );
+		final Scheduler scheduler = Guice4LocalBinder
+				.of( config,
+						Collections.singletonMap( EntityManagerFactory.class,
+								PersistenceConfig.createEMF() ) )
+				.inject( EnterpriseModel.class ).scheduler();
 
 		final Waiter waiter = new Waiter();
 		scheduler.time().subscribe( time ->

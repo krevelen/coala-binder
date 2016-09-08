@@ -24,13 +24,22 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.persistence.EntityManagerFactory;
+
+import org.apache.logging.log4j.Logger;
+
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
+import io.coala.enterprise.dao.CoordinationFactDao;
 import io.coala.exception.Thrower;
+import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
+import io.coala.persist.JPAUtil;
 import io.coala.time.Instant;
 import io.coala.time.Scheduler;
 import rx.Observer;
@@ -48,13 +57,13 @@ public interface CoordinationFact
 	Transaction.ID tranID();
 
 	/** @return */
-	Organization.ID creatorID();
+	CompositeActor.ID creatorID();
 
 	/** @return */
-	CoordinationFactType type();
+	CoordinationFactType kind();
 
 	/** @return */
-	Instant time();
+	Instant occurrence();
 
 	/** @return */
 	Instant expiration();
@@ -64,12 +73,12 @@ public interface CoordinationFact
 
 	/** @return */
 	@JsonAnyGetter
-	Map<String, Object> params();
+	Map<String, Object> properties();
 
 	@JsonAnySetter
 	default void set( final String name, final Object value )
 	{
-		params().put( name, value );
+		properties().put( name, value );
 	}
 
 	/**
@@ -82,23 +91,161 @@ public interface CoordinationFact
 		final Observer<Method> callObserver )
 	{
 		final CoordinationFact self = this;
-		return (F) Proxy.newProxyInstance(
-				subtype.getClassLoader(),
+		return (F) Proxy.newProxyInstance( subtype.getClassLoader(),
 				new Class<?>[]
-				{ subtype }, ( proxy, method, args ) ->
+		{ subtype }, ( proxy, method, args ) ->
+		{
+			try
+			{
+				final Object result = method.invoke( self, args );
+				if( callObserver != null ) callObserver.onNext( method );
+				// FIXME allow getter calls as lookup in properties() map
+				return result;
+			} catch( final Exception e )
+			{
+				if( callObserver != null ) callObserver.onError( e );
+				return Thrower.rethrowUnchecked( e );
+			}
+		} );
+	}
+
+	/**
+	 * {@link ID}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	class ID extends Id.Ordinal<UUID>
+	{
+		/** @return an {@link ID} with specified {@link UUID} */
+		public static CoordinationFact.ID of( UUID value )
+		{
+			return Util.of( value, new ID() );
+		}
+
+		/** @return a new {@link ID} */
+		public static CoordinationFact.ID create()
+		{
+			return of( new UUID() );
+		}
+	}
+
+	/**
+	 * {@link Simple}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	class Simple implements CoordinationFact
+	{
+
+		private Class<?> type;
+
+		private CoordinationFact.ID id;
+
+		private Instant occurrence;
+
+		private Transaction.ID tranID;
+
+		private CompositeActor.ID creatorID;
+
+		private CoordinationFactType kind;
+
+		private Instant expiration;
+
+		private CoordinationFact.ID causeID;
+
+		private Map<String, Object> properties = new HashMap<>();
+
+		/**
+		 * {@link Simple} zero-arg bean constructor
+		 */
+		protected Simple()
+		{
+
+		}
+
+		protected Simple( final Class<?> type, final CoordinationFact.ID id,
+			final Instant occurrence, final Transaction.ID tranID,
+			final CompositeActor.ID creatorID, final CoordinationFactType kind,
+			final Instant expiration, final CoordinationFact.ID causeID,
+			final Map<?, ?>... properties )
+		{
+			this.type = type;
+			this.id = id;
+			this.occurrence = occurrence;
+			this.tranID = tranID;
+			this.creatorID = creatorID;
+			this.kind = kind;
+			this.expiration = expiration;
+			this.causeID = causeID;
+			if( properties != null ) for( Map<?, ?> map : properties )
+				map.forEach( ( key, value ) ->
 				{
-					try
-					{
-						final Object result = method.invoke( self, args );
-						if( callObserver != null )
-							callObserver.onNext( method );
-						return result;
-					} catch( final Exception e )
-					{
-						if( callObserver != null ) callObserver.onError( e );
-						return Thrower.rethrowUnchecked( e );
-					}
+					this.properties.put( key.toString(), value );
 				} );
+		}
+
+		@Override
+		public String toString()
+		{
+			return this.type.getSimpleName() + '[' + kind() + '|' + creatorID()
+					+ '|' + occurrence() + ']' + properties();
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return Identified.hashCode( this );
+		}
+
+		@Override
+		public CoordinationFact.ID id()
+		{
+			return this.id;
+		}
+
+		@Override
+		public Instant occurrence()
+		{
+			return this.occurrence;
+		}
+
+		@Override
+		public Transaction.ID tranID()
+		{
+			return this.tranID;
+		}
+
+		@Override
+		public CompositeActor.ID creatorID()
+		{
+			return this.creatorID;
+		}
+
+		@Override
+		public CoordinationFactType kind()
+		{
+			return this.kind;
+		}
+
+		@Override
+		public Instant expiration()
+		{
+			return this.expiration;
+		}
+
+		@Override
+		public ID causeID()
+		{
+			return this.causeID;
+		}
+
+		@Override
+		public Map<String, Object> properties()
+		{
+			return this.properties;
+		}
 	}
 
 	/**
@@ -111,25 +258,49 @@ public interface CoordinationFact
 	{
 
 		/**
-		 * @param scheduler
-		 * @param factKind
-		 * @param id
-		 * @param tranID
-		 * @param creatorID
-		 * @param type
-		 * @param expiration
-		 * @param causeID
-		 * @param params
-		 * @return
+		 * @param type the type of {@link CoordinationFact} (transaction kind)
+		 * @param id the {@link CoordinationFact.ID}
+		 * @param tranID the {@link Transaction.ID}
+		 * @param creatorID the {@link Organization.ID}
+		 * @param kind the {@link CoordinationFactType} (process step kind)
+		 * @param expiration the {@link Instant} of expiration
+		 * @param causeID the {@link CoordinationFact.ID} of a cause, or
+		 *            {@code null} for external initiation
+		 * @param params the {@link CoordinationFact.ID}
+		 * @return a {@link CoordinationFact}
 		 */
-		<F extends CoordinationFact> F create( Scheduler scheduler,
-			Class<F> factKind, CoordinationFact.ID id, Transaction.ID tranID,
-			Organization.ID creatorID, CoordinationFactType type,
+		<F extends CoordinationFact> F create( //Scheduler scheduler,
+			Class<F> type, CoordinationFact.ID id, Transaction.ID tranID,
+			CompositeActor.ID creatorID, CoordinationFactType kind,
 			Instant expiration, CoordinationFact.ID causeID,
 			Map<?, ?>... params );
+
+		/**
+		 * {@link Factory.Simple} generates the desired extension of
+		 * {@link CoordinationFact} as proxy decorating a new
+		 * {@link CoordinationFact.Simple} instance
+		 */
+		@Singleton
+		class Simple implements Factory
+		{
+			@Inject
+			private Scheduler scheduler;
+
+			@Override
+			public <F extends CoordinationFact> F create(
+				final Class<F> factKind, final CoordinationFact.ID id,
+				final Transaction.ID tranID, final CompositeActor.ID creatorID,
+				final CoordinationFactType kind, final Instant expiration,
+				final CoordinationFact.ID causeID, final Map<?, ?>... params )
+			{
+				return new CoordinationFact.Simple( factKind, id,
+						this.scheduler.now(), tranID, creatorID, kind,
+						expiration, causeID, params ).proxyAs( factKind, null );
+			}
+		}
 	}
 
-	interface Persister
+	interface Persister extends AutoCloseable
 	{
 
 		/**
@@ -158,157 +329,67 @@ public interface CoordinationFact
 		 */
 		<F extends CoordinationFact> F find( Class<F> fact, ID id );
 
-	}
-
-	/**
-	 * {@link ID}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	class ID extends Id.Ordinal<UUID>
-	{
-		/** @return */
-		public static CoordinationFact.ID create()
-		{
-			return Util.of( new UUID(), new ID() );
-		}
-	}
-
-	/**
-	 * {@link Simple}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	class Simple implements CoordinationFact
-	{
-
-		private Class<?> kind;
-
-		private CoordinationFact.ID id;
-
-		private Instant time;
-
-		private Transaction.ID tranID;
-
-		private Organization.ID creatorID;
-
-		private CoordinationFactType type;
-
-		private Instant expiration;
-
-		private CoordinationFact.ID causeID;
-
-		private Map<String, Object> params = new HashMap<>();
-
 		/**
-		 * {@link Simple} zero-arg bean constructor
+		 * {@link SimpleJPA}
+		 * 
+		 * @version $Id$
+		 * @author Rick van Krevelen
 		 */
-		protected Simple()
+		@Singleton
+		public class SimpleJPA implements Persister
 		{
 
-		}
+			/** */
+			private static final Logger LOG = LogUtil
+					.getLogger( CoordinationFact.Persister.SimpleJPA.class );
 
-		protected Simple( final Class<?> kind, final CoordinationFact.ID id,
-			final Instant time, final Transaction.ID tranID,
-			final Organization.ID creatorID, final CoordinationFactType type,
-			final Instant expiration, final CoordinationFact.ID causeID,
-			final Map<?, ?>... params )
-		{
-			this.kind = kind;
-			this.id = id;
-			this.time = time;
-			this.tranID = tranID;
-			this.creatorID = creatorID;
-			this.type = type;
-			this.expiration = expiration;
-			this.causeID = causeID;
-			if( params != null ) for( Map<?, ?> param : params )
-				param.forEach( ( key, value ) ->
+			@Inject
+			private EntityManagerFactory emf;
+
+			@Override
+			public Iterable<CoordinationFact> findAll()
+			{
+				JPAUtil.transact( this.emf, em ->
 				{
-					this.params.put( key.toString(), value );
+					LOG.trace( "Read table, result: {}",
+							em.createQuery( "SELECT f FROM "
+									+ CoordinationFactDao.TABLE_NAME + " f",
+									CoordinationFact.class ).getResultList() );
 				} );
+				return null;
+			}
+
+			@Override
+			public <F extends CoordinationFact> Iterable<F>
+				find( final Class<F> fact )
+			{
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public <F extends CoordinationFact> Iterable<F>
+				find( final Class<F> fact, final CoordinationFactType factType )
+			{
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public <F extends CoordinationFact> F find( final Class<F> fact,
+				ID id )
+			{
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void close() throws Exception
+			{
+				this.emf.close();
+			}
+
 		}
 
-		@Override
-		public String toString()
-		{
-			return this.kind.getSimpleName() + '[' + type() + '|' + creatorID()
-					+ '|' + time() + ']' + params();
-		}
-
-		@Override
-		public int hashCode()
-		{
-			return Identified.hashCode( this );
-		}
-
-		@Override
-		public CoordinationFact.ID id()
-		{
-			return this.id;
-		}
-
-		@Override
-		public Instant time()
-		{
-			return this.time;
-		}
-
-		@Override
-		public Transaction.ID tranID()
-		{
-			return this.tranID;
-		}
-
-		@Override
-		public Organization.ID creatorID()
-		{
-			return this.creatorID;
-		}
-
-		@Override
-		public CoordinationFactType type()
-		{
-			return this.type;
-		}
-
-		@Override
-		public Instant expiration()
-		{
-			return this.expiration;
-		}
-
-		@Override
-		public ID causeID()
-		{
-			return this.causeID;
-		}
-
-		@Override
-		public Map<String, Object> params()
-		{
-			return this.params;
-		}
-	}
-
-	/**
-	 * {@link SimpleFactory} generates the desired {@link CoordinationFact}
-	 * sub-type as proxy decorating a new {@link Simple} instance
-	 */
-	class SimpleFactory implements Factory
-	{
-		@Override
-		public <F extends CoordinationFact> F create( final Scheduler scheduler,
-			final Class<F> factKind, final CoordinationFact.ID id,
-			final Transaction.ID tranID, final Organization.ID creatorID,
-			final CoordinationFactType type, final Instant expiration,
-			final CoordinationFact.ID causeID, final Map<?, ?>... params )
-		{
-			return new Simple( factKind, id, scheduler.now(), tranID, creatorID,
-					type, expiration, causeID, params ).proxyAs( factKind,
-							null );
-		}
 	}
 }

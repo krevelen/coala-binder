@@ -43,7 +43,7 @@ public interface CompositeActor
 	extends Proactive, Identified.Ordinal<CompositeActor.ID>
 {
 	/** @return the ownew {@link Organization.ID} */
-	Organization.ID ownerID();
+//	Organization.ID ownerID();
 
 	/** @return an {@link Observable} of outgoing {@link CoordinationFact}s */
 	Observable<CoordinationFact> outgoing();
@@ -84,19 +84,18 @@ public interface CompositeActor
 	 * @return the {@link Transaction} context
 	 */
 	<F extends CoordinationFact> Transaction<F> transact( Class<F> factKind,
-		Transaction.ID tranID, Organization.ID initiatorID,
-		Organization.ID executorID );
+		Transaction.ID tranID, CompositeActor.ID initiatorID,
+		CompositeActor.ID executorID );
 
 	/**
 	 * @param factKind the type of {@link CoordinationFact} to transact
 	 * @param executorID the executor {@link Organization.ID}
 	 * @return the {@link Transaction} context
 	 */
-	default <F extends CoordinationFact> Transaction<F>
-		asInitiator( final Class<F> factKind, final Organization.ID executorID )
+	default <F extends CoordinationFact> Transaction<F> asInitiator(
+		final Class<F> factKind, final CompositeActor.ID executorID )
 	{
-		return transact( factKind, Transaction.ID.create(), ownerID(),
-				executorID );
+		return transact( factKind, Transaction.ID.create(), id(), executorID );
 	}
 
 	/**
@@ -108,7 +107,7 @@ public interface CompositeActor
 		asResponder( final F fact )
 	{
 		return transact( (Class<F>) fact.getClass(), fact.tranID(),
-				fact.creatorID(), ownerID() );
+				fact.creatorID(), id() );
 	}
 
 	/**
@@ -122,7 +121,7 @@ public interface CompositeActor
 	 * @return
 	 */
 	default <F extends CoordinationFact> F createRequest(
-		final Class<F> factKind, final Organization.ID executorID,
+		final Class<F> factKind, final CompositeActor.ID executorID,
 		final CoordinationFact cause, final Instant expiration,
 		final Map<?, ?>... params )
 	{
@@ -164,13 +163,14 @@ public interface CompositeActor
 			final Organization.ID orgId )
 		{
 			return (CompositeActor.ID) Util.of( name, new ID() )
-					.setParent( orgId );
+					.parent( orgId );
 		}
 	}
 
-	static CompositeActor of( final CompositeActor.ID id,
-		final Organization org, final CoordinationFact.Factory factFactory )
+	static CompositeActor of( final String name, final Organization org,
+		final CoordinationFact.Factory factFactory )
 	{
+		final ID id = ID.of( name, org.id() );
 		final Subject<CoordinationFact, CoordinationFact> outgoing = PublishSubject
 				.create();
 		final Subject<CoordinationFact, CoordinationFact> expiring = PublishSubject
@@ -186,7 +186,7 @@ public interface CompositeActor
 			}
 
 			@Override
-			public CompositeActor.ID id()
+			public ID id()
 			{
 				return id;
 			}
@@ -217,8 +217,8 @@ public interface CompositeActor
 			@SuppressWarnings( "unchecked" )
 			public <F extends CoordinationFact> Transaction<F> transact(
 				final Class<F> factKind, final Transaction.ID tranID,
-				final Organization.ID initiatorID,
-				final Organization.ID executorID )
+				final CompositeActor.ID initiatorID,
+				final CompositeActor.ID executorID )
 			{
 				return (Transaction<F>) txs.computeIfAbsent( tranID, type ->
 				{
@@ -257,12 +257,6 @@ public interface CompositeActor
 					} );
 					return result;
 				} );
-			}
-
-			@Override
-			public Organization.ID ownerID()
-			{
-				return org.id();
 			}
 		};
 	}

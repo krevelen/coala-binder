@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper;
@@ -97,7 +98,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		public int compareTo( final Comparable other )
 		{
 			return other instanceof OrdinalChild
-					&& ((OrdinalChild) other).getParent() != null ? -1
+					&& ((OrdinalChild) other).parent() != null ? -1
 							: Util.compare( this, other );
 		}
 	}
@@ -136,6 +137,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		}
 
 		/** */
+		@JsonProperty //("parent")
 		private P parent = null;
 
 		/**
@@ -143,14 +145,14 @@ public class Id<T> extends Wrapper.Simple<T>
 		 * 
 		 * @param parent
 		 */
-		public OrdinalChild setParent( final P parent )
+		public OrdinalChild parent( final P parent )
 		{
 			this.parent = parent;
 			return this;
 		}
 
 		/** @return the parent {@link Id} */
-		public P getParent()
+		public P parent()
 		{
 			return this.parent;
 		}
@@ -161,9 +163,9 @@ public class Id<T> extends Wrapper.Simple<T>
 		 */
 		public boolean isAncestor( final Comparable p )
 		{
-			return !isOrphan() && (getParent().equals( p )
-					|| (getParent() instanceof OrdinalChild
-							&& ((OrdinalChild) getParent()).isAncestor( p )));
+			return !isOrphan() && (parent().equals( p )
+					|| (parent() instanceof OrdinalChild
+							&& ((OrdinalChild) parent()).isAncestor( p )));
 		}
 
 		/**
@@ -172,22 +174,22 @@ public class Id<T> extends Wrapper.Simple<T>
 		 */
 		public boolean isSibbling( final OrdinalChild<?, P> s )
 		{
-			return s != null && getParent() != null
-			// && s.getParent() != null :: handled by P#equals()
-					&& getParent().equals( s.getParent() );
+			return s != null && parent() != null
+			// && s.parent() != null :: handled by P#equals()
+					&& parent().equals( s.parent() );
 		}
 
 		@JsonIgnore
 		public boolean isOrphan()
 		{
-			return getParent() == null;
+			return parent() == null;
 		}
 
 		@Override
 		public String toString()
 		{
 			return isOrphan() ? unwrap().toString()
-					: getParent().toString() + PATH_SEP + unwrap();
+					: parent().toString() + PATH_SEP + unwrap();
 		}
 
 		@Override
@@ -195,8 +197,8 @@ public class Id<T> extends Wrapper.Simple<T>
 		{
 			final int prime = 31;
 			int result = super.hashCode();
-			if( getParent() != null && getParent() != this )
-				result = prime * result + getParent().hashCode();
+			if( parent() != null && parent() != this )
+				result = prime * result + parent().hashCode();
 			return result;
 		}
 
@@ -209,15 +211,15 @@ public class Id<T> extends Wrapper.Simple<T>
 			if( !super.equals( other ) ) return false;
 
 			final OrdinalChild<T, P> that = (OrdinalChild<T, P>) other;
-			return getParent() == null ? that.getParent() == null
-					: getParent().equals( that.getParent() );
+			return parent() == null ? that.parent() == null
+					: parent().equals( that.parent() );
 		}
 
 		/**
 		 * In this implementation, orphans ({@link OrdinalChild} objects with
-		 * {@link #getParent()} {@code == null}) and other {@link Comparable}
+		 * {@link #parent()} {@code == null}) and other {@link Comparable}
 		 * objects come before {@link OrdinalChild} objects with
-		 * {@link #getParent()} {@code != null}.
+		 * {@link #parent()} {@code != null}.
 		 * <p>
 		 * {@inheritDoc}
 		 */
@@ -227,9 +229,9 @@ public class Id<T> extends Wrapper.Simple<T>
 		{
 			if( other == null ) return 1;
 			if( !(other instanceof OrdinalChild) )
-				return getParent() == null ? Util.compare( this, other ) : 1;
-			final int parentCompare = Util.compare( getParent(),
-					((OrdinalChild<T, P>) other).getParent() );
+				return parent() == null ? Util.compare( this, other ) : 1;
+			final int parentCompare = Util.compare( parent(),
+					((OrdinalChild<T, P>) other).parent() );
 			if( parentCompare != 0 ) return parentCompare;
 			return Util.compare( this, other );
 		}

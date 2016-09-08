@@ -21,7 +21,13 @@
 
 	<properties>
 
-		<!-- testing -->
+		<!-- testing JPA -->
+		<jta.version>1.1</jta.version>
+		<hsqldb.version>2.3.4</hsqldb.version>
+		<hikari.version>2.4.7</hikari.version>
+		<hibernate.version>5.2.1.Final</hibernate.version>
+
+		<!-- testing XML -->
 		<woodstox.version>4.4.1</woodstox.version>
 		<jaxb-api.version>2.2.12</jaxb-api.version>
 		<cxf-xjc-plugin.version>3.1.6</cxf-xjc-plugin.version>
@@ -75,10 +81,16 @@
 		</dependency>
 
 		<dependency>
-			<!-- Java Extension API for dependency injection (and/or aspect oriented 
-				programming) -->
+			<!-- Java eXtension API for dependency injection -->
 			<groupId>javax.inject</groupId>
 			<artifactId>javax.inject</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<!-- Java Enterprise eXtension APIs, including JPA 2.1 -->
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
 
@@ -139,6 +151,54 @@
 		<dependency>
 			<groupId>net.jodah</groupId>
 			<artifactId>concurrentunit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- javax.transaction needed BEFORE Hibernate (in Kundera RDBMS) -->
+		<dependency>
+			<groupId>javax.transaction</groupId>
+			<artifactId>jta</artifactId>
+			<version>${jta.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- incl. in-memory JDBC database -->
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>${hsqldb.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- JPA provider for RDMBS and No-SQL (Neo4J, Mongo, ...) -->
+		<!-- <dependency> <groupId>com.impetus.kundera.client</groupId> <artifactId>kundera-rdbms</artifactId> 
+			<version>${kundera.version}</version> <scope>test</scope> <exclusions> <exclusion> 
+			<artifactId>javassist</artifactId> <groupId>javassist</groupId> </exclusion> 
+			<exclusion> <groupId>org.hibernate</groupId> <artifactId>hibernate-c3p0</artifactId> 
+			</exclusion> <exclusion> <groupId>org.hibernate</groupId> <artifactId>hibernate-core</artifactId> 
+			</exclusion> <exclusion> <groupId>org.hibernate</groupId> <artifactId>hibernate-validator</artifactId> 
+			</exclusion> </exclusions> </dependency> -->
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+			<version>${hibernate.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-hikaricp</artifactId>
+			<version>${hibernate.version}</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>HikariCP-java6</artifactId>
+					<groupId>com.zaxxer</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- replaces default Hibernate connection pool (C3P0) -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>${hikari.version}</version>
 			<scope>test</scope>
 		</dependency>
 

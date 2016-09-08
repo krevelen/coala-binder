@@ -21,15 +21,20 @@ package io.coala.enterprise;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import com.eaio.uuid.UUID;
 
+import io.coala.bind.LocalBinder;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
-import io.coala.time.Scheduler;
 import io.coala.time.Proactive;
+import io.coala.time.Scheduler;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
@@ -44,11 +49,15 @@ import rx.subjects.Subject;
 public interface Transaction<F extends CoordinationFact>
 	extends Proactive, Identified.Ordinal<Transaction.ID>
 {
-	/** @return */
-	Organization.ID initiatorID();
 
 	/** @return */
-	Organization.ID executorID();
+	Class<F> kind();
+
+	/** @return */
+	CompositeActor.ID initiatorID();
+
+	/** @return */
+	CompositeActor.ID executorID();
 
 	/**
 	 * @param type
@@ -79,46 +88,50 @@ public interface Transaction<F extends CoordinationFact>
 	class ID extends Id.Ordinal<UUID>
 	{
 		/** @return */
+		public static Transaction.ID of( final UUID value )
+		{
+			return Util.of( value, new ID() );
+		}
+
+		/** @return */
 		public static Transaction.ID create()
 		{
-			return Util.of( new UUID(), new ID() );
+			return of( new UUID() );
 		}
 	}
 
 	/**
-	 * @param factKind
+	 * @param kind
 	 * @param initiator
 	 * @param executorID
 	 * @param factFactory
 	 * @return
 	 */
-	static <F extends CoordinationFact> Transaction<F> of(
-		final Class<F> factKind, final Organization initiator,
-		final Organization.ID executorID,
+	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
+		final CompositeActor initiator, final CompositeActor.ID executorID,
 		final CoordinationFact.Factory factFactory )
 	{
-		return of( factKind, initiator.scheduler(), ID.create(), initiator.id(),
+		return of( kind, initiator.scheduler(), ID.create(), initiator.id(),
 				executorID, factFactory );
 	}
 
 	/**
-	 * @param factKind
+	 * @param kind
 	 * @param initiatorID
 	 * @param executor
 	 * @param factFactory
 	 * @return
 	 */
-	static <F extends CoordinationFact> Transaction<F> of(
-		final Class<F> factKind, final Organization.ID initiatorID,
-		final Organization executor,
+	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
+		final CompositeActor.ID initiatorID, final CompositeActor executor,
 		final CoordinationFact.Factory factFactory )
 	{
-		return of( factKind, executor.scheduler(), ID.create(), initiatorID,
+		return of( kind, executor.scheduler(), ID.create(), initiatorID,
 				executor.id(), factFactory );
 	}
 
 	/**
-	 * @param factKind
+	 * @param kind
 	 * @param scheduler
 	 * @param id
 	 * @param initiatorID
@@ -127,9 +140,26 @@ public interface Transaction<F extends CoordinationFact>
 	 * @return
 	 */
 	static <F extends CoordinationFact> Transaction<F> of(
-		final Class<F> factKind, final Scheduler scheduler,
-		final Transaction.ID id, final Organization.ID initiatorID,
-		final Organization.ID executorID,
+		final LocalBinder binder, final Transaction.ID id, final Class<F> kind,
+		final CompositeActor.ID initiatorID,
+		final CompositeActor.ID executorID )
+	{
+		return of( kind, binder.inject( Scheduler.class ), id, initiatorID,
+				executorID, binder.inject( CoordinationFact.Factory.class ) );
+	}
+
+	/**
+	 * @param kind
+	 * @param scheduler
+	 * @param id
+	 * @param initiatorID
+	 * @param executorID
+	 * @param factFactory
+	 * @return
+	 */
+	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
+		final Scheduler scheduler, final Transaction.ID id,
+		final CompositeActor.ID initiatorID, final CompositeActor.ID executorID,
 		final CoordinationFact.Factory factFactory )
 	{
 		final Subject<F, F> outgoing = PublishSubject.create();
@@ -144,19 +174,25 @@ public interface Transaction<F extends CoordinationFact>
 			}
 
 			@Override
+			public Class<F> kind()
+			{
+				return kind;
+			}
+
+			@Override
 			public Transaction.ID id()
 			{
 				return id;
 			}
 
 			@Override
-			public Organization.ID initiatorID()
+			public CompositeActor.ID initiatorID()
 			{
 				return initiatorID;
 			}
 
 			@Override
-			public Organization.ID executorID()
+			public CompositeActor.ID executorID()
 			{
 				return executorID;
 			}
@@ -168,11 +204,12 @@ public interface Transaction<F extends CoordinationFact>
 			{
 				try
 				{
-					final F result = factFactory.create( scheduler(), factKind,
-							CoordinationFact.ID.create(), id(),
-							type.isFromInitiator() ? initiatorID : executorID,
-							type, expiration, cause == null ? null : cause.id(),
-							params );
+					final F result = factFactory
+							.create( kind, CoordinationFact.ID.create(), id(),
+									type.isFromInitiator() ? initiatorID
+											: executorID,
+									type, expiration,
+									cause == null ? null : cause.id(), params );
 					if( cause != null ) pending.remove( cause.id() );
 					if( expiration != null )
 					{
@@ -216,5 +253,37 @@ public interface Transaction<F extends CoordinationFact>
 						} ) );
 			}
 		};
+	}
+
+	interface Factory
+	{
+		<F extends CoordinationFact> Transaction<F> create( Transaction.ID id,
+			Class<F> factType, CompositeActor.ID initiatorID,
+			CompositeActor.ID executorID );
+
+		@Singleton
+		class Simple implements Factory
+		{
+			private final Map<Class<?>, Transaction<?>> localCache = new ConcurrentHashMap<>();
+
+			@Inject
+			private LocalBinder binder;
+
+			@SuppressWarnings( "unchecked" )
+			@Override
+			public <F extends CoordinationFact> Transaction<F> create(
+				final ID id, final Class<F> kind,
+				final CompositeActor.ID initiatorID,
+				final CompositeActor.ID executorID )
+			{
+				return (Transaction<F>) this.localCache.computeIfAbsent( kind,
+						k ->
+						{
+							return Transaction.of( this.binder, id, kind,
+									initiatorID, executorID );
+						} );
+			}
+
+		}
 	}
 }

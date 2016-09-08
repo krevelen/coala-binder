@@ -21,10 +21,13 @@ package io.coala.enterprise;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import io.coala.bind.LocalBinder;
+import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Scheduler;
@@ -53,11 +56,11 @@ public interface Organization
 	}
 
 	default <F extends CoordinationFact> Observable<F>
-		incoming( final Class<F> factKind, final CoordinationFactType type )
+		incoming( final Class<F> tranKind, final CoordinationFactType factKind )
 	{
-		return incoming( factKind ).filter( f ->
+		return incoming( tranKind ).filter( f ->
 		{
-			return f.type() == type;
+			return f.kind() == factKind;
 		} );
 	}
 
@@ -71,11 +74,11 @@ public interface Organization
 	}
 
 	default <F extends CoordinationFact> Observable<F>
-		outgoing( final Class<F> factKind, final CoordinationFactType type )
+		outgoing( final Class<F> factKind, final CoordinationFactType kind )
 	{
 		return outgoing( factKind ).filter( f ->
 		{
-			return f.type() == type;
+			return f.kind() == kind;
 		} );
 	}
 
@@ -83,19 +86,22 @@ public interface Organization
 	 * @param actorID
 	 * @return
 	 */
-	CompositeActor actor( CompositeActor.ID actorID );
-
-	/** @param incoming */
-	void consume( CoordinationFact incoming );
+	CompositeActor actor( final String actorID );
 
 	/**
 	 * @param actorID
 	 * @return
 	 */
-	default CompositeActor actor( final String actorID )
+	default CompositeActor actor( CompositeActor.ID actorID )
 	{
-		return actor( CompositeActor.ID.of( actorID, id() ) );
+		return id().equals( actorID.parent() ) ? actor( actorID.unwrap() )
+				: Thrower.throwNew( IllegalArgumentException.class,
+						"Actor {} of {} unavailable for {}", actorID.unwrap(),
+						actorID.parent(), id() );
 	}
+
+	/** @param incoming */
+	void consume( CoordinationFact incoming );
 
 	/**
 	 * {@link ID}
@@ -111,6 +117,12 @@ public interface Organization
 		}
 	}
 
+	static Organization of( LocalBinder binder, String name )
+	{
+		return of( binder.inject( Scheduler.class ), name,
+				binder.inject( CoordinationFact.Factory.class ) );
+	}
+
 	static Organization of( final Scheduler scheduler, final String name,
 		final CoordinationFact.Factory factFactory )
 	{
@@ -119,7 +131,7 @@ public interface Organization
 				.create();
 		final Subject<CoordinationFact, CoordinationFact> outgoing = PublishSubject
 				.create();
-		final Map<CompositeActor.ID, CompositeActor> actorMap = new HashMap<>();
+		final Map<String, CompositeActor> actorMap = new HashMap<>();
 		return new Organization()
 		{
 			@Override
@@ -147,7 +159,7 @@ public interface Organization
 			}
 
 			@Override
-			public CompositeActor actor( final CompositeActor.ID actorID )
+			public CompositeActor actor( final String actorID )
 			{
 				return actorMap.computeIfAbsent( actorID, id ->
 				{
@@ -173,6 +185,8 @@ public interface Organization
 		@Singleton
 		class Simple implements Factory
 		{
+			private final Map<String, Organization> localCache = new ConcurrentHashMap<>();
+
 			@Inject
 			private Scheduler scheduler;
 
@@ -182,8 +196,11 @@ public interface Organization
 			@Override
 			public Organization create( final String name )
 			{
-				return Organization.of( this.scheduler, name,
-						this.factFactory );
+				return localCache.computeIfAbsent( name, k ->
+				{
+					return Organization.of( this.scheduler, name,
+							this.factFactory );
+				} );
 			}
 		}
 
