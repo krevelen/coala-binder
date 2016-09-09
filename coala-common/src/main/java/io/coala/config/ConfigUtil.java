@@ -39,6 +39,7 @@ import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
+import org.aeonbits.owner.Factory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -438,6 +439,13 @@ public class ConfigUtil implements Util
 		return path;
 	}
 
+	/**
+	 * TODO: implement {@link Factory} for local context?
+	 * 
+	 * @param encloser
+	 * @param field
+	 * @param binder
+	 */
 	public static void injectConfig( final Object encloser, final Field field,
 		final Object binder )
 	{

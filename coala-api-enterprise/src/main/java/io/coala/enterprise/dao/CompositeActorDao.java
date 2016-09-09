@@ -19,17 +19,25 @@
  */
 package io.coala.enterprise.dao;
 
+import java.util.Date;
+
+import javax.inject.Inject;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
 
 import io.coala.bind.LocalBinder;
 import io.coala.enterprise.CompositeActor;
-import io.coala.enterprise.CoordinationFact;
 import io.coala.enterprise.Organization;
+import io.coala.log.LogUtil;
 
 /**
  * {@link CompositeActorDao}
@@ -37,33 +45,89 @@ import io.coala.enterprise.Organization;
  * @version $Id$
  * @author Rick van Krevelen
  */
-@Entity( name = CompositeActorDao.TABLE_NAME )
+@Entity
+@Table( name = CompositeActorDao.TABLE_NAME )
 public class CompositeActorDao
-	extends AbstractLocalEntity<CompositeActor, CompositeActorDao>
+	extends AbstractDao<CompositeActor, CompositeActorDao>
 {
 	public static final String TABLE_NAME = "ACTORS";
 
-	@Column( name = "ID", nullable = true, updatable = false )
-	protected String id;
+	/**
+	 * {@link PK} as inspired by http://stackoverflow.com/a/13033039
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@Embeddable
+	public static class PK extends AbstractDao<CompositeActor.ID, PK>
+	{
 
-	@Column( name = "ORGANIZATION", nullable = true, updatable = false )
+		@Column( name = "CONTEXT", nullable = true, updatable = false )
+		protected String localID;
+
+		@Column( name = "ID", nullable = true, updatable = false )
+		protected String id;
+
+		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		protected PK parent;
+
+		@Inject
+		LocalBinder binder;
+
+		@Override
+		CompositeActor.ID doRestore()
+		{
+			if( this.binder.id().equals( this.localID ) )
+				LogUtil.getLogger( PK.class ).warn( "Context mismatch: {} v {}",
+						this.localID, this.binder.id() );
+			return CompositeActor.ID.of( this.id,
+					Organization.ID.of( this.parent.restore().unwrap() ) );
+		}
+
+		@Override
+		PK prePersist( final CompositeActor.ID source )
+		{
+			this.id = source.unwrap();
+			this.localID = this.binder.id();
+			return this;
+		}
+
+	}
+
+	/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
+	@Temporal( TemporalType.TIMESTAMP )
+	@Column( name = "CREATED_TS", insertable = false, updatable = false
+	/* , columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" */ )
+	protected Date created;
+
+	/** time stamp of last update; should never change */
+	@Version
+	@Temporal( TemporalType.TIMESTAMP )
+	@Column( name = "UPDATED_TS", nullable = false, insertable = false,
+		updatable = false )
+	protected Date updated;
+
+	@EmbeddedId
+	protected PK id;
+
 	@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
 	protected OrganizationDao organization;
 
+	@Inject
+	LocalBinder binder;
+
 	@Override
-	CompositeActor doRestore( final LocalBinder binder )
+	CompositeActor doRestore()
 	{
-		final Organization organization = this.organization.doRestore( binder );
-		return CompositeActor.of( this.id, organization,
-				binder.inject( CoordinationFact.Factory.class ) );
+		return this.binder.inject( CompositeActor.Factory.class )
+				.create( this.id.doRestore(), this.organization.doRestore() );
 	}
 
 	@Override
-	void prepare( final EntityManager em, final CompositeActor t )
+	CompositeActorDao prePersist( final CompositeActor source )
 	{
-		this.id = t.id().unwrap();
-//		this.organization = em.createQuery( "", OrganizationDao.class )
-//				.getSingleResult();
+		this.id = this.binder.inject( PK.class ).prePersist( source.id() );
+		return this;
 	}
 
 }

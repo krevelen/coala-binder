@@ -206,9 +206,6 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			if( !this.initialized ) this.initialize();
 			if( !this.scheduler.isRunning() )
 			{
-//				this.scheduler.scheduleEventNow(
-//						DEVSSimulatorInterface.FIRST_POSITION, () ->
-//						{
 				this.time.onNext( this.last );
 				try
 				{
@@ -220,7 +217,6 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 				{
 					this.time.onError( e );
 				}
-//						} );
 			}
 		} catch( final Throwable e )
 		{

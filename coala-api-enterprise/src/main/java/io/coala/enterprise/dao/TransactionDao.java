@@ -19,19 +19,23 @@
  */
 package io.coala.enterprise.dao;
 
+import javax.inject.Inject;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
+import javax.persistence.Embeddable;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 import com.eaio.uuid.UUID;
 
 import io.coala.bind.LocalBinder;
 import io.coala.enterprise.CoordinationFact;
 import io.coala.enterprise.Transaction;
+import io.coala.log.LogUtil;
 import io.coala.persist.UUIDToByteConverter;
 
 /**
@@ -40,43 +44,88 @@ import io.coala.persist.UUIDToByteConverter;
  * @version $Id$
  * @author Rick van Krevelen
  */
-@Entity( name = TransactionDao.TABLE_NAME )
-public class TransactionDao
-	extends AbstractLocalEntity<Transaction<?>, TransactionDao>
+@Entity
+@Table( name = TransactionDao.TABLE_NAME )
+public class TransactionDao extends AbstractDao<Transaction<?>, TransactionDao>
 {
 	public static final String TABLE_NAME = "TRANSACTIONS";
 
-	@Column( name = "ID", unique = true, nullable = false, updatable = false,
-		length = 16/* , columnDefinition = "BINARY(16)" */ )
-	@Convert( converter = UUIDToByteConverter.class )
-	protected UUID id;
+	/**
+	 * {@link PK} as inspired by http://stackoverflow.com/a/13033039
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@Embeddable
+	public static class PK extends AbstractDao<Transaction.ID, PK>
+	{
+
+		@Column( name = "CONTEXT", nullable = true, updatable = false )
+		protected String localID;
+
+		@Column( name = "ID", unique = true, nullable = false,
+			updatable = false,
+			length = 16/* , columnDefinition = "BINARY(16)" */ )
+		@Convert( converter = UUIDToByteConverter.class )
+		protected UUID id;
+
+		@Inject
+		LocalBinder binder;
+
+		@Override
+		Transaction.ID doRestore()
+		{
+			if( this.binder.id().equals( this.localID ) )
+				LogUtil.getLogger( PK.class ).warn( "Context mismatch: {} v {}",
+						this.localID, this.binder.id() );
+			return Transaction.ID.of( this.id );
+		}
+
+		@Override
+		PK prePersist( final Transaction.ID source )
+		{
+			this.id = source.unwrap();
+			this.localID = this.binder.id();
+			return this;
+		}
+
+	}
+
+	@EmbeddedId
+	protected PK id;
 
 	@Column( name = "KIND", nullable = true, updatable = false )
 	protected Class<? extends CoordinationFact> kind;
 
-	@Column( name = "INITIATOR", nullable = true, updatable = false )
+//	@Column( name = "INITIATOR", nullable = true, updatable = false )
 	@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
 	protected CompositeActorDao initiator;
 
-	@Column( name = "EXECUTOR", nullable = true, updatable = false )
+//	@Column( name = "EXECUTOR", nullable = true, updatable = false )
 	@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
 	protected CompositeActorDao executor;
 
+	@Inject
+	LocalBinder binder;
+
 	@Override
-	Transaction<?> doRestore( final LocalBinder binder )
+	Transaction<?> doRestore()
 	{
-		return Transaction.of( binder, Transaction.ID.of( this.id ), this.kind,
-				this.initiator.restore( binder ).id(),
-				this.executor.restore( binder ).id() );
+		return this.binder.inject( Transaction.Factory.class ).create(
+				this.id.restore(), this.kind, this.initiator.doRestore(),
+				this.executor.doRestore() );
 	}
 
 	@Override
-	void prepare( final EntityManager em, final Transaction<?> t )
+	TransactionDao prePersist( final Transaction<?> tran )
 	{
-		this.id = t.id().unwrap();
-		this.kind = t.kind();
-//		this.initiator = t.initiatorID();
-//		this.executor = t.executorID();
+		this.id = this.binder.inject( PK.class ).prePersist( tran.id() );
+		this.kind = tran.kind();
+		this.initiator = this.binder.inject( CompositeActorDao.class )
+				.prePersist( tran.initiator() );
+		this.executor = this.binder.inject( CompositeActorDao.class )
+				.prePersist( tran.executor() );
+		return this;
 	}
 
 }

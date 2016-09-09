@@ -19,7 +19,6 @@
  */
 package io.coala.enterprise;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -54,30 +53,30 @@ public interface Transaction<F extends CoordinationFact>
 	Class<F> kind();
 
 	/** @return */
-	CompositeActor.ID initiatorID();
+	CompositeActor initiator();
 
 	/** @return */
-	CompositeActor.ID executorID();
+	CompositeActor executor();
 
 	/**
-	 * @param type
+	 * @param factKind
 	 * @param cause
 	 * @param terminal
 	 * @param expiration
 	 * @param params
 	 * @return
 	 */
-	F createFact( CoordinationFactType type, CoordinationFact cause,
+	F createFact( CoordinationFactType factKind, CoordinationFact cause,
 		boolean terminal, Instant expiration, Map<?, ?>... params );
 
 	/** @param incoming */
 	void on( F incoming );
 
 	/** @return */
-	Observable<F> outgoing();
+	Observable<F> performed();
 
 	/** @return */
-	Observable<F> expiring();
+	Observable<F> expired();
 
 	/**
 	 * {@link ID}
@@ -101,51 +100,20 @@ public interface Transaction<F extends CoordinationFact>
 	}
 
 	/**
-	 * @param kind
-	 * @param initiator
-	 * @param executorID
-	 * @param factFactory
-	 * @return
-	 */
-	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
-		final CompositeActor initiator, final CompositeActor.ID executorID,
-		final CoordinationFact.Factory factFactory )
-	{
-		return of( kind, initiator.scheduler(), ID.create(), initiator.id(),
-				executorID, factFactory );
-	}
-
-	/**
-	 * @param kind
-	 * @param initiatorID
-	 * @param executor
-	 * @param factFactory
-	 * @return
-	 */
-	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
-		final CompositeActor.ID initiatorID, final CompositeActor executor,
-		final CoordinationFact.Factory factFactory )
-	{
-		return of( kind, executor.scheduler(), ID.create(), initiatorID,
-				executor.id(), factFactory );
-	}
-
-	/**
-	 * @param kind
+	 * @param tranKind
 	 * @param scheduler
 	 * @param id
-	 * @param initiatorID
-	 * @param executorID
-	 * @param factFactory
+	 * @param initiator
+	 * @param executor
 	 * @return
 	 */
 	static <F extends CoordinationFact> Transaction<F> of(
-		final LocalBinder binder, final Transaction.ID id, final Class<F> kind,
-		final CompositeActor.ID initiatorID,
-		final CompositeActor.ID executorID )
+		final LocalBinder binder, final Transaction.ID id,
+		final Class<F> tranKind, final CompositeActor initiator,
+		final CompositeActor executor )
 	{
-		return of( kind, binder.inject( Scheduler.class ), id, initiatorID,
-				executorID, binder.inject( CoordinationFact.Factory.class ) );
+		return of( tranKind, binder.inject( Scheduler.class ), id, initiator,
+				executor, binder.inject( CoordinationFact.Factory.class ) );
 	}
 
 	/**
@@ -159,12 +127,12 @@ public interface Transaction<F extends CoordinationFact>
 	 */
 	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
 		final Scheduler scheduler, final Transaction.ID id,
-		final CompositeActor.ID initiatorID, final CompositeActor.ID executorID,
+		final CompositeActor initiator, final CompositeActor executor,
 		final CoordinationFact.Factory factFactory )
 	{
-		final Subject<F, F> outgoing = PublishSubject.create();
-		final Map<CoordinationFact.ID, Expectation> pending = new HashMap<>();
-		final Subject<F, F> expiring = PublishSubject.create();
+		final Subject<F, F> performed = PublishSubject.create();
+		final Map<CoordinationFact.ID, Expectation> pending = new ConcurrentHashMap<>();
+		final Subject<F, F> expired = PublishSubject.create();
 		return new Transaction<F>()
 		{
 			@Override
@@ -186,70 +154,68 @@ public interface Transaction<F extends CoordinationFact>
 			}
 
 			@Override
-			public CompositeActor.ID initiatorID()
+			public CompositeActor initiator()
 			{
-				return initiatorID;
+				return initiator;
 			}
 
 			@Override
-			public CompositeActor.ID executorID()
+			public CompositeActor executor()
 			{
-				return executorID;
+				return executor;
 			}
 
 			@Override
-			public F createFact( final CoordinationFactType type,
+			public F createFact( final CoordinationFactType factKind,
 				final CoordinationFact cause, final boolean terminal,
 				final Instant expiration, final Map<?, ?>... params )
 			{
 				try
 				{
-					final F result = factFactory
-							.create( kind, CoordinationFact.ID.create(), id(),
-									type.isFromInitiator() ? initiatorID
-											: executorID,
-									type, expiration,
-									cause == null ? null : cause.id(), params );
+					final F result = factFactory.create( kind(),
+							CoordinationFact.ID.create(), this,
+							factKind.isFromInitiator() ? initiator : executor,
+							factKind, expiration, cause, params );
 					if( cause != null ) pending.remove( cause.id() );
 					if( expiration != null )
 					{
 						pending.put( result.id(), at( expiration ).call( () ->
 						{
-							pending.remove( expiring );
-							expiring.onNext( result );
+							pending.remove( expired );
+							expired.onNext( result );
 						} ) );
 					}
-					outgoing.onNext( result );
-					if( terminal ) outgoing.onCompleted();
+					performed.onNext( result );
+					if( terminal ) performed.onCompleted();
 					return result;
 				} catch( final Throwable e )
 				{
-					outgoing.onError( e );
+					performed.onError( e );
 					throw e;
 				}
 			}
 
 			@Override
-			public Observable<F> outgoing()
+			public Observable<F> performed()
 			{
-				return outgoing.asObservable();
+				return performed.asObservable();
 			}
 
 			@Override
-			public Observable<F> expiring()
+			public Observable<F> expired()
 			{
-				return expiring.asObservable();
+				return expired.asObservable();
 			}
 
 			@Override
 			public void on( final F fact )
 			{
-				pending.remove( fact.causeID() );
+				pending.remove( fact.cause().id() );
 				if( fact.expiration() != null ) pending.put( fact.id(),
 						scheduler.at( fact.expiration() ).call( () ->
 						{
-							pending.remove( expiring );
-							expiring.onNext( fact );
+							pending.remove( expired );
+							expired.onNext( fact );
 						} ) );
 			}
 		};
@@ -258,8 +224,8 @@ public interface Transaction<F extends CoordinationFact>
 	interface Factory
 	{
 		<F extends CoordinationFact> Transaction<F> create( Transaction.ID id,
-			Class<F> factType, CompositeActor.ID initiatorID,
-			CompositeActor.ID executorID );
+			Class<F> factType, CompositeActor initiator,
+			CompositeActor executor );
 
 		@Singleton
 		class Simple implements Factory
@@ -273,14 +239,13 @@ public interface Transaction<F extends CoordinationFact>
 			@Override
 			public <F extends CoordinationFact> Transaction<F> create(
 				final ID id, final Class<F> kind,
-				final CompositeActor.ID initiatorID,
-				final CompositeActor.ID executorID )
+				final CompositeActor initiator, final CompositeActor executor )
 			{
 				return (Transaction<F>) this.localCache.computeIfAbsent( kind,
 						k ->
 						{
 							return Transaction.of( this.binder, id, kind,
-									initiatorID, executorID );
+									initiator, executor );
 						} );
 			}
 

@@ -19,7 +19,6 @@
  */
 package io.coala.enterprise;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,11 +26,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.coala.bind.LocalBinder;
-import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.name.Identified;
-import io.coala.time.Scheduler;
 import io.coala.time.Proactive;
+import io.coala.time.Scheduler;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
@@ -68,15 +66,15 @@ public interface Organization
 	Observable<CoordinationFact> outgoing();
 
 	default <F extends CoordinationFact> Observable<F>
-		outgoing( final Class<F> factKind )
+		outgoing( final Class<F> tranKind )
 	{
-		return outgoing().ofType( factKind );
+		return outgoing().ofType( tranKind );
 	}
 
 	default <F extends CoordinationFact> Observable<F>
-		outgoing( final Class<F> factKind, final CoordinationFactType kind )
+		outgoing( final Class<F> tranKind, final CoordinationFactType kind )
 	{
-		return outgoing( factKind ).filter( f ->
+		return outgoing( tranKind ).filter( f ->
 		{
 			return f.kind() == kind;
 		} );
@@ -86,19 +84,16 @@ public interface Organization
 	 * @param actorID
 	 * @return
 	 */
-	CompositeActor actor( final String actorID );
+	default CompositeActor actor( final String actorID )
+	{
+		return actor( CompositeActor.ID.of( actorID, id() ) );
+	}
 
 	/**
 	 * @param actorID
 	 * @return
 	 */
-	default CompositeActor actor( CompositeActor.ID actorID )
-	{
-		return id().equals( actorID.parent() ) ? actor( actorID.unwrap() )
-				: Thrower.throwNew( IllegalArgumentException.class,
-						"Actor {} of {} unavailable for {}", actorID.unwrap(),
-						actorID.parent(), id() );
-	}
+	CompositeActor actor( CompositeActor.ID actorID );
 
 	/** @param incoming */
 	void consume( CoordinationFact incoming );
@@ -119,19 +114,23 @@ public interface Organization
 
 	static Organization of( LocalBinder binder, String name )
 	{
-		return of( binder.inject( Scheduler.class ), name,
+		return of( binder, ID.of( name ) );
+	}
+
+	static Organization of( LocalBinder binder, ID name )
+	{
+		return of( name, binder.inject( Scheduler.class ),
 				binder.inject( CoordinationFact.Factory.class ) );
 	}
 
-	static Organization of( final Scheduler scheduler, final String name,
+	static Organization of( final ID id, final Scheduler scheduler,
 		final CoordinationFact.Factory factFactory )
 	{
-		final Organization.ID id = ID.of( name );
 		final Subject<CoordinationFact, CoordinationFact> incoming = PublishSubject
 				.create();
 		final Subject<CoordinationFact, CoordinationFact> outgoing = PublishSubject
 				.create();
-		final Map<String, CompositeActor> actorMap = new HashMap<>();
+		final Map<CompositeActor.ID, CompositeActor> actorMap = new ConcurrentHashMap<>();
 		return new Organization()
 		{
 			@Override
@@ -159,10 +158,11 @@ public interface Organization
 			}
 
 			@Override
-			public CompositeActor actor( final String actorID )
+			public CompositeActor actor( final CompositeActor.ID actorID )
 			{
 				return actorMap.computeIfAbsent( actorID, id ->
 				{
+					// TODO use binder/factory
 					final CompositeActor result = CompositeActor.of( id, this,
 							factFactory );
 					result.outgoing().subscribe( outgoing );
@@ -180,12 +180,17 @@ public interface Organization
 
 	interface Factory
 	{
-		Organization create( String name );
+		default Organization create( final String name )
+		{
+			return create( ID.of( name ) );
+		}
+
+		Organization create( ID name );
 
 		@Singleton
 		class Simple implements Factory
 		{
-			private final Map<String, Organization> localCache = new ConcurrentHashMap<>();
+			private final Map<ID, Organization> localCache = new ConcurrentHashMap<>();
 
 			@Inject
 			private Scheduler scheduler;
@@ -194,11 +199,11 @@ public interface Organization
 			private CoordinationFact.Factory factFactory;
 
 			@Override
-			public Organization create( final String name )
+			public Organization create( final ID id )
 			{
-				return localCache.computeIfAbsent( name, k ->
+				return this.localCache.computeIfAbsent( id, k ->
 				{
-					return Organization.of( this.scheduler, name,
+					return Organization.of( id, this.scheduler,
 							this.factFactory );
 				} );
 			}

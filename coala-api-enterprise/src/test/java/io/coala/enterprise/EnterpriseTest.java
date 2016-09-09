@@ -39,24 +39,28 @@ public class EnterpriseTest
 	/** TODO specialized logging adding e.g. Timed#now() and Identified#id() */
 	private static final Logger LOG = LogUtil.getLogger( EnterpriseTest.class );
 
-	/**
-	 * {@link TestFact} custom fact kind
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	public interface TestFact extends CoordinationFact
-	{
-		// empty 
-	}
-
 	@Singleton
-	public class EnterpriseModel implements Proactive
+	public static class EnterpriseModel implements Proactive
 	{
+
+		/**
+		 * {@link TestFact} custom fact kind
+		 * 
+		 * @version $Id$
+		 * @author Rick van Krevelen
+		 */
+		interface TestFact extends CoordinationFact
+		{
+			// empty 
+		}
+
 		private final Scheduler scheduler;
 
 		@Inject
 		private Organization.Factory organizations;
+
+		@Inject
+		private CoordinationFact.Persister persister;
 
 		@Inject
 		public EnterpriseModel( final Scheduler scheduler )
@@ -82,12 +86,12 @@ public class EnterpriseTest
 			final DateTime offset = DateTime.now().withTimeAtStartOfDay()
 					.withDayOfMonth( 1 ).withMonthOfYear( 1 );
 
-			// create organization
+			LOG.trace( "initialize organization" );
 			final Organization org1 = this.organizations.create( "org1" );
 			final CompositeActor sales = org1.actor( "sales" );
 
-			// add business rule(s)
-			sales.on( TestFact.class, org1.id(), fact ->
+			LOG.trace( "initialize business rule(s)" );
+			sales.on( TestFact.class, sales.id(), fact ->
 			{
 				sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
 				{
@@ -96,17 +100,10 @@ public class EnterpriseTest
 									.singletonMap( "myParam1", "myValue1" ) );
 					LOG.trace( "t={}, {} responded: {} for incoming: {}", t,
 							sales.id(), response, fact );
-
 				} );
 			} );
 
-			// observe generated facts
-			org1.outgoing().subscribe( fact ->
-			{
-				LOG.trace( "t={}, outgoing: {}", org1.now().prettify( offset ),
-						fact );
-			} );
-
+			LOG.trace( "initialize TestFact[RQ] redirect to self" );
 			org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
 					.subscribe( f ->
 					{
@@ -116,14 +113,35 @@ public class EnterpriseTest
 						LOG.error( "Problem redirecting TestFact", e );
 					} );
 
-			// spawn initial transactions with self
+			LOG.trace( "intializeg TestFact initiation" );
 			atEach( Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset )
 					.iterate(), t ->
 					{
-						sales.createRequest( TestFact.class, sales.id(), null,
+						// spawn initial transactions with self
+						LOG.trace( "initiating TestFact" );
+						sales.createRequest( TestFact.class, sales, null,
 								t.add( 1 ), Collections.singletonMap(
 										"myParam2", "myValue2" ) );
 					} );
+
+			LOG.trace( "initialize incoming fact sniffing" );
+			org1.incoming().subscribe( fact ->
+			{
+				LOG.trace( "t={}, incoming: {}", org1.now().prettify( offset ),
+						fact );
+			} );
+
+			LOG.trace( "initialize outgoing fact persistence" );
+			org1.outgoing().subscribe( fact ->
+			{
+				try
+				{
+					this.persister.save( fact );
+				} catch( final Exception e )
+				{
+					e.printStackTrace();
+				}
+			} );
 
 			// TODO test fact expiration handling
 
@@ -152,7 +170,10 @@ public class EnterpriseTest
 		String DATASOURCE_USERNAME_KEY = "hibernate.hikari.dataSource.user";
 
 		String DATASOURCE_PASSWORD_KEY = "hibernate.hikari.dataSource.password";
-		
+
+		@DefaultValue( "hibernate_test_pu" )
+		String[] persistenceUnitNames();
+
 		@DefaultValue( "create" )
 		SchemaPolicy hibernateSchemaPolicy();
 
@@ -233,7 +254,7 @@ public class EnterpriseTest
 			waiter.resume();
 		} );
 		scheduler.resume();
-		waiter.await( 1, TimeUnit.SECONDS );
+		waiter.await( 10, TimeUnit.SECONDS );
 
 		LOG.info( "completed, t={}", scheduler.now() );
 	}
