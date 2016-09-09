@@ -5,7 +5,7 @@
 
 	<groupId>io.coala</groupId>
 	<artifactId>coala</artifactId>
-	<version>0.2.0-b4-SNAPSHOT</version>
+	<version>0.2.0-b4</version>
 	<packaging>pom</packaging>
 
 	<name>${project.artifactId} ${project.version}</name>
@@ -31,37 +31,32 @@
 		<!-- Binder API and utilities -->
 		<module>coala-api</module>
 
-		<!-- Capability API and utilities requires Binder API -->
-		<module>coala-api-capability</module>
-
-		<!-- Time API and utilities requires Capability API -->
+		<!-- Time API and utilities requires API -->
 		<module>coala-api-time</module>
 
-		<!-- Guice 3/4 adapters of the relevant core APIs -->
-		<module>adapters/guice3-coala-adapter</module>
+		<!-- Guice 4 adapter of the LocalBinder API -->
 		<module>adapters/guice4-coala-adapter</module>
 
-		<!-- DSOL2/3 adapters of the relevant core APIs -->
-		<module>adapters/dsol2-coala-adapter</module>
+		<!-- DSOL3 adapter of the relevant APIs -->
 		<module>adapters/dsol3-coala-adapter</module>
 
-		<!-- Eve 3 adapter of the relevant core APIs -->
-		<module>adapters/eve3-coala-adapter</module>
+		<!-- Enterprise Ontology API requires Guice and DSOL -->
+		<module>coala-api-enterprise</module>
 
 		<!-- commons-math3 adapter of the relevant core APIs -->
 		<module>adapters/math3-coala-adapter</module>
 
+		<!-- Eve 3 adapter of the relevant (inter) APIs -->
+		<module>adapters/eve3-coala-adapter</module>
+
 		<!-- colt adapter of the relevant core APIs -->
-		<module>adapters/colt-coala-adapter</module>
+		<!-- <module>adapters/colt-coala-adapter</module> -->
 
 		<!-- Jason adapter of the relevant core APIs -->
-		<module>adapters/jason-coala-adapter</module>
-
-		<!-- Enterprise Ontology API requires Eve and DSOL -->
-		<module>coala-api-enterprise</module>
+		<!-- <module>adapters/jason-coala-adapter</module> -->
 
 		<!-- Conway's game of life -->
-		<module>demos/coala-demo-conway</module>
+		<!-- <module>demos/coala-demo-conway</module> -->
 	</modules>
 
 	<properties>

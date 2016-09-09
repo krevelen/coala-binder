@@ -59,8 +59,8 @@ public class EnterpriseTest
 		@Inject
 		private Organization.Factory organizations;
 
-		@Inject
-		private CoordinationFact.Persister persister;
+//		@Inject
+//		private CoordinationFact.Persister persister;
 
 		@Inject
 		public EnterpriseModel( final Scheduler scheduler )
@@ -131,17 +131,17 @@ public class EnterpriseTest
 						fact );
 			} );
 
-			LOG.trace( "initialize outgoing fact persistence" );
-			org1.outgoing().subscribe( fact ->
-			{
-				try
-				{
-					this.persister.save( fact );
-				} catch( final Exception e )
-				{
-					e.printStackTrace();
-				}
-			} );
+//			LOG.trace( "initialize outgoing fact persistence" );
+//			org1.outgoing().subscribe( fact ->
+//			{
+//				try
+//				{
+//					this.persister.save( fact );
+//				} catch( final Exception e )
+//				{
+//					e.printStackTrace();
+//				}
+//			} );
 
 			// TODO test fact expiration handling
 
@@ -226,21 +226,20 @@ public class EnterpriseTest
 		final LocalConfig config = LocalConfig.builder().withId( "eoSim" )
 				.withProvider( Scheduler.class, Dsol3Scheduler.class )
 				.withProvider( Organization.Factory.class,
-						Organization.Factory.Simple.class )
+						Organization.Factory.LocalCaching.class )
 				.withProvider( Transaction.Factory.class,
-						Transaction.Factory.Simple.class )
+						Transaction.Factory.LocalCaching.class )
 				.withProvider( CoordinationFact.Factory.class,
 						CoordinationFact.Factory.Simple.class )
-				.withProvider( CoordinationFact.Persister.class,
-						CoordinationFact.Persister.SimpleJPA.class )
+//				.withProvider( CoordinationFact.Persister.class,
+//						CoordinationFact.Persister.SimpleJPA.class )
 				.build();
 
 		LOG.info( "Starting EO test, config: {}", config.toYAML() );
-		final Scheduler scheduler = Guice4LocalBinder
-				.of( config,
-						Collections.singletonMap( EntityManagerFactory.class,
-								PersistenceConfig.createEMF() ) )
-				.inject( EnterpriseModel.class ).scheduler();
+		final Scheduler scheduler = Guice4LocalBinder.of( config
+//						, Collections.singletonMap( EntityManagerFactory.class,
+//								PersistenceConfig.createEMF() ) 
+		).inject( EnterpriseModel.class ).scheduler();
 
 		final Waiter waiter = new Waiter();
 		scheduler.time().subscribe( time ->

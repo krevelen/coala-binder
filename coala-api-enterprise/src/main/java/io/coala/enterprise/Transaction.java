@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.bind.LocalBinder;
 import io.coala.name.Id;
@@ -49,14 +50,16 @@ public interface Transaction<F extends CoordinationFact>
 	extends Proactive, Identified.Ordinal<Transaction.ID>
 {
 
+	// FIXME add cause ID
+	
 	/** @return */
 	Class<F> kind();
 
 	/** @return */
-	CompositeActor initiator();
+	CompositeActor initiator(); // FIXME id only
 
 	/** @return */
-	CompositeActor executor();
+	CompositeActor executor(); // FIXME id only
 
 	/**
 	 * @param factKind
@@ -73,9 +76,11 @@ public interface Transaction<F extends CoordinationFact>
 	void on( F incoming );
 
 	/** @return */
+	@JsonIgnore
 	Observable<F> performed();
 
 	/** @return */
+	@JsonIgnore
 	Observable<F> expired();
 
 	/**
@@ -228,7 +233,7 @@ public interface Transaction<F extends CoordinationFact>
 			CompositeActor executor );
 
 		@Singleton
-		class Simple implements Factory
+		class LocalCaching implements Factory
 		{
 			private final Map<Class<?>, Transaction<?>> localCache = new ConcurrentHashMap<>();
 

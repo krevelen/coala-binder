@@ -188,7 +188,7 @@ public interface Organization
 		Organization create( ID name );
 
 		@Singleton
-		class Simple implements Factory
+		class LocalCaching implements Factory
 		{
 			private final Map<ID, Organization> localCache = new ConcurrentHashMap<>();
 

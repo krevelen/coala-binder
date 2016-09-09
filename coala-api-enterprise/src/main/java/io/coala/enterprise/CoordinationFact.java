@@ -62,7 +62,7 @@ public interface CoordinationFact
 	Transaction<?> transaction();
 
 	/** @return */
-	CompositeActor creator();
+	CompositeActor creator(); // FIXME id only
 
 	/** @return */
 	CoordinationFactType kind();
