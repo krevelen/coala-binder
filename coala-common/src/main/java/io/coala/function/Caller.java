@@ -157,11 +157,11 @@ public interface Caller<T, U, R, E extends Throwable>
 	 * @param callable the {@link Callable} method
 	 * @return an {@link Caller} instance
 	 */
-	static <R> Caller<Object, Object, R, Exception>
-		of( final Callable<R> callable )
-	{
-		return of( (ThrowingSupplier<R, Exception>) callable::call );
-	}
+//	static <R> Caller<Object, Object, R, Exception>
+//		of( final Callable<R> callable )
+//	{
+//		return of( (ThrowingSupplier<R, Exception>) callable::call );
+//	}
 
 	static <R> Caller<Object, Object, R, Exception> ofConstructor(
 		final Constructor<R> constructor, final Object... argConstants )
