@@ -33,15 +33,16 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
+import org.aeonbits.owner.Factory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.coala.bind.LocalBinder;
 import io.coala.config.InjectConfig.Scope;
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
@@ -320,7 +321,7 @@ public class ConfigUtil implements Util
 	{
 		final Map<String, String> result = export( config, (Pattern) null );
 		if( maps != null ) for( Map<?, ?> map : maps )
-			map.forEach( ( key, value ) ->
+			if( map != null ) map.forEach( ( key, value ) ->
 			{
 				result.put( key.toString(), value.toString() );
 			} );
@@ -363,6 +364,24 @@ public class ConfigUtil implements Util
 					result.put( replace, config.getProperty( key ) );
 				}
 			}
+		return result.entrySet().stream().collect( Collectors.toMap( e ->
+		{
+			return e.getKey();
+		}, e ->
+		{
+			return resolve( e.getValue(), result );
+		} ) );
+	}
+
+	static final Pattern KEY_PATTERN = Pattern.compile(
+			Pattern.quote( "${" ) + "([^}]*)" + Pattern.quote( "}" ) );
+
+	static String resolve( final String value, final Map<String, String> map )
+	{
+		String result = value;
+		Matcher m;
+		while( (m = KEY_PATTERN.matcher( result )).find() )
+			result = m.replaceFirst( map.get( m.group( 1 ) ) );
 		return result;
 	}
 
@@ -420,8 +439,15 @@ public class ConfigUtil implements Util
 		return path;
 	}
 
+	/**
+	 * TODO: implement {@link Factory} for local context?
+	 * 
+	 * @param encloser
+	 * @param field
+	 * @param binder
+	 */
 	public static void injectConfig( final Object encloser, final Field field,
-		final LocalBinder binder )
+		final Object binder )
 	{
 		final InjectConfig annot = field.getAnnotation( InjectConfig.class );
 		if( !Config.class.isAssignableFrom( field.getType() )
@@ -483,7 +509,7 @@ public class ConfigUtil implements Util
 					? ConfigFactory.create( configType, importsArray )
 					: ConfigCache.getOrCreate( key, configType, importsArray );
 			final Object value = direct ? config
-					: configType.getDeclaredMethod( annot.methodName() )
+					: configType.getDeclaredMethod( annot.key() )
 							.invoke( config );
 			field.set( encloser, value );
 		} catch( final Throwable e )

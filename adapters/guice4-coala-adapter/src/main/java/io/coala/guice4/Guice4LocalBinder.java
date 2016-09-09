@@ -35,9 +35,10 @@ import io.coala.bind.ProviderConfig;
 import io.coala.config.ConfigUtil;
 import io.coala.config.InjectConfig;
 import io.coala.exception.Thrower;
+import io.coala.inter.InjectProxy;
+import io.coala.inter.Invoker;
 import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
-import io.coala.random.DistributionParser;
 import io.coala.random.InjectDist;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.util.Instantiator;
@@ -51,6 +52,7 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Singleton
 public class Guice4LocalBinder implements LocalBinder
 {
 	/** */
@@ -70,8 +72,6 @@ public class Guice4LocalBinder implements LocalBinder
 			@Override
 			public void configure()
 			{
-				final com.google.inject.Provider<DistributionParser> parser = getProvider(
-						DistributionParser.class );
 				bindListener( Matchers.any(), new TypeListener()
 				{
 					@Override
@@ -111,6 +111,19 @@ public class Guice4LocalBinder implements LocalBinder
 														field, binder );
 											} );
 								} else if( field.isAnnotationPresent(
+										InjectProxy.class ) )
+								{
+									typeEncounter
+											.register( (MembersInjector<T>) t ->
+											{
+												Invoker.injectProxy( t, field,
+														() ->
+														{
+															return binder
+																	.inject( Invoker.class );
+														} );
+											} );
+								} else if( field.isAnnotationPresent(
 										InjectDist.class ) )
 								{
 									typeEncounter
@@ -118,15 +131,18 @@ public class Guice4LocalBinder implements LocalBinder
 											{
 												ProbabilityDistribution
 														.injectDistribution( t,
-																field,
-																parser.get() );
+																field, () ->
+																{
+																	return binder
+																			.inject( ProbabilityDistribution.Parser.class );
+																} );
 											} );
 								}
 							}
 						}
 					}
 				} );
-				this.
+
 				// binds itself, how nice :-)
 				bind( LocalBinder.class ).toInstance( binder );
 				emit( LocalBinder.class );

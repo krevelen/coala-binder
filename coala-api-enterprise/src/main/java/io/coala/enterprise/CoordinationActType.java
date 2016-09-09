@@ -1,7 +1,5 @@
 package io.coala.enterprise;
 
-import io.coala.enterprise.role.ActorRoleType;
-
 /**
  * The (coordination/production) act types that may occur in some transaction
  * 
@@ -22,26 +20,26 @@ import io.coala.enterprise.role.ActorRoleType;
 public enum CoordinationActType
 {
 	/**  */
-	INITIATING(false, ActorRoleType.INITIATOR, null,
+	INITIATING(false, PerformerType.INITIATOR, null,
 			CoordinationFactType.INITIATED),
 
 	/**  */
-	INITIATING_REQUEST_CANCELLATION(true, ActorRoleType.INITIATOR,
+	INITIATING_REQUEST_CANCELLATION(true, PerformerType.INITIATOR,
 			CoordinationFactType.REQUESTED,
 			CoordinationFactType._INITIATED_REQUEST_CANCELLATION),
 
 	/**  */
-	INITIATING_PROMISE_CANCELLATION(true, ActorRoleType.EXECUTOR,
+	INITIATING_PROMISE_CANCELLATION(true, PerformerType.EXECUTOR,
 			CoordinationFactType.PROMISED,
 			CoordinationFactType._INITIATED_PROMISE_CANCELLATION),
 
 	/**  */
-	INITIATING_STATE_CANCELLATION(true, ActorRoleType.EXECUTOR,
+	INITIATING_STATE_CANCELLATION(true, PerformerType.EXECUTOR,
 			CoordinationFactType.STATED,
 			CoordinationFactType._INITIATED_STATE_CANCELLATION),
 
 	/**  */
-	INITIATING_ACCEPT_CANCELLATION(true, ActorRoleType.INITIATOR,
+	INITIATING_ACCEPT_CANCELLATION(true, PerformerType.INITIATOR,
 			CoordinationFactType.ACCEPTED,
 			CoordinationFactType._INITIATED_ACCEPT_CANCELLATION),
 
@@ -49,48 +47,48 @@ public enum CoordinationActType
 	 * The "rq" coordination act (C-Act) that starts the order-phase (O-phase)
 	 * of some transaction and may lead to a "rq" coordination fact.
 	 */
-	REQUESTING(false, ActorRoleType.INITIATOR,
+	REQUESTING(false, PerformerType.INITIATOR,
 			CoordinationFactType.INITIATED, CoordinationFactType.REQUESTED),
 
 	/**  */
-	CANCELLING_REQUEST(true, ActorRoleType.INITIATOR,
+	CANCELLING_REQUEST(true, PerformerType.INITIATOR,
 			CoordinationFactType.REQUESTED,
 			CoordinationFactType._CANCELLED_REQUEST),
 
 	/**  */
-	REFUSING_REQUEST_CANCELLATION(true, ActorRoleType.EXECUTOR,
+	REFUSING_REQUEST_CANCELLATION(true, PerformerType.EXECUTOR,
 			CoordinationFactType._CANCELLED_REQUEST,
 			CoordinationFactType._REFUSED_REQUEST_CANCELLATION),
 
 	/**  */
-	ALLOWING_REQUEST_CANCELLATION(true, ActorRoleType.EXECUTOR,
+	ALLOWING_REQUEST_CANCELLATION(true, PerformerType.EXECUTOR,
 			CoordinationFactType._CANCELLED_REQUEST,
 			CoordinationFactType._ALLOWED_REQUEST_CANCELLATION),
 
 	/**  */
-	DECLINING(false, ActorRoleType.EXECUTOR,
+	DECLINING(false, PerformerType.EXECUTOR,
 			CoordinationFactType.REQUESTED, CoordinationFactType.DECLINED),
 
 	/**  */
-	QUITTING(false, ActorRoleType.INITIATOR,
+	QUITTING(false, PerformerType.INITIATOR,
 			CoordinationFactType.DECLINED, CoordinationFactType.QUIT),
 
 	/** The "pm" coordination act that may lead to a "pm" coordination fact. */
-	PROMISING(false, ActorRoleType.EXECUTOR,
+	PROMISING(false, PerformerType.EXECUTOR,
 			CoordinationFactType.REQUESTED, CoordinationFactType.PROMISED),
 
 	/**  */
-	CANCELLING_PROMISE(true, ActorRoleType.EXECUTOR,
+	CANCELLING_PROMISE(true, PerformerType.EXECUTOR,
 			CoordinationFactType.PROMISED,
 			CoordinationFactType._CANCELLED_PROMISE),
 
 	/**  */
-	REFUSING_PROMISE_CANCELLATION(true, ActorRoleType.INITIATOR,
+	REFUSING_PROMISE_CANCELLATION(true, PerformerType.INITIATOR,
 			CoordinationFactType._CANCELLED_PROMISE,
 			CoordinationFactType._REFUSED_PROMISE_CANCELLATION),
 
 	/**  */
-	ALLOWING_PROMISE_CANCELLATION(true, ActorRoleType.INITIATOR,
+	ALLOWING_PROMISE_CANCELLATION(true, PerformerType.INITIATOR,
 			CoordinationFactType._CANCELLED_PROMISE,
 			CoordinationFactType._ALLOWED_PROMISE_CANCELLATION),
 
@@ -98,51 +96,51 @@ public enum CoordinationActType
 	 * The "ex" production act that may lead to the production fact of this
 	 * transaction, completing the execution phase.
 	 */
-	EXECUTING(false, ActorRoleType.EXECUTOR,
+	EXECUTING(false, PerformerType.EXECUTOR,
 			CoordinationFactType.PROMISED, CoordinationFactType.EXECUTED),
 
 	/** The "st" coordination act that may lead to a "st" coordination fact. */
-	STATING(false, ActorRoleType.EXECUTOR, CoordinationFactType.EXECUTED,
+	STATING(false, PerformerType.EXECUTOR, CoordinationFactType.EXECUTED,
 			CoordinationFactType.STATED),
 
 	/**  */
-	CANCELLING_STATE(true, ActorRoleType.EXECUTOR,
+	CANCELLING_STATE(true, PerformerType.EXECUTOR,
 			CoordinationFactType.STATED, CoordinationFactType._CANCELLED_STATE),
 
 	/**  */
-	REFUSING_STATE_CANCELLATION(true, ActorRoleType.INITIATOR,
+	REFUSING_STATE_CANCELLATION(true, PerformerType.INITIATOR,
 			CoordinationFactType._CANCELLED_STATE,
 			CoordinationFactType._REFUSED_STATE_CANCELLATION),
 
 	/**  */
-	ALLOWING_STATE_CANCELLATION(true, ActorRoleType.INITIATOR,
+	ALLOWING_STATE_CANCELLATION(true, PerformerType.INITIATOR,
 			CoordinationFactType._CANCELLED_STATE,
 			CoordinationFactType._ALLOWED_STATE_CANCELLATION),
 
 	/**  */
-	REJECTING(false, ActorRoleType.INITIATOR,
+	REJECTING(false, PerformerType.INITIATOR,
 			CoordinationFactType.STATED, CoordinationFactType.REJECTED),
 
 	/**  */
-	STOPPING(false, ActorRoleType.EXECUTOR,
+	STOPPING(false, PerformerType.EXECUTOR,
 			CoordinationFactType.REJECTED, CoordinationFactType.STOPPED),
 
 	/** The "ac" coordination act that may lead to an "ac" coordination fact. */
-	ACCEPTING(false, ActorRoleType.INITIATOR,
+	ACCEPTING(false, PerformerType.INITIATOR,
 			CoordinationFactType.STATED, CoordinationFactType.ACCEPTED),
 
 	/**  */
-	CANCELLING_ACCEPT(true, ActorRoleType.INITIATOR,
+	CANCELLING_ACCEPT(true, PerformerType.INITIATOR,
 			CoordinationFactType.ACCEPTED,
 			CoordinationFactType._CANCELLED_ACCEPT),
 
 	/**  */
-	REFUSING_ACCEPT_CANCELLATION(true, ActorRoleType.EXECUTOR,
+	REFUSING_ACCEPT_CANCELLATION(true, PerformerType.EXECUTOR,
 			CoordinationFactType._CANCELLED_ACCEPT,
 			CoordinationFactType._REFUSED_ACCEPT_CANCELLATION),
 
 	/**  */
-	ALLOWING_ACCEPT_CANCELLATION(true, ActorRoleType.EXECUTOR,
+	ALLOWING_ACCEPT_CANCELLATION(true, PerformerType.EXECUTOR,
 			CoordinationFactType._CANCELLED_ACCEPT,
 			CoordinationFactType._ALLOWED_ACCEPT_CANCELLATION);
 
@@ -150,7 +148,7 @@ public enum CoordinationActType
 	private final boolean isCancellationAct;
 
 	/** the generic actor role type that can perform this type of act */
-	private final ActorRoleType performer;
+	private final PerformerType performer;
 
 	/** the fact type required for this act type to initiate, or null */
 	private final CoordinationFactType condition;
@@ -163,7 +161,7 @@ public enum CoordinationActType
 	 * @param outcomes the facts possibly resulting from this act type
 	 */
 	private CoordinationActType(final boolean isCancellationAct,
-			final ActorRoleType actorRole,
+			final PerformerType actorRole,
 			final CoordinationFactType condition,
 			final CoordinationFactType outcome)
 	{
@@ -180,7 +178,7 @@ public enum CoordinationActType
 	}
 
 	/** @return the generic actor role type performing this type of act */
-	public ActorRoleType performer()
+	public PerformerType performer()
 	{
 		return this.performer;
 	}
@@ -189,10 +187,10 @@ public enum CoordinationActType
 	 * @return the generic actor role type awaiting this type of act to result
 	 *         in some fact
 	 */
-	public ActorRoleType listener()
+	public PerformerType listener()
 	{
-		return this.performer.equals(ActorRoleType.EXECUTOR) ? ActorRoleType.INITIATOR
-				: ActorRoleType.EXECUTOR;
+		return this.performer.equals(PerformerType.EXECUTOR) ? PerformerType.INITIATOR
+				: PerformerType.EXECUTOR;
 	}
 
 	/**

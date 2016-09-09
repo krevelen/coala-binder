@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-b3</version>
+		<version>0.2.0-b4</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -23,13 +23,10 @@
 		<!-- <eve.version>3.2.0-SNAPSHOT</eve.version> atomic scheduler/messaging 
 			not released -->
 		<eve.version>3.1.1</eve.version>
-		<!-- <jetty.version>9.3.3.v20150827</jetty.version> causes java.lang.UnsupportedClassVersionError: 
-			org/eclipse/jetty/jndi/InitialContextFactory : Unsupported major.minor version 
-			52.0 -->
-		<jetty.version>9.2.10.v20150310</jetty.version>
-		<!-- <jackson.version>2.4.0</jackson.version> -->
+		<jetty.version>9.3.11.v20160721</jetty.version>
+		<cors.version>2.5</cors.version>
 		<javax.servlet-api.version>3.1.0</javax.servlet-api.version>
-		<guice.version>3.0</guice.version>
+		<httpcomponents.version>4.5.2</httpcomponents.version>
 	</properties>
 
 	<repositories>
@@ -63,7 +60,7 @@
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>coala-api-capability</artifactId>
+			<artifactId>coala-api</artifactId>
 		</dependency>
 
 		<dependency>
@@ -77,7 +74,11 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
+		<dependency>
+			<groupId>com.thetransactioncompany</groupId>
+			<artifactId>cors-filter</artifactId>
+			<version>${cors.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.almende.eve</groupId>
 			<artifactId>eve-transport-http-jetty</artifactId>
@@ -118,15 +119,15 @@
 
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>guice3-coala-adapter</artifactId>
+			<artifactId>guice4-coala-adapter</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.inject.extensions</groupId>
-			<artifactId>guice-assistedinject</artifactId>
-			<version>${guice.version}</version>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>fluent-hc</artifactId>
+			<version>${httpcomponents.version}</version>
 			<scope>test</scope>
 		</dependency>
 

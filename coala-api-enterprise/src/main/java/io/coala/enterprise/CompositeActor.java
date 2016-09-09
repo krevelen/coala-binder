@@ -19,10 +19,15 @@
  */
 package io.coala.enterprise;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import io.coala.exception.Thrower;
+import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
@@ -35,6 +40,8 @@ import rx.subjects.Subject;
 
 /**
  * {@link CompositeActor} can handle multiple {@link Transaction} types or kinds
+ * <p>
+ * TODO make recursive/holonic
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -42,9 +49,6 @@ import rx.subjects.Subject;
 public interface CompositeActor
 	extends Proactive, Identified.Ordinal<CompositeActor.ID>
 {
-	/** @return the ownew {@link Organization.ID} */
-	Organization.ID ownerID();
-
 	/** @return an {@link Observable} of outgoing {@link CoordinationFact}s */
 	Observable<CoordinationFact> outgoing();
 
@@ -53,50 +57,50 @@ public interface CompositeActor
 
 	/**
 	 * @param factKind the type of {@link CoordinationFact} to filter for
-	 * @param creatorID the origin {@link Organization.ID} to filter for
+	 * @param creatorID the origin {@link CompositeActor.ID} to filter for
 	 * @return an {@link Observable} of incoming {@link CoordinationFact}s
 	 */
 	<F extends CoordinationFact> Observable<F> on( Class<F> factKind,
-		Organization.ID creatorID );
+		CompositeActor.ID creatorID );
 
 	/**
 	 * @param factKind the type of {@link CoordinationFact} to filter for
-	 * @param creatorID the origin {@link Organization.ID} to filter for
+	 * @param creatorID the origin {@link CompositeActor.ID} to filter for
 	 * @param handler a {@link Consumer} for handling fact instances
 	 * @return the handler's {@link Subscription} for future cancellation
 	 */
 	default <F extends CoordinationFact> Subscription on( Class<F> factKind,
-		Organization.ID creatorID, final Consumer<F> handler )
+		CompositeActor.ID creatorID, final Consumer<F> handler )
 	{
 		return on( factKind, creatorID ).subscribe( fact ->
 		{
 			handler.accept( fact );
-		}, error ->
+		}, e ->
 		{
+			LogUtil.getLogger( CompositeActor.class ).warn( "Ignore error", e );
 		} );
 	}
 
 	/**
-	 * @param factKind the type of {@link CoordinationFact} to transact
-	 * @param tranID the context {@link Transaction.ID}
-	 * @param initiatorID the initiator {@link Organization.ID}
-	 * @param executorID the executor {@link Organization.ID}
+	 * @param tranKind the type of {@link CoordinationFact} to transact
+	 * @param transaction the context {@link Transaction}, or {@code null}
+	 * @param initiator the initiator {@link CompositeActor}
+	 * @param executor the executor {@link CompositeActor}
 	 * @return the {@link Transaction} context
 	 */
-	<F extends CoordinationFact> Transaction<F> transact( Class<F> factKind,
-		Transaction.ID tranID, Organization.ID initiatorID,
-		Organization.ID executorID );
+	<F extends CoordinationFact> Transaction<F> transact( Class<F> tranKind,
+		Transaction<F> transaction, CompositeActor initiator,
+		CompositeActor executor );
 
 	/**
-	 * @param factKind the type of {@link CoordinationFact} to transact
+	 * @param tranKind the type of {@link CoordinationFact} to transact
 	 * @param executorID the executor {@link Organization.ID}
 	 * @return the {@link Transaction} context
 	 */
 	default <F extends CoordinationFact> Transaction<F>
-		asInitiator( final Class<F> factKind, final Organization.ID executorID )
+		asInitiator( final Class<F> tranKind, final CompositeActor executor )
 	{
-		return transact( factKind, Transaction.ID.create(), ownerID(),
-				executorID );
+		return transact( tranKind, null, this, executor );
 	}
 
 	/**
@@ -107,43 +111,43 @@ public interface CompositeActor
 	default <F extends CoordinationFact> Transaction<F>
 		asResponder( final F fact )
 	{
-		return transact( (Class<F>) fact.getClass(), fact.tranID(),
-				fact.creatorID(), ownerID() );
+		return transact( (Class<F>) fact.getClass(),
+				(Transaction<F>) fact.transaction(), fact.creator(), this );
 	}
 
 	/**
 	 * initiate a new transaction
 	 * 
-	 * @param factKind
-	 * @param executorID
+	 * @param tranKind
+	 * @param executor
 	 * @param cause
 	 * @param expiration
 	 * @param params
 	 * @return
 	 */
 	default <F extends CoordinationFact> F createRequest(
-		final Class<F> factKind, final Organization.ID executorID,
+		final Class<F> tranKind, final CompositeActor executor, // FIXME id only
 		final CoordinationFact cause, final Instant expiration,
 		final Map<?, ?>... params )
 	{
-		return asInitiator( factKind, executorID ).createFact(
+		return (F) asInitiator( tranKind, executor ).createFact(
 				CoordinationFactType.REQUESTED, cause, false, expiration,
 				params );
 	}
 
 	/**
 	 * @param cause
-	 * @param type
+	 * @param factKind
 	 * @param terminal
 	 * @param expiration
 	 * @param params
 	 * @return
 	 */
 	default <F extends CoordinationFact> F createResponse( final F cause,
-		final CoordinationFactType type, final boolean terminal,
+		final CoordinationFactType factKind, final boolean terminal,
 		final Instant expiration, final Map<?, ?>... params )
 	{
-		return (F) asResponder( cause ).createFact( type, cause, terminal,
+		return (F) asResponder( cause ).createFact( factKind, cause, terminal,
 				expiration, params );
 	}
 
@@ -164,18 +168,18 @@ public interface CompositeActor
 			final Organization.ID orgId )
 		{
 			return (CompositeActor.ID) Util.of( name, new ID() )
-					.setParent( orgId );
+					.parent( orgId );
 		}
 	}
 
-	static CompositeActor of( final CompositeActor.ID id,
-		final Organization org, final CoordinationFact.Factory factFactory )
+	static CompositeActor of( final ID id, final Organization org,
+		final CoordinationFact.Factory factFactory )
 	{
 		final Subject<CoordinationFact, CoordinationFact> outgoing = PublishSubject
 				.create();
 		final Subject<CoordinationFact, CoordinationFact> expiring = PublishSubject
 				.create();
-		final Map<Transaction.ID, Transaction<?>> txs = new HashMap<>();
+		final Map<Transaction.ID, Transaction<?>> txs = new ConcurrentHashMap<>();
 
 		return new CompositeActor()
 		{
@@ -186,7 +190,7 @@ public interface CompositeActor
 			}
 
 			@Override
-			public CompositeActor.ID id()
+			public ID id()
 			{
 				return id;
 			}
@@ -205,65 +209,106 @@ public interface CompositeActor
 
 			@Override
 			public <F extends CoordinationFact> Observable<F>
-				on( final Class<F> factKind, final Organization.ID creatorID )
+				on( final Class<F> factKind, final CompositeActor.ID creatorID )
 			{
 				return org.incoming().ofType( factKind ).filter( fact ->
 				{
-					return fact.creatorID().equals( creatorID );
+					return fact.creator().id().equals( creatorID );
 				} );
 			}
 
 			@Override
 			@SuppressWarnings( "unchecked" )
 			public <F extends CoordinationFact> Transaction<F> transact(
-				final Class<F> factKind, final Transaction.ID tranID,
-				final Organization.ID initiatorID,
-				final Organization.ID executorID )
+				final Class<F> factKind, final Transaction<F> transaction,
+				final CompositeActor initiator, final CompositeActor executor )
 			{
-				return (Transaction<F>) txs.computeIfAbsent( tranID, type ->
+				try
 				{
-					final Transaction<F> result = Transaction.of( factKind,
-							scheduler(), tranID, initiatorID, executorID,
-							factFactory );
-					org.incoming().ofType( factKind ).subscribe( incoming ->
-					{
-						result.on( incoming );
-					}, e ->
-					{
-						// transport failed?
-					}, () ->
-					{
-						// simulation done?
-					} );
-					result.outgoing().subscribe( fact ->
-					{
-						outgoing.onNext( fact );
-					}, e ->
-					{
-						outgoing.onError( e );
-					}, () ->
-					{
-						txs.remove( tranID );
-					} );
-					result.expiring().subscribe( fact ->
-					{
-						expiring.onNext( fact );
-					}, e ->
-					{
-						expiring.onError( e );
-					}, () ->
-					{
-						// nothing to do
-					} );
-					return result;
-				} );
-			}
-
-			@Override
-			public Organization.ID ownerID()
-			{
-				return org.id();
+					return (Transaction<F>) txs.computeIfAbsent(
+							transaction == null ? Transaction.ID.create()
+									: transaction.id(),
+							tid ->
+							{
+								final Transaction<F> result = transaction != null
+										? transaction
+										: Transaction.of( factKind, scheduler(),
+												tid, initiator, executor,
+												factFactory );
+								org.incoming().ofType( factKind )
+										.subscribe( incoming ->
+										{
+											result.on( incoming );
+										}, e ->
+										{
+											// transport failed?
+										}, () ->
+										{
+											// simulation done?
+										} );
+								result.performed().subscribe( fact ->
+								{
+									outgoing.onNext( fact );
+								}, e ->
+								{
+									outgoing.onError( e );
+								}, () ->
+								{
+									txs.remove( result.id() );
+								} );
+								result.expired().subscribe( fact ->
+								{
+									expiring.onNext( fact );
+								}, e ->
+								{
+									expiring.onError( e );
+								}, () ->
+								{
+									// nothing to do
+								} );
+								return result;
+							} );
+				} catch( final Throwable e )
+				{
+//					outgoing.onError( e );
+					return Thrower.rethrowUnchecked( e );
+				}
 			}
 		};
+	}
+
+	/**
+	 * {@link Factory}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	interface Factory
+	{
+
+		default CompositeActor create( String name, Organization org )
+		{
+			return create( ID.of( name, org.id() ), org );
+		}
+
+		CompositeActor create( ID id, Organization org );
+
+		@Singleton
+		class Simple implements Factory
+		{
+			private final Map<ID, CompositeActor> localCache = new ConcurrentHashMap<>();
+
+			@Inject
+			private CoordinationFact.Factory factFactory;
+
+			@Override
+			public CompositeActor create( final ID id, final Organization org )
+			{
+				return this.localCache.computeIfAbsent( id, k ->
+				{
+					return CompositeActor.of( id, org, this.factFactory );
+				} );
+			}
+		}
 	}
 }

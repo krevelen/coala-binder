@@ -35,7 +35,6 @@ import io.coala.math.FrequencyDistribution;
 import io.coala.math.MeasureUtil;
 import io.coala.math.WeightedValue;
 import io.coala.util.Instantiator;
-import io.coala.util.TypeArguments;
 import rx.functions.Func0;
 
 /**
@@ -216,21 +215,26 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	{
 		if( this instanceof AmountDistribution )
 			return (AmountDistribution<Q>) this;
-		final List<Class<?>> args = TypeArguments
-				.of( ProbabilityDistribution.class, getClass() );
-		if( !args.isEmpty() )
-		{
-			if( Amount.class.isAssignableFrom( args.get( 0 ) ) )
-				return AmountDistribution
-						.of( (ProbabilityDistribution<Amount<Q>>) this );
-			if( !Number.class.isAssignableFrom( args.get( 0 ) ) )
-				return Thrower.throwNew( UnsupportedOperationException.class,
-						"No default conversion from {} to Amounts",
-						args.get( 0 ) );
-		}
+
+//		final List<Class<?>> args = TypeArguments
+//				.of( ProbabilityDistribution.class, getClass() );
+//		if( !args.isEmpty() && args.get( 0 ) != null /* no runtime type yet */ )
+//		{
+//			if( Amount.class.isAssignableFrom( args.get( 0 ) ) )
+//				return AmountDistribution
+//						.of( (ProbabilityDistribution<Amount<Q>>) this );
+//			if( !Number.class.isAssignableFrom( args.get( 0 ) ) )
+//				return Thrower.throwNew( UnsupportedOperationException.class,
+//						"No default conversion from {} to Amounts",
+//						args.get( 0 ) );
+//		}
 		return AmountDistribution.of( () ->
 		{
-			return MeasureUtil.toAmount( (Number) draw(), unit );
+			final T result = draw();
+			if( !Amount.class.isAssignableFrom( result.getClass() ) )
+				return (Amount<Q>) MeasureUtil.toAmount( (Number) draw(),
+						unit );
+			return (Amount<Q>) result;
 		} );
 	}
 
@@ -708,7 +712,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	 * @param binder
 	 */
 	static void injectDistribution( final Object encloser, final Field field,
-		final Parser parser )
+		final Supplier<Parser> parser )
 	{
 		if( !ProbabilityDistribution.class.isAssignableFrom( field.getType() ) )
 			Thrower.throwNew( UnsupportedOperationException.class,
@@ -718,7 +722,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		final InjectDist annot = field.getAnnotation( InjectDist.class );
 		try
 		{
-			final ProbabilityDistribution<?> parsedDist = parser
+			final ProbabilityDistribution<?> parsedDist = parser.get()
 					.parse( annot.value(), annot.paramType() );
 			if( field.getType().isAssignableFrom( parsedDist.getClass() ) )
 			{

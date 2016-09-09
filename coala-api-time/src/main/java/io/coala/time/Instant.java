@@ -133,20 +133,25 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return of( TimeSpan.valueOf( value ) );
 	}
 
+	public static Instant of( final ReadableDuration millis )
+	{
+		return of( millis.getMillis(), Units.MILLIS );
+	}
+
+	public static Instant of( final ReadableInstant instant,
+		final ReadableInstant offset )
+	{
+		return of( instant.getMillis() - offset.getMillis(), Units.MILLIS );
+	}
+
 	/**
 	 * {@link Instant} static factory method
 	 * 
 	 * @param value a{@link ReadableInstant} instant, e.g. {@link DateTime}
 	 */
-	public static Instant of( final ReadableInstant date,
-		final ReadableInstant offset )
+	public static Instant of( final Date value, final Date offset )
 	{
-		return of( date.getMillis() - offset.getMillis(), Units.MILLIS );
-	}
-
-	public static Instant of( final ReadableDuration joda )
-	{
-		return of( joda.getMillis(), Units.MILLIS );
+		return of( value.getTime() - offset.getTime(), Units.MILLIS );
 	}
 
 	/**
@@ -154,7 +159,8 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 * 
 	 * @param value
 	 */
-	public static Instant of( final java.time.Instant value )
+	public static Instant of( final java.time.Instant value,
+		final java.time.Instant offset )
 	{
 		return of( TimeSpan.of( DecimalMeasure.valueOf(
 				BigDecimal.valueOf( value.get( ChronoField.NANO_OF_SECOND ) )

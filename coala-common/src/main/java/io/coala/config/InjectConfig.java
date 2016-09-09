@@ -23,14 +23,13 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Qualifier;
 
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 
-import io.coala.bind.LocalBinder;
-import io.coala.exception.Thrower;
 import io.coala.name.Identified;
 
 /**
@@ -62,16 +61,16 @@ public @interface InjectConfig
 
 	Class<? extends Config> configType() default VoidConfig.class;
 
-	String methodName() default "fail";
+	String key() default "";
 
 	interface VoidConfig extends Config
 	{
-		default void fail()
-		{
-			Thrower.throwNew( UnsupportedOperationException.class,
-					"@{} missing valid configType attribute: {}",
-					InjectConfig.class.getSimpleName(), VoidConfig.class );
-		}
+//		default void fail()
+//		{
+//			Thrower.throwNew( UnsupportedOperationException.class,
+//					"@{} missing valid configType attribute: {}",
+//					InjectConfig.class.getSimpleName(), VoidConfig.class );
+//		}
 	}
 
 	/**

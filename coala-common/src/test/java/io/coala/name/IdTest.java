@@ -87,7 +87,7 @@ public class IdTest
 
 		public MyChild withParent( final Comparable value )
 		{
-			setParent( value );
+			parent( value );
 			return this;
 		}
 	}
@@ -98,28 +98,26 @@ public class IdTest
 	@BeforeClass
 	public static void listenExceptions()
 	{
-		ExceptionStream.asObservable()
-				.subscribe( new Observer<Throwable>()
-				{
-					@Override
-					public void onCompleted()
-					{
-						LOG.trace( "JVM COMPLETED" );
-					}
+		ExceptionStream.asObservable().subscribe( new Observer<Throwable>()
+		{
+			@Override
+			public void onCompleted()
+			{
+				LOG.trace( "JVM COMPLETED" );
+			}
 
-					@Override
-					public void onError( final Throwable e )
-					{
-						LOG.trace( "JVM FAILED" );
-					}
+			@Override
+			public void onError( final Throwable e )
+			{
+				LOG.trace( "JVM FAILED" );
+			}
 
-					@Override
-					public void onNext( final Throwable t )
-					{
-						LOG.error( "Intercept " + t.getClass().getSimpleName(),
-								t );
-					}
-				} );
+			@Override
+			public void onNext( final Throwable t )
+			{
+				LOG.error( "Intercept " + t.getClass().getSimpleName(), t );
+			}
+		} );
 	}
 
 	@Ignore // FIXME
@@ -210,10 +208,10 @@ public class IdTest
 		assertThat( "Ordinal should allow comparison with plain objects",
 				value1String.compareTo( value2String ),
 				equalTo( value1Wrap.compareTo( value2String ) ) );
-		assertThat( "orphan(2) = wrap(2)",
-				value2Orphan.compareTo( value2Wrap ), equalTo( 0 ) );
-		assertThat( "wrap(2) = orphan(2)",
-				value2Wrap.compareTo( value2Orphan ), equalTo( 0 ) );
+		assertThat( "orphan(2) = wrap(2)", value2Orphan.compareTo( value2Wrap ),
+				equalTo( 0 ) );
+		assertThat( "wrap(2) = orphan(2)", value2Wrap.compareTo( value2Orphan ),
+				equalTo( 0 ) );
 		assertThat( "wrap(1) < orphan(2)", value1Wrap.compareTo( value2Orphan ),
 				lessThan( 0 ) );
 		assertThat( "orphan(2) > wrap(1)", value2Orphan.compareTo( value1Wrap ),
