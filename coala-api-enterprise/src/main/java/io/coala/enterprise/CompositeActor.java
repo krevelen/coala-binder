@@ -25,7 +25,9 @@ import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.persistence.Entity;
 
+import io.coala.bind.LocalId;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.name.Id;
@@ -84,13 +86,14 @@ public interface CompositeActor
 	/**
 	 * @param tranKind the type of {@link CoordinationFact} to transact
 	 * @param transaction the context {@link Transaction}, or {@code null}
-	 * @param initiator the initiator {@link CompositeActor}
-	 * @param executor the executor {@link CompositeActor}
+	 * @param initiator the initiator {@link CompositeActor.ID}
+	 * @param executor the executor {@link CompositeActor.ID}
+	 * @param source the source {@link CompositeActor}
 	 * @return the {@link Transaction} context
 	 */
 	<F extends CoordinationFact> Transaction<F> transact( Class<F> tranKind,
-		Transaction<F> transaction, CompositeActor initiator,
-		CompositeActor executor );
+		Transaction<F> transaction, CompositeActor.ID initiator,
+		CompositeActor.ID executor, CompositeActor source );
 
 	/**
 	 * @param tranKind the type of {@link CoordinationFact} to transact
@@ -98,9 +101,9 @@ public interface CompositeActor
 	 * @return the {@link Transaction} context
 	 */
 	default <F extends CoordinationFact> Transaction<F>
-		asInitiator( final Class<F> tranKind, final CompositeActor executor )
+		asInitiator( final Class<F> tranKind, final CompositeActor.ID executor )
 	{
-		return transact( tranKind, null, this, executor );
+		return transact( tranKind, null, id(), executor, this );
 	}
 
 	/**
@@ -112,7 +115,8 @@ public interface CompositeActor
 		asResponder( final F fact )
 	{
 		return transact( (Class<F>) fact.getClass(),
-				(Transaction<F>) fact.transaction(), fact.creator(), this );
+				(Transaction<F>) fact.transaction(), fact.creator(), id(),
+				this );
 	}
 
 	/**
@@ -126,8 +130,8 @@ public interface CompositeActor
 	 * @return
 	 */
 	default <F extends CoordinationFact> F createRequest(
-		final Class<F> tranKind, final CompositeActor executor, // FIXME id only
-		final CoordinationFact cause, final Instant expiration,
+		final Class<F> tranKind, final CompositeActor.ID executor,
+		final CoordinationFact.ID cause, final Instant expiration,
 		final Map<?, ?>... params )
 	{
 		return (F) asInitiator( tranKind, executor ).createFact(
@@ -147,8 +151,8 @@ public interface CompositeActor
 		final CoordinationFactType factKind, final boolean terminal,
 		final Instant expiration, final Map<?, ?>... params )
 	{
-		return (F) asResponder( cause ).createFact( factKind, cause, terminal,
-				expiration, params );
+		return (F) asResponder( cause ).createFact( factKind, cause.id(),
+				terminal, expiration, params );
 	}
 
 	/**
@@ -157,18 +161,40 @@ public interface CompositeActor
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class ID extends Id.OrdinalChild<String, Organization.ID>
+	class ID extends LocalId
 	{
 		/**
 		 * @param name
 		 * @param orgId
 		 * @return
 		 */
-		public static CompositeActor.ID of( final String name,
-			final Organization.ID orgId )
+		public static ID of( final String name, final Organization.ID ctx )
 		{
-			return (CompositeActor.ID) Util.of( name, new ID() )
-					.parent( orgId );
+			return Id.of( new ID(), name, ctx );
+		}
+
+		protected static ID of( final LocalId ctx )
+		{
+			return of( (String) ctx.unwrap(),
+					Organization.ID.of( ctx.parent() ) );
+		}
+
+		@Entity//( name = LocalId.Dao.ENTITY_NAME )
+		public static class Dao extends LocalId.Dao
+		{
+			@Override
+			public ID restore()
+			{
+				return CompositeActor.ID.of( this.myId,
+						Organization.ID.of( this.parentId.restore() ) );
+			}
+
+			@Override
+			public Dao prePersist( final LocalId source )
+			{
+				super.prePersist( source );
+				return this;
+			}
 		}
 	}
 
@@ -213,7 +239,7 @@ public interface CompositeActor
 			{
 				return org.incoming().ofType( factKind ).filter( fact ->
 				{
-					return fact.creator().id().equals( creatorID );
+					return fact.creator().equals( creatorID );
 				} );
 			}
 
@@ -221,12 +247,13 @@ public interface CompositeActor
 			@SuppressWarnings( "unchecked" )
 			public <F extends CoordinationFact> Transaction<F> transact(
 				final Class<F> factKind, final Transaction<F> transaction,
-				final CompositeActor initiator, final CompositeActor executor )
+				final CompositeActor.ID initiator,
+				final CompositeActor.ID executor, final CompositeActor source )
 			{
 				try
 				{
 					return (Transaction<F>) txs.computeIfAbsent(
-							transaction == null ? Transaction.ID.create()
+							transaction == null ? Transaction.ID.create( id() )
 									: transaction.id(),
 							tid ->
 							{

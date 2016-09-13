@@ -32,6 +32,7 @@ import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
@@ -59,9 +60,20 @@ public class JsonUtil
 	static//private JsonUtil()
 	{
 		// singleton design pattern
-		LOG.trace( "Using jackson v: " + JOM.version() );
-		JOM.registerModule( new JodaModule() );
-		JOM.registerModule( new UUIDModule() );
+		initialize( JOM );
+	}
+
+	/**
+	 * @param instance
+	 */
+	public static void initialize( final ObjectMapper om )
+	{
+		om.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
+		om.registerModule( new JodaModule() );
+		om.registerModule( new UUIDModule() );
+		LOG.trace( "Using jackson v: {} with modules: {}", om.version(),
+				new Class[]
+		{ JodaModule.class, UUIDModule.class } );
 	}
 
 	/** */

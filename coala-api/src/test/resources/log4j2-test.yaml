@@ -14,7 +14,16 @@ Configuration:
       AppenderRef:
         ref: Console
     Logger:
-      - level: warn
-        name: javax.management
-        AppenderRef:
-          ref: Console
+      - name: javax.management
+        level: warn
+      - name: com.google.inject
+        level: info
+      - name: com.impetus.kundera
+        level: warn
+      - name: com.zaxxer.hikari
+        level: warn
+      - name: org.hibernate
+        level: warn
+      - name: hsqldb.db
+        level: warn
+          

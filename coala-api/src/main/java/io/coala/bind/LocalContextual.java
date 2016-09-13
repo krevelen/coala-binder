@@ -28,7 +28,8 @@ import io.coala.name.Identified;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface LocalContextual extends Contextual, Identified.Ordinal<String>
+public interface LocalContextual
+	extends Contextual, Identified.Ordinal<LocalId>
 {
 
 	static int hashCode( final LocalContextual self )
@@ -41,7 +42,7 @@ public interface LocalContextual extends Contextual, Identified.Ordinal<String>
 		return self.id().equals( other );
 	}
 
-	static String toString( final String id )
+	static String toString( final LocalId id )
 	{
 		return '(' + id.toString() + ')';
 	}

@@ -22,6 +22,7 @@ import javax.persistence.Persistence;
 
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
+import io.coala.log.LogUtil;
 
 /**
  * {@link JPAConfig}
@@ -72,8 +73,10 @@ public interface JPAConfig extends GlobalConfig
 	default EntityManagerFactory createEntityManagerFactory(
 		final String persistenceUnitNames, final Map<?, ?>... imports )
 	{
+		final Map<String, String> config = ConfigUtil.export( this, imports );
+		LogUtil.getLogger( JPAConfig.class ).trace( "JPA config: {}", config );
 		return Persistence.createEntityManagerFactory( persistenceUnitNames,
-				ConfigUtil.export( this, imports ) );
+				config );
 	}
 
 }

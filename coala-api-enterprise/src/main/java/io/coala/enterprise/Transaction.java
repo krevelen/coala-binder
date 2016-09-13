@@ -24,13 +24,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalId;
 import io.coala.name.Id;
 import io.coala.name.Identified;
+import io.coala.persist.UUIDToByteConverter;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
@@ -49,17 +62,17 @@ import rx.subjects.Subject;
 public interface Transaction<F extends CoordinationFact>
 	extends Proactive, Identified.Ordinal<Transaction.ID>
 {
-
-	// FIXME add cause ID
-	
 	/** @return */
 	Class<F> kind();
 
 	/** @return */
-	CompositeActor initiator(); // FIXME id only
+	LocalId owner();
 
 	/** @return */
-	CompositeActor executor(); // FIXME id only
+	CompositeActor.ID initiator();
+
+	/** @return */
+	CompositeActor.ID executor();
 
 	/**
 	 * @param factKind
@@ -69,7 +82,7 @@ public interface Transaction<F extends CoordinationFact>
 	 * @param params
 	 * @return
 	 */
-	F createFact( CoordinationFactType factKind, CoordinationFact cause,
+	F createFact( CoordinationFactType factKind, CoordinationFact.ID cause,
 		boolean terminal, Instant expiration, Map<?, ?>... params );
 
 	/** @param incoming */
@@ -89,18 +102,44 @@ public interface Transaction<F extends CoordinationFact>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class ID extends Id.Ordinal<UUID>
+	class ID extends LocalId
 	{
-		/** @return */
-		public static Transaction.ID of( final UUID value )
+
+		/** @return the wrapped value */
+		@Override
+		public UUID unwrap()
 		{
-			return Util.of( value, new ID() );
+			return (UUID) super.unwrap();
 		}
 
 		/** @return */
-		public static Transaction.ID create()
+		public static ID of( final UUID value, final LocalId ctx )
 		{
-			return of( new UUID() );
+			return Id.of( new ID(), value, ctx );
+		}
+
+		/** @return */
+		public static ID create( final LocalId ctx )
+		{
+			return of( new UUID(), ctx );
+		}
+
+		@Entity //( name = LocalId.Dao.ENTITY_NAME )
+		public static class Dao extends LocalId.Dao
+		{
+			@Override
+			public ID restore()
+			{
+				return ID.of( new UUID( this.myId ),
+						CompositeActor.ID.of( this.parentId.restore() ) );
+			}
+
+			@Override
+			public Dao prePersist( final LocalId source )
+			{
+				super.prePersist( source );
+				return this;
+			}
 		}
 	}
 
@@ -114,8 +153,8 @@ public interface Transaction<F extends CoordinationFact>
 	 */
 	static <F extends CoordinationFact> Transaction<F> of(
 		final LocalBinder binder, final Transaction.ID id,
-		final Class<F> tranKind, final CompositeActor initiator,
-		final CompositeActor executor )
+		final Class<F> tranKind, final CompositeActor.ID initiator,
+		final CompositeActor.ID executor )
 	{
 		return of( tranKind, binder.inject( Scheduler.class ), id, initiator,
 				executor, binder.inject( CoordinationFact.Factory.class ) );
@@ -132,7 +171,7 @@ public interface Transaction<F extends CoordinationFact>
 	 */
 	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
 		final Scheduler scheduler, final Transaction.ID id,
-		final CompositeActor initiator, final CompositeActor executor,
+		final CompositeActor.ID initiator, final CompositeActor.ID executor,
 		final CoordinationFact.Factory factFactory )
 	{
 		final Subject<F, F> performed = PublishSubject.create();
@@ -159,29 +198,36 @@ public interface Transaction<F extends CoordinationFact>
 			}
 
 			@Override
-			public CompositeActor initiator()
+			public LocalId owner()
+			{
+				return factFactory.owner();
+			}
+
+			@Override
+			public CompositeActor.ID initiator()
 			{
 				return initiator;
 			}
 
 			@Override
-			public CompositeActor executor()
+			public CompositeActor.ID executor()
 			{
 				return executor;
 			}
 
 			@Override
 			public F createFact( final CoordinationFactType factKind,
-				final CoordinationFact cause, final boolean terminal,
+				final CoordinationFact.ID cause, final boolean terminal,
 				final Instant expiration, final Map<?, ?>... params )
 			{
 				try
 				{
 					final F result = factFactory.create( kind(),
-							CoordinationFact.ID.create(), this,
+							CoordinationFact.ID.create( factFactory.owner() ),
+							this,
 							factKind.isFromInitiator() ? initiator : executor,
 							factKind, expiration, cause, params );
-					if( cause != null ) pending.remove( cause.id() );
+					if( cause != null ) pending.remove( cause );
 					if( expiration != null )
 					{
 						pending.put( result.id(), at( expiration ).call( () ->
@@ -215,7 +261,7 @@ public interface Transaction<F extends CoordinationFact>
 			@Override
 			public void on( final F fact )
 			{
-				pending.remove( fact.cause().id() );
+				pending.remove( fact.cause() );
 				if( fact.expiration() != null ) pending.put( fact.id(),
 						scheduler.at( fact.expiration() ).call( () ->
 						{
@@ -226,11 +272,69 @@ public interface Transaction<F extends CoordinationFact>
 		};
 	}
 
+	/**
+	 * {@link Dao}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@Entity( name = Dao.ENTITY_NAME )
+	public class Dao extends BindableDao<Transaction<?>, Dao>
+	{
+		public static final String ENTITY_NAME = "TRANSACTIONS";
+
+		@javax.persistence.Id
+		@GeneratedValue( strategy = GenerationType.IDENTITY )
+		@Column( name = "PK", nullable = false, updatable = false )
+		protected Integer pk;
+
+		@Column( name = "ID", nullable = false, updatable = false,
+			length = 16 /* , columnDefinition = "BINARY(16)" */ )
+		@Convert( converter = UUIDToByteConverter.class )
+		protected UUID id;
+
+		@Column( name = "KIND", nullable = true, updatable = false )
+		protected Class<? extends CoordinationFact> kind;
+
+		@JoinColumn( name = "INITIATOR_ID", nullable = true, updatable = false )
+		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		protected CompositeActor.ID.Dao initiator;
+
+		@JoinColumn( name = "EXECUTOR_ID", nullable = true, updatable = false )
+		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		protected CompositeActor.ID.Dao executor;
+
+		@Inject
+		@Transient
+		transient LocalBinder binder;
+
+		@Override
+		protected Transaction<?> doRestore()
+		{
+			return this.binder.inject( Transaction.Factory.class ).create(
+					Transaction.ID.of( this.id, this.binder.id() ), this.kind,
+					this.initiator.restore(), this.executor.restore() );
+		}
+
+		@Override
+		protected Dao prePersist( final Transaction<?> tran )
+		{
+			this.id = tran.id().unwrap();
+			this.kind = tran.kind();
+			this.initiator = new CompositeActor.ID.Dao()
+					.prePersist( tran.initiator() );
+			this.executor = new CompositeActor.ID.Dao()
+					.prePersist( tran.executor() );
+			return this;
+		}
+
+	}
+
 	interface Factory
 	{
 		<F extends CoordinationFact> Transaction<F> create( Transaction.ID id,
-			Class<F> factType, CompositeActor initiator,
-			CompositeActor executor );
+			Class<F> factType, CompositeActor.ID initiator,
+			CompositeActor.ID executor );
 
 		@Singleton
 		class LocalCaching implements Factory
@@ -244,7 +348,8 @@ public interface Transaction<F extends CoordinationFact>
 			@Override
 			public <F extends CoordinationFact> Transaction<F> create(
 				final ID id, final Class<F> kind,
-				final CompositeActor initiator, final CompositeActor executor )
+				final CompositeActor.ID initiator,
+				final CompositeActor.ID executor )
 			{
 				return (Transaction<F>) this.localCache.computeIfAbsent( kind,
 						k ->

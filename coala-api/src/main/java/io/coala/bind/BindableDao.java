@@ -1,4 +1,4 @@
-package io.coala.enterprise.dao;
+package io.coala.bind;
 
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
@@ -8,11 +8,10 @@ import javax.persistence.TypedQuery;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 
-import io.coala.bind.LocalBinder;
 import io.coala.json.JsonUtil;
 
 /**
- * {@link AbstractDao} links {@link Entity} and {@link Embeddable} data access
+ * {@link BindableDao} links {@link Entity} and {@link Embeddable} data access
  * object to their referent types and provides some JSON de/serialization
  * features
  * <p>
@@ -22,11 +21,11 @@ import io.coala.json.JsonUtil;
  * @author Rick van Krevelen
  */
 @JsonAutoDetect( fieldVisibility = Visibility.PROTECTED_AND_PUBLIC )
-public abstract class AbstractDao<T, THIS extends AbstractDao<T, ?>>
+public abstract class BindableDao<T, THIS extends BindableDao<T, ?>>
 {
 
 	@SuppressWarnings( "unchecked" )
-	public static <T extends AbstractDao<S, ?>, S> T persist(
+	public static <T extends BindableDao<S, ?>, S> T persist(
 		final LocalBinder binder, final EntityManager em, final S source,
 		final Class<T> entityType )
 	{
@@ -35,14 +34,14 @@ public abstract class AbstractDao<T, THIS extends AbstractDao<T, ?>>
 		return result;
 	}
 
-	abstract THIS prePersist( T source );
+	abstract protected THIS prePersist( T source );
 
 	public T restore()
 	{
 		return doRestore();
 	}
 
-	abstract T doRestore();
+	abstract protected T doRestore();
 
 	@Override
 	public String toString()

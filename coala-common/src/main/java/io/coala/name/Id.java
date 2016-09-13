@@ -15,12 +15,7 @@
  */
 package io.coala.name;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
 import org.aeonbits.owner.ConfigCache;
-import org.aeonbits.owner.Mutable;
-import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper;
-import io.coala.log.LogUtil;
 
 /**
  * {@link Id} is a {@link Wrapper} for reference values. Its un/wrapping should
@@ -49,18 +43,34 @@ public class Id<T> extends Wrapper.Simple<T>
 {
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger( Id.class );
+//	private static final Logger LOG = LogUtil.getLogger( Id.class );
 
-	/**
-	 * @param json the JSON {@link String}
-	 * @param type the concrete type of {@link Id}
-	 * @return the deserialized {@link Id}
-	 */
+	@Deprecated
 	public static <T> Id<T> valueOf( final T value )
+	{
+		return of( value );
+	}
+
+	public static <T> Id<T> of( final T value )
 	{
 		final Id<T> result = new Id<T>();
 		result.wrap( value );
 		return result;
+	}
+
+	@SuppressWarnings( "rawtypes" )
+	public static <T extends Comparable, P extends Comparable>
+		OrdinalChild<T, P> of( final T value, final P parent )
+	{
+		return of( new OrdinalChild<T, P>(), value, parent );
+	}
+
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public static <
+		T extends OrdinalChild<C, P>, C extends Comparable, P extends Comparable>
+		T of( final T id, final C child, final P parent )
+	{
+		return (T) ((T) id.wrap( child )).parent( parent );
 	}
 
 	/**
@@ -69,16 +79,19 @@ public class Id<T> extends Wrapper.Simple<T>
 	 * @version $Id: 48cb862b9b52a61fef7db29fbd862f0b60bcee27 $
 	 * @author Rick van Krevelen
 	 */
-	public static interface IdConfig extends GlobalConfig, Mutable
+	public static interface IdConfig extends GlobalConfig//, Mutable
 	{
 		String ID_SEPARATOR_KEY = "io.coala.name.separator";
 
+		String ID_SEPARATOR_DEFAULT = "-";
+
 		/** */
 		@Key( ID_SEPARATOR_KEY )
-		@DefaultValue( "-" )
+		@DefaultValue( ID_SEPARATOR_DEFAULT )
 		String separator();
 
-		IdConfig INSTANCE = ConfigCache.getOrCreate( IdConfig.class );
+		IdConfig INSTANCE = ConfigCache.getOrCreate( IdConfig.class,
+				System.getProperties(), System.getenv() );
 	}
 
 	/**
@@ -117,23 +130,23 @@ public class Id<T> extends Wrapper.Simple<T>
 	{
 
 		/** the configured PATH_SEP constant */
-		private static String PATH_SEP;
+		public static String ID_SEP_REGEX;
 
 		static
 		{
-			PATH_SEP = IdConfig.INSTANCE.separator();
-			IdConfig.INSTANCE.addPropertyChangeListener(
-					IdConfig.ID_SEPARATOR_KEY, new PropertyChangeListener()
-					{
-						@Override
-						public void
-							propertyChange( final PropertyChangeEvent evt )
-						{
-							PATH_SEP = IdConfig.INSTANCE.separator();
-							LOG.trace( evt.getPropertyName() + " now: "
-									+ evt.getNewValue() );
-						}
-					} );
+			ID_SEP_REGEX = IdConfig.INSTANCE.separator();
+//			IdConfig.INSTANCE.addPropertyChangeListener(
+//					IdConfig.ID_SEPARATOR_KEY, new PropertyChangeListener()
+//					{
+//						@Override
+//						public void
+//							propertyChange( final PropertyChangeEvent evt )
+//						{
+//							ID_SEP = IdConfig.INSTANCE.separator();
+//							LOG.trace( evt.getPropertyName() + " now: "
+//									+ evt.getNewValue() );
+//						}
+//					} );
 		}
 
 		/** */
@@ -172,7 +185,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		 * @param s the {@link OrdinalChild} to test parent of
 		 * @return {@code true} if parents
 		 */
-		public boolean isSibbling( final OrdinalChild<?, P> s )
+		public boolean isSibling( final OrdinalChild<?, P> s )
 		{
 			return s != null && parent() != null
 			// && s.parent() != null :: handled by P#equals()
@@ -189,7 +202,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		public String toString()
 		{
 			return isOrphan() ? unwrap().toString()
-					: parent().toString() + PATH_SEP + unwrap();
+					: parent().toString() + ID_SEP_REGEX + unwrap();
 		}
 
 		@Override
@@ -197,7 +210,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		{
 			final int prime = 31;
 			int result = super.hashCode();
-			if( parent() != null && parent() != this )
+			if( !isOrphan() && parent() != this )
 				result = prime * result + parent().hashCode();
 			return result;
 		}
@@ -211,7 +224,7 @@ public class Id<T> extends Wrapper.Simple<T>
 			if( !super.equals( other ) ) return false;
 
 			final OrdinalChild<T, P> that = (OrdinalChild<T, P>) other;
-			return parent() == null ? that.parent() == null
+			return isOrphan() ? that.isOrphan()
 					: parent().equals( that.parent() );
 		}
 

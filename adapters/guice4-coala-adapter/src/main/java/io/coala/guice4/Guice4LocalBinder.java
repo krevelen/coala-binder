@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -31,6 +32,7 @@ import io.coala.bind.BindingConfig;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.bind.LocalContextual;
+import io.coala.bind.LocalId;
 import io.coala.bind.ProviderConfig;
 import io.coala.config.ConfigUtil;
 import io.coala.config.InjectConfig;
@@ -323,19 +325,16 @@ public class Guice4LocalBinder implements LocalBinder
 		return result;
 	}
 
-	private static final Map<String, Injector> INJECTOR_CACHE = new HashMap<>();
+	private static final Map<LocalId, Injector> INJECTOR_CACHE = new ConcurrentHashMap<>();
 
 	@SafeVarargs
 	private static synchronized Injector cachedInjectorFor(
 		final Guice4LocalBinder binder, final Map<?, ?>... imports )
 	{
-		Injector result = INJECTOR_CACHE.get( binder.id );
-		if( result == null )
+		return INJECTOR_CACHE.computeIfAbsent( binder.id, id ->
 		{
-			result = createInjectorFor( binder, imports );
-			INJECTOR_CACHE.put( binder.id, result );
-		}
-		return result;
+			return createInjectorFor( binder, imports );
+		} );
 	}
 
 	/**
@@ -369,7 +368,7 @@ public class Guice4LocalBinder implements LocalBinder
 	{
 		final Guice4LocalBinder result = new Guice4LocalBinder();
 		result.config = config.binderConfig();
-		result.id = config.rawId();
+		result.id = config.localId();
 		result.context = config.context();
 		if( result.context == null ) result.context = new Context();
 		result.injector = cachedInjectorFor( result, bindImports );
@@ -388,7 +387,7 @@ public class Guice4LocalBinder implements LocalBinder
 
 	private transient BinderConfig config;
 
-	private String id;
+	private LocalId id;
 
 	/** the shared context */
 	private Context context;
@@ -400,7 +399,7 @@ public class Guice4LocalBinder implements LocalBinder
 	}
 
 	@Override
-	public String id()
+	public LocalId id()
 	{
 		return this.id;
 	}

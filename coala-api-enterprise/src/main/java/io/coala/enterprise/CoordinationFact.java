@@ -22,30 +22,49 @@ package io.coala.enterprise;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+import javax.persistence.Version;
 
+import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
 
+import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
-import io.coala.enterprise.dao.AbstractDao;
-import io.coala.enterprise.dao.CoordinationFactDao;
+import io.coala.bind.LocalId;
 import io.coala.exception.Thrower;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.persist.JPAUtil;
+import io.coala.persist.JsonNodeToStringConverter;
 import io.coala.time.Instant;
+import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import rx.Observer;
 
@@ -62,7 +81,7 @@ public interface CoordinationFact
 	Transaction<?> transaction();
 
 	/** @return */
-	CompositeActor creator(); // FIXME id only
+	CompositeActor.ID creator();
 
 	/** @return */
 	CoordinationFactType kind();
@@ -75,7 +94,7 @@ public interface CoordinationFact
 
 	/** @return */
 	@JsonIgnore
-	CoordinationFact cause();
+	CoordinationFact.ID cause();
 
 	/** @return */
 	@JsonAnyGetter
@@ -121,19 +140,157 @@ public interface CoordinationFact
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class ID extends Id.Ordinal<UUID>
+	class ID extends LocalId
 	{
-		/** @return an {@link ID} with specified {@link UUID} */
-		public static CoordinationFact.ID of( UUID value )
+
+		/** @return the wrapped value */
+		@Override
+		public UUID unwrap()
 		{
-			return Util.of( value, new ID() );
+			return (UUID) super.unwrap();
+		}
+
+		/** @return an {@link ID} with specified {@link UUID} */
+		public static ID of( final UUID value, final LocalId ctx )
+		{
+			return Id.of( new ID(), value, ctx );
 		}
 
 		/** @return a new {@link ID} */
-		public static CoordinationFact.ID create()
+		public static ID create( final LocalId ctx )
 		{
-			return of( new UUID() );
+			return of( new UUID(), ctx );
 		}
+
+		@Entity //( name = LocalId.Dao.ENTITY_NAME )
+		public static class Dao extends LocalId.Dao
+		{
+			@Override
+			public ID restore()
+			{
+				return ID.of( new UUID( this.myId ), this.parentId.restore() );
+			}
+
+			@Override
+			public Dao prePersist( final LocalId source )
+			{
+				super.prePersist( source );
+				return this;
+			}
+		}
+	}
+
+	/**
+	 * {@link Dao}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@Entity( name = Dao.ENTITY_NAME )
+	public class Dao extends BindableDao<CoordinationFact, Dao>
+	{
+		public static final String ENTITY_NAME = "FACTS";
+
+		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
+		@Temporal( TemporalType.TIMESTAMP )
+		@Column( name = "CREATED_TS", insertable = false, updatable = false,
+			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+		protected Date created;
+
+		/** time stamp of last update; should never change */
+		@Version
+		@Temporal( TemporalType.TIMESTAMP )
+		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
+			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+		protected Date updated;
+
+//	@Id
+//	@Column( name = "ID", nullable = false, updatable = false,
+//		length = 16 /* , columnDefinition = "BINARY(16)" */ )
+//	@Convert( converter = UUIDToByteConverter.class )
+
+		@javax.persistence.Id
+		@GeneratedValue( strategy = GenerationType.IDENTITY )
+		@Column( name = "PK", nullable = false, updatable = false )
+		protected Integer pk;
+
+		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST,
+			optional = true )
+		@JoinColumn( name = "ID", nullable = false, updatable = false )
+		protected CoordinationFact.ID.Dao id;
+
+//	@Column( name = "ID", nullable = false, updatable = false )
+//	protected CoordinationFact.ID.Dao id;
+
+		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@JoinColumn( name = "TRANSACTION_ID", nullable = false,
+			updatable = false )
+		protected Transaction.Dao transaction;
+
+		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@JoinColumn( name = "CREATOR_ID", nullable = false, updatable = false )
+		protected CompositeActor.ID.Dao creator;
+
+		@Column( name = "KIND", nullable = false, updatable = false )
+		protected CoordinationFactType kind;
+
+		@Temporal( TemporalType.TIMESTAMP )
+		@Column( name = "OCCURRENCE", nullable = true, updatable = false )
+		protected Date occurrence;
+
+		@Temporal( TemporalType.TIMESTAMP )
+		@Column( name = "EXPIRATION", nullable = true, updatable = false )
+		protected Date expiration;
+
+		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST,
+			optional = true )
+		@JoinColumn( name = "CAUSE_ID", nullable = true, updatable = false )
+		protected CoordinationFact.ID.Dao cause;
+
+		@Column( name = "PROPERTIES", nullable = true, updatable = false )
+		@Convert( converter = JsonNodeToStringConverter.class )
+		protected JsonNode properties;
+
+		@Inject
+		@Transient
+		private transient LocalBinder binder;
+
+		private static final Date offset = Date.from(
+				ConfigCache.getOrCreate( ReplicateConfig.class ).offset() );
+
+		@SuppressWarnings( { "unchecked", "rawtypes" } )
+		@Override
+		protected CoordinationFact doRestore()
+		{
+			final Transaction tran = this.transaction.restore();
+			return this.binder.inject( CoordinationFact.Factory.class ).create(
+					tran.kind(), this.id.restore(), tran,
+					this.creator.restore(), this.kind,
+					this.expiration == null ? null
+							: Instant.of( this.expiration, offset ),
+					this.cause == null ? null : this.cause.restore(),
+					(Map<?, ?>) JsonUtil.valueOf( this.properties,
+							Map.class ) );
+		}
+
+		@Override
+		protected Dao prePersist( final CoordinationFact fact )
+		{
+			this.id = new CoordinationFact.ID.Dao().prePersist( fact.id() );
+			this.kind = fact.kind();
+			this.transaction = this.binder.inject( Transaction.Dao.class )
+					.prePersist( fact.transaction() );
+			this.creator = new CompositeActor.ID.Dao()
+					.prePersist( fact.creator() );
+			this.cause = fact.cause() == null ? null
+					: new CoordinationFact.ID.Dao().prePersist( fact.cause() );
+			this.occurrence = fact.occurrence().toDate( offset );
+			this.expiration = fact.expiration() == null ? null
+					: fact.expiration().toDate( offset );
+			this.properties = JsonUtil.toTree( fact.properties() );
+			return this;
+		}
+
 	}
 
 	/**
@@ -153,13 +310,13 @@ public interface CoordinationFact
 
 		private Transaction<?> transaction;
 
-		private CompositeActor creator;
+		private CompositeActor.ID creator;
 
 		private CoordinationFactType kind;
 
 		private Instant expiration;
 
-		private CoordinationFact cause;
+		private CoordinationFact.ID cause;
 
 		private Map<String, Object> properties = new HashMap<>();
 
@@ -173,8 +330,8 @@ public interface CoordinationFact
 
 		protected Simple( final Class<?> type, final CoordinationFact.ID id,
 			final Instant occurrence, final Transaction<?> transaction,
-			final CompositeActor creator, final CoordinationFactType kind,
-			final Instant expiration, final CoordinationFact cause,
+			final CompositeActor.ID creator, final CoordinationFactType kind,
+			final Instant expiration, final CoordinationFact.ID cause,
 			final Map<?, ?>... properties )
 		{
 			this.type = type;
@@ -195,8 +352,8 @@ public interface CoordinationFact
 		@Override
 		public String toString()
 		{
-			return this.type.getSimpleName() + '[' + kind() + '|'
-					+ creator().id() + '|' + occurrence() + ']' + properties();
+			return this.type.getSimpleName() + '[' + kind() + '|' + creator()
+					+ '|' + occurrence() + ']' + properties();
 		}
 
 		@Override
@@ -224,7 +381,7 @@ public interface CoordinationFact
 		}
 
 		@Override
-		public CompositeActor creator()
+		public CompositeActor.ID creator()
 		{
 			return this.creator;
 		}
@@ -242,7 +399,7 @@ public interface CoordinationFact
 		}
 
 		@Override
-		public CoordinationFact cause()
+		public CoordinationFact.ID cause()
 		{
 			return this.cause;
 		}
@@ -263,33 +420,38 @@ public interface CoordinationFact
 	interface Factory
 	{
 
+		LocalId owner();
+
 		/**
 		 * @param tranKind the type of {@link CoordinationFact} (transaction
 		 *            kind)
 		 * @param id the {@link CoordinationFact.ID}
 		 * @param transaction the {@link Transaction}
-		 * @param creator the {@link CompositeActor}
+		 * @param creator the {@link CompositeActor.ID}
 		 * @param factKind the {@link CoordinationFactType} (process step kind)
 		 * @param expiration the {@link Instant} of expiration
-		 * @param cause the cause {@link CoordinationFact}, or {@code null} for
-		 *            external initiation
+		 * @param cause the cause {@link CoordinationFact.ID}, or {@code null}
+		 *            for external initiation
 		 * @param properties the properties
 		 * @return a {@link CoordinationFact}
 		 */
 		<F extends CoordinationFact> F create( //Scheduler scheduler,
 			Class<F> tranKind, CoordinationFact.ID id,
-			Transaction<? super F> transaction, CompositeActor creator,
+			Transaction<? super F> transaction, CompositeActor.ID creator,
 			CoordinationFactType factKind, Instant expiration,
-			CoordinationFact cause, Map<?, ?>... properties );
+			CoordinationFact.ID cause, Map<?, ?>... properties );
 
 		/**
-		 * {@link Factory.Simple} generates the desired extension of
-		 * {@link CoordinationFact} as proxy decorating a new
+		 * {@link CoordinationFact.Factory.Simple} generates the desired
+		 * extension of {@link CoordinationFact} as proxy decorating a new
 		 * {@link CoordinationFact.Simple} instance
 		 */
 		@Singleton
 		class Simple implements Factory
 		{
+			@Inject
+			private LocalBinder binder;
+
 			@Inject
 			private Scheduler scheduler;
 
@@ -297,13 +459,19 @@ public interface CoordinationFact
 			public <F extends CoordinationFact> F create(
 				final Class<F> tranKind, final CoordinationFact.ID id,
 				final Transaction<? super F> transaction,
-				final CompositeActor creator,
+				final CompositeActor.ID creator,
 				final CoordinationFactType factKind, final Instant expiration,
-				final CoordinationFact cause, final Map<?, ?>... params )
+				final CoordinationFact.ID cause, final Map<?, ?>... params )
 			{
 				return new CoordinationFact.Simple( tranKind, id,
 						this.scheduler.now(), transaction, creator, factKind,
 						expiration, cause, params ).proxyAs( tranKind, null );
+			}
+
+			@Override
+			public LocalId owner()
+			{
+				return this.binder.id();
 			}
 		}
 	}
@@ -364,10 +532,7 @@ public interface CoordinationFact
 
 			/** */
 			private static final Logger LOG = LogUtil
-					.getLogger( CoordinationFact.Persister.SimpleJPA.class );
-
-			/** */
-			private static final String TABLE = CoordinationFactDao.TABLE_NAME;
+					.getLogger( SimpleJPA.class );
 
 			@Inject
 			private LocalBinder binder;
@@ -381,13 +546,12 @@ public interface CoordinationFact
 				final List<CoordinationFact> result = new ArrayList<>();
 				JPAUtil.transact( this.emf, em ->
 				{
-					for( CoordinationFactDao f : em
-							.createQuery( "SELECT f FROM " + TABLE + " f",
-									CoordinationFactDao.class )
-							.getResultList() )
+					for( Dao f : em.createQuery(
+							"SELECT f FROM " + Dao.ENTITY_NAME + " f",
+							Dao.class ).getResultList() )
 						result.add( f.restore() );
 				} );
-				LOG.trace( "Read {}, result: {}", TABLE, result );
+				LOG.trace( "Read {}, result: {}", Dao.ENTITY_NAME, result );
 				return result;
 //				return ()->
 //				{
@@ -446,8 +610,7 @@ public interface CoordinationFact
 			{
 				JPAUtil.transact( this.emf, em ->
 				{
-					AbstractDao.persist( this.binder, em, fact,
-							CoordinationFactDao.class );
+					BindableDao.persist( this.binder, em, fact, Dao.class );
 				} );
 			}
 
@@ -457,8 +620,7 @@ public interface CoordinationFact
 				if( facts != null ) JPAUtil.transact( this.emf, em ->
 				{
 					for( CoordinationFact fact : facts )
-						AbstractDao.persist( this.binder, em, fact,
-								CoordinationFactDao.class );
+						BindableDao.persist( this.binder, em, fact, Dao.class );
 				} );
 			}
 
@@ -468,8 +630,7 @@ public interface CoordinationFact
 				JPAUtil.transact( this.emf, em ->
 				{
 					for( CoordinationFact fact : facts )
-						AbstractDao.persist( this.binder, em, fact,
-								CoordinationFactDao.class );
+						BindableDao.persist( this.binder, em, fact, Dao.class );
 				} );
 			}
 		}

@@ -1,7 +1,6 @@
 package io.coala.enterprise;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -15,11 +14,12 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
+import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.guice4.Guice4LocalBinder;
 import io.coala.log.LogUtil;
-import io.coala.persist.HibernateJPAConfig;
+import io.coala.persist.JPAUtil;
 import io.coala.time.Duration;
 import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
@@ -59,8 +59,8 @@ public class EnterpriseTest
 		@Inject
 		private Organization.Factory organizations;
 
-//		@Inject
-//		private CoordinationFact.Persister persister;
+		@Inject
+		private CoordinationFact.Persister persister;
 
 		@Inject
 		public EnterpriseModel( final Scheduler scheduler )
@@ -119,7 +119,7 @@ public class EnterpriseTest
 					{
 						// spawn initial transactions with self
 						LOG.trace( "initiating TestFact" );
-						sales.createRequest( TestFact.class, sales, null,
+						sales.createRequest( TestFact.class, sales.id(), null,
 								t.add( 1 ), Collections.singletonMap(
 										"myParam2", "myValue2" ) );
 					} );
@@ -131,17 +131,17 @@ public class EnterpriseTest
 						fact );
 			} );
 
-//			LOG.trace( "initialize outgoing fact persistence" );
-//			org1.outgoing().subscribe( fact ->
-//			{
-//				try
-//				{
-//					this.persister.save( fact );
-//				} catch( final Exception e )
-//				{
-//					e.printStackTrace();
-//				}
-//			} );
+			LOG.trace( "initialize outgoing fact persistence" );
+			org1.outgoing().subscribe( fact ->
+			{
+				try
+				{
+					this.persister.save( fact );
+				} catch( final Exception e )
+				{
+					e.printStackTrace();
+				}
+			} );
 
 			// TODO test fact expiration handling
 
@@ -161,60 +161,6 @@ public class EnterpriseTest
 		}
 	}
 
-	interface PersistenceConfig extends HibernateJPAConfig
-	{
-		String DATASOURCE_CLASS_KEY = "hibernate.hikari.dataSourceClassName";
-
-		String DATASOURCE_URL_KEY = "hibernate.hikari.dataSource.url";
-
-		String DATASOURCE_USERNAME_KEY = "hibernate.hikari.dataSource.user";
-
-		String DATASOURCE_PASSWORD_KEY = "hibernate.hikari.dataSource.password";
-
-		@DefaultValue( "hibernate_test_pu" )
-		String[] persistenceUnitNames();
-
-		@DefaultValue( "create" )
-		SchemaPolicy hibernateSchemaPolicy();
-
-		@Key( DEFAULT_SCHEMA_KEY )
-		@DefaultValue( "PUBLIC" )
-		String hibernateDefaultSchema();
-
-		@Key( CONNECTION_PROVIDER_CLASS_KEY )
-		@DefaultValue( "org.hibernate.hikaricp.internal.HikariCPConnectionProvider" )
-		String hibernateConnectionProviderClass();
-
-		// see https://github.com/brettwooldridge/HikariCP/wiki/Configuration#popular-datasource-class-names
-		@Key( DATASOURCE_CLASS_KEY )
-		@DefaultValue( "org.hsqldb.jdbc.JDBCDataSource" )
-		String hikariDataSourceClass();
-
-		@Key( DATASOURCE_USERNAME_KEY )
-		@DefaultValue( "sa" )
-		String username();
-
-		@Key( DATASOURCE_PASSWORD_KEY )
-		@DefaultValue( "" )
-		String password();
-
-		@Key( DATASOURCE_URL_KEY )
-		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
-//		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
-//		@DefaultValue( "jdbc:mysql://localhost/testdb" )
-		String url();
-
-		/**
-		 * @param imports additional {@link EntityManagerFactory} configuration
-		 * @return the (expensive) {@link EntityManagerFactory}
-		 */
-		static EntityManagerFactory createEMF( final Map<?, ?>... imports )
-		{
-			return ConfigCache.getOrCreate( PersistenceConfig.class, imports )
-					.createEntityManagerFactory();
-		}
-	}
-
 	@Test
 	public void testEnterpriseOntology() throws TimeoutException
 	{
@@ -231,15 +177,16 @@ public class EnterpriseTest
 						Transaction.Factory.LocalCaching.class )
 				.withProvider( CoordinationFact.Factory.class,
 						CoordinationFact.Factory.Simple.class )
-//				.withProvider( CoordinationFact.Persister.class,
-//						CoordinationFact.Persister.SimpleJPA.class )
+				.withProvider( CoordinationFact.Persister.class,
+						CoordinationFact.Persister.SimpleJPA.class )
 				.build();
 
 		LOG.info( "Starting EO test, config: {}", config.toYAML() );
-		final Scheduler scheduler = Guice4LocalBinder.of( config
-//						, Collections.singletonMap( EntityManagerFactory.class,
-//								PersistenceConfig.createEMF() ) 
-		).inject( EnterpriseModel.class ).scheduler();
+		final LocalBinder binder = Guice4LocalBinder.of( config,
+				Collections.singletonMap( EntityManagerFactory.class,
+						HibHikHypConfig.createEMF() ) );
+		final Scheduler scheduler = binder.inject( EnterpriseModel.class )
+				.scheduler();
 
 		final Waiter waiter = new Waiter();
 		scheduler.time().subscribe( time ->
@@ -254,6 +201,10 @@ public class EnterpriseTest
 		} );
 		scheduler.resume();
 		waiter.await( 10, TimeUnit.SECONDS );
+
+		for( Object f : binder.inject( CoordinationFact.Persister.class )
+				.findAll() )
+			LOG.trace( "Got fact: {}", f );
 
 		LOG.info( "completed, t={}", scheduler.now() );
 	}

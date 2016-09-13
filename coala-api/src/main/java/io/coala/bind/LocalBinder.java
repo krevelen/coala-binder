@@ -145,7 +145,7 @@ public interface LocalBinder extends LocalContextual
 			}
 
 			@Override
-			public String id()
+			public LocalId id()
 			{
 				return this.origin.id();
 			}

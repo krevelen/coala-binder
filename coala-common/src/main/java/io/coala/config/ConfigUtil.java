@@ -364,7 +364,10 @@ public class ConfigUtil implements Util
 					result.put( replace, config.getProperty( key ) );
 				}
 			}
-		return result.entrySet().stream().collect( Collectors.toMap( e ->
+		return result.entrySet().stream().filter( e ->
+		{
+			return e.getValue() != null;
+		} ).collect( Collectors.toMap( e ->
 		{
 			return e.getKey();
 		}, e ->
@@ -378,10 +381,17 @@ public class ConfigUtil implements Util
 
 	static String resolve( final String value, final Map<String, String> map )
 	{
+		if( value == null || value.isEmpty() ) return value;
 		String result = value;
 		Matcher m;
 		while( (m = KEY_PATTERN.matcher( result )).find() )
-			result = m.replaceFirst( map.get( m.group( 1 ) ) );
+		{
+			final String replacement = map.get( m.group( 1 ) );
+			if( replacement != null )
+				result = m.replaceFirst( replacement );
+			else
+				break;
+		}
 		return result;
 	}
 

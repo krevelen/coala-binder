@@ -24,8 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.persistence.Entity;
 
 import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalId;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Proactive;
@@ -104,17 +106,32 @@ public interface Organization
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class ID extends Id.Ordinal<String>
+	class ID extends LocalId
 	{
-		public static Organization.ID of( final String name )
+		public static ID of( final String name, final LocalId ctx )
 		{
-			return Util.of( name, new ID() );
+			return Id.of( new ID(), name, ctx );
+		}
+
+		protected static ID of( final LocalId ctx )
+		{
+			return of( (String) ctx.unwrap(), ctx.parent() );
+		}
+
+		@Entity//( name = LocalId.Dao.ENTITY_NAME )
+		public static class Dao extends LocalId.Dao
+		{
+			@Override
+			public ID restore()
+			{
+				return ID.of( this.myId, this.parentId.restore() );
+			}
 		}
 	}
 
 	static Organization of( LocalBinder binder, String name )
 	{
-		return of( binder, ID.of( name ) );
+		return of( binder, ID.of( name, binder.id() ) );
 	}
 
 	static Organization of( LocalBinder binder, ID name )
@@ -180,10 +197,7 @@ public interface Organization
 
 	interface Factory
 	{
-		default Organization create( final String name )
-		{
-			return create( ID.of( name ) );
-		}
+		Organization create( final String name );
 
 		Organization create( ID name );
 
@@ -193,10 +207,19 @@ public interface Organization
 			private final Map<ID, Organization> localCache = new ConcurrentHashMap<>();
 
 			@Inject
+			private LocalBinder binder;
+
+			@Inject
 			private Scheduler scheduler;
 
 			@Inject
 			private CoordinationFact.Factory factFactory;
+
+			@Override
+			public Organization create( final String name )
+			{
+				return create( ID.of( name, this.binder.id() ) );
+			}
 
 			@Override
 			public Organization create( final ID id )

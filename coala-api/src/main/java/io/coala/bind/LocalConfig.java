@@ -38,6 +38,7 @@ import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 import io.coala.json.Contextual.Context;
 import io.coala.json.JsonUtil;
+import io.coala.name.Id;
 
 /**
  * {@link LocalConfig}
@@ -52,9 +53,19 @@ public interface LocalConfig extends GlobalConfig
 
 	String ID_KEY = "id";
 
-	String ID_DEFAULT = "";
+	String LOCAL_ID_KEY = "local-id";
+
+	String CONTEXT_ID_KEY = "context-id";
+
+	String CONTEXT_KEY = "context";
+
+	UUID CONTEXT_DEFAULT = new UUID();
+
+	String ID_DEFAULT = ""; // non-null triggers AnonymousConverter as required
 
 	String ID_PREFIX = "${" + ID_KEY + "}";
+
+	String BINDER_KEY = "binder";
 
 	static LocalConfig create( final Map<?, ?>... imports )
 	{
@@ -72,31 +83,55 @@ public interface LocalConfig extends GlobalConfig
 		return new JsonBuilder();
 	}
 
+	@Key( CONTEXT_ID_KEY )
+	@DefaultValue( ID_DEFAULT )
+	String rawContextId();
+
+	@Key( ID_KEY )
+	@DefaultValue( ID_DEFAULT )
+	@ConverterClass( AnonymousConverter.class )
+	String rawId();
+
+	@Key( LOCAL_ID_KEY )
+	@DefaultValue( "${" + CONTEXT_ID_KEY + "}"
+			+ Id.IdConfig.ID_SEPARATOR_DEFAULT + "${" + ID_KEY + "}" )
+	@ConverterClass( LocalIdConverter.class )
+	LocalId localId();
+
+	// TODO add 'extends' key to inherit/import from other contexts
+
+	@Key( CONTEXT_KEY )
+	@ConverterClass( Context.ConfigConverter.class )
+	Context context();
+
 	class AnonymousConverter implements Converter<String>
 	{
 		@Override
 		public String convert( final Method method, final String input )
 		{
 			return input == null || input.isEmpty()
-					|| input.equals( ID_DEFAULT ) ? "anon|" + (new UUID())
+					|| input.equals( ID_DEFAULT )
+							? "anon|" + (new UUID()).getClockSeqAndNode()
 							: input;
 		}
 	}
 
-	@Key( ID_KEY )
-	@DefaultValue( ID_DEFAULT )
-	@ConverterClass( LocalConfig.AnonymousConverter.class )
-	String rawId();
-
-	// TODO add 'extends' key to inherit/import from other contexts
-
-	String CONTEXT_KEY = "context";
-
-	@Key( CONTEXT_KEY )
-	@ConverterClass( Context.ConfigConverter.class )
-	Context context();
-
-	String BINDER_KEY = "binder";
+	class LocalIdConverter implements Converter<LocalId>
+	{
+		@Override
+		public LocalId convert( final Method method, final String input )
+		{
+			final String[] split = input
+					.split( Id.IdConfig.ID_SEPARATOR_DEFAULT );
+			return split.length == 1
+					? LocalId.of( split[0], LocalId.of( CONTEXT_DEFAULT ) )
+					: LocalId.of( split[1],
+							LocalId.of( split[0].isEmpty()
+									|| split[0].equals( ID_DEFAULT )
+											? CONTEXT_DEFAULT
+											: new UUID( split[0] ) ) );
+		}
+	}
 
 	/**
 	 * @param imports

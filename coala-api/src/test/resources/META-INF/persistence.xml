@@ -9,19 +9,13 @@
 		transaction-type="RESOURCE_LOCAL">
 		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 		<!-- JPA needs all entities as <class/> in Java SE environments :( -->
-		<class>io.coala.enterprise.CoordinationFact$Dao</class>
-		<class>io.coala.enterprise.CoordinationFact$ID$Dao</class>
-		<class>io.coala.enterprise.CompositeActor$ID$Dao</class>
-		<class>io.coala.enterprise.Organization$ID$Dao</class>
-		<class>io.coala.enterprise.Transaction$Dao</class>
-		<class>io.coala.enterprise.Transaction$ID$Dao</class>
+		<class>io.coala.bind.LocalId$Dao</class>
 		<!-- <shared-cache-mode>ALL</shared-cache-mode> -->
 		<!-- <validation-mode>AUTO</validation-mode> -->
 		<properties>
 			<!-- <property name="hibernate.archive.autodetection" value="class,hbm" 
 				/> -->
-			<!-- <property name="kundera.annotations.scan.package" value="nl.rivm.cib.episim.persist" 
-				/> <property name="kundera.client.lookup.class" value="com.impetus.client.rdbms.RDBMSClientFactory" 
+			<!-- <property name="kundera.client.lookup.class" value="com.impetus.client.rdbms.RDBMSClientFactory" 
 				/> -->
 		</properties>
 	</persistence-unit>
