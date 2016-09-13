@@ -450,4 +450,11 @@ public class Guice4LocalBinder implements LocalBinder
 				return true;
 		return false;
 	}
+
+	@Override
+	public <T> T injectMembers( final T encloser )
+	{
+		this.injector.injectMembers( encloser );
+		return encloser;
+	}
 }

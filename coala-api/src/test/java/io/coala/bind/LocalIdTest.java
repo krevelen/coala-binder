@@ -61,7 +61,7 @@ public class LocalIdTest
 		final List<LocalId> list = new ArrayList<>();
 		JPAUtil.transact( emf, em ->
 		{
-			id.streamAll( em ).forEach( list::add );
+			id.findAll( em, null ).forEach( list::add );
 		} );
 		LOG.trace( "SELECT all: {}", list );
 	}

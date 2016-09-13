@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.Entity;
 
+import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
@@ -179,14 +180,16 @@ public interface CompositeActor
 					Organization.ID.of( ctx.parent() ) );
 		}
 
-		@Entity//( name = LocalId.Dao.ENTITY_NAME )
+		@Entity( name = Dao.ENTITY_NAME )
 		public static class Dao extends LocalId.Dao
 		{
+			public static final String ENTITY_NAME = "ACTOR_IDS";
+
 			@Override
-			public ID restore()
+			public ID restore( final LocalBinder binder )
 			{
 				return CompositeActor.ID.of( this.myId,
-						Organization.ID.of( this.parentId.restore() ) );
+						Organization.ID.of( this.parentId.restore( binder ) ) );
 			}
 
 			@Override

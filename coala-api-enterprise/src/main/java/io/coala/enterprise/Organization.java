@@ -108,6 +108,12 @@ public interface Organization
 	 */
 	class ID extends LocalId
 	{
+		@Override
+		public String toString()
+		{
+			return unwrap().toString(); // hide local context
+		}
+
 		public static ID of( final String name, final LocalId ctx )
 		{
 			return Id.of( new ID(), name, ctx );
@@ -118,13 +124,15 @@ public interface Organization
 			return of( (String) ctx.unwrap(), ctx.parent() );
 		}
 
-		@Entity//( name = LocalId.Dao.ENTITY_NAME )
+		@Entity( name = Dao.ENTITY_NAME )
 		public static class Dao extends LocalId.Dao
 		{
+			public static final String ENTITY_NAME = "ORGANIZATION_IDS";
+
 			@Override
-			public ID restore()
+			public ID restore( final LocalBinder binder )
 			{
-				return ID.of( this.myId, this.parentId.restore() );
+				return ID.of( this.myId, this.parentId.restore( binder ) );
 			}
 		}
 	}

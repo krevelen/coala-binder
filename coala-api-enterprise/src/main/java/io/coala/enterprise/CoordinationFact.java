@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,6 +34,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -41,7 +43,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.Transient;
 import javax.persistence.Version;
 
 import org.aeonbits.owner.ConfigCache;
@@ -99,6 +100,30 @@ public interface CoordinationFact
 	/** @return */
 	@JsonAnyGetter
 	Map<String, Object> properties();
+
+	default Stream<CoordinationFact> find( final EntityManager em,
+		final LocalBinder binder, final String query )
+	{
+		return em.createQuery( query, Dao.class ).getResultList().stream()
+				.map( dao ->
+				{
+					return dao.restore( binder );
+				} );
+	}
+
+	default Stream<CoordinationFact> findAll( final EntityManager em,
+		final LocalBinder binder )
+	{
+		return find( em, binder,
+				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
+	}
+
+	default Dao persist( final EntityManager em )
+	{
+		final Dao result = new Dao().prePersist( this );
+		em.persist( result );
+		return result;
+	}
 
 	@JsonAnySetter
 	default void set( final String name, final Object value )
@@ -162,13 +187,16 @@ public interface CoordinationFact
 			return of( new UUID(), ctx );
 		}
 
-		@Entity //( name = LocalId.Dao.ENTITY_NAME )
+		@Entity( name = Dao.ENTITY_NAME )
 		public static class Dao extends LocalId.Dao
 		{
+			public static final String ENTITY_NAME = "FACT_IDS";
+
 			@Override
-			public ID restore()
+			public ID restore( final LocalBinder binder )
 			{
-				return ID.of( new UUID( this.myId ), this.parentId.restore() );
+				return ID.of( new UUID( this.myId ),
+						this.parentId.restore( binder ) );
 			}
 
 			@Override
@@ -251,24 +279,20 @@ public interface CoordinationFact
 		@Convert( converter = JsonNodeToStringConverter.class )
 		protected JsonNode properties;
 
-		@Inject
-		@Transient
-		private transient LocalBinder binder;
-
 		private static final Date offset = Date.from(
 				ConfigCache.getOrCreate( ReplicateConfig.class ).offset() );
 
 		@SuppressWarnings( { "unchecked", "rawtypes" } )
 		@Override
-		protected CoordinationFact doRestore()
+		public CoordinationFact restore( final LocalBinder binder )
 		{
-			final Transaction tran = this.transaction.restore();
-			return this.binder.inject( CoordinationFact.Factory.class ).create(
-					tran.kind(), this.id.restore(), tran,
-					this.creator.restore(), this.kind,
+			final Transaction tran = this.transaction.restore( binder );
+			return binder.inject( CoordinationFact.Factory.class ).create(
+					tran.kind(), this.id.restore( binder ), tran,
+					this.creator.restore( binder ), this.kind,
 					this.expiration == null ? null
 							: Instant.of( this.expiration, offset ),
-					this.cause == null ? null : this.cause.restore(),
+					this.cause == null ? null : this.cause.restore( binder ),
 					(Map<?, ?>) JsonUtil.valueOf( this.properties,
 							Map.class ) );
 		}
@@ -278,7 +302,7 @@ public interface CoordinationFact
 		{
 			this.id = new CoordinationFact.ID.Dao().prePersist( fact.id() );
 			this.kind = fact.kind();
-			this.transaction = this.binder.inject( Transaction.Dao.class )
+			this.transaction = new Transaction.Dao()
 					.prePersist( fact.transaction() );
 			this.creator = new CompositeActor.ID.Dao()
 					.prePersist( fact.creator() );
@@ -549,7 +573,7 @@ public interface CoordinationFact
 					for( Dao f : em.createQuery(
 							"SELECT f FROM " + Dao.ENTITY_NAME + " f",
 							Dao.class ).getResultList() )
-						result.add( f.restore() );
+						result.add( f.restore( this.binder ) );
 				} );
 				LOG.trace( "Read {}, result: {}", Dao.ENTITY_NAME, result );
 				return result;

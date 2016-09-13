@@ -36,12 +36,7 @@ public abstract class BindableDao<T, THIS extends BindableDao<T, ?>>
 
 	abstract protected THIS prePersist( T source );
 
-	public T restore()
-	{
-		return doRestore();
-	}
-
-	abstract protected T doRestore();
+	public abstract T restore( LocalBinder binder );
 
 	@Override
 	public String toString()

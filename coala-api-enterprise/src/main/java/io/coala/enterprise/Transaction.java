@@ -21,6 +21,7 @@ package io.coala.enterprise;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,12 +29,12 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.Transient;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -96,6 +97,30 @@ public interface Transaction<F extends CoordinationFact>
 	@JsonIgnore
 	Observable<F> expired();
 
+	default Stream<Transaction<?>> find( final EntityManager em,
+		final LocalBinder binder, final String query )
+	{
+		return em.createQuery( query, Dao.class ).getResultList().stream()
+				.map( dao ->
+				{
+					return dao.restore( binder );
+				} );
+	}
+
+	default Stream<Transaction<?>> findAll( final EntityManager em,
+		final LocalBinder binder )
+	{
+		return find( em, binder,
+				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
+	}
+
+	default Dao persist( final EntityManager em )
+	{
+		final Dao result = new Dao().prePersist( this );
+		em.persist( result );
+		return result;
+	}
+
 	/**
 	 * {@link ID}
 	 * 
@@ -124,14 +149,16 @@ public interface Transaction<F extends CoordinationFact>
 			return of( new UUID(), ctx );
 		}
 
-		@Entity //( name = LocalId.Dao.ENTITY_NAME )
+		@Entity( name = Dao.ENTITY_NAME )
 		public static class Dao extends LocalId.Dao
 		{
+			public static final String ENTITY_NAME = "TRANSACTION_IDS";
+
 			@Override
-			public ID restore()
+			public ID restore( final LocalBinder binder )
 			{
-				return ID.of( new UUID( this.myId ),
-						CompositeActor.ID.of( this.parentId.restore() ) );
+				return ID.of( new UUID( this.myId ), CompositeActor.ID
+						.of( this.parentId.restore( binder ) ) );
 			}
 
 			@Override
@@ -304,16 +331,13 @@ public interface Transaction<F extends CoordinationFact>
 		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
 		protected CompositeActor.ID.Dao executor;
 
-		@Inject
-		@Transient
-		transient LocalBinder binder;
-
 		@Override
-		protected Transaction<?> doRestore()
+		public Transaction<?> restore( final LocalBinder binder )
 		{
-			return this.binder.inject( Transaction.Factory.class ).create(
-					Transaction.ID.of( this.id, this.binder.id() ), this.kind,
-					this.initiator.restore(), this.executor.restore() );
+			return binder.inject( Transaction.Factory.class ).create(
+					Transaction.ID.of( this.id, binder.id() ), this.kind,
+					this.initiator.restore( binder ),
+					this.executor.restore( binder ) );
 		}
 
 		@Override

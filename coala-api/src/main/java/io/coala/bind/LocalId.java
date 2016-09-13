@@ -37,7 +37,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.TypedQuery;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
 
@@ -86,21 +85,26 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		return Id.of( new LocalId(), value, parentId );
 	}
 
-	public TypedQuery<Dao> query( final EntityManager em, final String query )
+	public Stream<LocalId> find( final EntityManager em,
+		final LocalBinder binder, final String query )
 	{
-		return em.createQuery( query, LocalId.Dao.class );
+		return em.createQuery( query, Dao.class ).getResultList().stream()
+				.map( dao ->
+				{
+					return dao.restore( binder );
+				} );
 	}
 
-	public Stream<LocalId> streamAll( final EntityManager em )
+	public Stream<LocalId> findAll( final EntityManager em,
+		final LocalBinder binder )
 	{
-		return query( em, "SELECT id FROM " + Dao.ENTITY_NAME + " id" )
-				.getResultList().stream().map( Dao::restore );
+		return find( em, binder,
+				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
 	}
 
 	public Dao persist( final EntityManager em )
 	{
 		final Dao result = new Dao().prePersist( this );
-//		if( result.parentId != null ) em.persist( result.parentId );
 		em.persist( result );
 		return result;
 	}
@@ -152,11 +156,11 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		protected UUID contextId;
 
 		@Override
-		protected LocalId doRestore()
+		public LocalId restore( final LocalBinder binder )
 		{
 			return LocalId.of( this.myId,
 					this.parentId == null ? LocalId.of( this.contextId )
-							: this.parentId.doRestore() );
+							: this.parentId.restore( binder ) );
 		}
 
 		@Override

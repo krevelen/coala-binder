@@ -40,6 +40,12 @@ public interface LocalBinder extends LocalContextual
 	<T> T inject( Class<T> type );
 
 	/**
+	 * @param encloser the enclosing object to inject members into
+	 * @return an instance as provided by a {@link LocalProvider}
+	 */
+	<T> T injectMembers( T encloser );
+
+	/**
 	 * @param type the factory type to (re)bind
 	 * @param provider the instance {@link Provider}
 	 * @return this {@link LocalBinder} to allow chaining

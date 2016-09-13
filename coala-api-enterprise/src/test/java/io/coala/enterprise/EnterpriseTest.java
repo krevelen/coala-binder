@@ -19,7 +19,6 @@ import io.coala.bind.LocalConfig;
 import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.guice4.Guice4LocalBinder;
 import io.coala.log.LogUtil;
-import io.coala.persist.JPAUtil;
 import io.coala.time.Duration;
 import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
