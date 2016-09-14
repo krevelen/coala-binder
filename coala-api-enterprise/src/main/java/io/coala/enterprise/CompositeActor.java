@@ -136,7 +136,7 @@ public interface CompositeActor
 		final Map<?, ?>... params )
 	{
 		return (F) asInitiator( tranKind, executor ).createFact(
-				CoordinationFactType.REQUESTED, cause, false, expiration,
+				CoordinationFactKind.REQUESTED, cause, false, expiration,
 				params );
 	}
 
@@ -149,7 +149,7 @@ public interface CompositeActor
 	 * @return
 	 */
 	default <F extends CoordinationFact> F createResponse( final F cause,
-		final CoordinationFactType factKind, final boolean terminal,
+		final CoordinationFactKind factKind, final boolean terminal,
 		final Instant expiration, final Map<?, ?>... params )
 	{
 		return (F) asResponder( cause ).createFact( factKind, cause.id(),
@@ -202,7 +202,8 @@ public interface CompositeActor
 	}
 
 	static CompositeActor of( final ID id, final Organization org,
-		final CoordinationFact.Factory factFactory )
+		final CoordinationFact.Factory factFactory,
+		final CoordinationFactBank.Factory bankFactory )
 	{
 		final Subject<CoordinationFact, CoordinationFact> outgoing = PublishSubject
 				.create();
@@ -249,7 +250,7 @@ public interface CompositeActor
 			@Override
 			@SuppressWarnings( "unchecked" )
 			public <F extends CoordinationFact> Transaction<F> transact(
-				final Class<F> factKind, final Transaction<F> transaction,
+				final Class<F> tranKind, final Transaction<F> transaction,
 				final CompositeActor.ID initiator,
 				final CompositeActor.ID executor, final CompositeActor source )
 			{
@@ -262,10 +263,10 @@ public interface CompositeActor
 							{
 								final Transaction<F> result = transaction != null
 										? transaction
-										: Transaction.of( factKind, scheduler(),
+										: Transaction.of( tranKind, scheduler(),
 												tid, initiator, executor,
-												factFactory );
-								org.incoming().ofType( factKind )
+												factFactory, bankFactory );
+								org.incoming().ofType( tranKind )
 										.subscribe( incoming ->
 										{
 											result.on( incoming );
@@ -331,12 +332,16 @@ public interface CompositeActor
 			@Inject
 			private CoordinationFact.Factory factFactory;
 
+			@Inject
+			private CoordinationFactBank.Factory bankFactory;
+
 			@Override
 			public CompositeActor create( final ID id, final Organization org )
 			{
 				return this.localCache.computeIfAbsent( id, k ->
 				{
-					return CompositeActor.of( id, org, this.factFactory );
+					return CompositeActor.of( id, org, this.factFactory,
+							this.bankFactory );
 				} );
 			}
 		}

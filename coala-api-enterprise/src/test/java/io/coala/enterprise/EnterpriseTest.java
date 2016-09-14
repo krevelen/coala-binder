@@ -59,9 +59,6 @@ public class EnterpriseTest
 		private Organization.Factory organizations;
 
 		@Inject
-		private CoordinationFact.Persister persister;
-
-		@Inject
 		public EnterpriseModel( final Scheduler scheduler )
 		{
 			this.scheduler = scheduler;
@@ -95,7 +92,7 @@ public class EnterpriseTest
 				sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
 				{
 					final TestFact response = sales.createResponse( fact,
-							CoordinationFactType.STATED, true, null, Collections
+							CoordinationFactKind.STATED, true, null, Collections
 									.singletonMap( "myParam1", "myValue1" ) );
 					LOG.trace( "t={}, {} responded: {} for incoming: {}", t,
 							sales.id(), response, fact );
@@ -103,7 +100,7 @@ public class EnterpriseTest
 			} );
 
 			LOG.trace( "initialize TestFact[RQ] redirect to self" );
-			org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
+			org1.outgoing( TestFact.class, CoordinationFactKind.REQUESTED )
 					.subscribe( f ->
 					{
 						org1.consume( f );
@@ -135,7 +132,7 @@ public class EnterpriseTest
 			{
 				try
 				{
-					this.persister.save( fact );
+					fact.save();
 				} catch( final Exception e )
 				{
 					e.printStackTrace();
@@ -176,8 +173,8 @@ public class EnterpriseTest
 						Transaction.Factory.LocalCaching.class )
 				.withProvider( CoordinationFact.Factory.class,
 						CoordinationFact.Factory.Simple.class )
-				.withProvider( CoordinationFact.Persister.class,
-						CoordinationFact.Persister.SimpleJPA.class )
+				.withProvider( CoordinationFactBank.Factory.class,
+						CoordinationFactBank.Factory.LocalJPA.class )
 				.build();
 
 		LOG.info( "Starting EO test, config: {}", config.toYAML() );
@@ -201,8 +198,8 @@ public class EnterpriseTest
 		scheduler.resume();
 		waiter.await( 10, TimeUnit.SECONDS );
 
-		for( Object f : binder.inject( CoordinationFact.Persister.class )
-				.findAll() )
+		for( Object f : binder.inject( CoordinationFactBank.Factory.class )
+				.create().find().toBlocking().toIterable() )
 			LOG.trace( "Got fact: {}", f );
 
 		LOG.info( "completed, t={}", scheduler.now() );

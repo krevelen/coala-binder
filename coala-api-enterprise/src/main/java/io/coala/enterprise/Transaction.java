@@ -83,7 +83,7 @@ public interface Transaction<F extends CoordinationFact>
 	 * @param params
 	 * @return
 	 */
-	F createFact( CoordinationFactType factKind, CoordinationFact.ID cause,
+	F createFact( CoordinationFactKind factKind, CoordinationFact.ID cause,
 		boolean terminal, Instant expiration, Map<?, ?>... params );
 
 	/** @param incoming */
@@ -96,6 +96,8 @@ public interface Transaction<F extends CoordinationFact>
 	/** @return */
 	@JsonIgnore
 	Observable<F> expired();
+
+	CoordinationFactBank<F> facts();
 
 	default Stream<Transaction<?>> find( final EntityManager em,
 		final LocalBinder binder, final String query )
@@ -149,25 +151,25 @@ public interface Transaction<F extends CoordinationFact>
 			return of( new UUID(), ctx );
 		}
 
-		@Entity( name = Dao.ENTITY_NAME )
-		public static class Dao extends LocalId.Dao
-		{
-			public static final String ENTITY_NAME = "TRANSACTION_IDS";
-
-			@Override
-			public ID restore( final LocalBinder binder )
-			{
-				return ID.of( new UUID( this.myId ), CompositeActor.ID
-						.of( this.parentId.restore( binder ) ) );
-			}
-
-			@Override
-			public Dao prePersist( final LocalId source )
-			{
-				super.prePersist( source );
-				return this;
-			}
-		}
+//		@Entity( name = Dao.ENTITY_NAME )
+//		public static class Dao extends LocalId.Dao
+//		{
+//			public static final String ENTITY_NAME = "TRANSACTION_IDS";
+//
+//			@Override
+//			public ID restore( final LocalBinder binder )
+//			{
+//				return ID.of( new UUID( this.myId ), CompositeActor.ID
+//						.of( this.parentId.restore( binder ) ) );
+//			}
+//
+//			@Override
+//			public Dao prePersist( final LocalId source )
+//			{
+//				super.prePersist( source );
+//				return this;
+//			}
+//		}
 	}
 
 	/**
@@ -184,7 +186,8 @@ public interface Transaction<F extends CoordinationFact>
 		final CompositeActor.ID executor )
 	{
 		return of( tranKind, binder.inject( Scheduler.class ), id, initiator,
-				executor, binder.inject( CoordinationFact.Factory.class ) );
+				executor, binder.inject( CoordinationFact.Factory.class ),
+				binder.inject( CoordinationFactBank.Factory.class ) );
 	}
 
 	/**
@@ -199,11 +202,13 @@ public interface Transaction<F extends CoordinationFact>
 	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
 		final Scheduler scheduler, final Transaction.ID id,
 		final CompositeActor.ID initiator, final CompositeActor.ID executor,
-		final CoordinationFact.Factory factFactory )
+		final CoordinationFact.Factory factFactory,
+		final CoordinationFactBank.Factory bankFactory )
 	{
 		final Subject<F, F> performed = PublishSubject.create();
 		final Map<CoordinationFact.ID, Expectation> pending = new ConcurrentHashMap<>();
 		final Subject<F, F> expired = PublishSubject.create();
+		final CoordinationFactBank<F> factBank = bankFactory.create( kind );
 		return new Transaction<F>()
 		{
 			@Override
@@ -243,7 +248,7 @@ public interface Transaction<F extends CoordinationFact>
 			}
 
 			@Override
-			public F createFact( final CoordinationFactType factKind,
+			public F createFact( final CoordinationFactKind factKind,
 				final CoordinationFact.ID cause, final boolean terminal,
 				final Instant expiration, final Map<?, ?>... params )
 			{
@@ -295,6 +300,12 @@ public interface Transaction<F extends CoordinationFact>
 							pending.remove( expired );
 							expired.onNext( fact );
 						} ) );
+			}
+
+			@Override
+			public CoordinationFactBank<F> facts()
+			{
+				return factBank;
 			}
 		};
 	}

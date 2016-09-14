@@ -56,7 +56,7 @@ public interface Organization
 	}
 
 	default <F extends CoordinationFact> Observable<F>
-		incoming( final Class<F> tranKind, final CoordinationFactType factKind )
+		incoming( final Class<F> tranKind, final CoordinationFactKind factKind )
 	{
 		return incoming( tranKind ).filter( f ->
 		{
@@ -74,7 +74,7 @@ public interface Organization
 	}
 
 	default <F extends CoordinationFact> Observable<F>
-		outgoing( final Class<F> tranKind, final CoordinationFactType kind )
+		outgoing( final Class<F> tranKind, final CoordinationFactKind kind )
 	{
 		return outgoing( tranKind ).filter( f ->
 		{
@@ -145,11 +145,13 @@ public interface Organization
 	static Organization of( LocalBinder binder, ID name )
 	{
 		return of( name, binder.inject( Scheduler.class ),
-				binder.inject( CoordinationFact.Factory.class ) );
+				binder.inject( CoordinationFact.Factory.class ),
+				binder.inject( CoordinationFactBank.Factory.class ) );
 	}
 
 	static Organization of( final ID id, final Scheduler scheduler,
-		final CoordinationFact.Factory factFactory )
+		final CoordinationFact.Factory factFactory,
+		final CoordinationFactBank.Factory bankFactory )
 	{
 		final Subject<CoordinationFact, CoordinationFact> incoming = PublishSubject
 				.create();
@@ -189,7 +191,7 @@ public interface Organization
 				{
 					// TODO use binder/factory
 					final CompositeActor result = CompositeActor.of( id, this,
-							factFactory );
+							factFactory, bankFactory );
 					result.outgoing().subscribe( outgoing );
 					return result;
 				} );
@@ -223,6 +225,9 @@ public interface Organization
 			@Inject
 			private CoordinationFact.Factory factFactory;
 
+			@Inject
+			private CoordinationFactBank.Factory bankFactory;
+
 			@Override
 			public Organization create( final String name )
 			{
@@ -235,10 +240,9 @@ public interface Organization
 				return this.localCache.computeIfAbsent( id, k ->
 				{
 					return Organization.of( id, this.scheduler,
-							this.factFactory );
+							this.factFactory, this.bankFactory );
 				} );
 			}
 		}
-
 	}
 }

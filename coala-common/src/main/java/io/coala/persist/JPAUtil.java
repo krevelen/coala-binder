@@ -21,6 +21,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 
+import rx.Observable;
+
 /**
  * {@link JPAUtil}
  * 
@@ -41,17 +43,33 @@ public class JPAUtil
 	public static void transact( final EntityManagerFactory emf,
 		final Consumer<EntityManager> consumer )
 	{
-		final EntityManager em = emf.createEntityManager();
-		final EntityTransaction tran = em.getTransaction();
-		try
+		consumer.accept( transact( emf ).toBlocking().first() );
+	}
+
+	/**
+	 * @param emf
+	 * @return
+	 */
+	public static Observable<EntityManager>
+		transact( final EntityManagerFactory emf )
+	{
+		return Observable.create( sub ->
 		{
-			tran.begin();
-			consumer.accept( em );
-			if( tran.isActive() ) tran.commit();
-		} finally
-		{
-			if( tran.isActive() ) tran.rollback();
-			em.close();
-		}
+			final EntityManager em = emf.createEntityManager();
+			final EntityTransaction tran = em.getTransaction();
+			try
+			{
+				tran.begin();
+				sub.onNext( em );
+				if( tran.isActive() ) tran.commit();
+				sub.onCompleted();
+//				em.close(); // FIXME?
+			} catch( final Throwable e )
+			{
+				if( tran.isActive() ) tran.rollback();
+				em.close();
+				sub.onError( e );
+			}
+		} );
 	}
 }

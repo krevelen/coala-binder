@@ -20,36 +20,36 @@ import java.util.Arrays;
 import io.coala.machine.StateNode;
 
 /**
- * {@link CoordinationFactType}
+ * {@link CoordinationFactKind}
  */
-public enum CoordinationFactType implements StateNode<CoordinationFactType>
+public enum CoordinationFactKind implements StateNode<CoordinationFactKind>
 {
 
 	/** the moment that a transaction's order phase is initiated */
-	INITIATED( false, PerformerType.INITIATOR, CoordinationActType.REQUESTING ), // no
+	INITIATED( false, PerformerType.INITIATOR, CoordinationActKind.REQUESTING ), // no
 	// choice
 
 	/** the moment that a request cancellation phase is initiated */
-	_INITIATED_REQUEST_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActType.CANCELLING_REQUEST ), // no choice
+	_INITIATED_REQUEST_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActKind.CANCELLING_REQUEST ), // no choice
 
 	/** the moment that a promise cancellation phase is initiated */
-	_INITIATED_PROMISE_CANCELLATION( true, PerformerType.EXECUTOR, CoordinationActType.CANCELLING_PROMISE ), // no choice
+	_INITIATED_PROMISE_CANCELLATION( true, PerformerType.EXECUTOR, CoordinationActKind.CANCELLING_PROMISE ), // no choice
 
 	/** the moment that a promise cancellation phase is initiated */
-	_INITIATED_STATE_CANCELLATION( true, PerformerType.EXECUTOR, CoordinationActType.CANCELLING_STATE ), // no choice
+	_INITIATED_STATE_CANCELLATION( true, PerformerType.EXECUTOR, CoordinationActKind.CANCELLING_STATE ), // no choice
 
 	/** the moment that an accept cancellation phase is initiated */
-	_INITIATED_ACCEPT_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActType.CANCELLING_ACCEPT ), // no choice
+	_INITIATED_ACCEPT_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActKind.CANCELLING_ACCEPT ), // no choice
 
 	/** */
 	QUIT( false, null ), // both roles terminate this exchange
 
 	/** */
-	_CANCELLED_REQUEST( true, PerformerType.EXECUTOR, CoordinationActType.ALLOWING_REQUEST_CANCELLATION, // permission
-			CoordinationActType.REFUSING_REQUEST_CANCELLATION ), // forbidden, e.g. timed-out
+	_CANCELLED_REQUEST( true, PerformerType.EXECUTOR, CoordinationActKind.ALLOWING_REQUEST_CANCELLATION, // permission
+			CoordinationActKind.REFUSING_REQUEST_CANCELLATION ), // forbidden, e.g. timed-out
 
 	/** terminal state for request cancellation */
-	_ALLOWED_REQUEST_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActType.QUITTING ), // no choice
+	_ALLOWED_REQUEST_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActKind.QUITTING ), // no choice
 
 	/**
 	 * The (intersubjective) "rq" coordination fact (C-fact) that a request has
@@ -57,23 +57,23 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 * is an agendum for the executor to either promise or decline to produce
 	 * its P-fact.
 	 */
-	REQUESTED( false, PerformerType.EXECUTOR, CoordinationActType.PROMISING, // permission
-			CoordinationActType.DECLINING ), // forbidden, e.g. timed-out
+	REQUESTED( false, PerformerType.EXECUTOR, CoordinationActKind.PROMISING, // permission
+			CoordinationActKind.DECLINING ), // forbidden, e.g. timed-out
 
 	/** terminal state for request cancellation */
 	_REFUSED_REQUEST_CANCELLATION( true, null ), // both roles terminate this
 	// exchange
 
 	/** */
-	DECLINED( false, PerformerType.INITIATOR, CoordinationActType.REQUESTING, // permission
-			CoordinationActType.QUITTING ), // forbidden, e.g. timed-out
+	DECLINED( false, PerformerType.INITIATOR, CoordinationActKind.REQUESTING, // permission
+			CoordinationActKind.QUITTING ), // forbidden, e.g. timed-out
 
 	/** */
-	_CANCELLED_PROMISE( true, PerformerType.INITIATOR, CoordinationActType.ALLOWING_PROMISE_CANCELLATION, // permission
-			CoordinationActType.REFUSING_PROMISE_CANCELLATION ), // forbidden, e.g. timed-out
+	_CANCELLED_PROMISE( true, PerformerType.INITIATOR, CoordinationActKind.ALLOWING_PROMISE_CANCELLATION, // permission
+			CoordinationActKind.REFUSING_PROMISE_CANCELLATION ), // forbidden, e.g. timed-out
 
 	/** terminal state for promise cancellation */
-	_ALLOWED_PROMISE_CANCELLATION( true, PerformerType.EXECUTOR, CoordinationActType.DECLINING ), // no choice
+	_ALLOWED_PROMISE_CANCELLATION( true, PerformerType.EXECUTOR, CoordinationActKind.DECLINING ), // no choice
 
 	/**
 	 * The (intersubjective) "pm" coordination fact (C-fact) that a promise was
@@ -81,7 +81,7 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 * an agendum for the executor to produce the P-Fact of the transaction and
 	 * state the result.
 	 */
-	PROMISED( false, PerformerType.EXECUTOR, CoordinationActType.EXECUTING ), // no
+	PROMISED( false, PerformerType.EXECUTOR, CoordinationActKind.EXECUTING ), // no
 	// choice
 
 	/**
@@ -96,15 +96,15 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 * P-Fact of some transaction. Production is handled subjectively, i.e. its
 	 * processes and result are principally not knowable to the initiator.
 	 */
-	EXECUTED( false, PerformerType.EXECUTOR, CoordinationActType.STATING ), // no choice
+	EXECUTED( false, PerformerType.EXECUTOR, CoordinationActKind.STATING ), // no choice
 
 	/**
 	 * The executor cancelled a state (e.g. to avoid rejection), causing the
 	 * initiator to stop rejecting/accepting and allow or refuse this
 	 * cancellation (Dietz, 2006:97)
 	 */
-	_CANCELLED_STATE( true, PerformerType.INITIATOR, CoordinationActType.ALLOWING_STATE_CANCELLATION, // permission
-			CoordinationActType.REFUSING_STATE_CANCELLATION ), // forbidden, e.g. timed-out
+	_CANCELLED_STATE( true, PerformerType.INITIATOR, CoordinationActKind.ALLOWING_STATE_CANCELLATION, // permission
+			CoordinationActKind.REFUSING_STATE_CANCELLATION ), // forbidden, e.g. timed-out
 
 	/**
 	 * terminal state for state cancellation. The initiator allowed the
@@ -120,8 +120,8 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 * is an agendum for the initiator to either accept or refuse the stated
 	 * result (P-fact) of this transaction process.
 	 */
-	STATED( false, PerformerType.INITIATOR, CoordinationActType.ACCEPTING, // permission
-			CoordinationActType.REJECTING ), // forbidden, e.g. timed-out
+	STATED( false, PerformerType.INITIATOR, CoordinationActKind.ACCEPTING, // permission
+			CoordinationActKind.REJECTING ), // forbidden, e.g. timed-out
 
 	/**
 	 * Terminal state for state cancellation. When a state cancellation was
@@ -137,22 +137,22 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 * This fact is an agendum for the executor to either state a new result
 	 * (P-fact) or stop this transaction process.
 	 */
-	REJECTED( false, PerformerType.EXECUTOR, CoordinationActType.STATING, // permission
-			CoordinationActType.STOPPING ), // forbidden, e.g. timed-out
+	REJECTED( false, PerformerType.EXECUTOR, CoordinationActKind.STATING, // permission
+			CoordinationActKind.STOPPING ), // forbidden, e.g. timed-out
 
 	/**
 	 * agendum for executor to allow or refuse the accept cancelation by the
 	 * initiator
 	 */
-	_CANCELLED_ACCEPT( true, PerformerType.EXECUTOR, CoordinationActType.ALLOWING_ACCEPT_CANCELLATION, // permission
-			CoordinationActType.REFUSING_ACCEPT_CANCELLATION ), // forbidden, e.g. timed-out
+	_CANCELLED_ACCEPT( true, PerformerType.EXECUTOR, CoordinationActKind.ALLOWING_ACCEPT_CANCELLATION, // permission
+			CoordinationActKind.REFUSING_ACCEPT_CANCELLATION ), // forbidden, e.g. timed-out
 
 	/**
 	 * terminal state for accept cancellation. The executor allowed the
 	 * initiator's accept cancellation (e.g. due to payment problems) causing
 	 * the initiator to reject (Dietz, 2006:97)
 	 */
-	_ALLOWED_ACCEPT_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActType.REJECTING ), // no choice
+	_ALLOWED_ACCEPT_CANCELLATION( true, PerformerType.INITIATOR, CoordinationActKind.REJECTING ), // no choice
 
 	/** terminal state for P-fact transaction for both initiator and executor */
 	STOPPED( false, null ), // both roles terminate this exchange
@@ -183,7 +183,7 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 * The generic act types possibly triggered by this fact type decider's
 	 * response
 	 */
-	private final CoordinationActType[] proceedActs;
+	private final CoordinationActKind[] proceedActs;
 
 	/**
 	 * @param isCancellationFact true if this type of fact is part of
@@ -194,9 +194,9 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 *            decision, or null for both
 	 * @param proceedActs the acts possibly resulting from this fact type
 	 */
-	private CoordinationFactType( final boolean isCancellationFact,
+	private CoordinationFactKind( final boolean isCancellationFact,
 		final PerformerType deciderRole,
-		final CoordinationActType... proceedActs )
+		final CoordinationActKind... proceedActs )
 	{
 		this.isCancellationStep = isCancellationFact;
 		this.responderRole = deciderRole;
@@ -258,7 +258,7 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 * @return an array of generic act types possibly triggered by this fact
 	 *         type, or null if terminal
 	 */
-	public CoordinationActType[] responseKind( final PerformerType roleType )
+	public CoordinationActKind[] responseKind( final PerformerType roleType )
 	{
 		return this.proceedActs;
 	}
@@ -285,11 +285,11 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 *            type
 	 * @return true if specified act type is a legal response to this fact type
 	 */
-	public boolean isValidResponseKind( final CoordinationActType response )
+	public boolean isValidResponseKind( final CoordinationActKind response )
 	{
 		if( !this.responderRoleType().equals( response.performer() ) )
 			return true; // any response is good for the party that has to wait
-		for( CoordinationActType actType : this
+		for( CoordinationActKind actType : this
 				.responseKind( response.performer() ) )
 			if( actType.equals( response ) ) return true;
 		return false;
@@ -303,7 +303,7 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	 *         options are to await reply or to terminate the exchange
 	 */
 	@SuppressWarnings( "incomplete-switch" )
-	public CoordinationActType defaultResponseKind(
+	public CoordinationActKind defaultResponseKind(
 		final PerformerType roleType, final boolean proceed )
 	{
 		if( responderRoleType() != null
@@ -314,15 +314,15 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 				switch( this )
 				{
 				case REQUESTED:
-				return CoordinationActType.CANCELLING_REQUEST;
+				return CoordinationActKind.CANCELLING_REQUEST;
 				case PROMISED:
-				return CoordinationActType.CANCELLING_REQUEST;
+				return CoordinationActKind.CANCELLING_REQUEST;
 				case EXECUTED:
-				return CoordinationActType.CANCELLING_REQUEST;
+				return CoordinationActKind.CANCELLING_REQUEST;
 				case STATED:
-				return CoordinationActType.CANCELLING_STATE;
+				return CoordinationActKind.CANCELLING_STATE;
 				case REJECTED:
-				return CoordinationActType.CANCELLING_REQUEST;
+				return CoordinationActKind.CANCELLING_REQUEST;
 				}
 			return null;
 		}
@@ -335,7 +335,7 @@ public enum CoordinationFactType implements StateNode<CoordinationFactType>
 	}
 
 	@Override
-	public boolean mayPrecede( final CoordinationFactType factType )
+	public boolean mayPrecede( final CoordinationFactKind factType )
 	{
 		return isValidResponseKind(
 				factType.defaultResponseKind( PerformerType.INITIATOR, true ) )
