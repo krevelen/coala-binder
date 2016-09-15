@@ -72,8 +72,8 @@ interface HibHikHypConfig extends HibernateJPAConfig
 	String password();
 
 	@Key( DATASOURCE_URL_KEY )
-//	@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
-	@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
+	@DefaultValue( "jdbc:hsqldb:file:target/testdb2" )
+//	@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
 //	@DefaultValue( "jdbc:mysql://localhost/testdb" )
 	String url();
 

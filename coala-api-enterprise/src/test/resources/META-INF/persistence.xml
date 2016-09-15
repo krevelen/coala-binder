@@ -9,9 +9,9 @@
 		transaction-type="RESOURCE_LOCAL">
 		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 		<!-- JPA needs all entities as <class/> in Java SE environments :( -->
+		<class>io.coala.bind.LocalId$Dao</class>
 		<class>io.coala.enterprise.CoordinationFact$Dao</class>
 		<class>io.coala.enterprise.CompositeActor$ID$Dao</class>
-		<class>io.coala.enterprise.Organization$ID$Dao</class>
 		<class>io.coala.enterprise.Transaction$Dao</class>
 		<!-- <shared-cache-mode>ALL</shared-cache-mode> -->
 		<!-- <validation-mode>AUTO</validation-mode> -->

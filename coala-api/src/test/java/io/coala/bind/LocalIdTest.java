@@ -44,7 +44,7 @@ public class LocalIdTest
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( LocalIdTest.class );
 
-	@Test
+	@Test//( expected = PersistenceException.class )
 	public void testLocalId()
 	{
 		LOG.info( "Starting test of: {}", LocalId.class.getSimpleName() );
@@ -53,13 +53,32 @@ public class LocalIdTest
 				LocalId.of( "agent", LocalId.of( new UUID() ) ) ) );
 
 		final EntityManagerFactory emf = HibHikHypConfig.createEMF();
-		JPAUtil.transact( emf, em ->
+		JPAUtil.session( emf, em ->
 		{
 			id.persist( em );
-			LOG.trace( "Persisted: {}", id );
+			LOG.trace( "a Persisted: {}", id );
+		} );
+		JPAUtil.session( emf, em ->
+		{
+			id.persist( em );
+			LOG.trace( "b Persisted: {}", id );
+		} );
+		JPAUtil.session( emf, em ->
+		{
+			id.persist( em );
+			LOG.trace( "c Persisted: {}", id );
+		} );
+		JPAUtil.session( emf, em ->
+		{
+			id.persist( em );
+			LOG.trace( "d Persisted: {}", id );
+			id.persist( em );
+			LOG.trace( "e Persisted: {}", id );
+			id.persist( em );
+			LOG.trace( "f Persisted: {}", id );
 		} );
 		final List<LocalId> list = new ArrayList<>();
-		JPAUtil.transact( emf, em ->
+		JPAUtil.session( emf, em ->
 		{
 			id.findAll( em, null ).forEach( list::add );
 		} );

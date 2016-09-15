@@ -19,22 +19,27 @@
  */
 package io.coala.enterprise;
 
+import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import org.aeonbits.owner.ConfigCache;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -42,12 +47,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
-import io.coala.name.Id;
 import io.coala.name.Identified;
+import io.coala.persist.Persistable;
 import io.coala.persist.UUIDToByteConverter;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
+import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import rx.Observable;
 import rx.subjects.PublishSubject;
@@ -60,8 +66,8 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Transaction<F extends CoordinationFact>
-	extends Proactive, Identified.Ordinal<Transaction.ID>
+public interface Transaction<F extends CoordinationFact> extends Proactive,
+	Identified.Ordinal<Transaction.ID>, Persistable<Transaction.Dao>
 {
 	/** @return */
 	Class<F> kind();
@@ -99,6 +105,12 @@ public interface Transaction<F extends CoordinationFact>
 
 	CoordinationFactBank<F> facts();
 
+	default java.time.Instant offset()
+	{
+		// FIXME which cache?
+		return ConfigCache.getOrCreate( ReplicateConfig.class ).offset();
+	}
+
 	default Stream<Transaction<?>> find( final EntityManager em,
 		final LocalBinder binder, final String query )
 	{
@@ -116,9 +128,14 @@ public interface Transaction<F extends CoordinationFact>
 				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
 	}
 
+	@Override
 	default Dao persist( final EntityManager em )
 	{
-		final Dao result = new Dao().prePersist( this );
+		final Dao result = new Dao();
+		result.id = Objects.requireNonNull( id().unwrap() );
+		result.kind = Objects.requireNonNull( kind() );
+		result.initiator = Objects.requireNonNull( initiator() ).persist( em );
+		result.executor = Objects.requireNonNull( executor() ).persist( em );
 		em.persist( result );
 		return result;
 	}
@@ -142,7 +159,7 @@ public interface Transaction<F extends CoordinationFact>
 		/** @return */
 		public static ID of( final UUID value, final LocalId ctx )
 		{
-			return Id.of( new ID(), value, ctx );
+			return LocalId.of( new ID(), value, ctx );
 		}
 
 		/** @return */
@@ -254,10 +271,10 @@ public interface Transaction<F extends CoordinationFact>
 			{
 				try
 				{
+					final CompositeActor.ID creator = factKind.isFromInitiator()
+							? initiator : executor;
 					final F result = factFactory.create( kind(),
-							CoordinationFact.ID.create( factFactory.owner() ),
-							this,
-							factKind.isFromInitiator() ? initiator : executor,
+							CoordinationFact.ID.create( creator ), this,
 							factKind, expiration, cause, params );
 					if( cause != null ) pending.remove( cause );
 					if( expiration != null )
@@ -317,29 +334,55 @@ public interface Transaction<F extends CoordinationFact>
 	 * @author Rick van Krevelen
 	 */
 	@Entity( name = Dao.ENTITY_NAME )
-	public class Dao extends BindableDao<Transaction<?>, Dao>
+	public class Dao implements BindableDao<Transaction<?>, Dao>
 	{
 		public static final String ENTITY_NAME = "TRANSACTIONS";
 
-		@javax.persistence.Id
+		@Id
 		@GeneratedValue( strategy = GenerationType.IDENTITY )
 		@Column( name = "PK", nullable = false, updatable = false )
 		protected Integer pk;
 
-		@Column( name = "ID", nullable = false, updatable = false,
-			length = 16 /* , columnDefinition = "BINARY(16)" */ )
+//		@Id // FIXME can't use this BINARY(16) as foreign key ?
+		@Column( name = "ID", nullable = false, updatable = false, length = 16,
+			columnDefinition = "BINARY(16)" )
 		@Convert( converter = UUIDToByteConverter.class )
 		protected UUID id;
 
-		@Column( name = "KIND", nullable = true, updatable = false )
+		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
+		@Temporal( TemporalType.TIMESTAMP )
+		@Column( name = "CREATED_TS", insertable = false, updatable = false,
+			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+		@JsonIgnore
+		protected Date created;
+
+//		/** time stamp of last update; should never change */
+//		@Version
+//		@Temporal( TemporalType.TIMESTAMP )
+//		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
+//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+//		@JsonIgnore
+//		protected Date updated;
+
+		@Column( name = "KIND", nullable = false, updatable = false )
 		protected Class<? extends CoordinationFact> kind;
 
-		@JoinColumn( name = "INITIATOR_ID", nullable = true, updatable = false )
-		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@ManyToOne( optional = false ) //( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@JoinColumn( name = "INITIATOR_ID", updatable = false )
+//		@Embedded
+//		@AttributeOverrides( @AttributeOverride( name = "id",
+//			column = @Column( name = "INITIATOR_ID" ) ) )
+//		@AssociationOverride( name = "id",
+//			joinColumns = @JoinColumn(name = "INITIATOR_ID",insertable = false, updatable = false ) )
 		protected CompositeActor.ID.Dao initiator;
 
-		@JoinColumn( name = "EXECUTOR_ID", nullable = true, updatable = false )
-		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@ManyToOne( optional = false ) //( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@JoinColumn( name = "EXECUTOR_ID", updatable = false )
+//		@Embedded
+//		@AttributeOverrides( @AttributeOverride( name = "id",
+//			column = @Column( name = "EXECUTOR_ID" ) ) )
+//		@AssociationOverride( name = "id",
+//			joinColumns = @JoinColumn( name = "EXECUTOR_ID",insertable = false, updatable = false ) )
 		protected CompositeActor.ID.Dao executor;
 
 		@Override
@@ -347,22 +390,9 @@ public interface Transaction<F extends CoordinationFact>
 		{
 			return binder.inject( Transaction.Factory.class ).create(
 					Transaction.ID.of( this.id, binder.id() ), this.kind,
-					this.initiator.restore( binder ),
-					this.executor.restore( binder ) );
+					CompositeActor.ID.of( this.initiator.restore( binder ) ),
+					CompositeActor.ID.of( this.executor.restore( binder ) ) );
 		}
-
-		@Override
-		protected Dao prePersist( final Transaction<?> tran )
-		{
-			this.id = tran.id().unwrap();
-			this.kind = tran.kind();
-			this.initiator = new CompositeActor.ID.Dao()
-					.prePersist( tran.initiator() );
-			this.executor = new CompositeActor.ID.Dao()
-					.prePersist( tran.executor() );
-			return this;
-		}
-
 	}
 
 	interface Factory

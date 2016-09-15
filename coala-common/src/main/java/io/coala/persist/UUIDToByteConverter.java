@@ -31,8 +31,8 @@ import com.eaio.uuid.UUID;
 
 /**
  * {@link AttributeConverter} converts {@link com.eaio.uuid.UUID} &lrarr;
- * {@code byte[]}. Apply to your {@link Entity @Entity} attribute (field of
- * type {@link UUID}). <blockquote>Usage:<br/>
+ * {@code byte[]}. Apply to your {@link Entity @Entity} attribute (field of type
+ * {@link UUID}). <blockquote>Usage:<br/>
  * <code>{@link Convert#converter() @Convert}({@link Convert#converter() converter}={@link UUIDToByteConverter UUIDToByteConverter.class})</code>
  * </blockquote>
  * 
@@ -46,7 +46,7 @@ public class UUIDToByteConverter implements AttributeConverter<UUID, byte[]>
 	public byte[] convertToDatabaseColumn( final UUID attribute )
 	{
 		final byte[] result = new byte[Long.BYTES * 2];
-		ByteBuffer.wrap( result ).asLongBuffer()
+		if( attribute != null ) ByteBuffer.wrap( result ).asLongBuffer()
 				.put( new long[]
 		{ attribute.getTime(), attribute.getClockSeqAndNode() } );
 		return result;
@@ -55,6 +55,7 @@ public class UUIDToByteConverter implements AttributeConverter<UUID, byte[]>
 	@Override
 	public UUID convertToEntityAttribute( final byte[] dbData )
 	{
+		if( dbData == null ) return null;
 		final LongBuffer buffer = ByteBuffer.wrap( dbData ).asLongBuffer();
 		return new UUID( buffer.get( 0 ), buffer.get( 1 ) );
 	}

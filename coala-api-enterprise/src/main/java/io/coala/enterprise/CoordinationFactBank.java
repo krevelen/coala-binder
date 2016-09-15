@@ -19,6 +19,7 @@
  */
 package io.coala.enterprise;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -28,8 +29,9 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
+
+import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.LocalBinder;
 import io.coala.enterprise.CoordinationFact.Dao;
@@ -38,6 +40,7 @@ import io.coala.math.Range;
 import io.coala.persist.JPAUtil;
 import io.coala.time.Instant;
 import rx.Observable;
+import rx.subjects.PublishSubject;
 
 /**
  * {@link CoordinationFactBank}
@@ -53,20 +56,28 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	/**
 	 * @param fact
 	 */
-	Observable<Dao> save( Observable<F> fact );
+	Observable<Dao> saveAsync( Observable<F> fact );
+
+	/**
+	 * @param fact
+	 */
+	default Iterable<Dao> saveSync( Observable<F> fact )
+	{
+		return saveAsync( fact ).toBlocking().toIterable();
+	}
+
+	static Logger logger()
+	{
+		return LogUtil.getLogger( CoordinationFactBank.class );
+	}
 
 	/**
 	 * @param fact
 	 */
 	default void save( final F fact )
 	{
-		save( Observable.just( fact ) )/* .toBlocking() */.subscribe( dao ->
-		{
-		}, e ->
-		{
-			LogUtil.getLogger( CoordinationFactBank.class )
-					.error( "Problem while saving: " + fact, e );
-		} );
+		for( Dao dao : saveSync( Observable.just( fact ) ) )
+			logger().trace( "saved: {}", dao );
 	}
 
 	/**
@@ -75,13 +86,8 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	@SuppressWarnings( "unchecked" )
 	default void save( final F... facts )
 	{
-		save( Observable.from( facts ) )/* .toBlocking() */.subscribe( dao ->
-		{
-		}, e ->
-		{
-			LogUtil.getLogger( CoordinationFactBank.class )
-					.error( "Problem while saving facts", e );
-		} );
+		for( Dao dao : saveSync( Observable.from( facts ) ) )
+			logger().trace( "saved: {}", dao );
 	}
 
 	/**
@@ -89,13 +95,8 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	 */
 	default void save( final Iterable<F> facts )
 	{
-		save( Observable.from( facts ) )/* .toBlocking() */.subscribe( dao ->
-		{
-		}, e ->
-		{
-			LogUtil.getLogger( CoordinationFactBank.class )
-					.error( "Problem while saving facts", e );
-		} );
+		for( Dao dao : saveSync( Observable.from( facts ) ) )
+			logger().trace( "saved: {}", dao );
 	}
 
 	/**
@@ -258,9 +259,9 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		}
 
 		@Override
-		public Observable<Dao> save( final Observable<T> fact )
+		public Observable<Dao> saveAsync( final Observable<T> fact )
 		{
-			return this.bank.save( (Observable<?>) fact );
+			return this.bank.saveAsync( (Observable<?>) fact );
 		}
 
 		@Override
@@ -305,23 +306,36 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		}
 
 		@Override
-		public Observable<Dao> save( final Observable<CoordinationFact> facts )
+		public Observable<Dao>
+			saveAsync( final Observable<CoordinationFact> facts )
 		{
-			return facts//.observeOn( Schedulers.io() ) 
-					// FIXME rejoin at sim onCompleted
-					.withLatestFrom(
-					JPAUtil.transact( this.emf ),
-					( fact, em ) -> fact.persist( em ) );
+			// TODO defer: facts.observeOn( ... ) & rejoin at sim::onCompleted
+			return PublishSubject.<Dao> create( sub ->
+			{
+				// One session for each fact
+				facts.subscribe( fact ->
+				{
+					JPAUtil.session( this.emf, em -> fact.persist( em ) );
+				}, e -> sub.onError( e ), () -> sub.onCompleted() );
+				
+				// One session for all facts
+//				JPAUtil.session( this.emf ).subscribe( em ->
+//				{
+//					facts.subscribe( fact ->
+//					{
+//						em.flush();
+//						sub.onNext( fact.persist( em ) );
+//					}, e -> sub.onError( e ), () -> sub.onCompleted() );
+//			}, e -> sub.onError( e ), () -> sub.onCompleted() );
+			} ).asObservable();
 		}
 
 		@Override
 		public CoordinationFact find( final CoordinationFact.ID id )
 		{
-			return JPAUtil.transact( this.emf ).toBlocking().first()
-					.createQuery(
-							"SELECT f FROM " + CoordinationFact.Dao.ENTITY_NAME
-									+ " AS f WHERE f.ID=?1",
-							CoordinationFact.Dao.class )
+			return JPAUtil.session( this.emf ).toBlocking().first()
+					.createQuery( "SELECT f FROM " + Dao.ENTITY_NAME
+							+ " AS f WHERE f.ID=?1", Dao.class )
 					.setParameter( 1, id.unwrap() ).getSingleResult()
 					.restore( this.binder );
 		}
@@ -342,33 +356,37 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 			// TODO: chunking, two-step streaming, sorted by creation time-stamp
 			return Observable.create( sub ->
 			{
-				JPAUtil.transact( this.emf ).subscribe( em ->
+				JPAUtil.session( this.emf ).subscribe( em ->
 				{
 					final CriteriaBuilder cb = em.getCriteriaBuilder();
 					final CriteriaQuery<Dao> q = cb.createQuery( Dao.class );
 					final Root<Dao> d = q.from( Dao.class );
 					q.select( d );
+
 					// TODO first (1) fetch id's sorted by time-stamp, 
 					// then (2) fetch full Dao upon (chunked) traversal
-					@SuppressWarnings( "rawtypes" )
-					final ParameterExpression<Class> typeParam = cb
-							.parameter( Class.class );
-					if( type != null ) q.where( cb
-							.equal( d.get( "tranKind" ), typeParam ) );
-					final ParameterExpression<CoordinationFactKind> kindParam = cb
-							.parameter( CoordinationFactKind.class );
-					if( kind != null ) q.where( cb
-							.equal( d.get( Dao.KIND_ATTR_NAME ), kindParam ) );
+
+//					@SuppressWarnings( "rawtypes" )
+//					final ParameterExpression<Class> typeParam = cb
+//							.parameter( Class.class );
+//					if( type != null )
+//						q.where( cb.equal( d.get( "transaction" ).get( "kind" ),
+//								typeParam ) );
+//					final ParameterExpression<CoordinationFactKind> kindParam = cb
+//							.parameter( CoordinationFactKind.class );
+//					if( kind != null ) q.where( cb
+//							.equal( d.get( Dao.KIND_ATTR_NAME ), kindParam ) );
 
 					final TypedQuery<Dao> query = em.createQuery( q );
 
-					if( type != null ) query.setParameter( typeParam, type );
-					if( kind != null ) query.setParameter( kindParam, kind );
+//					if( type != null ) query.setParameter( typeParam, type );
+//					if( kind != null ) query.setParameter( kindParam, kind );
 
-					query.getResultList().stream().map( dao ->
-					{
-						return dao.restore( this.binder );
-					} ).forEach( sub::onNext );
+					final List<Dao> list = query.getResultList();
+					System.err.println( "Got: " + list );
+					list.stream().map( dao -> dao.restore( this.binder ) )
+							.forEach( sub::onNext );
+					sub.onCompleted();
 				}, sub::onError );
 			} );
 		}

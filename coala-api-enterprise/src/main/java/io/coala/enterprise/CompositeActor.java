@@ -25,9 +25,7 @@ import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.Entity;
 
-import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
@@ -164,41 +162,51 @@ public interface CompositeActor
 	 */
 	class ID extends LocalId
 	{
+
+//		@Override
+//		public ID parent()
+//		{
+//			return (ID) super.parent();
+//		}
+
 		/**
 		 * @param name
 		 * @param orgId
 		 * @return
 		 */
-		public static ID of( final String name, final Organization.ID ctx )
+		public static ID of( final String name, final LocalId parent )
 		{
-			return Id.of( new ID(), name, ctx );
+			return Id.of( new ID(), name, parent );
 		}
 
-		protected static ID of( final LocalId ctx )
+		public static ID of( final LocalId raw )
 		{
-			return of( (String) ctx.unwrap(),
-					Organization.ID.of( ctx.parent() ) );
+			return raw == null || raw.parent() == null ? null
+					: of( raw.unwrap().toString(), raw.parent() );
 		}
 
-		@Entity( name = Dao.ENTITY_NAME )
-		public static class Dao extends LocalId.Dao
-		{
-			public static final String ENTITY_NAME = "ACTOR_IDS";
-
-			@Override
-			public ID restore( final LocalBinder binder )
-			{
-				return CompositeActor.ID.of( this.myId,
-						Organization.ID.of( this.parentId.restore( binder ) ) );
-			}
-
-			@Override
-			public Dao prePersist( final LocalId source )
-			{
-				super.prePersist( source );
-				return this;
-			}
-		}
+//		@Entity
+//		@Table( name = "ACTORS" )
+//		public static class Dao extends LocalId.Dao
+//		{
+//
+//			@Override
+//			public ID restore( final LocalBinder binder )
+//			{
+//				Objects.requireNonNull( this.id );
+//				Objects.requireNonNull( this.contextId );
+//				return ID.of( this.id,
+//						this.parent == null ? LocalId.of( this.contextId )
+//								: this.parent.restore( binder ) );
+//			}
+//
+//			@Override
+//			protected LocalId.Dao prePersist( final EntityManager em,
+//				final LocalId source )
+//			{
+//				return super.prePersist( em, source );
+//			}
+//		}
 	}
 
 	static CompositeActor of( final ID id, final Organization org,

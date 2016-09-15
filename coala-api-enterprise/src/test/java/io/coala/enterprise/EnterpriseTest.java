@@ -128,16 +128,8 @@ public class EnterpriseTest
 			} );
 
 			LOG.trace( "initialize outgoing fact persistence" );
-			org1.outgoing().subscribe( fact ->
-			{
-				try
-				{
-					fact.save();
-				} catch( final Exception e )
-				{
-					e.printStackTrace();
-				}
-			} );
+			org1.outgoing().subscribe( fact -> fact.save(),
+					e -> LOG.error( "Problem while saving fact", e ) );
 
 			// TODO test fact expiration handling
 

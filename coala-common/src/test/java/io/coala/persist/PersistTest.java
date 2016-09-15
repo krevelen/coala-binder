@@ -182,20 +182,20 @@ public class PersistTest
 				.getOrCreate( MyHibernateConfig.class );
 		LOG.trace( "Testing JPA config: {}", ConfigUtil.export( conf ) );
 		final EntityManagerFactory emf = conf.createEntityManagerFactory();
-		JPAUtil.transact( emf, em ->
+		JPAUtil.session( emf, em ->
 		{
 			final int res0 = em
 					.createQuery( "DELETE FROM " + ENTITY_NAME + " r" )
 					.executeUpdate();
 			LOG.trace( "Removed records: {}", res0 );
 		} );
-		JPAUtil.transact( emf, em ->
+		JPAUtil.session( emf, em ->
 		{
 			em.persist( MyRegistration.of( "Rick", "van Krevelen" ) );
 			em.persist( MyRegistration.of( "Joram", "Hoogink" ) );
 			LOG.trace( "Filled table" );
 		} );
-		JPAUtil.transact( emf, em ->
+		JPAUtil.session( emf, em ->
 		{
 			LOG.trace( "Read table, result: {}",
 					em.createQuery( "SELECT r FROM " + ENTITY_NAME + " r",

@@ -24,11 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.Entity;
 
 import io.coala.bind.LocalBinder;
-import io.coala.bind.LocalId;
-import io.coala.name.Id;
+import io.coala.enterprise.CompositeActor.ID;
 import io.coala.name.Identified;
 import io.coala.time.Proactive;
 import io.coala.time.Scheduler;
@@ -42,8 +40,7 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Organization
-	extends Proactive, Identified.Ordinal<Organization.ID>
+public interface Organization extends Proactive, Identified.Ordinal<ID>
 {
 
 	/** @return */
@@ -88,63 +85,63 @@ public interface Organization
 	 */
 	default CompositeActor actor( final String actorID )
 	{
-		return actor( CompositeActor.ID.of( actorID, id() ) );
+		return actor( ID.of( actorID, id() ) );
 	}
 
 	/**
 	 * @param actorID
 	 * @return
 	 */
-	CompositeActor actor( CompositeActor.ID actorID );
+	CompositeActor actor( ID actorID );
 
 	/** @param incoming */
 	void consume( CoordinationFact incoming );
 
-	/**
-	 * {@link ID}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	class ID extends LocalId
-	{
-		@Override
-		public String toString()
-		{
-			return unwrap().toString(); // hide local context
-		}
+//	/**
+//	 * {@link ID}
+//	 * 
+//	 * @version $Id$
+//	 * @author Rick van Krevelen
+//	 */
+//	class ID extends LocalId
+//	{
+//		@Override
+//		public String toString()
+//		{
+//			return unwrap().toString(); // hide local context
+//		}
+//
+//		public static ID of( final String name, final LocalId ctx )
+//		{
+//			return Id.of( new ID(), name, ctx );
+//		}
+//
+//		protected static ID of( final LocalId ctx )
+//		{
+//			return of( (String) ctx.unwrap(), ctx.parent() );
+//		}
+//
+//		@Entity( name = Dao.ENTITY_NAME )
+//		public static class Dao extends LocalId.Dao
+//		{
+//			public static final String ENTITY_NAME = "ORGANIZATION";
+//
+//			@Override
+//			public ID restore( final LocalBinder binder )
+//			{
+//				return ID.of( this.id, this.parent.restore( binder ) );
+//			}
+//		}
+//	}
 
-		public static ID of( final String name, final LocalId ctx )
-		{
-			return Id.of( new ID(), name, ctx );
-		}
-
-		protected static ID of( final LocalId ctx )
-		{
-			return of( (String) ctx.unwrap(), ctx.parent() );
-		}
-
-		@Entity( name = Dao.ENTITY_NAME )
-		public static class Dao extends LocalId.Dao
-		{
-			public static final String ENTITY_NAME = "ORGANIZATION_IDS";
-
-			@Override
-			public ID restore( final LocalBinder binder )
-			{
-				return ID.of( this.myId, this.parentId.restore( binder ) );
-			}
-		}
-	}
-
-	static Organization of( LocalBinder binder, String name )
+	static Organization of( final LocalBinder binder, final String name )
 	{
 		return of( binder, ID.of( name, binder.id() ) );
 	}
 
-	static Organization of( LocalBinder binder, ID name )
+	static Organization of( final LocalBinder binder, final ID id )
 	{
-		return of( name, binder.inject( Scheduler.class ),
+		return of( id, binder.inject( Scheduler.class ),
 				binder.inject( CoordinationFact.Factory.class ),
 				binder.inject( CoordinationFactBank.Factory.class ) );
 	}
@@ -157,7 +154,7 @@ public interface Organization
 				.create();
 		final Subject<CoordinationFact, CoordinationFact> outgoing = PublishSubject
 				.create();
-		final Map<CompositeActor.ID, CompositeActor> actorMap = new ConcurrentHashMap<>();
+		final Map<ID, CompositeActor> actorMap = new ConcurrentHashMap<>();
 		return new Organization()
 		{
 			@Override
@@ -167,7 +164,7 @@ public interface Organization
 			}
 
 			@Override
-			public Organization.ID id()
+			public ID id()
 			{
 				return id;
 			}

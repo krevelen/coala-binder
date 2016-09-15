@@ -15,12 +15,19 @@
  */
 package io.coala.persist;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
+import javax.persistence.PersistenceException;
 
+import io.coala.exception.Thrower;
+import io.coala.function.ThrowingConsumer;
 import rx.Observable;
 
 /**
@@ -31,6 +38,9 @@ import rx.Observable;
  */
 public class JPAUtil
 {
+//	/** */
+//	private static final Logger LOG = LogUtil.getLogger( JPAUtil.class );
+
 	private JPAUtil()
 	{
 		// singleton
@@ -40,10 +50,33 @@ public class JPAUtil
 	 * @param emf the (expensive) {@link EntityManagerFactory}
 	 * @param consumer the transaction's {@link EntityManager} {@link Consumer}
 	 */
-	public static void transact( final EntityManagerFactory emf,
-		final Consumer<EntityManager> consumer )
+	public static void session( final EntityManagerFactory emf,
+		final ThrowingConsumer<EntityManager, ?> consumer )
 	{
-		consumer.accept( transact( emf ).toBlocking().first() );
+		final List<Throwable> error = new ArrayList<>( 1 );
+		final CountDownLatch latch = new CountDownLatch( 1 );
+		session( emf ).subscribe( em ->
+		{
+			try
+			{
+				consumer.accept( em );
+			} catch( final Throwable e )
+			{
+				Thrower.rethrowUnchecked( e );
+			} finally
+			{
+				latch.countDown();
+			}
+		}, e -> error.add( e ) );
+		try
+		{
+			latch.await();//( 1, TimeUnit.SECONDS );
+		} catch( final InterruptedException ignore )
+		{
+		}
+		if( !error.isEmpty() ) Thrower.rethrowUnchecked( error.get( 0 ) );
+//		if( latch.getCount() != 0 )
+//			Thrower.throwNew( TimeoutException.class, "JPA session time-out" );
 	}
 
 	/**
@@ -51,7 +84,7 @@ public class JPAUtil
 	 * @return
 	 */
 	public static Observable<EntityManager>
-		transact( final EntityManagerFactory emf )
+		session( final EntityManagerFactory emf )
 	{
 		return Observable.create( sub ->
 		{
@@ -61,15 +94,62 @@ public class JPAUtil
 			{
 				tran.begin();
 				sub.onNext( em );
-				if( tran.isActive() ) tran.commit();
+				if( tran.isActive() )
+				{
+					tran.commit();
+				}
 				sub.onCompleted();
-//				em.close(); // FIXME?
 			} catch( final Throwable e )
 			{
-				if( tran.isActive() ) tran.rollback();
-				em.close();
+				if( tran.isActive() )
+				{
+					tran.rollback();
+				}
 				sub.onError( e );
+			} finally
+			{
+				em.close();
 			}
 		} );
+	}
+
+	/**
+	 * see http://stackoverflow.com/a/35587856/1418999, but with half the calls
+	 * to {@code finder}
+	 * 
+	 * @param em
+	 * @param finder
+	 * @param factory
+	 * @return
+	 */
+	public static <T> T findOrCreate( final EntityManager outer,
+		final Supplier<T> finder, final Supplier<T> factory )
+	{
+		final EntityManager inner = outer.getEntityManagerFactory()
+				.createEntityManager();
+		final T attempt1 = finder.get();
+		if( attempt1 != null ) return attempt1;
+		final T created = factory.get();
+		final EntityTransaction tx = inner.getTransaction();
+		try
+		{
+			tx.begin();
+			inner.persist( created );
+			tx.commit();
+			return outer.merge( created );
+		} catch( final PersistenceException ex )
+		{
+			tx.rollback(); // unique constraint violation ?
+			final T result = finder.get(); // retry
+			if( result != null ) return result; // ok now
+			throw ex; // other issue -> fail
+		} catch( final Throwable t )
+		{
+			tx.rollback();
+			throw t;
+		} finally
+		{
+			inner.close();
+		}
 	}
 }

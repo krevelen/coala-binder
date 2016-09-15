@@ -19,12 +19,11 @@
  */
 package io.coala.bind;
 
-import java.util.Date;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.persistence.Cacheable;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
@@ -32,18 +31,21 @@ import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NoResultException;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
-import javax.persistence.Version;
 
 import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.coala.exception.Thrower;
+import io.coala.json.JsonUtil;
 import io.coala.name.Id;
+import io.coala.persist.JPAUtil;
+import io.coala.persist.Persistable;
 import io.coala.persist.UUIDToByteConverter;
 
 /**
@@ -56,7 +58,23 @@ import io.coala.persist.UUIDToByteConverter;
  */
 @SuppressWarnings( "rawtypes" )
 public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
+	implements Persistable<LocalId.Dao>
 {
+
+	public UUID contextId()
+	{
+		for( LocalId i = this; i.parent() != null; i = i.parent() )
+			if( i.parent() != null && i.parent().parent() == null )
+				return (UUID) i.parent().unwrap();
+		throw new IllegalArgumentException();
+	}
+
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + JsonUtil.stringify( this );
+	}
+
 	/**
 	 * FIXME reverse direction, handle UUID, handle multiple ancestors...
 	 * 
@@ -77,12 +95,12 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 
 	public static LocalId of( final UUID contextId )
 	{
-		return of( contextId, null );
+		return Id.of( new LocalId(), contextId, null );
 	}
 
-	public static LocalId of( final Comparable value, final LocalId parentId )
+	public static LocalId of( final String value, final LocalId parent )
 	{
-		return Id.of( new LocalId(), value, parentId );
+		return Id.of( new LocalId(), value, parent );
 	}
 
 	public Stream<LocalId> find( final EntityManager em,
@@ -102,11 +120,16 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
 	}
 
+	@Override
 	public Dao persist( final EntityManager em )
 	{
-		final Dao result = new Dao().prePersist( this );
-		em.persist( result );
-		return result;
+		final Dao parent = Objects.requireNonNull( parent() ).parent() == null
+				? null : parent().persist( em ); // recurse
+		final String id = Objects.requireNonNull( unwrap() ).toString();
+		final UUID context = Objects.requireNonNull( contextId() );
+		return JPAUtil.<Dao> findOrCreate( em,
+				() -> Dao.find( em, id, parent, context ),
+				() -> Dao.of( id, parent, context ) );
 	}
 
 	/**
@@ -118,66 +141,99 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	 */
 	@Entity( name = Dao.ENTITY_NAME )
 	@Cacheable
-	@Table( name = "LOCAL_IDS", uniqueConstraints = @UniqueConstraint(
+	@Table( name = "LOCAL_IDS",
+		uniqueConstraints =
+	{ @UniqueConstraint(
+		// FIXME this constraint can be violated, using Hibernate 5
 		columnNames =
-	{ "MY_ID", "PARENT_ID", "CONTEXT_ID" } ) )
-	public static class Dao extends BindableDao<LocalId, Dao>
+		{ Dao.CONTEXT_COLUMN_NAME, Dao.PARENT_COLUMN_NAME,
+					Dao.ID_COLUMN_NAME } ) } )
+	@Inheritance( strategy = InheritanceType.SINGLE_TABLE )
+//	@DiscriminatorColumn( name = "ID_TYPE" )
+	public static class Dao implements BindableDao
 	{
-		public static final String ENTITY_NAME = "LocalIdDao";
+		public static final String ENTITY_NAME = "LOCAL_ID";
 
-		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
-		@Temporal( TemporalType.TIMESTAMP )
-		@Column( name = "CREATED_TS", insertable = false, updatable = false,
-			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-		protected Date created;
+		public static final String ID_COLUMN_NAME = "ID";
 
-		/** automated time stamp of last update (typically never changes) */
-		@Version
-		@Temporal( TemporalType.TIMESTAMP )
-		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
-			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-		protected Date updated;
+		public static final String PARENT_COLUMN_NAME = "PARENT";
+
+		public static final String CONTEXT_COLUMN_NAME = "CONTEXT";
+
+		protected static Dao find( final EntityManager em, final String id,
+			final Dao parent, final UUID context )
+		{
+			try
+			{
+				final Dao result = em
+						.createQuery(
+								"SELECT d FROM " + ENTITY_NAME
+										+ " d WHERE d.id=?1  AND d.contextId=?2",
+								Dao.class )
+						.setParameter( 1, Objects.requireNonNull( id ) )
+						.setParameter( 2, Objects.requireNonNull( context ) )
+						.getSingleResult();
+				return result;
+			} catch( final NoResultException ignore )
+			{
+				return null;
+			}
+		}
+
+		protected static Dao of( final String id, final Dao parent,
+			final UUID context )
+		{
+			final Dao result = new Dao();
+			result.contextId = context;
+			result.parent = parent;
+			result.id = id;
+			return result;
+		}
 
 		@javax.persistence.Id
 		@GeneratedValue( strategy = GenerationType.IDENTITY )
-		@Column( name = "ID", nullable = false, updatable = false )
-		protected Integer id;
+		@Column( name = "PK", nullable = false, updatable = false,
+			insertable = false )
+		@JsonIgnore
+		protected Integer pk;
 
-		@Column( name = "MY_ID", nullable = false, updatable = false )
-		protected String myId;
+//		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
+//		@Temporal( TemporalType.TIMESTAMP )
+//		@Column( name = "CREATED_TS", insertable = false, updatable = false,
+//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+//		@JsonIgnore
+//		protected Date created;
 
-		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
-		@JoinColumn( name = "PARENT_ID", nullable = true, updatable = false )
-		protected Dao parentId;
+//		/** automated time stamp of last update (typically never changes) */
+//		@Version
+//		@Temporal( TemporalType.TIMESTAMP )
+//		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
+//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+//		@JsonIgnore
+//		protected Date updated;
 
-		@Column( name = "CONTEXT_ID", nullable = false, updatable = false,
-			length = 16 /* , columnDefinition = "BINARY(16)" */ )
+		@Column( name = ID_COLUMN_NAME, nullable = false, updatable = false )
+		protected String id;
+
+		@ManyToOne( fetch = FetchType.LAZY )
+		@JoinColumn( name = PARENT_COLUMN_NAME, nullable = true,
+			updatable = false )
+		protected Dao parent;
+
+		@Column( name = CONTEXT_COLUMN_NAME, nullable = false,
+			updatable = false, length = 16, columnDefinition = "BINARY(16)" )
 		@Convert( converter = UUIDToByteConverter.class )
 		protected UUID contextId;
 
 		@Override
 		public LocalId restore( final LocalBinder binder )
 		{
-			return LocalId.of( this.myId,
-					this.parentId == null ? LocalId.of( this.contextId )
-							: this.parentId.restore( binder ) );
-		}
-
-		@Override
-		protected Dao prePersist( final LocalId source )
-		{
-			// exit recursion if no parent (i.e. source == root context UUID)
-			if( source == null || source.parent() == null ) return null;
-			for( LocalId id = source; id.parent() != null; id = id.parent() )
-				if( id.parent() != null && id.parent().parent() == null )
-					this.contextId = (UUID) id.parent().unwrap();
-			if( this.contextId == null )
-				Thrower.throwNew( IllegalArgumentException.class,
-						"Unable to resolve context UUID for {}: {}",
-						LocalId.class.getSimpleName(), source );
-			this.myId = source.unwrap().toString();
-			this.parentId = new Dao().prePersist( source.parent() );
-			return this;
+			System.err.println( "restoring: " + this );
+			return LocalId.of( Objects.requireNonNull( this.id ),
+					this.parent == null
+							? LocalId.of(
+									Objects.requireNonNull( this.contextId ) )
+							: this.parent.restore( binder ) );
 		}
 	}
 }
