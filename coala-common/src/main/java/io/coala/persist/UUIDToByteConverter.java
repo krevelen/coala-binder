@@ -45,8 +45,9 @@ public class UUIDToByteConverter implements AttributeConverter<UUID, byte[]>
 	@Override
 	public byte[] convertToDatabaseColumn( final UUID attribute )
 	{
+		if( attribute == null ) return null;
 		final byte[] result = new byte[Long.BYTES * 2];
-		if( attribute != null ) ByteBuffer.wrap( result ).asLongBuffer()
+		ByteBuffer.wrap( result ).asLongBuffer()
 				.put( new long[]
 		{ attribute.getTime(), attribute.getClockSeqAndNode() } );
 		return result;

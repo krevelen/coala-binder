@@ -58,8 +58,15 @@ public interface Persistable<DAO extends Persistable.Dao>
 				.getResultList().stream();
 	}
 
+	@JsonAutoDetect( fieldVisibility = Visibility.PROTECTED_AND_PUBLIC )
+	@JsonInclude( Include.NON_NULL )
 	interface Dao
 	{
+
+		default String stringify()
+		{
+			return getClass().getSimpleName() + JsonUtil.stringify( this );
+		}
 
 	}
 }

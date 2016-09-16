@@ -141,8 +141,8 @@ public class JPAUtil
 		{
 			tx.rollback(); // unique constraint violation ?
 			final T result = finder.get(); // retry
-			if( result != null ) return result; // ok now
-			throw ex; // other issue -> fail
+			if( result == null ) throw ex; // other issue -> fail
+			return result; // ok now
 		} catch( final Throwable t )
 		{
 			tx.rollback();

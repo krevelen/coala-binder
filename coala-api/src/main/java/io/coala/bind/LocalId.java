@@ -254,7 +254,6 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		@GeneratedValue( strategy = GenerationType.IDENTITY )
 		@Column( name = "PK", nullable = false, updatable = false,
 			insertable = false )
-		@JsonIgnore
 		protected Integer pk;
 
 //		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
@@ -280,6 +279,7 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 			updatable = false )
 		protected Dao parent;
 
+		@JsonIgnore
 		@Column( name = CONTEXT_COLUMN_NAME, nullable = false,
 			updatable = false, length = 16, columnDefinition = "BINARY(16)" )
 		@Convert( converter = UUIDToByteConverter.class )
