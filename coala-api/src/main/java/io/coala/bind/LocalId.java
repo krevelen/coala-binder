@@ -19,6 +19,7 @@
  */
 package io.coala.bind;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -41,8 +42,14 @@ import javax.persistence.UniqueConstraint;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.util.StdConverter;
 
-import io.coala.json.JsonUtil;
 import io.coala.name.Id;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
@@ -57,36 +64,30 @@ import io.coala.persist.UUIDToByteConverter;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
+@JsonSerialize( using = LocalId.JsonExport.class ) // override Wrapper tooling
+@JsonDeserialize( converter = LocalId.JsonStringToLocalIdConverter.class )
 public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	implements Persistable<LocalId.Dao>
 {
-
-	public UUID contextId()
+	public static class JsonExport extends JsonSerializer<LocalId>
 	{
-		for( LocalId i = this; i.parent() != null; i = i.parent() )
-			if( i.parent() != null && i.parent().parent() == null )
-				return (UUID) i.parent().unwrap();
-		throw new IllegalArgumentException();
+		@Override
+		public void serialize( final LocalId value, final JsonGenerator jgen,
+			final SerializerProvider provider ) throws IOException
+		{
+			jgen.writeString( value.toJSON() );
+		}
 	}
 
-	@Override
-	public String toString()
+	public static class JsonStringToLocalIdConverter
+		extends StdConverter<String, LocalId>
 	{
-		return getClass().getSimpleName() + JsonUtil.stringify( this );
+		@Override
+		public LocalId convert( final String value )
+		{
+			return valueOf( value );
+		}
 	}
-
-	/**
-	 * FIXME reverse direction, handle UUID, handle multiple ancestors...
-	 * 
-	 * @param localId the "natural" {@link String} representation
-	 * @return the parsed/deserialized {@link LocalId}
-	 */
-//	public static LocalId valueOf( final String localId )
-//	{
-//		if( localId == null ) return null;
-//		final String[] split = localId.split( ID_SEP_REGEX, 2 );
-//		return of( split[0], valueOf( split[1] ) );
-//	}
 
 	public static LocalId create()
 	{
@@ -102,6 +103,65 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	{
 		return Id.of( new LocalId(), value, parent );
 	}
+
+	public static LocalId valueOf( final String value )
+	{
+		String[] pair = value.split( "@" );
+		if( pair.length != 2 || pair[1].isEmpty() )
+			throw new IllegalArgumentException( "Can't parse " + value );
+		LocalId parent = of( new UUID( pair[1] ) );
+		for( pair = pair[0].split( ID_SEP_REGEX,
+				2 ); pair.length == 2; pair = pair[1].split( ID_SEP_REGEX, 2 ) )
+			parent = of( pair[0], parent );
+		return of( pair[0], parent );
+	}
+
+	@JsonValue
+	public String toJSON()
+	{
+		String result = unwrap().toString();
+		for( LocalId id = parent(); id != null; id = id.parent() )
+			if( id.unwrap() instanceof UUID )
+				result += "@" + id.unwrap();
+			else
+				result = id.unwrap() + ID_SEP_REGEX + result;
+		return result;
+	}
+
+	@Override
+	public String toString()
+	{
+		String result = unwrap().toString();
+		for( LocalId id = parent(); id != null; id = id.parent() )
+			if( id.unwrap() instanceof UUID )
+				result = '['
+						+ Integer.toHexString( ((UUID) id.unwrap()).hashCode() )
+						+ ']' + result;
+			else
+				result = id.unwrap() + ID_SEP_REGEX + result;
+		return result;
+	}
+
+	public UUID contextId()
+	{
+		for( LocalId i = this; i.parent() != null; i = i.parent() )
+			if( i.parent() != null && i.parent().parent() == null )
+				return (UUID) i.parent().unwrap();
+		throw new IllegalArgumentException();
+	}
+
+	/**
+	 * FIXME reverse direction, handle UUID, handle multiple ancestors...
+	 * 
+	 * @param localId the "natural" {@link String} representation
+	 * @return the parsed/deserialized {@link LocalId}
+	 */
+//	public static LocalId valueOf( final String localId )
+//	{
+//		if( localId == null ) return null;
+//		final String[] split = localId.split( ID_SEP_REGEX, 2 );
+//		return of( split[0], valueOf( split[1] ) );
+//	}
 
 	public Stream<LocalId> find( final EntityManager em,
 		final LocalBinder binder, final String query )
@@ -141,13 +201,13 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	 */
 	@Entity( name = Dao.ENTITY_NAME )
 	@Cacheable
-	@Table( name = "LOCAL_IDS",
-		uniqueConstraints =
+	@Table( name = "LOCAL_IDS", uniqueConstraints =
+	// FIXME this constraint can be violated, using Hibernate 5
 	{ @UniqueConstraint(
-		// FIXME this constraint can be violated, using Hibernate 5
 		columnNames =
-		{ Dao.CONTEXT_COLUMN_NAME, Dao.PARENT_COLUMN_NAME,
-					Dao.ID_COLUMN_NAME } ) } )
+			{ Dao.CONTEXT_COLUMN_NAME, Dao.ID_COLUMN_NAME } ),
+			@UniqueConstraint( columnNames =
+			{ Dao.CONTEXT_COLUMN_NAME, Dao.PARENT_COLUMN_NAME } ) } )
 	@Inheritance( strategy = InheritanceType.SINGLE_TABLE )
 //	@DiscriminatorColumn( name = "ID_TYPE" )
 	public static class Dao implements BindableDao
@@ -228,7 +288,6 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		@Override
 		public LocalId restore( final LocalBinder binder )
 		{
-			System.err.println( "restoring: " + this );
 			return LocalId.of( Objects.requireNonNull( this.id ),
 					this.parent == null
 							? LocalId.of(

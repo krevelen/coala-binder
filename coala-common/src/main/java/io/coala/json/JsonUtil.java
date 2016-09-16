@@ -19,11 +19,14 @@ import java.beans.PropertyEditorSupport;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
 
@@ -31,6 +34,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
@@ -69,11 +73,12 @@ public class JsonUtil
 	public static void initialize( final ObjectMapper om )
 	{
 		om.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
-		om.registerModule( new JodaModule() );
-		om.registerModule( new UUIDModule() );
+		final List<Module> modules = Arrays.asList( new JodaModule(),
+				new UUIDModule() );
+		om.registerModules( modules );
 		LOG.trace( "Using jackson v: {} with modules: {}", om.version(),
-				new Class[]
-		{ JodaModule.class, UUIDModule.class } );
+				modules.stream().map( m -> m.getModuleName() )
+						.collect( Collectors.toList() ) );
 	}
 
 	/** */

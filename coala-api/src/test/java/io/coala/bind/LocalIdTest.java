@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import com.eaio.uuid.UUID;
 
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.persist.JPAUtil;
 
@@ -44,44 +45,51 @@ public class LocalIdTest
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( LocalIdTest.class );
 
-	@Test//( expected = PersistenceException.class )
+	@Test //( expected = PersistenceException.class )
 	public void testLocalId()
 	{
 		LOG.info( "Starting test of: {}", LocalId.class.getSimpleName() );
 
-		final LocalId id = LocalId.of( "role", LocalId.of( "org",
+		final LocalId id1 = LocalId.of( "role", LocalId.of( "org",
 				LocalId.of( "agent", LocalId.of( new UUID() ) ) ) );
+
+		final LocalId id2 = LocalId.of( "role", LocalId.of( "org",
+				LocalId.of( "agent", LocalId.of( new UUID() ) ) ) );
+
+		final LocalId id3 = LocalId.of( "role", LocalId.of( "org",
+				LocalId.of( "", LocalId.of( new UUID() ) ) ) );
 
 		final EntityManagerFactory emf = HibHikHypConfig.createEMF();
 		JPAUtil.session( emf, em ->
 		{
-			id.persist( em );
-			LOG.trace( "a Persisted: {}", id );
+			id1.persist( em );
+			LOG.trace( "a Persisted: {}", id1 );
 		} );
 		JPAUtil.session( emf, em ->
 		{
-			id.persist( em );
-			LOG.trace( "b Persisted: {}", id );
+			id1.persist( em );
+			LOG.trace( "b Persisted: {}", id1 );
 		} );
 		JPAUtil.session( emf, em ->
 		{
-			id.persist( em );
-			LOG.trace( "c Persisted: {}", id );
+			id2.persist( em );
+			LOG.trace( "c Persisted: {}", id2 );
 		} );
 		JPAUtil.session( emf, em ->
 		{
-			id.persist( em );
-			LOG.trace( "d Persisted: {}", id );
-			id.persist( em );
-			LOG.trace( "e Persisted: {}", id );
-			id.persist( em );
-			LOG.trace( "f Persisted: {}", id );
+			id1.persist( em );
+			LOG.trace( "d Persisted: {}", id1 );
+			id2.persist( em );
+			LOG.trace( "e Persisted: {}", id2 );
+			id3.persist( em );
+			LOG.trace( "f Persisted: {}", id3 );
 		} );
 		final List<LocalId> list = new ArrayList<>();
-		JPAUtil.session( emf, em ->
-		{
-			id.findAll( em, null ).forEach( list::add );
-		} );
+		JPAUtil.session( emf,
+				em -> id1.findAll( em, null ).forEach( list::add ) );
 		LOG.trace( "SELECT all: {}", list );
+		list.forEach( id -> LOG.trace( "stringify {} -> {} -> {}", id,
+				JsonUtil.stringify( id ),
+				JsonUtil.valueOf( JsonUtil.stringify( id ), LocalId.class ) ) );
 	}
 }
