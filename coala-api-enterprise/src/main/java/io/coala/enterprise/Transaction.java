@@ -37,6 +37,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NoResultException;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
@@ -60,6 +61,7 @@ import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
 import io.coala.json.JsonUtil;
 import io.coala.name.Identified;
+import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
 import io.coala.persist.UUIDToByteConverter;
 import io.coala.time.Expectation;
@@ -142,6 +144,7 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 	@Override
 	default Dao persist( final EntityManager em )
 	{
+		// TODO cache by primary key
 		final Dao result = new Dao();
 		result.id = Objects.requireNonNull( id().unwrap() );
 		result.kind = Objects.requireNonNull( kind() );
@@ -414,6 +417,25 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 						this.expired.onNext( fact );
 					} ) );
 		}
+
+		private Integer pk = null;
+
+		@Override
+		public Dao persist( final EntityManager em )
+		{
+			if( this.pk != null ) return em.find( Dao.class, this.pk ); // cached?
+			final UUID id = Objects.requireNonNull( id().unwrap() );
+			final Class<F> kind = Objects.requireNonNull( kind() );
+			final LocalId.Dao initiatorRef = Objects
+					.requireNonNull( initiatorRef() ).persist( em );
+			final LocalId.Dao executorRef = Objects
+					.requireNonNull( executorRef() ).persist( em );
+			final Dao result = JPAUtil.<Dao> findOrCreate( em,
+					() -> Dao.find( em, id ),
+					() -> Dao.of( id, kind, initiatorRef, executorRef ) );
+			this.pk = result.pk;
+			return result;
+		}
 	}
 
 	/**
@@ -427,6 +449,33 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 	{
 		public static final String ENTITY_NAME = "TRANSACTIONS";
 
+		protected static Dao find( final EntityManager em, final UUID id )
+		{
+			try
+			{
+				return em
+						.createQuery( "SELECT d FROM " + ENTITY_NAME
+								+ " d WHERE d.id=?1", Dao.class )
+						.setParameter( 1, Objects.requireNonNull( id ) )
+						.getSingleResult();
+			} catch( final NoResultException ignore )
+			{
+				return null;
+			}
+		}
+
+		protected static Dao of( final UUID id,
+			final Class<? extends CoordinationFact> kind,
+			final LocalId.Dao initiatorRef, final LocalId.Dao executorRef )
+		{
+			final Dao result = new Dao();
+			result.id = id;
+			result.kind = kind;
+			result.initiatorRef = initiatorRef;
+			result.executorRef = executorRef;
+			return result;
+		}
+
 		@Id
 		@GeneratedValue( strategy = GenerationType.IDENTITY )
 		@Column( name = "PK", nullable = false, updatable = false )
@@ -434,7 +483,7 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 
 //		@Id // FIXME can't use this BINARY(16) as foreign key ?
 		@Column( name = "ID", nullable = false, updatable = false, length = 16,
-			columnDefinition = "BINARY(16)" )
+			columnDefinition = "BINARY(16)", unique = true )
 		@Convert( converter = UUIDToByteConverter.class )
 		protected UUID id;
 
@@ -463,7 +512,7 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 //			column = @Column( name = "INITIATOR_ID" ) ) )
 //		@AssociationOverride( name = "id",
 //			joinColumns = @JoinColumn(name = "INITIATOR_ID",insertable = false, updatable = false ) )
-		protected CompositeActor.ID.Dao initiatorRef;
+		protected LocalId.Dao initiatorRef;
 
 		@ManyToOne( optional = false ) //( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
 		@JoinColumn( name = "EXECUTOR_ID", updatable = false )
@@ -472,7 +521,7 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 //			column = @Column( name = "EXECUTOR_ID" ) ) )
 //		@AssociationOverride( name = "id",
 //			joinColumns = @JoinColumn( name = "EXECUTOR_ID",insertable = false, updatable = false ) )
-		protected CompositeActor.ID.Dao executorRef;
+		protected LocalId.Dao executorRef;
 
 		@Override
 		public Transaction<?> restore( final LocalBinder binder )

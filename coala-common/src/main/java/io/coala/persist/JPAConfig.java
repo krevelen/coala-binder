@@ -63,7 +63,7 @@ public interface JPAConfig extends GlobalConfig
 	SharedCacheMode sharedCacheMode();
 
 	@Key( CACHE_RETRIEVE_MODE_KEY )
-	@DefaultValue( "BYPASS" )
+	@DefaultValue( "USE" ) // BYPASS = off, REFRESH = update from query
 	CacheRetrieveMode cacheRetrieveMode();
 
 //	@Key( "javax.persistence.provider" )

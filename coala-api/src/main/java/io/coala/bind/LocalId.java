@@ -65,7 +65,7 @@ import io.coala.persist.UUIDToByteConverter;
  */
 @SuppressWarnings( "rawtypes" )
 @JsonSerialize( using = LocalId.JsonExport.class ) // override Wrapper tooling
-@JsonDeserialize( converter = LocalId.JsonStringToLocalIdConverter.class )
+@JsonDeserialize( converter = LocalId.FromStringConverter.class )
 public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	implements Persistable<LocalId.Dao>
 {
@@ -79,7 +79,7 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		}
 	}
 
-	public static class JsonStringToLocalIdConverter
+	public static class FromStringConverter
 		extends StdConverter<String, LocalId>
 	{
 		@Override
@@ -177,16 +177,21 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
 	}
 
+	private Integer pk = null;
+
 	@Override
 	public Dao persist( final EntityManager em )
 	{
+		if( this.pk != null ) return em.find( Dao.class, this.pk ); // cached?
 		final Dao parentRef = Objects.requireNonNull( parentRef() )
 				.parentRef() == null ? null : parentRef().persist( em ); // recurse
 		final String id = Objects.requireNonNull( unwrap() ).toString();
 		final UUID contextRef = Objects.requireNonNull( contextRef() );
-		return JPAUtil.<Dao> findOrCreate( em,
+		final Dao result = JPAUtil.<Dao> findOrCreate( em,
 				() -> Dao.find( em, id, contextRef ),
 				() -> Dao.of( id, parentRef, contextRef ) );
+		this.pk = result.pk;
+		return result;
 	}
 
 	/**
@@ -199,14 +204,12 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	@Entity( name = Dao.ENTITY_NAME )
 	@Cacheable
 	@Table( name = "LOCAL_IDS", uniqueConstraints =
-	// FIXME this constraint can be violated, using Hibernate 5
 	{ @UniqueConstraint(
 		columnNames =
 			{ Dao.CONTEXT_COLUMN_NAME, Dao.ID_COLUMN_NAME } ),
 			@UniqueConstraint( columnNames =
 			{ Dao.CONTEXT_COLUMN_NAME, Dao.PARENT_COLUMN_NAME } ) } )
 	@Inheritance( strategy = InheritanceType.SINGLE_TABLE )
-//	@DiscriminatorColumn( name = "ID_TYPE" )
 	public static class Dao implements BindableDao
 	{
 		public static final String ENTITY_NAME = "LOCAL_ID";
