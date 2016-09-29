@@ -28,8 +28,8 @@ public class ExceptionStream<T extends Throwable & Contextual>
 	public static <T extends Throwable & Contextual> ExceptionStream<T>
 		getInstance()
 	{
-		if( INSTANCE == null ) INSTANCE = new ExceptionStream<T>();
-		return (ExceptionStream<T>) INSTANCE;
+		return INSTANCE != null ? (ExceptionStream<T>) INSTANCE
+				: (ExceptionStream<T>) (INSTANCE = new ExceptionStream<T>());
 	}
 
 	/**
@@ -39,16 +39,14 @@ public class ExceptionStream<T extends Throwable & Contextual>
 	 * @return the same {@link Contextual} to allow chaining
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <T extends Throwable & Contextual> T
-		toPublished( final T e )
+	public static <T extends Throwable & Contextual> T toPublished( final T e )
 	{
 		((Observer<T>) getInstance().subject).onNext( e );
 		return e;
 	}
 
 	/**
-	 * @return an {@link Observable} of {@link Contextual} {@link Throwable}
-	 *         s
+	 * @return an {@link Observable} of {@link Contextual} {@link Throwable} s
 	 */
 	public static Observable<? extends Throwable> asObservable()
 	{

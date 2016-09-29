@@ -17,8 +17,10 @@ package io.coala.persist;
 
 import java.util.Map;
 
+import javax.persistence.CacheRetrieveMode;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.SharedCacheMode;
 
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
@@ -44,11 +46,25 @@ public interface JPAConfig extends GlobalConfig
 	@Key( "javax.persistence.jdbc.password" )
 	String password();
 
+	/** the SHARED_CACHE_MODE_KEY as per {@link SharedCacheMode} */
+	String SHARED_CACHE_MODE_KEY = "javax.persistence.sharedCache.mode";
+
+	/** the CACHE_RETRIEVE_MODE_KEY as per {@link CacheRetrieveMode} */
+	String CACHE_RETRIEVE_MODE_KEY = "javax.persistence.cache.retrieveMode";
+
 	String NAME_DELIMITER = ",";
 
 	@Key( "javax.persistence.unit.names" )
 	@Separator( NAME_DELIMITER )
 	String[] persistenceUnitNames();
+
+	@Key( SHARED_CACHE_MODE_KEY )
+	@DefaultValue( "ENABLE_SELECTIVE" )
+	SharedCacheMode sharedCacheMode();
+
+	@Key( CACHE_RETRIEVE_MODE_KEY )
+	@DefaultValue( "BYPASS" )
+	CacheRetrieveMode cacheRetrieveMode();
 
 //	@Key( "javax.persistence.provider" )
 //	Class<?> provider();
@@ -73,7 +89,9 @@ public interface JPAConfig extends GlobalConfig
 	default EntityManagerFactory createEntityManagerFactory(
 		final String persistenceUnitNames, final Map<?, ?>... imports )
 	{
-		final Map<String, String> config = ConfigUtil.export( this, imports );
+		final Map<String, Object> config = ConfigUtil.export( this, imports );
+		config.put( SHARED_CACHE_MODE_KEY, sharedCacheMode() ); // deser
+		config.put( CACHE_RETRIEVE_MODE_KEY, cacheRetrieveMode() ); // deser
 		LogUtil.getLogger( JPAConfig.class ).trace( "JPA config: {}", config );
 		return Persistence.createEntityManagerFactory( persistenceUnitNames,
 				config );

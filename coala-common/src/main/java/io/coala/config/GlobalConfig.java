@@ -58,7 +58,7 @@ public interface GlobalConfig extends YamlConfig
 	{
 		final Pattern pattern = Pattern.compile(
 				"^" + Pattern.quote( subKey + KEY_SEP ) + "(?<sub>.*)" );
-		final Map<String, String> subMap = ConfigUtil.export( this, pattern,
+		final Map<String, Object> subMap = ConfigUtil.export( this, pattern,
 				"${sub}" );
 		final String base = base(),
 				sub = base == null ? subKey : base + KEY_SEP + subKey;

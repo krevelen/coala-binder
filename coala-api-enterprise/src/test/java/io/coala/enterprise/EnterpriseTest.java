@@ -12,11 +12,13 @@ import javax.persistence.EntityManagerFactory;
 import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.dsol3.Dsol3Scheduler;
+import io.coala.exception.ExceptionStream;
 import io.coala.guice4.Guice4LocalBinder;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
@@ -38,9 +40,19 @@ public class EnterpriseTest
 	/** TODO specialized logging adding e.g. Timed#now() and Identified#id() */
 	private static final Logger LOG = LogUtil.getLogger( EnterpriseTest.class );
 
+	@SuppressWarnings( "serial" )
 	@Singleton
 	public static class EnterpriseModel implements Proactive
 	{
+//		static
+//		{
+//			JsonUtil.getJOM().registerModule( new SimpleModule()
+//			{
+//				{
+//					this.addDeserializer( TestFact.class, null );
+//				}
+//			} );
+//		}
 
 		/**
 		 * {@link TestFact} custom fact kind
@@ -48,15 +60,33 @@ public class EnterpriseTest
 		 * @version $Id$
 		 * @author Rick van Krevelen
 		 */
+//		@JsonDeserialize( using = TestFactDeserializer.class )
 		interface TestFact extends CoordinationFact
 		{
 			// empty 
+			static TestFact fromJSON( final String json )
+			{
+				return CoordinationFact.fromJSON( json, TestFact.class );
+			}
 		}
+
+//		public static class TestFactDeserializer
+//			extends JsonDeserializer<TestFact>
+//		{
+//			@Override
+//			public TestFact deserialize( final JsonParser p,
+//				final DeserializationContext ctxt )
+//				throws IOException, JsonProcessingException
+//			{
+//				return CoordinationFact.fromJSON( p.readValueAsTree(),
+//						TestFact.class );
+//			}
+//		}
 
 		private final Scheduler scheduler;
 
 		@Inject
-		private Organization.Factory organizations;
+		private CompositeActor.Factory organizations;
 
 		@Inject
 		public EnterpriseModel( final Scheduler scheduler )
@@ -83,52 +113,58 @@ public class EnterpriseTest
 					.withDayOfMonth( 1 ).withMonthOfYear( 1 );
 
 			LOG.trace( "initialize organization" );
-			final Organization org1 = this.organizations.create( "org1" );
+			final CompositeActor org1 = this.organizations.create( "org1" );
 			final CompositeActor sales = org1.actor( "sales" );
 
 			LOG.trace( "initialize business rule(s)" );
-			sales.on( TestFact.class, sales.id(), fact ->
-			{
-				sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
-				{
-					final TestFact response = sales.createResponse( fact,
-							CoordinationFactKind.STATED, true, null, Collections
-									.singletonMap( "myParam1", "myValue1" ) );
-					LOG.trace( "t={}, {} responded: {} for incoming: {}", t,
-							sales.id(), response, fact );
-				} );
-			} );
-
-			LOG.trace( "initialize TestFact[RQ] redirect to self" );
-			org1.outgoing( TestFact.class, CoordinationFactKind.REQUESTED )
-					.subscribe( f ->
+			sales.on( TestFact.class, CoordinationFactKind.REQUESTED,
+					sales.id() ).subscribe( cause ->
 					{
-						org1.consume( f );
-					}, e ->
-					{
-						LOG.error( "Problem redirecting TestFact", e );
-					} );
+						sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
+						{
+							final TestFact response = sales.respond( cause,
+									CoordinationFactKind.STATED, true, null,
+									Collections.singletonMap( "stParam",
+											"stValue" ) );
+							LOG.trace( "t={}, responded: {}", t, response );
+						} );
+					}, e -> LOG.error( "Problem", e ) );
 
-			LOG.trace( "intializeg TestFact initiation" );
+//			LOG.trace( "initialize TestFact[RQ] redirect to self" );
+//			org1.outgoing( TestFact.class, CoordinationFactKind.REQUESTED )
+//					.subscribe( f ->
+//					{
+//						org1.consume( f );
+//					}, e ->
+//					{
+//						LOG.error( "Problem redirecting TestFact", e );
+//					} );
+
+			LOG.trace( "intialize TestFact initiation" );
 			atEach( Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset )
 					.iterate(), t ->
 					{
 						// spawn initial transactions with self
-						LOG.trace( "initiating TestFact" );
-						sales.createRequest( TestFact.class, sales.id(), null,
-								t.add( 1 ), Collections.singletonMap(
-										"myParam2", "myValue2" ) );
+						final TestFact request = sales.initiate( TestFact.class,
+								sales.id(), null, t.add( 1 ), Collections
+										.singletonMap( "rqParam", "rqValue" ) );
+						final String json = request.toJSON();
+						final String fact = TestFact.fromJSON( json )
+								/*
+								 * .transaction()
+								 */.toString();
+						LOG.trace( "initiated: {} => {}", json, fact );
 					} );
 
 			LOG.trace( "initialize incoming fact sniffing" );
-			org1.incoming().subscribe( fact ->
+			org1.facts().subscribe( fact ->
 			{
-				LOG.trace( "t={}, incoming: {}", org1.now().prettify( offset ),
+				LOG.trace( "t={}, fact: {}", org1.now().prettify( offset ),
 						fact );
 			} );
 
 			LOG.trace( "initialize outgoing fact persistence" );
-			org1.outgoing().subscribe( fact -> fact.save(),
+			org1.facts().subscribe( CoordinationFact::save,
 					e -> LOG.error( "Problem while saving fact", e ) );
 
 			// TODO test fact expiration handling
@@ -149,9 +185,29 @@ public class EnterpriseTest
 		}
 	}
 
+	@BeforeClass
+	public static void listenExceptions()
+	{
+		ExceptionStream.asObservable().subscribe(
+				t -> LOG.error( "Intercept " + t.getClass().getSimpleName() ),
+				e -> LOG.error( "ExceptionStream failed", e ),
+				() -> LOG.trace( "JUnit test completed" ) );
+	}
+
 	@Test
 	public void testEnterpriseOntology() throws TimeoutException
 	{
+		LOG.trace( "Deser: ", CoordinationFact.fromJSON(
+				"{" + "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
+						+ ",\"occurrence\":{},\"transaction\":{"
+						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$EnterpriseModel$TestFact\""
+						+ ",\"id\":\"1a990580-863a-11e6-8b9d-c47d461717bb\""
+						+ ",\"initiatorRef\":\"eoSim-org1-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
+						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
+						+ "}" + ",\"kind\":\"REQUESTED\",\"expiration\":{}"
+						+ ",\"rqParam\":\"rqValue\"" + "}",
+				EnterpriseModel.TestFact.class ) );
+
 		// configure replication FIXME via LocalConfig?
 		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
 				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 500 ) );
@@ -159,12 +215,12 @@ public class EnterpriseTest
 		// configure tooling
 		final LocalConfig config = LocalConfig.builder().withId( "eoSim" )
 				.withProvider( Scheduler.class, Dsol3Scheduler.class )
-				.withProvider( Organization.Factory.class,
-						Organization.Factory.LocalCaching.class )
+				.withProvider( CompositeActor.Factory.class,
+						CompositeActor.Factory.LocalCaching.class )
 				.withProvider( Transaction.Factory.class,
 						Transaction.Factory.LocalCaching.class )
 				.withProvider( CoordinationFact.Factory.class,
-						CoordinationFact.Factory.Simple.class )
+						CoordinationFact.Factory.SimpleProxies.class )
 				.withProvider( CoordinationFactBank.Factory.class,
 						CoordinationFactBank.Factory.LocalJPA.class )
 				.build();

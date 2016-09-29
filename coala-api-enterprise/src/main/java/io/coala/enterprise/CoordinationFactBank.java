@@ -61,7 +61,7 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	/**
 	 * @param fact
 	 */
-	default Iterable<Dao> saveSync( Observable<F> fact )
+	default Iterable<Dao> saveSync( final Observable<F> fact )
 	{
 		return saveAsync( fact ).toBlocking().toIterable();
 	}
@@ -109,47 +109,47 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 
 	default Class<F> transactionKindFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default CoordinationFactKind kindFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default CoordinationFact.ID causeFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default CompositeActor.ID initiatorFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default CompositeActor.ID executorFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default CompositeActor.ID creatorFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default Range<Instant> occurrenceFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default Range<Instant> expirationFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	default Map<String, Object> propertiesFilter()
 	{
-		return null;
+		return null; // default: any
 	}
 
 	/**
@@ -309,15 +309,15 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		public Observable<Dao>
 			saveAsync( final Observable<CoordinationFact> facts )
 		{
-			// TODO defer: facts.observeOn( ... ) & rejoin at sim::onCompleted
+			// TODO defer: facts.observeOn( ... ) & rejoin at sim::onCompleted ?
 			return PublishSubject.<Dao> create( sub ->
 			{
 				// One session for each fact
 				facts.subscribe( fact ->
 				{
-					JPAUtil.session( this.emf, em -> fact.persist( em ) );
+					JPAUtil.session( this.emf, fact::persist );
 				}, e -> sub.onError( e ), () -> sub.onCompleted() );
-				
+
 				// One session for all facts
 //				JPAUtil.session( this.emf ).subscribe( em ->
 //				{
@@ -343,8 +343,8 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		@Override
 		public Observable<CoordinationFact> find()
 		{
-			final Class<?> type = transactionKindFilter();
-			final CoordinationFactKind kind = kindFilter();
+//			final Class<?> type = transactionKindFilter();
+//			final CoordinationFactKind kind = kindFilter();
 //			final CoordinationFact.ID cause = causeFilter();
 //			final CompositeActor.ID initiator = initiatorFilter();
 //			final CompositeActor.ID executor = executorFilter();
@@ -383,7 +383,6 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 //					if( kind != null ) query.setParameter( kindParam, kind );
 
 					final List<Dao> list = query.getResultList();
-					System.err.println( "Got: " + list );
 					list.stream().map( dao -> dao.restore( this.binder ) )
 							.forEach( sub::onNext );
 					sub.onCompleted();

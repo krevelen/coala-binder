@@ -111,7 +111,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		public int compareTo( final Comparable other )
 		{
 			return other instanceof OrdinalChild
-					&& ((OrdinalChild) other).parent() != null ? -1
+					&& ((OrdinalChild) other).parentRef() != null ? -1
 							: Util.compare( this, other );
 		}
 	}
@@ -165,7 +165,7 @@ public class Id<T> extends Wrapper.Simple<T>
 		}
 
 		/** @return the parent {@link Id} */
-		public P parent()
+		public P parentRef()
 		{
 			return this.parent;
 		}
@@ -176,9 +176,9 @@ public class Id<T> extends Wrapper.Simple<T>
 		 */
 		public boolean isAncestor( final Comparable p )
 		{
-			return !isOrphan() && (parent().equals( p )
-					|| (parent() instanceof OrdinalChild
-							&& ((OrdinalChild) parent()).isAncestor( p )));
+			return !isOrphan() && (parentRef().equals( p )
+					|| (parentRef() instanceof OrdinalChild
+							&& ((OrdinalChild) parentRef()).isAncestor( p )));
 		}
 
 		/**
@@ -187,22 +187,22 @@ public class Id<T> extends Wrapper.Simple<T>
 		 */
 		public boolean isSibling( final OrdinalChild<?, P> s )
 		{
-			return s != null && parent() != null
+			return s != null && parentRef() != null
 			// && s.parent() != null :: handled by P#equals()
-					&& parent().equals( s.parent() );
+					&& parentRef().equals( s.parentRef() );
 		}
 
 		@JsonIgnore
 		public boolean isOrphan()
 		{
-			return parent() == null;
+			return parentRef() == null;
 		}
 
 		@Override
 		public String toString()
 		{
 			return isOrphan() ? unwrap().toString()
-					: parent().toString() + ID_SEP_REGEX + unwrap();
+					: parentRef().toString() + ID_SEP_REGEX + unwrap();
 		}
 
 		@Override
@@ -210,8 +210,8 @@ public class Id<T> extends Wrapper.Simple<T>
 		{
 			final int prime = 31;
 			int result = super.hashCode();
-			if( !isOrphan() && parent() != this )
-				result = prime * result + parent().hashCode();
+			if( !isOrphan() && parentRef() != this )
+				result = prime * result + parentRef().hashCode();
 			return result;
 		}
 
@@ -225,14 +225,14 @@ public class Id<T> extends Wrapper.Simple<T>
 
 			final OrdinalChild<T, P> that = (OrdinalChild<T, P>) other;
 			return isOrphan() ? that.isOrphan()
-					: parent().equals( that.parent() );
+					: parentRef().equals( that.parentRef() );
 		}
 
 		/**
 		 * In this implementation, orphans ({@link OrdinalChild} objects with
-		 * {@link #parent()} {@code == null}) and other {@link Comparable}
+		 * {@link #parentRef()} {@code == null}) and other {@link Comparable}
 		 * objects come before {@link OrdinalChild} objects with
-		 * {@link #parent()} {@code != null}.
+		 * {@link #parentRef()} {@code != null}.
 		 * <p>
 		 * {@inheritDoc}
 		 */
@@ -242,9 +242,9 @@ public class Id<T> extends Wrapper.Simple<T>
 		{
 			if( other == null ) return 1;
 			if( !(other instanceof OrdinalChild) )
-				return parent() == null ? Util.compare( this, other ) : 1;
-			final int parentCompare = Util.compare( parent(),
-					((OrdinalChild<T, P>) other).parent() );
+				return parentRef() == null ? Util.compare( this, other ) : 1;
+			final int parentCompare = Util.compare( parentRef(),
+					((OrdinalChild<T, P>) other).parentRef() );
 			if( parentCompare != 0 ) return parentCompare;
 			return Util.compare( this, other );
 		}

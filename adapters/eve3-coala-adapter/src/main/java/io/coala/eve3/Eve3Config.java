@@ -91,10 +91,10 @@ public interface Eve3Config extends GlobalConfig, Mutable
 		// default: servlet context is root ancestor of (recursive) local id
 		String context = "/agents";
 		String id = "";
-		for( LocalId i = localId; i.parent() != null; i = i.parent() )
+		for( LocalId i = localId; i.parentRef() != null; i = i.parentRef() )
 		{
-			if( i.parent() != null && i.parent().parent() == null )
-				context += "/" + i.parent();
+			if( i.parentRef() != null && i.parentRef().parentRef() == null )
+				context += "/" + i.parentRef();
 			id = id.isEmpty() ? i.unwrap().toString()
 					: i.unwrap().toString() + LocalId.ID_SEP_REGEX + id;
 		}

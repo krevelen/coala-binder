@@ -120,7 +120,7 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	public String toJSON()
 	{
 		String result = unwrap().toString();
-		for( LocalId id = parent(); id != null; id = id.parent() )
+		for( LocalId id = parentRef(); id != null; id = id.parentRef() )
 			if( id.unwrap() instanceof UUID )
 				result += "@" + id.unwrap();
 			else
@@ -132,21 +132,18 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	public String toString()
 	{
 		String result = unwrap().toString();
-		for( LocalId id = parent(); id != null; id = id.parent() )
+		for( LocalId id = parentRef(); id != null; id = id.parentRef() )
 			if( id.unwrap() instanceof UUID )
-				result = '['
-						+ Integer.toHexString( ((UUID) id.unwrap()).hashCode() )
-						+ ']' + result;
+				result += "@" + Integer.toHexString( id.unwrap().hashCode() );
 			else
 				result = id.unwrap() + ID_SEP_REGEX + result;
 		return result;
 	}
 
-	public UUID contextId()
+	public UUID contextRef()
 	{
-		for( LocalId i = this; i.parent() != null; i = i.parent() )
-			if( i.parent() != null && i.parent().parent() == null )
-				return (UUID) i.parent().unwrap();
+		for( LocalId i = this; i != null; i = i.parentRef() )
+			if( i.parentRef() == null ) return (UUID) i.unwrap();
 		throw new IllegalArgumentException();
 	}
 
@@ -183,13 +180,13 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	@Override
 	public Dao persist( final EntityManager em )
 	{
-		final Dao parent = Objects.requireNonNull( parent() ).parent() == null
-				? null : parent().persist( em ); // recurse
+		final Dao parentRef = Objects.requireNonNull( parentRef() )
+				.parentRef() == null ? null : parentRef().persist( em ); // recurse
 		final String id = Objects.requireNonNull( unwrap() ).toString();
-		final UUID context = Objects.requireNonNull( contextId() );
+		final UUID contextRef = Objects.requireNonNull( contextRef() );
 		return JPAUtil.<Dao> findOrCreate( em,
-				() -> Dao.find( em, id, parent, context ),
-				() -> Dao.of( id, parent, context ) );
+				() -> Dao.find( em, id, contextRef ),
+				() -> Dao.of( id, parentRef, contextRef ) );
 	}
 
 	/**
@@ -221,19 +218,18 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		public static final String CONTEXT_COLUMN_NAME = "CONTEXT";
 
 		protected static Dao find( final EntityManager em, final String id,
-			final Dao parent, final UUID context )
+			final UUID context )
 		{
 			try
 			{
-				final Dao result = em
+				return em
 						.createQuery(
 								"SELECT d FROM " + ENTITY_NAME
-										+ " d WHERE d.id=?1  AND d.contextId=?2",
+										+ " d WHERE d.id=?1 AND d.contextRef=?2",
 								Dao.class )
 						.setParameter( 1, Objects.requireNonNull( id ) )
 						.setParameter( 2, Objects.requireNonNull( context ) )
 						.getSingleResult();
-				return result;
 			} catch( final NoResultException ignore )
 			{
 				return null;
@@ -244,8 +240,8 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 			final UUID context )
 		{
 			final Dao result = new Dao();
-			result.contextId = context;
-			result.parent = parent;
+			result.contextRef = context;
+			result.parentRef = parent;
 			result.id = id;
 			return result;
 		}
@@ -277,22 +273,22 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		@ManyToOne( fetch = FetchType.LAZY )
 		@JoinColumn( name = PARENT_COLUMN_NAME, nullable = true,
 			updatable = false )
-		protected Dao parent;
+		protected Dao parentRef;
 
 		@JsonIgnore
 		@Column( name = CONTEXT_COLUMN_NAME, nullable = false,
 			updatable = false, length = 16, columnDefinition = "BINARY(16)" )
 		@Convert( converter = UUIDToByteConverter.class )
-		protected UUID contextId;
+		protected UUID contextRef;
 
 		@Override
 		public LocalId restore( final LocalBinder binder )
 		{
 			return LocalId.of( Objects.requireNonNull( this.id ),
-					this.parent == null
+					this.parentRef == null
 							? LocalId.of(
-									Objects.requireNonNull( this.contextId ) )
-							: this.parent.restore( binder ) );
+									Objects.requireNonNull( this.contextRef ) )
+							: this.parentRef.restore( binder ) );
 		}
 	}
 }

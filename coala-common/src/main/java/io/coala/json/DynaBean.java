@@ -84,8 +84,9 @@ import io.coala.util.TypeArguments;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@SuppressWarnings( "rawtypes" )
 @JsonInclude( Include.NON_NULL )
-public class DynaBean implements Cloneable
+public final class DynaBean implements Cloneable, Comparable
 {
 
 	/**
@@ -136,9 +137,8 @@ public class DynaBean implements Cloneable
 	@JsonAnyGetter
 	protected Map<String, Object> any()
 	{
-		if( this.dynamicProperties == null ) return Collections.emptyMap();
-
-		return this.dynamicProperties;
+		return this.dynamicProperties == null ? Collections.emptyMap()
+				: this.dynamicProperties;
 	}
 
 	/**
@@ -264,6 +264,12 @@ public class DynaBean implements Cloneable
 	public boolean equals( final Object other )
 	{
 		return any().equals( other );
+	}
+
+	@Override
+	public int compareTo( final Object o )
+	{
+		throw new IllegalStateException( "Invocation should be intercepted" );
 	}
 
 	@Override
@@ -485,12 +491,11 @@ public class DynaBean implements Cloneable
 	}
 
 	/**
-	 * @param <S>
 	 * @param <T>
 	 * @param wrapperType
 	 * @return
 	 */
-	static final <S, T> JsonSerializer<T>
+	static final <T> JsonSerializer<T>
 		createJsonSerializer( final Class<T> type )
 	{
 		return new JsonSerializer<T>()
@@ -503,8 +508,13 @@ public class DynaBean implements Cloneable
 				// non-Proxy objects get default treatment
 				if( !Proxy.isProxyClass( value.getClass() ) )
 				{
-					serializers.findValueSerializer( value.getClass(), null )
-							.serialize( value, jgen, serializers );
+					@SuppressWarnings( "unchecked" )
+					final JsonSerializer<T> ser = (JsonSerializer<T>) serializers
+							.findValueSerializer( value.getClass() );
+					if( ser != this )
+						ser.serialize( value, jgen, serializers );
+					else
+						LOG.warn( "Problem serializing: {}", value );
 					return;
 				}
 
@@ -801,8 +811,8 @@ public class DynaBean implements Cloneable
 		final DynaBean bean, final Properties... imports )
 	{
 //		if( !type.isAnnotationPresent( BeanProxy.class ) )
-//			throw ExceptionBuilder.unchecked( "%s is not a @%s", type,
-//					BeanProxy.class.getSimpleName() ).build();
+//			throw ExceptionFactory.createUnchecked( "{} is not a @{}", type,
+//					BeanProxy.class.getSimpleName() );
 
 		return (T) Proxy.newProxyInstance( type.getClassLoader(),
 				new Class[]

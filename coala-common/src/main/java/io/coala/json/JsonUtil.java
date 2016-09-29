@@ -21,7 +21,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -70,14 +69,14 @@ public class JsonUtil
 	/**
 	 * @param instance
 	 */
-	public static void initialize( final ObjectMapper om )
+	public synchronized static void initialize( final ObjectMapper om )
 	{
 		om.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
-		final List<Module> modules = Arrays.asList( new JodaModule(),
-				new UUIDModule() );
+
+		final Module[] modules = { new JodaModule(), new UUIDModule() };
 		om.registerModules( modules );
 		LOG.trace( "Using jackson v: {} with modules: {}", om.version(),
-				modules.stream().map( m -> m.getModuleName() )
+				Arrays.asList( modules ).stream().map( m -> m.getModuleName() )
 						.collect( Collectors.toList() ) );
 	}
 
@@ -390,49 +389,56 @@ public class JsonUtil
 	{
 		synchronized( JSON_REGISTRATION_CACHE )
 		{
-			Set<Class<?>> cache = JSON_REGISTRATION_CACHE.get( om );
-			if( cache == null )
-			{
-				cache = new HashSet<>();
-				JSON_REGISTRATION_CACHE.put( om, cache );
-			}
-			if( cache.contains( type ) ) return type;
+			if( type.isPrimitive() ) return type;
+			Set<Class<?>> cache = JSON_REGISTRATION_CACHE.computeIfAbsent( om,
+					key -> new HashSet<>() );
+			if( type.isPrimitive() || cache.contains( type ) ) return type;
 
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
-//			LOG.trace( "Checking JSON conversion for type: {}", type );
+			LOG.trace( "Register JSON conversion of type: {}", type.getName() );
 			if( type.isAnnotationPresent( BeanProxy.class ) )
 			{
-				if( !type.isInterface() )
-					Thrower.throwNew( IllegalArgumentException.class,
-							"@{} must target an interface, but annotates: {}",
-							BeanProxy.class.getSimpleName(), type );
+//				if( !type.isInterface() )
+//					return Thrower.throwNew( IllegalArgumentException.class,
+//							"@{} must target an interface, but annotates: {}",
+//							BeanProxy.class.getSimpleName(), type );
 
 				DynaBean.registerType( om, type, imports );
-
-				for( Method method : type.getDeclaredMethods() )
-					if( method.getReturnType() != Void.TYPE
-							&& method.getReturnType() != type
-							&& !cache.contains( type ) )
-					{
-						checkRegistered( om, method.getReturnType(), imports );
-						cache.add( method.getReturnType() );
-					}
-
+				checkRegisteredMembers( om, type, imports );
 				// LOG.trace("Registered Dynabean de/serializer for: " + type);
 			} else if( Wrapper.class.isAssignableFrom( type ) )
-				// {
+			{
 				Wrapper.Util.registerType( om,
 						(Class<? extends Wrapper>) type );
-
-			// LOG.trace("Registered Wrapper de/serializer for: " + type);
-			// } else
+				checkRegisteredMembers( om, type, imports );
+				// LOG.trace("Registered Wrapper de/serializer for: " + type);
+			}
+			// else
 			// LOG.trace("Assume default de/serializer for: " + type);
 
 			cache.add( type );
 
 			return type;
 		}
+	}
+
+	public static <T> Class<T> checkRegisteredMembers( final ObjectMapper om,
+		final Class<T> type, final Properties... imports )
+	{
+		for( Method method : type.getDeclaredMethods() )
+			if( method.getParameterCount() == 0
+					&& method.getReturnType() != Void.TYPE
+					&& method.getReturnType() != type )
+			{
+//				LOG.trace(
+//						"Checking {}#{}(..) return type: {} @JsonProperty={}",
+//						type.getSimpleName(), method.getName(),
+//						method.getReturnType().getSimpleName(),
+//						method.getAnnotation( JsonProperty.class ) );
+				checkRegistered( om, method.getReturnType(), imports );
+			}
+		return type;
 	}
 }

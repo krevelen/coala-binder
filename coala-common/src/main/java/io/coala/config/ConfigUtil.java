@@ -316,10 +316,10 @@ public class ConfigUtil implements Util
 	 * @param maps
 	 * @return the joined String-to-String mapping
 	 */
-	public static Map<String, String> export( final Accessible config,
+	public static Map<String, Object> export( final Accessible config,
 		final Map<?, ?>... maps )
 	{
-		final Map<String, String> result = export( config, (Pattern) null );
+		final Map<String, Object> result = export( config, (Pattern) null );
 		if( maps != null ) for( Map<?, ?> map : maps )
 			if( map != null ) map.forEach( ( key, value ) ->
 			{
@@ -333,7 +333,7 @@ public class ConfigUtil implements Util
 	 * @param keyFilter (optional) the {@link Pattern} to match keys against
 	 * @return the (matched) keys and values
 	 */
-	public static Map<String, String> export( final Accessible config,
+	public static Map<String, Object> export( final Accessible config,
 		final Pattern keyFilter )
 	{
 		return export( config, keyFilter, null );
@@ -345,7 +345,7 @@ public class ConfigUtil implements Util
 	 * @param replacement (optional) the key replacement pattern
 	 * @return the (matched) keys and values
 	 */
-	public static Map<String, String> export( final Accessible config,
+	public static Map<String, Object> export( final Accessible config,
 		final Pattern keyFilter, final String replacement )
 	{
 		final Map<String, String> result = new TreeMap<>();

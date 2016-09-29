@@ -36,8 +36,11 @@ import org.jscience.physics.amount.Amount;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
@@ -62,8 +65,8 @@ import io.coala.util.DecimalUtil;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
-//@JsonSerialize( using = TimeSpan.JsonSerializer.class )
-//@JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
+@JsonSerialize( using = TimeSpan.JsonSerializer.class )
+@JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
 public class TimeSpan extends DecimalMeasure
 {
 	static
@@ -554,12 +557,18 @@ public class TimeSpan extends DecimalMeasure
 			final DeserializationContext ctxt )
 			throws IOException, JsonProcessingException
 		{
-			final TimeSpan result = p.getCurrentToken().isNumeric()
-					? TimeSpan.of( p.getNumberValue() )
-					: TimeSpan.valueOf( p.getText() );
-			// LOG.trace("Deserialized {} {} to: {}", p.getCurrentToken(),
-			// p.getText(), result);
-			return result;
+			if( p.getCurrentToken().isNumeric() )
+				return TimeSpan.of( p.getNumberValue() );
+
+			if( p.getCurrentToken().isScalarValue() )
+				return TimeSpan.of( p.getValueAsString() );
+
+			final TreeNode tree = p.readValueAsTree();
+			if( tree.size() == 0 ) return null;
+
+			return Thrower.throwNew( IllegalArgumentException.class,
+					"Problem parsing {} from {}",
+					TimeSpan.class.getSimpleName(), tree );
 		}
 	}
 }

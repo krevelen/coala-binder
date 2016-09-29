@@ -84,7 +84,6 @@ import io.coala.math.MeasureUtil;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
-//@Wrapper.JavaPolymorph
 public class Instant extends Wrapper.Simple<TimeSpan>
 	implements Comparable<Instant>
 {
@@ -225,16 +224,16 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return Util.of( value, Instant.class );
 	}
 
-	public Unit<?> unit()
-	{
-		return unwrap().getUnit();
-	}
-
 	/** the ZERO */
 	public static final Instant ZERO = of( TimeSpan.ZERO );
 
 	/** the ONE */
 	public static final Instant ONE = of( TimeSpan.ONE );
+
+	public Unit<?> unit()
+	{
+		return unwrap().getUnit();
+	}
 
 	@Override
 	public int compareTo( final Instant that )

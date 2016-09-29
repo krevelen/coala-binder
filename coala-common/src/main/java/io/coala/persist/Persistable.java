@@ -22,6 +22,7 @@ package io.coala.persist;
 import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.coala.json.JsonUtil;
 import io.coala.util.TypeArguments;
+import rx.Observable;
 
 /**
  * {@link Persistable}
@@ -41,32 +43,38 @@ import io.coala.util.TypeArguments;
 @JsonInclude( Include.NON_NULL )
 public interface Persistable<DAO extends Persistable.Dao>
 {
-	DAO persist( EntityManager em );
 
 	default String stringify()
 	{
 		return getClass().getSimpleName() + JsonUtil.stringify( this );
 	}
 
-	@SuppressWarnings( "unchecked" )
-	default Stream<DAO> find( final EntityManager em, final String query )
-	{
-		return em
-				.createQuery( query,
-						(Class<DAO>) TypeArguments
-								.of( Persistable.class, getClass() ).get( 0 ) )
-				.getResultList().stream();
-	}
-
 	@JsonAutoDetect( fieldVisibility = Visibility.PROTECTED_AND_PUBLIC )
 	@JsonInclude( Include.NON_NULL )
 	interface Dao
 	{
-
 		default String stringify()
 		{
 			return getClass().getSimpleName() + JsonUtil.stringify( this );
 		}
+	}
+	
+	@Transactional
+	DAO persist( EntityManager em );
 
+	@Transactional
+	default Observable<DAO> findAsync( final EntityManager em,
+		final String query )
+	{
+		return Observable.empty(); // FIXME
+	}
+
+	@Transactional
+	@SuppressWarnings( "unchecked" )
+	default Stream<DAO> findSync( final EntityManager em, final String query )
+	{
+		final Class<DAO> daoType = (Class<DAO>) TypeArguments
+				.of( Persistable.class, getClass() ).get( 0 );
+		return em.createQuery( query, daoType ).getResultList().stream();
 	}
 }
