@@ -19,9 +19,14 @@
  */
 package io.coala.enterprise;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,10 +35,15 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.measure.DecimalMeasure;
+import javax.measure.unit.Unit;
 import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
+import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
@@ -57,6 +67,7 @@ import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
 import io.coala.bind.BindableDao;
@@ -64,6 +75,7 @@ import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
+import io.coala.math.MeasureUtil;
 import io.coala.name.Identified;
 import io.coala.persist.JsonNodeToStringConverter;
 import io.coala.persist.Persistable;
@@ -85,9 +97,13 @@ public interface CoordinationFact extends
 
 	String KIND_PROPERTY = "kind";
 
-	String OCCURRENCE_PROPERTY = "occurrence";
+	String OCCUR_PROPERTY = "occur";
 
-	String EXPIRATION_PROPERTY = "expiration";
+	String OCCUR_UTC_PROPERTY = "occurUtcSec";
+
+	String EXPIRE_PROPERTY = "expire";
+
+	String EXPIRE_UTC_PROPERTY = "expireUtcSec";
 
 	String CAUSE_REF_PROPERTY = "causeRef";
 
@@ -95,15 +111,17 @@ public interface CoordinationFact extends
 	@JsonProperty( TRANSACTION_PROPERTY )
 	<F extends CoordinationFact> Transaction<F> transaction();
 
-	default Class<? extends CoordinationFact> type()
-	{
-		return transaction() == null ? getClass() : transaction().kind();
-	}
+	<F extends CoordinationFact> F self(); // "this" points to impl, not proxy
 
 	@SuppressWarnings( "unchecked" )
-	default <F extends CoordinationFact> void save()
+	default <F extends CoordinationFact> F commit( final boolean cleanUp )
 	{
-		((Transaction<F>) transaction()).facts().save( (F) this );
+		return ((Transaction<F>) transaction()).commit( self(), cleanUp );
+	}
+
+	default Class<? extends CoordinationFact> type()
+	{
+		return Objects.requireNonNull( transaction() ).kind();
 	}
 
 	/** @return */
@@ -140,12 +158,27 @@ public interface CoordinationFact extends
 	CoordinationFactKind kind();
 
 	/** @return */
-	@JsonProperty( OCCURRENCE_PROPERTY )
-	Instant occurrence();
+	@JsonProperty( OCCUR_PROPERTY )
+	Instant occur();
 
 	/** @return */
-	@JsonProperty( EXPIRATION_PROPERTY )
-	Instant expiration();
+	@JsonProperty( OCCUR_UTC_PROPERTY )
+	default java.time.Instant occurUtc()
+	{
+		return occur().toDate( transaction().offset() );
+	}
+
+	/** @return */
+	@JsonProperty( EXPIRE_PROPERTY )
+	Instant expire();
+
+	/** @return */
+	@JsonProperty( EXPIRE_UTC_PROPERTY )
+	default java.time.Instant expireUtc()
+	{
+		return expire() == null ? null
+				: expire().toDate( transaction().offset() );
+	}
 
 	/** @return */
 	@JsonProperty( CAUSE_REF_PROPERTY )
@@ -178,28 +211,34 @@ public interface CoordinationFact extends
 				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	default Dao persist( final EntityManager em )
 	{
-		final Dao result = new Dao();
-
 		final Date offset = Date.from( transaction().offset() );
+		final Unit<?> unit = transaction().timeUnit();
+		final Instant occurrence = Objects.requireNonNull( occur() );
+		final Instant expiration = expire();
+		final Transaction<?> tx = Objects.requireNonNull( transaction() );
+		final ID causeRef = causeRef();
 
+		final Dao result = new Dao();
 		result.id = Objects.requireNonNull( id().unwrap() );
+		result.tid = Objects.requireNonNull( tx.id().unwrap() );
+		result.type = Objects.requireNonNull( tx.kind() );
 		result.kind = Objects.requireNonNull( kind() );
-		result.transaction = Objects.requireNonNull( transaction() )
+		result.initiatorRef = Objects.requireNonNull( tx.initiatorRef() )
+				.persist( em );
+		result.executorRef = Objects.requireNonNull( tx.executorRef() )
 				.persist( em );
 		result.creatorRef = Objects.requireNonNull( creatorRef() )
 				.persist( em );
-		result.causeRef = causeRef() == null ? null
-				: Objects.requireNonNull( causeRef().unwrap() );
-		result.causeCreatorRef = causeRef() == null ? null
-				: Objects.requireNonNull( causeRef().parentRef() )
-						.persist( em );
-		result.occurrence = Objects.requireNonNull( occurrence() )
-				.toDate( offset );
-		result.expiration = expiration() == null ? null
-				: expiration().toDate( offset );
+		result.causeRef = causeRef == null ? null
+				: Objects.requireNonNull( causeRef.unwrap() );
+		result.causeCreatorRef = causeRef == null ? null
+				: Objects.requireNonNull( causeRef.parentRef() ).persist( em );
+		result.occurrence = Dao.InstantDao.of( occurrence, offset, unit );
+		result.expiration = Dao.InstantDao.of( expiration, offset, unit );
 		result.properties = JsonUtil.toTree( properties() );
 		em.persist( result );
 		return result;
@@ -214,24 +253,54 @@ public interface CoordinationFact extends
 	default <F extends CoordinationFact> F proxyAs( final Class<F> subtype,
 		final Observer<Method> callObserver )
 	{
-		final CoordinationFact self = this;
-		return (F) Proxy.newProxyInstance( subtype.getClassLoader(),
+		final CoordinationFact impl = this;
+		final F proxy = (F) Proxy.newProxyInstance( subtype.getClassLoader(),
 				new Class<?>[]
-		{ subtype }, ( proxy, method, args ) ->
+		{ subtype }, ( self, method, args ) ->
 		{
 			try
 			{
-				final Object result = method.invoke( self, args );
+				final Object result = method.invoke( impl, args );
 				if( callObserver != null ) callObserver.onNext( method );
-				// FIXME allow getter calls as lookup in properties() map
 				return result;
 			} catch( Throwable e )
 			{
+				if( e instanceof IllegalArgumentException )
+					return invokeAsBean( impl.properties(), subtype, method,
+							args );
 				if( e instanceof InvocationTargetException ) e = e.getCause();
 				if( callObserver != null ) callObserver.onError( e );
-				throw e;//return null;//Thrower.rethrowUnchecked( e );
+				throw e;
 			}
 		} );
+		if( impl instanceof Simple ) ((Simple) impl).proxy = proxy;
+		return proxy;
+	}
+
+	/**
+	 * match bean read method to bean property
+	 * <p>
+	 * TODO allow builder-type (i.e. chaining 'with*') setters?
+	 * 
+	 * @param beanType
+	 * @param properties
+	 * @param method
+	 * @param args
+	 * @return
+	 * @throws IntrospectionException
+	 */
+	static Object invokeAsBean( final Map<String, Object> properties,
+		final Class<?> beanType, final Method method, final Object... args )
+		throws IntrospectionException
+	{
+		final BeanInfo beanInfo = Introspector.getBeanInfo( beanType );
+		for( PropertyDescriptor pd : beanInfo.getPropertyDescriptors() )
+			if( method.equals( pd.getReadMethod() ) )
+				return properties.get( pd.getName() );
+			else if( method.equals( pd.getWriteMethod() ) )
+				return properties.put( pd.getName(), args[0] );
+		return Thrower.throwNew( IllegalArgumentException.class,
+				"Can't invoke {} as bean method", method );
 	}
 
 	// @JsonValue
@@ -269,18 +338,50 @@ public interface CoordinationFact extends
 	static <F extends CoordinationFact> F fromJSON( final ObjectMapper om,
 		final TreeNode json, final Class<F> factType )
 	{
+		if( json == null ) return null;
 		try
 		{
 			Transaction.Simple.checkRegistered( om );
-//			JsonUtil.checkRegisteredMembers( om, Transaction.Simple.class );
 			JsonUtil.checkRegisteredMembers( om,
 					CoordinationFact.Simple.class );
-			return json == null ? null
-					: JsonUtil.valueOf( json, Simple.class ).proxyAs( factType,
-							null );
+			final Simple result = JsonUtil.valueOf( om, json, Simple.class );
+			fromJSON( om, json, factType, result.properties() );
+			return result.proxyAs( factType, null );
 		} catch( final Exception e )
 		{
-			e.printStackTrace();
+			return Thrower.rethrowUnchecked( e );
+		}
+	}
+
+	/**
+	 * override and deserialize bean properties as declared in factType
+	 * <p>
+	 * TODO allow builder-type (i.e. with* chaining setter) properties?
+	 * 
+	 * @param om
+	 * @param json
+	 * @param factType
+	 * @param properties
+	 * @return the properties again, to allow chaining
+	 * @throws IntrospectionException
+	 */
+	static <T extends CoordinationFact> Map<String, Object> fromJSON(
+		final ObjectMapper om, final TreeNode json, final Class<T> factType,
+		final Map<String, Object> properties )
+	{
+		try
+		{
+			final ObjectNode tree = (ObjectNode) json;
+			final BeanInfo beanInfo = Introspector.getBeanInfo( factType );
+			for( PropertyDescriptor pd : beanInfo.getPropertyDescriptors() )
+				if( tree.has( pd.getName() ) )
+					properties.computeIfPresent( pd.getName(),
+							( property, current ) -> JsonUtil.valueOf( om,
+									tree.get( property ),
+									pd.getPropertyType() ) );
+			return properties;
+		} catch( final Throwable e )
+		{
 			return Thrower.rethrowUnchecked( e );
 		}
 	}
@@ -343,15 +444,64 @@ public interface CoordinationFact extends
 	 * @author Rick van Krevelen
 	 */
 	@Entity( name = Dao.ENTITY_NAME )
-	@AttributeOverride( name = "transaction.kind",
-		column = @Column( name = Dao.TYPE_ATTR_NAME ) )
 	public class Dao implements BindableDao<CoordinationFact, Dao>
 	{
 		public static final String ENTITY_NAME = "FACTS";
 
-		public static final String TYPE_ATTR_NAME = "TYPE";
+		public static final String TYPE_COL_NAME = "TYPE";
 
-		public static final String KIND_ATTR_NAME = "KIND";
+		public static final String KIND_COL_NAME = "KIND";
+
+		@Embeddable
+		public static class InstantDao
+			implements BindableDao<Instant, InstantDao>
+		{
+			public static final String UTC_ATTR_NAME = "utc"; // Java attribute
+			public static final String NUM_ATTR_NAME = "num"; // Java attribute
+			public static final String STR_ATTR_NAME = "str"; // Java attribute
+
+			@Temporal( TemporalType.TIMESTAMP )
+			@Column
+			protected Date utc; // derived, based on offset
+
+			@Column
+			protected BigDecimal num; // derived, based on common time unit
+
+			@Column
+			protected String str; // exact precision, scale, and unit
+
+			/**
+			 * @param expiration
+			 * @param offset
+			 * @param unit
+			 * @return
+			 */
+			@SuppressWarnings( { "unchecked", "rawtypes" } )
+			public static InstantDao of( final Instant instant,
+				final Date offset, final Unit unit )
+			{
+				final InstantDao result = new InstantDao();
+				if( instant == null )
+				{
+					result.utc = null;
+					result.num = null;
+					result.str = null;
+				} else
+				{
+					result.utc = instant.toDate( offset );
+					result.num = MeasureUtil.toBigDecimal( instant.unwrap() );
+					result.str = instant.toString();
+				}
+				return result;
+			}
+
+			@Override
+			public Instant restore( final LocalBinder binder )
+			{
+				return this.str == null ? null
+						: Instant.of( DecimalMeasure.valueOf( this.str ) );
+			}
+		}
 
 		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
 		@Temporal( TemporalType.TIMESTAMP )
@@ -360,49 +510,64 @@ public interface CoordinationFact extends
 		@JsonIgnore
 		protected Date created;
 
-//		/** time stamp of last update; should never change */
-//		@Version
-//		@Temporal( TemporalType.TIMESTAMP )
-//		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
-//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-//		@JsonIgnore
-//		protected Date updated;
-
 		@Id
 		@GeneratedValue( strategy = GenerationType.IDENTITY )
 		@Column( name = "PK", nullable = false, updatable = false )
 		protected Integer pk;
 
-//		@Id
 		@Column( name = "ID", nullable = false, updatable = false, length = 16,
-			columnDefinition = "BINARY(16)" )
+			columnDefinition = "BINARY(16)", unique = true )
 		@Convert( converter = UUIDToByteConverter.class )
 		protected UUID id;
 
 		@ManyToOne( optional = false, fetch = FetchType.LAZY,
 			cascade = CascadeType.PERSIST )
 		@JoinColumn( name = "CREATOR_ID", updatable = false )
-//		@Embedded
-//		@AssociationOverride( name = "id",
-//			joinColumns = @JoinColumn( name = "CREATOR_ID", insertable = false,
-//				updatable = false ) )
 		protected CompositeActor.ID.Dao creatorRef;
 
-		@ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
-		@JoinColumn( name = "TRANSACTION_ID", nullable = false,
-			updatable = false )
-		protected Transaction.Dao transaction;
+		@Column( name = "TID", nullable = false, updatable = false, length = 16,
+			columnDefinition = "BINARY(16)" )
+		@Convert( converter = UUIDToByteConverter.class )
+		protected UUID tid;
 
-		@Column( name = KIND_ATTR_NAME, nullable = false, updatable = false )
+		@Column( name = "TYPE", nullable = false, updatable = false )
+		protected Class<? extends CoordinationFact> type;
+
+		@ManyToOne( optional = false ) //( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@JoinColumn( name = "INITIATOR_ID", updatable = false )
+		protected LocalId.Dao initiatorRef;
+
+		@ManyToOne( optional = false ) //( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
+		@JoinColumn( name = "EXECUTOR_ID", updatable = false )
+		protected LocalId.Dao executorRef;
+
+		@Column( name = KIND_COL_NAME, nullable = false, updatable = false )
 		protected CoordinationFactKind kind;
 
-		@Temporal( TemporalType.TIMESTAMP )
-		@Column( name = "OCCURRENCE", nullable = false, updatable = false )
-		protected Date occurrence;
+		@AttributeOverrides( {
+				@AttributeOverride( name = InstantDao.UTC_ATTR_NAME,
+					column = @Column( name = "OCCUR_ISO", nullable = false,
+						updatable = false ) ),
+				@AttributeOverride( name = InstantDao.NUM_ATTR_NAME,
+					column = @Column( name = "OCCUR", nullable = false,
+						updatable = false ) ),
+				@AttributeOverride( name = InstantDao.STR_ATTR_NAME,
+					column = @Column( name = "OCCUR_STR", nullable = false,
+						updatable = false ) ), } )
+		@Embedded
+		protected InstantDao occurrence;
 
-		@Temporal( TemporalType.TIMESTAMP )
-		@Column( name = "EXPIRATION", nullable = true, updatable = false )
-		protected Date expiration;
+		@AttributeOverrides( {
+				@AttributeOverride( name = InstantDao.UTC_ATTR_NAME,
+					column = @Column( name = "EXPIRE_ISO",
+						updatable = false ) ),
+				@AttributeOverride( name = InstantDao.NUM_ATTR_NAME,
+					column = @Column( name = "EXPIRE", updatable = false ) ),
+				@AttributeOverride( name = InstantDao.STR_ATTR_NAME,
+					column = @Column( name = "EXPIRE_STR",
+						updatable = false ) ), } )
+		@Embedded
+		protected InstantDao expiration;
 
 		@Column( name = "CAUSE_ID", nullable = true, updatable = false,
 			length = 16, columnDefinition = "BINARY(16)" )
@@ -428,7 +593,7 @@ public interface CoordinationFact extends
 		@Override
 		public CoordinationFact restore( final LocalBinder binder )
 		{
-			Objects.requireNonNull( this.transaction );
+//			Objects.requireNonNull( this.transaction );
 			Objects.requireNonNull( this.creatorRef );
 			if( this.causeRef != null )
 				Objects.requireNonNull( this.causeCreatorRef );
@@ -436,20 +601,27 @@ public interface CoordinationFact extends
 			final CompositeActor.ID creator = CompositeActor.ID
 					.of( this.creatorRef.restore( binder ) );
 			final ID id = ID.of( Objects.requireNonNull( this.id ), creator );
-			final Transaction tran = this.transaction.restore( binder );
+			final Transaction tx = binder.inject( Transaction.Factory.class )
+					.create( Transaction.ID.of( this.tid, binder.id() ),
+							this.type,
+							CompositeActor.ID
+									.of( this.initiatorRef.restore( binder ) ),
+							CompositeActor.ID
+									.of( this.executorRef.restore( binder ) ) );
 			final ID cause = this.causeRef == null ? null
 					: ID.of( this.causeRef, CompositeActor.ID
 							.of( this.causeCreatorRef.restore( binder ) ) );
-			final Date offset = Date.from( tran.offset() );
-			final Instant occurrence = Instant
-					.of( Objects.requireNonNull( this.occurrence ), offset );
+			final Instant occurrence = Objects.requireNonNull( this.occurrence )
+					.restore( binder );
 			final Instant expiration = this.expiration == null ? null
-					: Instant.of( this.expiration, offset );
+					: this.expiration.restore( binder );
 
+			final Map<String, Object> properties = JsonUtil
+					.valueOf( this.properties, Map.class );
 			return binder.inject( CoordinationFact.Factory.class ).create(
-					tran.kind(), id, tran, this.kind, occurrence, expiration,
-					cause, (Map<?, ?>) JsonUtil.valueOf( this.properties,
-							Map.class ) );
+					tx.kind(), id, tx, this.kind, occurrence, expiration, cause,
+					fromJSON( JsonUtil.getJOM(), this.properties, tx.kind(),
+							properties ) );
 		}
 	}
 
@@ -462,6 +634,7 @@ public interface CoordinationFact extends
 	@JsonInclude( Include.NON_NULL )
 	class Simple implements CoordinationFact
 	{
+		private transient CoordinationFact proxy = null;
 		private CoordinationFact.ID id;
 		private Instant occurrence;
 		private Transaction<?> transaction;
@@ -502,7 +675,7 @@ public interface CoordinationFact extends
 		{
 			return type().getSimpleName() + '['
 					+ Integer.toHexString( id().unwrap().hashCode() ) + '|'
-					+ kind() + '|' + creatorRef() + '|' + occurrence() + ']'
+					+ kind() + '|' + creatorRef() + '|' + occur() + ']'
 					+ properties();
 		}
 
@@ -519,7 +692,7 @@ public interface CoordinationFact extends
 		}
 
 		@Override
-		public Instant occurrence()
+		public Instant occur()
 		{
 			return this.occurrence;
 		}
@@ -538,7 +711,7 @@ public interface CoordinationFact extends
 		}
 
 		@Override
-		public Instant expiration()
+		public Instant expire()
 		{
 			return this.expiration;
 		}
@@ -561,6 +734,13 @@ public interface CoordinationFact extends
 		public Object set( final String key, final Object value )
 		{
 			return properties.put( key, value );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		@Override
+		public <F extends CoordinationFact> F self()
+		{
+			return (F) this.proxy;
 		}
 	}
 

@@ -31,6 +31,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -526,5 +528,21 @@ public class ConfigUtil implements Util
 		{
 			Thrower.rethrowUnchecked( e );
 		}
+	}
+
+	private static final Map<Config, Map<Supplier<?>, Object>> CONFIG_VALUE_CACHE = new ConcurrentHashMap<>();
+
+	/**
+	 * @param config the (cached) {@link Config} instance
+	 * @param supplier the {@link Supplier} method (on the {@link Config} type)
+	 * @return the cached value
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <T> T cachedValue( final Config config,
+		final Supplier<T> supplier )
+	{
+		return (T) CONFIG_VALUE_CACHE
+				.computeIfAbsent( config, key -> new ConcurrentHashMap<>() )
+				.computeIfAbsent( supplier, Supplier::get );
 	}
 }

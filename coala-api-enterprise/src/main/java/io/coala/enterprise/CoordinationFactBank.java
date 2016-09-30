@@ -74,10 +74,11 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	/**
 	 * @param fact
 	 */
-	default void save( final F fact )
+	default Dao save( final F fact )
 	{
 		for( Dao dao : saveSync( Observable.just( fact ) ) )
-			logger().trace( "saved: {}", dao );
+			return dao;
+		return null;
 	}
 
 	/**

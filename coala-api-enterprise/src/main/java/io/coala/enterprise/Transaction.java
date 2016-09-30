@@ -19,32 +19,16 @@
  */
 package io.coala.enterprise;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Entity;
-import javax.persistence.EntityManager;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NoResultException;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-
-import org.aeonbits.owner.ConfigCache;
+import javax.measure.unit.Unit;
 
 import com.eaio.uuid.UUID;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -56,14 +40,13 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
-import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
+import io.coala.config.ConfigUtil;
+import io.coala.config.InjectConfig;
 import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil;
 import io.coala.name.Identified;
-import io.coala.persist.JPAUtil;
-import io.coala.persist.Persistable;
-import io.coala.persist.UUIDToByteConverter;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
@@ -81,8 +64,8 @@ import rx.subjects.Subject;
  * @author Rick van Krevelen
  */
 //@BeanProxy
-public interface Transaction<F extends CoordinationFact> extends Proactive,
-	Identified.Ordinal<Transaction.ID>, Persistable<Transaction.Dao>
+public interface Transaction<F extends CoordinationFact>
+	extends Proactive, Identified.Ordinal<Transaction.ID>//, Persistable<Transaction.Dao>
 {
 	/** @return */
 	@JsonProperty( "kind" )
@@ -103,58 +86,31 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 	/**
 	 * @param factKind
 	 * @param cause
-	 * @param terminal
 	 * @param expiration
 	 * @param params
 	 * @return
 	 */
 	F generate( CoordinationFactKind factKind, CoordinationFact.ID cause,
-		boolean terminal, Instant expiration, Map<?, ?>... params );
+		Instant expiration, Map<?, ?>... params );
+
+	F commit( F fact, boolean cleanUp );
 
 	/** @param incoming */
 	void on( F incoming );
 
 	/** @return */
-	Observable<F> generated();
+	Observable<F> committed();
 
 	/** @return */
 	Observable<F> expired();
 
-	CoordinationFactBank<F> facts();
+	CoordinationFactBank<F> factBank();
 
-	default java.time.Instant offset()
-	{
-		// FIXME which cache?
-		return ConfigCache.getOrCreate( ReplicateConfig.class ).offset();
-	}
+	/** @return the {@link java.time.Instant} real offset of virtual time */
+	java.time.Instant offset();
 
-	default Stream<Transaction<?>> find( final EntityManager em,
-		final LocalBinder binder, final String query )
-	{
-		return findSync( em, query ).map( dao -> dao.restore( binder ) );
-	}
-
-	default Stream<Transaction<?>> findAll( final EntityManager em,
-		final LocalBinder binder )
-	{
-		return find( em, binder,
-				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
-	}
-
-	@Override
-	default Dao persist( final EntityManager em )
-	{
-		// TODO cache by primary key
-		final Dao result = new Dao();
-		result.id = Objects.requireNonNull( id().unwrap() );
-		result.kind = Objects.requireNonNull( kind() );
-		result.initiatorRef = Objects.requireNonNull( initiatorRef() )
-				.persist( em );
-		result.executorRef = Objects.requireNonNull( executorRef() )
-				.persist( em );
-		em.persist( result );
-		return result;
-	}
+	/** @return the {@link Unit} of virtual time */
+	Unit<?> timeUnit();
 
 	/**
 	 * {@link ID}
@@ -203,42 +159,41 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 	}
 
 	/**
-	 * @param tranKind
-	 * @param scheduler
 	 * @param id
-	 * @param initiator
-	 * @param executor
+	 * @param kind
+	 * @param initiatorRef
+	 * @param executorRef
 	 * @return
 	 */
 	static <F extends CoordinationFact> Transaction<F> of(
-		final LocalBinder binder, final Transaction.ID id,
-		final Class<F> tranKind, final CompositeActor.ID initiator,
-		final CompositeActor.ID executor )
+		final LocalBinder binder, final Transaction.ID id, final Class<F> kind,
+		final CompositeActor.ID initiatorRef,
+		final CompositeActor.ID executorRef )
 	{
-		return of( tranKind, binder.inject( Scheduler.class ), id, initiator,
-				executor, binder.inject( CoordinationFact.Factory.class ),
-				binder.inject( CoordinationFactBank.Factory.class ) );
+		return binder.injectMembers(
+				new Simple<F>( id, kind, initiatorRef, executorRef ) );
 	}
 
 	/**
-	 * @param kind
-	 * @param scheduler
 	 * @param id
+	 * @param kind
 	 * @param initiatorRef
 	 * @param executorRef
+	 * @param config
+	 * @param scheduler
 	 * @param factFactory a {@link CoordinationFact.Factory}
 	 * @param bankFactory a {@link CoordinationFactBank.Factory} or {@code null}
 	 * @return a {@link Simple} instance
 	 */
-	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
-		final Scheduler scheduler, final Transaction.ID id,
+	static <F extends CoordinationFact> Transaction<F> of(
+		final Transaction.ID id, final Class<F> kind,
 		final CompositeActor.ID initiatorRef,
-		final CompositeActor.ID executorRef,
-		final CoordinationFact.Factory factFactory,
+		final CompositeActor.ID executorRef, final ReplicateConfig config,
+		final Scheduler scheduler, final CoordinationFact.Factory factFactory,
 		final CoordinationFactBank.Factory bankFactory )
 	{
-		return new Simple<F>( kind, scheduler, id, initiatorRef, executorRef,
-				factFactory, bankFactory );
+		return new Simple<F>( id, kind, initiatorRef, executorRef, config,
+				scheduler, factFactory, bankFactory );
 	}
 
 	/**
@@ -275,43 +230,52 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 		private final Subject<F, F> generated = PublishSubject.create();
 		private final Subject<F, F> expired = PublishSubject.create();
 		private final Map<CoordinationFact.ID, Expectation> pending = new ConcurrentHashMap<>();
-		private CoordinationFactBank<F> factBank;
-		private Class<F> kind;
-		private Scheduler scheduler;
 		private Transaction.ID id;
+		private Class<F> kind;
 		private CompositeActor.ID initiatorRef;
 		private CompositeActor.ID executorRef;
-		private CoordinationFact.Factory factFactory;
+
+		@Inject
+		private transient Scheduler scheduler;
+
+		@Inject
+		private transient CoordinationFact.Factory factFactory;
+
+		@Inject
+		private transient CoordinationFactBank.Factory bankFactory;
+		private CoordinationFactBank<F> factBank = null;
+
+		@InjectConfig
+		private transient ReplicateConfig config;
+		private java.time.Instant offset = null;
+		private Unit<?> timeUnit = null;
 
 		public Simple()
 		{
 		}
 
-		@Inject
-		public Simple( final LocalBinder binder, final Class<F> kind,
-			final Transaction.ID id, final CompositeActor.ID initiatorRef,
+		protected Simple( final Transaction.ID id, final Class<F> kind,
+			final CompositeActor.ID initiatorRef,
 			final CompositeActor.ID executorRef )
-		{
-			this( kind, binder.inject( Scheduler.class ), id, initiatorRef,
-					executorRef,
-					binder.inject( CoordinationFact.Factory.class ),
-					binder.inject( CoordinationFactBank.Factory.class ) );
-		}
-
-		public Simple( final Class<F> kind, final Scheduler scheduler,
-			final Transaction.ID id, final CompositeActor.ID initiatorRef,
-			final CompositeActor.ID executorRef,
-			final CoordinationFact.Factory factFactory,
-			final CoordinationFactBank.Factory bankFactory )
 		{
 			this.id = id;
 			this.kind = kind;
 			this.initiatorRef = initiatorRef;
 			this.executorRef = executorRef;
+		}
+
+		public Simple( final Transaction.ID id, final Class<F> kind,
+			final CompositeActor.ID initiatorRef,
+			final CompositeActor.ID executorRef, final ReplicateConfig config,
+			final Scheduler scheduler,
+			final CoordinationFact.Factory factFactory,
+			final CoordinationFactBank.Factory bankFactory )
+		{
+			this( id, kind, initiatorRef, executorRef );
+			this.config = config;
 			this.scheduler = scheduler;
 			this.factFactory = factFactory;
-			this.factBank = bankFactory == null ? null
-					: bankFactory.create( kind );
+			this.bankFactory = bankFactory;
 		}
 
 		@Override
@@ -324,12 +288,6 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 		public Class<F> kind()
 		{
 			return this.kind;
-		}
-
-		@Override
-		public CoordinationFactBank<F> facts()
-		{
-			return this.factBank;
 		}
 
 		@Override
@@ -358,34 +316,42 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 
 		@Override
 		public F generate( final CoordinationFactKind factKind,
-			final CoordinationFact.ID causeRef, final boolean terminal,
-			final Instant expiration, final Map<?, ?>... params )
+			final CoordinationFact.ID causeRef, final Instant expiration,
+			final Map<?, ?>... params )
+		{
+			return this.factFactory.create( kind(),
+					CoordinationFact.ID.create( factKind.isFromInitiator()
+							? initiatorRef() : executorRef() ),
+					this, factKind, expiration, causeRef, params );
+		}
+
+		@Override
+		public F commit( final F fact, final boolean cleanUp )
 		{
 			try
 			{
-				final CompositeActor.ID creator = factKind.isFromInitiator()
-						? initiatorRef() : executorRef();
-				final F result = this.factFactory.create( kind(),
-						CoordinationFact.ID.create( creator ), this, factKind,
-						expiration, causeRef, params );
-				if( causeRef != null ) this.pending.remove( causeRef );
-				if( expiration != null )
-					this.pending.put( result.id(), at( expiration ).call( () ->
+				if( fact.causeRef() != null )
+					this.pending.remove( fact.causeRef() );
+				if( fact.expire() != null )
+					this.pending.put( fact.id(), at( fact.expire() ).call( () ->
 					{
-						Objects.requireNonNull( result.id() );
-						this.pending.remove( result.id() );
-						this.expired.onNext( result );
+						Objects.requireNonNull( fact.id() );
+						this.pending.remove( fact.id() );
+						this.expired.onNext( fact );
 					} ) );
-				this.generated.onNext( result );
-				if( facts() != null ) facts().save( result );
-				if( terminal )
+				LogUtil.getLogger( Transaction.class ).trace( "{} type: {}: {}",
+						kind(), fact.getClass(),
+						kind().isAssignableFrom( fact.getClass() ) );
+				this.generated.onNext( fact );
+				if( factBank() != null ) factBank().save( fact );
+				if( cleanUp )
 				{
 					this.pending.values().forEach( Expectation::remove );
 					this.pending.clear();
 					this.expired.onCompleted();
 					this.generated.onCompleted();
 				}
-				return result;
+				return fact;
 			} catch( final Throwable e )
 			{
 				this.generated.onError( e );
@@ -394,7 +360,7 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 		}
 
 		@Override
-		public Observable<F> generated()
+		public Observable<F> committed()
 		{
 			return this.generated.asObservable();
 		}
@@ -410,127 +376,37 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 		{
 			if( fact.causeRef() != null )
 				this.pending.remove( fact.causeRef() );
-			if( fact.expiration() != null ) this.pending.put( fact.id(),
-					scheduler.at( fact.expiration() ).call( () ->
-					{
-						this.pending.remove( fact.id() );
-						this.expired.onNext( fact );
-					} ) );
+			if( fact.expire() != null )
+				this.pending.put( fact.id(), at( fact.expire() ).call( () ->
+				{
+					this.pending.remove( fact.id() );
+					this.expired.onNext( fact );
+				} ) );
 		}
-
-		private Integer pk = null;
 
 		@Override
-		public Dao persist( final EntityManager em )
+		public java.time.Instant offset()
 		{
-			if( this.pk != null ) return em.find( Dao.class, this.pk ); // cached?
-			final UUID id = Objects.requireNonNull( id().unwrap() );
-			final Class<F> kind = Objects.requireNonNull( kind() );
-			final LocalId.Dao initiatorRef = Objects
-					.requireNonNull( initiatorRef() ).persist( em );
-			final LocalId.Dao executorRef = Objects
-					.requireNonNull( executorRef() ).persist( em );
-			final Dao result = JPAUtil.<Dao> findOrCreate( em,
-					() -> Dao.find( em, id ),
-					() -> Dao.of( id, kind, initiatorRef, executorRef ) );
-			this.pk = result.pk;
-			return result;
+			return this.offset != null ? this.offset
+					: (this.offset = ConfigUtil.cachedValue( this.config,
+							this.config::offset ));
 		}
-	}
-
-	/**
-	 * {@link Dao}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	@Entity( name = Dao.ENTITY_NAME )
-	public class Dao implements BindableDao<Transaction<?>, Dao>
-	{
-		public static final String ENTITY_NAME = "TRANSACTIONS";
-
-		protected static Dao find( final EntityManager em, final UUID id )
-		{
-			try
-			{
-				return em
-						.createQuery( "SELECT d FROM " + ENTITY_NAME
-								+ " d WHERE d.id=?1", Dao.class )
-						.setParameter( 1, Objects.requireNonNull( id ) )
-						.getSingleResult();
-			} catch( final NoResultException ignore )
-			{
-				return null;
-			}
-		}
-
-		protected static Dao of( final UUID id,
-			final Class<? extends CoordinationFact> kind,
-			final LocalId.Dao initiatorRef, final LocalId.Dao executorRef )
-		{
-			final Dao result = new Dao();
-			result.id = id;
-			result.kind = kind;
-			result.initiatorRef = initiatorRef;
-			result.executorRef = executorRef;
-			return result;
-		}
-
-		@Id
-		@GeneratedValue( strategy = GenerationType.IDENTITY )
-		@Column( name = "PK", nullable = false, updatable = false )
-		protected Integer pk;
-
-//		@Id // FIXME can't use this BINARY(16) as foreign key ?
-		@Column( name = "ID", nullable = false, updatable = false, length = 16,
-			columnDefinition = "BINARY(16)", unique = true )
-		@Convert( converter = UUIDToByteConverter.class )
-		protected UUID id;
-
-		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
-		@Temporal( TemporalType.TIMESTAMP )
-		@Column( name = "CREATED_TS", insertable = false, updatable = false,
-			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-		@JsonIgnore
-		protected Date created;
-
-//		/** time stamp of last update; should never change */
-//		@Version
-//		@Temporal( TemporalType.TIMESTAMP )
-//		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
-//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-//		@JsonIgnore
-//		protected Date updated;
-
-		@Column( name = "KIND", nullable = false, updatable = false )
-		protected Class<? extends CoordinationFact> kind;
-
-		@ManyToOne( optional = false ) //( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
-		@JoinColumn( name = "INITIATOR_ID", updatable = false )
-//		@Embedded
-//		@AttributeOverrides( @AttributeOverride( name = "id",
-//			column = @Column( name = "INITIATOR_ID" ) ) )
-//		@AssociationOverride( name = "id",
-//			joinColumns = @JoinColumn(name = "INITIATOR_ID",insertable = false, updatable = false ) )
-		protected LocalId.Dao initiatorRef;
-
-		@ManyToOne( optional = false ) //( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST )
-		@JoinColumn( name = "EXECUTOR_ID", updatable = false )
-//		@Embedded
-//		@AttributeOverrides( @AttributeOverride( name = "id",
-//			column = @Column( name = "EXECUTOR_ID" ) ) )
-//		@AssociationOverride( name = "id",
-//			joinColumns = @JoinColumn( name = "EXECUTOR_ID",insertable = false, updatable = false ) )
-		protected LocalId.Dao executorRef;
 
 		@Override
-		public Transaction<?> restore( final LocalBinder binder )
+		public Unit<?> timeUnit()
 		{
-			return binder.inject( Transaction.Factory.class ).create(
-					Transaction.ID.of( this.id, binder.id() ), this.kind,
-					CompositeActor.ID.of( this.initiatorRef.restore( binder ) ),
-					CompositeActor.ID
-							.of( this.executorRef.restore( binder ) ) );
+			return this.timeUnit != null ? this.timeUnit
+					: (this.timeUnit = ConfigUtil.cachedValue( this.config,
+							this.config::timeUnit ));
+		}
+
+		@Override
+		public CoordinationFactBank<F> factBank()
+		{
+			return this.factBank != null ? this.factBank
+					: this.bankFactory == null ? null
+							: (this.factBank = this.bankFactory
+									.create( kind() ));
 		}
 	}
 
@@ -556,13 +432,9 @@ public interface Transaction<F extends CoordinationFact> extends Proactive,
 				final CompositeActor.ID executor )
 			{
 				return (Transaction<F>) this.localCache.computeIfAbsent( kind,
-						k ->
-						{
-							return Transaction.of( this.binder, id, kind,
-									initiator, executor );
-						} );
+						key -> Transaction.of( this.binder, id, kind, initiator,
+								executor ) );
 			}
-
 		}
 	}
 }

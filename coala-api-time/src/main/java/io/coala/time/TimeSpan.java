@@ -226,7 +226,7 @@ public class TimeSpan extends DecimalMeasure
 	protected static final Measure<BigDecimal, Duration>
 		parsePeriodOrMeasure( final String measure )
 	{
-		if( measure == null ) throw new NullPointerException();
+		if( measure == null ) return null;//throw new NullPointerException();
 		DecimalMeasure<Duration> result;
 		try
 		{

@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.coala.exception.Thrower;
 import io.coala.json.DynaBean.BeanProxy;
@@ -73,7 +74,8 @@ public class JsonUtil
 	{
 		om.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
 
-		final Module[] modules = { new JodaModule(), new UUIDModule() };
+		final Module[] modules = { new JodaModule(), new UUIDModule(),
+				new JavaTimeModule() };
 		om.registerModules( modules );
 		LOG.trace( "Using jackson v: {} with modules: {}", om.version(),
 				Arrays.asList( modules ).stream().map( m -> m.getModuleName() )
@@ -145,8 +147,7 @@ public class JsonUtil
 //			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -173,14 +174,13 @@ public class JsonUtil
 	 */
 	public static JsonNode toTree( final String json )
 	{
+		if( json == null || json.isEmpty() ) return null;
 		try
 		{
-			return json == null || json.isEmpty() ? null
-					: getJOM().readTree( json );
+			return getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -214,16 +214,15 @@ public class JsonUtil
 	public static <T> T valueOf( final InputStream json,
 		final Class<T> resultType, final Properties... imports )
 	{
+		if( json == null ) return null;
 		try
 		{
 			final ObjectMapper om = getJOM();
-			return json == null ? null
-					: (T) om.readValue( json,
-							checkRegistered( om, resultType, imports ) );
+			return (T) om.readValue( json,
+					checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -249,18 +248,16 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final String json,
 		final Class<T> resultType, final Properties... imports )
 	{
+		if( json == null || json.equalsIgnoreCase( "null" ) ) return null;
 		try
 		{
-			return json == null || json.equalsIgnoreCase( "null" ) ? null
-					: (T) om.readValue(
-							!json.startsWith( "\"" )
-									&& resultType == String.class
-											? "\"" + json + "\"" : json,
-							checkRegistered( om, resultType, imports ) );
+			return (T) om.readValue(
+					!json.startsWith( "\"" ) && resultType == String.class
+							? "\"" + json + "\"" : json,
+					checkRegistered( om, resultType, imports ) );
 		} catch( final Throwable e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -286,17 +283,17 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final TreeNode tree,
 		final Class<T> resultType, final Properties... imports )
 	{
+		if( tree == null ) return null;
 		// TODO add work-around for Wrapper sub-types?
 		if( resultType.isMemberClass()
 				&& !Modifier.isStatic( resultType.getModifiers() ) )
-			Thrower.throwNew( IllegalArgumentException.class,
+			return Thrower.throwNew( IllegalArgumentException.class,
 					"Unable to deserialize non-static member: {}", resultType );
 
 		try
 		{
-			return tree == null ? null
-					: (T) om.treeToValue( tree,
-							checkRegistered( om, resultType, imports ) );
+			return (T) om.treeToValue( tree,
+					checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
 			return Thrower.rethrowUnchecked( e );
@@ -326,14 +323,13 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final String json,
 		final TypeReference<T> typeReference, final Properties... imports )
 	{
+		if( json == null ) return null;
 		try
 		{
 			final Class<?> rawType = om.getTypeFactory()
 					.constructType( typeReference ).getRawClass();
 			checkRegistered( om, rawType, imports );
-			return json == null ? null
-					: (T) om.readValue( json, typeReference );
-
+			return (T) om.readValue( json, typeReference );
 		} catch( final Exception e )
 		{
 			Thrower.rethrowUnchecked( e );

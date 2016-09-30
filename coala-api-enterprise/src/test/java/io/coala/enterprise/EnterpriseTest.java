@@ -22,6 +22,7 @@ import io.coala.exception.ExceptionStream;
 import io.coala.guice4.Guice4LocalBinder;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
+import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
@@ -44,15 +45,6 @@ public class EnterpriseTest
 	@Singleton
 	public static class EnterpriseModel implements Proactive
 	{
-//		static
-//		{
-//			JsonUtil.getJOM().registerModule( new SimpleModule()
-//			{
-//				{
-//					this.addDeserializer( TestFact.class, null );
-//				}
-//			} );
-//		}
 
 		/**
 		 * {@link TestFact} custom fact kind
@@ -60,28 +52,17 @@ public class EnterpriseTest
 		 * @version $Id$
 		 * @author Rick van Krevelen
 		 */
-//		@JsonDeserialize( using = TestFactDeserializer.class )
-		interface TestFact extends CoordinationFact
+		public interface TestFact extends CoordinationFact
 		{
-			// empty 
+			Instant getRqParam(); // get "rqParam" bean property
+
+			void setRqParam( Instant value ); // set "rqParam" bean property
+
 			static TestFact fromJSON( final String json )
 			{
 				return CoordinationFact.fromJSON( json, TestFact.class );
 			}
 		}
-
-//		public static class TestFactDeserializer
-//			extends JsonDeserializer<TestFact>
-//		{
-//			@Override
-//			public TestFact deserialize( final JsonParser p,
-//				final DeserializationContext ctxt )
-//				throws IOException, JsonProcessingException
-//			{
-//				return CoordinationFact.fromJSON( p.readValueAsTree(),
-//						TestFact.class );
-//			}
-//		}
 
 		private final Scheduler scheduler;
 
@@ -118,54 +99,41 @@ public class EnterpriseTest
 
 			LOG.trace( "initialize business rule(s)" );
 			sales.on( TestFact.class, CoordinationFactKind.REQUESTED,
-					sales.id() ).subscribe( cause ->
+					sales.id() ).subscribe( rq ->
 					{
 						sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
 						{
-							final TestFact response = sales.respond( cause,
-									CoordinationFactKind.STATED, true, null,
+							final TestFact st = sales.respond( rq,
+									CoordinationFactKind.STATED, null,
 									Collections.singletonMap( "stParam",
 											"stValue" ) );
-							LOG.trace( "t={}, responded: {}", t, response );
+							st.transaction().commit( st, true );
+							LOG.trace( "t={}, rqParam: {}, responded: {}", t,
+									rq.getRqParam(), st );
 						} );
 					}, e -> LOG.error( "Problem", e ) );
-
-//			LOG.trace( "initialize TestFact[RQ] redirect to self" );
-//			org1.outgoing( TestFact.class, CoordinationFactKind.REQUESTED )
-//					.subscribe( f ->
-//					{
-//						org1.consume( f );
-//					}, e ->
-//					{
-//						LOG.error( "Problem redirecting TestFact", e );
-//					} );
 
 			LOG.trace( "intialize TestFact initiation" );
 			atEach( Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset )
 					.iterate(), t ->
 					{
 						// spawn initial transactions with self
-						final TestFact request = sales.initiate( TestFact.class,
-								sales.id(), null, t.add( 1 ), Collections
-										.singletonMap( "rqParam", "rqValue" ) );
-						final String json = request.toJSON();
+						final TestFact rq = sales.initiate( TestFact.class,
+								sales.id(), null, t.add( 1 ) );
+						rq.setRqParam( t );
+						rq.commit( false );
+						final String json = rq.toJSON();
 						final String fact = TestFact.fromJSON( json )
-								/*
-								 * .transaction()
-								 */.toString();
+								.toString();
 						LOG.trace( "initiated: {} => {}", json, fact );
 					} );
 
 			LOG.trace( "initialize incoming fact sniffing" );
-			org1.facts().subscribe( fact ->
+			org1.occurred().subscribe( fact ->
 			{
 				LOG.trace( "t={}, fact: {}", org1.now().prettify( offset ),
 						fact );
 			} );
-
-			LOG.trace( "initialize outgoing fact persistence" );
-			org1.facts().subscribe( CoordinationFact::save,
-					e -> LOG.error( "Problem while saving fact", e ) );
 
 			// TODO test fact expiration handling
 
@@ -205,7 +173,7 @@ public class EnterpriseTest
 						+ ",\"initiatorRef\":\"eoSim-org1-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ "}" + ",\"kind\":\"REQUESTED\",\"expiration\":{}"
-						+ ",\"rqParam\":\"rqValue\"" + "}",
+						+ ",\"rqParam\":\"123 ms\"" + "}",
 				EnterpriseModel.TestFact.class ) );
 
 		// configure replication FIXME via LocalConfig?
@@ -213,7 +181,7 @@ public class EnterpriseTest
 				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 500 ) );
 
 		// configure tooling
-		final LocalConfig config = LocalConfig.builder().withId( "eoSim" )
+		final LocalConfig config = LocalConfig.builder().withId( "world1" )
 				.withProvider( Scheduler.class, Dsol3Scheduler.class )
 				.withProvider( CompositeActor.Factory.class,
 						CompositeActor.Factory.LocalCaching.class )
@@ -248,7 +216,8 @@ public class EnterpriseTest
 
 		for( Object f : binder.inject( CoordinationFactBank.Factory.class )
 				.create().find().toBlocking().toIterable() )
-			LOG.trace( "Got fact: {}", f );
+			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
+					((EnterpriseModel.TestFact) f).getRqParam() );
 
 		LOG.info( "completed, t={}", scheduler.now() );
 	}

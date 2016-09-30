@@ -32,11 +32,12 @@ import com.fasterxml.jackson.databind.util.StdConverter;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.LocalId;
-import io.coala.exception.Thrower;
+import io.coala.config.InjectConfig;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
+import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import rx.Observable;
 import rx.Observer;
@@ -72,7 +73,7 @@ public interface CompositeActor extends Proactive,
 	 * @return an {@link Observable} stream of all generated or received
 	 *         {@link CoordinationFact}s
 	 */
-	Observable<CoordinationFact> facts();
+	Observable<CoordinationFact> occurred();
 
 	/**
 	 * @return an {@link Observable} merging {@link Transaction#expired()}
@@ -81,13 +82,13 @@ public interface CompositeActor extends Proactive,
 	Observable<CoordinationFact> expired();
 
 	/**
-	 * @param factKind the type of {@link CoordinationFact} to filter for
+	 * @param tranKind the type of {@link CoordinationFact} to filter for
 	 * @return an {@link Observable} of incoming {@link CoordinationFact}s
 	 */
 	default <F extends CoordinationFact> Observable<F>
-		on( final Class<F> factKind )
+		on( final Class<F> tranKind )
 	{
-		return facts().ofType( factKind );
+		return occurred().ofType( tranKind );
 	}
 
 	/**
@@ -128,10 +129,13 @@ public interface CompositeActor extends Proactive,
 				.filter( fact -> fact.creatorRef().equals( creatorRef ) );
 	}
 
-	/** @return an {@link Observable} of outgoing {@link CoordinationFact}s */
+	/**
+	 * @return an {@link Observable} of {@link CoordinationFact}s where
+	 *         {@link CoordinationFact#isOutgoing() isOutgoing()==true}
+	 */
 	default Observable<CoordinationFact> outgoing()
 	{
-		return facts().filter( CoordinationFact::isOutgoing );
+		return occurred().filter( CoordinationFact::isOutgoing );
 	}
 
 	default <F extends CoordinationFact> Observable<F>
@@ -200,24 +204,22 @@ public interface CompositeActor extends Proactive,
 		final Instant expiration, final Map<?, ?>... params )
 	{
 		return (F) asInitiator( tranKind, executor ).generate(
-				CoordinationFactKind.REQUESTED, cause, false, expiration,
-				params );
+				CoordinationFactKind.REQUESTED, cause, expiration, params );
 	}
 
 	/**
 	 * @param cause
 	 * @param factKind
-	 * @param terminal
 	 * @param expiration
 	 * @param params
 	 * @return
 	 */
 	default <F extends CoordinationFact> F respond( final F cause,
-		final CoordinationFactKind factKind, final boolean terminal,
-		final Instant expiration, final Map<?, ?>... params )
+		final CoordinationFactKind factKind, final Instant expiration,
+		final Map<?, ?>... params )
 	{
 		return (F) asResponder( cause ).generate( factKind, cause.id(),
-				terminal, expiration, params );
+				expiration, params );
 	}
 
 	/**
@@ -269,14 +271,15 @@ public interface CompositeActor extends Proactive,
 
 	/**
 	 * @param id
+	 * @param config
 	 * @param scheduler
 	 * @param actorFactory
 	 * @param factFactory
 	 * @param bankFactory
 	 * @return
 	 */
-	static CompositeActor of( final ID id, final Scheduler scheduler,
-		final CompositeActor.Factory actorFactory,
+	static CompositeActor of( final ID id, final ReplicateConfig config,
+		final Scheduler scheduler, final CompositeActor.Factory actorFactory,
 		final CoordinationFact.Factory factFactory,
 		final CoordinationFactBank.Factory bankFactory )
 	{
@@ -284,7 +287,7 @@ public interface CompositeActor extends Proactive,
 		{
 //			final Logger LOG = LogUtil.getLogger( CompositeActor.class );
 
-			private final Subject<CoordinationFact, CoordinationFact> incoming = PublishSubject
+			private final Subject<CoordinationFact, CoordinationFact> occurred = PublishSubject
 					.create();
 			/**
 			 * the {@link Subject} that merges all {@link Transaction#expired()}
@@ -320,65 +323,68 @@ public interface CompositeActor extends Proactive,
 				final CompositeActor.ID initiator,
 				final CompositeActor.ID executor, final CompositeActor source )
 			{
-				try
-				{
-					return (Transaction<F>) this.txs.computeIfAbsent(
-							transaction == null ? Transaction.ID.create( id() )
-									: transaction.id(),
-							tid ->
-							{
-								final Transaction<F> result = transaction != null
-										? transaction
-										: Transaction.of( tranKind, scheduler(),
-												tid, initiator, executor,
-												factFactory, bankFactory );
-								this.on( tranKind ).subscribe( result::on,
-										this::onError );
-								result.generated().subscribe(
-										this.incoming::onNext,
-										this.incoming::onError,
-										() -> this.txs.remove( result.id() ) );
-								result.expired().subscribe(
-										this.expiring::onNext,
-										this.expiring::onError );
-								return result;
-							} );
-				} catch( final Throwable e )
-				{
-//					outgoing.onError( e );
-					return Thrower.rethrowUnchecked( e );
-				}
+				return (Transaction<F>) this.txs.computeIfAbsent(
+						transaction == null ? Transaction.ID.create( id() )
+								: transaction.id(),
+						tid ->
+						{
+							final Transaction<F> result = transaction != null
+									? transaction
+									: Transaction.of( tid, tranKind, initiator,
+											executor, config, scheduler(),
+											factFactory, bankFactory );
+							// actor -> tx (remove any pending)
+							on( tranKind ).subscribe( result::on,
+									this::onError );
+							// tx -> actor (committed facts)
+							result.committed().subscribe( this.occurred::onNext,
+									this.occurred::onError,
+									() -> this.txs.remove( result.id() ) );
+							// tx -> actor (expired facts)
+							result.expired().subscribe( this.expiring::onNext,
+									this.expiring::onError );
+							return result;
+						} );
 			}
 
 			@Override
 			public CompositeActor actor( final ID actorID )
 			{
-				return this.actorMap.computeIfAbsent( actorID,
-						id -> actorFactory.create( actorID, facts() ) );
+				return this.actorMap.computeIfAbsent( actorID, id ->
+				//actorFactory.createChild( actorID, occurred(), this )
+				{
+					final CompositeActor result = actorFactory.create( id );
+					// child -> parent
+					result.occurred().subscribe( this::onNext, this::onError );
+					// FIXME how to notify sibling actors without looping ?
+//					occurred().filter( f -> !f.creatorRef().equals( id() ) )
+//							.subscribe( result );
+					return result;
+				} );
 			}
 
 			@Override
-			public Observable<CoordinationFact> facts()
+			public Observable<CoordinationFact> occurred()
 			{
-				return this.incoming.asObservable();
+				return this.occurred.asObservable();
 			}
 
 			@Override
 			public void onCompleted()
 			{
-				this.incoming.onCompleted();
+				this.occurred.onCompleted();
 			}
 
 			@Override
 			public void onError( final Throwable e )
 			{
-				this.incoming.onError( e );
+				this.occurred.onError( e );
 			}
 
 			@Override
 			public void onNext( final CoordinationFact fact )
 			{
-				this.incoming.onNext( fact );
+				this.occurred.onNext( fact );
 			}
 		};
 	}
@@ -398,21 +404,25 @@ public interface CompositeActor extends Proactive,
 		{
 			return create( ID.of( name, id() ) );
 		}
-
-		default CompositeActor create( final String name,
-			final CompositeActor parent )
-		{
-			return create( ID.of( name, parent.id() ), parent.facts() );
-		}
-
-		default CompositeActor create( final ID id,
-			final Observable<CoordinationFact> incoming )
-		{
-			final CompositeActor result = create( id );
-//			result.outgoing().subscribe( outgoing );
-			incoming.subscribe( result );
-			return result;
-		}
+//
+//		default CompositeActor createChild( final String name,
+//			final CompositeActor parent )
+//		{
+//			return createChild( ID.of( name, parent.id() ), parent.occurred(),
+//					parent );
+//		}
+//
+//		default CompositeActor createChild( final ID id,
+//			final Observable<CoordinationFact> parentSource,
+//			final Observer<CoordinationFact> parentSink )
+//		{
+//			final CompositeActor result = create( id );
+//			result.occurred().subscribe( parentSink::onNext,
+//					parentSink::onError );
+////			parentSource.filter( f -> f.creatorRef().equals( id() ) )
+////					.subscribe( result );
+//			return result;
+//		}
 
 		@Singleton
 		class LocalCaching implements Factory
@@ -421,6 +431,9 @@ public interface CompositeActor extends Proactive,
 
 			@Inject
 			private LocalBinder binder;
+
+			@InjectConfig
+			private ReplicateConfig config;
 
 			@Inject
 			private Scheduler scheduler;
@@ -436,8 +449,8 @@ public interface CompositeActor extends Proactive,
 			{
 				return this.localCache.computeIfAbsent( id, k ->
 				{
-					return CompositeActor.of( id, this.scheduler, this,
-							this.factFactory, this.bankFactory );
+					return CompositeActor.of( id, this.config, this.scheduler,
+							this, this.factFactory, this.bankFactory );
 				} );
 			}
 
