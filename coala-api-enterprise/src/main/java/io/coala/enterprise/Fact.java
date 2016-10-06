@@ -127,10 +127,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	// derived @JsonIgnore 
 	default Actor.ID creatorRef()
 	{
-		return id().parentRef() != null ? id().parentRef()
-				: kind().originatorRoleType() == RoleKind.EXECUTOR
-						? transaction().executorRef()
-						: transaction().initiatorRef();
+		return kind().originatorRoleType() == RoleKind.EXECUTOR
+				? transaction().executorRef() : transaction().initiatorRef();
 	}
 
 	/** @return */
@@ -426,9 +424,9 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		}
 
 		@Override
-		public Actor.ID parentRef()
+		public Transaction.ID parentRef()
 		{
-			return (Actor.ID) super.parentRef();
+			return (Transaction.ID) super.parentRef();
 		}
 
 		public Pretty prettyHash()
@@ -438,13 +436,13 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		}
 
 		/** @return an {@link ID} with specified {@link UUID} */
-		public static ID of( final UUID value, final Actor.ID ctx )
+		public static ID of( final UUID value, final Transaction.ID ctx )
 		{
 			return LocalId.of( new ID(), value, ctx );
 		}
 
 		/** @return a new {@link ID} */
-		public static ID create( final Actor.ID ctx )
+		public static ID create( final Transaction.ID ctx )
 		{
 			return of( new UUID(), ctx );
 		}

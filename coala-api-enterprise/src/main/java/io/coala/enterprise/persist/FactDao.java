@@ -190,8 +190,8 @@ public class FactDao implements BindableDao<Fact, FactDao>
 				.persist( em );
 		dao.causeRef = causeRef == null ? null
 				: Objects.requireNonNull( causeRef.unwrap() );
-		dao.causeCreatorRef = causeRef == null ? null
-				: Objects.requireNonNull( causeRef.parentRef() ).persist( em );
+		dao.causeTranRef = causeRef == null ? null
+				: Objects.requireNonNull( causeRef.parentRef() ).unwrap();
 		dao.occurrence = InstantDao.of( occurrence, offset, unit );
 		dao.expiration = InstantDao.of( expiration, offset, unit );
 		dao.properties = JsonUtil.toTree( fact.properties() );
@@ -268,9 +268,10 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	@Convert( converter = UUIDToByteConverter.class )
 	protected UUID causeRef;
 
-	@ManyToOne( optional = true, fetch = FetchType.LAZY, cascade = {} )
-	@JoinColumn( name = "CAUSER_ID", updatable = false )
-	protected LocalIdDao causeCreatorRef;
+	@Column( name = "CAUSE_TID", nullable = true, updatable = false, length = 16,
+		columnDefinition = "BINARY(16)" )
+	@Convert( converter = UUIDToByteConverter.class )
+	protected UUID causeTranRef;
 
 	@Column( name = "PROPERTIES", nullable = true, updatable = false )
 	@Convert( converter = JsonToStringConverter.class )
@@ -281,19 +282,17 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	public Fact restore( final LocalBinder binder )
 	{
 		Objects.requireNonNull( this.creatorRef );
-		if( this.causeRef != null )
-			Objects.requireNonNull( this.causeCreatorRef );
+		if( this.causeRef != null ) Objects.requireNonNull( this.causeTranRef );
 
-		final Actor.ID creator = Actor.ID
-				.of( this.creatorRef.restore( binder ) );
-		final ID id = ID.of( Objects.requireNonNull( this.id ), creator );
+		final ID id = ID.of( Objects.requireNonNull( this.id ),
+				Transaction.ID.of( this.tid, binder.id() ) );
 		final Transaction tx = binder.inject( Transaction.Factory.class )
 				.create( Transaction.ID.of( this.tid, binder.id() ), this.type,
 						Actor.ID.of( this.initiatorRef.restore( binder ) ),
 						Actor.ID.of( this.executorRef.restore( binder ) ) );
 		final ID cause = this.causeRef == null ? null
 				: ID.of( this.causeRef,
-						Actor.ID.of( this.causeCreatorRef.restore( binder ) ) );
+						Transaction.ID.of( this.causeTranRef, binder.id() ) );
 		final Instant occurrence = Objects.requireNonNull( this.occurrence )
 				.restore( binder );
 		final Instant expiration = this.expiration == null ? null

@@ -287,13 +287,11 @@ public interface Transaction<F extends Fact>
 		public F generate( final FactKind factKind, final Fact.ID causeRef,
 			final Instant expiration, final Map<?, ?>... params )
 		{
-			if( causeRef == null && factKind == FactKind.REQUESTED )
+			if( causeRef == null || !causeRef.parentRef().equals( id() ) )
 				checkNotInitiated();
 			this.initiated = true;
 			checkNotTerminated();
-			return this.factFactory.create( kind(),
-					Fact.ID.create( factKind.isFromInitiator() ? initiatorRef()
-							: executorRef() ),
+			return this.factFactory.create( kind(), Fact.ID.create( id() ),
 					this, factKind, expiration, causeRef, params );
 		}
 
