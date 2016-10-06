@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.util.StdConverter;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.LocalId;
-import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;

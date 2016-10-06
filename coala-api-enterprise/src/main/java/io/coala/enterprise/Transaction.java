@@ -42,7 +42,6 @@ import io.coala.bind.LocalId;
 import io.coala.config.ConfigUtil;
 import io.coala.config.InjectConfig;
 import io.coala.exception.Thrower;
-import io.coala.log.LogUtil;
 import io.coala.name.Identified;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
@@ -216,6 +215,7 @@ public interface Transaction<F extends Fact>
 		private Class<F> kind;
 		private Actor.ID initiatorRef;
 		private Actor.ID executorRef;
+		private boolean initiated = false;
 		private boolean terminated = false;
 
 		@Inject
@@ -271,6 +271,12 @@ public interface Transaction<F extends Fact>
 			return this.executorRef;
 		}
 
+		protected void checkNotInitiated()
+		{
+			if( this.initiated ) Thrower.throwNew( IllegalStateException.class,
+					"Already initiated: {}", id() );
+		}
+
 		protected void checkNotTerminated()
 		{
 			if( this.terminated ) Thrower.throwNew( IllegalStateException.class,
@@ -281,6 +287,9 @@ public interface Transaction<F extends Fact>
 		public F generate( final FactKind factKind, final Fact.ID causeRef,
 			final Instant expiration, final Map<?, ?>... params )
 		{
+			if( causeRef == null && factKind == FactKind.REQUESTED )
+				checkNotInitiated();
+			this.initiated = true;
 			checkNotTerminated();
 			return this.factFactory.create( kind(),
 					Fact.ID.create( factKind.isFromInitiator() ? initiatorRef()
