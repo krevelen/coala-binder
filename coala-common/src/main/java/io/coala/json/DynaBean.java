@@ -23,8 +23,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -76,6 +74,7 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
+import io.coala.util.ReflectUtil;
 import io.coala.util.TypeArguments;
 
 /**
@@ -303,22 +302,6 @@ public final class DynaBean implements Cloneable, Comparable
 		private static final Logger LOG = LogUtil
 				.getLogger( DynaBeanInvocationHandler.class );
 
-		private static Constructor<MethodHandles.Lookup> lookupConstructor;
-		{
-			try
-			{
-				lookupConstructor = MethodHandles.Lookup.class
-						.getDeclaredConstructor( Class.class, int.class );
-				if( !lookupConstructor.isAccessible() )
-				{
-					lookupConstructor.setAccessible( true );
-				}
-			} catch( final Exception e )
-			{
-
-			}
-		}
-
 		/** */
 		private final Class<?> type;
 
@@ -417,14 +400,8 @@ public final class DynaBean implements Cloneable, Comparable
 
 				if( !method.getReturnType().equals( Void.TYPE ) )
 				{
-					// see http://stackoverflow.com/a/23990827
-					// see https://rmannibucau.wordpress.com/2014/03/27/java-8-default-interface-methods-and-jdk-dynamic-proxies/#comment-1333
-					if( method.isDefault() ) return lookupConstructor
-							.newInstance( method.getDeclaringClass(),
-									MethodHandles.Lookup.PRIVATE )
-							.unreflectSpecial( method,
-									method.getDeclaringClass() )
-							.bindTo( proxy ).invokeWithArguments( args );
+					if( method.isDefault() ) return ReflectUtil
+							.invokeDefaultMethod( proxy, method, args );
 
 					Object result = this.bean.any().get( beanProp );
 					if( result == null )

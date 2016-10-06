@@ -34,7 +34,7 @@ import javax.persistence.criteria.Root;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.LocalBinder;
-import io.coala.enterprise.CoordinationFact.Dao;
+import io.coala.enterprise.persist.FactDao;
 import io.coala.log.LogUtil;
 import io.coala.math.Range;
 import io.coala.persist.JPAUtil;
@@ -43,40 +43,39 @@ import rx.Observable;
 import rx.subjects.PublishSubject;
 
 /**
- * {@link CoordinationFactBank}
+ * {@link FactBank}
  * 
  * @param <F>
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface CoordinationFactBank<F extends CoordinationFact>
-	extends AutoCloseable
+public interface FactBank<F extends Fact> extends AutoCloseable
 {
 
 	/**
 	 * @param fact
 	 */
-	Observable<Dao> saveAsync( Observable<F> fact );
+	Observable<FactDao> saveAsync( Observable<F> fact );
 
 	/**
 	 * @param fact
 	 */
-	default Iterable<Dao> saveSync( final Observable<F> fact )
+	default Iterable<FactDao> saveSync( final Observable<F> fact )
 	{
 		return saveAsync( fact ).toBlocking().toIterable();
 	}
 
 	static Logger logger()
 	{
-		return LogUtil.getLogger( CoordinationFactBank.class );
+		return LogUtil.getLogger( FactBank.class );
 	}
 
 	/**
 	 * @param fact
 	 */
-	default Dao save( final F fact )
+	default FactDao save( final F fact )
 	{
-		for( Dao dao : saveSync( Observable.just( fact ) ) )
+		for( FactDao dao : saveSync( Observable.just( fact ) ) )
 			return dao;
 		return null;
 	}
@@ -87,7 +86,7 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	@SuppressWarnings( "unchecked" )
 	default void save( final F... facts )
 	{
-		for( Dao dao : saveSync( Observable.from( facts ) ) )
+		for( FactDao dao : saveSync( Observable.from( facts ) ) )
 			logger().trace( "saved: {}", dao );
 	}
 
@@ -96,7 +95,7 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	 */
 	default void save( final Iterable<F> facts )
 	{
-		for( Dao dao : saveSync( Observable.from( facts ) ) )
+		for( FactDao dao : saveSync( Observable.from( facts ) ) )
 			logger().trace( "saved: {}", dao );
 	}
 
@@ -113,27 +112,27 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		return null; // default: any
 	}
 
-	default CoordinationFactKind kindFilter()
+	default FactKind kindFilter()
 	{
 		return null; // default: any
 	}
 
-	default CoordinationFact.ID causeFilter()
+	default Fact.ID causeFilter()
 	{
 		return null; // default: any
 	}
 
-	default CompositeActor.ID initiatorFilter()
+	default Actor.ID initiatorFilter()
 	{
 		return null; // default: any
 	}
 
-	default CompositeActor.ID executorFilter()
+	default Actor.ID executorFilter()
 	{
 		return null; // default: any
 	}
 
-	default CompositeActor.ID creatorFilter()
+	default Actor.ID creatorFilter()
 	{
 		return null; // default: any
 	}
@@ -154,13 +153,13 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	}
 
 	/**
-	 * @param id the {@link CoordinationFact.ID} to match
-	 * @return the {@link CoordinationFact} or {@code null} if not found
+	 * @param id the {@link Fact.ID} to match
+	 * @return the {@link Fact} or {@code null} if not found
 	 */
-	F find( CoordinationFact.ID id );
+	F find( Fact.ID id );
 
 	/**
-	 * @return an {@link Iterable} of the matching {@link CoordinationFact}s
+	 * @return an {@link Iterable} of the matching {@link Fact}s
 	 */
 	Observable<F> find();
 
@@ -170,16 +169,15 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	}
 
 	/**
-	 * @param factKind the {@link CoordinationFactKind} to match
-	 * @return an {@link Iterable} of the matching {@link CoordinationFact}s
+	 * @param factKind the {@link FactKind} to match
+	 * @return an {@link Iterable} of the matching {@link Fact}s
 	 */
-	default CoordinationFactBank<F>
-		matchKind( final CoordinationFactKind factKind )
+	default FactBank<F> matchKind( final FactKind factKind )
 	{
-		return new CoordinationFactBank.Wrapper<F>( this )
+		return new FactBank.Wrapper<F>( this )
 		{
 			@Override
-			public CoordinationFactKind kindFilter()
+			public FactKind kindFilter()
 			{
 				return factKind;
 			}
@@ -187,20 +185,20 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	}
 
 	/**
-	 * @param causeId the cause {@link CoordinationFact.ID} to match
-	 * @return an {@link Iterable} of the matching {@link CoordinationFact}s
+	 * @param causeId the cause {@link Fact.ID} to match
+	 * @return an {@link Iterable} of the matching {@link Fact}s
 	 */
-	default <T extends CoordinationFact> CoordinationFactBank<T>
+	default <T extends Fact> FactBank<T>
 		matchTransactionKind( final Class<T> tranKind )
 	{
-		final CoordinationFactBank<?> self = this;
-		return new CoordinationFactBank.Wrapper<T>( self )
+		final FactBank<?> self = this;
+		return new FactBank.Wrapper<T>( self )
 		{
 
 			@Override
-			public T find( final CoordinationFact.ID id )
+			public T find( final Fact.ID id )
 			{
-				final CoordinationFact result = self.find( id );
+				final Fact result = self.find( id );
 				return result == null ? null : result.proxyAs( tranKind, null );
 			}
 
@@ -220,16 +218,15 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	}
 
 	/**
-	 * @param causeId the cause {@link CoordinationFact.ID} to match
-	 * @return an {@link Iterable} of the matching {@link CoordinationFact}s
+	 * @param causeId the cause {@link Fact.ID} to match
+	 * @return an {@link Iterable} of the matching {@link Fact}s
 	 */
-	default CoordinationFactBank<F>
-		matchCause( final CoordinationFact.ID causeId )
+	default FactBank<F> matchCause( final Fact.ID causeId )
 	{
-		return new CoordinationFactBank.Wrapper<F>( this )
+		return new FactBank.Wrapper<F>( this )
 		{
 			@Override
-			public CoordinationFact.ID causeFilter()
+			public Fact.ID causeFilter()
 			{
 				return causeId;
 			}
@@ -244,11 +241,11 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	class Wrapper<T extends CoordinationFact> implements CoordinationFactBank<T>
+	class Wrapper<T extends Fact> implements FactBank<T>
 	{
-		protected final CoordinationFactBank bank;
+		protected final FactBank bank;
 
-		Wrapper( final CoordinationFactBank bank )
+		Wrapper( final FactBank bank )
 		{
 			this.bank = bank;
 		}
@@ -260,13 +257,13 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		}
 
 		@Override
-		public Observable<Dao> saveAsync( final Observable<T> fact )
+		public Observable<FactDao> saveAsync( final Observable<T> fact )
 		{
 			return this.bank.saveAsync( (Observable<?>) fact );
 		}
 
 		@Override
-		public T find( final CoordinationFact.ID id )
+		public T find( final Fact.ID id )
 		{
 			return (T) this.bank.find( id );
 		}
@@ -291,7 +288,7 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 	 * @author Rick van Krevelen
 	 */
 	@Singleton
-	public class SimpleJPA implements CoordinationFactBank<CoordinationFact>
+	public class SimpleJPA implements FactBank<Fact>
 	{
 
 		@Inject
@@ -307,11 +304,10 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		}
 
 		@Override
-		public Observable<Dao>
-			saveAsync( final Observable<CoordinationFact> facts )
+		public Observable<FactDao> saveAsync( final Observable<Fact> facts )
 		{
 			// TODO defer: facts.observeOn( ... ) & rejoin at sim::onCompleted ?
-			return PublishSubject.<Dao> create( sub ->
+			return PublishSubject.<FactDao> create( sub ->
 			{
 				// One session for each fact
 				facts.subscribe( fact ->
@@ -332,17 +328,17 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		}
 
 		@Override
-		public CoordinationFact find( final CoordinationFact.ID id )
+		public Fact find( final Fact.ID id )
 		{
 			return JPAUtil.session( this.emf ).toBlocking().first()
-					.createQuery( "SELECT f FROM " + Dao.ENTITY_NAME
-							+ " AS f WHERE f.ID=?1", Dao.class )
+					.createQuery( "SELECT f FROM " + FactDao.ENTITY_NAME
+							+ " AS f WHERE f.ID=?1", FactDao.class )
 					.setParameter( 1, id.unwrap() ).getSingleResult()
 					.restore( this.binder );
 		}
 
 		@Override
-		public Observable<CoordinationFact> find()
+		public Observable<Fact> find()
 		{
 //			final Class<?> type = transactionKindFilter();
 //			final CoordinationFactKind kind = kindFilter();
@@ -360,8 +356,8 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 				JPAUtil.session( this.emf ).subscribe( em ->
 				{
 					final CriteriaBuilder cb = em.getCriteriaBuilder();
-					final CriteriaQuery<Dao> q = cb.createQuery( Dao.class );
-					final Root<Dao> d = q.from( Dao.class );
+					final CriteriaQuery<FactDao> q = cb.createQuery( FactDao.class );
+					final Root<FactDao> d = q.from( FactDao.class );
 					q.select( d );
 
 					// TODO first (1) fetch id's sorted by time-stamp, 
@@ -378,12 +374,12 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 //					if( kind != null ) q.where( cb
 //							.equal( d.get( Dao.KIND_ATTR_NAME ), kindParam ) );
 
-					final TypedQuery<Dao> query = em.createQuery( q );
+					final TypedQuery<FactDao> query = em.createQuery( q );
 
 //					if( type != null ) query.setParameter( typeParam, type );
 //					if( kind != null ) query.setParameter( kindParam, kind );
 
-					final List<Dao> list = query.getResultList();
+					final List<FactDao> list = query.getResultList();
 					list.stream().map( dao -> dao.restore( this.binder ) )
 							.forEach( sub::onNext );
 					sub.onCompleted();
@@ -392,25 +388,15 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 		}
 
 		@Override
-		public Class<CoordinationFact> transactionKindFilter()
+		public Class<Fact> transactionKindFilter()
 		{
-			return CoordinationFact.class;
+			return Fact.class;
 		}
 	}
 
 	interface Factory
 	{
-		CoordinationFactBank<?> create();
-
-		/**
-		 * @param tranKind
-		 * @return
-		 */
-		default <F extends CoordinationFact> CoordinationFactBank<F>
-			create( final Class<F> tranKind )
-		{
-			return create().matchTransactionKind( tranKind );
-		}
+		FactBank<?> create();
 
 		@Singleton
 		class LocalJPA implements Factory
@@ -420,7 +406,7 @@ public interface CoordinationFactBank<F extends CoordinationFact>
 			private LocalBinder binder;
 
 			@Override
-			public CoordinationFactBank<?> create()
+			public FactBank<?> create()
 			{
 				return this.binder.inject( SimpleJPA.class );
 			}

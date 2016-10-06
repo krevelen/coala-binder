@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -388,12 +389,18 @@ public class JsonUtil
 			if( type.isPrimitive() ) return type;
 			Set<Class<?>> cache = JSON_REGISTRATION_CACHE.computeIfAbsent( om,
 					key -> new HashSet<>() );
-			if( type.isPrimitive() || cache.contains( type ) ) return type;
+			if( type.getPackage() == Object.class.getPackage()
+					|| type.getPackage() == Collection.class.getPackage()
+					|| type.isPrimitive()
+					// assume java.lang.* and java.util.* are already mapped
+					|| TreeNode.class.isAssignableFrom( type )
+					|| cache.contains( type ) )
+				return type;
 
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
-			LOG.trace( "Register JSON conversion of type: {}", type.getName() );
+			LOG.trace( "Register JSON conversion of type: {}", type	 );
 			if( type.isAnnotationPresent( BeanProxy.class ) )
 			{
 //				if( !type.isInterface() )

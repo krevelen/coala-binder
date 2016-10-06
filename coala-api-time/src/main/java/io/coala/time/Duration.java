@@ -28,6 +28,7 @@ import org.jscience.physics.amount.Amount;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.Wrapper;
+import io.coala.log.LogUtil.Pretty;
 import io.coala.math.MeasureUtil;
 
 /**
@@ -298,12 +299,12 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 		return unwrap();
 	}
 
-	public Object prettify( final int scale )
+	public Pretty prettify( final int scale )
 	{
 		return unwrap().prettify( scale );
 	}
 
-	public Object prettify( final Unit<?> unit, final int scale )
+	public Pretty prettify( final Unit<?> unit, final int scale )
 	{
 		return unwrap().prettify( unit, scale );
 	}

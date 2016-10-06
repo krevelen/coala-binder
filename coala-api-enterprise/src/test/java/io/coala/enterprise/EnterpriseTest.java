@@ -3,10 +3,10 @@ package io.coala.enterprise;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.unit.NonSI;
 import javax.persistence.EntityManagerFactory;
 
 import org.aeonbits.owner.ConfigCache;
@@ -14,6 +14,9 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
@@ -27,6 +30,7 @@ import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
+import io.coala.time.Units;
 import net.jodah.concurrentunit.Waiter;
 
 /**
@@ -52,22 +56,34 @@ public class EnterpriseTest
 		 * @version $Id$
 		 * @author Rick van Krevelen
 		 */
-		public interface TestFact extends CoordinationFact
+		@JsonAutoDetect( fieldVisibility = Visibility.ANY,
+			getterVisibility = Visibility.NONE,
+			isGetterVisibility = Visibility.NONE,
+			setterVisibility = Visibility.NONE )
+		public interface TestFact extends Fact
 		{
 			Instant getRqParam(); // get "rqParam" bean property
 
 			void setRqParam( Instant value ); // set "rqParam" bean property
 
+			default TestFact withRqParam( Instant value )
+			{
+				setRqParam( value );
+				return this;
+			}
+
+			String getStParam();
+
 			static TestFact fromJSON( final String json )
 			{
-				return CoordinationFact.fromJSON( json, TestFact.class );
+				return Fact.fromJSON( json, TestFact.class );
 			}
 		}
 
 		private final Scheduler scheduler;
 
 		@Inject
-		private CompositeActor.Factory organizations;
+		private Actor.Factory actorFactory;
 
 		@Inject
 		public EnterpriseModel( final Scheduler scheduler )
@@ -90,50 +106,60 @@ public class EnterpriseTest
 		{
 			LOG.trace( "initializing..." );
 
-			final DateTime offset = DateTime.now().withTimeAtStartOfDay()
-					.withDayOfMonth( 1 ).withMonthOfYear( 1 );
+			final Actor org1 = this.actorFactory.create( "org1" );
+			LOG.trace( "initialized organization" );
 
-			LOG.trace( "initialize organization" );
-			final CompositeActor org1 = this.organizations.create( "org1" );
-			final CompositeActor sales = org1.actor( "sales" );
+			final DateTime offset = new DateTime(
+					this.actorFactory.offset().toEpochMilli() );
+			LOG.trace( "initialized occurred and expired fact sniffing" );
 
-			LOG.trace( "initialize business rule(s)" );
-			sales.on( TestFact.class, CoordinationFactKind.REQUESTED,
-					sales.id() ).subscribe( rq ->
+			org1.occurred().subscribe( fact ->
+			{
+				LOG.trace( "t={}, occurred: {}", org1.now().prettify( offset ),
+						fact );
+			}, e -> LOG.error( "Problem", e ) );
+			org1.expired().subscribe( fact ->
+			{
+				LOG.trace( "t={}, expired: {}", org1.now().prettify( offset ),
+						fact );
+			}, e -> LOG.error( "Problem", e ) );
+
+			final AtomicInteger counter = new AtomicInteger( 0 );
+			final Actor sales = org1.actor( "sales" );
+			org1.occurred( TestFact.class, FactKind.REQUESTED, sales.id() )
+					.subscribe( rq ->
 					{
-						sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
+						sales.after( Duration.of( 1, Units.DAYS ) ).call( t ->
 						{
-							final TestFact st = sales.respond( rq,
-									CoordinationFactKind.STATED, null,
-									Collections.singletonMap( "stParam",
-											"stValue" ) );
-							st.transaction().commit( st, true );
-							LOG.trace( "t={}, rqParam: {}, responded: {}", t,
-									rq.getRqParam(), st );
+							final TestFact st = sales
+									.respond( rq, FactKind.STATED )
+									.with( "stParam", "stValue"
+											+ counter.getAndIncrement() );
+							LOG.trace( "t={}, rqParam: {}, respond: {} <- {}",
+									t, rq.getRqParam(),
+									st.causeRef().prettyHash(),
+									st.getStParam() );
+							st.commit( false );
 						} );
-					}, e -> LOG.error( "Problem", e ) );
+					}, e -> LOG.error( "Problem", e ),
+							() -> LOG.trace( "sales/rq completed?" ) );
+			LOG.trace( "initialized business rule(s)" );
 
-			LOG.trace( "intialize TestFact initiation" );
-			atEach( Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset )
+			atEach( Timing.valueOf( "0 0 0 30 * ? *" ).offset( offset )
 					.iterate(), t ->
 					{
 						// spawn initial transactions with self
 						final TestFact rq = sales.initiate( TestFact.class,
-								sales.id(), null, t.add( 1 ) );
-						rq.setRqParam( t );
-						rq.commit( false );
+								sales.id(), null, t.add( 1 ) ).withRqParam( t );
+
+						// de/serialization test
 						final String json = rq.toJSON();
 						final String fact = TestFact.fromJSON( json )
 								.toString();
-						LOG.trace( "initiated: {} => {}", json, fact );
+						LOG.trace( "initiate: {} => {}", json, fact );
+						rq.commit( false );
 					} );
-
-			LOG.trace( "initialize incoming fact sniffing" );
-			org1.occurred().subscribe( fact ->
-			{
-				LOG.trace( "t={}, fact: {}", org1.now().prettify( offset ),
-						fact );
-			} );
+			LOG.trace( "intialized TestFact initiation" );
 
 			// TODO test fact expiration handling
 
@@ -147,9 +173,7 @@ public class EnterpriseTest
 
 			// TODO test Jason or GOAL scripts for business rules
 
-			// TODO test/implement JSON de/serialization (for UI interaction)
-
-			LOG.trace( "initialized!" );
+			LOG.trace( "initialization complete!" );
 		}
 	}
 
@@ -165,7 +189,7 @@ public class EnterpriseTest
 	@Test
 	public void testEnterpriseOntology() throws TimeoutException
 	{
-		LOG.trace( "Deser: ", CoordinationFact.fromJSON(
+		LOG.trace( "Deser: ", Fact.fromJSON(
 				"{" + "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"occurrence\":{},\"transaction\":{"
 						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$EnterpriseModel$TestFact\""
@@ -178,19 +202,19 @@ public class EnterpriseTest
 
 		// configure replication FIXME via LocalConfig?
 		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
-				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 500 ) );
+				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );
 
 		// configure tooling
 		final LocalConfig config = LocalConfig.builder().withId( "world1" )
 				.withProvider( Scheduler.class, Dsol3Scheduler.class )
-				.withProvider( CompositeActor.Factory.class,
-						CompositeActor.Factory.LocalCaching.class )
+				.withProvider( Actor.Factory.class,
+						Actor.Factory.LocalCaching.class )
 				.withProvider( Transaction.Factory.class,
 						Transaction.Factory.LocalCaching.class )
-				.withProvider( CoordinationFact.Factory.class,
-						CoordinationFact.Factory.SimpleProxies.class )
-				.withProvider( CoordinationFactBank.Factory.class,
-						CoordinationFactBank.Factory.LocalJPA.class )
+				.withProvider( Fact.Factory.class,
+						Fact.Factory.SimpleProxies.class )
+				.withProvider( FactBank.Factory.class,
+						FactBank.Factory.LocalJPA.class )
 				.build();
 
 		LOG.info( "Starting EO test, config: {}", config.toYAML() );
@@ -212,10 +236,10 @@ public class EnterpriseTest
 			waiter.resume();
 		} );
 		scheduler.resume();
-		waiter.await( 10, TimeUnit.SECONDS );
+		waiter.await( 15, TimeUnit.SECONDS );
 
-		for( Object f : binder.inject( CoordinationFactBank.Factory.class )
-				.create().find().toBlocking().toIterable() )
+		for( Object f : binder.inject( FactBank.Factory.class ).create().find()
+				.toBlocking().toIterable() )
 			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
 					((EnterpriseModel.TestFact) f).getRqParam() );
 

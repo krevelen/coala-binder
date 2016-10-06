@@ -254,14 +254,20 @@ public class LogUtil implements Util
 		}
 	}
 
+	public static interface Pretty
+	{
+		@Override
+		String toString();
+	}
+	
 	/**
 	 * @param supplier the function to decorate in {@link #toString()} calls
 	 * @return a decorator {@link Object} to help delay {@link #toString()} call
 	 *         until absolutely necessary (e.g. for logging at a desired level)
 	 */
-	public static Object wrapToString( final Supplier<String> supplier )
+	public static Pretty wrapToString( final Supplier<String> supplier )
 	{
-		return new Object()
+		return new Pretty()
 		{
 			@Override
 			public String toString()

@@ -38,12 +38,15 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
+import io.coala.log.LogUtil.Pretty;
 import io.coala.math.MeasureUtil;
 import io.coala.util.DecimalUtil;
 
@@ -65,8 +68,8 @@ import io.coala.util.DecimalUtil;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
-@JsonSerialize( using = TimeSpan.JsonSerializer.class )
-@JsonDeserialize( using = TimeSpan.JsonDeserializer.class )
+@JsonSerialize( using = TimeSpan.ToJsonString.class )
+@JsonDeserialize( using = TimeSpan.FromJsonValue.class )
 public class TimeSpan extends DecimalMeasure
 {
 	static
@@ -506,52 +509,35 @@ public class TimeSpan extends DecimalMeasure
 				DecimalUtil.DEFAULT_CONTEXT ), getUnit() );
 	}
 
-	public Object prettify( final int scale )
+	public Pretty prettify( final int scale )
 	{
 		return prettify( getUnit(), scale );
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public Object prettify( final Unit<?> unit, final int scale )
+	public Pretty prettify( final Unit<?> unit, final int scale )
 	{
-		return LogUtil.wrapToString( () ->
-		{
-			return DecimalUtil
-					.setScale( MeasureUtil.toUnit( this, unit ).getValue(),
-							scale )
-					.toString() + unit;
-		} );
+		return LogUtil
+				.wrapToString(
+						() -> DecimalUtil
+								.setScale( MeasureUtil.toUnit( this, unit )
+										.getValue(), scale )
+								.toString() + unit );
 	}
 
-	public static class JsonSerializer
-		extends com.fasterxml.jackson.databind.JsonSerializer<TimeSpan>
+	public static class ToJsonString extends JsonSerializer<TimeSpan>
 	{
-		public JsonSerializer()
-		{
-			// LOG.trace("Created " + getClass().getName());
-		}
-
 		@Override
 		public void serialize( final TimeSpan value, final JsonGenerator gen,
 			final SerializerProvider serializers )
 			throws IOException, JsonProcessingException
 		{
-			final String result = value.toString();
-			// if (value.getUnit().getClass() == ProductUnit.class)
-			// LOG.trace("Serialized {} {} to: {}", value.getUnit().getClass()
-			// .getSimpleName(), value, result, new RuntimeException());
-			gen.writeString( result );
+			gen.writeString( value.toString() );
 		}
 	}
 
-	public static class JsonDeserializer
-		extends com.fasterxml.jackson.databind.JsonDeserializer<TimeSpan>
+	public static class FromJsonValue extends JsonDeserializer<TimeSpan>
 	{
-		public JsonDeserializer()
-		{
-			// LOG.trace("Created " + getClass().getName());
-		}
-
 		@Override
 		public TimeSpan deserialize( final JsonParser p,
 			final DeserializationContext ctxt )

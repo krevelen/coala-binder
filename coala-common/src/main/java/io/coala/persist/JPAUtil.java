@@ -118,6 +118,43 @@ public class JPAUtil
 	 * to {@code finder}
 	 * 
 	 * @param em
+	 * @param keyFinder
+	 * @param factory
+	 * @return
+	 */
+	public static <T> void existsOrCreate( final EntityManager outer,
+		final Supplier<Boolean> keyFinder, final Supplier<T> factory )
+	{
+		if( keyFinder.get() ) return;
+		final EntityManager inner = outer.getEntityManagerFactory()
+				.createEntityManager();
+		final T created = factory.get();
+		final EntityTransaction tx = inner.getTransaction();
+		try
+		{
+			tx.begin();
+			inner.persist( created );
+			tx.commit();
+			outer.merge( created );
+		} catch( final PersistenceException ex )
+		{
+			tx.rollback(); // unique constraint violation ?
+			if( !keyFinder.get() ) throw ex; // retry failed otherwise -> fail
+		} catch( final Throwable t )
+		{
+			tx.rollback();
+			throw t;
+		} finally
+		{
+			inner.close();
+		}
+	}
+
+	/**
+	 * see http://stackoverflow.com/a/35587856/1418999, but with half the calls
+	 * to {@code finder}
+	 * 
+	 * @param em
 	 * @param finder
 	 * @param factory
 	 * @return

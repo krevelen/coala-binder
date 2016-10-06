@@ -20,28 +20,11 @@
 package io.coala.bind;
 
 import java.io.IOException;
-import java.util.Objects;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Entity;
 import javax.persistence.EntityManager;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NoResultException;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 
 import com.eaio.uuid.UUID;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -50,10 +33,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
+import io.coala.bind.persist.LocalIdDao;
 import io.coala.name.Id;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
-import io.coala.persist.UUIDToByteConverter;
 
 /**
  * {@link LocalId} is a recursive child-parent id pair with a {@link UUID} as
@@ -67,7 +50,7 @@ import io.coala.persist.UUIDToByteConverter;
 @JsonSerialize( using = LocalId.JsonExport.class ) // override Wrapper tooling
 @JsonDeserialize( converter = LocalId.FromStringConverter.class )
 public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
-	implements Persistable<LocalId.Dao>
+	implements Persistable<LocalIdDao>
 {
 	public static class JsonExport extends JsonSerializer<LocalId>
 	{
@@ -147,23 +130,10 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		throw new IllegalArgumentException();
 	}
 
-	/**
-	 * FIXME reverse direction, handle UUID, handle multiple ancestors...
-	 * 
-	 * @param localId the "natural" {@link String} representation
-	 * @return the parsed/deserialized {@link LocalId}
-	 */
-//	public static LocalId valueOf( final String localId )
-//	{
-//		if( localId == null ) return null;
-//		final String[] split = localId.split( ID_SEP_REGEX, 2 );
-//		return of( split[0], valueOf( split[1] ) );
-//	}
-
 	public Stream<LocalId> find( final EntityManager em,
 		final LocalBinder binder, final String query )
 	{
-		return em.createQuery( query, Dao.class ).getResultList().stream()
+		return em.createQuery( query, LocalIdDao.class ).getResultList().stream()
 				.map( dao ->
 				{
 					return dao.restore( binder );
@@ -174,124 +144,18 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		final LocalBinder binder )
 	{
 		return find( em, binder,
-				"SELECT dao FROM " + Dao.ENTITY_NAME + " dao" );
+				"SELECT dao FROM " + LocalIdDao.ENTITY_NAME + " dao" );
 	}
 
-	private Integer pk = null;
+	private transient Integer pk = null;
 
 	@Override
-	public Dao persist( final EntityManager em )
+	public LocalIdDao persist( final EntityManager em )
 	{
-		if( this.pk != null ) return em.find( Dao.class, this.pk ); // cached?
-		final Dao parentRef = Objects.requireNonNull( parentRef() )
-				.parentRef() == null ? null : parentRef().persist( em ); // recurse
-		final String id = Objects.requireNonNull( unwrap() ).toString();
-		final UUID contextRef = Objects.requireNonNull( contextRef() );
-		final Dao result = JPAUtil.<Dao> findOrCreate( em,
-				() -> Dao.find( em, id, contextRef ),
-				() -> Dao.of( id, parentRef, contextRef ) );
+		if( this.pk != null ) return em.find( LocalIdDao.class, this.pk ); // cached?
+		final LocalIdDao result = JPAUtil.<LocalIdDao> findOrCreate( em,
+				() -> LocalIdDao.find( em, this ), () -> LocalIdDao.create( em, this ) );
 		this.pk = result.pk;
 		return result;
-	}
-
-	/**
-	 * Although this {@link Dao} implements the {@link BindableDao}, it does not
-	 * require to be @{@link Inject}ed e.g. by a {@link LocalBinder}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	@Entity( name = Dao.ENTITY_NAME )
-	@Cacheable
-	@Table( name = "LOCAL_IDS", uniqueConstraints =
-	{ @UniqueConstraint(
-		columnNames =
-			{ Dao.CONTEXT_COLUMN_NAME, Dao.ID_COLUMN_NAME } ),
-			@UniqueConstraint( columnNames =
-			{ Dao.CONTEXT_COLUMN_NAME, Dao.PARENT_COLUMN_NAME } ) } )
-	@Inheritance( strategy = InheritanceType.SINGLE_TABLE )
-	public static class Dao implements BindableDao
-	{
-		public static final String ENTITY_NAME = "LOCAL_ID";
-
-		public static final String ID_COLUMN_NAME = "ID";
-
-		public static final String PARENT_COLUMN_NAME = "PARENT";
-
-		public static final String CONTEXT_COLUMN_NAME = "CONTEXT";
-
-		protected static Dao find( final EntityManager em, final String id,
-			final UUID context )
-		{
-			try
-			{
-				return em
-						.createQuery(
-								"SELECT d FROM " + ENTITY_NAME
-										+ " d WHERE d.id=?1 AND d.contextRef=?2",
-								Dao.class )
-						.setParameter( 1, Objects.requireNonNull( id ) )
-						.setParameter( 2, Objects.requireNonNull( context ) )
-						.getSingleResult();
-			} catch( final NoResultException ignore )
-			{
-				return null;
-			}
-		}
-
-		protected static Dao of( final String id, final Dao parent,
-			final UUID context )
-		{
-			final Dao result = new Dao();
-			result.contextRef = context;
-			result.parentRef = parent;
-			result.id = id;
-			return result;
-		}
-
-		@javax.persistence.Id
-		@GeneratedValue( strategy = GenerationType.IDENTITY )
-		@Column( name = "PK", nullable = false, updatable = false,
-			insertable = false )
-		protected Integer pk;
-
-//		/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
-//		@Temporal( TemporalType.TIMESTAMP )
-//		@Column( name = "CREATED_TS", insertable = false, updatable = false,
-//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-//		@JsonIgnore
-//		protected Date created;
-
-//		/** automated time stamp of last update (typically never changes) */
-//		@Version
-//		@Temporal( TemporalType.TIMESTAMP )
-//		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
-//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-//		@JsonIgnore
-//		protected Date updated;
-
-		@Column( name = ID_COLUMN_NAME, nullable = false, updatable = false )
-		protected String id;
-
-		@ManyToOne( fetch = FetchType.LAZY )
-		@JoinColumn( name = PARENT_COLUMN_NAME, nullable = true,
-			updatable = false )
-		protected Dao parentRef;
-
-		@JsonIgnore
-		@Column( name = CONTEXT_COLUMN_NAME, nullable = false,
-			updatable = false, length = 16, columnDefinition = "BINARY(16)" )
-		@Convert( converter = UUIDToByteConverter.class )
-		protected UUID contextRef;
-
-		@Override
-		public LocalId restore( final LocalBinder binder )
-		{
-			return LocalId.of( Objects.requireNonNull( this.id ),
-					this.parentRef == null
-							? LocalId.of(
-									Objects.requireNonNull( this.contextRef ) )
-							: this.parentRef.restore( binder ) );
-		}
 	}
 }
