@@ -400,7 +400,7 @@ public class JsonUtil
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
-			LOG.trace( "Register JSON conversion of type: {}", type	 );
+//			LOG.trace( "Register JSON conversion of type: {}", type	 );
 			if( type.isAnnotationPresent( BeanProxy.class ) )
 			{
 //				if( !type.isInterface() )

@@ -310,8 +310,6 @@ public interface Transaction<F extends Fact>
 						this.pending.remove( fact.id() );
 						this.expired.onNext( fact );
 					} ) );
-				LogUtil.getLogger( Actor.class ).trace( "transact {} gen: {}",
-						id().prettyHash(), fact.id().prettyHash() );
 
 				// publish / fire / send
 				this.commits.onNext( fact );

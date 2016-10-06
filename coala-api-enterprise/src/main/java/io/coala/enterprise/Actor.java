@@ -419,9 +419,6 @@ public interface Actor
 								: this.txFactory.create( tid, tranKind,
 										initiatorRef, executorRef );
 						// tx -> actor (committed facts)
-						LogUtil.getLogger( Actor.class ).trace(
-								"reg: tran {} to actor {}", tid.prettyHash(),
-								id() );
 						tx.committed().subscribe( this::onNext, this::onError,
 								() -> this.txs.remove( tx.id() ) );
 						// tx -> actor (expired facts)
@@ -438,10 +435,8 @@ public interface Actor
 			{
 				final Actor child = this.actorFactory.create( id );
 				// child -> parent
-				LogUtil.getLogger( Actor.class )
-						.trace( "reg: child {} to parent {}", id, id() );
 				child.occurred().subscribe( this::onNext, this::onError );
-				// FIXME how to notify sibling actors without looping ?
+				// FIXME how to notify sibling/cousin actors without looping ?
 //					occurred().filter( f -> !f.creatorRef().equals( id() ) )
 //							.subscribe( result );
 				return child;
