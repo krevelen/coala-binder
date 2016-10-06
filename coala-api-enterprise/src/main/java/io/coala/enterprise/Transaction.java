@@ -271,7 +271,7 @@ public interface Transaction<F extends Fact>
 			return this.executorRef;
 		}
 
-		protected void checkTerminated()
+		protected void checkNotTerminated()
 		{
 			if( this.terminated ) Thrower.throwNew( IllegalStateException.class,
 					"Already terminated: {}", id() );
@@ -281,7 +281,7 @@ public interface Transaction<F extends Fact>
 		public F generate( final FactKind factKind, final Fact.ID causeRef,
 			final Instant expiration, final Map<?, ?>... params )
 		{
-			checkTerminated();
+			checkNotTerminated();
 			return this.factFactory.create( kind(),
 					Fact.ID.create( factKind.isFromInitiator() ? initiatorRef()
 							: executorRef() ),
@@ -291,7 +291,7 @@ public interface Transaction<F extends Fact>
 		@Override
 		public F commit( final F fact, final boolean cleanUp )
 		{
-			checkTerminated();
+			checkNotTerminated();
 			// prevent re-committing
 			if( this.committedIds.contains( fact.id().unwrap() ) )
 				return Thrower.throwNew( IllegalStateException.class,
@@ -385,7 +385,7 @@ public interface Transaction<F extends Fact>
 		@Singleton
 		class LocalCaching implements Factory
 		{
-			private transient final Map<Class<?>, Transaction<?>> localCache = new ConcurrentHashMap<>();
+			private transient final Map<ID, Transaction<?>> localCache = new ConcurrentHashMap<>();
 
 			@Inject
 			private transient Scheduler scheduler;
@@ -395,8 +395,8 @@ public interface Transaction<F extends Fact>
 
 			@InjectConfig
 			private transient ReplicateConfig config;
-			private transient Unit<?> timeUnit;
-			private transient java.time.Instant offset;
+			private transient Unit<?> timeUnitCache;
+			private transient java.time.Instant offsetCache;
 
 			@SuppressWarnings( "unchecked" )
 			@Override
@@ -404,26 +404,34 @@ public interface Transaction<F extends Fact>
 				final Class<F> kind, final Actor.ID initiatorRef,
 				final Actor.ID executorRef )
 			{
-				return (Transaction<F>) this.localCache.computeIfAbsent( kind,
-						key -> Transaction.of( id, kind, initiatorRef,
-								executorRef, this.scheduler, this.factFactory,
-								timeUnit(), offset() ) );
+				return (Transaction<F>) this.localCache.computeIfAbsent( id,
+						key ->
+						{
+							final Transaction<?> tx = Transaction.of( id, kind,
+									initiatorRef, executorRef, this.scheduler,
+									this.factFactory, timeUnit(), offset() );
+							tx.committed().subscribe( f ->
+							{
+							}, e -> this.localCache.remove( id ),
+									() -> this.localCache.remove( id ) );
+							return tx;
+						} );
 			}
 
 			@Override
 			public java.time.Instant offset()
 			{
-				return this.offset != null ? this.offset
-						: (this.offset = ConfigUtil.cachedValue( this.config,
-								this.config::offset ));
+				return this.offsetCache != null ? this.offsetCache
+						: (this.offsetCache = ConfigUtil.cachedValue(
+								this.config, this.config::offset ));
 			}
 
 			@Override
 			public Unit<?> timeUnit()
 			{
-				return this.timeUnit != null ? this.timeUnit
-						: (this.timeUnit = ConfigUtil.cachedValue( this.config,
-								this.config::timeUnit ));
+				return this.timeUnitCache != null ? this.timeUnitCache
+						: (this.timeUnitCache = ConfigUtil.cachedValue(
+								this.config, this.config::timeUnit ));
 			}
 		}
 	}

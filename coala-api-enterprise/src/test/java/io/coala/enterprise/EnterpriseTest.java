@@ -135,11 +135,10 @@ public class EnterpriseTest
 									.respond( rq, FactKind.STATED )
 									.with( "stParam", "stValue"
 											+ counter.getAndIncrement() );
-							LOG.trace( "t={}, rqParam: {}, respond: {} <- {}",
-									t, rq.getRqParam(),
+							LOG.trace( "respond: {} <- {}",
 									st.causeRef().prettyHash(),
 									st.getStParam() );
-							st.commit( false );
+							st.commit( true );
 						} );
 					}, e -> LOG.error( "Problem", e ),
 							() -> LOG.trace( "sales/rq completed?" ) );
@@ -157,7 +156,7 @@ public class EnterpriseTest
 						final String fact = TestFact.fromJSON( json )
 								.toString();
 						LOG.trace( "initiate: {} => {}", json, fact );
-						rq.commit( false );
+						rq.commit();
 					} );
 			LOG.trace( "intialized TestFact initiation" );
 
