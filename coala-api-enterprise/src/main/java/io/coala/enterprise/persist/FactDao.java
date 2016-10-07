@@ -188,6 +188,7 @@ public class FactDao implements BindableDao<Fact, FactDao>
 				.persist( em );
 		dao.creatorRef = Objects.requireNonNull( fact.creatorRef() )
 				.persist( em );
+		dao.cause = causeRef == null ? null : find( em, causeRef );
 		dao.causeRef = causeRef == null ? null
 				: Objects.requireNonNull( causeRef.unwrap() );
 		dao.causeTranRef = causeRef == null ? null
@@ -263,13 +264,20 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	@Embedded
 	protected InstantDao expiration;
 
-	@Column( name = "CAUSE_ID", nullable = true, updatable = false, length = 16,
-		columnDefinition = "BINARY(16)" )
+	/** links to complete cause (only if persisted locally) */
+	@ManyToOne( optional = true, fetch = FetchType.LAZY, cascade = {} )
+	@JoinColumn( name = "CAUSE_ID", updatable = false )
+	protected FactDao cause;
+
+	/** to construct cause reference, e.g. if cause is persisted remotely */
+	@Column( name = "CAUSE_REF", nullable = true, updatable = false,
+		length = 16, columnDefinition = "BINARY(16)" )
 	@Convert( converter = UUIDToByteConverter.class )
 	protected UUID causeRef;
 
-	@Column( name = "CAUSE_TID", nullable = true, updatable = false, length = 16,
-		columnDefinition = "BINARY(16)" )
+	/** to construct cause reference, e.g. if cause is persisted remotely */
+	@Column( name = "CAUSE_TID", nullable = true, updatable = false,
+		length = 16, columnDefinition = "BINARY(16)" )
 	@Convert( converter = UUIDToByteConverter.class )
 	protected UUID causeTranRef;
 
