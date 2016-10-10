@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
 import io.coala.bind.persist.LocalIdDao;
+import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
@@ -91,7 +92,8 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	{
 		String[] pair = value.split( "@" );
 		if( pair.length != 2 || pair[1].isEmpty() )
-			throw new IllegalArgumentException( "Can't parse " + value );
+			Thrower.throwNew( IllegalArgumentException.class,
+					"Can't parse {} from: '{}'", LocalId.class, value );
 		LocalId parent = of( new UUID( pair[1] ) );
 		for( pair = pair[0].split( ID_SEP_REGEX,
 				2 ); pair.length == 2; pair = pair[1].split( ID_SEP_REGEX, 2 ) )
@@ -133,8 +135,8 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	public Stream<LocalId> find( final EntityManager em,
 		final LocalBinder binder, final String query )
 	{
-		return em.createQuery( query, LocalIdDao.class ).getResultList().stream()
-				.map( dao ->
+		return em.createQuery( query, LocalIdDao.class ).getResultList()
+				.stream().map( dao ->
 				{
 					return dao.restore( binder );
 				} );
@@ -154,7 +156,8 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	{
 		if( this.pk != null ) return em.find( LocalIdDao.class, this.pk ); // cached?
 		final LocalIdDao result = JPAUtil.<LocalIdDao> findOrCreate( em,
-				() -> LocalIdDao.find( em, this ), () -> LocalIdDao.create( em, this ) );
+				() -> LocalIdDao.find( em, this ),
+				() -> LocalIdDao.create( em, this ) );
 		this.pk = result.pk;
 		return result;
 	}

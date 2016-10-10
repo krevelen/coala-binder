@@ -67,10 +67,12 @@ public interface LocalBinder extends LocalContextual
 	 * @param args the parameter constants to use for each instantiation
 	 * @return this {@link LocalBinder} to allow chaining
 	 */
+	@SuppressWarnings( "unchecked" )
 	default <T> LocalBinder reset( final Class<T> type,
 		final Class<? extends T> impl, final Object... args )
 	{
-		return reset( type, LocalProvider.of( this,
+		return reset( type, (Provider<T>) // must cast to avoid deploy errors 
+		LocalProvider.of( this,
 				Instantiator.providerOf( impl.asSubclass( type ), args ),
 				false ) );
 	}
