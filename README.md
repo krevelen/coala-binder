@@ -158,7 +158,7 @@ world1:
       impl: io.coala.enterprise.Fact$Factory$SimpleProxies
     - bindings:
       - type: io.coala.enterprise.FactBank$Factory
-      impl: io.coala.enterprise.FactBank$Factory$LocalJPA
+      impl: io.coala.enterprise.FactBank$Factory$InMemory
 ```
  
 #### Configure programmatically  
