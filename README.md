@@ -5,89 +5,10 @@ Common Ontological Abstraction Layer for Agents --- a binder for reuse of agent 
 
 This extension of the *coala-api-time* API provides a kind of domain specific language (DSL) for modeling, simulating, exchanging and persisting organization interactions using the [Enterprise Ontology](http://www.springer.com/gp/book/9783540291695) by [Jan Dietz](https://www.wikiwand.com/en/Jan_Dietz), in particular the PSI or &psi;-theory of *Performance in Social Interaction*, which Johan den Haan explains briefly in [this blog entry](http://www.theenterprisearchitect.eu/blog/2009/10/10/modeling-an-organization-using-enterprise-ontology/).
 
-## Concepts
-
-Enterprise ontology revolves around a few central concepts, for which the `coala-api-enterprise` provides the following Java counterparts:
-
-Enterprise Ontology | Java Type | Database Entity
---- | --- | ---
-Organization, Composite Actor, Elementary Actor | `io.coala.enterprise.Actor` | *reference only*
-Transaction | `io.coala.enterprise.Transaction` | *reference only*
-Fact, Coordination Fact | `io.coala.enterprise.Fact` | `FACTS`
-FactBank | `io.coala.enterprise.FactBank` | -
-Time | based *coala-time* API | -
-Business Logic, Behavior | based on *rx-java* API | -
-
-## Usage Example
-
-Suppose we have a *World1* with two organizations trading as *Supplier1* and 
-*Consumer1* via their respective *Sales* and *Procurement* departments 
-in a monthly pattern. We could implement this as follows:
-
-```java
-@Singleton public static class World implements Proactive
-{
-
-	/** A type of {@link Fact} reflecting the {@link Sale} transaction kind */
-	public interface Sale extends Fact { }
-	
-	/** A specialist performer view for (executing) {@link Sale} transactions */
-	public interface Sales extends Actor<Sale> { }
-	
-	/** A specialist performer view for (initiating) {@link Sale} transactions */
-	public interface Buying extends Actor<Sale> { }
-
-	/** the {@link Scheduler} for generating proactive behavior */
-	private final Scheduler scheduler;
-	
-	/** the {@link Actor.Factory} for creating (cached) {@link Actor} objects */
-	private final Actor.Factory actors;
-	
-	/** the {@link World} constructor */
-	@Inject public World(Scheduler scheduler, Actor.Factory actors)
-	{
-		this.actors = actors;
-		this.scheduler = scheduler;
-		// initialize this World upon scheduler reset
-		scheduler.onReset( this::init );
-	}
-	
-	@Override public scheduler(){ return this.scheduler; }
-	
-	/** initialize the {@link World} */
-	public void init()
-	{
-		// 1. create the "Supplier1" organization and specialized Sales department
-		Actor<Fact> supplier1 = this.actors.create( "Supplier1" );
-		Sales supplier1Sales = supplier1.executor( Sale.class, Sales.class );
-		
-		// 2. add Sale execution behavior
-		supplier1Sales.commits( FactKind.REQUESTED ).subscribe( 
-			rq -> after( Duration.of( 1, Units.DAYS ) ).call( 
-				t -> supplier1Sales.respond( rq, FactKind.STATED ).commit() ) );
-				
-		// 3. create the "Consumer1" organization and specialized Buying department
-		Actor<Fact> consumer1 = this.actors.create( "Consumer1" );
-		Buying consumer1Buying = consumer1.initiator( Sale.class, Buying.class );
-		
-		// 4. add Sale acceptance behavior
-		consumer1Buying.commits( FactKind.STATED ).subscribe( 
-			st -> System.err.println( "Sale was executed: " + st ) );
-			
-		// 5. create recurrence rule for midnight of the 30th of each month
-		Timing timing = Timing.valueOf( "0 0 0 30 * ? *" );
-		
-		// 6. add Sale initiating behavior
-		atEach( timing.offset( this.actors.offset() ).iterate(), 
-			t -> consumer1Buying.initiate( Sale.class, supplier1.id() ).commit() )
-	}
-}
-```
-
 ## Getting started
 
 ### Step 1: Configure your project
-First, add the following to your Maven project object model's `<project>` tag:
+First, add the following to your Maven project's `<project>` tag:
 
 ```xml
 <properties>
@@ -130,38 +51,38 @@ First, add the following to your Maven project object model's `<project>` tag:
 ### Step 2: Configure the binders
 Second, configure the implementation bindings of virtual time scheduler(s), actors, transactions, facts, and fact banks factories, in this case using default implementations, and launch: 
 
-#### Confiure using a file
+#### A. Configure using a file
 Create the LocalBinder for the `world1` container from a YAML formatted file with the name `world1.yaml`:
 
 ```java
-LocalBinder binder = LocalConfig.openYAML( "world1.yaml", "world1" ).create();
+LocalBinder binder = LocalConfig.openYAML( "my-config.yaml", "my-world" ).create();
 ```
 
-   and provide a `world1.yaml` file located in the classpath or current `${user.dir}`:
+and provide your `my-config.yaml` file (located either in the class-path, relative to the current `${user.dir}` working directory, or at some absolute path or URL):
 
 ```yaml
-world1:
+my-world:
   binder:
     impl: io.coala.guice4.Guice4LocalBinder
     providers:
-    - bindings:
+    - impl: io.coala.dsol3.Dsol3Scheduler
+      bindings:
       - type: io.coala.time.Scheduler
-      impl: io.coala.dsol3.Dsol3Scheduler
-    - bindings:
+    - impl: io.coala.enterprise.Actor$Factory$LocalCaching
+      bindings:
       - type: io.coala.enterprise.Actor$Factory
-      impl: io.coala.enterprise.Actor$Factory$LocalCaching
-    - bindings:
+    - impl: io.coala.enterprise.Transaction$Factory$LocalCaching
+      bindings:
       - type: io.coala.enterprise.Transaction$Factory
-      impl: io.coala.enterprise.Transaction$Factory$LocalCaching
-    - bindings:
+    - impl: io.coala.enterprise.Fact$Factory$SimpleProxies
+      bindings:
       - type: io.coala.enterprise.Fact$Factory
-      impl: io.coala.enterprise.Fact$Factory$SimpleProxies
-    - bindings:
+    - impl: io.coala.enterprise.FactBank$Factory$InMemory
+      bindings:
       - type: io.coala.enterprise.FactBank$Factory
-      impl: io.coala.enterprise.FactBank$Factory$InMemory
 ```
  
-#### Configure programmatically  
+#### B. Configure programmatically (e.g. unit testing)
 Alternatively, create the LocalBinder for the `world1` container and launch programmatically in Java:
 
 ```java
@@ -187,3 +108,87 @@ world.scheduler().resume();
 latch.await();
 System.out.println( "End reached!" );
 ```
+
+## Example Usage: Supplier and Consumer Performing Sale Transactions
+
+Suppose we have a *World1* with two organizations trading as *Supplier1* and 
+*Consumer1* via their respective *Sales* and *Procurement* departments 
+in a monthly pattern. We could implement this as follows:
+
+```java
+@Singleton public static class World implements Proactive
+{
+	/** A type of {@link Fact} reflecting the {@link Sale} transaction kind */
+	public interface Sale extends Fact { }
+	
+	/** A specialist/performer view for (executing) {@link Sale} transactions */
+	public interface Sales extends Actor<Sale> { }
+	
+	/** A specialist/performer view for (initiating) {@link Sale} transactions */
+	public interface Buying extends Actor<Sale> { }
+
+	/** The local {@link Scheduler} for generating proactive behavior */
+	private final Scheduler scheduler;
+	
+	/** The local {@link Actor.Factory} for (cached) {@link Actor} objects */
+	private final Actor.Factory actors;
+	
+	/** DI {@link World} constructor */
+	@Inject public World( Scheduler scheduler, Actor.Factory actors )
+	{
+		this.actors = actors;
+		this.scheduler = scheduler;
+		// initialize this World upon scheduler reset
+		scheduler.onReset( this::init );
+	}
+	
+	@Override public scheduler(){ return this.scheduler; }
+	
+	/** initialize the {@link World} */
+	public void init()
+	{
+		// 1. create the "Supplier1" organization and specialized Sales department
+		Actor<Fact> supplier1 = this.actors.create( "Supplier1" );
+		Sales supplier1Sales = supplier1.executor( Sale.class, Sales.class );
+		
+		// 2. add Sale execution behavior
+		supplier1Sales.commits( FactKind.REQUESTED ).subscribe( 
+			rq -> after( Duration.of( 1, Units.DAYS ) ).call( 
+				t -> supplier1Sales.respond( rq, FactKind.STATED ).commit() ) );
+				
+		// 3. create the "Consumer1" organization and specialized Buying department
+		Actor<Fact> consumer1 = this.actors.create( "Consumer1" );
+		Buying consumer1Buying = consumer1.initiator( Sale.class, Buying.class );
+		
+		// 4. add Sale acceptance behavior
+		consumer1Buying.commits( FactKind.STATED ).subscribe( 
+			st -> System.err.println( "Sale was executed: " + st ) );
+			
+		// 5. create recurrence rule for midnight of the 30th of each month
+		Timing timing = Timing.valueOf( "0 0 0 30 * ? *" );
+		
+		// 6. add Sale initiating behavior
+		atEach( timing.offset( this.actors.offset() ).iterate(), 
+			t -> consumer1Buying.initiate( Sale.class, supplier1.id() ).commit() )
+	}
+}
+```
+
+## Features
+
+### JPA Support
+
+Persist your facts using the Java Persistence API v2.1, by binding the `FactBank.Factory.SimpleJPA`, a simple `FactBank` instance provider that relies on two entity tables:
+
+- `LOCAL_IDS` mapped by `io.coala.bind.persist.LocalIdDao`, and
+- `FACTS`, mapped by `io.coala.enterprise.persist.FactDao`.
+
+The following measures were taken in order to reduce the amount of querying required by the JPA provider:
+
+- the `@Entit` `LocalIdDao`, used to identify Actors, is annotated as `@Cacheable` for the L2 cache of the `EntityManagerFactory`, which in turn is used by all its `EntityManager`s
+- all `Transaction` data is embedded within each `FactDao` entry, thus removing the need to check and maintain unique-constraints on `@ManyToOne` join relations 
+- `UUID` identifier values (used to reference `Fact` and `Transaction` entries) are stored as bytes for high speed lookup and low memory footprint
+- virtual time, is persisted in three variants of the `@Embeddable` `InstantDao` (see e.g. `FactDao.occur` and `FactDao.expire`): 
+  - (redundant) `@Temporal` posix-time, converted using the replication offset `java.time.Instant`
+  - (redundant) `NUMERIC` virtual time, converted to the replication base time unit
+  - `TEXT` exact time, with scientific scale, precision, and time unit
