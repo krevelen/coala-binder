@@ -199,7 +199,7 @@ public class EnterpriseTest
 		LOG.trace( "Deser: ", Fact.fromJSON(
 				"{" + "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"occurrence\":{},\"transaction\":{"
-						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$EnterpriseModel$Sale\""
+						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$World$Sale\""
 						+ ",\"id\":\"1a990580-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"initiatorRef\":\"eoSim-org1-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""

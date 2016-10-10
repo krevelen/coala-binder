@@ -21,6 +21,7 @@ package io.coala.enterprise;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -34,6 +35,7 @@ import javax.persistence.criteria.Root;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.LocalBinder;
+import io.coala.enterprise.Fact.ID;
 import io.coala.enterprise.persist.FactDao;
 import io.coala.log.LogUtil;
 import io.coala.math.Range;
@@ -282,6 +284,45 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	}
 
 	/**
+	 * {@link SimpleMemory}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@Singleton
+	public class SimpleMemory implements FactBank<Fact>
+	{
+		private final Map<ID,Fact> memory = new TreeMap<>();
+		
+		@Override
+		public Observable<FactDao> saveAsync( final Observable<Fact> facts )
+		{
+			return facts.map( fact->{
+				this.memory.put( fact.id(), fact );
+				return null;
+			} );
+		}
+
+		@Override
+		public Fact find( final ID id )
+		{
+			return this.memory.get( id );
+		}
+
+		@Override
+		public Observable<Fact> find()
+		{
+			return Observable.from( this.memory.values() );
+		}
+		
+		@Override
+		public void close() throws Exception
+		{
+			this.memory.clear();
+		}
+	}
+
+	/**
 	 * {@link SimpleJPA}
 	 * 
 	 * @version $Id$
@@ -409,6 +450,20 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 			public FactBank<?> create()
 			{
 				return this.binder.inject( SimpleJPA.class );
+			}
+		}
+
+		@Singleton
+		class InMemory implements Factory
+		{
+
+			@Inject
+			private LocalBinder binder;
+
+			@Override
+			public FactBank<?> create()
+			{
+				return this.binder.inject( SimpleMemory.class );
 			}
 		}
 	}

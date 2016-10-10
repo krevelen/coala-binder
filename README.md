@@ -63,8 +63,8 @@ in a monthly pattern. We could implement this as follows:
 		
 		// 2. add Sale execution behavior
 		supplier1Sales.commits( FactKind.REQUESTED ).subscribe( 
-			rq -> after( Duration.of( 1, Units.DAYS ) ).call( t -> 
-				supplier1Sales.respond( rq, FactKind.STATED ).commit() ) );
+			rq -> after( Duration.of( 1, Units.DAYS ) ).call( 
+				t -> supplier1Sales.respond( rq, FactKind.STATED ).commit() ) );
 				
 		// 3. create the "Consumer1" organization and specialized Buying department
 		Actor<Fact> consumer1 = this.actors.create( "Consumer1" );
@@ -86,7 +86,7 @@ in a monthly pattern. We could implement this as follows:
 
 ## Getting started
 
-### Step 1
+### Step 1: Configure your project
 First, add the following to your Maven project object model's `<project>` tag:
 
 ```xml
@@ -101,27 +101,25 @@ First, add the following to your Maven project object model's `<project>` tag:
 		<id>coala-public</id>
 		<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
 	</repository>
-	<!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
-	<repository>
+	<repository> <!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
 		<id>dsol</id>
 		<url>http://simulation.tudelft.nl/maven</url>
 	</repository>
 </repositories>
 
 <dependencies>
+	:
 	<dependency>
 		<groupId>io.coala</groupId>
 		<artifactId>coala-api-enterprise</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
-	<!-- for the Guice4 adapter of io.coala.bind.LocalBinder -->
-	<dependency>
+	<dependency> <!-- for the Guice4 adapter of io.coala.bind.LocalBinder -->
 		<groupId>io.coala</groupId>
 		<artifactId>guice4-coala-adapter</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
-	<!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
-	<dependency>
+	<dependency> <!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
 		<groupId>io.coala</groupId>
 		<artifactId>dsol3-coala-adapter</artifactId>
 		<version>${coala.version}</version>
@@ -129,18 +127,17 @@ First, add the following to your Maven project object model's `<project>` tag:
 </dependencies>
 ```
 
-### Step 2
-Second, configure the implementation bindings of virtual time scheduler(s), 
-actors, transactions, facts, and fact banks factories, 
-in this case using default implementations, and launch e.g. 
+### Step 2: Configure the binders
+Second, configure the implementation bindings of virtual time scheduler(s), actors, transactions, facts, and fact banks factories, in this case using default implementations, and launch: 
 
-a. using the following command to configure the binder `world1` using a YAML formatted file with the name `world1.yaml`:
+#### Confiure using a file
+Create the LocalBinder for the `world1` container from a YAML formatted file with the name `world1.yaml`:
 
 ```java
 LocalBinder binder = LocalConfig.openYAML( "world1.yaml", "world1" ).create();
 ```
 
-   `world1.yaml` (located in the classpath or current `${user.dir}`):
+   and provide a `world1.yaml` file located in the classpath or current `${user.dir}`:
 
 ```yaml
 world1:
@@ -163,8 +160,9 @@ world1:
       - type: io.coala.enterprise.FactBank$Factory
       impl: io.coala.enterprise.FactBank$Factory$LocalJPA
 ```
-   
-b. configure and launch programmatically in Java:
+ 
+#### Configure programmatically  
+Alternatively, create the LocalBinder for the `world1` container and launch programmatically in Java:
 
 ```java
 LocalBinder binder = LocalConfig.builder().withId( "world1" )
@@ -172,11 +170,11 @@ LocalBinder binder = LocalConfig.builder().withId( "world1" )
 	.withProvider( Actor.Factory.class, Actor.Factory.LocalCaching.class )
 	.withProvider( Transaction.Factory.class, Transaction.Factory.LocalCaching.class )
 	.withProvider( Fact.Factory.class, Fact.Factory.SimpleProxies.class )
-	.withProvider( FactBank.Factory.class, FactBank.Factory.LocalJPA.class )
+	.withProvider( FactBank.Factory.class, FactBank.Factory.InMemory.class )
 	.build().create();
 ```
 
-### Step 3
+### Step 3: Run your scenario
 Finally, start the scheduler and await completion:
 
 ```java
