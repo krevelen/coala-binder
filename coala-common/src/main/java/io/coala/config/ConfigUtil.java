@@ -72,6 +72,8 @@ public class ConfigUtil implements Util
 	/** Default (relative path) value for the configuration file name */
 	public static final String CONFIG_FILE_DEFAULT = "coala.properties";
 
+	public static final String CONFIG_FILE_YAML_DEFAULT = "coala.yaml";
+
 	public static final String CONFIG_FILE_BOOTTIME = System
 			.getProperty( CONFIG_FILE_PROPERTY, CONFIG_FILE_DEFAULT );
 
@@ -79,6 +81,8 @@ public class ConfigUtil implements Util
 	{
 		ConfigFactory.setProperty( CONFIG_FILE_PROPERTY, CONFIG_FILE_BOOTTIME );
 	}
+
+	private static final Map<Config, Map<Supplier<?>, Object>> CONFIG_VALUE_CACHE = new ConcurrentHashMap<>();
 
 	/** {@link ConfigUtil} singleton constructor */
 	private ConfigUtil()
@@ -529,8 +533,6 @@ public class ConfigUtil implements Util
 			Thrower.rethrowUnchecked( e );
 		}
 	}
-
-	private static final Map<Config, Map<Supplier<?>, Object>> CONFIG_VALUE_CACHE = new ConcurrentHashMap<>();
 
 	/**
 	 * @param config the (cached) {@link Config} instance

@@ -1,11 +1,11 @@
-# coala-binder
-Common Ontological Abstraction Layer for Agents --- binder for reuse of agent code across AOSE/MASs and M&amp;S/ABMs
+# COALA
+Common Ontological Abstraction Layer for Agents --- a binder for reuse of agent code across AOSE/MASs and M&amp;S/ABMs
 
-## coala-api-enterprise
+# COALA Enterprise API
 
 This extension of the *coala-api-time* API provides a kind of domain specific language (DSL) for modeling, simulating, exchanging and persisting organization interactions using the [Enterprise Ontology](http://www.springer.com/gp/book/9783540291695) by [Jan Dietz](https://www.wikiwand.com/en/Jan_Dietz), in particular the PSI or &psi;-theory of *Performance in Social Interaction*, which Johan den Haan explains briefly in [this blog entry](http://www.theenterprisearchitect.eu/blog/2009/10/10/modeling-an-organization-using-enterprise-ontology/).
 
-### Concepts
+## Concepts
 
 Enterprise ontology revolves around a few central concepts, for which the `coala-api-enterprise` provides the following Java counterparts:
 
@@ -18,7 +18,7 @@ FactBank | `io.coala.enterprise.FactBank` | -
 Time | based *coala-time* API | -
 Business Logic, Behavior | based on *rx-java* API | -
 
-### COALA Enterprise API example
+## Usage Example
 
 Suppose we have a *World1* with two organizations trading as *Supplier1* and 
 *Consumer1* via their respective *Sales* and *Procurement* departments 
@@ -84,8 +84,9 @@ in a monthly pattern. We could implement this as follows:
 }
 ```
 
-### Getting started
+## Getting started
 
+### Step 1
 First, add the following to your Maven project object model's `<project>` tag:
 
 ```xml
@@ -100,12 +101,12 @@ First, add the following to your Maven project object model's `<project>` tag:
 		<id>coala-public</id>
 		<url>https://github.com/krevelen/coala-binder/raw/mvn-repo/</url>
 	</repository>
-	<!-- for the DSOL3 adapter of io.coala.time.Scheduler-->
+	<!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
 	<repository>
 		<id>dsol</id>
 		<url>http://simulation.tudelft.nl/maven</url>
 	</repository>
-</repositories
+</repositories>
 
 <dependencies>
 	<dependency>
@@ -113,13 +114,13 @@ First, add the following to your Maven project object model's `<project>` tag:
 		<artifactId>coala-api-enterprise</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
-	<!-- for the Guice4 adapter of io.coala.bind.LocalBinder-->
+	<!-- for the Guice4 adapter of io.coala.bind.LocalBinder -->
 	<dependency>
 		<groupId>io.coala</groupId>
 		<artifactId>guice4-coala-adapter</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
-	<!-- for the DSOL3 adapter of io.coala.time.Scheduler-->
+	<!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
 	<dependency>
 		<groupId>io.coala</groupId>
 		<artifactId>dsol3-coala-adapter</artifactId>
@@ -128,16 +129,63 @@ First, add the following to your Maven project object model's `<project>` tag:
 </dependencies>
 ```
 
+### Step 2
 Second, configure the implementation bindings of virtual time scheduler(s), 
 actors, transactions, facts, and fact banks factories, 
-in this case using default implementations:
+in this case using default implementations, and launch e.g. 
+
+a. using the following command to configure the binder `world1` using a YAML formatted file with the name `world1.yaml`:
 
 ```java
-LocalConfig config = LocalConfig.builder().withId( "world1" )
+LocalBinder binder = LocalConfig.openYAML( "world1.yaml", "world1" ).create();
+```
+
+   `world1.yaml` (located in the classpath or current `${user.dir}`):
+
+```yaml
+world1:
+  binder:
+    impl: io.coala.guice4.Guice4LocalBinder
+    providers:
+    - bindings:
+      - type: io.coala.time.Scheduler
+      impl: io.coala.dsol3.Dsol3Scheduler
+    - bindings:
+      - type: io.coala.enterprise.Actor$Factory
+      impl: io.coala.enterprise.Actor$Factory$LocalCaching
+    - bindings:
+      - type: io.coala.enterprise.Transaction$Factory
+      impl: io.coala.enterprise.Transaction$Factory$LocalCaching
+    - bindings:
+      - type: io.coala.enterprise.Fact$Factory
+      impl: io.coala.enterprise.Fact$Factory$SimpleProxies
+    - bindings:
+      - type: io.coala.enterprise.FactBank$Factory
+      impl: io.coala.enterprise.FactBank$Factory$LocalJPA
+```
+   
+b. configure and launch programmatically in Java:
+
+```java
+LocalBinder binder = LocalConfig.builder().withId( "world1" )
 	.withProvider( Scheduler.class, Dsol3Scheduler.class )
 	.withProvider( Actor.Factory.class, Actor.Factory.LocalCaching.class )
 	.withProvider( Transaction.Factory.class, Transaction.Factory.LocalCaching.class )
 	.withProvider( Fact.Factory.class, Fact.Factory.SimpleProxies.class )
 	.withProvider( FactBank.Factory.class, FactBank.Factory.LocalJPA.class )
-	.build();
+	.build().create();
+```
+
+### Step 3
+Finally, start the scheduler and await completion:
+
+```java
+CountDownLatch latch = new CountDownLatch(1);
+World world = binder.inject( World.class );
+world.scheduler().time().subscribe(
+	t -> System.out.println( "t=" + t.prettify( world.actors.offset() ) ),
+	Thrower::rethrowUnchecked, latch::countDown );
+world.scheduler().resume();
+latch.await();
+System.out.println( "End reached!" );
 ```

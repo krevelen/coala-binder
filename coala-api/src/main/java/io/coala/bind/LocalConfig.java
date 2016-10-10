@@ -19,6 +19,7 @@
  */
 package io.coala.bind;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +40,7 @@ import io.coala.config.GlobalConfig;
 import io.coala.json.Contextual.Context;
 import io.coala.json.JsonUtil;
 import io.coala.name.Id;
+import io.coala.util.Instantiator;
 
 /**
  * {@link LocalConfig}
@@ -70,6 +72,19 @@ public interface LocalConfig extends GlobalConfig
 	static LocalConfig create( final Map<?, ?>... imports )
 	{
 		return ConfigFactory.create( LocalConfig.class, imports );
+	}
+
+	static LocalConfig openYAML( final String yamlPath, final String id,
+		final Map<?, ?>... imports ) throws IOException
+	{
+		return GlobalConfig.openYAML( yamlPath ).subConfig( id,
+				LocalConfig.class, Collections.singletonMap( ID_KEY, id ) );
+	}
+
+	static LocalConfig openYAML( final String id, final Map<?, ?>... imports )
+		throws IOException
+	{
+		return openYAML( ConfigUtil.CONFIG_FILE_YAML_DEFAULT, id, imports );
 	}
 
 	static LocalConfig of( final String id, final Map<?, ?>... imports )
@@ -104,6 +119,22 @@ public interface LocalConfig extends GlobalConfig
 	@ConverterClass( Context.ConfigConverter.class )
 	Context context();
 
+	/**
+	 * @param imports
+	 * @return the (cached) {@link BinderConfig} instance
+	 * @see ConfigCache#getOrCreate(Class, Map[])
+	 */
+	default BinderConfig binderConfig( final Map<?, ?>... imports )
+	{
+		return subConfig( BINDER_KEY, BinderConfig.class, imports );
+	}
+
+	default LocalBinder create( final Map<Class<?>, ?> bindImports )
+	{
+		return Instantiator.instantiate( binderConfig().binderType(), this,
+				bindImports );
+	}
+
 	class AnonymousConverter implements Converter<String>
 	{
 		@Override
@@ -131,16 +162,6 @@ public interface LocalConfig extends GlobalConfig
 											? CONTEXT_DEFAULT
 											: new UUID( split[0] ) ) );
 		}
-	}
-
-	/**
-	 * @param imports
-	 * @return the (cached) {@link BinderConfig} instance
-	 * @see ConfigCache#getOrCreate(Class, Map[])
-	 */
-	default BinderConfig binderConfig( final Map<?, ?>... imports )
-	{
-		return subConfig( BINDER_KEY, BinderConfig.class, imports );
 	}
 
 	class JsonBuilder

@@ -366,14 +366,24 @@ public class Guice4LocalBinder implements LocalBinder
 	public static Guice4LocalBinder of( final LocalConfig config,
 		final Map<Class<?>, ?> bindImports )
 	{
-		final Guice4LocalBinder result = new Guice4LocalBinder();
-		result.config = config.binderConfig();
-		result.id = config.localId();
-		result.context = config.context();
-		if( result.context == null ) result.context = new Context();
-		result.injector = cachedInjectorFor( result, bindImports );
-		initTypesFor( result );
-		return result;
+		return new Guice4LocalBinder( config, bindImports );
+	}
+
+	public Guice4LocalBinder()
+	{
+		// zero-arg bean constructor
+	}
+
+	/** for instantiation by {@link LocalConfig#create(Map)} */
+	public Guice4LocalBinder( final LocalConfig config,
+		final Map<Class<?>, ?> bindImports )
+	{
+		this.config = config.binderConfig();
+		this.id = config.localId();
+		this.context = config.context();
+		if( this.context == null ) this.context = new Context();
+		this.injector = cachedInjectorFor( this, bindImports );
+		initTypesFor( this );
 	}
 
 	private final transient Subject<Class<?>, Class<?>> bindings = PublishSubject

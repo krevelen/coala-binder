@@ -1,5 +1,7 @@
 package io.coala.config;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
@@ -77,5 +79,23 @@ public interface GlobalConfig extends YamlConfig
 //		LogUtil.getLogger( GlobalConfig.class )
 //				.trace( "Got subConfigs for {}: {}", subKey, result );
 		return result;
+	}
+
+	static GlobalConfig create( final Map<?, ?>... imports )
+	{
+		return ConfigCache.getOrCreate( GlobalConfig.class, imports );
+	}
+
+	static GlobalConfig openYAML( final String yamlPath,
+		final Map<?, ?>... imports ) throws IOException
+	{
+		return ConfigFactory.create( GlobalConfig.class,
+				ConfigUtil.join( YamlUtil.flattenYaml( new File(yamlPath) ), imports ) );
+	}
+
+	static GlobalConfig openYAML( final Map<?, ?>... imports )
+		throws IOException
+	{
+		return openYAML( ConfigUtil.CONFIG_FILE_YAML_DEFAULT, imports );
 	}
 }

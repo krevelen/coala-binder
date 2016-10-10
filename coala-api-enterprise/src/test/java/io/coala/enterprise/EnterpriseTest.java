@@ -1,5 +1,6 @@
 package io.coala.enterprise;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -17,9 +18,7 @@ import org.junit.Test;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
-import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.exception.ExceptionStream;
-import io.coala.guice4.Guice4LocalBinder;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
@@ -44,7 +43,7 @@ public class EnterpriseTest
 
 	@SuppressWarnings( "serial" )
 	@Singleton
-	public static class EnterpriseModel implements Proactive
+	public static class World implements Proactive
 	{
 		public interface Sales extends Actor<Sale>
 		{
@@ -96,10 +95,10 @@ public class EnterpriseTest
 		private final Scheduler scheduler;
 
 		@Inject
-		private Actor.Factory actorFactory;
+		private Actor.Factory actors;
 
 		@Inject
-		public EnterpriseModel( final Scheduler scheduler )
+		public World( final Scheduler scheduler )
 		{
 			this.scheduler = scheduler;
 			scheduler.onReset( this::initScenario );
@@ -119,11 +118,11 @@ public class EnterpriseTest
 		{
 			LOG.trace( "initializing..." );
 
-			final Actor<Fact> org1 = this.actorFactory.create( "org1" );
+			final Actor<Fact> org1 = this.actors.create( "org1" );
 			LOG.trace( "initialized organization" );
 
 			final DateTime offset = new DateTime(
-					this.actorFactory.offset().toEpochMilli() );
+					this.actors.offset().toEpochMilli() );
 			LOG.trace( "initialized occurred and expired fact sniffing" );
 
 			org1.commits().subscribe( fact ->
@@ -195,7 +194,7 @@ public class EnterpriseTest
 	}
 
 	@Test
-	public void testEnterpriseOntology() throws TimeoutException
+	public void testEnterpriseOntology() throws TimeoutException, IOException, InterruptedException
 	{
 		LOG.trace( "Deser: ", Fact.fromJSON(
 				"{" + "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
@@ -206,30 +205,31 @@ public class EnterpriseTest
 						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ "}" + ",\"kind\":\"REQUESTED\",\"expiration\":{}"
 						+ ",\"rqParam\":\"123 ms\"" + "}",
-				EnterpriseModel.Sale.class ) );
+				World.Sale.class ) );
 
 		// configure replication FIXME via LocalConfig?
 		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
 				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );
 
 		// configure tooling
-		final LocalConfig config = LocalConfig.builder().withId( "world1" )
-				.withProvider( Scheduler.class, Dsol3Scheduler.class )
-				.withProvider( Actor.Factory.class,
-						Actor.Factory.LocalCaching.class )
-				.withProvider( Transaction.Factory.class,
-						Transaction.Factory.LocalCaching.class )
-				.withProvider( Fact.Factory.class,
-						Fact.Factory.SimpleProxies.class )
-				.withProvider( FactBank.Factory.class,
-						FactBank.Factory.LocalJPA.class )
-				.build();
-
-		LOG.info( "Starting EO test, config: {}", config.toYAML() );
-		final LocalBinder binder = Guice4LocalBinder.of( config,
-				Collections.singletonMap( EntityManagerFactory.class,
+//		final LocalConfig config = LocalConfig.builder().withId( "world1" )
+//				.withProvider( Scheduler.class, Dsol3Scheduler.class )
+//				.withProvider( Actor.Factory.class,
+//						Actor.Factory.LocalCaching.class )
+//				.withProvider( Transaction.Factory.class,
+//						Transaction.Factory.LocalCaching.class )
+//				.withProvider( Fact.Factory.class,
+//						Fact.Factory.SimpleProxies.class )
+//				.withProvider( FactBank.Factory.class,
+//						FactBank.Factory.LocalJPA.class )
+//				.build();
+		final LocalBinder binder = LocalConfig
+				.openYAML( "world1.yaml", "world1" )
+				.create( Collections.singletonMap( EntityManagerFactory.class,
 						HibHikHypConfig.createEMF() ) );
-		final Scheduler scheduler = binder.inject( EnterpriseModel.class )
+
+		LOG.info( "Starting EO test, config: {}", binder );
+		final Scheduler scheduler = binder.inject( World.class )
 				.scheduler();
 
 		final Waiter waiter = new Waiter();
@@ -246,10 +246,20 @@ public class EnterpriseTest
 		scheduler.resume();
 		waiter.await( 15, TimeUnit.SECONDS );
 
+//		CountDownLatch latch = new CountDownLatch( 1 );
+//		World world = binder.inject( World.class );
+//		world.scheduler().time().subscribe(
+//				t -> System.out
+//						.println( "t=" + t.prettify( world.actors.offset() ) ),
+//				Thrower::rethrowUnchecked, latch::countDown );
+//		world.scheduler().resume();
+//		latch.await();
+//		System.out.println( "End reached!" );
+
 		for( Object f : binder.inject( FactBank.Factory.class ).create().find()
 				.toBlocking().toIterable() )
 			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
-					((EnterpriseModel.Sale) f).getRqParam() );
+					((World.Sale) f).getRqParam() );
 
 		LOG.info( "completed, t={}", scheduler.now() );
 	}
