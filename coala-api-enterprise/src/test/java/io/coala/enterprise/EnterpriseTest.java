@@ -137,22 +137,19 @@ public class EnterpriseTest
 					Procurement.class );
 			final Sales sales = org1.executor( Sale.class, Sales.class );
 			sales.setTotalValue( 0 );
-			org1.commits( Sale.class, FactKind.REQUESTED, sales.id() )
-					.subscribe( rq -> after( Duration.of( 1, Units.DAYS ) )
-							.call( t ->
-							{
-								final Sale st = sales
-										.respond( rq, FactKind.STATED )
-										.with( "stParam", "stValue"
-												+ counter.getAndIncrement() );
-								sales.addToTotal( 1 );
-								LOG.trace( "respond: {} <- {}, total now: {}",
-										st.causeRef().prettyHash(),
-										st.getStParam(),
-										sales.getTotalValue() );
-								st.commit( true );
-							} ), e -> LOG.error( "Problem", e ),
-							() -> LOG.trace( "sales/rq completed?" ) );
+			sales.commits( FactKind.REQUESTED ).subscribe(
+					rq -> after( Duration.of( 1, Units.DAYS ) ).call( t ->
+					{
+						final Sale st = sales.respond( rq, FactKind.STATED )
+								.with( "stParam",
+										"stValue" + counter.getAndIncrement() );
+						sales.addToTotal( 1 );
+						LOG.trace( "{} responds: {} <- {}, total now: {}",
+								sales.id(), st.causeRef().prettyHash(),
+								st.getStParam(), sales.getTotalValue() );
+						st.commit( true );
+					} ), e -> LOG.error( "Problem", e ),
+					() -> LOG.trace( "sales/rq completed?" ) );
 			LOG.trace( "initialized business rule(s)" );
 
 			atEach( Timing.valueOf( "0 0 0 30 * ? *" ).offset( offset )
@@ -166,7 +163,8 @@ public class EnterpriseTest
 						// de/serialization test
 						final String json = rq.toJSON();
 						final String fact = Sale.fromJSON( json ).toString();
-						LOG.trace( "initiate: {} => {}", json, fact );
+						LOG.trace( "{} initiates: {} => {}", proc.id(), json,
+								fact );
 						rq.commit();
 					} );
 			LOG.trace( "intialized TestFact initiation" );
