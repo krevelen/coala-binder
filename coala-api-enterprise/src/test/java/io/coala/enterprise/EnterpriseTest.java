@@ -73,7 +73,6 @@ public class EnterpriseTest
 		/**
 		 * {@link Sale} custom fact kind
 		 */
-		@TransactionKind( )
 		public interface Sale extends Fact
 		{
 			Instant getRqParam(); // get "rqParam" bean property
@@ -139,21 +138,20 @@ public class EnterpriseTest
 			final Sales sales = org1.executor( Sale.class, Sales.class );
 			sales.setTotalValue( 0 );
 			org1.commits( Sale.class, FactKind.REQUESTED, sales.id() )
-					.subscribe( rq ->
-					{
-						after( Duration.of( 1, Units.DAYS ) ).call( t ->
-						{
-							final Sale st = sales.respond( rq, FactKind.STATED )
-									.with( "stParam", "stValue"
-											+ counter.getAndIncrement() );
-							sales.addToTotal( 1 );
-							LOG.trace( "respond: {} <- {}, total now: {}",
-									st.causeRef().prettyHash(), st.getStParam(),
-									sales.getTotalValue() );
-							st.commit( true );
-
-						} );
-					}, e -> LOG.error( "Problem", e ),
+					.subscribe( rq -> after( Duration.of( 1, Units.DAYS ) )
+							.call( t ->
+							{
+								final Sale st = sales
+										.respond( rq, FactKind.STATED )
+										.with( "stParam", "stValue"
+												+ counter.getAndIncrement() );
+								sales.addToTotal( 1 );
+								LOG.trace( "respond: {} <- {}, total now: {}",
+										st.causeRef().prettyHash(),
+										st.getStParam(),
+										sales.getTotalValue() );
+								st.commit( true );
+							} ), e -> LOG.error( "Problem", e ),
 							() -> LOG.trace( "sales/rq completed?" ) );
 			LOG.trace( "initialized business rule(s)" );
 

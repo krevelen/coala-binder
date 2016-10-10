@@ -87,9 +87,17 @@ public interface Actor<F extends Fact>
 	}
 
 	/**
+	 * @param factKind the {@link FactKind} to filter for
+	 * @return an {@link Observable} of incoming {@link Fact}s
+	 */
+	default Observable<F> commits( final FactKind factKind )
+	{
+		return commits().filter( f -> f.kind().equals( factKind ) );
+	}
+
+	/**
 	 * @param tranKind the type of {@link Fact} to filter for
 	 * @param factKind the {@link FactKind} to filter for
-	 * @param creatorID the origin {@link Actor.ID} to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
 	 */
 	default <T extends F> Observable<T> commits( final Class<T> tranKind,
