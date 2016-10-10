@@ -42,6 +42,8 @@ import io.coala.bind.LocalId;
 import io.coala.config.ConfigUtil;
 import io.coala.config.InjectConfig;
 import io.coala.exception.Thrower;
+import io.coala.function.ThrowingConsumer;
+import io.coala.function.ThrowingRunnable;
 import io.coala.name.Identified;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
@@ -53,9 +55,15 @@ import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
 /**
- * {@link Transaction}
+ * {@link Transaction} is an instance of some {@link F transaction kind}
+ * occurring between some {@link #initiatorRef()} and {@link #executorRef()},
+ * each {@link Identified} by a unique {@link Transaction.ID id}, with utility
+ * methods to {@link #generate(FactKind, Fact.ID, Instant, Map...) generate} and
+ * {@link #commit(Fact, boolean) commit} new {@link F facts}, published via an
+ * {@link Observable} stream of {@link #commits()}, and {@link Proactive timing}
+ * their expiration handling
  * 
- * @param <F>
+ * @param <F> the type of {@link Fact} representing the transaction kind
  * @version $Id$
  * @author Rick van Krevelen
  */
@@ -103,11 +111,25 @@ public interface Transaction<F extends Fact>
 	 */
 	F commit( F fact, boolean cleanUp );
 
-	/** @return */
-	Observable<F> committed();
+	/**
+	 * @param fact the {@link Fact} to commit, i.e. save &amp; send
+	 * @param onExpiration the {@link ThrowingConsumer} to call upon expiration
+	 * @return the {@link Fact} again to allow chaining
+	 */
+	default F commit( final F fact, final ThrowingConsumer<F, ?> onExpiration )
+	{
+		return commit( fact, () -> onExpiration.accept( fact ) );
+	}
+
+	/**
+	 * @param fact the {@link Fact} to commit, i.e. save &amp; send
+	 * @param onExpiration the {@link ThrowingRunnable} to call upon expiration
+	 * @return the {@link Fact} again to allow chaining
+	 */
+	F commit( F fact, ThrowingRunnable<?> onExpiration );
 
 	/** @return */
-	Observable<F> expired();
+	Observable<F> commits();
 
 	FactBank<F> factBank();
 
@@ -201,7 +223,6 @@ public interface Transaction<F extends Fact>
 	class Simple<F extends Fact> implements Transaction<F>
 	{
 		private transient final Subject<F, F> commits = PublishSubject.create();
-		private transient final Subject<F, F> expired = PublishSubject.create();
 		private transient final Map<Fact.ID, Expectation> pending = new ConcurrentHashMap<>();
 		private transient final Set<UUID> committedIds = Collections
 				.synchronizedSet( new HashSet<>() );
@@ -296,7 +317,19 @@ public interface Transaction<F extends Fact>
 		}
 
 		@Override
+		public F commit( final F fact, final ThrowingRunnable<?> onExpiration )
+		{
+			return commit( fact, false, onExpiration );
+		}
+
+		@Override
 		public F commit( final F fact, final boolean cleanUp )
+		{
+			return commit( fact, cleanUp, null );
+		}
+
+		public F commit( final F fact, final boolean cleanUp,
+			final ThrowingRunnable<?> onExpiration )
 		{
 			checkNotTerminated();
 			// prevent re-committing
@@ -313,10 +346,13 @@ public interface Transaction<F extends Fact>
 				if( fact.expire() != null )
 					this.pending.put( fact.id(), at( fact.expire() ).call( () ->
 					{
-						Objects.requireNonNull( fact.id() );
-						this.pending.remove( fact.id() );
-						this.expired.onNext( fact );
+						if( onExpiration != null ) onExpiration.run();
+						this.pending
+								.remove( Objects.requireNonNull( fact.id() ) );
 					} ) );
+				else if( onExpiration != null )
+					return Thrower.throwNew( IllegalStateException.class,
+							"Expiration function never gets called: {}", fact );
 
 				// publish / fire / send
 				this.commits.onNext( fact );
@@ -329,7 +365,6 @@ public interface Transaction<F extends Fact>
 				{
 					this.terminated = true;
 					this.commits.onCompleted();
-					this.expired.onCompleted();
 					this.pending.values().forEach( Expectation::remove );
 					this.pending.clear();
 					this.committedIds.clear();
@@ -340,21 +375,14 @@ public interface Transaction<F extends Fact>
 			} catch( final Throwable e )
 			{
 				this.commits.onError( e );
-				this.expired.onError( e );
 				throw e;
 			}
 		}
 
 		@Override
-		public Observable<F> committed()
+		public Observable<F> commits()
 		{
 			return this.commits.asObservable();
-		}
-
-		@Override
-		public Observable<F> expired()
-		{
-			return this.expired.asObservable();
 		}
 
 		@Override
@@ -415,7 +443,7 @@ public interface Transaction<F extends Fact>
 							final Transaction<?> tx = Transaction.of( id, kind,
 									initiatorRef, executorRef, this.scheduler,
 									this.factFactory, timeUnit(), offset() );
-							tx.committed().subscribe( f ->
+							tx.commits().subscribe( f ->
 							{
 							}, e -> this.localCache.remove( id ),
 									() -> this.localCache.remove( id ) );

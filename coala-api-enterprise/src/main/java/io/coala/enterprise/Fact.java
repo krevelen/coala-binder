@@ -73,6 +73,11 @@ import rx.Observer;
  * @version $Id$
  * @author Rick van Krevelen
  */
+/*
+ * @JsonAutoDetect( fieldVisibility = Visibility.ANY, getterVisibility =
+ * Visibility.NONE, isGetterVisibility = Visibility.NONE, setterVisibility =
+ * Visibility.NONE )
+ */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 {
 	String TRANSACTION_PROPERTY = "transaction";
@@ -141,13 +146,23 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 	/**
 	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
-	 *         of different {@linkplain Actor.ID#organization() roots}
+	 *         in the same {@link Actor.ID#organization()}
+	 */
+	@JsonIgnore // derived  
+	default boolean isIncoming()
+	{
+		return creatorRef().organization()
+				.equals( responderRef().organization() );
+	}
+
+	/**
+	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
+	 *         in a different {@link Actor.ID#organization()}
 	 */
 	@JsonIgnore // derived  
 	default boolean isOutgoing()
 	{
-		return !creatorRef().organization()
-				.equals( responderRef().organization() );
+		return !isIncoming();
 	}
 
 	/** @return */
@@ -263,7 +278,18 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	default <F extends Fact> F proxyAs( final Class<F> subtype,
 		final Observer<Method> callObserver )
 	{
-		final Fact impl = this;
+		return proxyAs( this, subtype, callObserver );
+	}
+
+	/**
+	 * @param subtype the type of {@link Fact} to mimic
+	 * @param callObserver an {@link Observer} of method call, or {@code null}
+	 * @return the {@link Proxy} instance
+	 */
+	@SuppressWarnings( "unchecked" )
+	static <F extends Fact> F proxyAs( final Fact impl, final Class<F> subtype,
+		final Observer<Method> callObserver )
+	{
 		final F proxy = (F) Proxy.newProxyInstance( subtype.getClassLoader(),
 				new Class<?>[]
 		{ subtype }, ( self, method, args ) ->
@@ -295,7 +321,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 				throw e;
 			}
 		} );
-		if( impl instanceof Simple ) ((Simple) impl).proxy = proxy;
 		return proxy;
 	}
 
@@ -584,6 +609,22 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		public <F extends Fact> F self()
 		{
 			return (F) this.proxy;
+		}
+
+		/**
+		 * @param subtype the type of {@link Fact} to mimic
+		 * @param callObserver an {@link Observer} of method call, or
+		 *            {@code null}
+		 * @return the {@link Proxy} instance
+		 */
+		@Override
+		@SuppressWarnings( "unchecked" )
+		public <F extends Fact> F proxyAs( final Class<F> subtype,
+			final Observer<Method> callObserver )
+		{
+			final F proxy = Fact.proxyAs( this, subtype, callObserver );
+			this.proxy = proxy;
+			return proxy;
 		}
 	}
 

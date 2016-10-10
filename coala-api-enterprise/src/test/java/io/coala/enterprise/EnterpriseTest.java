@@ -15,9 +15,6 @@ import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.dsol3.Dsol3Scheduler;
@@ -49,34 +46,51 @@ public class EnterpriseTest
 	@Singleton
 	public static class EnterpriseModel implements Proactive
 	{
+		public interface Sales extends Actor<Sale>
+		{
+			Integer getTotalValue();
+
+			void setTotalValue( Integer totalValue );
+
+			default void addToTotal( Integer increment )
+			{
+				setTotalValue( getTotalValue() + increment );
+			}
+		}
+
+		public interface Procurement extends Actor<Sale>
+		{
+			Integer getTotalValue();
+
+			void setTotalValue( Integer totalValue );
+
+			default void addToTotal( Integer increment )
+			{
+				setTotalValue( getTotalValue() + increment );
+			}
+		}
 
 		/**
-		 * {@link TestFact} custom fact kind
-		 * 
-		 * @version $Id$
-		 * @author Rick van Krevelen
+		 * {@link Sale} custom fact kind
 		 */
-		@JsonAutoDetect( fieldVisibility = Visibility.ANY,
-			getterVisibility = Visibility.NONE,
-			isGetterVisibility = Visibility.NONE,
-			setterVisibility = Visibility.NONE )
-		public interface TestFact extends Fact
+		@TransactionKind( )
+		public interface Sale extends Fact
 		{
 			Instant getRqParam(); // get "rqParam" bean property
 
 			void setRqParam( Instant value ); // set "rqParam" bean property
 
-			default TestFact withRqParam( Instant value )
+			default Sale withRqParam( Instant value ) // test default method
 			{
 				setRqParam( value );
 				return this;
 			}
 
-			String getStParam();
+			String getStParam(); // get "stParam" bean property
 
-			static TestFact fromJSON( final String json )
+			static Sale fromJSON( final String json ) // test de/serialization
 			{
-				return Fact.fromJSON( json, TestFact.class );
+				return Fact.fromJSON( json, Sale.class );
 			}
 		}
 
@@ -106,39 +120,38 @@ public class EnterpriseTest
 		{
 			LOG.trace( "initializing..." );
 
-			final Actor org1 = this.actorFactory.create( "org1" );
+			final Actor<Fact> org1 = this.actorFactory.create( "org1" );
 			LOG.trace( "initialized organization" );
 
 			final DateTime offset = new DateTime(
 					this.actorFactory.offset().toEpochMilli() );
 			LOG.trace( "initialized occurred and expired fact sniffing" );
 
-			org1.occurred().subscribe( fact ->
+			org1.commits().subscribe( fact ->
 			{
-				LOG.trace( "t={}, occurred: {}", org1.now().prettify( offset ),
-						fact );
-			}, e -> LOG.error( "Problem", e ) );
-			org1.expired().subscribe( fact ->
-			{
-				LOG.trace( "t={}, expired: {}", org1.now().prettify( offset ),
+				LOG.trace( "t={}, occurred: {}", now().prettify( offset ),
 						fact );
 			}, e -> LOG.error( "Problem", e ) );
 
 			final AtomicInteger counter = new AtomicInteger( 0 );
-			final Actor sales = org1.actor( "sales" );
-			org1.occurred( TestFact.class, FactKind.REQUESTED, sales.id() )
+			final Procurement proc = org1.initiator( Sale.class,
+					Procurement.class );
+			final Sales sales = org1.executor( Sale.class, Sales.class );
+			sales.setTotalValue( 0 );
+			org1.commits( Sale.class, FactKind.REQUESTED, sales.id() )
 					.subscribe( rq ->
 					{
-						sales.after( Duration.of( 1, Units.DAYS ) ).call( t ->
+						after( Duration.of( 1, Units.DAYS ) ).call( t ->
 						{
-							final TestFact st = sales
-									.respond( rq, FactKind.STATED )
+							final Sale st = sales.respond( rq, FactKind.STATED )
 									.with( "stParam", "stValue"
 											+ counter.getAndIncrement() );
-							LOG.trace( "respond: {} <- {}",
-									st.causeRef().prettyHash(),
-									st.getStParam() );
+							sales.addToTotal( 1 );
+							LOG.trace( "respond: {} <- {}, total now: {}",
+									st.causeRef().prettyHash(), st.getStParam(),
+									sales.getTotalValue() );
 							st.commit( true );
+
 						} );
 					}, e -> LOG.error( "Problem", e ),
 							() -> LOG.trace( "sales/rq completed?" ) );
@@ -147,14 +160,14 @@ public class EnterpriseTest
 			atEach( Timing.valueOf( "0 0 0 30 * ? *" ).offset( offset )
 					.iterate(), t ->
 					{
-						// spawn initial transactions with self
-						final TestFact rq = sales.initiate( TestFact.class,
-								sales.id(), null, t.add( 1 ) ).withRqParam( t );
+						// spawn initial transactions from/with self
+						final Sale rq = proc
+								.initiate( Sale.class, sales.id(), t.add( 1 ) )
+								.withRqParam( t );
 
 						// de/serialization test
 						final String json = rq.toJSON();
-						final String fact = TestFact.fromJSON( json )
-								.toString();
+						final String fact = Sale.fromJSON( json ).toString();
 						LOG.trace( "initiate: {} => {}", json, fact );
 						rq.commit();
 					} );
@@ -191,13 +204,13 @@ public class EnterpriseTest
 		LOG.trace( "Deser: ", Fact.fromJSON(
 				"{" + "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"occurrence\":{},\"transaction\":{"
-						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$EnterpriseModel$TestFact\""
+						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$EnterpriseModel$Sale\""
 						+ ",\"id\":\"1a990580-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"initiatorRef\":\"eoSim-org1-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ "}" + ",\"kind\":\"REQUESTED\",\"expiration\":{}"
 						+ ",\"rqParam\":\"123 ms\"" + "}",
-				EnterpriseModel.TestFact.class ) );
+				EnterpriseModel.Sale.class ) );
 
 		// configure replication FIXME via LocalConfig?
 		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
@@ -240,7 +253,7 @@ public class EnterpriseTest
 		for( Object f : binder.inject( FactBank.Factory.class ).create().find()
 				.toBlocking().toIterable() )
 			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
-					((EnterpriseModel.TestFact) f).getRqParam() );
+					((EnterpriseModel.Sale) f).getRqParam() );
 
 		LOG.info( "completed, t={}", scheduler.now() );
 	}
