@@ -31,6 +31,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -70,6 +72,8 @@ public class ConfigUtil implements Util
 	/** Default (relative path) value for the configuration file name */
 	public static final String CONFIG_FILE_DEFAULT = "coala.properties";
 
+	public static final String CONFIG_FILE_YAML_DEFAULT = "coala.yaml";
+
 	public static final String CONFIG_FILE_BOOTTIME = System
 			.getProperty( CONFIG_FILE_PROPERTY, CONFIG_FILE_DEFAULT );
 
@@ -77,6 +81,8 @@ public class ConfigUtil implements Util
 	{
 		ConfigFactory.setProperty( CONFIG_FILE_PROPERTY, CONFIG_FILE_BOOTTIME );
 	}
+
+	private static final Map<Config, Map<Supplier<?>, Object>> CONFIG_VALUE_CACHE = new ConcurrentHashMap<>();
 
 	/** {@link ConfigUtil} singleton constructor */
 	private ConfigUtil()
@@ -316,10 +322,10 @@ public class ConfigUtil implements Util
 	 * @param maps
 	 * @return the joined String-to-String mapping
 	 */
-	public static Map<String, String> export( final Accessible config,
+	public static Map<String, Object> export( final Accessible config,
 		final Map<?, ?>... maps )
 	{
-		final Map<String, String> result = export( config, (Pattern) null );
+		final Map<String, Object> result = export( config, (Pattern) null );
 		if( maps != null ) for( Map<?, ?> map : maps )
 			if( map != null ) map.forEach( ( key, value ) ->
 			{
@@ -333,7 +339,7 @@ public class ConfigUtil implements Util
 	 * @param keyFilter (optional) the {@link Pattern} to match keys against
 	 * @return the (matched) keys and values
 	 */
-	public static Map<String, String> export( final Accessible config,
+	public static Map<String, Object> export( final Accessible config,
 		final Pattern keyFilter )
 	{
 		return export( config, keyFilter, null );
@@ -345,7 +351,7 @@ public class ConfigUtil implements Util
 	 * @param replacement (optional) the key replacement pattern
 	 * @return the (matched) keys and values
 	 */
-	public static Map<String, String> export( final Accessible config,
+	public static Map<String, Object> export( final Accessible config,
 		final Pattern keyFilter, final String replacement )
 	{
 		final Map<String, String> result = new TreeMap<>();
@@ -364,7 +370,10 @@ public class ConfigUtil implements Util
 					result.put( replace, config.getProperty( key ) );
 				}
 			}
-		return result.entrySet().stream().collect( Collectors.toMap( e ->
+		return result.entrySet().stream().filter( e ->
+		{
+			return e.getValue() != null;
+		} ).collect( Collectors.toMap( e ->
 		{
 			return e.getKey();
 		}, e ->
@@ -378,10 +387,17 @@ public class ConfigUtil implements Util
 
 	static String resolve( final String value, final Map<String, String> map )
 	{
+		if( value == null || value.isEmpty() ) return value;
 		String result = value;
 		Matcher m;
 		while( (m = KEY_PATTERN.matcher( result )).find() )
-			result = m.replaceFirst( map.get( m.group( 1 ) ) );
+		{
+			final String replacement = map.get( m.group( 1 ) );
+			if( replacement != null )
+				result = m.replaceFirst( replacement );
+			else
+				break;
+		}
 		return result;
 	}
 
@@ -516,5 +532,19 @@ public class ConfigUtil implements Util
 		{
 			Thrower.rethrowUnchecked( e );
 		}
+	}
+
+	/**
+	 * @param config the (cached) {@link Config} instance
+	 * @param supplier the {@link Supplier} method (on the {@link Config} type)
+	 * @return the cached value
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <T> T cachedValue( final Config config,
+		final Supplier<T> supplier )
+	{
+		return (T) CONFIG_VALUE_CACHE
+				.computeIfAbsent( config, key -> new ConcurrentHashMap<>() )
+				.computeIfAbsent( supplier, Supplier::get );
 	}
 }

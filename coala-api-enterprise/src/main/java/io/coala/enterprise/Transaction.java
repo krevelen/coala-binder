@@ -19,69 +19,125 @@
  */
 package io.coala.enterprise;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.measure.unit.Unit;
 
 import com.eaio.uuid.UUID;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.util.StdConverter;
 
-import io.coala.bind.LocalBinder;
-import io.coala.name.Id;
+import io.coala.bind.LocalId;
+import io.coala.config.ConfigUtil;
+import io.coala.config.InjectConfig;
+import io.coala.exception.Thrower;
+import io.coala.function.ThrowingConsumer;
+import io.coala.function.ThrowingRunnable;
 import io.coala.name.Identified;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
+import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
 
 /**
- * {@link Transaction}
+ * {@link Transaction} is an instance of some {@link F transaction kind}
+ * occurring between some {@link #initiatorRef()} and {@link #executorRef()},
+ * each {@link Identified} by a unique {@link Transaction.ID id}, with utility
+ * methods to {@link #generate(FactKind, Fact.ID, Instant, Map...) generate} and
+ * {@link #commit(Fact, boolean) commit} new {@link F facts}, published via an
+ * {@link Observable} stream of {@link #commits()}, and {@link Proactive timing}
+ * their expiration handling
  * 
- * @param <F>
+ * @param <F> the type of {@link Fact} representing the transaction kind
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Transaction<F extends CoordinationFact>
+public interface Transaction<F extends Fact>
 	extends Proactive, Identified.Ordinal<Transaction.ID>
 {
-
-	// FIXME add cause ID
-	
 	/** @return */
+	@JsonProperty( "kind" )
 	Class<F> kind();
 
 	/** @return */
-	CompositeActor initiator(); // FIXME id only
+	@JsonProperty( "initiatorRef" )
+	Actor.ID initiatorRef();
 
 	/** @return */
-	CompositeActor executor(); // FIXME id only
+	@JsonProperty( "executorRef" )
+	Actor.ID executorRef();
 
 	/**
 	 * @param factKind
 	 * @param cause
-	 * @param terminal
 	 * @param expiration
 	 * @param params
 	 * @return
 	 */
-	F createFact( CoordinationFactType factKind, CoordinationFact cause,
-		boolean terminal, Instant expiration, Map<?, ?>... params );
+	F generate( FactKind factKind, Fact.ID cause, Instant expiration,
+		Map<?, ?>... params );
 
-	/** @param incoming */
-	void on( F incoming );
+	/**
+	 * saves; sends; schedules expiration; cancels cause expiration (if pending)
+	 * 
+	 * @param fact the {@link Fact} to commit, i.e. save &amp; send
+	 * @return the {@link Fact} again to allow chaining
+	 */
+	default F commit( F fact )
+	{
+		return commit( fact, false );
+	}
+
+	/**
+	 * @param fact the {@link Fact} to commit, i.e. save &amp; send
+	 * @param cleanUp {@code true} iff the {@link Transaction} may clean up,
+	 *            e.g. it has terminated or no further facts are expected
+	 * @return the {@link Fact} again to allow chaining
+	 */
+	F commit( F fact, boolean cleanUp );
+
+	/**
+	 * @param fact the {@link Fact} to commit, i.e. save &amp; send
+	 * @param onExpiration the {@link ThrowingConsumer} to call upon expiration
+	 * @return the {@link Fact} again to allow chaining
+	 */
+	default F commit( final F fact, final ThrowingConsumer<F, ?> onExpiration )
+	{
+		return commit( fact, () -> onExpiration.accept( fact ) );
+	}
+
+	/**
+	 * @param fact the {@link Fact} to commit, i.e. save &amp; send
+	 * @param onExpiration the {@link ThrowingRunnable} to call upon expiration
+	 * @return the {@link Fact} again to allow chaining
+	 */
+	F commit( F fact, ThrowingRunnable<?> onExpiration );
 
 	/** @return */
-	@JsonIgnore
-	Observable<F> performed();
+	Observable<F> commits();
 
-	/** @return */
-	@JsonIgnore
-	Observable<F> expired();
+	FactBank<F> factBank();
+
+	/** @return the {@link java.time.Instant} UTC offset of virtual time */
+	java.time.Instant offset();
+
+	/** @return the {@link Unit} of virtual time */
+	Unit<?> timeUnit();
 
 	/**
 	 * {@link ID}
@@ -89,171 +145,327 @@ public interface Transaction<F extends CoordinationFact>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class ID extends Id.Ordinal<UUID>
+	@JsonDeserialize( converter = ID.FromStringConverter.class )
+	class ID extends LocalId
 	{
-		/** @return */
-		public static Transaction.ID of( final UUID value )
+		public static class FromStringConverter extends StdConverter<String, ID>
 		{
-			return Util.of( value, new ID() );
+			@Override
+			public ID convert( final String value )
+			{
+				return of( new UUID( value ), null );
+			}
+		}
+
+		@Override
+		@JsonValue
+		public String toJSON()
+		{
+			// omit parentRef
+			return unwrap().toString();
+		}
+
+		/** @return the wrapped value */
+		@Override
+		public UUID unwrap()
+		{
+			return (UUID) super.unwrap();
+		}
+
+		public String prettyHash()
+		{
+			return Integer.toHexString( unwrap().hashCode() );
 		}
 
 		/** @return */
-		public static Transaction.ID create()
+		public static ID of( final UUID value, final LocalId ctx )
 		{
-			return of( new UUID() );
+			return LocalId.of( new ID(), value, ctx );
+		}
+
+		/** @return */
+		public static ID create( final LocalId ctx )
+		{
+			return of( new UUID(), ctx );
 		}
 	}
 
 	/**
-	 * @param tranKind
-	 * @param scheduler
 	 * @param id
-	 * @param initiator
-	 * @param executor
-	 * @return
-	 */
-	static <F extends CoordinationFact> Transaction<F> of(
-		final LocalBinder binder, final Transaction.ID id,
-		final Class<F> tranKind, final CompositeActor initiator,
-		final CompositeActor executor )
-	{
-		return of( tranKind, binder.inject( Scheduler.class ), id, initiator,
-				executor, binder.inject( CoordinationFact.Factory.class ) );
-	}
-
-	/**
 	 * @param kind
+	 * @param initiatorRef
+	 * @param executorRef
+	 * @param config
 	 * @param scheduler
-	 * @param id
-	 * @param initiatorID
-	 * @param executorID
-	 * @param factFactory
-	 * @return
+	 * @param factFactory a {@link Fact.Factory}
+	 * @param bankFactory a {@link FactBank.Factory} or {@code null}
+	 * @return a {@link Simple} instance
 	 */
-	static <F extends CoordinationFact> Transaction<F> of( final Class<F> kind,
-		final Scheduler scheduler, final Transaction.ID id,
-		final CompositeActor initiator, final CompositeActor executor,
-		final CoordinationFact.Factory factFactory )
+	static <F extends Fact> Transaction<F> of( final Transaction.ID id,
+		final Class<F> kind, final Actor.ID initiatorRef,
+		final Actor.ID executorRef, final Scheduler scheduler,
+		final Fact.Factory factFactory, final Unit<?> timeUnit,
+		final java.time.Instant offset )
 	{
-		final Subject<F, F> performed = PublishSubject.create();
-		final Map<CoordinationFact.ID, Expectation> pending = new ConcurrentHashMap<>();
-		final Subject<F, F> expired = PublishSubject.create();
-		return new Transaction<F>()
+		return new Simple<F>( id, kind, initiatorRef, executorRef, scheduler,
+				factFactory, timeUnit, offset );
+	}
+
+	/**
+	 * {@link Simple}
+	 * 
+	 * @param <F>
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	@SuppressWarnings( "serial" )
+	@JsonInclude( Include.NON_NULL )
+	class Simple<F extends Fact> implements Transaction<F>
+	{
+		private transient final Subject<F, F> commits = PublishSubject.create();
+		private transient final Map<Fact.ID, Expectation> pending = new ConcurrentHashMap<>();
+		private transient final Set<UUID> committedIds = Collections
+				.synchronizedSet( new HashSet<>() );
+		private transient Scheduler scheduler;
+		private transient Fact.Factory factFactory;
+		private transient FactBank<F> factBank = null;
+		private transient java.time.Instant offset = null;
+		private transient Unit<?> timeUnit = null;
+
+		private Transaction.ID id;
+		private Class<F> kind;
+		private Actor.ID initiatorRef;
+		private Actor.ID executorRef;
+		private boolean initiated = false;
+		private boolean terminated = false;
+
+		@Inject
+		public Simple()
 		{
-			@Override
-			public Scheduler scheduler()
-			{
-				return scheduler;
-			}
+			// zero-arg bean constructor
+		}
 
-			@Override
-			public Class<F> kind()
-			{
-				return kind;
-			}
+		public Simple( final Transaction.ID id, final Class<F> kind,
+			final Actor.ID initiatorRef, final Actor.ID executorRef,
+			final Scheduler scheduler, final Fact.Factory factFactory,
+			final Unit<?> timeUnit, final java.time.Instant offset )
+		{
+			this.id = id;
+			this.kind = kind;
+			this.initiatorRef = initiatorRef;
+			this.executorRef = executorRef;
+			this.scheduler = scheduler;
+			this.factFactory = factFactory;
+			this.factBank = factFactory.factBank() == null ? null
+					: factFactory.factBank().matchTransactionKind( kind );
+			this.timeUnit = timeUnit;
+			this.offset = offset;
+		}
 
-			@Override
-			public Transaction.ID id()
-			{
-				return id;
-			}
+		@Override
+		public Scheduler scheduler()
+		{
+			return this.scheduler;
+		}
 
-			@Override
-			public CompositeActor initiator()
-			{
-				return initiator;
-			}
+		@Override
+		public Class<F> kind()
+		{
+			return this.kind;
+		}
 
-			@Override
-			public CompositeActor executor()
-			{
-				return executor;
-			}
+		@Override
+		public Transaction.ID id()
+		{
+			return this.id;
+		}
 
-			@Override
-			public F createFact( final CoordinationFactType factKind,
-				final CoordinationFact cause, final boolean terminal,
-				final Instant expiration, final Map<?, ?>... params )
+		@Override
+		public Actor.ID initiatorRef()
+		{
+			return this.initiatorRef;
+		}
+
+		@Override
+		public Actor.ID executorRef()
+		{
+			return this.executorRef;
+		}
+
+		protected void checkNotInitiated()
+		{
+			if( this.initiated ) Thrower.throwNew( IllegalStateException.class,
+					"Already initiated: {}", id() );
+		}
+
+		protected void checkNotTerminated()
+		{
+			if( this.terminated ) Thrower.throwNew( IllegalStateException.class,
+					"Already terminated: {}", id() );
+		}
+
+		@Override
+		public F generate( final FactKind factKind, final Fact.ID causeRef,
+			final Instant expiration, final Map<?, ?>... params )
+		{
+			if( causeRef == null || !causeRef.parentRef().equals( id() ) )
+				checkNotInitiated();
+			this.initiated = true;
+			checkNotTerminated();
+			return this.factFactory.create( kind(), Fact.ID.create( id() ),
+					this, factKind, expiration, causeRef, params );
+		}
+
+		@Override
+		public F commit( final F fact, final ThrowingRunnable<?> onExpiration )
+		{
+			return commit( fact, false, onExpiration );
+		}
+
+		@Override
+		public F commit( final F fact, final boolean cleanUp )
+		{
+			return commit( fact, cleanUp, null );
+		}
+
+		public F commit( final F fact, final boolean cleanUp,
+			final ThrowingRunnable<?> onExpiration )
+		{
+			checkNotTerminated();
+			// prevent re-committing
+			if( this.committedIds.contains( fact.id().unwrap() ) )
+				return Thrower.throwNew( IllegalStateException.class,
+						"Already committed: {}", fact );
+			this.committedIds.add( fact.id().unwrap() );
+
+			try
 			{
-				try
-				{
-					final F result = factFactory.create( kind(),
-							CoordinationFact.ID.create(), this,
-							factKind.isFromInitiator() ? initiator : executor,
-							factKind, expiration, cause, params );
-					if( cause != null ) pending.remove( cause.id() );
-					if( expiration != null )
+				// un/schedule expiration
+				if( fact.causeRef() != null )
+					this.pending.remove( fact.causeRef() );
+				if( fact.expire() != null )
+					this.pending.put( fact.id(), at( fact.expire() ).call( () ->
 					{
-						pending.put( result.id(), at( expiration ).call( () ->
-						{
-							pending.remove( expired );
-							expired.onNext( result );
-						} ) );
-					}
-					performed.onNext( result );
-					if( terminal ) performed.onCompleted();
-					return result;
-				} catch( final Throwable e )
+						if( onExpiration != null ) onExpiration.run();
+						this.pending
+								.remove( Objects.requireNonNull( fact.id() ) );
+					} ) );
+				else if( onExpiration != null )
+					return Thrower.throwNew( IllegalStateException.class,
+							"Expiration function never gets called: {}", fact );
+
+				// publish / fire / send
+				this.commits.onNext( fact );
+
+				// persist
+				if( factBank() != null ) factBank().save( fact );
+
+				// unsubscribe listeners, cancel pending expirations
+				if( cleanUp )
 				{
-					performed.onError( e );
-					throw e;
+					this.terminated = true;
+					this.commits.onCompleted();
+					this.pending.values().forEach( Expectation::remove );
+					this.pending.clear();
+					this.committedIds.clear();
 				}
-			}
 
-			@Override
-			public Observable<F> performed()
+				// allow chaining
+				return fact;
+			} catch( final Throwable e )
 			{
-				return performed.asObservable();
+				this.commits.onError( e );
+				throw e;
 			}
+		}
 
-			@Override
-			public Observable<F> expired()
-			{
-				return expired.asObservable();
-			}
+		@Override
+		public Observable<F> commits()
+		{
+			return this.commits.asObservable();
+		}
 
-			@Override
-			public void on( final F fact )
-			{
-				pending.remove( fact.cause().id() );
-				if( fact.expiration() != null ) pending.put( fact.id(),
-						scheduler.at( fact.expiration() ).call( () ->
-						{
-							pending.remove( expired );
-							expired.onNext( fact );
-						} ) );
-			}
-		};
+		@Override
+		public java.time.Instant offset()
+		{
+			return this.offset;
+		}
+
+		@Override
+		public Unit<?> timeUnit()
+		{
+			return this.timeUnit;
+		}
+
+		@Override
+		public FactBank<F> factBank()
+		{
+			return this.factBank;
+		}
 	}
 
 	interface Factory
 	{
-		<F extends CoordinationFact> Transaction<F> create( Transaction.ID id,
-			Class<F> factType, CompositeActor initiator,
-			CompositeActor executor );
+		<F extends Fact> Transaction<F> create( Transaction.ID id,
+			Class<F> factType, Actor.ID initiator, Actor.ID executor );
+
+		/** @return the {@link java.time.Instant} UTC offset of virtual time */
+		java.time.Instant offset();
+
+		/** @return the {@link Unit} of virtual time */
+		Unit<?> timeUnit();
 
 		@Singleton
 		class LocalCaching implements Factory
 		{
-			private final Map<Class<?>, Transaction<?>> localCache = new ConcurrentHashMap<>();
+			private transient final Map<ID, Transaction<?>> localCache = new ConcurrentHashMap<>();
 
 			@Inject
-			private LocalBinder binder;
+			private transient Scheduler scheduler;
+
+			@Inject
+			private transient Fact.Factory factFactory;
+
+			@InjectConfig
+			private transient ReplicateConfig config;
+			private transient Unit<?> timeUnitCache;
+			private transient java.time.Instant offsetCache;
 
 			@SuppressWarnings( "unchecked" )
 			@Override
-			public <F extends CoordinationFact> Transaction<F> create(
-				final ID id, final Class<F> kind,
-				final CompositeActor initiator, final CompositeActor executor )
+			public <F extends Fact> Transaction<F> create( final ID id,
+				final Class<F> kind, final Actor.ID initiatorRef,
+				final Actor.ID executorRef )
 			{
-				return (Transaction<F>) this.localCache.computeIfAbsent( kind,
-						k ->
+				return (Transaction<F>) this.localCache.computeIfAbsent( id,
+						key ->
 						{
-							return Transaction.of( this.binder, id, kind,
-									initiator, executor );
+							final Transaction<?> tx = Transaction.of( id, kind,
+									initiatorRef, executorRef, this.scheduler,
+									this.factFactory, timeUnit(), offset() );
+							tx.commits().subscribe( f ->
+							{
+							}, e -> this.localCache.remove( id ),
+									() -> this.localCache.remove( id ) );
+							return tx;
 						} );
 			}
 
+			@Override
+			public java.time.Instant offset()
+			{
+				return this.offsetCache != null ? this.offsetCache
+						: (this.offsetCache = ConfigUtil.cachedValue(
+								this.config, this.config::offset ));
+			}
+
+			@Override
+			public Unit<?> timeUnit()
+			{
+				return this.timeUnitCache != null ? this.timeUnitCache
+						: (this.timeUnitCache = ConfigUtil.cachedValue(
+								this.config, this.config::timeUnit ));
+			}
 		}
 	}
 }

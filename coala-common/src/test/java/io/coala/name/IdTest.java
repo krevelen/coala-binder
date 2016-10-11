@@ -33,8 +33,6 @@ import org.junit.Test;
 
 import io.coala.exception.ExceptionStream;
 import io.coala.log.LogUtil;
-import io.coala.name.Id;
-import rx.Observer;
 
 /**
  * {@link IdTest}
@@ -98,26 +96,10 @@ public class IdTest
 	@BeforeClass
 	public static void listenExceptions()
 	{
-		ExceptionStream.asObservable().subscribe( new Observer<Throwable>()
-		{
-			@Override
-			public void onCompleted()
-			{
-				LOG.trace( "JVM COMPLETED" );
-			}
-
-			@Override
-			public void onError( final Throwable e )
-			{
-				LOG.trace( "JVM FAILED" );
-			}
-
-			@Override
-			public void onNext( final Throwable t )
-			{
-				LOG.error( "Intercept " + t.getClass().getSimpleName(), t );
-			}
-		} );
+		ExceptionStream.asObservable().subscribe(
+				t -> LOG.error( "Intercept " + t.getClass().getSimpleName() ),
+				e -> LOG.error( "ExceptionStream failed", e ),
+				() -> LOG.trace( "JVM COMPLETED" ) );
 	}
 
 	@Ignore // FIXME

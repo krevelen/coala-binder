@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
+import io.coala.log.LogUtil;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
@@ -136,7 +137,9 @@ public interface Scheduler extends Proactive
 				what.accept( t );
 			} catch( final Throwable e )
 			{
-				Thrower.rethrowUnchecked( e );
+				LogUtil.getLogger( Scheduler.class )
+						.error( "Problem in " + what, e );
+//				Thrower.rethrowUnchecked( e );
 			}
 		}, e ->
 		{
