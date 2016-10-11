@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalId;
 import io.coala.inter.Exposer;
 
 /**
@@ -48,14 +49,18 @@ public class Eve3Exposer implements Exposer
 	public <T> List<URI> exposeAs( final String id, final Class<T> serviceIntf,
 		final T serviceImpl )
 	{
-		return this.eve3.getAgent( id == null ? this.binder.id() : id ).expose(
-				// FIXME apply http://stackoverflow.com/a/30287201 to 
-				// annotate each method as Access(PUBLIC)  
-				Proxy.newProxyInstance( serviceIntf.getClassLoader(),
-						new Class[]
-				{ serviceIntf }, ( proxy, method, args ) ->
-				{
-					return method.invoke( serviceImpl, args );
-				} ) );
+		return this.eve3
+				.getAgent( id == null ? this.binder.id() // self
+						: LocalId.of( id, this.binder.id() ) )
+				.expose(
+						// FIXME apply http://stackoverflow.com/a/30287201 to 
+						// annotate each method as Access(PUBLIC)  
+						Proxy.newProxyInstance( serviceIntf.getClassLoader(),
+								new Class[]
+						{ serviceIntf },
+								( proxy, method, args ) ->
+								{
+									return method.invoke( serviceImpl, args );
+								} ) );
 	}
 }

@@ -30,10 +30,11 @@ import com.almende.eve.deploy.Boot;
 import com.almende.eve.instantiation.InstantiationServiceConfig;
 import com.almende.eve.state.file.FileStateConfig;
 import com.almende.util.jackson.JOM;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.coala.bind.LocalId;
 import io.coala.config.InjectConfig;
+import io.coala.json.JsonUtil;
 
 /**
  * {@link Eve3Factory}
@@ -45,7 +46,7 @@ import io.coala.config.InjectConfig;
 public class Eve3Factory
 {
 	// not static: lives in localbinder context as 'singleton'
-	private final Map<String, Eve3Container> eveContainers = new ConcurrentHashMap<>();
+	private final Map<LocalId, Eve3Container> eveContainers = new ConcurrentHashMap<>();
 
 	@InjectConfig
 	private Eve3Config localEveConfig;
@@ -70,7 +71,7 @@ public class Eve3Factory
 		return this.eveConfig;
 	}
 
-	protected Eve3Container getAgent( final String id,
+	protected Eve3Container getAgent( final LocalId id,
 		final Map<?, ?>... imports )
 	{
 		return this.eveContainers.computeIfAbsent( id, uri ->
@@ -81,7 +82,7 @@ public class Eve3Factory
 
 	protected Eve3Factory()
 	{
-		JOM.getInstance().disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
+		JsonUtil.initialize( JOM.getInstance() );
 
 		// TODO prevent multiple boots?
 

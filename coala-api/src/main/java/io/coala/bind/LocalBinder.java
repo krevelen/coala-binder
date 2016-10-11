@@ -40,6 +40,12 @@ public interface LocalBinder extends LocalContextual
 	<T> T inject( Class<T> type );
 
 	/**
+	 * @param encloser the enclosing object to inject members into
+	 * @return an instance as provided by a {@link LocalProvider}
+	 */
+	<T> T injectMembers( T encloser );
+
+	/**
 	 * @param type the factory type to (re)bind
 	 * @param provider the instance {@link Provider}
 	 * @return this {@link LocalBinder} to allow chaining
@@ -65,13 +71,11 @@ public interface LocalBinder extends LocalContextual
 	default <T> LocalBinder reset( final Class<T> type,
 		final Class<? extends T> impl, final Object... args )
 	{
-		return reset( type,
-				(Provider<T>) LocalProvider
-						.of( this,
-								Instantiator.providerOf(
-										impl.asSubclass( type ), args ),
-								false ) );
-	}
+		return reset( type, (Provider<T>) // must cast to avoid deploy errors 
+		LocalProvider.of( this,
+				Instantiator.providerOf( impl.asSubclass( type ), args ),
+				false ) );
+	} 
 
 	/**
 	 * @return an {@link Observable} stream of all (re)bound {@link Class}s
@@ -149,7 +153,7 @@ public interface LocalBinder extends LocalContextual
 			}
 
 			@Override
-			public String id()
+			public LocalId id()
 			{
 				return this.origin.id();
 			}

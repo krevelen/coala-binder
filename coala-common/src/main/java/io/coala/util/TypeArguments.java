@@ -156,7 +156,7 @@ public class TypeArguments
 						}
 						superClass = (Class<? super S>) superClass
 								.getSuperclass();
-//						if( superClass == null ) break;
+						if( superClass == null ) break; // eg. generic interface
 					}
 					// if (intfType == null)
 					// type = typeClass.getGenericSuperclass();

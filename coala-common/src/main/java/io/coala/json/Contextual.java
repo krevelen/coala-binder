@@ -16,9 +16,14 @@
 package io.coala.json;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.aeonbits.owner.Converter;
+
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 /**
  * {@link Contextual} provides a {@link Context} {@link DynaBean} for adding
@@ -51,19 +56,22 @@ public interface Contextual
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	public class Context extends DynaBean
+	public class Context //extends DynaBean
 	{
 
-		@Override
+		private Map<String, Object> values = null;
+
+		@JsonAnyGetter
 		public Map<String, Object> any()
 		{
-			return super.any();
+			return this.values != null ? this.values
+					: (this.values = new HashMap<>());
 		}
 
-		@Override
+		@JsonAnySetter
 		public Object set( final String name, final Object value )
 		{
-			return super.set( name, value );
+			return any().put( name, value );
 		}
 
 		/**
@@ -72,7 +80,8 @@ public interface Contextual
 		 */
 		public Context locked()
 		{
-			super.lock();
+			if( this.values != null )
+				this.values = Collections.unmodifiableMap( this.values );
 			return this;
 		}
 

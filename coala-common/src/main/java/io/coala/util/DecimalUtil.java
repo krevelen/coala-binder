@@ -132,4 +132,15 @@ public class DecimalUtil implements Util
 	{
 		return value.setScale( scale, DEFAULT_CONTEXT.getRoundingMode() );
 	}
+
+	/**
+	 * @param dividend the numerator
+	 * @param divisor the denominator
+	 * @return the {@link BigDecimal} division
+	 */
+	public static BigDecimal divide( final Number dividend, Number divisor )
+	{
+		return valueOf( dividend ).divide( valueOf( divisor ),
+				DEFAULT_CONTEXT );
+	}
 }

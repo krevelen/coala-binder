@@ -91,11 +91,11 @@ public class Eve3Test
 		LOG.info( "Starting Eve3 test, config: {}", config.toYAML() );
 		final LocalBinder binder = Guice4LocalBinder.of( config );
 
-		LOG.trace( "Loaded Eve3 agent config for '{}': {}", agentName,
+		LOG.trace( "Loaded Eve3 agent config for '{}': {}", config.localId(),
 				binder.inject( Eve3Factory.class ).getConfig(
 				//				 Collections.singletonMap(
 				//				 Eve3Config.CONFIG_PATH_KEY, "eve-wrapper.yaml" ) 
-				).forAgent( agentName ).toYAML() );
+				).forAgent( config.localId() ).toYAML() );
 
 		final Exposer exposer = binder.inject( Eve3Exposer.class );
 		LOG.trace( "Created @Singleton Exposer: {}", exposer );

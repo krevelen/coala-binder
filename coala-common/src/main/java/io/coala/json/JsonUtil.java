@@ -19,11 +19,14 @@ import java.beans.PropertyEditorSupport;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
 
@@ -31,9 +34,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.coala.exception.Thrower;
 import io.coala.json.DynaBean.BeanProxy;
@@ -59,9 +65,22 @@ public class JsonUtil
 	static//private JsonUtil()
 	{
 		// singleton design pattern
-		LOG.trace( "Using jackson v: " + JOM.version() );
-		JOM.registerModule( new JodaModule() );
-		JOM.registerModule( new UUIDModule() );
+		initialize( JOM );
+	}
+
+	/**
+	 * @param instance
+	 */
+	public synchronized static void initialize( final ObjectMapper om )
+	{
+		om.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
+
+		final Module[] modules = { new JodaModule(), new UUIDModule(),
+				new JavaTimeModule() };
+		om.registerModules( modules );
+		LOG.trace( "Using jackson v: {} with modules: {}", om.version(),
+				Arrays.asList( modules ).stream().map( m -> m.getModuleName() )
+						.collect( Collectors.toList() ) );
 	}
 
 	/** */
@@ -129,8 +148,7 @@ public class JsonUtil
 //			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -157,14 +175,13 @@ public class JsonUtil
 	 */
 	public static JsonNode toTree( final String json )
 	{
+		if( json == null || json.isEmpty() ) return null;
 		try
 		{
-			return json == null || json.isEmpty() ? null
-					: getJOM().readTree( json );
+			return getJOM().readTree( json );
 		} catch( final Exception e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -198,16 +215,15 @@ public class JsonUtil
 	public static <T> T valueOf( final InputStream json,
 		final Class<T> resultType, final Properties... imports )
 	{
+		if( json == null ) return null;
 		try
 		{
 			final ObjectMapper om = getJOM();
-			return json == null ? null
-					: (T) om.readValue( json,
-							checkRegistered( om, resultType, imports ) );
+			return (T) om.readValue( json,
+					checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -233,18 +249,16 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final String json,
 		final Class<T> resultType, final Properties... imports )
 	{
+		if( json == null || json.equalsIgnoreCase( "null" ) ) return null;
 		try
 		{
-			return json == null || json.equalsIgnoreCase( "null" ) ? null
-					: (T) om.readValue(
-							!json.startsWith( "\"" )
-									&& resultType == String.class
-											? "\"" + json + "\"" : json,
-							checkRegistered( om, resultType, imports ) );
+			return (T) om.readValue(
+					!json.startsWith( "\"" ) && resultType == String.class
+							? "\"" + json + "\"" : json,
+					checkRegistered( om, resultType, imports ) );
 		} catch( final Throwable e )
 		{
-			Thrower.rethrowUnchecked( e );
-			return null;
+			return Thrower.rethrowUnchecked( e );
 		}
 	}
 
@@ -270,17 +284,17 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final TreeNode tree,
 		final Class<T> resultType, final Properties... imports )
 	{
+		if( tree == null ) return null;
 		// TODO add work-around for Wrapper sub-types?
 		if( resultType.isMemberClass()
 				&& !Modifier.isStatic( resultType.getModifiers() ) )
-			Thrower.throwNew( IllegalArgumentException.class,
+			return Thrower.throwNew( IllegalArgumentException.class,
 					"Unable to deserialize non-static member: {}", resultType );
 
 		try
 		{
-			return tree == null ? null
-					: (T) om.treeToValue( tree,
-							checkRegistered( om, resultType, imports ) );
+			return (T) om.treeToValue( tree,
+					checkRegistered( om, resultType, imports ) );
 		} catch( final Exception e )
 		{
 			return Thrower.rethrowUnchecked( e );
@@ -310,14 +324,13 @@ public class JsonUtil
 	public static <T> T valueOf( final ObjectMapper om, final String json,
 		final TypeReference<T> typeReference, final Properties... imports )
 	{
+		if( json == null ) return null;
 		try
 		{
 			final Class<?> rawType = om.getTypeFactory()
 					.constructType( typeReference ).getRawClass();
 			checkRegistered( om, rawType, imports );
-			return json == null ? null
-					: (T) om.readValue( json, typeReference );
-
+			return (T) om.readValue( json, typeReference );
 		} catch( final Exception e )
 		{
 			Thrower.rethrowUnchecked( e );
@@ -373,49 +386,62 @@ public class JsonUtil
 	{
 		synchronized( JSON_REGISTRATION_CACHE )
 		{
-			Set<Class<?>> cache = JSON_REGISTRATION_CACHE.get( om );
-			if( cache == null )
-			{
-				cache = new HashSet<>();
-				JSON_REGISTRATION_CACHE.put( om, cache );
-			}
-			if( cache.contains( type ) ) return type;
+			if( type.isPrimitive() ) return type;
+			Set<Class<?>> cache = JSON_REGISTRATION_CACHE.computeIfAbsent( om,
+					key -> new HashSet<>() );
+			if( type.getPackage() == Object.class.getPackage()
+					|| type.getPackage() == Collection.class.getPackage()
+					|| type.isPrimitive()
+					// assume java.lang.* and java.util.* are already mapped
+					|| TreeNode.class.isAssignableFrom( type )
+					|| cache.contains( type ) )
+				return type;
 
 			// use Class.forName(String) ?
 			// see http://stackoverflow.com/a/9130560
 
-//			LOG.trace( "Checking JSON conversion for type: {}", type );
+//			LOG.trace( "Register JSON conversion of type: {}", type	 );
 			if( type.isAnnotationPresent( BeanProxy.class ) )
 			{
-				if( !type.isInterface() )
-					Thrower.throwNew( IllegalArgumentException.class,
-							"@{} must target an interface, but annotates: {}",
-							BeanProxy.class.getSimpleName(), type );
+//				if( !type.isInterface() )
+//					return Thrower.throwNew( IllegalArgumentException.class,
+//							"@{} must target an interface, but annotates: {}",
+//							BeanProxy.class.getSimpleName(), type );
 
 				DynaBean.registerType( om, type, imports );
-
-				for( Method method : type.getDeclaredMethods() )
-					if( method.getReturnType() != Void.TYPE
-							&& method.getReturnType() != type
-							&& !cache.contains( type ) )
-					{
-						checkRegistered( om, method.getReturnType(), imports );
-						cache.add( method.getReturnType() );
-					}
-
+				checkRegisteredMembers( om, type, imports );
 				// LOG.trace("Registered Dynabean de/serializer for: " + type);
 			} else if( Wrapper.class.isAssignableFrom( type ) )
-				// {
+			{
 				Wrapper.Util.registerType( om,
 						(Class<? extends Wrapper>) type );
-
-			// LOG.trace("Registered Wrapper de/serializer for: " + type);
-			// } else
+				checkRegisteredMembers( om, type, imports );
+				// LOG.trace("Registered Wrapper de/serializer for: " + type);
+			}
+			// else
 			// LOG.trace("Assume default de/serializer for: " + type);
 
 			cache.add( type );
 
 			return type;
 		}
+	}
+
+	public static <T> Class<T> checkRegisteredMembers( final ObjectMapper om,
+		final Class<T> type, final Properties... imports )
+	{
+		for( Method method : type.getDeclaredMethods() )
+			if( method.getParameterCount() == 0
+					&& method.getReturnType() != Void.TYPE
+					&& method.getReturnType() != type )
+			{
+//				LOG.trace(
+//						"Checking {}#{}(..) return type: {} @JsonProperty={}",
+//						type.getSimpleName(), method.getName(),
+//						method.getReturnType().getSimpleName(),
+//						method.getAnnotation( JsonProperty.class ) );
+				checkRegistered( om, method.getReturnType(), imports );
+			}
+		return type;
 	}
 }

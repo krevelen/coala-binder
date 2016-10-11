@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 
+import org.aeonbits.owner.Config.Sources;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.Converter;
 
@@ -36,6 +37,7 @@ import io.coala.config.GlobalConfig;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Sources("classpath:log4j2.component.properties")
 public interface LogConfig extends GlobalConfig
 {
 

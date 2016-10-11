@@ -22,13 +22,12 @@ import java.util.Collections;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.MessageFactory;
-import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.message.ParameterizedMessageFactory;
 import org.apache.logging.log4j.message.StringFormattedMessage;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.exception.ExceptionBuilder.CheckedException;
+import io.coala.exception.ExceptionBuilder.UncheckedException;
 import io.coala.json.Contextual;
 import io.coala.json.Contextual.Context;
 import io.coala.log.LogUtil;
@@ -176,8 +175,9 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			return MESSAGE_FACTORY.newMessage( message );
 		} catch( final Throwable t )
 		{
-			LOG.warn( new ParameterizedMessage( "Problem with message \"{}\"",
-					message ), t );
+			LOG.warn(
+					LogUtil.messageOf( "Problem with message \"{}\"", message ),
+					t );
 			return format( message.toString() );
 		}
 	}
@@ -189,8 +189,9 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			return MESSAGE_FACTORY.newMessage( message );
 		} catch( final Throwable t )
 		{
-			LOG.warn( new ParameterizedMessage( "Problem with message \"{}\"",
-					message ), t );
+			LOG.warn(
+					LogUtil.messageOf( "Problem with message \"{}\"", message ),
+					t );
 			return new StringFormattedMessage( message.toString() );
 		}
 	}
@@ -203,7 +204,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 			return MESSAGE_FACTORY.newMessage( messageFormat, params );
 		} catch( final Throwable t )
 		{
-			LOG.warn( new ParameterizedMessage(
+			LOG.warn( LogUtil.messageOf(
 					"Problem with message format \"{}\" and params: {}",
 					messageFormat, params == null ? Collections.emptyList()
 							: Arrays.asList( params ) ),

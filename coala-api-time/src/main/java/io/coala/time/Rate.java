@@ -30,6 +30,8 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -43,8 +45,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @version $Id: bfdc8d8bb88fbee407229d510a7619daeed3b992 $
  * @author Rick van Krevelen
  */
-@JsonSerialize( using = Rate.JsonSerializer.class )
-@JsonDeserialize( using = Rate.JsonDeserializer.class )
+@JsonSerialize( using = Rate.ToJsonString.class )
+@JsonDeserialize( using = Rate.FromJsonString.class )
 public class Rate extends DecimalMeasure<Frequency>
 {
 
@@ -168,38 +170,24 @@ public class Rate extends DecimalMeasure<Frequency>
 		return new Rate( value );
 	}
 
-	public static class JsonSerializer
-		extends com.fasterxml.jackson.databind.JsonSerializer<Rate>
+	public static class ToJsonString extends JsonSerializer<Rate>
 	{
-		public JsonSerializer()
-		{
-			// LOG.trace("Created " + getClass().getName());
-		}
-
 		@Override
 		public void serialize( final Rate value, final JsonGenerator gen,
 			final SerializerProvider serializers )
 			throws IOException, JsonProcessingException
 		{
-			// LOG.trace("Serializing " + value);
 			gen.writeString( value.toString() );
 		}
 	}
 
-	public static class JsonDeserializer
-		extends com.fasterxml.jackson.databind.JsonDeserializer<Rate>
+	public static class FromJsonString extends JsonDeserializer<Rate>
 	{
-		public JsonDeserializer()
-		{
-			// LOG.trace("Created " + getClass().getName());
-		}
-
 		@Override
 		public Rate deserialize( final JsonParser p,
 			final DeserializationContext ctxt )
 			throws IOException, JsonProcessingException
 		{
-			// LOG.trace("Deserializing " + p.getText());
 			return Rate.valueOf( p.getText() );
 		}
 	}

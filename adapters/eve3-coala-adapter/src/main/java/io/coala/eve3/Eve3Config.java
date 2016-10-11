@@ -18,7 +18,7 @@ package io.coala.eve3;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.coala.bind.LocalConfig;
+import io.coala.bind.LocalId;
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 import io.coala.config.YamlUtil;
@@ -84,21 +85,36 @@ public interface Eve3Config extends GlobalConfig, Mutable
 		return subConfigs( TEMPLATES_KEY, AgentBuilderConfig.class, imports );
 	}
 
-	default AgentBuilderConfig forAgent( final String id,
+	default AgentBuilderConfig forAgent( final LocalId localId,
 		final Map<?, ?>... imports )
 	{
+		// default: servlet context is root ancestor of (recursive) local id
+		String context = "/agents";
+		String id = "";
+		for( LocalId i = localId; i.parentRef() != null; i = i.parentRef() )
+		{
+			if( i.parentRef() != null && i.parentRef().parentRef() == null )
+				context += "/" + i.parentRef();
+			id = id.isEmpty() ? i.unwrap().toString()
+					: i.unwrap().toString() + LocalId.ID_SEP_REGEX + id;
+		}
+		final Map<String, String> map = new HashMap<>();
+		map.put( LocalConfig.ID_KEY, id );
+		map.put( DefaultAgentBuilderConfig.HTTP_CONTEXT_KEY, context );
+
+		// FIXME add default servlet context with links to each agent's GUI
+		
+		// start agent transports
 		final DefaultAgentBuilderConfig defaults = ConfigFactory.create(
 				DefaultAgentBuilderConfig.class,
-				ConfigUtil.join(
-						Collections.singletonMap( LocalConfig.ID_KEY, id ),
-						imports ) );
+				ConfigUtil.join( map, imports ) );
 		// try agent with given id
 		for( Map.Entry<String, AgentBuilderConfig> entry : agentConfigs(
 				imports ).entrySet() )
 		{
 			final ObjectNode agentConfig = (ObjectNode) entry.getValue()
 					.toJSON();
-			// match agent id
+			// match (local) agent id
 			if( !id.equals(
 					agentConfig.get( AgentBuilderConfig.ID_KEY ).asText() ) )
 				continue;
@@ -204,6 +220,7 @@ public interface Eve3Config extends GlobalConfig, Mutable
 		default Eve3Container buildAgent()
 		{
 			final AgentConfig config = builderConfig();
+			// FIXME apply localId.parent() as servlet context
 			final Agent result = new AgentBuilder().with( config ).onBoot()
 					.build();
 			Objects.requireNonNull( result );

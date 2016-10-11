@@ -22,7 +22,21 @@ Configuration:
         level: warn
       - name: com.zaxxer.hikari
         level: warn
-      - name: org.hibernate
-        level: warn
       - name: hsqldb.db
         level: warn
+      - name: org.hibernate
+        level: warn
+      # hide constraint warnings for 'create-drop' DDL and 'in-memory' database
+      - name: org.hibernate.tool.schema.internal.ExceptionHandlerLoggedImpl
+        level: error
+      # show (unformatted) SQL
+      - name: org.hibernate.SQL
+        level: debug
+      # show SQL parameter bindings
+#      - name: org.hibernate.type
+#        level: trace
+#      - name: org.hibernate.type.BasicTypeRegistry
+#        level: warn
+#      - name: org.hibernate.type.descriptor.converter
+#        level: warn
+        

@@ -31,6 +31,7 @@ import io.coala.config.GlobalConfig;
  */
 public interface BinderConfig extends GlobalConfig
 {
+	String IMPLEMENTATION_KEY = "impl";
 
 	String PROVIDERS_KEY = "providers";
 
@@ -39,4 +40,8 @@ public interface BinderConfig extends GlobalConfig
 	{
 		return subConfigs( PROVIDERS_KEY, ProviderConfig.class, imports );
 	}
+
+	@Key( IMPLEMENTATION_KEY )
+	@DefaultValue( "io.coala.guice4.Guice4LocalBinder" )
+	Class<? extends LocalBinder> binderType();
 }

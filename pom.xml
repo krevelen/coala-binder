@@ -64,6 +64,12 @@
 		<encoding>UTF-8</encoding>
 		<skipTests>false</skipTests>
 
+		<!-- Eclipse JPA activation, see http://stackoverflow.com/a/37604836 -->
+		<m2e.jpa.activation>false</m2e.jpa.activation>
+		<m2e.jsf.activation>false</m2e.jsf.activation>
+		<m2e.cdi.activation>true</m2e.cdi.activation>
+		<m2e.jaxrs.activation>false</m2e.jaxrs.activation>
+
 		<maven.test.skip>${skipTests}</maven.test.skip>
 		<project.build.sourceLevel>${source}</project.build.sourceLevel>
 		<project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>

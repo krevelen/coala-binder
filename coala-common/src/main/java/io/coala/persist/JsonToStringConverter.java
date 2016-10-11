@@ -21,27 +21,29 @@ package io.coala.persist;
 
 import javax.persistence.AttributeConverter;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.TreeNode;
 
 import io.coala.json.JsonUtil;
 
 /**
- * {@link JsonNodeToStringConverter}
+ * {@link JsonToStringConverter} converts Strings to/from Json trees, an
+ * intermediate form useful for lazy deserialization, e.g. into run-time or
+ * abstract types
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class JsonNodeToStringConverter
-	implements AttributeConverter<JsonNode, String>
+public class JsonToStringConverter
+	implements AttributeConverter<TreeNode, String>
 {
 	@Override
-	public String convertToDatabaseColumn( final JsonNode attribute )
+	public String convertToDatabaseColumn( final TreeNode attribute )
 	{
 		return JsonUtil.stringify( attribute );
 	}
 
 	@Override
-	public JsonNode convertToEntityAttribute( final String dbData )
+	public TreeNode convertToEntityAttribute( final String dbData )
 	{
 		return JsonUtil.toTree( dbData );
 	}
