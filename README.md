@@ -8,7 +8,7 @@ This extension of the *coala-api-time* API provides a kind of domain specific la
 ## Getting started
 
 ### Step 1: Configure your project
-First, add the following to your Maven project's `<project>` tag:
+First, add the following to the `<project>` tag of your Maven project's `pom.xml`:
 
 ```xml
 <properties>
@@ -51,16 +51,17 @@ First, add the following to your Maven project's `<project>` tag:
 ### Step 2: Configure the binders
 Second, configure the implementation bindings of virtual time scheduler(s), actors, transactions, facts, and fact banks factories, in this case using default implementations, and launch: 
 
-#### A. Configure using a file
-Create the LocalBinder for the `world1` container from a YAML formatted file with the name `world1.yaml`:
+#### A. Configure using a file or URL (e.g. package for deployment)
+Create the LocalBinder for the `my-world` container from a YAML formatted file with the name `my-config.yaml`:
 
 ```java
 LocalBinder binder = LocalConfig.openYAML( "my-config.yaml", "my-world" ).create();
 ```
 
-and provide your `my-config.yaml` file (located either in the class-path, relative to the current `${user.dir}` working directory, or at some absolute path or URL):
+and provide your `my-config.yaml` file located either in the class-path, relative to the current `${user.dir}` working directory, or at some absolute path or URL:
 
 ```yaml
+ # my-config.yaml
 my-world:
   binder:
     impl: io.coala.guice4.Guice4LocalBinder
@@ -147,48 +148,83 @@ in a monthly pattern. We could implement this as follows:
 	/** initialize the {@link World} */
 	public void init()
 	{
-		// 1. create the "Supplier1" organization and specialized Sales department
+		// 1. create the "Supplier1" organization with "Sales" dept
 		Actor<Fact> supplier1 = this.actors.create( "Supplier1" );
 		Sales supplier1Sales = supplier1.asExecutor( Sales.class );
 		
-		// 2. add Sale execution behavior
+		// 2. add "Sale" execution behavior to "Sales" dept
 		supplier1Sales.emit( FactKind.REQUESTED ).subscribe( 
 			rq -> after( Duration.of( 1, Units.DAYS ) ).call( 
 				t -> supplier1Sales.respond( rq, FactKind.STATED ).commit() ) );
 				
-		// 3. create the "Consumer1" organization and specialized Buying department
+		// 3. create the "Consumer1" organization with "Buying" dept
 		Actor<Fact> consumer1 = this.actors.create( "Consumer1" );
 		Buying consumer1Buying = consumer1.asInitiator( Buying.class );
 		
-		// 4. add Sale acceptance behavior
+		// 4. add "Sale" acceptance behavior to "Buying" dept
 		consumer1Buying.emit( FactKind.STATED ).subscribe( 
 			st -> System.err.println( "Sale was executed: " + st ) );
-			
-		// 5. create recurrence rule for midnight of the 30th of each month
-		Timing timing = Timing.valueOf( "0 0 0 30 * ? *" );
 		
-		// 6. add Sale initiating behavior
+		// 5. add "Sale" initiating behavior: each month at the 30th at midnight 
+		Timing timing = Timing.valueOf( "0 0 0 30 * ? *" );
 		atEach( timing.offset( this.actors.offset() ).iterate(), 
 			t -> consumer1Buying.initiate( supplier1.id() ).commit() )
+		
+		// 6. make facts between them 'inter-subjective' (ie. known to both actors)
+		supplier1.outgoing().subscribe(consumer1);
+		consumer1.outgoing().subscribe(supplier1);
 	}
 }
 ```
 
 ## Features
 
+### Bean support
+
+When you specify bean property read and write methods to your `Fact` or `Actor` interface extension, they will be considered as type-safe proxy getters and setters, reading from and writing to the `#properties()` mapping. Furthermore, `default` methods are supported, so you can also apply the builder pattern to your specification.
+
+For instance, you could extend your `Sale` fact to have the `posixETA` property, including a builder method `withPosixETA(..)` and conversion method `toVirtualETA(..)`:
+
+```java
+public interface Sale extends Fact
+{
+	/** @return the {@link java.time.Instant posix} ETA */
+	java.time.Instant getPosixETA(); // implemented by proxy to #properties()
+	/** @param value the {@link java.time.Instant posix} ETA */
+	void setPosixETA(java.time.Instant value);
+	/** 
+	 * @param value the {@link java.time.Instant posix} ETA
+	 * @return this {@link Sale} object, to allow chaining 
+	 */
+	default Sale withPosixETA(java.time.Instant value)
+	{ 
+		setPosixETA(value); 
+		return this; 
+	}
+	/** 
+	 * @param offset the {@link java.time.Instant posix} offset to convert from
+	 * @return a virtual {@link io.coala.time.Instant} conversion
+	 */
+	default io.coala.time.Instant toVirtualETA(java.time.Instant offset)
+	{
+		return io.coala.time.Instant.of(getActualETA(), offset);
+	}
+}
+```
+
 ### JPA Support
 
-Persist your facts using the Java Persistence API v2.1, by binding the `FactBank.Factory.SimpleJPA`, a simple `FactBank` instance provider that relies on two entity tables:
+Persist your facts using the Java Persistence API v2.1, for instance by binding the `FactBank.Factory.SimpleJPA`. This is a simple persistent `FactBank` instance provider example that relies on two entity tables:
 
 - `LOCAL_IDS` mapped by `io.coala.bind.persist.LocalIdDao`, and
 - `FACTS`, mapped by `io.coala.enterprise.persist.FactDao`.
 
-The following measures were taken in order to reduce the amount of querying required by the JPA provider:
+In order to reduce the amount of querying required by the JPA provider, the following measures were taken:
 
-- the `@Entit` `LocalIdDao`, used to identify Actors, is annotated as `@Cacheable` for the L2 cache of the `EntityManagerFactory`, which in turn is used by all its `EntityManager`s
-- all `Transaction` data is embedded within each `FactDao` entry, thus removing the need to check and maintain unique-constraints on `@ManyToOne` join relations 
+- the `@Entity` `LocalIdDao`, used to identify Actors, is annotated as `@Cacheable` for the L2 cache of the `EntityManagerFactory`, which in turn is used by each `EntityManager`
+- all `io.coala.enterprise.Transaction` data is embedded within each `FactDao` entry, thus removing the need to check and maintain unique-constraints on `@ManyToOne` join relations 
 - `UUID` identifier values (used to reference `Fact` and `Transaction` entries) are stored as bytes for high speed lookup and low memory footprint
-- virtual time, is persisted in three variants of the `@Embeddable` `InstantDao` (see e.g. `FactDao.occur` and `FactDao.expire`): 
+- virtual time is persisted in three variants using the `@Embeddable` `InstantDao` (see e.g. `FactDao.occur` and `FactDao.expire`): 
   - (redundant) `@Temporal` posix-time, converted using the replication offset `java.time.Instant`
   - (redundant) `NUMERIC` virtual time, converted to the replication base time unit
   - `TEXT` exact time, with scientific scale, precision, and time unit
