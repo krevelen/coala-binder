@@ -149,19 +149,19 @@ in a monthly pattern. We could implement this as follows:
 	{
 		// 1. create the "Supplier1" organization and specialized Sales department
 		Actor<Fact> supplier1 = this.actors.create( "Supplier1" );
-		Sales supplier1Sales = supplier1.executor( Sale.class, Sales.class );
+		Sales supplier1Sales = supplier1.asExecutor( Sales.class );
 		
 		// 2. add Sale execution behavior
-		supplier1Sales.commits( FactKind.REQUESTED ).subscribe( 
+		supplier1Sales.emit( FactKind.REQUESTED ).subscribe( 
 			rq -> after( Duration.of( 1, Units.DAYS ) ).call( 
 				t -> supplier1Sales.respond( rq, FactKind.STATED ).commit() ) );
 				
 		// 3. create the "Consumer1" organization and specialized Buying department
 		Actor<Fact> consumer1 = this.actors.create( "Consumer1" );
-		Buying consumer1Buying = consumer1.initiator( Sale.class, Buying.class );
+		Buying consumer1Buying = consumer1.asInitiator( Buying.class );
 		
 		// 4. add Sale acceptance behavior
-		consumer1Buying.commits( FactKind.STATED ).subscribe( 
+		consumer1Buying.emit( FactKind.STATED ).subscribe( 
 			st -> System.err.println( "Sale was executed: " + st ) );
 			
 		// 5. create recurrence rule for midnight of the 30th of each month
@@ -169,7 +169,7 @@ in a monthly pattern. We could implement this as follows:
 		
 		// 6. add Sale initiating behavior
 		atEach( timing.offset( this.actors.offset() ).iterate(), 
-			t -> consumer1Buying.initiate( Sale.class, supplier1.id() ).commit() )
+			t -> consumer1Buying.initiate( supplier1.id() ).commit() )
 	}
 }
 ```

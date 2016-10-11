@@ -125,18 +125,19 @@ public class EnterpriseTest
 					this.actors.offset().toEpochMilli() );
 			LOG.trace( "initialized occurred and expired fact sniffing" );
 
-			org1.commits().subscribe( fact ->
+			org1.emit().subscribe( fact ->
 			{
 				LOG.trace( "t={}, occurred: {}", now().prettify( offset ),
 						fact );
 			}, e -> LOG.error( "Problem", e ) );
 
 			final AtomicInteger counter = new AtomicInteger( 0 );
-			final Procurement proc = org1.initiator( Sale.class,
+			final Procurement proc = org1.asInitiator( //Sale.class,
 					Procurement.class );
-			final Sales sales = org1.executor( Sale.class, Sales.class );
+			final Sales sales = org1.asExecutor( //Sale.class, 
+					Sales.class );
 			sales.setTotalValue( 0 );
-			sales.commits( FactKind.REQUESTED ).subscribe(
+			sales.emit( FactKind.REQUESTED ).subscribe(
 					rq -> after( Duration.of( 1, Units.DAYS ) ).call( t ->
 					{
 						final Sale st = sales.respond( rq, FactKind.STATED )
@@ -155,8 +156,7 @@ public class EnterpriseTest
 					.iterate(), t ->
 					{
 						// spawn initial transactions from/with self
-						final Sale rq = proc
-								.initiate( Sale.class, sales.id(), t.add( 1 ) )
+						final Sale rq = proc.initiate( sales.id(), t.add( 1 ) )
 								.withRqParam( t );
 
 						// de/serialization test
@@ -194,18 +194,19 @@ public class EnterpriseTest
 	}
 
 	@Test
-	public void testEnterpriseOntology() throws TimeoutException, IOException, InterruptedException
+	public void testEnterpriseOntology()
+		throws TimeoutException, IOException, InterruptedException
 	{
-		LOG.trace( "Deser: ", Fact.fromJSON(
-				"{" + "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
+		LOG.trace( "Deser: ",
+				Fact.fromJSON( "{"
+						+ "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"occurrence\":{},\"transaction\":{"
 						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$World$Sale\""
 						+ ",\"id\":\"1a990580-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"initiatorRef\":\"eoSim-org1-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ "}" + ",\"kind\":\"REQUESTED\",\"expiration\":{}"
-						+ ",\"rqParam\":\"123 ms\"" + "}",
-				World.Sale.class ) );
+						+ ",\"rqParam\":\"123 ms\"" + "}", World.Sale.class ) );
 
 		// configure replication FIXME via LocalConfig?
 		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
@@ -224,13 +225,12 @@ public class EnterpriseTest
 //						FactBank.Factory.LocalJPA.class )
 //				.build();
 		final LocalBinder binder = LocalConfig
-				.openYAML( "world1.yaml", "world1" )
+				.openYAML( "world1.yaml", "my-world" )
 				.create( Collections.singletonMap( EntityManagerFactory.class,
 						HibHikHypConfig.createEMF() ) );
 
 		LOG.info( "Starting EO test, config: {}", binder );
-		final Scheduler scheduler = binder.inject( World.class )
-				.scheduler();
+		final Scheduler scheduler = binder.inject( World.class ).scheduler();
 
 		final Waiter waiter = new Waiter();
 		scheduler.time().subscribe( time ->

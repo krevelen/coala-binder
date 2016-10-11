@@ -19,18 +19,15 @@
  */
 package io.coala.enterprise.persist;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.measure.DecimalMeasure;
 import javax.measure.unit.Unit;
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
 import javax.persistence.Convert;
-import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
@@ -57,10 +54,10 @@ import io.coala.enterprise.Fact.ID;
 import io.coala.enterprise.FactKind;
 import io.coala.enterprise.Transaction;
 import io.coala.json.JsonUtil;
-import io.coala.math.MeasureUtil;
 import io.coala.persist.JsonToStringConverter;
 import io.coala.persist.UUIDToByteConverter;
 import io.coala.time.Instant;
+import io.coala.time.persist.InstantDao;
 
 /**
  * {@link FactDao}
@@ -76,65 +73,6 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	public static final String TYPE_COL_NAME = "TYPE";
 
 	public static final String KIND_COL_NAME = "KIND";
-
-	@Embeddable
-	public static class InstantDao
-		implements BindableDao<Instant, FactDao.InstantDao>
-	{
-		/** the Java attribute name for the POSIX time value */
-		public static final String POSIX_ATTR_NAME = "posix";
-
-		/** the Java attribute name for the numeric virtual time value */
-		public static final String NUM_ATTR_NAME = "num";
-
-		/** the Java attribute name for the exact virtual time descriptor */
-		public static final String STR_ATTR_NAME = "str";
-
-		/** derived, based on replication UTC offset */
-		@Temporal( TemporalType.TIMESTAMP )
-		@Column
-		protected Date posix; // 
-
-		/** derived, based on replication time unit */
-		@Column
-		protected BigDecimal num; // 
-
-		/** exact precision, scale and unit description */
-		@Column
-		protected String str;
-
-		/**
-		 * @param expiration
-		 * @param offset
-		 * @param unit
-		 * @return
-		 */
-		@SuppressWarnings( { "unchecked", "rawtypes" } )
-		public static FactDao.InstantDao of( final Instant instant,
-			final Date offset, final Unit unit )
-		{
-			final FactDao.InstantDao result = new InstantDao();
-			if( instant == null )
-			{
-				result.posix = null;
-				result.num = null;
-				result.str = null;
-			} else
-			{
-				result.posix = instant.toDate( offset );
-				result.num = MeasureUtil.toBigDecimal( instant.unwrap() );
-				result.str = instant.toString();
-			}
-			return result;
-		}
-
-		@Override
-		public Instant restore( final LocalBinder binder )
-		{
-			return this.str == null ? null
-					: Instant.of( DecimalMeasure.valueOf( this.str ) );
-		}
-	}
 
 	public static boolean exists( final EntityManager em, final ID id )
 	{
@@ -173,8 +111,8 @@ public class FactDao implements BindableDao<Fact, FactDao>
 		final Transaction<?> tx = Objects.requireNonNull( fact.transaction() );
 		final Date offset = Date.from( tx.offset() );
 		final Unit<?> unit = tx.timeUnit();
-		final Instant occurrence = Objects.requireNonNull( fact.occur() );
-		final Instant expiration = fact.expire();
+		final Instant occur = Objects.requireNonNull( fact.occur() );
+		final Instant expire = fact.expire();
 		final ID causeRef = fact.causeRef();
 
 		final FactDao dao = new FactDao();
@@ -193,8 +131,8 @@ public class FactDao implements BindableDao<Fact, FactDao>
 				: Objects.requireNonNull( causeRef.unwrap() );
 		dao.causeTranRef = causeRef == null ? null
 				: Objects.requireNonNull( causeRef.parentRef() ).unwrap();
-		dao.occurrence = InstantDao.of( occurrence, offset, unit );
-		dao.expiration = InstantDao.of( expiration, offset, unit );
+		dao.occur = InstantDao.of( occur, offset, unit );
+		dao.expire = InstantDao.of( expire, offset, unit );
 		dao.properties = JsonUtil.toTree( fact.properties() );
 //			em.persist( result );
 		return dao;
@@ -251,7 +189,7 @@ public class FactDao implements BindableDao<Fact, FactDao>
 				column = @Column( name = "OCCUR_STR", nullable = false,
 					updatable = false ) ), } )
 	@Embedded
-	protected InstantDao occurrence;
+	protected InstantDao occur;
 
 	@AttributeOverrides( {
 			@AttributeOverride( name = InstantDao.POSIX_ATTR_NAME,
@@ -262,7 +200,7 @@ public class FactDao implements BindableDao<Fact, FactDao>
 				column = @Column( name = "EXPIRE_STR",
 					updatable = false ) ), } )
 	@Embedded
-	protected InstantDao expiration;
+	protected InstantDao expire;
 
 	/** links to complete cause (only if persisted locally) */
 	@ManyToOne( optional = true, fetch = FetchType.LAZY, cascade = {} )
@@ -301,15 +239,15 @@ public class FactDao implements BindableDao<Fact, FactDao>
 		final ID cause = this.causeRef == null ? null
 				: ID.of( this.causeRef,
 						Transaction.ID.of( this.causeTranRef, binder.id() ) );
-		final Instant occurrence = Objects.requireNonNull( this.occurrence )
+		final Instant occur = Objects.requireNonNull( this.occur )
 				.restore( binder );
-		final Instant expiration = this.expiration == null ? null
-				: this.expiration.restore( binder );
+		final Instant expire = this.expire == null ? null
+				: this.expire.restore( binder );
 
 		final Map<String, Object> properties = JsonUtil
 				.valueOf( this.properties, Map.class );
 		return binder.inject( Fact.Factory.class ).create( tx.kind(), id, tx,
-				this.kind, occurrence, expiration, cause,
+				this.kind, occur, expire, cause,
 				Fact.fromJSON( JsonUtil.getJOM(), this.properties, tx.kind(),
 						properties ) );
 	}

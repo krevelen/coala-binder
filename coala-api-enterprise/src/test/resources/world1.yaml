@@ -1,19 +1,20 @@
-world1:
+my-world:
   binder:
     impl: io.coala.guice4.Guice4LocalBinder
     providers:
-    - bindings:
+    - impl: io.coala.dsol3.Dsol3Scheduler
+      bindings:
       - type: io.coala.time.Scheduler
-      impl: io.coala.dsol3.Dsol3Scheduler
-    - bindings:
+    - impl: io.coala.enterprise.Actor$Factory$LocalCaching
+      bindings:
       - type: io.coala.enterprise.Actor$Factory
-      impl: io.coala.enterprise.Actor$Factory$LocalCaching
-    - bindings:
+    - impl: io.coala.enterprise.Transaction$Factory$LocalCaching
+      bindings:
       - type: io.coala.enterprise.Transaction$Factory
-      impl: io.coala.enterprise.Transaction$Factory$LocalCaching
-    - bindings:
+    - impl: io.coala.enterprise.Fact$Factory$SimpleProxies
+      bindings:
       - type: io.coala.enterprise.Fact$Factory
-      impl: io.coala.enterprise.Fact$Factory$SimpleProxies
-    - bindings:
+#    - impl: io.coala.enterprise.FactBank$Factory$InMemory
+    - impl: io.coala.enterprise.FactBank$Factory$LocalJPA
+      bindings:
       - type: io.coala.enterprise.FactBank$Factory
-      impl: io.coala.enterprise.FactBank$Factory$InMemory

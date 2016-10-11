@@ -40,6 +40,7 @@ import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
 import io.coala.util.ReflectUtil;
+import io.coala.util.TypeArguments;
 import rx.Observable;
 import rx.Observer;
 import rx.subjects.PublishSubject;
@@ -61,38 +62,41 @@ public interface Actor<F extends Fact>
 	Map<String, Object> properties();
 
 	/**
-	 * @param tranKind
-	 * @return an actor that handles the initiator-side of specified transaction
-	 *         type (and all its subtypes)
+	 * @param actorKind
+	 * @return an actor view that for performing the initiator-side of its
+	 *         transaction type (and all its subtypes)
 	 */
-	<A extends Actor<T>, T extends F> A initiator( Class<T> tranKind,
-		Class<A> actorKind );
+	<A extends Actor<T>, T extends F> A asInitiator( Class<A> actorKind );
 
-	<A extends Actor<T>, T extends F> A executor( Class<T> tranKind,
-		Class<A> actorKind );
+	/**
+	 * @param actorKind
+	 * @return an actor view that for performing the executor-side of its
+	 *         transaction type (and all its subtypes)
+	 */
+	<A extends Actor<T>, T extends F> A asExecutor( Class<A> actorKind );
 
 	/**
 	 * @return an {@link Observable} stream of all generated or received
 	 *         {@link Fact}s
 	 */
-	Observable<F> commits();
+	Observable<F> emit();
 
 	/**
 	 * @param tranKind the type of {@link Fact} to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
 	 */
-	default <T extends F> Observable<T> commits( final Class<T> tranKind )
+	default <T extends F> Observable<T> emit( final Class<T> tranKind )
 	{
-		return commits().ofType( tranKind );
+		return emit().ofType( tranKind );
 	}
 
 	/**
 	 * @param factKind the {@link FactKind} to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
 	 */
-	default Observable<F> commits( final FactKind factKind )
+	default Observable<F> emit( final FactKind factKind )
 	{
-		return commits().filter( f -> f.kind().equals( factKind ) );
+		return emit().filter( f -> f.kind().equals( factKind ) );
 	}
 
 	/**
@@ -100,10 +104,10 @@ public interface Actor<F extends Fact>
 	 * @param factKind the {@link FactKind} to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
 	 */
-	default <T extends F> Observable<T> commits( final Class<T> tranKind,
+	default <T extends F> Observable<T> emit( final Class<T> tranKind,
 		final FactKind factKind )
 	{
-		return commits( tranKind ).filter( f -> f.kind().equals( factKind ) );
+		return emit( tranKind ).filter( f -> f.kind().equals( factKind ) );
 	}
 
 	/**
@@ -111,10 +115,10 @@ public interface Actor<F extends Fact>
 	 * @param creatorRef the origin {@link Actor.ID} to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
 	 */
-	default <T extends F> Observable<T> commits( final Class<T> tranKind,
+	default <T extends F> Observable<T> emit( final Class<T> tranKind,
 		final Actor.ID creatorRef )
 	{
-		return commits( tranKind )
+		return emit( tranKind )
 				.filter( fact -> fact.creatorRef().equals( creatorRef ) );
 	}
 
@@ -124,20 +128,20 @@ public interface Actor<F extends Fact>
 	 * @param creatorRef the origin {@link Actor.ID} to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
 	 */
-	default <T extends F> Observable<T> commits( final Class<T> tranKind,
+	default <T extends F> Observable<T> emit( final Class<T> tranKind,
 		final FactKind factKind, final Actor.ID creatorRef )
 	{
-		return commits( tranKind, factKind )
+		return emit( tranKind, factKind )
 				.filter( fact -> fact.creatorRef().equals( creatorRef ) );
 	}
 
 	/**
-	 * @return all {@link #commits()} where {@link Fact#isOutgoing()
-	 *         isOutgoing()} {@code == true}
+	 * @return all {@link #emit()} where {@link Fact#isOutgoing() isOutgoing()}
+	 *         {@code == true}
 	 */
 	default Observable<F> outgoing()
 	{
-		return commits().filter( Fact::isOutgoing );
+		return emit().filter( Fact::isOutgoing );
 	}
 
 	default <T extends F> Observable<T> outgoing( final Class<T> tranKind )
@@ -149,6 +153,12 @@ public interface Actor<F extends Fact>
 		final FactKind kind )
 	{
 		return outgoing( tranKind ).filter( f -> f.kind() == kind );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Class<F> tranKind()
+	{
+		return (Class<F>) TypeArguments.of( Actor.class, getClass() ).get( 0 );
 	}
 
 	/**
@@ -163,6 +173,19 @@ public interface Actor<F extends Fact>
 	/**
 	 * create a request initiating a new {@link Transaction}
 	 * 
+	 * @param executorRef a {@link Actor.ID} of the intended executor
+	 * @param params additional property (or bean attribute) values, if any
+	 * @return the initial request {@link Fact}
+	 */
+	@SuppressWarnings( "unchecked" )
+	default F initiate( final Actor.ID executorRef, final Map<?, ?>... params )
+	{
+		return initiate( tranKind(), executorRef, null, null, params );
+	}
+
+	/**
+	 * create a request initiating a new {@link Transaction}
+	 * 
 	 * @param tranKind the type of {@link Fact} being coordinated
 	 * @param executorRef a {@link Actor.ID} of the intended executor
 	 * @param params additional property (or bean attribute) values, if any
@@ -172,6 +195,20 @@ public interface Actor<F extends Fact>
 		final Actor.ID executorRef, final Map<?, ?>... params )
 	{
 		return initiate( tranKind, executorRef, null, null, params );
+	}
+
+	/**
+	 * create a request initiating a new {@link Transaction}
+	 * 
+	 * @param executorRef a {@link Actor.ID} of the intended executor
+	 * @param cause the {@link Fact} triggering the request, or {@code null}
+	 * @param params additional property (or bean attribute) values, if any
+	 * @return the initial request {@link Fact}
+	 */
+	default F initiate( final Actor.ID executorRef, final Fact.ID cause,
+		final Map<?, ?>... params )
+	{
+		return initiate( tranKind(), executorRef, cause, null, params );
 	}
 
 	/**
@@ -193,18 +230,31 @@ public interface Actor<F extends Fact>
 	/**
 	 * create a request initiating a new {@link Transaction}
 	 * 
+	 * @param executorRef a {@link Actor.ID} of the intended executor
+	 * @param expire the expire {@link Instant} of the request, or {@code null}
+	 * @param params additional property (or bean attribute) values, if any
+	 * @return the initial request {@link Fact}
+	 */
+	default F initiate( final Actor.ID executorRef, final Instant expire,
+		final Map<?, ?>... params )
+	{
+		return initiate( tranKind(), executorRef, null, expire, params );
+	}
+
+	/**
+	 * create a request initiating a new {@link Transaction}
+	 * 
 	 * @param tranKind the type of {@link Fact} being coordinated
 	 * @param executorRef a {@link Actor.ID} of the intended executor
-	 * @param expiration the expiration {@link Instant} of the request, or
-	 *            {@code null}
+	 * @param expire the expire {@link Instant} of the request, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
 	 * @return the initial request {@link Fact}
 	 */
 	default <T extends Fact> T initiate( final Class<T> tranKind,
-		final Actor.ID executorRef, final Instant expiration,
+		final Actor.ID executorRef, final Instant expire,
 		final Map<?, ?>... params )
 	{
-		return initiate( tranKind, executorRef, null, expiration, params );
+		return initiate( tranKind, executorRef, null, expire, params );
 	}
 
 	/**
@@ -213,17 +263,16 @@ public interface Actor<F extends Fact>
 	 * @param tranKind the type of {@link Fact} being coordinated
 	 * @param executorRef a {@link Actor.ID} of the intended executor
 	 * @param cause the {@link Fact} triggering the request, or {@code null}
-	 * @param expiration the expiration {@link Instant} of the request, or
-	 *            {@code null}
+	 * @param expire the expire {@link Instant} of the request, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
 	 * @return the initial request {@link Fact}
 	 */
 	default <T extends Fact> T initiate( final Class<T> tranKind,
-		final Actor.ID executorRef, final Fact.ID cause,
-		final Instant expiration, final Map<?, ?>... params )
+		final Actor.ID executorRef, final Fact.ID cause, final Instant expire,
+		final Map<?, ?>... params )
 	{
 		return transact( tranKind, id(), executorRef )
-				.generate( FactKind.REQUESTED, cause, expiration, params );
+				.generate( FactKind.REQUESTED, cause, expire, params );
 	}
 
 	/**
@@ -241,17 +290,16 @@ public interface Actor<F extends Fact>
 	/**
 	 * @param cause the {@link Fact} triggering the response
 	 * @param factKind the {@link FactKind} of the response
-	 * @param expiration the expiration {@link Instant} of the response, or
-	 *            {@code null}
+	 * @param expire the expire {@link Instant} of the response, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
 	 * @return a response {@link Fact}
 	 */
 	@SuppressWarnings( "unchecked" )
 	default F respond( final F cause, final FactKind factKind,
-		final Instant expiration, final Map<?, ?>... params )
+		final Instant expire, final Map<?, ?>... params )
 	{
 		return ((Transaction<F>) cause.transaction()).generate( factKind,
-				cause.id(), expiration, params );
+				cause.id(), expire, params );
 	}
 
 	default <S extends F> Actor<S> specializeIn( final Class<S> tranKind )
@@ -268,9 +316,9 @@ public interface Actor<F extends Fact>
 			}
 
 			@Override
-			public Observable<S> commits()
+			public Observable<S> emit()
 			{
-				return parent.commits( tranKind );
+				return parent.emit( tranKind );
 			}
 
 			@Override
@@ -293,16 +341,16 @@ public interface Actor<F extends Fact>
 
 			@Override
 			public <A extends Actor<T>, T extends S> A
-				initiator( final Class<T> tranKind, final Class<A> actorKind )
+				asInitiator( final Class<A> actorKind )
 			{
-				return parent.initiator( tranKind, actorKind );
+				return parent.asInitiator( actorKind );
 			}
 
 			@Override
 			public <A extends Actor<T>, T extends S> A
-				executor( final Class<T> tranKind, final Class<A> actorKind )
+				asExecutor( final Class<A> actorKind )
 			{
-				return parent.executor( tranKind, actorKind );
+				return parent.asExecutor( actorKind );
 			}
 
 			@Override
@@ -447,8 +495,6 @@ public interface Actor<F extends Fact>
 
 	class Simple implements Actor<Fact>
 	{
-//			final Logger LOG = LogUtil.getLogger( Simple.class );
-
 		public static Simple of( final LocalBinder binder, final ID id )
 		{
 			final Simple result = binder.inject( Simple.class );
@@ -458,10 +504,10 @@ public interface Actor<F extends Fact>
 
 		private transient final Map<Transaction.ID, Transaction<?>> txs = new ConcurrentHashMap<>();
 
-		private transient final Subject<Fact, Fact> commits = PublishSubject
+		private transient final Subject<Fact, Fact> emit = PublishSubject
 				.create();
 
-		private transient final Map<Class<?>, Observable<?>> typeCommits = new ConcurrentHashMap<>();
+		private transient final Map<Class<?>, Observable<?>> typeemit = new ConcurrentHashMap<>();
 
 		private transient final Map<Class<?>, Actor<?>> specialists = new ConcurrentHashMap<>();
 
@@ -517,53 +563,55 @@ public interface Actor<F extends Fact>
 		@SuppressWarnings( "unchecked" )
 		@Override
 		public <A extends Actor<F>, F extends Fact> A
-			initiator( final Class<F> tranKind, final Class<A> actorKind )
+			asInitiator( final Class<A> actorKind )
 		{
 			return ((Actor<? super F>) this.specialists.computeIfAbsent(
-					tranKind, key -> this.specializeIn( tranKind ) ))
+					TypeArguments.of( Actor.class, actorKind ).get( 0 ),
+					key -> this.specializeIn( (Class<F>) key ) ))
 							.proxyAs( actorKind );
 		}
 
 		@SuppressWarnings( "unchecked" )
 		@Override
 		public <A extends Actor<F>, F extends Fact> A
-			executor( final Class<F> tranKind, final Class<A> actorKind )
+			asExecutor( final Class<A> actorKind )
 		{
 			return ((Actor<? super F>) this.specialists.computeIfAbsent(
-					tranKind, key -> this.specializeIn( tranKind ) ))
+					TypeArguments.of( Actor.class, actorKind ).get( 0 ),
+					key -> this.specializeIn( (Class<F>) key ) ))
 							.proxyAs( actorKind );
 		}
 
 		@Override
-		public Observable<Fact> commits()
+		public Observable<Fact> emit()
 		{
-			return this.commits.asObservable();
+			return this.emit.asObservable();
 		}
 
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public <F extends Fact> Observable<F> commits( final Class<F> tranKind )
+		public <F extends Fact> Observable<F> emit( final Class<F> tranKind )
 		{
-			return (Observable<F>) this.typeCommits.computeIfAbsent( tranKind,
-					commits()::ofType );
+			return (Observable<F>) this.typeemit.computeIfAbsent( tranKind,
+					emit()::ofType );
 		}
 
 		@Override
 		public void onCompleted()
 		{
-			this.commits.onCompleted();
+			this.emit.onCompleted();
 		}
 
 		@Override
 		public void onError( final Throwable e )
 		{
-			this.commits.onError( e );
+			this.emit.onError( e );
 		}
 
 		@Override
 		public void onNext( final Fact fact )
 		{
-			this.commits.onNext( fact );
+			this.emit.onNext( fact );
 		}
 	}
 
