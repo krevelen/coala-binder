@@ -12,7 +12,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
 
 /**
@@ -153,15 +152,15 @@ public interface Caller<T, U, R, E extends Throwable>
 		};
 	}
 
-	/**
+	/** 
 	 * @param callable the {@link Callable} method
 	 * @return an {@link Caller} instance
 	 */
-//	static <R> Caller<Object, Object, R, Exception>
-//		of( final Callable<R> callable )
-//	{
-//		return of( (ThrowingSupplier<R, Exception>) callable::call );
-//	}
+	static <R> Caller<Object, Object, R, Exception>
+		ofCallable( final Callable<R> callable )
+	{
+		return of( (ThrowingSupplier<R, Exception>) callable::call );
+	}
 
 	static <R> Caller<Object, Object, R, Exception> ofConstructor(
 		final Constructor<R> constructor, final Object... argConstants )
@@ -223,12 +222,9 @@ public interface Caller<T, U, R, E extends Throwable>
 				try
 				{
 					return method.invoke( target, argsSupplier.get() );
-				} catch( final Exception e )
-				{
-					throw e;
 				} catch( final Throwable e )
 				{
-					throw ExceptionFactory.createChecked( e, "rethrow" );
+					return Thrower.rethrowUnchecked( e );
 				}
 			}
 		} );

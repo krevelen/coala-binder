@@ -19,6 +19,7 @@
  */
 package io.coala.bind;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +39,8 @@ import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 import io.coala.json.Contextual.Context;
 import io.coala.json.JsonUtil;
+import io.coala.name.Id;
+import io.coala.util.Instantiator;
 
 /**
  * {@link LocalConfig}
@@ -52,13 +55,36 @@ public interface LocalConfig extends GlobalConfig
 
 	String ID_KEY = "id";
 
-	String ID_DEFAULT = "";
+	String LOCAL_ID_KEY = "local-id";
+
+	String CONTEXT_ID_KEY = "context-id";
+
+	String CONTEXT_KEY = "context";
+
+	UUID CONTEXT_DEFAULT = new UUID();
+
+	String ID_DEFAULT = ""; // non-null triggers AnonymousConverter as required
 
 	String ID_PREFIX = "${" + ID_KEY + "}";
+
+	String BINDER_KEY = "binder";
 
 	static LocalConfig create( final Map<?, ?>... imports )
 	{
 		return ConfigFactory.create( LocalConfig.class, imports );
+	}
+
+	static LocalConfig openYAML( final String yamlPath, final String id,
+		final Map<?, ?>... imports ) throws IOException
+	{
+		return GlobalConfig.openYAML( yamlPath ).subConfig( id,
+				LocalConfig.class, Collections.singletonMap( ID_KEY, id ) );
+	}
+
+	static LocalConfig openYAML( final String id, final Map<?, ?>... imports )
+		throws IOException
+	{
+		return openYAML( ConfigUtil.CONFIG_FILE_YAML_DEFAULT, id, imports );
 	}
 
 	static LocalConfig of( final String id, final Map<?, ?>... imports )
@@ -72,31 +98,26 @@ public interface LocalConfig extends GlobalConfig
 		return new JsonBuilder();
 	}
 
-	class AnonymousConverter implements Converter<String>
-	{
-		@Override
-		public String convert( final Method method, final String input )
-		{
-			return input == null || input.isEmpty()
-					|| input.equals( ID_DEFAULT ) ? "anon|" + (new UUID())
-							: input;
-		}
-	}
+	@Key( CONTEXT_ID_KEY )
+	@DefaultValue( ID_DEFAULT )
+	String rawContextId();
 
 	@Key( ID_KEY )
 	@DefaultValue( ID_DEFAULT )
-	@ConverterClass( LocalConfig.AnonymousConverter.class )
+	@ConverterClass( AnonymousConverter.class )
 	String rawId();
 
-	// TODO add 'extends' key to inherit/import from other contexts
+	@Key( LOCAL_ID_KEY )
+	@DefaultValue( "${" + CONTEXT_ID_KEY + "}"
+			+ Id.IdConfig.ID_SEPARATOR_DEFAULT + "${" + ID_KEY + "}" )
+	@ConverterClass( LocalIdConverter.class )
+	LocalId localId();
 
-	String CONTEXT_KEY = "context";
+	// TODO add 'extends' key to inherit/import from other contexts
 
 	@Key( CONTEXT_KEY )
 	@ConverterClass( Context.ConfigConverter.class )
 	Context context();
-
-	String BINDER_KEY = "binder";
 
 	/**
 	 * @param imports
@@ -106,6 +127,41 @@ public interface LocalConfig extends GlobalConfig
 	default BinderConfig binderConfig( final Map<?, ?>... imports )
 	{
 		return subConfig( BINDER_KEY, BinderConfig.class, imports );
+	}
+
+	default LocalBinder create( final Map<Class<?>, ?> bindImports )
+	{
+		return Instantiator.instantiate( binderConfig().binderType(), this,
+				bindImports );
+	}
+
+	class AnonymousConverter implements Converter<String>
+	{
+		@Override
+		public String convert( final Method method, final String input )
+		{
+			return input == null || input.isEmpty()
+					|| input.equals( ID_DEFAULT )
+							? "anon|" + (new UUID()).getClockSeqAndNode()
+							: input;
+		}
+	}
+
+	class LocalIdConverter implements Converter<LocalId>
+	{
+		@Override
+		public LocalId convert( final Method method, final String input )
+		{
+			final String[] split = input
+					.split( Id.IdConfig.ID_SEPARATOR_DEFAULT );
+			return split.length == 1
+					? LocalId.of( split[0], LocalId.of( CONTEXT_DEFAULT ) )
+					: LocalId.of( split[1],
+							LocalId.of( split[0].isEmpty()
+									|| split[0].equals( ID_DEFAULT )
+											? CONTEXT_DEFAULT
+											: new UUID( split[0] ) ) );
+		}
 	}
 
 	class JsonBuilder

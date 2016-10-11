@@ -1,30 +1,32 @@
 package io.coala.enterprise;
 
+import java.io.IOException;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.unit.NonSI;
 import javax.persistence.EntityManagerFactory;
 
 import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
-import io.coala.dsol3.Dsol3Scheduler;
-import io.coala.guice4.Guice4LocalBinder;
+import io.coala.exception.ExceptionStream;
 import io.coala.log.LogUtil;
-import io.coala.persist.HibernateJPAConfig;
 import io.coala.time.Duration;
+import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
+import io.coala.time.Units;
 import net.jodah.concurrentunit.Waiter;
 
 /**
@@ -39,31 +41,64 @@ public class EnterpriseTest
 	/** TODO specialized logging adding e.g. Timed#now() and Identified#id() */
 	private static final Logger LOG = LogUtil.getLogger( EnterpriseTest.class );
 
+	@SuppressWarnings( "serial" )
 	@Singleton
-	public static class EnterpriseModel implements Proactive
+	public static class World implements Proactive
 	{
+		public interface Sales extends Actor<Sale>
+		{
+			Integer getTotalValue();
+
+			void setTotalValue( Integer totalValue );
+
+			default void addToTotal( Integer increment )
+			{
+				setTotalValue( getTotalValue() + increment );
+			}
+		}
+
+		public interface Procurement extends Actor<Sale>
+		{
+			Integer getTotalValue();
+
+			void setTotalValue( Integer totalValue );
+
+			default void addToTotal( Integer increment )
+			{
+				setTotalValue( getTotalValue() + increment );
+			}
+		}
 
 		/**
-		 * {@link TestFact} custom fact kind
-		 * 
-		 * @version $Id$
-		 * @author Rick van Krevelen
+		 * {@link Sale} custom fact kind
 		 */
-		interface TestFact extends CoordinationFact
+		public interface Sale extends Fact
 		{
-			// empty 
+			Instant getRqParam(); // get "rqParam" bean property
+
+			void setRqParam( Instant value ); // set "rqParam" bean property
+
+			default Sale withRqParam( Instant value ) // test default method
+			{
+				setRqParam( value );
+				return this;
+			}
+
+			String getStParam(); // get "stParam" bean property
+
+			static Sale fromJSON( final String json ) // test de/serialization
+			{
+				return Fact.fromJSON( json, Sale.class );
+			}
 		}
 
 		private final Scheduler scheduler;
 
 		@Inject
-		private Organization.Factory organizations;
-
-//		@Inject
-//		private CoordinationFact.Persister persister;
+		private Actor.Factory actors;
 
 		@Inject
-		public EnterpriseModel( final Scheduler scheduler )
+		public World( final Scheduler scheduler )
 		{
 			this.scheduler = scheduler;
 			scheduler.onReset( this::initScenario );
@@ -83,65 +118,55 @@ public class EnterpriseTest
 		{
 			LOG.trace( "initializing..." );
 
-			final DateTime offset = DateTime.now().withTimeAtStartOfDay()
-					.withDayOfMonth( 1 ).withMonthOfYear( 1 );
+			final Actor<Fact> org1 = this.actors.create( "org1" );
+			LOG.trace( "initialized organization" );
 
-			LOG.trace( "initialize organization" );
-			final Organization org1 = this.organizations.create( "org1" );
-			final CompositeActor sales = org1.actor( "sales" );
+			final DateTime offset = new DateTime(
+					this.actors.offset().toEpochMilli() );
+			LOG.trace( "initialized occurred and expired fact sniffing" );
 
-			LOG.trace( "initialize business rule(s)" );
-			sales.on( TestFact.class, sales.id(), fact ->
+			org1.emit().subscribe( fact ->
 			{
-				sales.after( Duration.of( 1, NonSI.DAY ) ).call( t ->
-				{
-					final TestFact response = sales.createResponse( fact,
-							CoordinationFactType.STATED, true, null, Collections
-									.singletonMap( "myParam1", "myValue1" ) );
-					LOG.trace( "t={}, {} responded: {} for incoming: {}", t,
-							sales.id(), response, fact );
-				} );
-			} );
+				LOG.trace( "t={}, occurred: {}", now().prettify( offset ),
+						fact );
+			}, e -> LOG.error( "Problem", e ) );
 
-			LOG.trace( "initialize TestFact[RQ] redirect to self" );
-			org1.outgoing( TestFact.class, CoordinationFactType.REQUESTED )
-					.subscribe( f ->
+			final AtomicInteger counter = new AtomicInteger( 0 );
+			final Procurement proc = org1.asInitiator( //Sale.class,
+					Procurement.class );
+			final Sales sales = org1.asExecutor( //Sale.class, 
+					Sales.class );
+			sales.setTotalValue( 0 );
+			sales.emit( FactKind.REQUESTED ).subscribe(
+					rq -> after( Duration.of( 1, Units.DAYS ) ).call( t ->
 					{
-						org1.consume( f );
-					}, e ->
-					{
-						LOG.error( "Problem redirecting TestFact", e );
-					} );
+						final Sale st = sales.respond( rq, FactKind.STATED )
+								.with( "stParam",
+										"stValue" + counter.getAndIncrement() );
+						sales.addToTotal( 1 );
+						LOG.trace( "{} responds: {} <- {}, total now: {}",
+								sales.id(), st.causeRef().prettyHash(),
+								st.getStParam(), sales.getTotalValue() );
+						st.commit( true );
+					} ), e -> LOG.error( "Problem", e ),
+					() -> LOG.trace( "sales/rq completed?" ) );
+			LOG.trace( "initialized business rule(s)" );
 
-			LOG.trace( "intializeg TestFact initiation" );
-			atEach( Timing.valueOf( "0 0 0 14 * ? *" ).offset( offset )
+			atEach( Timing.valueOf( "0 0 0 30 * ? *" ).offset( offset )
 					.iterate(), t ->
 					{
-						// spawn initial transactions with self
-						LOG.trace( "initiating TestFact" );
-						sales.createRequest( TestFact.class, sales, null,
-								t.add( 1 ), Collections.singletonMap(
-										"myParam2", "myValue2" ) );
+						// spawn initial transactions from/with self
+						final Sale rq = proc.initiate( sales.id(), t.add( 1 ) )
+								.withRqParam( t );
+
+						// de/serialization test
+						final String json = rq.toJSON();
+						final String fact = Sale.fromJSON( json ).toString();
+						LOG.trace( "{} initiates: {} => {}", proc.id(), json,
+								fact );
+						rq.commit();
 					} );
-
-			LOG.trace( "initialize incoming fact sniffing" );
-			org1.incoming().subscribe( fact ->
-			{
-				LOG.trace( "t={}, incoming: {}", org1.now().prettify( offset ),
-						fact );
-			} );
-
-//			LOG.trace( "initialize outgoing fact persistence" );
-//			org1.outgoing().subscribe( fact ->
-//			{
-//				try
-//				{
-//					this.persister.save( fact );
-//				} catch( final Exception e )
-//				{
-//					e.printStackTrace();
-//				}
-//			} );
+			LOG.trace( "intialized TestFact initiation" );
 
 			// TODO test fact expiration handling
 
@@ -155,91 +180,57 @@ public class EnterpriseTest
 
 			// TODO test Jason or GOAL scripts for business rules
 
-			// TODO test/implement JSON de/serialization (for UI interaction)
-
-			LOG.trace( "initialized!" );
+			LOG.trace( "initialization complete!" );
 		}
 	}
 
-	interface PersistenceConfig extends HibernateJPAConfig
+	@BeforeClass
+	public static void listenExceptions()
 	{
-		String DATASOURCE_CLASS_KEY = "hibernate.hikari.dataSourceClassName";
-
-		String DATASOURCE_URL_KEY = "hibernate.hikari.dataSource.url";
-
-		String DATASOURCE_USERNAME_KEY = "hibernate.hikari.dataSource.user";
-
-		String DATASOURCE_PASSWORD_KEY = "hibernate.hikari.dataSource.password";
-
-		@DefaultValue( "hibernate_test_pu" )
-		String[] persistenceUnitNames();
-
-		@DefaultValue( "create" )
-		SchemaPolicy hibernateSchemaPolicy();
-
-		@Key( DEFAULT_SCHEMA_KEY )
-		@DefaultValue( "PUBLIC" )
-		String hibernateDefaultSchema();
-
-		@Key( CONNECTION_PROVIDER_CLASS_KEY )
-		@DefaultValue( "org.hibernate.hikaricp.internal.HikariCPConnectionProvider" )
-		String hibernateConnectionProviderClass();
-
-		// see https://github.com/brettwooldridge/HikariCP/wiki/Configuration#popular-datasource-class-names
-		@Key( DATASOURCE_CLASS_KEY )
-		@DefaultValue( "org.hsqldb.jdbc.JDBCDataSource" )
-		String hikariDataSourceClass();
-
-		@Key( DATASOURCE_USERNAME_KEY )
-		@DefaultValue( "sa" )
-		String username();
-
-		@Key( DATASOURCE_PASSWORD_KEY )
-		@DefaultValue( "" )
-		String password();
-
-		@Key( DATASOURCE_URL_KEY )
-		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
-//		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
-//		@DefaultValue( "jdbc:mysql://localhost/testdb" )
-		String url();
-
-		/**
-		 * @param imports additional {@link EntityManagerFactory} configuration
-		 * @return the (expensive) {@link EntityManagerFactory}
-		 */
-		static EntityManagerFactory createEMF( final Map<?, ?>... imports )
-		{
-			return ConfigCache.getOrCreate( PersistenceConfig.class, imports )
-					.createEntityManagerFactory();
-		}
+		ExceptionStream.asObservable().subscribe(
+				t -> LOG.error( "Intercept " + t.getClass().getSimpleName() ),
+				e -> LOG.error( "ExceptionStream failed", e ),
+				() -> LOG.trace( "JUnit test completed" ) );
 	}
 
 	@Test
-	public void testEnterpriseOntology() throws TimeoutException
+	public void testEnterpriseOntology()
+		throws TimeoutException, IOException, InterruptedException
 	{
+		LOG.trace( "Deser: ",
+				Fact.fromJSON( "{"
+						+ "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
+						+ ",\"occurrence\":{},\"transaction\":{"
+						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$World$Sale\""
+						+ ",\"id\":\"1a990580-863a-11e6-8b9d-c47d461717bb\""
+						+ ",\"initiatorRef\":\"eoSim-org1-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
+						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
+						+ "}" + ",\"kind\":\"REQUESTED\",\"expiration\":{}"
+						+ ",\"rqParam\":\"123 ms\"" + "}", World.Sale.class ) );
+
 		// configure replication FIXME via LocalConfig?
 		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
-				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 500 ) );
+				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );
 
 		// configure tooling
-		final LocalConfig config = LocalConfig.builder().withId( "eoSim" )
-				.withProvider( Scheduler.class, Dsol3Scheduler.class )
-				.withProvider( Organization.Factory.class,
-						Organization.Factory.LocalCaching.class )
-				.withProvider( Transaction.Factory.class,
-						Transaction.Factory.LocalCaching.class )
-				.withProvider( CoordinationFact.Factory.class,
-						CoordinationFact.Factory.Simple.class )
-//				.withProvider( CoordinationFact.Persister.class,
-//						CoordinationFact.Persister.SimpleJPA.class )
-				.build();
+//		final LocalConfig config = LocalConfig.builder().withId( "world1" )
+//				.withProvider( Scheduler.class, Dsol3Scheduler.class )
+//				.withProvider( Actor.Factory.class,
+//						Actor.Factory.LocalCaching.class )
+//				.withProvider( Transaction.Factory.class,
+//						Transaction.Factory.LocalCaching.class )
+//				.withProvider( Fact.Factory.class,
+//						Fact.Factory.SimpleProxies.class )
+//				.withProvider( FactBank.Factory.class,
+//						FactBank.Factory.LocalJPA.class )
+//				.build();
+		final LocalBinder binder = LocalConfig
+				.openYAML( "world1.yaml", "my-world" )
+				.create( Collections.singletonMap( EntityManagerFactory.class,
+						HibHikHypConfig.createEMF() ) );
 
-		LOG.info( "Starting EO test, config: {}", config.toYAML() );
-		final Scheduler scheduler = Guice4LocalBinder.of( config
-//						, Collections.singletonMap( EntityManagerFactory.class,
-//								PersistenceConfig.createEMF() ) 
-		).inject( EnterpriseModel.class ).scheduler();
+		LOG.info( "Starting EO test, config: {}", binder );
+		final Scheduler scheduler = binder.inject( World.class ).scheduler();
 
 		final Waiter waiter = new Waiter();
 		scheduler.time().subscribe( time ->
@@ -253,7 +244,22 @@ public class EnterpriseTest
 			waiter.resume();
 		} );
 		scheduler.resume();
-		waiter.await( 10, TimeUnit.SECONDS );
+		waiter.await( 15, TimeUnit.SECONDS );
+
+//		CountDownLatch latch = new CountDownLatch( 1 );
+//		World world = binder.inject( World.class );
+//		world.scheduler().time().subscribe(
+//				t -> System.out
+//						.println( "t=" + t.prettify( world.actors.offset() ) ),
+//				Thrower::rethrowUnchecked, latch::countDown );
+//		world.scheduler().resume();
+//		latch.await();
+//		System.out.println( "End reached!" );
+
+		for( Object f : binder.inject( FactBank.Factory.class ).create().find()
+				.toBlocking().toIterable() )
+			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
+					((World.Sale) f).getRqParam() );
 
 		LOG.info( "completed, t={}", scheduler.now() );
 	}

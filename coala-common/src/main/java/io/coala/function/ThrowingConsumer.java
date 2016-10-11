@@ -19,6 +19,14 @@
  */
 package io.coala.function;
 
+/**
+ * {@link ThrowingConsumer} consumes a {@link T} possibly throwing a {@link E}
+ * 
+ * @param <T> the type of object to consumed
+ * @param <E> the type of (checked) {@link Throwable} (if any)
+ * @version $Id$
+ * @author Rick van Krevelen
+ */
 @FunctionalInterface
 public interface ThrowingConsumer<T, E extends Throwable>
 {

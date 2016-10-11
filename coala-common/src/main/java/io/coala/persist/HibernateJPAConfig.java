@@ -100,15 +100,15 @@ public interface HibernateJPAConfig extends JPAConfig
 	String hibernateDefaultSchema();
 
 	@Key( SHOW_SQL_KEY )
-	@DefaultValue( "true" )
+	@DefaultValue( "false" )
 	boolean hibernateShowSQL();
 
 	@Key( USE_SQL_COMMENTS_KEY )
-	@DefaultValue( "true" )
+	@DefaultValue( "false" )
 	boolean hibernateUseSQLComments();
 
 	@Key( FORMAT_SQL_KEY )
-	@DefaultValue( "true" )
+	@DefaultValue( "false" )
 	boolean hibernateFormatSQL();
 
 	@Key( CONNECTION_PROVIDER_CLASS_KEY )

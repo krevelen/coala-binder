@@ -151,7 +151,7 @@ public class ClassUtil implements Util
 			if( componentClass != null )
 				return Array.newInstance( componentClass, 0 ).getClass();
 		}
-//		LOG.trace( "Type is a variable: {}", type.toString() );
+//		LogUtil.getLogger( ClassUtil.class ).trace( "Raw variable: {}", type );
 		return null;
 	}
 
