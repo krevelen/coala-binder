@@ -152,7 +152,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		};
 	}
 
-	/**
+	/** 
 	 * @param callable the {@link Callable} method
 	 * @return an {@link Caller} instance
 	 */

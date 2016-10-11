@@ -75,7 +75,7 @@ public interface LocalBinder extends LocalContextual
 		LocalProvider.of( this,
 				Instantiator.providerOf( impl.asSubclass( type ), args ),
 				false ) );
-	}
+	} 
 
 	/**
 	 * @return an {@link Observable} stream of all (re)bound {@link Class}s
