@@ -117,58 +117,57 @@ Suppose we have a *World1* with two organizations trading as *Supplier1* and
 in a monthly pattern. We could implement this as follows:
 
 ```java
-@Singleton public static class World implements Proactive
+@Singleton // inject the same instance across the container
+public static class World implements Proactive
 {
+	/** The local {@link Scheduler} for generating proactive behavior */
+	private final Scheduler scheduler;
+	/** The local {@link Actor.Factory} for (cached) {@link Actor} objects */
+	private final Actor.Factory actors;
+	/** (dependency-injectable) {@link World} constructor */
+	@Inject 
+	public World( Scheduler scheduler, Actor.Factory actors )
+	{
+		this.actors = actors;
+		this.scheduler = scheduler;
+		scheduler.onReset( this::init ); // initialize upon scheduler reset
+	}
+	@Override // Proactive#scheduler()
+	public scheduler(){ return this.scheduler; }
+	
 	/** A type of {@link Fact} reflecting the {@link Sale} transaction kind */
 	public interface Sale extends Fact { }
 	
 	/** A specialist/performer view for (executing) {@link Sale} transactions */
-	public interface Sales extends Actor<Sale> { }
+	public interface SalesDept extends Actor<Sale> { }
 	
 	/** A specialist/performer view for (initiating) {@link Sale} transactions */
-	public interface Buying extends Actor<Sale> { }
+	public interface BuyingDept extends Actor<Sale> { }
 
-	/** The local {@link Scheduler} for generating proactive behavior */
-	private final Scheduler scheduler;
-	
-	/** The local {@link Actor.Factory} for (cached) {@link Actor} objects */
-	private final Actor.Factory actors;
-	
-	/** DI {@link World} constructor */
-	@Inject public World( Scheduler scheduler, Actor.Factory actors )
-	{
-		this.actors = actors;
-		this.scheduler = scheduler;
-		// initialize this World upon scheduler reset
-		scheduler.onReset( this::init );
-	}
-	
-	@Override public scheduler(){ return this.scheduler; }
-	
 	/** initialize the {@link World} */
 	public void init()
 	{
 		// 1. create the "Supplier1" organization with "Sales" dept
 		Actor<Fact> supplier1 = this.actors.create( "Supplier1" );
-		Sales supplier1Sales = supplier1.asExecutor( Sales.class );
+		SalesDept salesDept = supplier1.asExecutor( SalesDept.class );
 		
 		// 2. add "Sale" execution behavior to "Sales" dept
-		supplier1Sales.emit( FactKind.REQUESTED ).subscribe( 
+		salesDept.emit( FactKind.REQUESTED ).subscribe( 
 			rq -> after( Duration.of( 1, Units.DAYS ) ).call( 
-				t -> supplier1Sales.respond( rq, FactKind.STATED ).commit() ) );
+				t -> salesDept.respond( rq, FactKind.STATED ).commit() ) );
 				
 		// 3. create the "Consumer1" organization with "Buying" dept
 		Actor<Fact> consumer1 = this.actors.create( "Consumer1" );
-		Buying consumer1Buying = consumer1.asInitiator( Buying.class );
+		BuyingDept buyingDept = consumer1.asInitiator( BuyingDept.class );
 		
 		// 4. add "Sale" acceptance behavior to "Buying" dept
-		consumer1Buying.emit( FactKind.STATED ).subscribe( 
+		buyingDept.emit( FactKind.STATED ).subscribe( 
 			st -> System.err.println( "Sale was executed: " + st ) );
 		
 		// 5. add "Sale" initiating behavior: each month at the 30th at midnight 
 		Timing timing = Timing.valueOf( "0 0 0 30 * ? *" );
 		atEach( timing.offset( this.actors.offset() ).iterate(), 
-			t -> consumer1Buying.initiate( supplier1.id() ).commit() )
+			t -> buyingDept.initiate( supplier1.id() ).commit() )
 		
 		// 6. make facts between them 'inter-subjective' (ie. known to both actors)
 		supplier1.outgoing().subscribe(consumer1);
@@ -179,21 +178,29 @@ in a monthly pattern. We could implement this as follows:
 
 ## Features
 
-### Bean support
+### Adding properties to Fact and Actor subtypes
 
 When you specify bean property read and write methods to your `Fact` or `Actor` interface extension, they will be considered as type-safe proxy getters and setters, reading from and writing to the `#properties()` mapping. Furthermore, `default` methods are supported, so you can also apply the builder pattern to your specification.
 
-For instance, you could extend your `Sale` fact to have the `posixETA` property, including a builder method `withPosixETA(..)` and conversion method `toVirtualETA(..)`:
+For instance, you could extend your `Sale` fact to have the `posixETA` property, including a builder method `withPosixETA(..)` and conversion method `getVirtualETA(..)`:
 
 ```java
 public interface Sale extends Fact
 {
-	/** @return the {@link java.time.Instant posix} ETA */
-	java.time.Instant getPosixETA(); // implemented by proxy to #properties()
-	/** @param value the {@link java.time.Instant posix} ETA */
+	/**
+	 * implemented by proxy, using {@link #properties()}
+	 * @return the {@link java.time.Instant posix-time} ETA 
+	 */
+	java.time.Instant getPosixETA();
+	
+	/**
+	 * implemented by proxy, using {@link #properties()}
+	 * @param value the {@link java.time.Instant posix-time} ETA 
+	 */
 	void setPosixETA(java.time.Instant value);
+	
 	/** 
-	 * @param value the {@link java.time.Instant posix} ETA
+	 * @param value the {@link java.time.Instant posix-time} ETA
 	 * @return this {@link Sale} object, to allow chaining 
 	 */
 	default Sale withPosixETA(java.time.Instant value)
@@ -201,18 +208,19 @@ public interface Sale extends Fact
 		setPosixETA(value); 
 		return this; 
 	}
+	
 	/** 
-	 * @param offset the {@link java.time.Instant posix} offset to convert from
+	 * @param offset the {@link java.time.Instant posix-time} offset to convert from
 	 * @return a virtual {@link io.coala.time.Instant} conversion
 	 */
-	default io.coala.time.Instant toVirtualETA(java.time.Instant offset)
+	default io.coala.time.Instant getVirtualETA(java.time.Instant offset)
 	{
-		return io.coala.time.Instant.of(getActualETA(), offset);
+		return io.coala.time.Instant.of(getPosixETA(), offset);
 	}
 }
 ```
 
-### JPA Support
+### Persisting in files and No/SQL databases
 
 Persist your facts using the Java Persistence API v2.1, for instance by binding the `FactBank.Factory.SimpleJPA`. This is a simple persistent `FactBank` instance provider example that relies on two entity tables:
 
@@ -224,7 +232,4 @@ In order to reduce the amount of querying required by the JPA provider, the foll
 - the `@Entity` `LocalIdDao`, used to identify Actors, is annotated as `@Cacheable` for the L2 cache of the `EntityManagerFactory`, which in turn is used by each `EntityManager`
 - all `io.coala.enterprise.Transaction` data is embedded within each `FactDao` entry, thus removing the need to check and maintain unique-constraints on `@ManyToOne` join relations 
 - `UUID` identifier values (used to reference `Fact` and `Transaction` entries) are stored as bytes for high speed lookup and low memory footprint
-- virtual time is persisted in three variants using the `@Embeddable` `InstantDao` (see e.g. `FactDao.occur` and `FactDao.expire`): 
-  - (redundant) `@Temporal` posix-time, converted using the replication offset `java.time.Instant`
-  - (redundant) `NUMERIC` virtual time, converted to the replication base time unit
-  - `TEXT` exact time, with scientific scale, precision, and time unit
+- `io.coala.time.Instant` values are persisted as exact scientific measures (thus preserving precision, scale, and unit) along with two redundant ratio/`NUMERIC` and posix/`@Temporal` variants (often useful in business analytical queries) by means of the `@Embeddable` `InstantDao` (see e.g. `FactDao.occur` and `FactDao.expire`)

@@ -21,8 +21,8 @@ import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.FormattedMessage;
 import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.slf4j.LoggerFactory;
 
 import io.coala.exception.Thrower;
@@ -121,51 +121,51 @@ public class LogUtil implements Util
 	/**
 	 * @param pattern
 	 * @param arg
-	 * @return a {@link ParameterizedMessage} for delayed parameterized
-	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @return a {@link FormattedMessage} for delayed parameterized formatting
+	 *         in e.g. {@link Logger#trace(Message,Throwable)}
 	 */
-	public static ParameterizedMessage messageOf( final String pattern,
+	public static FormattedMessage messageOf( final String pattern,
 		final Object arg )
 	{
-		return new ParameterizedMessage( pattern, arg );
+		return new FormattedMessage( pattern, arg );
 	}
 
 	/**
 	 * @param pattern
 	 * @param arg1
 	 * @param arg2
-	 * @return a {@link ParameterizedMessage} for delayed parameterized
-	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @return a {@link FormattedMessage} for delayed parameterized formatting
+	 *         in e.g. {@link Logger#trace(Message,Throwable)}
 	 */
-	public static ParameterizedMessage messageOf( final String pattern,
+	public static FormattedMessage messageOf( final String pattern,
 		final Object arg1, Object arg2 )
 	{
-		return new ParameterizedMessage( pattern, arg1, arg2 );
+		return new FormattedMessage( pattern, arg1, arg2 );
 	}
 
 	/**
 	 * @param pattern
 	 * @param args
-	 * @return a {@link ParameterizedMessage} for delayed parameterized
-	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @return a {@link FormattedMessage} for delayed parameterized formatting
+	 *         in e.g. {@link Logger#trace(Message,Throwable)}
 	 */
-	public static ParameterizedMessage messageOf( final String pattern,
+	public static FormattedMessage messageOf( final String pattern,
 		final Object... args )
 	{
-		return new ParameterizedMessage( pattern, args );
+		return new FormattedMessage( pattern, args );
 	}
 
 	/**
 	 * @param throwable
 	 * @param pattern
 	 * @param args
-	 * @return a {@link ParameterizedMessage} for delayed parameterized
-	 *         formatting in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @return a {@link FormattedMessage} for delayed parameterized formatting
+	 *         in e.g. {@link Logger#trace(Message,Throwable)}
 	 */
-	public static ParameterizedMessage messageOf( final Throwable throwable,
+	public static FormattedMessage messageOf( final Throwable throwable,
 		final String pattern, final Object... args )
 	{
-		return new ParameterizedMessage( pattern, args, throwable );
+		return new FormattedMessage( pattern, args, throwable );
 	}
 
 	/**
@@ -259,7 +259,7 @@ public class LogUtil implements Util
 		@Override
 		String toString();
 	}
-	
+
 	/**
 	 * @param supplier the function to decorate in {@link #toString()} calls
 	 * @return a decorator {@link Object} to help delay {@link #toString()} call

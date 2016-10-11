@@ -197,7 +197,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	Fact.ID causeRef();
 
 	/**
-	 * Useful as {@link JsonAnyGetter}
+	 * Default storage for bean properties, also useful for reference by a
+	 * {@link JsonAnyGetter} or {@link JsonAnySetter} method
 	 * 
 	 * @return the properties {@link Map} as used for extended getters/setters
 	 */
