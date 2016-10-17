@@ -18,6 +18,7 @@ import org.junit.Test;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
+import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.exception.ExceptionStream;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
@@ -213,19 +214,19 @@ public class EnterpriseTest
 				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );
 
 		// configure tooling
-//		final LocalConfig config = LocalConfig.builder().withId( "world1" )
-//				.withProvider( Scheduler.class, Dsol3Scheduler.class )
-//				.withProvider( Actor.Factory.class,
-//						Actor.Factory.LocalCaching.class )
-//				.withProvider( Transaction.Factory.class,
-//						Transaction.Factory.LocalCaching.class )
-//				.withProvider( Fact.Factory.class,
-//						Fact.Factory.SimpleProxies.class )
-//				.withProvider( FactBank.Factory.class,
-//						FactBank.Factory.LocalJPA.class )
-//				.build();
-		final LocalBinder binder = LocalConfig
-				.openYAML( "world1.yaml", "my-world" )
+		final LocalBinder binder = LocalConfig.builder().withId( "world1" )
+				.withProvider( Scheduler.class, Dsol3Scheduler.class )
+				.withProvider( Actor.Factory.class,
+						Actor.Factory.LocalCaching.class )
+				.withProvider( Transaction.Factory.class,
+						Transaction.Factory.LocalCaching.class )
+				.withProvider( Fact.Factory.class,
+						Fact.Factory.SimpleProxies.class )
+				.withProvider( FactBank.Factory.class,
+						FactBank.Factory.LocalJPA.class )
+				.build()
+//		final LocalBinder binder = LocalConfig
+//				.openYAML( "world1.yaml", "my-world" )
 				.create( Collections.singletonMap( EntityManagerFactory.class,
 						HibHikHypConfig.createEMF() ) );
 
@@ -236,13 +237,7 @@ public class EnterpriseTest
 		scheduler.time().subscribe( time ->
 		{
 			// virtual time passes...
-		}, error ->
-		{
-			waiter.rethrow( error );
-		}, () ->
-		{
-			waiter.resume();
-		} );
+		}, waiter::rethrow, waiter::resume );
 		scheduler.resume();
 		waiter.await( 15, TimeUnit.SECONDS );
 

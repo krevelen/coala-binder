@@ -46,8 +46,9 @@ public interface JDBCConfig extends GlobalConfig
 	String password();
 
 	default void execute( final String sql, final Consumer<ResultSet> consumer )
-		throws SQLException
+		throws SQLException, ClassNotFoundException
 	{
+		Class.forName( driver() );
 		JDBCUtil.execute( url(), username(), password(), sql, consumer );
 	}
 }
