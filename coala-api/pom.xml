@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.coala</groupId>
 		<artifactId>coala</artifactId>
-		<version>0.2.0-b4</version>
+		<version>0.2.0-b5-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 
@@ -63,7 +63,7 @@
 			<artifactId>coala-common</artifactId>
 		</dependency>
 
-		<!-- reference implementation of javax.measurement JSR-363 -->
+		<!-- TODO reference implementation of javax.measurement JSR-363 -->
 		<!-- <dependency> <groupId>javax.measure</groupId> <artifactId>unit-api</artifactId> 
 			<version>1.0</version> </dependency> -->
 
