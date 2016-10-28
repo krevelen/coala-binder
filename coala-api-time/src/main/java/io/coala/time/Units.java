@@ -23,7 +23,13 @@ public class Units
 	public static final Unit<Duration> NANOS = SI.NANO( SI.SECOND );
 
 	/** */
+	public static final Unit<Duration> HOURS = NonSI.HOUR;
+
+	/** */
 	public static final Unit<Duration> DAYS = NonSI.DAY;
+
+	/** */
+	public static final String HOURS_ALIAS = "hrs";
 
 	/** */
 	public static final String DAYS_ALIAS = "days";
@@ -60,6 +66,8 @@ public class Units
 	public static void registerAliases()
 	{
 		if( registered ) return;
+		UnitFormat.getInstance().alias( HOURS, HOURS_ALIAS );
+		UnitFormat.getInstance().label( HOURS, HOURS_ALIAS );
 		UnitFormat.getInstance().alias( DAYS, DAYS_ALIAS );
 		UnitFormat.getInstance().label( DAYS, DAYS_ALIAS );
 		UnitFormat.getInstance().alias( DAILY, DAILY_ALIAS );

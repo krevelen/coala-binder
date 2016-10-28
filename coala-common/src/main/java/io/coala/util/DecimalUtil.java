@@ -113,7 +113,7 @@ public class DecimalUtil implements Util
 
 	public static BigDecimal valueOf( final Number value )
 	{
-		return value instanceof BigDecimal ? valueOf( (BigDecimal) value )
+		return value instanceof BigDecimal ? (BigDecimal) value
 				: value instanceof Long || value instanceof Integer
 						|| value instanceof Short || value instanceof Byte
 								? valueOf( value.longValue() )
@@ -142,5 +142,25 @@ public class DecimalUtil implements Util
 	{
 		return valueOf( dividend ).divide( valueOf( divisor ),
 				DEFAULT_CONTEXT );
+	}
+
+	/**
+	 * @param value the {@link BigDecimal} to round in {@link #DEFAULT_CONTEXT}
+	 * @return the rounded value
+	 */
+	public static int intValue( final BigDecimal value )
+	{
+		return value.setScale( 0, DEFAULT_CONTEXT.getRoundingMode() )
+				.intValue();
+	}
+
+	/**
+	 * @param value the {@link BigDecimal} to round in {@link #DEFAULT_CONTEXT}
+	 * @return the rounded value
+	 */
+	public static long longValue( final BigDecimal value )
+	{
+		return value.setScale( 0, DEFAULT_CONTEXT.getRoundingMode() )
+				.longValue();
 	}
 }

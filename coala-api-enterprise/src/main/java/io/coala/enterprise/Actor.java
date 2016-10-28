@@ -33,12 +33,17 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
 import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalBinding;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.LocalId;
+import io.coala.exception.Thrower;
+import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
+import io.coala.time.Proactive;
+import io.coala.time.Scheduler;
 import io.coala.util.ReflectUtil;
 import io.coala.util.TypeArguments;
 import rx.Observable;
@@ -53,27 +58,13 @@ import rx.subjects.Subject;
  * @author Rick van Krevelen
  */
 public interface Actor<F extends Fact>
-	extends Identified.Ordinal<Actor.ID>, Observer<F>
+	extends Identified.Ordinal<Actor.ID>, Observer<F>, Proactive, LocalBinding
 {
 
 	/**
 	 * @return the properties {@link Map} as used for extended getters/setters
 	 */
 	Map<String, Object> properties();
-
-	/**
-	 * @param actorKind
-	 * @return an actor view that for performing the initiator-side of its
-	 *         transaction type (and all its subtypes)
-	 */
-	<A extends Actor<T>, T extends F> A asInitiator( Class<A> actorKind );
-
-	/**
-	 * @param actorKind
-	 * @return an actor view that for performing the executor-side of its
-	 *         transaction type (and all its subtypes)
-	 */
-	<A extends Actor<T>, T extends F> A asExecutor( Class<A> actorKind );
 
 	/**
 	 * @return an {@link Observable} stream of all generated or received
@@ -302,17 +293,64 @@ public interface Actor<F extends Fact>
 				cause.id(), expire, params );
 	}
 
+	Actor<Fact> main();
+
+	/**
+	 * @param actorKind
+	 * @return an actor view for performing either or both of the initiator and
+	 *         executor sides of its transaction sub-type(s)
+	 */
+	default <A extends Actor<T>, T extends F> ID specialist(
+		final Class<A> actorKind, final ThrowingConsumer<A, ?> consumer )
+	{
+		try
+		{
+			final A specialist = specialist( actorKind );
+			consumer.accept( specialist );
+			return specialist.id();
+		} catch( final Throwable e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
+	}
+
+	/**
+	 * @param actorKind
+	 * @return an actor view for performing either or both of the initiator and
+	 *         executor sides of its transaction sub-type(s)
+	 */
+	default <A extends Actor<T>, T extends F> A
+		specialist( final Class<A> actorKind )
+	{
+		return specialist( actorKind, this );
+	}
+
+	/**
+	 * @param actorKind
+	 * @param actorImpl
+	 * @return an actor view for performing either or both of the initiator and
+	 *         executor sides of its transaction sub-type(s)
+	 */
+	<A extends Actor<T>, T extends F> A specialist( Class<A> actorKind,
+		Actor<? super T> actorImpl );
+
 	default <S extends F> Actor<S> specializeIn( final Class<S> tranKind )
 	{
 		final Actor<F> parent = this;
 		return new Actor<S>()
 		{
-			private final ID id = ID.of( tranKind, parent.id() );
+			private final ID specialistId = ID.of( tranKind, main().id() );
 
 			@Override
 			public ID id()
 			{
-				return this.id;
+				return this.specialistId;
+			}
+
+			@Override
+			public Actor<Fact> main()
+			{
+				return parent.main();
 			}
 
 			@Override
@@ -340,17 +378,10 @@ public interface Actor<F extends Fact>
 			}
 
 			@Override
-			public <A extends Actor<T>, T extends S> A
-				asInitiator( final Class<A> actorKind )
+			public <A extends Actor<T>, T extends S> A specialist(
+				final Class<A> actorKind, final Actor<? super T> actorImpl )
 			{
-				return parent.asInitiator( actorKind );
-			}
-
-			@Override
-			public <A extends Actor<T>, T extends S> A
-				asExecutor( final Class<A> actorKind )
-			{
-				return parent.asExecutor( actorKind );
+				return parent.specialist( actorKind, actorImpl );
 			}
 
 			@Override
@@ -364,7 +395,19 @@ public interface Actor<F extends Fact>
 			@Override
 			public Map<String, Object> properties()
 			{
-				return parent.properties();
+				return parent.properties(); // TODO localize properties?
+			}
+
+			@Override
+			public Scheduler scheduler()
+			{
+				return parent.scheduler();
+			}
+
+			@Override
+			public LocalBinder binder()
+			{
+				return parent.binder();
 			}
 		};
 	}
@@ -393,13 +436,26 @@ public interface Actor<F extends Fact>
 	}
 
 	/**
+	 * @param actorKind the type of {@link Actor} to mimic
+	 * @param impl an implementation to route calls to
+	 * @return the {@link Proxy} instance
+	 */
+	@SuppressWarnings( "unchecked" )
+	default <A extends Actor<T>, T extends F> A
+		proxyAs( final Actor<? super T> impl, final Class<A> actorKind )
+	{
+		return proxyAs( impl, actorKind, null );
+	}
+
+	/**
+	 * @param impl the implementation to route calls to
 	 * @param actorType the type of {@link Actor} to mimic
 	 * @param callObserver an {@link Observer} of method call, or {@code null}
 	 * @return the {@link Proxy} instance
 	 */
 	@SuppressWarnings( "unchecked" )
 	static <A extends Actor<T>, F extends Fact, T extends F> A proxyAs(
-		final Actor<F> impl, final Class<A> actorType,
+		final Actor<? super T> impl, final Class<A> actorType,
 		final Observer<Method> callObserver )
 	{
 		final A proxy = (A) Proxy.newProxyInstance( actorType.getClassLoader(),
@@ -516,6 +572,12 @@ public interface Actor<F extends Fact>
 		@Inject
 		private transient Transaction.Factory txFactory;
 
+		@Inject
+		private transient Scheduler scheduler;
+
+		@Inject
+		private transient LocalBinder binder;
+
 		private ID id;
 
 		@Inject
@@ -534,6 +596,12 @@ public interface Actor<F extends Fact>
 		public ID id()
 		{
 			return this.id;
+		}
+
+		@Override
+		public Actor<Fact> main()
+		{
+			return this;
 		}
 
 		@Override
@@ -562,24 +630,13 @@ public interface Actor<F extends Fact>
 
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public <A extends Actor<F>, F extends Fact> A
-			asInitiator( final Class<A> actorKind )
+		public <A extends Actor<F>, F extends Fact> A specialist(
+			final Class<A> actorKind, final Actor<? super F> actorImpl )
 		{
 			return ((Actor<? super F>) this.specialists.computeIfAbsent(
 					TypeArguments.of( Actor.class, actorKind ).get( 0 ),
 					key -> this.specializeIn( (Class<F>) key ) ))
-							.proxyAs( actorKind );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		@Override
-		public <A extends Actor<F>, F extends Fact> A
-			asExecutor( final Class<A> actorKind )
-		{
-			return ((Actor<? super F>) this.specialists.computeIfAbsent(
-					TypeArguments.of( Actor.class, actorKind ).get( 0 ),
-					key -> this.specializeIn( (Class<F>) key ) ))
-							.proxyAs( actorKind );
+							.proxyAs( actorImpl, actorKind );
 		}
 
 		@Override
@@ -612,6 +669,18 @@ public interface Actor<F extends Fact>
 		public void onNext( final Fact fact )
 		{
 			this.emit.onNext( fact );
+		}
+
+		@Override
+		public Scheduler scheduler()
+		{
+			return this.scheduler;
+		}
+
+		@Override
+		public LocalBinder binder()
+		{
+			return this.binder;
 		}
 	}
 

@@ -19,8 +19,14 @@
  */
 package io.coala.random;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.ParseException;
+
+import org.aeonbits.owner.Config;
+import org.aeonbits.owner.Converter;
+
+import io.coala.random.ProbabilityDistribution.Parser;
 
 /**
  * {@link DistributionParsable}
@@ -53,5 +59,39 @@ public interface DistributionParsable<T>
 		parse( ProbabilityDistribution.Parser distParser ) throws ParseException
 	{
 		return parse( distParser, BigDecimal.class );
+	}
+
+	/**
+	 * {@link FromString} utility for
+	 * {@link Config}-interfaces
+	 * 
+	 * @param <T> the result type
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	public class FromString<T>
+		implements Converter<DistributionParsable<T>>
+	{
+		@SuppressWarnings( { "rawtypes", "unchecked" } )
+		@Override
+		public DistributionParsable<T> convert( final Method method,
+			final String input )
+		{
+			return new DistributionParsable()
+			{
+				@Override
+				public ProbabilityDistribution parse( final Parser p,
+					final Class t ) throws ParseException
+				{
+					return p.parse( input, t );
+				}
+
+				@Override
+				public String toString()
+				{
+					return input;
+				}
+			};
+		}
 	}
 }

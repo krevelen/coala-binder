@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.SortedMap;
 
+import javax.inject.Singleton;
+
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Converter;
 
@@ -46,7 +48,7 @@ import io.coala.util.DecimalUtil;
  * similar to the standard Java {@link Random} generator (which is wrapped
  * accordingly in the {@link JavaRandom} decorator)
  * 
- * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public interface PseudoRandom extends Identified<PseudoRandom.Name>
@@ -106,10 +108,13 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		return new BigInteger( 1, nextBits( numBits ) );
 	}
 
-	/** draw with 128-bits precision (c.q. {@link MathContext#DECIMAL128}) */
+	/**
+	 * draw &isin;[0,1], TODO: 128-bits precision (c.q.
+	 * {@link MathContext#DECIMAL128})
+	 */
 	default BigDecimal nextBigDecimal()
 	{
-		return nextBigDecimal( 128 );
+		return DecimalUtil.valueOf( nextDouble() );
 	}
 
 	default BigDecimal nextBigDecimal( int numBits )
@@ -326,6 +331,14 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		/**
 		 * @return a {@link PseudoRandom}
 		 */
+		default PseudoRandom create( final CharSequence id )
+		{
+			return create( id, id.hashCode() );
+		}
+
+		/**
+		 * @return a {@link PseudoRandom}
+		 */
 		default PseudoRandom create( final CharSequence id, final Number seed )
 		{
 			return create( Name.of( id.toString() ), seed );
@@ -335,6 +348,68 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		 * @return a {@link PseudoRandom}
 		 */
 		PseudoRandom create( Name id, Number seed );
+	}
 
+	/**
+	 * {@link JavaRandom} decorates a standard Java {@link Random} generator as
+	 * {@link PseudoRandom}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	public class JavaRandom extends Random implements PseudoRandom
+	{
+		/** the serialVersionUID */
+		private static final long serialVersionUID = 1L;
+
+		public static JavaRandom of( final Name id, final long seed )
+		{
+			final JavaRandom result = new JavaRandom();
+			result.id = id;
+			result.setSeed( seed );
+			return result;
+		}
+
+		/** the id */
+		private Name id;
+
+		/** the seed */
+		private Long seed;
+
+		@Override
+		public void setSeed( final long seed )
+		{
+			super.setSeed( seed );
+			this.seed = seed;
+		}
+
+		@Override
+		public Name id()
+		{
+			return this.id;
+		}
+
+		@Override
+		public Long seed()
+		{
+			return this.seed;
+		}
+
+		@Singleton
+		public static class Factory implements PseudoRandom.Factory
+		{
+			private final static Factory INSTANCE = new Factory();
+
+			public static final Factory instance()
+			{
+				return INSTANCE;
+			}
+
+			@Override
+			public JavaRandom create( final Name id, final Number seed )
+			{
+				return JavaRandom.of( id, seed.longValue() );
+			}
+		}
 	}
 }

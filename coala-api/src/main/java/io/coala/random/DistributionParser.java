@@ -169,8 +169,8 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 		if( getFactory() == null )
 		{
 			final T value = (T) args.get( 0 ).getValue();
-			LOG.warn( "No {} set, creating Deterministic<{}> -> {}",
-					ProbabilityDistribution.Factory.class.getSimpleName(),
+			LOG.warn( "No {} Factory set, creating Deterministic<{}> -> {}",
+					ProbabilityDistribution.class.getSimpleName(),
 					value.getClass().getSimpleName(), value );
 			return ProbabilityDistribution.createDeterministic( value );
 		}

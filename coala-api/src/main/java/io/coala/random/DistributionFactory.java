@@ -19,12 +19,14 @@
  */
 package io.coala.random;
 
+import java.math.BigDecimal;
+import java.util.stream.StreamSupport;
+
 import io.coala.exception.Thrower;
 import io.coala.math.WeightedValue;
-import io.coala.random.JavaRandom.Factory;
+import io.coala.util.DecimalUtil;
 
-public class DistributionFactory
-	implements ProbabilityDistribution.Factory
+public class DistributionFactory implements ProbabilityDistribution.Factory
 {
 
 	private static DistributionFactory INSTANCE = null;
@@ -39,7 +41,8 @@ public class DistributionFactory
 
 	public DistributionFactory()
 	{
-		this( Factory.instance().create() );
+		this( PseudoRandom.JavaRandom.Factory.instance()
+				.create( PseudoRandom.Config.NAME_DEFAULT ) );
 	}
 
 	public DistributionFactory( final PseudoRandom stream )
@@ -54,22 +57,20 @@ public class DistributionFactory
 	}
 
 	@Override
-	public <T> ProbabilityDistribution<T>
-		createDeterministic( final T value )
+	public <T> ProbabilityDistribution<T> createDeterministic( final T value )
 	{
 		return ProbabilityDistribution.createDeterministic( value );
 	}
 
 	@Override
-	public ProbabilityDistribution<Boolean>
-		createBernoulli( final Number p )
+	public ProbabilityDistribution<Boolean> createBernoulli( final Number p )
 	{
 		return ProbabilityDistribution.createBernoulli( getStream(), p );
 	}
 
 	@Override
-	public ProbabilityDistribution<Long>
-		createBinomial( final Number trials, final Number p )
+	public ProbabilityDistribution<Long> createBinomial( final Number trials,
+		final Number p )
 	{
 		return Thrower.throwNew( UnsupportedOperationException.class,
 				"binomial" );
@@ -79,8 +80,23 @@ public class DistributionFactory
 	public <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
 		createCategorical( final Iterable<WV> probabilities )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"categorical" );
+		final BigDecimal total = StreamSupport
+				.stream( probabilities.spliterator(), true )
+				.map( wv -> DecimalUtil
+						.valueOf( wv.getWeight().doubleValue() ) )
+				.reduce( BigDecimal::add ).orElse( BigDecimal.ZERO );
+		return () ->
+		{
+			BigDecimal sum = BigDecimal.ZERO,
+					stop = total.multiply( getStream().nextBigDecimal() );
+			for( WV wv : probabilities )
+			{
+				sum = sum.add( DecimalUtil.valueOf( wv.getWeight() ) );
+				if( sum.compareTo( stop ) < 0 ) continue;
+				return wv.getValue();
+			}
+			return null;
+		};
 	}
 
 	@Override
@@ -118,21 +134,19 @@ public class DistributionFactory
 	public ProbabilityDistribution<Long>
 		createZipf( final Number numberOfElements, final Number exponent )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"zipf" );
+		return Thrower.throwNew( UnsupportedOperationException.class, "zipf" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createBeta( final Number alpha,
 		final Number beta )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"beta" );
+		return Thrower.throwNew( UnsupportedOperationException.class, "beta" );
 	}
 
 	@Override
-	public ProbabilityDistribution<Double>
-		createCauchy( final Number median, final Number scale )
+	public ProbabilityDistribution<Double> createCauchy( final Number median,
+		final Number scale )
 	{
 		return Thrower.throwNew( UnsupportedOperationException.class,
 				"cauchy" );
@@ -159,8 +173,7 @@ public class DistributionFactory
 	public <T extends Number> ProbabilityDistribution<Double>
 		createEmpirical( final T... values )
 	{
-		return () -> values[getStream().nextInt( values.length )]
-				.doubleValue();
+		return () -> values[getStream().nextInt( values.length )].doubleValue();
 	}
 
 	@Override
@@ -175,21 +188,19 @@ public class DistributionFactory
 	public ProbabilityDistribution<Double> createGamma( final Number shape,
 		final Number scale )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"gamma" );
+		return Thrower.throwNew( UnsupportedOperationException.class, "gamma" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createLevy( final Number mu,
 		final Number c )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"levy" );
+		return Thrower.throwNew( UnsupportedOperationException.class, "levy" );
 	}
 
 	@Override
-	public ProbabilityDistribution<Double>
-		createLogNormal( final Number scale, final Number shape )
+	public ProbabilityDistribution<Double> createLogNormal( final Number scale,
+		final Number shape )
 	{
 		return Thrower.throwNew( UnsupportedOperationException.class,
 				"log-normal" );
@@ -204,8 +215,8 @@ public class DistributionFactory
 	}
 
 	@Override
-	public ProbabilityDistribution<double[]> createMultinormal(
-		final double[] means, final double[][] covariances )
+	public ProbabilityDistribution<double[]>
+		createMultinormal( final double[] means, final double[][] covariances )
 	{
 		return Thrower.throwNew( UnsupportedOperationException.class,
 				"multinormal" );
@@ -228,8 +239,8 @@ public class DistributionFactory
 	}
 
 	@Override
-	public ProbabilityDistribution<Double> createTriangular(
-		final Number min, final Number max, final Number mode )
+	public ProbabilityDistribution<Double> createTriangular( final Number min,
+		final Number max, final Number mode )
 	{
 		final double lower = mode.doubleValue() - min.doubleValue();
 		final double upper = max.doubleValue() - mode.doubleValue();
@@ -238,8 +249,7 @@ public class DistributionFactory
 		{
 			final double p = getStream().nextDouble();
 			return p < lower / total
-					? min.doubleValue()
-							+ StrictMath.sqrt( p * lower * total )
+					? min.doubleValue() + StrictMath.sqrt( p * lower * total )
 					: max.doubleValue()
 							- StrictMath.sqrt( (1 - p) * upper * total );
 		};
@@ -270,8 +280,8 @@ public class DistributionFactory
 	}
 
 	@Override
-	public ProbabilityDistribution<Double>
-		createWeibull( final Number alpha, final Number beta )
+	public ProbabilityDistribution<Double> createWeibull( final Number alpha,
+		final Number beta )
 	{
 		return Thrower.throwNew( UnsupportedOperationException.class,
 				"weibull" );

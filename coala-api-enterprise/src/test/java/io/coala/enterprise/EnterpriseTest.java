@@ -133,10 +133,8 @@ public class EnterpriseTest
 			}, e -> LOG.error( "Problem", e ) );
 
 			final AtomicInteger counter = new AtomicInteger( 0 );
-			final Procurement proc = org1.asInitiator( //Sale.class,
-					Procurement.class );
-			final Sales sales = org1.asExecutor( //Sale.class, 
-					Sales.class );
+			final Procurement proc = org1.specialist( Procurement.class );
+			final Sales sales = org1.specialist( Sales.class );
 			sales.setTotalValue( 0 );
 			sales.emit( FactKind.REQUESTED ).subscribe(
 					rq -> after( Duration.of( 1, Units.DAYS ) ).call( t ->
