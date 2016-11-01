@@ -23,6 +23,9 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.ParseException;
 
+import javax.measure.DecimalMeasure;
+import javax.measure.quantity.Quantity;
+
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
 
@@ -45,8 +48,9 @@ public interface DistributionParsable<T>
 	 * @throws ParseException
 	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
 	 */
-	ProbabilityDistribution<T> parse( ProbabilityDistribution.Parser distParser,
-		Class<?> paramType ) throws ParseException;
+	ProbabilityDistribution<T> parseType(
+		ProbabilityDistribution.Parser distParser, Class<?> paramType )
+		throws ParseException;
 
 	/**
 	 * @param <T> the type of values to draw
@@ -58,19 +62,33 @@ public interface DistributionParsable<T>
 	default ProbabilityDistribution<T>
 		parse( ProbabilityDistribution.Parser distParser ) throws ParseException
 	{
-		return parse( distParser, BigDecimal.class );
+		return parseType( distParser, BigDecimal.class );
 	}
 
 	/**
-	 * {@link FromString} utility for
-	 * {@link Config}-interfaces
+	 * @param <T> the type of values to draw
+	 * @param dist the {@link String} representation
+	 * @return a {@link ProbabilityDistribution} of {@link T} values
+	 * @throws ParseException
+	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
+	 */
+	@SuppressWarnings( "unchecked" )
+	default <Q extends Quantity> AmountDistribution<Q>
+		parse( ProbabilityDistribution.Parser distParser, Class<Q> quantity )
+			throws ParseException
+	{
+		return (AmountDistribution<Q>) parseType( distParser,
+				DecimalMeasure.class ).toAmounts();
+	}
+
+	/**
+	 * {@link FromString} utility for {@link Config}-interfaces
 	 * 
 	 * @param <T> the result type
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	public class FromString<T>
-		implements Converter<DistributionParsable<T>>
+	public class FromString<T> implements Converter<DistributionParsable<T>>
 	{
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		@Override
@@ -80,7 +98,7 @@ public interface DistributionParsable<T>
 			return new DistributionParsable()
 			{
 				@Override
-				public ProbabilityDistribution parse( final Parser p,
+				public ProbabilityDistribution parseType( final Parser p,
 					final Class t ) throws ParseException
 				{
 					return p.parse( input, t );

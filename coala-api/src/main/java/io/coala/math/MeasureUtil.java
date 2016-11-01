@@ -22,6 +22,7 @@ import javax.measure.unit.Unit;
 import org.jscience.geography.coordinates.LatLong;
 import org.jscience.physics.amount.Amount;
 
+import io.coala.exception.Thrower;
 import io.coala.util.Compare;
 import io.coala.util.DecimalUtil;
 import io.coala.util.Util;
@@ -96,32 +97,15 @@ public class MeasureUtil implements Util
 	public static <Q extends Quantity> Amount<Q> toAmount( final Number value,
 		final Unit<Q> unit )
 	{
-		if( value instanceof BigDecimal )
-			return toAmount( (BigDecimal) value, unit );
-		if( value instanceof BigInteger )
-			return toAmount( (BigInteger) value, unit );
-		if( value instanceof Long
-				|| long.class.isAssignableFrom( value.getClass() ) )
-			return toAmount( (long) value, unit );
-		if( value instanceof Integer
-				|| int.class.isAssignableFrom( value.getClass() ) )
-			return toAmount( (int) value, unit );
-		if( value instanceof Short
-				|| short.class.isAssignableFrom( value.getClass() ) )
-			return toAmount( (short) value, unit );
-		if( value instanceof Byte
-				|| byte.class.isAssignableFrom( value.getClass() ) )
-			return toAmount( (byte) value, unit );
-		return toAmount( BigDecimal.valueOf( value.doubleValue() ), unit );
+		return toAmount( DecimalUtil.valueOf( value ), unit );
 	}
 
 	public static <Q extends Quantity> Amount<Q>
 		toAmount( final Measure<?, Q> prob )
 	{
 		final Unit<Q> unit = prob.getUnit();
-		return prob.getValue() instanceof BigDecimal
-				? toAmount( (BigDecimal) prob.getValue(), unit )
-				: toAmount( prob.doubleValue( unit ), unit );
+		return toAmount( prob.getValue() instanceof Number
+				? (Number) prob.getValue() : prob.doubleValue( unit ), unit );
 	}
 
 	/**
@@ -238,9 +222,39 @@ public class MeasureUtil implements Util
 	public static <Q extends Quantity> BigDecimal
 		toBigDecimal( final Measure<?, Q> measure, final Unit<?> unit )
 	{
-		return measure instanceof DecimalMeasure
-				? ((DecimalMeasure<Q>) measure).to( (Unit<Q>) unit ).getValue()
-				: BigDecimal.valueOf( measure.doubleValue( (Unit<Q>) unit ) );
+		return measure == null ? null
+				: measure instanceof DecimalMeasure
+						? ((DecimalMeasure<Q>) measure).to( (Unit<Q>) unit )
+								.getValue()
+						: BigDecimal.valueOf(
+								measure.doubleValue( (Unit<Q>) unit ) );
+	}
+
+	public static BigDecimal toBigDecimal( final Measurable<?> value )
+	{
+		return value == null ? null
+				: value instanceof Measure
+						? toBigDecimal( (Measure<?, ?>) value )
+						: value instanceof Amount
+								? toBigDecimal( (Amount<?>) value )
+								: Thrower.throwNew(
+										IllegalArgumentException.class,
+										"Unknown Measurable type: {}",
+										value.getClass() );
+	}
+
+	public static BigDecimal toBigDecimal( final Measurable<?> value,
+		final Unit<?> unit )
+	{
+		return value == null ? null
+				: value instanceof Measure
+						? toBigDecimal( (Measure<?, ?>) value, unit )
+						: value instanceof Amount
+								? toBigDecimal( (Amount<?>) value, unit )
+								: Thrower.throwNew(
+										IllegalArgumentException.class,
+										"Unknown Measurable type: {}",
+										value.getClass() );
 	}
 
 	/**
@@ -363,6 +377,22 @@ public class MeasureUtil implements Util
 		toUnit( final DecimalMeasure<Q> measure, final Unit<?> unit )
 	{
 		return measure.to( (Unit<Q>) unit, DecimalUtil.DEFAULT_CONTEXT );
+	}
+
+	/**
+	 * @param value
+	 * @return
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity> Unit<Q> unitOf( final Object value )
+	{
+		return value instanceof Amount ? ((Amount<Q>) value).getUnit()
+				: value instanceof Measure ? ((Measure<?, Q>) value).getUnit()
+						: value instanceof Number ? (Unit<Q>) Unit.ONE
+								: Thrower.throwNew(
+										IllegalArgumentException.class,
+										"Unknown unit of measurement for {}",
+										value );
 	}
 
 	/**

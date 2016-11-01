@@ -23,7 +23,6 @@ import static org.aeonbits.owner.util.Collections.entry;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.comparesEqualTo;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +30,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Config;
-import net.jodah.concurrentunit.Waiter;
 
 /**
  * {@link ProactiveTest}
@@ -60,19 +58,7 @@ public class TimeStepTest
 			LOG.trace( "Scheduler initialized, t={}", s.now().prettify( 3 ) );
 		} );
 
-		final Waiter waiter = new Waiter();
-		scheduler.time().subscribe( time ->
-		{
-		}, error ->
-		{
-			LOG.error( "error at t=" + scheduler.now(), error );
-			waiter.rethrow( error );
-		}, () ->
-		{
-			waiter.resume();
-		} );
-		scheduler.resume();
-		waiter.await( 1, TimeUnit.SECONDS );
+		scheduler.run();
 		assertThat( "end time is ten", scheduler.now(),
 				comparesEqualTo( Instant.of( 10 ) ) );
 		LOG.info( "Time step test complete, t={}", scheduler.now() );

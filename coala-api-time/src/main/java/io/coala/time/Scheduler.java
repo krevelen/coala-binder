@@ -1,9 +1,14 @@
 package io.coala.time;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
+import javax.inject.Singleton;
+
+import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalBinding;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
@@ -20,7 +25,7 @@ import rx.subjects.Subject;
  * @version $Id: d60e554b08ebba3a7b59f0924ecbdd8910988d7a $
  * @author Rick van Krevelen
  */
-public interface Scheduler extends Proactive
+public interface Scheduler extends Proactive, Runnable
 {
 
 	@Override
@@ -32,14 +37,23 @@ public interface Scheduler extends Proactive
 	/** @return an {@link Observable} stream of {@link Instant}s */
 	Observable<Instant> time();
 
-	/** continue executing scheduled events */
-	void resume();
-
-	Observable<Scheduler> onReset();
-
-	Subscription onReset( ThrowingRunnable<?> runnable );
+	default Subscription onReset( ThrowingRunnable<?> runnable )
+	{
+		return onReset( s -> runnable.run() );
+	}
 
 	Subscription onReset( ThrowingConsumer<Scheduler, ?> consumer );
+
+	/** continue executing scheduled events until completion */
+	void run();
+
+	/** continue executing scheduled events until completion */
+	default Instant run( final ThrowingConsumer<Scheduler, ?> onReset )
+	{
+		onReset( onReset );
+		run();
+		return time().toBlocking().last();
+	}
 
 	/**
 	 * @param when the {@link Instant} of execution
@@ -199,10 +213,7 @@ public interface Scheduler extends Proactive
 		final Expectation exp0 = schedule( it.next(), delayedCopy::onNext );
 		if( what != null ) what.onNext( exp0 );
 		// schedule each following element upon merge with delayed previous
-		return delayedCopy.zipWith( () ->
-		{
-			return it;
-		}, ( t, t_next ) ->
+		return delayedCopy.zipWith( () -> it, ( t, t_next ) ->
 		{
 			final Expectation exp = schedule( t_next, delayedCopy::onNext );
 			if( what != null ) what.onNext( exp );
@@ -340,4 +351,55 @@ public interface Scheduler extends Proactive
 		} );
 	}
 
+	interface Factory
+	{
+
+		Scheduler create( ReplicateConfig config );
+
+		default Scheduler create( final Map<?, ?>... imports )
+		{
+			return create( ReplicateConfig.getOrCreate( imports ) );
+		}
+
+		default Scheduler create( final String rawId,
+			final Map<?, ?>... imports )
+		{
+			return create( ReplicateConfig.getOrCreate( rawId, imports ) );
+		}
+
+		default Instant createAndRun(
+			final ThrowingConsumer<Scheduler, ?> onReset, final String id,
+			final Map<?, ?>... imports ) throws Throwable
+		{
+			return create( id, imports ).run( onReset );
+		}
+
+		default Observable<Scheduler> createAndRun(
+			final Observable<String> ids, final Map<?, ?>... imports )
+			throws Throwable
+		{
+			return Observable.create( sub -> ids.subscribe(
+					id -> create( id, imports ).run( sub::onNext ),
+					sub::onError, sub::onCompleted ) );
+		}
+
+		@Singleton
+		class Inject implements Factory, LocalBinding
+		{
+			private LocalBinder binder;
+
+			@Override
+			public Scheduler create( final ReplicateConfig config )
+			{
+				binder().reset( ReplicateConfig.class, config );
+				return binder().inject( config.schedulerType() );
+			}
+
+			@Override
+			public LocalBinder binder()
+			{
+				return this.binder;
+			}
+		}
+	}
 }

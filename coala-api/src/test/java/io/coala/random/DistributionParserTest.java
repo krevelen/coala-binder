@@ -72,7 +72,7 @@ public class DistributionParserTest
 					bernoulli.draw() ? "heads" : "tails" );
 
 		final ProbabilityDistribution<HML> categoricalEnum = config
-				.categoricalEnum().parse( distParser, HML.class );
+				.categoricalEnum().parseType( distParser, HML.class );
 		assertNotNull( "categoricalEnum not set", categoricalEnum );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "`{}` #{}: {}", config.categoricalEnum(), i + 1,

@@ -22,6 +22,7 @@ package io.coala.time;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -30,13 +31,12 @@ import javax.measure.unit.Unit;
 
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.Converter;
-import org.aeonbits.owner.util.Collections;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 import io.coala.config.JsonConverter;
-import io.coala.config.YamlConfig;
 import io.coala.json.JsonUtil;
 
 /**
@@ -45,27 +45,27 @@ import io.coala.json.JsonUtil;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface ReplicateConfig extends GlobalConfig, YamlConfig
+public interface ReplicateConfig extends GlobalConfig
 {
 	String ID_KEY = "replication.id";
 
 	String ID_DEFAULT = "repl0";
 
-//	String SEED_KEY = "replication.seed";
-//
-//	String SEED_DEFAULT = "1234";
+	String SCHEDULER_TYPE_KEY = "replication.scheduler-type";
+
+	String SCHEDULER_TYPE_DEFAULT = "io.coala.dsol3.Dsol3Scheduler";
 
 	String TIME_UNIT_KEY = "replication.time-unit";
 
 	String TIME_UNIT_DEFAULT = Units.DAYS_ALIAS;
 
+	String DURATION_KEY = "replication.duration";
+
+	String DURATION_DEFAULT = "300";
+
 	String OFFSET_KEY = "replication.offset";
 
 	String OFFSET_DEFAULT = "2020-01-01T00:00:00Z";
-
-	String DURATION_KEY = "replication.duration";
-
-	String DURATION_DEFAULT = "300"/* + Units.DAYS_ALIAS */;
 
 	@Key( ID_KEY )
 	@DefaultValue( ID_DEFAULT )
@@ -77,12 +77,12 @@ public interface ReplicateConfig extends GlobalConfig, YamlConfig
 		return JsonUtil.valueOf( new TextNode( rawId() ), idType );
 	}
 
-//	@Key( SEED_KEY )
-//	@DefaultValue( SEED_DEFAULT )
-//	String rawSeed();
-//
-//	@DefaultValue( "${" + SEED_KEY + "}" )
-//	Long seed();
+	/**
+	 * @return
+	 */
+	@Key( SCHEDULER_TYPE_KEY )
+	@DefaultValue( SCHEDULER_TYPE_DEFAULT )
+	Class<? extends Scheduler> schedulerType();
 
 	@Key( TIME_UNIT_KEY )
 	@DefaultValue( TIME_UNIT_DEFAULT )
@@ -156,23 +156,19 @@ public interface ReplicateConfig extends GlobalConfig, YamlConfig
 		}
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	static ReplicateConfig get()
-	{
-		return of( new Map[0] );
-	}
-
-	@SafeVarargs
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	static ReplicateConfig of( final Map.Entry... entries )
-	{
-		return of( Collections.map( entries ) );
-	}
-
-	@SafeVarargs
-	@SuppressWarnings( { "rawtypes" } )
-	static ReplicateConfig of( final Map... imports )
+	static ReplicateConfig getOrCreate( final Map<?, ?>... imports )
 	{
 		return ConfigCache.getOrCreate( ReplicateConfig.class, imports );
+	}
+
+	static ReplicateConfig getOrCreate( final String rawId,
+		final Map<?, ?>... imports )
+	{
+		return ConfigCache
+				.getOrCreate( rawId, ReplicateConfig.class,
+						ConfigUtil.join(
+								Collections.singletonMap(
+										ReplicateConfig.ID_KEY, rawId ),
+								imports ) );
 	}
 }

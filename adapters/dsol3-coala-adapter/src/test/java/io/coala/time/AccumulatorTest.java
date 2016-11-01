@@ -23,7 +23,6 @@ import static org.aeonbits.owner.util.Collections.entry;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.measure.quantity.DataAmount;
@@ -37,7 +36,6 @@ import org.junit.Test;
 import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
 import io.coala.time.Accumulator.Integrator;
-import net.jodah.concurrentunit.Waiter;
 import rx.Observer;
 
 /**
@@ -100,20 +98,7 @@ public class AccumulatorTest
 			LOG.info( "initialized, t={}", s.now() );
 		} );
 
-		final Waiter waiter = new Waiter();
-		scheduler.time().subscribe( time ->
-		{
-			LOG.trace( "t={}", time.prettify( SI.SECOND, 2 ) );
-		}, error ->
-		{
-			LOG.error( "error at t=" + scheduler.now(), error );
-			waiter.rethrow( error );
-		}, () ->
-		{
-			waiter.resume();
-		} );
-		scheduler.resume();
-		waiter.await( 1, TimeUnit.SECONDS );
+		scheduler.run();
 		LOG.info( "Accumulator test complete, t={}", scheduler.now() );
 	}
 

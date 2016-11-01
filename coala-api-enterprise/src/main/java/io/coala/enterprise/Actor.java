@@ -57,8 +57,8 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Actor<F extends Fact>
-	extends Identified.Ordinal<Actor.ID>, Observer<F>, Proactive, LocalBinding
+public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
+	Observer<Fact>, Proactive, LocalBinding
 {
 
 	/**
@@ -146,12 +146,6 @@ public interface Actor<F extends Fact>
 		return outgoing( tranKind ).filter( f -> f.kind() == kind );
 	}
 
-	@SuppressWarnings( "unchecked" )
-	default Class<F> tranKind()
-	{
-		return (Class<F>) TypeArguments.of( Actor.class, getClass() ).get( 0 );
-	}
-
 	/**
 	 * @param tranKind the type of {@link Fact} to initiate or continue
 	 * @param initiatorRef the initiator {@link Actor.ID}
@@ -171,7 +165,7 @@ public interface Actor<F extends Fact>
 	@SuppressWarnings( "unchecked" )
 	default F initiate( final Actor.ID executorRef, final Map<?, ?>... params )
 	{
-		return initiate( tranKind(), executorRef, null, null, params );
+		return initiate( specialism(), executorRef, null, null, params );
 	}
 
 	/**
@@ -199,7 +193,7 @@ public interface Actor<F extends Fact>
 	default F initiate( final Actor.ID executorRef, final Fact.ID cause,
 		final Map<?, ?>... params )
 	{
-		return initiate( tranKind(), executorRef, cause, null, params );
+		return initiate( specialism(), executorRef, cause, null, params );
 	}
 
 	/**
@@ -229,7 +223,7 @@ public interface Actor<F extends Fact>
 	default F initiate( final Actor.ID executorRef, final Instant expire,
 		final Map<?, ?>... params )
 	{
-		return initiate( tranKind(), executorRef, null, expire, params );
+		return initiate( specialism(), executorRef, null, expire, params );
 	}
 
 	/**
@@ -295,6 +289,8 @@ public interface Actor<F extends Fact>
 
 	Actor<Fact> main();
 
+	Class<F> specialism();
+
 	/**
 	 * @param actorKind
 	 * @return an actor view for performing either or both of the initiator and
@@ -354,6 +350,12 @@ public interface Actor<F extends Fact>
 			}
 
 			@Override
+			public Class<S> specialism()
+			{
+				return tranKind;
+			}
+
+			@Override
 			public Observable<S> emit()
 			{
 				return parent.emit( tranKind );
@@ -372,7 +374,7 @@ public interface Actor<F extends Fact>
 			}
 
 			@Override
-			public void onNext( final S fact )
+			public void onNext( final Fact fact )
 			{
 				parent.onNext( fact );
 			}
@@ -480,7 +482,7 @@ public interface Actor<F extends Fact>
 				} catch( final Exception ignore )
 				{
 					LogUtil.getLogger( Fact.class ).warn(
-							"{}method call failed: {}",
+							"bean {}method call failed: {}",
 							method.isDefault() ? "default " : "", method,
 							ignore );
 				}
@@ -542,10 +544,19 @@ public interface Actor<F extends Fact>
 		}
 
 		/** @return the derived root parent's {@link ID} */
-		public ID organization()
+		public ID organizationRef()
 		{
 			for( LocalId id = this;; id = id.parentRef() )
 				if( id.parentRef() instanceof ID == false ) return (ID) id;
+		}
+
+		/**
+		 * @param name
+		 * @return
+		 */
+		public ID peerRef( final String name )
+		{
+			return of( name, parentRef() );
 		}
 	}
 
@@ -586,10 +597,10 @@ public interface Actor<F extends Fact>
 			// empty bean constructor
 		}
 
-		public Simple( final ID id, final Transaction.Factory txFactory )
+		private Simple withId( final ID id )
 		{
 			this.id = id;
-			this.txFactory = txFactory;
+			return this;
 		}
 
 		@Override
@@ -622,10 +633,16 @@ public interface Actor<F extends Fact>
 						final Transaction<T> tx = this.txFactory.create( tid,
 								tranKind, initiatorRef, executorRef );
 						// tx -> actor (committed facts)
-						tx.commits().subscribe( this::onNext, this::onError,
+						tx.commits().subscribe( main()::onNext, main()::onError,
 								() -> this.txs.remove( tid ) );
 						return tx;
 					} );
+		}
+
+		@Override
+		public Class<Fact> specialism()
+		{
+			return Fact.class;
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -633,10 +650,12 @@ public interface Actor<F extends Fact>
 		public <A extends Actor<F>, F extends Fact> A specialist(
 			final Class<A> actorKind, final Actor<? super F> actorImpl )
 		{
-			return ((Actor<? super F>) this.specialists.computeIfAbsent(
-					TypeArguments.of( Actor.class, actorKind ).get( 0 ),
-					key -> this.specializeIn( (Class<F>) key ) ))
-							.proxyAs( actorImpl, actorKind );
+			final Class<F> specialism = (Class<F>) TypeArguments
+					.of( Actor.class, actorKind ).get( 0 );
+			final Actor<? super F> specialist = (Actor<? super F>) this.specialists
+					.computeIfAbsent( specialism,
+							key -> actorImpl.specializeIn( (Class<F>) key ) );
+			return specialist.proxyAs( specialist, actorKind );
 		}
 
 		@Override
@@ -650,7 +669,9 @@ public interface Actor<F extends Fact>
 		public <F extends Fact> Observable<F> emit( final Class<F> tranKind )
 		{
 			return (Observable<F>) this.typeemit.computeIfAbsent( tranKind,
-					emit()::ofType );
+					key -> emit()
+							.filter( f -> key.isAssignableFrom( f.type() ) )
+							.map( tranKind::cast ) );
 		}
 
 		@Override
@@ -668,7 +689,13 @@ public interface Actor<F extends Fact>
 		@Override
 		public void onNext( final Fact fact )
 		{
-			this.emit.onNext( fact );
+			try
+			{
+				this.emit.onNext( fact );
+			} catch( final Exception e )
+			{
+				e.printStackTrace();
+			}
 		}
 
 		@Override
@@ -724,10 +751,8 @@ public interface Actor<F extends Fact>
 			@Override
 			public Actor<Fact> create( final ID id )
 			{
-				return this.localCache.computeIfAbsent( id, k ->
-				{
-					return new Simple( id, this.txFactory );
-				} );
+				return this.localCache.computeIfAbsent( id,
+						k -> this.binder.inject( Simple.class ).withId( id ) );
 			}
 
 			@Override
@@ -754,5 +779,14 @@ public interface Actor<F extends Fact>
 				return this.txFactory.timeUnit();
 			}
 		}
+	}
+
+	/**
+	 * @param healthAdvisorName
+	 * @return
+	 */
+	default Actor.ID peerRef( final String name )
+	{
+		return main().id().peerRef( name );
 	}
 }

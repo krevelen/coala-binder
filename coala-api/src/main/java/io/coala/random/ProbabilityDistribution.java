@@ -15,7 +15,6 @@
  */
 package io.coala.random;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.List;
@@ -24,10 +23,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.inject.Provider;
+import javax.measure.Measurable;
 import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
 
-import org.aeonbits.owner.Config;
 import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.Thrower;
@@ -231,10 +230,14 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		return AmountDistribution.of( () ->
 		{
 			final T result = draw();
-			if( !Amount.class.isAssignableFrom( result.getClass() ) )
+			if( Measurable.class.isAssignableFrom( result.getClass() ) )
+				return (Amount<Q>) MeasureUtil
+						.toAmount( (Measurable<Q>) draw() ).to( unit );
+			if( Number.class.isAssignableFrom( result.getClass() ) )
 				return (Amount<Q>) MeasureUtil.toAmount( (Number) draw(),
 						unit );
-			return (Amount<Q>) result;
+			return Thrower.throwNew( IllegalArgumentException.class,
+					"Can't convert to Amount<Q>: {}", result );
 		} );
 	}
 
@@ -459,8 +462,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		/**
 		 * The Gamma distribution family also includes
 		 * <a href="https://www.wikiwand.com/en/Erlang_distribution">Erlang
-		 * distributions</a> (where shape <em>k</em> is an integer) <img alt=
-		 * "Probability density function" height="150" src=
+		 * distributions</a> (where shape <em>k</em> is an integer)
+		 * <img alt= "Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Gamma_distribution_pdf.svg/650px-Gamma_distribution_pdf.svg.png"/>
 		 * 
 		 * @param shape &alpha; or <em>k</em>
@@ -705,84 +708,4 @@ public interface ProbabilityDistribution<T> //extends Serializable
 //		polynomial regression ( Number... initialCoefficients ) => pdf?
 
 	}
-
-	/**
-	 * @param encloser
-	 * @param field
-	 * @param binder
-	 */
-	static void injectDistribution( final Object encloser, final Field field,
-		final Supplier<Parser> parser )
-	{
-		if( !ProbabilityDistribution.class.isAssignableFrom( field.getType() ) )
-			Thrower.throwNew( UnsupportedOperationException.class,
-					"@{} only injects extensions of {}",
-					InjectDist.class.getSimpleName(), Config.class );
-		field.setAccessible( true );
-		final InjectDist annot = field.getAnnotation( InjectDist.class );
-		try
-		{
-			final ProbabilityDistribution<?> parsedDist = parser.get()
-					.parse( annot.value(), annot.paramType() );
-			if( field.getType().isAssignableFrom( parsedDist.getClass() ) )
-			{
-				field.set( encloser, parsedDist );
-				return;
-			} else if( AmountDistribution.class
-					.isAssignableFrom( field.getType() ) )
-			{
-				final Unit<?> unit = annot.unit().isEmpty() ? Unit.ONE
-						: Unit.valueOf( annot.unit() );
-//				final Class<?> fieldDim = TypeArguments
-//						.of( AmountDistribution.class, field.getType()
-//								.asSubclass( AmountDistribution.class ) )
-//						.get( 0 );
-//				final Class<?> parsedDim = TypeArguments.of( Unit.class, unit
-//						.getStandardUnit().getClass().asSubclass( Unit.class ) )
-//						.get( 0 );
-//
-//				LogUtil.getLogger( ProbabilityDistribution.class ).trace(
-//						"Convert amounts from parsed {} to injected {}",
-//						parsedDim, fieldDim );
-//				if( fieldDim == parsedDim )
-
-				// FIXME injects raw, check unit compatibility in helper method?
-				field.set( encloser, parsedDist.toAmounts( unit ) );
-
-//				else
-//					Thrower.throwNew( UnsupportedOperationException.class,
-//							"Can't convert amounts from parsed {} to injected {}",
-//							parsedDim.getTypeName(), fieldDim.getTypeName() );
-			} else
-				Thrower.throwNew( UnsupportedOperationException.class,
-						"Can't convert values from parsed {} to injected {}",
-						parsedDist.getClass().getTypeName(),
-						field.getType().getTypeName() );
-//			final Class<?> fieldValueType = TypeArguments
-//					.of( ProbabilityDistribution.class, field.getType()
-//							.asSubclass( ProbabilityDistribution.class ) )
-//					.get( 0 );
-//			final Class<?> parsedValueType = TypeArguments
-//					.of( ProbabilityDistribution.class, parsedDist.getClass() )
-//					.get( 0 );
-//			if( fieldValueType == null
-//					|| fieldValueType.isAssignableFrom( parsedValueType ) )
-//				field.set( encloser, parsedDist );
-//			else if( Amount.class.isAssignableFrom( fieldValueType )
-//					&& Number.class.isAssignableFrom( parsedValueType ) )
-//			{
-//				final Unit<?> unit = annot.unit().isEmpty() ? Unit.ONE
-//						: Unit.valueOf( annot.unit() );
-//				field.set( encloser, parsedDist.toAmounts( unit ) );
-//			} else
-//				Thrower.throwNew( UnsupportedOperationException.class,
-//						"Can't convert values from parsed {} to injected {}",
-//						InjectDist.class.getSimpleName(), parsedValueType,
-//						fieldValueType );
-		} catch( final Exception e )
-		{
-			Thrower.rethrowUnchecked( e );
-		}
-	}
-
 }

@@ -32,11 +32,11 @@ import com.almende.eve.protocol.jsonrpc.annotation.Access;
 import com.almende.eve.protocol.jsonrpc.annotation.AccessType;
 import com.almende.eve.protocol.jsonrpc.annotation.Name;
 
+import io.coala.bind.InjectProxy;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.guice4.Guice4LocalBinder;
 import io.coala.inter.Exposer;
-import io.coala.inter.InjectProxy;
 import io.coala.inter.Invoker;
 import io.coala.log.LogUtil;
 

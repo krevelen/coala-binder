@@ -56,7 +56,7 @@ public class ReplicateConfigTest
 	@Test
 	public void test() throws Exception
 	{
-		final ReplicateConfig conf = ReplicateConfig.get();
+		final ReplicateConfig conf = ReplicateConfig.getOrCreate();
 		LOG.info( "Testing {} defaults: {}",
 				ReplicateConfig.class.getSimpleName(), conf );
 //		Method method = Unit.class.getMethod( "valueOf", CharSequence.class );

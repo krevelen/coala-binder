@@ -26,15 +26,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.measure.Measurable;
+import javax.measure.unit.Unit;
 
 import org.apache.logging.log4j.Logger;
-import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
+import io.coala.math.MeasureUtil;
 import io.coala.math.WeightedValue;
 import io.coala.random.ProbabilityDistribution.Factory;
 import io.coala.util.InstanceParser;
@@ -113,39 +115,34 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 				if( valuePair.trim().isEmpty() ) continue; // empty parentheses
 				final String[] valueWeights = valuePair
 						.split( WEIGHT_SEPARATORS );
-				params.add(
-						valueWeights.length == 1 // no weight given
-								? WeightedValue.of(
-										argParser.parseOrTrimmed( valuePair ),
-										BigDecimal.ONE )
-								: WeightedValue.of(
-										argParser.parseOrTrimmed(
-												valueWeights[0] ),
-										new BigDecimal( valueWeights[1].trim() ) ) );
+				params.add( valueWeights.length == 1 // no weight given
+						? WeightedValue.of(
+								argParser.parseOrTrimmed( valuePair ),
+								BigDecimal.ONE )
+						: WeightedValue.of(
+								argParser.parseOrTrimmed( valueWeights[0] ),
+								new BigDecimal( valueWeights[1].trim() ) ) );
 			} catch( final Throwable t )
 			{
-//				throw new ParseException( "Could not parse '" + dist.trim()
-//						+ "': " + t.getMessage(), m.start() );
 				Thrower.rethrowUnchecked( t );
 			}
 		if( params.isEmpty() && argType.isEnum() )
 			for( P constant : argType.getEnumConstants() )
 			params.add( WeightedValue.of( constant, BigDecimal.ONE ) );
-		final ProbabilityDistribution<T> result = parse( m.group( DIST_GROUP ),
-				params );
-		if( !Amount.class.isAssignableFrom( argType ) || params.isEmpty() )
-			return result;
+		if( !Measurable.class.isAssignableFrom( argType ) || params.isEmpty() )
+			return parse( m.group( DIST_GROUP ), params );
 
-		/* try {@link AmountDistribution} */
-		final Amount<?> first = (Amount<?>) params.get( 0 ).getValue();
-		// check parameter value unit compatibility
-		for( int i = params.size() - 1; i > 0; i-- )
-			if( !((Amount<?>) params.get( i ).getValue()).getUnit()
-					.isCompatible( first.getUnit() ) )
-				throw ExceptionFactory.createUnchecked(
-						"quantities incompatible of {} and {}", first,
-						params.get( i ).getValue() );
-		return (ProbabilityDistribution<T>) result.toAmounts();
+		// convert parameter to Number type and check quantity compatibility
+		final Unit<?> firstUnit = MeasureUtil
+				.unitOf( params.get( 0 ).getValue() );
+		final List<WeightedValue<BigDecimal>> numbers = params.stream()
+				.map( wv -> WeightedValue.of(
+						MeasureUtil.toBigDecimal( (Measurable<?>) wv.getValue(),
+								firstUnit ),
+						wv.getWeight() ) )
+				.collect( Collectors.toList() );
+		return (ProbabilityDistribution<T>) parse( m.group( DIST_GROUP ),
+				numbers ).toAmounts( firstUnit );
 	}
 
 	/**

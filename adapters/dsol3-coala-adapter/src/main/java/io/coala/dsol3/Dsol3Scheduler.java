@@ -13,10 +13,9 @@ import javax.measure.quantity.Quantity;
 
 import org.apache.logging.log4j.Logger;
 
-import io.coala.config.InjectConfig;
+import io.coala.bind.InjectConfig;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
-import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
@@ -74,10 +73,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	private final Subject<Instant, Instant> time = PublishSubject.create();
 
 	/** the time */
-	private final Observable<Scheduler> reset = time.first().map( t ->
-	{
-		return this;
-	} );
+	private final Subject<Scheduler, Scheduler> reset = PublishSubject.create();
 
 	/** the listeners */
 	private final NavigableMap<Instant, Subject<Instant, Instant>> listeners = new ConcurrentSkipListMap<>();
@@ -155,12 +151,21 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			{
 				synchronized( this.listeners )
 				{
+					// publish end time
+					final Instant t = this.scheduler.getSimulatorTime()
+							.toInstant();
+					if( this.last == null || !Compare.eq( t, this.last ) )
+						this.time.onNext( t.to( this.first.unit() ) );
+
+					// unsubscribe all event listeners
 					this.listeners.values().removeIf( timeProxy ->
 					{
 						timeProxy.onCompleted();
 						return true;
 					} );
 					this.time.onCompleted();
+
+					// clean up
 					this.scheduler.cleanUp();
 					this.scheduler = null;
 				}
@@ -175,7 +180,8 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 //			final ThrowingConsumer<Scheduler, ?> onInitialize = config.initer();
 
 			this.last = this.first = startTime.toInstant();
-			final ObservableDSOLModel model = ObservableDSOLModel.of( id );
+			final ObservableDSOLModel model = ObservableDSOLModel.of( id,
+					() -> this.reset.onNext( this ) );
 
 			// initialize the simulator
 			((DEVSSimulator) this.scheduler).initialize( DsolTime
@@ -199,7 +205,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	@Override
-	public void resume()
+	public void run()
 	{
 		try
 		{
@@ -226,24 +232,9 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 	}
 
 	@Override
-	public Observable<Scheduler> onReset()
-	{
-		return this.reset.asObservable();
-	}
-
-	@Override
-	public Subscription onReset( final ThrowingRunnable<?> runnable )
-	{
-		return onReset( s ->
-		{
-			runnable.run();
-		} );
-	}
-
-	@Override
 	public Subscription onReset( final ThrowingConsumer<Scheduler, ?> consumer )
 	{
-		return onReset().subscribe( s ->
+		return this.reset.subscribe( s ->
 		{
 			try
 			{
@@ -254,6 +245,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 			}
 		}, e ->
 		{
+			// error propagated through time-stream
 		} );
 	}
 
@@ -300,7 +292,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 							// propagate execution error
 							this.time.onError( e );
 						}
-					} ) );
+					}, e -> LOG.error( "Problem", e ) ) );
 		}
 	}
 
@@ -308,7 +300,8 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 		extends DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>>
 	{
 		@SuppressWarnings( { "serial", "rawtypes", "unchecked" } )
-		static <Q extends Quantity> ObservableDSOLModel<Q> of( final String id )
+		static <Q extends Quantity> ObservableDSOLModel<Q> of( final String id,
+			final Runnable onReset )
 		{
 			return new ObservableDSOLModel<Q>()
 			{
@@ -334,8 +327,10 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 							{
 								// first: rename the worker thread
 								Thread.currentThread().setName( id );
+								onReset.run();
 							} );
-					LOG.trace( "initializing, t={}, #events={}",
+
+					LOG.trace( "initialized, t={}, #events={}",
 							simulator.getSimulatorTime(),
 							devsSim.getEventList().size() );
 				}

@@ -105,7 +105,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	 * 
 	 * @return the {@link Fact} again to allow chaining
 	 */
-	default <F extends Fact> F commit()
+	default Fact commit()
 	{
 		return commit( kind().isTerminal() );
 	}
@@ -146,18 +146,18 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 	/**
 	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
-	 *         in the same {@link Actor.ID#organization()}
+	 *         in the same {@link Actor.ID#organizationRef()}
 	 */
 	@JsonIgnore // derived  
 	default boolean isIncoming()
 	{
-		return creatorRef().organization()
-				.equals( responderRef().organization() );
+		return creatorRef().organizationRef()
+				.equals( responderRef().organizationRef() );
 	}
 
 	/**
 	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
-	 *         in a different {@link Actor.ID#organization()}
+	 *         in a different {@link Actor.ID#organizationRef()}
 	 */
 	@JsonIgnore // derived  
 	default boolean isOutgoing()
@@ -299,7 +299,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 			{
 				final Object result = method.isDefault()
 						&& Proxy.isProxyClass( self.getClass() )
-								? ReflectUtil.invokeDefaultMethod( self, method,
+								? ReflectUtil.invokeDefaultMethod( impl, method,
 										args )
 								: method.invoke( impl, args );
 				if( callObserver != null ) callObserver.onNext( method );

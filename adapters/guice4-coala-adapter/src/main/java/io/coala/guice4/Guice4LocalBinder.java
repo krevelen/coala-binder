@@ -29,19 +29,18 @@ import com.google.inject.spi.TypeListener;
 
 import io.coala.bind.BinderConfig;
 import io.coala.bind.BindingConfig;
+import io.coala.bind.InjectConfig;
+import io.coala.bind.InjectDist;
+import io.coala.bind.InjectLogger;
+import io.coala.bind.InjectProxy;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.LocalId;
 import io.coala.bind.ProviderConfig;
-import io.coala.config.ConfigUtil;
-import io.coala.config.InjectConfig;
 import io.coala.exception.Thrower;
-import io.coala.inter.InjectProxy;
 import io.coala.inter.Invoker;
-import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
-import io.coala.random.InjectDist;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.util.Instantiator;
 import rx.Observable;
@@ -97,48 +96,33 @@ public class Guice4LocalBinder implements LocalBinder
 														|| field.getType() == java.util.logging.Logger.class)) )
 								{
 									typeEncounter.register(
-											(InjectionListener<T>) t ->
-											{
-												// replace default logger
-												LogUtil.injectLogger( t,
-														field );
-											} );
+											// replace default logger
+											(InjectionListener<T>) t -> InjectLogger.Util
+													.injectLogger( t, field ) );
 								} else if( field.isAnnotationPresent(
 										InjectConfig.class ) )
 								{
-									typeEncounter
-											.register( (MembersInjector<T>) t ->
-											{
-												ConfigUtil.injectConfig( t,
-														field, binder );
-											} );
+									typeEncounter.register(
+											(MembersInjector<T>) t -> InjectConfig.Util
+													.injectConfig( t, field,
+															binder ) );
 								} else if( field.isAnnotationPresent(
 										InjectProxy.class ) )
 								{
-									typeEncounter
-											.register( (MembersInjector<T>) t ->
-											{
-												Invoker.injectProxy( t, field,
-														() ->
-														{
-															return binder
-																	.inject( Invoker.class );
-														} );
-											} );
+									typeEncounter.register(
+											(MembersInjector<T>) t -> InjectProxy.Util
+													.injectProxy( t, field,
+															() -> binder.inject(
+																	Invoker.class ) ) );
 								} else if( field.isAnnotationPresent(
 										InjectDist.class ) )
 								{
-									typeEncounter
-											.register( (MembersInjector<T>) t ->
-											{
-												ProbabilityDistribution
-														.injectDistribution( t,
-																field, () ->
-																{
-																	return binder
-																			.inject( ProbabilityDistribution.Parser.class );
-																} );
-											} );
+									typeEncounter.register(
+											(MembersInjector<T>) t -> InjectDist.Util
+													.injectDistribution( t,
+															field,
+															() -> binder.inject(
+																	ProbabilityDistribution.Parser.class ) ) );
 								}
 							}
 						}

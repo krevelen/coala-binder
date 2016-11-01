@@ -1,7 +1,5 @@
 package io.coala.guice4;
 
-import java.util.Collections;
-
 import javax.inject.Singleton;
 import javax.measure.quantity.Duration;
 
@@ -9,11 +7,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import io.coala.bind.InjectDist;
 import io.coala.bind.LocalConfig;
 import io.coala.random.AmountDistribution;
 import io.coala.random.DistributionFactory;
 import io.coala.random.DistributionParser;
-import io.coala.random.InjectDist;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.PseudoRandom;
 
@@ -62,8 +60,7 @@ public class InjectDistTest
 				.build();
 
 		LOG.info( "Starting InjectDist test, config: {}", config );
-		final Model model = config.create( Collections.emptyMap() )
-				.inject( Model.class );
+		final Model model = config.createBinder().inject( Model.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "coin toss #{}: {}", i + 1,
 					model.bernoulli.draw() ? "heads" : "tails" );

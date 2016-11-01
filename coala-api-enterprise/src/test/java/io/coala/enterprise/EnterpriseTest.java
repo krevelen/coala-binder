@@ -2,7 +2,6 @@ package io.coala.enterprise;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,7 +27,6 @@ import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
 import io.coala.time.Units;
-import net.jodah.concurrentunit.Waiter;
 
 /**
  * {@link EnterpriseTest}
@@ -225,19 +223,14 @@ public class EnterpriseTest
 				.build()
 //		final LocalBinder binder = LocalConfig
 //				.openYAML( "world1.yaml", "my-world" )
-				.create( Collections.singletonMap( EntityManagerFactory.class,
-						HibHikHypConfig.createEMF() ) );
+				.createBinder(
+						Collections.singletonMap( EntityManagerFactory.class,
+								HibHikHypConfig.createEMF() ) );
 
 		LOG.info( "Starting EO test, config: {}", binder );
 		final Scheduler scheduler = binder.inject( World.class ).scheduler();
 
-		final Waiter waiter = new Waiter();
-		scheduler.time().subscribe( time ->
-		{
-			// virtual time passes...
-		}, waiter::rethrow, waiter::resume );
-		scheduler.resume();
-		waiter.await( 15, TimeUnit.SECONDS );
+		scheduler.run();
 
 //		CountDownLatch latch = new CountDownLatch( 1 );
 //		World world = binder.inject( World.class );
