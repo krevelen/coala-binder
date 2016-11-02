@@ -36,6 +36,7 @@ import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalBinding;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.LocalId;
+import io.coala.enterprise.FactExchange.Direction;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
@@ -124,26 +125,6 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	{
 		return emit( tranKind, factKind )
 				.filter( fact -> fact.creatorRef().equals( creatorRef ) );
-	}
-
-	/**
-	 * @return all {@link #emit()} where {@link Fact#isOutgoing() isOutgoing()}
-	 *         {@code == true}
-	 */
-	default Observable<F> outgoing()
-	{
-		return emit().filter( Fact::isOutgoing );
-	}
-
-	default <T extends F> Observable<T> outgoing( final Class<T> tranKind )
-	{
-		return outgoing().ofType( tranKind );
-	}
-
-	default <T extends F> Observable<T> outgoing( final Class<T> tranKind,
-		final FactKind kind )
-	{
-		return outgoing( tranKind ).filter( f -> f.kind() == kind );
 	}
 
 	/**
@@ -288,6 +269,15 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	}
 
 	Actor<Fact> main();
+
+	/**
+	 * @param healthAdvisorName
+	 * @return
+	 */
+	default Actor.ID peerRef( final String name )
+	{
+		return main().id().peerRef( name );
+	}
 
 	Class<F> specialism();
 
@@ -543,7 +533,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 					: of( raw.unwrap().toString(), raw.parentRef() );
 		}
 
-		/** @return the derived root parent's {@link ID} */
+		/** @return the recursed root ancestor {@link ID} */
 		public ID organizationRef()
 		{
 			for( LocalId id = this;; id = id.parentRef() )
@@ -595,12 +585,6 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		public Simple()
 		{
 			// empty bean constructor
-		}
-
-		private Simple withId( final ID id )
-		{
-			this.id = id;
-			return this;
 		}
 
 		@Override
@@ -709,6 +693,23 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		{
 			return this.binder;
 		}
+
+		private Simple withId( final ID id )
+		{
+			this.id = id;
+			return this;
+		}
+
+		/**
+		 * @param factExchange
+		 * @return
+		 */
+		private Simple withExchangeDirection( final FactExchange factExchange,
+			final Direction direction )
+		{
+			factExchange.register( this, direction );
+			return this;
+		}
 	}
 
 	/**
@@ -748,11 +749,16 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			@Inject
 			private transient Transaction.Factory txFactory;
 
+			@Inject
+			private transient FactExchange factExchange;
+
 			@Override
 			public Actor<Fact> create( final ID id )
 			{
-				return this.localCache.computeIfAbsent( id,
-						k -> this.binder.inject( Simple.class ).withId( id ) );
+				return this.localCache.computeIfAbsent( id.organizationRef(),
+						orgRef -> this.binder.inject( Simple.class )
+								.withId( id ).withExchangeDirection(
+										this.factExchange, Direction.BIDI ) );
 			}
 
 			@Override
@@ -779,14 +785,5 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 				return this.txFactory.timeUnit();
 			}
 		}
-	}
-
-	/**
-	 * @param healthAdvisorName
-	 * @return
-	 */
-	default Actor.ID peerRef( final String name )
-	{
-		return main().id().peerRef( name );
 	}
 }

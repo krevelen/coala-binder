@@ -205,7 +205,7 @@ public class Dsol3Scheduler<Q extends Quantity> implements Scheduler
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	@Override
-	public void run()
+	public void resume()
 	{
 		try
 		{

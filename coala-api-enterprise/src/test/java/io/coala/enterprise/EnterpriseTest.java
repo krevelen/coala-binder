@@ -218,8 +218,9 @@ public class EnterpriseTest
 						Transaction.Factory.LocalCaching.class )
 				.withProvider( Fact.Factory.class,
 						Fact.Factory.SimpleProxies.class )
-				.withProvider( FactBank.Factory.class,
-						FactBank.Factory.LocalJPA.class )
+				.withProvider( FactBank.class, FactBank.SimpleJPA.class )
+				.withProvider( FactExchange.class,
+						FactExchange.SimpleBus.class )
 				.build()
 //		final LocalBinder binder = LocalConfig
 //				.openYAML( "world1.yaml", "my-world" )
@@ -242,8 +243,8 @@ public class EnterpriseTest
 //		latch.await();
 //		System.out.println( "End reached!" );
 
-		for( Object f : binder.inject( FactBank.Factory.class ).create().find()
-				.toBlocking().toIterable() )
+		for( Object f : binder.inject( FactBank.class ).find().toBlocking()
+				.toIterable() )
 			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
 					((World.Sale) f).getRqParam() );
 

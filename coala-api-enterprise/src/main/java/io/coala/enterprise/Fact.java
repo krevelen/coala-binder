@@ -145,24 +145,34 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	}
 
 	/**
-	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
-	 *         in the same {@link Actor.ID#organizationRef()}
+	 * @param id
+	 * @return
 	 */
-	@JsonIgnore // derived  
-	default boolean isIncoming()
+	@JsonIgnore
+	default boolean isIncoming( final Actor.ID id )
 	{
-		return creatorRef().organizationRef()
-				.equals( responderRef().organizationRef() );
+		return id.organizationRef().equals( responderRef().organizationRef() );
+	}
+
+	/**
+	 * @param id
+	 * @return
+	 */
+	@JsonIgnore
+	default boolean isOutgoing( final Actor.ID id )
+	{
+		return !isIncoming( id );
 	}
 
 	/**
 	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
-	 *         in a different {@link Actor.ID#organizationRef()}
+	 *         in the same {@link Actor.ID#organizationRef()}
 	 */
-	@JsonIgnore // derived  
-	default boolean isOutgoing()
+	@JsonIgnore
+	default boolean isInternal()
 	{
-		return !isIncoming();
+		return !creatorRef().organizationRef()
+				.equals( responderRef().organizationRef() );
 	}
 
 	/** @return */
@@ -299,7 +309,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 			{
 				final Object result = method.isDefault()
 						&& Proxy.isProxyClass( self.getClass() )
-								? ReflectUtil.invokeDefaultMethod( impl, method,
+								? ReflectUtil.invokeDefaultMethod( self, method,
 										args )
 								: method.invoke( impl, args );
 				if( callObserver != null ) callObserver.onNext( method );
@@ -690,7 +700,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 			@SuppressWarnings( "rawtypes" )
 			@Inject
-			private FactBank.Factory bankFactory;
+			private FactBank bank;
 
 			@Override
 			public <F extends Fact> F create( final Class<F> tranKind,
@@ -714,7 +724,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 			@Override
 			public FactBank<?> factBank()
 			{
-				return this.bankFactory.create();
+				return this.bank;
 			}
 		}
 	}

@@ -224,8 +224,8 @@ public class MeasureUtil implements Util
 	{
 		return measure == null ? null
 				: measure instanceof DecimalMeasure
-						? ((DecimalMeasure<Q>) measure).to( (Unit<Q>) unit )
-								.getValue()
+						? ((DecimalMeasure<Q>) measure).to( (Unit<Q>) unit,
+								DecimalUtil.DEFAULT_CONTEXT ).getValue()
 						: BigDecimal.valueOf(
 								measure.doubleValue( (Unit<Q>) unit ) );
 	}

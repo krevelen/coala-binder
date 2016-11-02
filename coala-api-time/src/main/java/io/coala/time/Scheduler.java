@@ -45,14 +45,21 @@ public interface Scheduler extends Proactive, Runnable
 	Subscription onReset( ThrowingConsumer<Scheduler, ?> consumer );
 
 	/** continue executing scheduled events until completion */
-	void run();
+	void resume();
+
+	/** block Thread until completion */
+	@Override
+	default void run()
+	{
+		resume();
+		time().toBlocking().last();
+	}
 
 	/** continue executing scheduled events until completion */
-	default Instant run( final ThrowingConsumer<Scheduler, ?> onReset )
+	default void run( final ThrowingConsumer<Scheduler, ?> onReset )
 	{
 		onReset( onReset );
 		run();
-		return time().toBlocking().last();
 	}
 
 	/**
@@ -365,13 +372,6 @@ public interface Scheduler extends Proactive, Runnable
 			final Map<?, ?>... imports )
 		{
 			return create( ReplicateConfig.getOrCreate( rawId, imports ) );
-		}
-
-		default Instant createAndRun(
-			final ThrowingConsumer<Scheduler, ?> onReset, final String id,
-			final Map<?, ?>... imports ) throws Throwable
-		{
-			return create( id, imports ).run( onReset );
 		}
 
 		default Observable<Scheduler> createAndRun(
