@@ -61,10 +61,12 @@ public class LatLong implements Serializable
 	public static LatLong of( final Quantity<Angle> lat,
 		final Quantity<Angle> lon )
 	{
-		return new LatLong( lat, QuantityUtil.valueOf( lon, lat.getUnit() ) );
+		return new LatLong( lat, lon );
 	}
 
 	private static final Apfloat TWO = new Apint( 2 );
+
+	private final Unit<Angle> unit;
 
 	private final List<Quantity<Angle>> coordinates;
 
@@ -72,18 +74,26 @@ public class LatLong implements Serializable
 
 	public LatLong( final Quantity<Angle> lat, final Quantity<Angle> lon )
 	{
-		this.coordinates = Arrays.asList( lat, lon );
+		this( lat, lon, lat.getUnit() );
+	}
+
+	public LatLong( final Quantity<Angle> lat, final Quantity<Angle> lon,
+		final Unit<Angle> unit )
+	{
+		this.unit = unit;
+		this.coordinates = Arrays.asList( QuantityUtil.valueOf( lat, unit ),
+				QuantityUtil.valueOf( lon, unit ) );
 	}
 
 	@Override
 	public String toString()
 	{
-		final BigDecimal lat = DecimalUtil
-				.valueOf( this.coordinates.get( 0 ).getValue() );
-		final BigDecimal lon = DecimalUtil
-				.valueOf( this.coordinates.get( 1 ).getValue() );
-		return "(" + lat.toPlainString() + " by " + lon.toPlainString() + " "
-				+ this.coordinates.get( 0 ).getUnit() + ")";
+		return "("
+				+ getCoordinates().stream()
+						.map( q -> DecimalUtil.valueOf( q.getValue() )
+								.toPlainString() )
+						.collect( Collectors.joining( " by " ) )
+				+ " " + this.unit + ")";
 	}
 
 	/**
