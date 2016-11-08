@@ -1,6 +1,7 @@
 package io.coala.time;
 
 import javax.measure.Unit;
+import javax.measure.format.UnitFormat;
 import javax.measure.quantity.Frequency;
 import javax.measure.quantity.Time;
 
@@ -17,7 +18,7 @@ import tec.uom.se.unit.Units;
  */
 public class TimeUnits extends Units
 {
-	
+
 	/** */
 	public static final String MILLIS_LABEL = "ms";
 	public static final Unit<Time> MILLIS = new TransformedUnit<>( MILLIS_LABEL,
@@ -57,14 +58,13 @@ public class TimeUnits extends Units
 			ANNUAL_LABEL, HERTZ,
 			new RationalConverter( 1, 60 * 60 * 24 * 365 ) );
 
-	public static final SimpleUnitFormat UNIT_FORMAT = SimpleUnitFormat
-			.getInstance();
+	public static final UnitFormat UNIT_FORMAT = SimpleUnitFormat.getInstance();
 
 	static
 	{
-		UNIT_FORMAT.alias( HOUR, HOURS.getSymbol() );
+		((SimpleUnitFormat) UNIT_FORMAT).alias( HOUR, HOURS.getSymbol() );
 		UNIT_FORMAT.label( DAY, DAY.getSymbol() );
-		UNIT_FORMAT.alias( DAY, DAYS.getSymbol() );
+		((SimpleUnitFormat) UNIT_FORMAT).alias( DAY, DAYS.getSymbol() );
 		UNIT_FORMAT.label( DAILY, DAILY.getSymbol() );
 		UNIT_FORMAT.label( ANNUM, ANNUM.getSymbol() );
 		UNIT_FORMAT.label( ANNUAL, ANNUAL.getSymbol() );

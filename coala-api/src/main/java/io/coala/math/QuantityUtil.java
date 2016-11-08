@@ -9,6 +9,7 @@ import java.util.Set;
 import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.format.ParserException;
+import javax.measure.format.UnitFormat;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Time;
 
@@ -29,7 +30,6 @@ import io.coala.exception.Thrower;
 import io.coala.util.Util;
 import tec.uom.se.AbstractUnit;
 import tec.uom.se.ComparableQuantity;
-import tec.uom.se.format.SimpleUnitFormat;
 import tec.uom.se.unit.Units;
 
 /**
@@ -154,7 +154,7 @@ public class QuantityUtil implements Util
 	 * @return
 	 */
 	public static ComparableQuantity valueOf( final CharSequence str,
-		final SimpleUnitFormat unitFormat )
+		final UnitFormat unitFormat )
 	{
 		final String[] split = str.toString().split( "\\s+" );
 		return split.length < 2 ? valueOf( DecimalUtil.valueOf( str ) )
