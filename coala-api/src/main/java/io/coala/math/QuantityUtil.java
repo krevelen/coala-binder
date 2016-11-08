@@ -10,6 +10,7 @@ import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.format.ParserException;
 import javax.measure.format.UnitFormat;
+import javax.measure.quantity.Angle;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Time;
 
@@ -27,9 +28,11 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import io.coala.exception.Thrower;
+import io.coala.util.Compare;
 import io.coala.util.Util;
 import tec.uom.se.AbstractUnit;
 import tec.uom.se.ComparableQuantity;
+import tec.uom.se.format.SimpleUnitFormat;
 import tec.uom.se.unit.Units;
 
 /**
@@ -461,5 +464,46 @@ public class QuantityUtil implements Util
 		doubleValue( final Quantity<?> qty, final Unit<Q> unit )
 	{
 		return DecimalUtil.doubleValue( valueOf( qty, unit ).getValue() );
+	}
+
+	/**
+	 * @param qty1
+	 * @param qty2
+	 * @param precision
+	 * @return
+	 */
+	public static boolean approximates( final Quantity<Angle> qty1,
+		final Quantity<Angle> qty2, final int precision )
+	{
+		final BigDecimal v1 = DecimalUtil.toScale( qty1.getValue(),
+				precision - 1 );
+		final BigDecimal v2 = DecimalUtil.toScale( qty2.getValue(),
+				precision - 1 );
+		return Compare.eq( v1, v2 );
+	}
+
+	/**
+	 * @param quantity
+	 * @return
+	 * @see BigDecimal#precision()
+	 */
+	public static int precision( final Quantity<Angle> quantity )
+	{
+		return DecimalUtil.valueOf( quantity.getValue() ).precision();
+	}
+
+	/**
+	 * @param quantity
+	 * @return
+	 * @see BigDecimal#scale()
+	 */
+	public static int scale( final Quantity<Angle> quantity )
+	{
+		return DecimalUtil.valueOf( quantity.getValue() ).scale();
+	}
+	
+	static
+	{
+		SimpleUnitFormat.getInstance().label( Units.DEGREE_ANGLE, "deg" );
 	}
 }

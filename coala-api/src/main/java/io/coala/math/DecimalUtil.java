@@ -110,7 +110,7 @@ public class DecimalUtil implements Util
 								? new Apfloat( value.longValue() )
 								: value instanceof BigInteger
 										? new Apfloat( (BigInteger) value )
-										: new Apfloat( value.doubleValue() );
+										: new Apfloat( valueOf( value ) );
 	}
 
 	public static BigDecimal valueOf( final Apfloat value )

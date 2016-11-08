@@ -41,6 +41,7 @@ import org.apfloat.Apint;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.coala.util.Compare;
 import tec.uom.se.ComparableQuantity;
 import tec.uom.se.unit.Units;
 
@@ -60,8 +61,7 @@ public class LatLong implements Serializable
 	public static LatLong of( final Quantity<Angle> lat,
 		final Quantity<Angle> lon )
 	{
-		System.err.println( lat + " by " + lon );
-		return new LatLong( lat, lon.to( lat.getUnit() ) );
+		return new LatLong( lat, QuantityUtil.valueOf( lon, lat.getUnit() ) );
 	}
 
 	private static final Apfloat TWO = new Apint( 2 );
@@ -78,7 +78,12 @@ public class LatLong implements Serializable
 	@Override
 	public String toString()
 	{
-		return this.coordinates.toString();
+		final BigDecimal lat = DecimalUtil
+				.valueOf( this.coordinates.get( 0 ).getValue() );
+		final BigDecimal lon = DecimalUtil
+				.valueOf( this.coordinates.get( 1 ).getValue() );
+		return "(" + lat.toPlainString() + " by " + lon.toPlainString() + " "
+				+ this.coordinates.get( 0 ).getUnit() + ")";
 	}
 
 	/**
@@ -120,11 +125,31 @@ public class LatLong implements Serializable
 		final Apfloat lon1 = this.getRadians().get( 1 );
 		final Apfloat lat2 = that.getRadians().get( 0 );
 		final Apfloat lon2 = that.getRadians().get( 1 );
-		final Apfloat dist = TWO.multiply( asin( sqrt( pow(
-				sin( abs( lat1.subtract( lat2 ) ).divide( TWO ) ),
-				TWO ).add( cos( lat1 ).multiply( cos( lat2 ) ).multiply(
-						pow( sin( abs( lon1.subtract( lon2 ) ).divide( TWO ) ),
-								TWO ) ) ) ) ) );
-		return QuantityUtil.valueOf( dist.precision( 4 ), Units.RADIAN );
+		final Apfloat dist = TWO
+				.multiply( asin( sqrt( pow( sin(
+						abs( lat1.subtract( lat2 ) ).divide( TWO ) ), TWO ).add(
+								cos( lat1 ).multiply( cos( lat2 ) ).multiply(
+										pow( sin( abs( lon1.subtract( lon2 ) )
+												.divide( TWO ) ), TWO ) ) ) ) ) )
+				.precision( Compare.min( lat1.precision(), lon1.precision(),
+						lat2.precision(), lon2.precision() ) );
+		return QuantityUtil.valueOf( DecimalUtil.valueOf( dist ),
+				Units.RADIAN );
+	}
+
+	public ComparableQuantity<Angle> angularDistance( final LatLong that,
+		final Unit<Angle> unit )
+	{
+		return QuantityUtil.valueOf( angularDistance( that ), unit );
+	}
+
+	/**
+	 * @return
+	 * @see QuantityUtil#precision(Quantity)
+	 */
+	public int precision()
+	{
+		return Compare.min( QuantityUtil.precision( getCoordinates().get( 0 ) ),
+				QuantityUtil.precision( getCoordinates().get( 1 ) ) );
 	}
 }
