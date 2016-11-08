@@ -118,6 +118,18 @@ public class QuantityUtil implements Util
 				: valueOf( value.getValue(), value.getUnit() );
 	}
 
+	/** TODO remove when degree/radian conversions is fixed in JSR-363 uom-se */
+	@Deprecated
+	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
+		toUnit( final Quantity<Q> value, final Unit<Q> unit )
+	{
+		if( value.getUnit() == Units.RADIAN && unit == Units.DEGREE_ANGLE )
+			return valueOf( DecimalUtil.toDegrees( value.getValue() ), unit );
+		if( value.getUnit() == Units.DEGREE_ANGLE && unit == Units.RADIAN )
+			return valueOf( DecimalUtil.toRadians( value.getValue() ), unit );
+		return valueOf( value ).to( unit );
+	}
+
 	/**
 	 * @param value
 	 * @param unit
@@ -127,11 +139,7 @@ public class QuantityUtil implements Util
 	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
 		valueOf( final Quantity<?> value, final Unit<Q> unit )
 	{
-		if( value.getUnit() == Units.RADIAN && unit == Units.DEGREE_ANGLE )
-			return valueOf( DecimalUtil.toDegrees( value.getValue() ), unit );
-		if( value.getUnit() == Units.DEGREE_ANGLE && unit == Units.RADIAN )
-			return valueOf( DecimalUtil.toRadians( value.getValue() ), unit );
-		return valueOf( (Quantity<Q>) value ).to( unit );
+		return toUnit( (Quantity<Q>) value, unit );
 	}
 
 	@SuppressWarnings( "rawtypes" )

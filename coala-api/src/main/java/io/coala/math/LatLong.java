@@ -94,9 +94,8 @@ public class LatLong implements Serializable
 	{
 		return this.radians != null ? this.radians
 				: (this.radians = this.coordinates.stream()
-						.map( c -> c.getUnit().equals( Units.DEGREE_ANGLE )
-								? DecimalUtil.toRadians( c.getValue() )
-								: c.to( Units.RADIAN ).getValue() )
+						.map( c -> QuantityUtil.valueOf( c, Units.RADIAN )
+								.getValue() )
 						.map( DecimalUtil::toApfloat )
 						.collect( Collectors.toList() ));
 	}
