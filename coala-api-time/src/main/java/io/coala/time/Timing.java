@@ -25,12 +25,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.measure.Measurable;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.ReadableInstant;
-import org.jscience.physics.amount.Amount;
 import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
@@ -48,9 +45,9 @@ import rx.Observable;
  * calendar-based offset. Pattern syntax compatibility includes:
  * <ul>
  * <li>a {@link CronExpression} (e.g. {@code "0 0 0 14 * ? *"} for
- * <em>&ldquo;midnight of every 14th day
- *            of the month&rdquo;</em> or {@code "0 30 9,12,15 * * ?"} for
- * <em>&ldquo;every day at 9:30am, 12:30pm and 3:30pm&rdquo;</em>);</li>
+ * <em>&ldquo;midnight of every 14th day of the month&rdquo;</em> or
+ * {@code "0 30 9,12,15 * * ?"} for <em>&ldquo;every day at 9:30am, 12:30pm and
+ * 3:30pm&rdquo;</em>);</li>
  * <li>a {@link DateTimeIteratorFactory iCal RRULE or RDATE} pattern (e.g.
  * {@code "DTSTART;TZID=US-Eastern:19970902T090000\r\nRRULE:FREQ=DAILY;UNTIL=20130430T083000Z;INTERVAL=1;"}
  * );</li>
@@ -311,7 +308,7 @@ public interface Timing extends Wrapper<String>
 						this.count++;
 						return Instant.of(
 								next.getTime() - offset.toEpochMilli(),
-								Units.MILLIS );
+								TimeUnits.MILLIS );
 					}
 				};
 			};
@@ -380,7 +377,7 @@ public interface Timing extends Wrapper<String>
 							return Instant.of(
 									this.it.next().getMillis()
 											- offset.toEpochMilli(),
-									Units.MILLIS );
+									TimeUnits.MILLIS );
 						}
 					};
 				} catch( final Exception e )

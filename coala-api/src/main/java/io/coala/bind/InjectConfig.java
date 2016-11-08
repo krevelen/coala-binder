@@ -13,14 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.coala.config;
+package io.coala.bind;
 
+import java.io.InputStream;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -29,8 +32,15 @@ import javax.inject.Qualifier;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
+import org.aeonbits.owner.Factory;
 
+import io.coala.config.ConfigUtil;
+import io.coala.config.YamlUtil;
+import io.coala.exception.Thrower;
+import io.coala.log.LogUtil;
 import io.coala.name.Identified;
+import io.coala.util.FileUtil;
+import io.coala.util.ObjectsUtil;
 
 /**
  * {@link InjectConfig} marks an {@link Inject}able type's member field(s) which
@@ -111,5 +121,103 @@ public @interface InjectConfig
 		 * inject a new {@link Config} instance, don't cache/share
 		 */
 		NONE,
+	}
+
+	class Util
+	{
+
+		/**
+		 * TODO: implement {@link Factory} for local context?
+		 * 
+		 * @param encloser
+		 * @param field
+		 * @param binder
+		 */
+		public static void injectConfig( final Object encloser,
+			final Field field, final Object binder )
+		{
+			if( binder instanceof LocalBinder ) try
+			{
+				field.setAccessible( true );
+				field.set( encloser,
+						((LocalBinder) binder).inject( field.getType() ) );
+				System.err.println( "Provided config from binder" );
+				return;
+			} catch( final Exception e )
+			{
+				// ignore
+			}
+			final InjectConfig annot = field
+					.getAnnotation( InjectConfig.class );
+			if( !Config.class.isAssignableFrom( field.getType() )
+					&& annot.configType() == null )
+				Thrower.throwNew( UnsupportedOperationException.class,
+						"@{} only injects extensions of {}",
+						InjectConfig.class.getSimpleName(), Config.class );
+			final List<Map<?, ?>> imports = new ArrayList<>();
+			if( annot != null && annot.yamlURI().length != 0 )
+			{
+				for( String yamlURI : annot.yamlURI() )
+					try
+					{
+						LogUtil.getLogger( ConfigUtil.class )
+								.trace( "Import YAML from {}", yamlURI );
+						final InputStream is = FileUtil
+								.toInputStream( ConfigUtil.expand( yamlURI ) );
+						if( is != null )
+							imports.add( YamlUtil.flattenYaml( is ) );
+					} catch( final Exception e )
+					{
+						Thrower.rethrowUnchecked( e );
+					}
+			}
+			final Map<?, ?>[] importsArray = imports
+					.toArray( new Map[imports.size()] );
+			final Scope scope = annot != null ? annot.value() : Scope.DEFAULT;
+			try
+			{
+				final boolean useFieldType = annot
+						.configType() == InjectConfig.VoidConfig.class;
+				final Class<? extends Config> configType = useFieldType
+						? field.getType().asSubclass( Config.class )
+						: annot.configType();
+				field.setAccessible( true );
+				final Object key;
+				switch( scope )
+				{
+				case BINDER:
+					key = configType.getName() + '@'
+							+ Integer.toHexString( binder.hashCode() );
+					break;
+				case FIELD:
+					key = field;
+					break;
+				case ID:
+					key = encloser instanceof Identified<?>
+							? ObjectsUtil.defaultIfNull(
+									((Identified<?>) encloser).id(), encloser )
+							: encloser;
+					break;
+				case NONE:
+					key = null;
+					break;
+				default:
+				case DEFAULT:
+					key = configType;
+					break;
+				}
+				final Config config = key == null
+						? ConfigFactory.create( configType, importsArray )
+						: ConfigCache.getOrCreate( key, configType,
+								importsArray );
+				final Object value = useFieldType ? config
+						: configType.getDeclaredMethod( annot.key() )
+								.invoke( config );
+				field.set( encloser, value );
+			} catch( final Throwable e )
+			{
+				Thrower.rethrowUnchecked( e );
+			}
+		}
 	}
 }

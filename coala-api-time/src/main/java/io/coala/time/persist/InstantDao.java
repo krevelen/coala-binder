@@ -22,8 +22,7 @@ package io.coala.time.persist;
 import java.math.BigDecimal;
 import java.util.Date;
 
-import javax.measure.DecimalMeasure;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.Temporal;
@@ -31,7 +30,7 @@ import javax.persistence.TemporalType;
 
 import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
-import io.coala.math.MeasureUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.time.Instant;
 
 /**
@@ -41,8 +40,7 @@ import io.coala.time.Instant;
  * @author Rick van Krevelen
  */
 @Embeddable
-public class InstantDao
-	implements BindableDao<Instant, InstantDao>
+public class InstantDao implements BindableDao<Instant, InstantDao>
 {
 	/** the Java attribute name for the POSIX time value */
 	public static final String POSIX_ATTR_NAME = "posix";
@@ -85,7 +83,7 @@ public class InstantDao
 		} else
 		{
 			result.posix = instant.toDate( offset );
-			result.num = MeasureUtil.toBigDecimal( instant.unwrap() );
+			result.num = QuantityUtil.toBigDecimal( instant.unwrap() );
 			result.str = instant.toString();
 		}
 		return result;
@@ -95,6 +93,6 @@ public class InstantDao
 	public Instant restore( final LocalBinder binder )
 	{
 		return this.str == null ? null
-				: Instant.of( DecimalMeasure.valueOf( this.str ) );
+				: Instant.of( QuantityUtil.valueOf( this.str ) );
 	}
 }

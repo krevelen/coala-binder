@@ -3,7 +3,6 @@ package io.coala.time;
 import static org.aeonbits.owner.util.Collections.entry;
 
 import java.math.BigDecimal;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.Logger;
@@ -12,7 +11,6 @@ import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
-import net.jodah.concurrentunit.Waiter;
 
 public class SignalTest
 {
@@ -33,26 +31,14 @@ public class SignalTest
 			signal.atEach(
 					Timing.of( "0 0 13 * * ?" ).offset( offset ).iterate(), t ->
 					{
-						LOG.trace( "t={}, dt={}, v={}",
-								t.prettify( Units.DAYS, 2 ), t.toDate( offset ),
+						LOG.trace( "t={}, dt={} (1pm), const={}",
+								t.prettify( TimeUnits.DAYS, 2 ), t.toDate( offset ),
 								signal.current() );
 					} );
 			LOG.trace( "scheduler initialized" );
 		} );
 
-		final Waiter waiter = new Waiter();
-		scheduler.time().subscribe( time ->
-		{
-		}, error ->
-		{
-			LOG.error( "error at t=" + scheduler.now(), error );
-			waiter.rethrow( error );
-		}, () ->
-		{
-			waiter.resume();
-		} );
-		scheduler.resume();
-		waiter.await( 1, TimeUnit.SECONDS );
+		scheduler.run();
 		LOG.info( "Signal test complete, t={}", scheduler.now() );
 	}
 

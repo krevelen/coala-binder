@@ -21,6 +21,8 @@ package io.coala.time;
 
 import java.util.Date;
 
+import javax.measure.format.ParserException;
+
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
@@ -56,18 +58,26 @@ public class ReplicateConfigTest
 	@Test
 	public void test() throws Exception
 	{
-		final ReplicateConfig conf = ReplicateConfig.get();
+		final ReplicateConfig conf = ReplicateConfig.getOrCreate();
 		LOG.info( "Testing {} defaults: {}",
 				ReplicateConfig.class.getSimpleName(), conf );
-//		Method method = Unit.class.getMethod( "valueOf", CharSequence.class );
-//		if( isStatic( method.getModifiers() ) )
-//			LOG.trace( "Created unit: {}",
-//					method.invoke( null, conf.rawTimeUnit() ) );
 
-		LOG.trace( "Id as static TestId  : {}", conf.id( TestId.class ) );
-		LOG.trace( "Time unit as Unit    : {}", conf.timeUnit() );
-		LOG.trace( "Offset as local Date : {}", Date.from( conf.offset() ) );
-		LOG.trace( "Duration as Amount   : {}", conf.duration().toAmount() );
+		try
+		{
+			LOG.trace( "Id as static TestId  : {}", conf.id( TestId.class ) );
+			LOG.trace( "Time unit as Unit    : {}", conf.timeUnit() );
+			LOG.trace( "Offset as local Date : {}",
+					Date.from( conf.offset() ) );
+			LOG.trace( "Duration as Quantity : {}", conf.duration() );
+		} catch( final Exception e )
+		{
+			if( e instanceof ParserException
+					&& ((ParserException) e).getParsedString() != null )
+				LOG.error( ((ParserException) e).getParsedString() );
+			else if( e.getCause() instanceof ParserException )
+				LOG.error( ((ParserException) e.getCause()).getParsedString() );
+			throw e;
+		}
 	}
 
 }

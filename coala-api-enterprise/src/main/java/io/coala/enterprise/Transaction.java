@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,9 +38,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
+import io.coala.bind.InjectConfig;
 import io.coala.bind.LocalId;
 import io.coala.config.ConfigUtil;
-import io.coala.config.InjectConfig;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
@@ -374,8 +374,8 @@ public interface Transaction<F extends Fact>
 				return fact;
 			} catch( final Throwable e )
 			{
-				this.commits.onError( e );
-				throw e;
+				this.commits.onError( e ); // finish other observers
+				return null;
 			}
 		}
 

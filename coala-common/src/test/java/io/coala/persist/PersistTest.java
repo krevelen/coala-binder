@@ -66,7 +66,7 @@ public class PersistTest
 	}
 
 	@Test
-	public void testJDBC() throws SQLException
+	public void testJDBC() throws SQLException, ClassNotFoundException
 	{
 		final MyHypersonicConfig conf = ConfigCache
 				.getOrCreate( MyHypersonicConfig.class );
@@ -76,34 +76,26 @@ public class PersistTest
 				+ ", first VARCHAR(255) " //
 				+ ", last VARCHAR(255) " //
 				+ " )";
-		conf.execute( qry0, rs ->
-		{
-			LOG.trace( "Created table: {} -> {}", qry0,
-					JDBCUtil.toString( rs ) );
-		} );
+		conf.execute( qry0, rs -> LOG.trace( "Created table: {} -> {}", qry0,
+				JDBCUtil.toString( rs ) ) );
 
 		final String qry1 = "TRUNCATE TABLE " + ENTITY_NAME;
 		conf.execute( qry1, rs ->
-		{
-			LOG.trace( "Cleared table: {} -> {}", qry1,
-					JDBCUtil.toString( rs ) );
-		} );
+
+		LOG.trace( "Cleared table: {} -> {}", qry1, JDBCUtil.toString( rs ) ) );
 
 		final String qry2 = "INSERT INTO " + ENTITY_NAME //
 				+ " (first, last) VALUES " //
 				+ "('Rick','van Krevelen')" //
 				+ ", ('Joram','Hoogink')";
 		conf.execute( qry2, rs ->
-		{
-			LOG.trace( "Filled table: {} -> {}", qry2,
-					JDBCUtil.toString( rs ) );
-		} );
+
+		LOG.trace( "Filled table: {} -> {}", qry2, JDBCUtil.toString( rs ) ) );
 
 		final String qry3 = "SELECT * FROM " + ENTITY_NAME;
 		conf.execute( qry3, rs ->
-		{
-			LOG.trace( "Read table: {} -> {}", qry3, JDBCUtil.toString( rs ) );
-		} );
+
+		LOG.trace( "Read table: {} -> {}", qry3, JDBCUtil.toString( rs ) ) );
 	}
 
 	interface MyHibernateConfig extends KunderaJPAConfig

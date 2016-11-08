@@ -26,15 +26,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 
 import org.apache.logging.log4j.Logger;
-import org.jscience.physics.amount.Amount;
 
-import io.coala.exception.ExceptionFactory;
 import io.coala.exception.Thrower;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.math.WeightedValue;
 import io.coala.random.ProbabilityDistribution.Factory;
 import io.coala.util.InstanceParser;
@@ -68,9 +71,16 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 	 * <code>dist(arg1; arg2; &hellip;)</code> or
 	 * <code>dist(v1:w1; v2:w2; &hellip;)</code>
 	 */
+	public static final String DISTRIBUTION_FORMAT_REGEX = "^(?<" + DIST_GROUP
+			+ ">[^\\(]+)\\s*\\((?<" + PARAMS_GROUP + ">[^)]*)\\)$";
+
+	/**
+	 * matches string representations like:
+	 * <code>dist(arg1; arg2; &hellip;)</code> or
+	 * <code>dist(v1:w1; v2:w2; &hellip;)</code>
+	 */
 	public static final Pattern DISTRIBUTION_FORMAT = Pattern
-			.compile( "^(?<" + DIST_GROUP + ">[^\\(]+)\\s*\\((?<" + PARAMS_GROUP
-					+ ">[^)]*)\\)$" );
+			.compile( DISTRIBUTION_FORMAT_REGEX );
 
 	private final ProbabilityDistribution.Factory factory;
 
@@ -105,6 +115,11 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 				"Incorrect format, expected <dist>(p0;p1;p2), was: " + dist,
 				0 );
 		final List<WeightedValue<P>> params = new ArrayList<>();
+		
+		// FIXME register separate Jackson Module artefact
+		if( Quantity.class.isAssignableFrom( argType ) )
+			QuantityUtil.checkRegistered( JsonUtil.getJOM() ); 
+		
 		final InstanceParser<P> argParser = InstanceParser.of( argType );
 		for( String valuePair : m.group( PARAMS_GROUP )
 				.split( PARAM_SEPARATORS ) )
@@ -113,39 +128,33 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 				if( valuePair.trim().isEmpty() ) continue; // empty parentheses
 				final String[] valueWeights = valuePair
 						.split( WEIGHT_SEPARATORS );
-				params.add(
-						valueWeights.length == 1 // no weight given
-								? WeightedValue.of(
-										argParser.parseOrTrimmed( valuePair ),
-										BigDecimal.ONE )
-								: WeightedValue.of(
-										argParser.parseOrTrimmed(
-												valueWeights[0] ),
-										new BigDecimal( valueWeights[1].trim() ) ) );
+				params.add( valueWeights.length == 1 // no weight given
+						? WeightedValue.of(
+								argParser.parseOrTrimmed( valuePair ),
+								BigDecimal.ONE )
+						: WeightedValue.of(
+								argParser.parseOrTrimmed( valueWeights[0] ),
+								new BigDecimal( valueWeights[1].trim() ) ) );
 			} catch( final Throwable t )
 			{
-//				throw new ParseException( "Could not parse '" + dist.trim()
-//						+ "': " + t.getMessage(), m.start() );
 				Thrower.rethrowUnchecked( t );
 			}
 		if( params.isEmpty() && argType.isEnum() )
 			for( P constant : argType.getEnumConstants() )
 			params.add( WeightedValue.of( constant, BigDecimal.ONE ) );
-		final ProbabilityDistribution<T> result = parse( m.group( DIST_GROUP ),
-				params );
-		if( !Amount.class.isAssignableFrom( argType ) || params.isEmpty() )
-			return result;
+		if( !Quantity.class.isAssignableFrom( argType ) || params.isEmpty() )
+			return parse( m.group( DIST_GROUP ), params );
 
-		/* try {@link AmountDistribution} */
-		final Amount<?> first = (Amount<?>) params.get( 0 ).getValue();
-		// check parameter value unit compatibility
-		for( int i = params.size() - 1; i > 0; i-- )
-			if( !((Amount<?>) params.get( i ).getValue()).getUnit()
-					.isCompatible( first.getUnit() ) )
-				throw ExceptionFactory.createUnchecked(
-						"quantities incompatible of {} and {}", first,
-						params.get( i ).getValue() );
-		return (ProbabilityDistribution<T>) result.toAmounts();
+		// convert parameter to Number type and check quantity compatibility
+		final Unit<?> firstUnit = QuantityUtil
+				.unitOf( params.get( 0 ).getValue() );
+		final List<WeightedValue<BigDecimal>> numbers = params.stream()
+				.map( wv -> WeightedValue.of( QuantityUtil
+						.toBigDecimal( (Quantity<?>) wv.getValue(), firstUnit ),
+						wv.getWeight() ) )
+				.collect( Collectors.toList() );
+		return (ProbabilityDistribution<T>) parse( m.group( DIST_GROUP ),
+				numbers ).toQuantities( firstUnit );
 	}
 
 	/**
@@ -169,8 +178,8 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 		if( getFactory() == null )
 		{
 			final T value = (T) args.get( 0 ).getValue();
-			LOG.warn( "No {} set, creating Deterministic<{}> -> {}",
-					ProbabilityDistribution.Factory.class.getSimpleName(),
+			LOG.warn( "No {} Factory set, creating Deterministic<{}> -> {}",
+					ProbabilityDistribution.class.getSimpleName(),
 					value.getClass().getSimpleName(), value );
 			return ProbabilityDistribution.createDeterministic( value );
 		}

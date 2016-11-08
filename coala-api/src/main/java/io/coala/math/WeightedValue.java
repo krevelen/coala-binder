@@ -15,7 +15,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import io.coala.json.Wrapper;
-import io.coala.util.DecimalUtil;
 
 /**
  * {@link WeightedValue}
@@ -32,23 +31,21 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * @param key
 	 * @param value
+	 * @param weight
 	 * @return a {@link WeightedValue} instance
 	 */
-	public static <V> WeightedValue<V> of( final V key, final Number value )
+	public static <V> WeightedValue<V> of( final V value, final Number weight )
 	{
-		return new WeightedValue<V>( key, value );
+		return new WeightedValue<V>( value, weight );
 	}
 
 	public static <V> Set<WeightedValue<V>>
-		of( final Map<V, ? extends Number> values )
+		of( final Map<V, ? extends Number> weights )
 	{
 		final Set<WeightedValue<V>> result = new HashSet<>();
-		values.forEach( ( key, value ) ->
-		{
-			result.add( of( key, value ) );
-		} );
+		weights.forEach(
+				( value, weight ) -> result.add( of( value, weight ) ) );
 		return result;
 	}
 
@@ -78,7 +75,7 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 	@Override
 	public String toString()
 	{
-		return "(" + getWeight() + " => " + getValue() + ") @" + hashCode();
+		return getValue() + " (w=" + getWeight() + ")";
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -171,8 +168,7 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 		return result;
 	}
 
-	public static <
-		V extends Comparable<? super V>, WV extends WeightedValue<? extends V>>
+	public static <V extends Comparable<? super V>, WV extends WeightedValue<? extends V>>
 		NavigableSet<WeightedValue<Bin<V>>> stratify(
 			final Iterable<WV> weights, final Iterable<Bin<V>> exclusiveRanges )
 	{
@@ -230,8 +226,7 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 		extends Join<L, R>, Comparable<JoinOrdinal<L, R>>
 	{
 
-		static <
-			L extends Comparable<? super L>, R extends Comparable<? super R>>
+		static <L extends Comparable<? super L>, R extends Comparable<? super R>>
 			JoinOrdinal<L, R> of( final L left, final R right )
 		{
 			return new JoinOrdinal<L, R>()
@@ -290,8 +285,7 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 		}, ignoreZeroes );
 	}
 
-	public static <
-		V extends Comparable<? super V>, W extends Comparable<? super W>>
+	public static <V extends Comparable<? super V>, W extends Comparable<? super W>>
 		NavigableSet<WeightedValue<JoinOrdinal<V, W>>>
 		joinOrdinal( final Iterable<WeightedValue<V>> left,
 			final Iterable<WeightedValue<W>> right, final boolean ignoreZeroes )

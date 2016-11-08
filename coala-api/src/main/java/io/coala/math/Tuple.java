@@ -57,8 +57,6 @@ public class Tuple implements Comparable<Tuple>
 
 	private List<? extends Comparable<?>> list;
 
-	private Integer hashCode = null;
-
 	public Tuple( final List<? extends Comparable<?>> values )
 	{
 		this.list = Collections.unmodifiableList( values );
@@ -72,14 +70,7 @@ public class Tuple implements Comparable<Tuple>
 	@Override
 	public int hashCode()
 	{
-		if( this.hashCode == null )
-		{
-			int result = super.hashCode();
-			for( Object value : values() )
-				result = result * 37 + value.hashCode();
-			this.hashCode = result;
-		}
-		return this.hashCode;
+		return values().hashCode();
 	}
 
 	@Override

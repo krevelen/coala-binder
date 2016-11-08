@@ -17,26 +17,20 @@ package io.coala.dsol3;
 
 import java.math.BigDecimal;
 
-import javax.measure.Measurable;
-import javax.measure.Measure;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
-import javax.measure.quantity.Quantity;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
-import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
-import io.coala.exception.Thrower;
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
-import io.coala.math.MeasureUtil;
+import io.coala.math.DecimalUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.time.Instant;
-import io.coala.time.TimeSpan;
-import io.coala.time.Units;
+import io.coala.time.TimeUnits;
 import io.coala.util.Instantiator;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.experiment.Experiment;
@@ -47,6 +41,7 @@ import nl.tudelft.simulation.dsol.simtime.TimeUnit;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulatorInterface;
 import nl.tudelft.simulation.dsol.simulators.Simulator;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@link DsolTime} extends a DSOL {@link SimTime} to become a {@link Wrapper}
@@ -57,9 +52,27 @@ import nl.tudelft.simulation.dsol.simulators.Simulator;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class DsolTime<Q extends Quantity> extends
-	SimTime<Measurable<Q>, BigDecimal, DsolTime<Q>> implements Wrapper<TimeSpan>
+public class DsolTime<Q extends Quantity<Q>>
+	extends SimTime<DsolTime.DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
+	implements Wrapper<DsolTime.DsolQuantity<Q>>
 {
+
+	static class DsolQuantity<Q extends Quantity<Q>>
+		extends Wrapper.Simple<ComparableQuantity<Q>>
+		implements Comparable<DsolQuantity<Q>>
+	{
+		public static <Q extends Quantity<Q>> DsolQuantity<Q>
+			of( final ComparableQuantity<Q> value )
+		{
+			return Util.of( value, new DsolQuantity<Q>() );
+		}
+
+		@Override
+		public int compareTo( final DsolQuantity<Q> o )
+		{
+			return unwrap().compareTo( o.unwrap() );
+		}
+	}
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( DsolTime.class );
@@ -73,21 +86,21 @@ public class DsolTime<Q extends Quantity> extends
 		switch( unit )
 		{
 		case DAY:
-			return Units.DAYS;
+			return TimeUnits.DAYS;
 		case HOUR:
-			return NonSI.HOUR;
+			return TimeUnits.HOURS;
 		case MILLISECOND:
-			return Units.MILLIS;
+			return TimeUnits.MILLIS;
 		case MINUTE:
-			return NonSI.MINUTE;
+			return TimeUnits.MINUTE;
 		case SECOND:
-			return SI.SECOND;
+			return TimeUnits.SECOND;
 		case WEEK:
-			return NonSI.WEEK;
+			return TimeUnits.WEEK;
 		case YEAR:
-			return NonSI.YEAR;
+			return TimeUnits.ANNUM;
 		case UNIT:
-			return Unit.ONE;
+			return QuantityUtil.PURE;
 		default:
 			throw ExceptionFactory
 					.createUnchecked( "Unsupported unit: " + unit );
@@ -105,63 +118,20 @@ public class DsolTime<Q extends Quantity> extends
 	 * @return
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <N extends Number & Comparable<N>, Q extends Quantity>
-		DsolTime<Q> valueOf( final N time, final Unit<Q> unit )
+	public static <Q extends Quantity<Q> & Comparable<Q>> DsolTime<Q> valueOf(
+		final SimTime<? extends Number, ?, ?> time, final Unit<Q> unit )
 	{
-		try
-		{
-			return valueOf( TimeSpan.of( time, unit ) );
-		} catch( final Throwable e )
-		{
-			return Thrower.rethrowUnchecked( e );
-		}
-	}
-
-	/**
-	 * @param time
-	 * @return
-	 */
-	@SuppressWarnings( "unchecked" )
-	public static <N extends Number & Comparable<N>, Q extends Quantity>
-		DsolTime<Q> valueOf( final SimTime<N, ?, ?> time, final Unit<Q> unit )
-	{
-		try
-		{
-			return valueOf( TimeSpan.of( time.get(), unit ) );
-		} catch( final Throwable e )
-		{
-			return Thrower.rethrowUnchecked( e );
-		}
+		return valueOf( time.get(), unit );
 	}
 
 	/**
 	 * @param absoluteTime the {@link Instant}
 	 * @return the new {@link DsolTime}
 	 */
-	@SuppressWarnings( "unchecked" )
-	public static DsolTime<?> valueOf( final Instant absoluteTime )
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	public static DsolTime valueOf( final Instant absoluteTime )
 	{
 		return valueOf( absoluteTime.unwrap() );
-	}
-
-	/**
-	 * @param absoluteTime the {@link TimeSpan}
-	 * @return the new {@link DsolTime}
-	 */
-	public static <Q extends Quantity> DsolTime<Q>
-		valueOf( final Measure<?, Q> absoluteTime )
-	{
-		return Util.of( TimeSpan.of( absoluteTime ), new DsolTime<Q>() );
-	}
-
-	/**
-	 * @param absoluteTime the {@link TimeSpan}
-	 * @return the new {@link DsolTime}
-	 */
-	public static <Q extends Quantity> DsolTime<Q>
-		valueOf( final Amount<Q> absoluteTime )
-	{
-		return Util.of( TimeSpan.of( absoluteTime ), new DsolTime<Q>() );
 	}
 
 	/**
@@ -171,20 +141,44 @@ public class DsolTime<Q extends Quantity> extends
 	@SuppressWarnings( "unchecked" )
 	public static DsolTime<Dimensionless> valueOf( final Number absoluteTime )
 	{
-		return valueOf( TimeSpan.of( absoluteTime, Unit.ONE ) );
+		return valueOf( QuantityUtil.valueOf( absoluteTime ) );
 	}
 
 	/**
-	 * @return the zero constant as {@link DsolTime}
+	 * @param time
+	 * @return
 	 */
-//	public static DsolTime zero()
-//	{
-//		return ZERO;
-//	}
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity<Q>> DsolTime<Q>
+		valueOf( final Number time, final Unit<Q> unit )
+	{
+		return valueOf( QuantityUtil.valueOf( time, unit ) );
+	}
+
+	/**
+	 * @param absoluteTime the {@link TimeSpan}
+	 * @return the new {@link DsolTime}
+	 */
+	public static <Q extends Quantity<Q>> DsolTime<Q>
+		valueOf( final Quantity<Q> absoluteTime )
+	{
+		return valueOf(
+				DsolQuantity.<Q>of( QuantityUtil.valueOf( absoluteTime ) ) );
+	}
+
+	/**
+	 * @param absoluteTime the {@link TimeSpan}
+	 * @return the new {@link DsolTime}
+	 */
+	static <Q extends Quantity<Q>> DsolTime<Q>
+		valueOf( final DsolQuantity<Q> absoluteTime )
+	{
+		return Util.of( absoluteTime, new DsolTime<Q>() );
+	}
 
 	public Instant toInstant()
 	{
-		return Instant.of( unwrap() );
+		return Instant.of( quantity() );
 	}
 
 	/**
@@ -195,25 +189,34 @@ public class DsolTime<Q extends Quantity> extends
 		super( null ); // initialize empty
 	}
 
-	private TimeSpan value;
+	private DsolQuantity<Q> value;
 
 	@Override
-	public TimeSpan unwrap()
+	public DsolQuantity<Q> unwrap()
 	{
 		return this.value;
 	}
 
 	@Override
-	public DsolTime<Q> wrap( final TimeSpan absoluteTime )
+	public DsolTime<Q> wrap( final DsolQuantity<Q> absoluteTime )
 	{
 		this.value = absoluteTime;
 		return this;
 	}
 
-	@SuppressWarnings( "unchecked" )
+	public ComparableQuantity<Q> quantity()
+	{
+		return unwrap().unwrap();
+	}
+
+	public BigDecimal decimal()
+	{
+		return DecimalUtil.valueOf( unwrap().unwrap().getValue() );
+	}
+
 	public Unit<Q> unit()
 	{
-		return unwrap().getUnit();
+		return unwrap().unwrap().getUnit();
 	}
 
 	/**
@@ -223,13 +226,14 @@ public class DsolTime<Q extends Quantity> extends
 	@Override
 	public void add( final BigDecimal relativeTime )
 	{
-		wrap( unwrap().add( relativeTime ) );
+		wrap( DsolQuantity.of( quantity()
+				.add( QuantityUtil.valueOf( relativeTime, unit() ) ) ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> plus( final DsolTime<Q> relativeTime )
 	{
-		return plus( relativeTime.unwrap().to( unit() ).getValue() );
+		return valueOf( quantity().add( relativeTime.quantity() ) );
 	}
 
 	/**
@@ -240,21 +244,22 @@ public class DsolTime<Q extends Quantity> extends
 	public void subtract( final BigDecimal relativeTime )
 	{
 		LOG.warn( "Please use thread-safe minus(..)" );
-		wrap( unwrap().subtract( relativeTime ) );
+		wrap( DsolQuantity.of( quantity()
+				.subtract( QuantityUtil.valueOf( relativeTime, unit() ) ) ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> subtract( final DsolTime<Q> relativeTime )
 	{
-		return minus( MeasureUtil.toBigDecimal( relativeTime.unwrap() ) );
+		return valueOf( quantity().subtract( relativeTime.quantity() ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
 	@Override
 	public BigDecimal minus( final DsolTime<Q> absoluteTime )
 	{
-		return unwrap().getValue()
-				.subtract( MeasureUtil.toBigDecimal( absoluteTime.unwrap() ) );
+		return DecimalUtil.valueOf(
+				quantity().subtract( absoluteTime.quantity() ).getValue() );
 	}
 
 	@Override
@@ -265,22 +270,22 @@ public class DsolTime<Q extends Quantity> extends
 	}
 
 	@Override
-	public TimeSpan get()
+	public DsolQuantity<Q> get()
 	{
 		return unwrap();
 	}
 
 	@Override
-	public void set( final Measurable<Q> absoluteTime )
+	public void set( final DsolQuantity<Q> absoluteTime )
 	{
-		wrap( (TimeSpan) absoluteTime );
+		wrap( absoluteTime );
 	}
 
 	@Override
 	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> setZero()
 	{
-		return DsolTime.valueOf( TimeSpan.of( BigDecimal.ZERO, unit() ) );
+		return valueOf( BigDecimal.ZERO, unit() );
 	}
 
 	/**
@@ -291,10 +296,8 @@ public class DsolTime<Q extends Quantity> extends
 		createDEVSSimulator( final Class<T> simType )
 	{
 		final T result = Instantiator.instantiate( simType );
-		Runtime.getRuntime().addShutdownHook( new Thread( () ->
-		{
-			((Simulator) result).cleanUp();
-		} ) );
+		Runtime.getRuntime().addShutdownHook(
+				new Thread( () -> ((Simulator) result).cleanUp() ) );
 		return result;
 	}
 
@@ -311,14 +314,14 @@ public class DsolTime<Q extends Quantity> extends
 	 * @throws NamingException in case a context for the replication cannot be
 	 *             created
 	 */
-	public static <Q extends Quantity>
-		Replication<Measurable<Q>, BigDecimal, DsolTime<Q>>
+	public static <Q extends Quantity<Q>>
+		Replication<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
 		createReplication( final String id, final DsolTime<Q> startTime,
 			final BigDecimal warmupPeriod, final BigDecimal runLength,
-			final DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>> model )
+			final DSOLModel<DsolQuantity<Q>, BigDecimal, DsolTime<Q>> model )
 			throws NamingException
 	{
-		return new Replication<Measurable<Q>, BigDecimal, DsolTime<Q>>( id,
+		return new Replication<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>( id,
 				startTime, warmupPeriod, runLength, model );
 	}
 }

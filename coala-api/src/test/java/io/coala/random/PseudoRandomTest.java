@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.log.LogUtil;
+import io.coala.random.PseudoRandom.JavaRandom;
 
 /**
  * {@link PseudoRandomTest}

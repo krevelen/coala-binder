@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 6eb6e896ff64c5101804a1f87c3a8287db474d0f $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -17,37 +17,31 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.inter;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.time.Duration;
-
-import javax.inject.Qualifier;
+package io.coala.time;
 
 /**
- * {@link InjectProxy} this field should be a proxy with specified
- * {@link #value() address}
+ * {@link Scenario} is a helper interface to reset and start a scenario
+ * factories for behaviors, persistence, interactions, etc.
  * 
- * @version $Id$
+ * @version $Id: 6eb6e896ff64c5101804a1f87c3a8287db474d0f $
  * @author Rick van Krevelen
  */
-@Qualifier
-@Documented
-@Retention( RetentionPolicy.RUNTIME )
-@Target( ElementType.FIELD )
-public @interface InjectProxy
+public interface Scenario extends Proactive, Runnable
 {
 
-	String value();
+	default void reset( final Scheduler scheduler ) throws Exception
+	{
+		init();
+	}
 
-	/**
-	 * @return the timeout duration
-	 * @see Duration#parse(CharSequence)
-	 */
-	String timeout() default Invoker.SYNC_TIMEOUT_DEFAULT;
+	default void init() throws Exception
+	{
+		// empty
+	}
 
+	@Override
+	default void run()
+	{
+		scheduler().run( this::reset );
+	}
 }

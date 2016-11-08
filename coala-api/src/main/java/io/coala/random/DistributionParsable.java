@@ -19,8 +19,16 @@
  */
 package io.coala.random;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.ParseException;
+
+import javax.measure.Quantity;
+
+import org.aeonbits.owner.Config;
+import org.aeonbits.owner.Converter;
+
+import io.coala.random.ProbabilityDistribution.Parser;
 
 /**
  * {@link DistributionParsable}
@@ -39,8 +47,9 @@ public interface DistributionParsable<T>
 	 * @throws ParseException
 	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
 	 */
-	ProbabilityDistribution<T> parse( ProbabilityDistribution.Parser distParser,
-		Class<?> paramType ) throws ParseException;
+	ProbabilityDistribution<T> parseType(
+		ProbabilityDistribution.Parser distParser, Class<?> paramType )
+		throws ParseException;
 
 	/**
 	 * @param <T> the type of values to draw
@@ -52,6 +61,54 @@ public interface DistributionParsable<T>
 	default ProbabilityDistribution<T>
 		parse( ProbabilityDistribution.Parser distParser ) throws ParseException
 	{
-		return parse( distParser, BigDecimal.class );
+		return parseType( distParser, BigDecimal.class );
+	}
+
+	/**
+	 * @param <T> the type of values to draw
+	 * @param dist the {@link String} representation
+	 * @return a {@link ProbabilityDistribution} of {@link T} values
+	 * @throws ParseException
+	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
+	 */
+	@SuppressWarnings( "unchecked" )
+	default <Q extends Quantity<Q>> QuantityDistribution<Q>
+		parse( ProbabilityDistribution.Parser distParser, Class<Q> quantity )
+			throws ParseException
+	{
+		return (QuantityDistribution<Q>) parseType( distParser, Quantity.class )
+				.toQuantities();
+	}
+
+	/**
+	 * {@link FromString} utility for {@link Config}-interfaces
+	 * 
+	 * @param <T> the result type
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
+	public class FromString<T> implements Converter<DistributionParsable<T>>
+	{
+		@SuppressWarnings( { "rawtypes", "unchecked" } )
+		@Override
+		public DistributionParsable<T> convert( final Method method,
+			final String input )
+		{
+			return new DistributionParsable()
+			{
+				@Override
+				public ProbabilityDistribution parseType( final Parser p,
+					final Class t ) throws ParseException
+				{
+					return p.parse( input, t );
+				}
+
+				@Override
+				public String toString()
+				{
+					return input;
+				}
+			};
+		}
 	}
 }

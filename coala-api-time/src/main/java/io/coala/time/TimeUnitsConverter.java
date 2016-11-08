@@ -17,35 +17,26 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.util;
+package io.coala.time;
 
-import java.math.MathContext;
-import java.math.RoundingMode;
+import java.lang.reflect.Method;
 
-import io.coala.config.GlobalConfig;
+import javax.measure.Unit;
+
+import org.aeonbits.owner.Converter;
 
 /**
- * {@link DecimalConfig}
+ * {@link TimeUnitsConverter} as OWNER ignores
+ * {@link Unit#parse(CharSequence)}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface DecimalConfig extends GlobalConfig
+public class TimeUnitsConverter implements Converter<Unit<?>>
 {
-	String PRECISION_KEY = "decimal.precision";
-
-	String ROUNDING_MODE_KEY = "decimal.rounding-mode";
-
-	@Key( PRECISION_KEY )
-	@DefaultValue( "16" )
-	int precision();
-
-	@Key( ROUNDING_MODE_KEY )
-	@DefaultValue( "HALF_UP" )
-	RoundingMode roundingMode();
-
-	default MathContext createMathContext()
+	@Override
+	public Unit<?> convert( final Method method, final String input )
 	{
-		return new MathContext( precision(), roundingMode() );
+		return TimeUnits.UNIT_FORMAT.parse( input );
 	}
 }

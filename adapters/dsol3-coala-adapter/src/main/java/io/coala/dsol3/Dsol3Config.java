@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import javax.measure.quantity.Quantity;
+import javax.measure.Quantity;
 
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.Converter;
@@ -32,7 +32,7 @@ import org.aeonbits.owner.util.Collections;
 import io.coala.config.GlobalConfig;
 import io.coala.config.YamlConfig;
 import io.coala.function.ThrowingConsumer;
-import io.coala.math.MeasureUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.time.Duration;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
@@ -129,16 +129,16 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 		return of( Collections.entry( ID_KEY, replConfig.rawId() ),
 				Collections.entry( START_TIME_KEY,
 						DsolTime.valueOf( 0, duration.unit() ).toString() ),
-				Collections.entry( RUN_LENGTH_KEY, MeasureUtil
+				Collections.entry( RUN_LENGTH_KEY, QuantityUtil
 						.toBigDecimal( duration.unwrap() ).toString() ) );
 	}
 
-	default <Q extends Quantity> Dsol3Scheduler<Q> create()
+	default <Q extends Quantity<Q>> Dsol3Scheduler<Q> create()
 	{
 		return Dsol3Scheduler.of( this );
 	}
 
-	default <Q extends Quantity> Dsol3Scheduler<Q>
+	default <Q extends Quantity<Q>> Dsol3Scheduler<Q>
 		create( final ThrowingConsumer<Scheduler, ?> modelInitializer )
 	{
 		return Dsol3Scheduler.of( this, modelInitializer );

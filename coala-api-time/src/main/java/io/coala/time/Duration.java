@@ -15,21 +15,23 @@
  */
 package io.coala.time;
 
-import javax.measure.DecimalMeasure;
-import javax.measure.Measure;
+import static io.coala.log.LogUtil.wrapToString;
+
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 
 import org.joda.time.Period;
 import org.joda.time.ReadableDuration;
-import org.jscience.physics.amount.Amount;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.json.Wrapper;
+import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
-import io.coala.math.MeasureUtil;
+import io.coala.math.DecimalUtil;
+import io.coala.math.QuantityUtil;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@linkplain Duration} wraps an {@linkplain TimeSpan} that is
@@ -84,8 +86,7 @@ import io.coala.math.MeasureUtil;
  * @version $Id: a4d1db0cef5ed1fc88522da2c69aa49907d8de7d $
  */
 @SuppressWarnings( { "rawtypes", "unchecked" } )
-public class Duration extends Wrapper.Simple<TimeSpan>
-	implements Comparable<Duration>
+public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 {
 
 	/**
@@ -116,7 +117,7 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Duration of( final String value )
 	{
-		return of( TimeSpan.valueOf( value ) );
+		return of( QuantityUtil.parseDuration( value ) );
 	}
 
 	/**
@@ -126,7 +127,15 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Duration valueOf( final String value )
 	{
-		return of( value );
+		try
+		{
+			return of( QuantityUtil.valueOf( value, TimeUnits.UNIT_FORMAT ) );
+		} catch( final Throwable e )
+		{
+			LogUtil.getLogger( Duration.class )
+					.error( "Problem parsing " + value, e );
+			throw e;
+		}
 	}
 
 	/**
@@ -136,27 +145,7 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Duration of( final ReadableDuration value )
 	{
-		return of( TimeSpan.of( value ) );
-	}
-
-	/**
-	 * {@link Duration} static factory method
-	 * 
-	 * @param value
-	 */
-	public static Duration of( final Measure value )
-	{
-		return of( TimeSpan.of( value ) );
-	}
-
-	/**
-	 * {@link Duration} static factory method
-	 * 
-	 * @param value
-	 */
-	public static Duration of( final Amount value )
-	{
-		return of( TimeSpan.of( value ) );
+		return of( QuantityUtil.valueOf( value.getMillis(), TimeUnits.MILLIS ) );
 	}
 
 	/**
@@ -166,7 +155,7 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Duration of( final Number units )
 	{
-		return of( TimeSpan.of( units ) );
+		return of( QuantityUtil.valueOf( units ) );
 	}
 
 	/**
@@ -178,15 +167,25 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Duration of( final Number value, final Unit<?> unit )
 	{
-		return of( TimeSpan.of( value, unit ) );
+		return of( QuantityUtil.valueOf( value, unit ) );
 	}
 
 	/**
 	 * {@link Duration} static factory method
 	 * 
-	 * @param value the {@link TimeSpan}
+	 * @param value the {@link Quantity}
 	 */
-	public static Duration of( final TimeSpan value )
+	public static Duration of( final Quantity<?> value )
+	{
+		return of( QuantityUtil.valueOf( value ) );
+	}
+
+	/**
+	 * {@link Duration} static factory method
+	 * 
+	 * @param value the {@link Quantity}
+	 */
+	public static Duration of( final ComparableQuantity<?> value )
 	{
 		return Util.of( value, new Duration() );
 	}
@@ -202,13 +201,10 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	}
 
 	/** */
-	public static final Duration ZERO = Duration.of( Amount.ZERO );
+	public static final Duration ZERO = Duration.of( QuantityUtil.ZERO );
 
-	@Override
-	public int compareTo( final Duration that )
-	{
-		return Util.compare( this, that );
-	}
+	/** */
+	public static final Duration ONE = Duration.of( QuantityUtil.ONE );
 
 	public Unit<?> unit()
 	{
@@ -220,57 +216,54 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 		return of( unwrap().to( unit ) );
 	}
 
-	public int intValue( final Unit unit )
+	public int intValue()
 	{
-		return unwrap().intValue( unit );
+		return QuantityUtil.intValue( unwrap() );
 	}
 
-	public long longValue( final Unit unit )
+	public long longValue()
 	{
-		return unwrap().longValue( unit );
+		return QuantityUtil.longValue( unwrap() );
 	}
 
-	public float floatValue( final Unit unit )
+	public float floatValue()
 	{
-		return unwrap().floatValue( unit );
+		return QuantityUtil.floatValue( unwrap() );
 	}
 
-	public double doubleValue( final Unit unit )
+	public double doubleValue()
 	{
-		return unwrap().doubleValue( unit );
+		return QuantityUtil.doubleValue( unwrap() );
 	}
 
 	public Duration pow( final double exponent )
 	{
-		return of( MeasureUtil.pow( unwrap(), exponent ) );
+		return of( QuantityUtil.pow( unwrap(), exponent ) );
 	}
 
 	public Duration floor()
 	{
-		return of( MeasureUtil.floor( unwrap() ) );
+		return of( QuantityUtil.floor( unwrap() ) );
 	}
 
 	public Duration ceil()
 	{
-		return of( MeasureUtil.ceil( unwrap() ) );
+		return of( QuantityUtil.ceil( unwrap() ) );
 	}
 
-	@JsonIgnore
 	public long toMillisLong()
 	{
-		return longValue( Units.MILLIS );
+		return QuantityUtil.longValue( unwrap(), TimeUnits.MILLIS );
 	}
 
-	@JsonIgnore
 	public long toNanosLong()
 	{
-		return longValue( Units.NANOS );
+		return QuantityUtil.longValue( unwrap(), TimeUnits.NANOS );
 	}
 
 	/**
 	 * @return the Joda {@link ReadableDuration} implementation of a time span
 	 */
-	@JsonIgnore
 	public ReadableDuration toJoda()
 	{
 		return org.joda.time.Duration.millis( toMillisLong() );
@@ -279,33 +272,27 @@ public class Duration extends Wrapper.Simple<TimeSpan>
 	/**
 	 * @return a JRE8 {@link java.time.Duration} implementation of a time span
 	 */
-	@JsonIgnore
 	public java.time.Duration toJSR310()
 	{
 		return java.time.Duration.ofNanos( toNanosLong() );
 	}
 
-	/** @return the JScience {@link Amount} implementation of a time span */
+	/** @return the JSR-363 {@link Quantity} implementation of a time span */
 	@JsonIgnore
-	public Amount toAmount()
-	{
-		return MeasureUtil.toAmount( unwrap() );
-	}
-
-	/** @return the JSR-275 {@link Measure} implementation of a time span */
-	@JsonIgnore
-	public Measure toMeasure()
+	public ComparableQuantity toMeasure()
 	{
 		return unwrap();
 	}
 
 	public Pretty prettify( final int scale )
 	{
-		return unwrap().prettify( scale );
+		return prettify( unit(), scale );
 	}
 
-	public Pretty prettify( final Unit<?> unit, final int scale )
+	public Pretty prettify( final Unit unit, final int scale )
 	{
-		return unwrap().prettify( unit, scale );
+		return wrapToString( () -> DecimalUtil
+				.toScale( unwrap().to( unit ).getValue(), scale ).toString()
+				+ unit );
 	}
 }

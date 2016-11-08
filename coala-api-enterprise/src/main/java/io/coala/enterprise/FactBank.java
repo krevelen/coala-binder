@@ -284,21 +284,22 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	}
 
 	/**
-	 * {@link SimpleMemory}
+	 * {@link SimpleCache}
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@Singleton
-	public class SimpleMemory implements FactBank<Fact>
+	public class SimpleCache implements FactBank<Fact>
 	{
-		private final Map<ID,Fact> memory = new TreeMap<>();
-		
+		private final Map<ID, Fact> cache = new TreeMap<>();
+
 		@Override
 		public Observable<FactDao> saveAsync( final Observable<Fact> facts )
 		{
-			return facts.map( fact->{
-				this.memory.put( fact.id(), fact );
+			return facts.map( fact ->
+			{
+				this.cache.put( fact.id(), fact );
 				return null;
 			} );
 		}
@@ -306,19 +307,19 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		@Override
 		public Fact find( final ID id )
 		{
-			return this.memory.get( id );
+			return this.cache.get( id );
 		}
 
 		@Override
 		public Observable<Fact> find()
 		{
-			return Observable.from( this.memory.values() );
+			return Observable.from( this.cache.values() );
 		}
-		
+
 		@Override
 		public void close() throws Exception
 		{
-			this.memory.clear();
+			this.cache.clear();
 		}
 	}
 
@@ -348,7 +349,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		public Observable<FactDao> saveAsync( final Observable<Fact> facts )
 		{
 			// TODO defer: facts.observeOn( ... ) & rejoin at sim::onCompleted ?
-			return PublishSubject.<FactDao> create( sub ->
+			return PublishSubject.<FactDao>create( sub ->
 			{
 				// One session for each fact
 				facts.subscribe( fact ->
@@ -397,7 +398,8 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 				JPAUtil.session( this.emf ).subscribe( em ->
 				{
 					final CriteriaBuilder cb = em.getCriteriaBuilder();
-					final CriteriaQuery<FactDao> q = cb.createQuery( FactDao.class );
+					final CriteriaQuery<FactDao> q = cb
+							.createQuery( FactDao.class );
 					final Root<FactDao> d = q.from( FactDao.class );
 					q.select( d );
 
@@ -432,39 +434,6 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		public Class<Fact> transactionKindFilter()
 		{
 			return Fact.class;
-		}
-	}
-
-	interface Factory
-	{
-		FactBank<?> create();
-
-		@Singleton
-		class LocalJPA implements Factory
-		{
-
-			@Inject
-			private LocalBinder binder;
-
-			@Override
-			public FactBank<?> create()
-			{
-				return this.binder.inject( SimpleJPA.class );
-			}
-		}
-
-		@Singleton
-		class InMemory implements Factory
-		{
-
-			@Inject
-			private LocalBinder binder;
-
-			@Override
-			public FactBank<?> create()
-			{
-				return this.binder.inject( SimpleMemory.class );
-			}
 		}
 	}
 }

@@ -4,14 +4,14 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 
@@ -121,7 +121,7 @@ public class ReflectUtil implements Util
 	}
 
 	/**
-	 * Invoke default methods on a proxy instance
+	 * InvocationHandler for default interface methods (e.g. on proxy instances)
 	 * <p>
 	 * see http://stackoverflow.com/a/23990827,
 	 * http://stackoverflow.com/a/37816247/1418999, <a href=
@@ -140,36 +140,35 @@ public class ReflectUtil implements Util
 	public static Object invokeDefaultMethod( final Object proxy,
 		final Method method, final Object[] args ) throws Throwable
 	{
-		return Lookup.in( method.getDeclaringClass() )
+		return lookup( method.getDeclaringClass() )
 				.unreflectSpecial( method, method.getDeclaringClass() )
 				.bindTo( proxy ).invokeWithArguments( args );
 	}
 
-	private static class Lookup
-	{
-		private static final Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR = lookupConstructor();
+	private static final Map<Class<?>, Lookup> LOOKUP_CACHE = new ConcurrentHashMap<>();
 
-		private static Constructor<MethodHandles.Lookup> lookupConstructor()
+	private static Constructor<Lookup> LOOKUP_CONSTRUCTOR = null;
+
+	private static Lookup lookup( final Class<?> type ) throws Throwable
+	{
+		return LOOKUP_CACHE.computeIfAbsent( type, key ->
 		{
 			try
 			{
-				Constructor<MethodHandles.Lookup> ctor = MethodHandles.Lookup.class
-						.getDeclaredConstructor( Class.class, int.class );
-				ctor.setAccessible( true );
-				return ctor;
-			} catch( NoSuchMethodException e )
+				return lookupConstructor().newInstance( key, Lookup.PRIVATE );
+			} catch( final Exception e )
 			{
-				return null;
+				return Thrower.rethrowUnchecked( e );
 			}
-		}
-
-		private static MethodHandles.Lookup in( Class<?> requestedLookupClass )
-			throws IllegalAccessException, InvocationTargetException,
-			InstantiationException
-		{
-			return LOOKUP_CONSTRUCTOR.newInstance( requestedLookupClass,
-					MethodHandles.Lookup.PRIVATE );
-		}
+		} );
 	}
 
+	private static Constructor<Lookup> lookupConstructor()
+		throws NoSuchMethodException, SecurityException
+	{
+		LOOKUP_CONSTRUCTOR = Lookup.class.getDeclaredConstructor( Class.class,
+				int.class );
+		LOOKUP_CONSTRUCTOR.setAccessible( true );
+		return LOOKUP_CONSTRUCTOR;
+	}
 }

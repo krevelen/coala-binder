@@ -25,8 +25,6 @@ import static org.hamcrest.number.OrderingComparison.comparesEqualTo;
 
 import java.util.concurrent.TimeoutException;
 
-import javax.measure.unit.Unit;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
@@ -63,13 +61,13 @@ public class ProactiveTest
 
 		LOG.trace( "testing t+1 == " + Instant.ONE );
 		assertThat( "FutureSelf#after(t) time is added to Timed#now()",
-				model.after( TimeSpan.ONE ).now(),
+				model.after( Duration.ONE ).now(),
 				comparesEqualTo( Instant.ONE ) );
 
-		LOG.trace( "testing t+3 != " + Instant.of( 2, Unit.ONE ) );
+		LOG.trace( "testing t+3 != " + Instant.of( 2 ) );
 		assertThat( "FutureSelf#after(t) time is added to Timed#now()",
-				model.after( TimeSpan.of( 3, Unit.ONE ) ).now(),
-				not( comparesEqualTo( Instant.of( 2, Unit.ONE ) ) ) );
+				model.after( Duration.of( 3 ) ).now(),
+				not( comparesEqualTo( Instant.of( 2 ) ) ) );
 	}
 
 }

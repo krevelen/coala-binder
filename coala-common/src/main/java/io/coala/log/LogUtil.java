@@ -15,7 +15,6 @@
  */
 package io.coala.log;
 
-import java.lang.reflect.Field;
 import java.util.Locale;
 import java.util.function.Supplier;
 
@@ -23,10 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.FormattedMessage;
 import org.apache.logging.log4j.message.Message;
-import org.slf4j.LoggerFactory;
 
-import io.coala.exception.Thrower;
-import io.coala.name.Identified;
 import io.coala.util.Util;
 
 /**
@@ -216,42 +212,6 @@ public class LogUtil implements Util
 				.getLogger( name );
 		result.setLevel( level );
 		return result;
-	}
-
-	public static void injectLogger( final Object encloser, final Field field )
-	{
-		final String postfix = encloser instanceof Identified
-				? "." + ((Identified<?>) encloser).id() : "";
-		Object logger = null;
-		try
-		{
-			// Log4j2
-			if( field.getType() == Logger.class )
-				logger = getLogger( encloser.getClass(), encloser );
-			else // SLF4J
-			if( field.getType() == org.slf4j.Logger.class )
-			{
-				logger = LoggerFactory
-						.getLogger( encloser.getClass().getName() + postfix );
-			} else // java.util.logging
-			if( field.getType() == java.util.logging.Logger.class )
-			{
-				logger = LogUtil.getJavaLogger(
-						encloser.getClass().getName() + postfix );
-			} else
-				Thrower.throwNew( UnsupportedOperationException.class,
-						"@{} only injects {}, {} or {}",
-						InjectLogger.class.getSimpleName(),
-						Logger.class.getName(),
-						org.slf4j.Logger.class.getName(),
-						java.util.logging.Logger.class.getName() );
-
-			field.setAccessible( true );
-			field.set( encloser, logger );
-		} catch( final Exception e )
-		{
-			Thrower.rethrowUnchecked( e );
-		}
 	}
 
 	public static interface Pretty

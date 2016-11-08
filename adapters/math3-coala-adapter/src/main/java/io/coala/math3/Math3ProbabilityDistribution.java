@@ -15,6 +15,7 @@
  */
 package io.coala.math3;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,9 +24,8 @@ import java.util.Objects;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.quantity.Dimensionless;
-import javax.measure.quantity.Quantity;
-import javax.measure.unit.Unit;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
 import org.apache.commons.math3.distribution.BinomialDistribution;
@@ -60,15 +60,15 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jscience.physics.amount.Amount;
 
 import io.coala.bind.LocalBinder;
 import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.WeightedValue;
-import io.coala.random.AmountDistribution;
+import io.coala.random.QuantityDistribution;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.PseudoRandom;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@link Math3ProbabilityDistribution} creates {@link ProbabilityDistribution}s
@@ -562,21 +562,21 @@ public abstract class Math3ProbabilityDistribution<S>
 			return this.factory;
 		}
 
-		public <Q extends Quantity> AmountDistribution<Q> fitNormal(
+		public <Q extends Quantity<Q>> QuantityDistribution<Q> fitNormal(
 			final FrequencyDistribution.Interval<Q, ?> freq,
 			final Unit<Q> unit )
 		{
 			final WeightedObservedPoints points = new WeightedObservedPoints();
-			for( Entry<Amount<Q>, Amount<Dimensionless>> entry : freq
-					.toProportions( Unit.ONE ).entrySet() )
-				points.add( entry.getKey().getEstimatedValue(),
-						entry.getValue().getEstimatedValue() );
+			for( Entry<ComparableQuantity<Q>, BigDecimal> entry : freq
+					.toProportions().entrySet() )
+				points.add( entry.getKey().to( unit ).getValue().doubleValue(),
+						entry.getValue().doubleValue() );
 			final double[] params = GaussianCurveFitter.create()
 					.fit( points.toList() );
 			LOG.trace( "Fitted Gaussian with parameters: [norm,mu,sd]={}",
 					Arrays.asList( params ) );
 			return getFactory().createNormal( params[1], params[2] )
-					.toAmounts( unit ).times( params[0] );
+					.toQuantities( unit ).multiply( params[0] );
 		}
 
 	}
