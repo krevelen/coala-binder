@@ -22,15 +22,9 @@ package io.coala.time;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 
-import javax.measure.Measurable;
-import javax.measure.Measure;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
-import javax.measure.unit.Unit;
-
-//import javax.measure.quantity.Dimensionless;
-//import javax.measure.quantity.Duration;
-
-import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.Thrower;
 import io.coala.function.Caller;
@@ -94,7 +88,7 @@ public interface Proactive extends Timed
 	 *            {@link Dimensionless})
 	 * @return the {@link FutureSelf} wrapper to allow chaining
 	 */
-	default FutureSelf after( final Measurable<?> delay )
+	default FutureSelf after( final Quantity<?> delay )
 	{
 		return FutureSelf.of( this, now().add( delay ) );
 	}

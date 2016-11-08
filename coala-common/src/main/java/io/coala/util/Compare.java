@@ -16,6 +16,7 @@ public class Compare implements Util
 	 */
 	private Compare()
 	{
+		// empty
 	}
 
 	public static <T extends Comparable<?>> T max( final T o1, final T o2 )
@@ -70,9 +71,20 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 = o2</code>
 	 */
-	public static <T extends Comparable<?>> boolean eq( final T o1, final T o2 )
+	public static <T> boolean eq( final Comparable<?> o1, final T o2 )
 	{
-		return Comparison.eq( o1, o2 );
+		return Comparison.compare( o1, o2 ) == 0;
+	}
+
+	/**
+	 * @param <T> the type of {@link Comparable}
+	 * @param o1 a {@link T} value
+	 * @param o2 a {@link T} value
+	 * @return <code>o1 <> o2</code>
+	 */
+	public static <T> boolean ne( final Comparable<?> o1, final T o2 )
+	{
+		return Comparison.compare( o1, o2 ) == 0;
 	}
 
 	/**
@@ -81,9 +93,9 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 < o2</code>
 	 */
-	public static <T extends Comparable<?>> boolean lt( final T o1, final T o2 )
+	public static <T> boolean lt( final Comparable<?> o1, final T o2 )
 	{
-		return Comparison.lt( o1, o2 );
+		return Comparison.compare( o1, o2 ) < 0;
 	}
 
 	/**
@@ -92,9 +104,9 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 =< o2</code>
 	 */
-	public static <T extends Comparable<?>> boolean le( final T o1, final T o2 )
+	public static <T> boolean le( final Comparable<?> o1, final T o2 )
 	{
-		return Comparison.le( o1, o2 );
+		return Comparison.compare( o1, o2 ) <= 0;
 	}
 
 	/**
@@ -103,9 +115,9 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 > o2</code>
 	 */
-	public static <T extends Comparable<?>> boolean gt( final T o1, final T o2 )
+	public static <T> boolean gt( final Comparable<?> o1, final T o2 )
 	{
-		return Comparison.gt( o1, o2 );
+		return Comparison.compare( o1, o2 ) > 0;
 	}
 
 	/**
@@ -114,9 +126,9 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 >= o2</code>
 	 */
-	public static <T extends Comparable<?>> boolean ge( final T o1, final T o2 )
+	public static <T> boolean ge( final Comparable<?> o1, final T o2 )
 	{
-		return Comparison.ge( o1, o2 );
+		return Comparison.compare( o1, o2 ) >= 0;
 	}
 
 }

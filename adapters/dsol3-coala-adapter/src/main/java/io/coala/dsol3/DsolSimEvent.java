@@ -22,7 +22,7 @@ package io.coala.dsol3;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-import javax.measure.quantity.Quantity;
+import javax.measure.Quantity;
 
 import com.eaio.uuid.UUID;
 
@@ -39,7 +39,7 @@ import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEventInterface;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
-public class DsolSimEvent<Q extends Quantity>
+public class DsolSimEvent<Q extends Quantity<Q>>
 	extends Wrapper.SimpleOrdinal<DsolSimEvent.ID>
 	implements SimEventInterface<DsolTime<Q>>
 {
@@ -104,13 +104,13 @@ public class DsolSimEvent<Q extends Quantity>
 		return NORMAL_PRIORITY;
 	}
 
-	public static <Q extends Quantity> DsolSimEvent<Q>
+	public static <Q extends Quantity<Q>> DsolSimEvent<Q>
 		of( final DsolTime<Q> when, final Callable<Void> call )
 	{
 		return new DsolSimEvent<Q>( when, call );
 	}
 
-	public static <Q extends Quantity> DsolSimEvent<Q>
+	public static <Q extends Quantity<Q>> DsolSimEvent<Q>
 		of( final DsolTime<Q> when, final Runnable runnable )
 	{
 		return of( when, new Callable<Void>()
@@ -124,7 +124,7 @@ public class DsolSimEvent<Q extends Quantity>
 		} );
 	}
 
-	public static <Q extends Quantity> DsolSimEvent<Q> of(
+	public static <Q extends Quantity<Q>> DsolSimEvent<Q> of(
 		final DsolTime<Q> when, final Object target, final Method method,
 		final Object... args )
 	{

@@ -17,7 +17,7 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.util;
+package io.coala.math;
 
 import java.math.MathContext;
 import java.math.RoundingMode;

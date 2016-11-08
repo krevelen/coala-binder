@@ -19,12 +19,11 @@
  */
 package io.coala.time;
 
-import javax.measure.quantity.Quantity;
+import javax.measure.Quantity;
 
-import org.jscience.physics.amount.Amount;
-
-import io.coala.math.MeasureUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.math.Range;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@link Indicator} is a linear-time {@link Signal} of {@link Amount}s
@@ -33,35 +32,38 @@ import io.coala.math.Range;
  * @version $Id: 01dc7612a810c2dd7cb72089ff66146f1f91fbda $
  * @author Rick van Krevelen
  */
-public class Indicator<Q extends Quantity>
-	extends Signal.SimpleOrdinal<Amount<Q>>
+public class Indicator<Q extends Quantity<Q>>
+	extends Signal.SimpleOrdinal<ComparableQuantity<Q>>
 {
 
-	public static <Q extends Quantity> Indicator<Q>
-		of( final Scheduler scheduler, final Amount<Q> initialValue )
+	public static <Q extends Quantity<Q>> Indicator<Q>
+		of( final Scheduler scheduler, final Quantity<Q> initialValue )
 	{
-		return new Indicator<Q>( scheduler, TimeInvariant.of( initialValue ) );
+		return new Indicator<Q>( scheduler,
+				TimeInvariant.of( QuantityUtil.valueOf( initialValue ) ) );
 	}
 
-	private final TimeInvariant<Amount<Q>> timeInvariant;
+	private final TimeInvariant<ComparableQuantity<Q>> timeInvariant;
 
 	public Indicator( final Scheduler scheduler,
-		final TimeInvariant<Amount<Q>> timeInvariant )
+		final TimeInvariant<ComparableQuantity<Q>> timeInvariant )
 	{
 		super( scheduler, Range.infinite(), timeInvariant::get );
 		this.timeInvariant = timeInvariant;
 	}
 
-	public void setValue( final Amount<Q> amount )
+	public void setValue( final Quantity<Q> amount )
 	{
-		this.timeInvariant.set( amount );
+		this.timeInvariant.set( QuantityUtil.valueOf( amount ) );
 	}
 
 	/**
 	 * @param size
 	 */
+	@SuppressWarnings( "unchecked" )
 	public void add( final Number value )
 	{
-		setValue( current().plus( MeasureUtil.toAmount( value ) ) );
+		setValue( (Q) current()
+				.add( QuantityUtil.valueOf( value, current().getUnit() ) ) );
 	}
 }

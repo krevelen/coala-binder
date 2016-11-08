@@ -38,10 +38,10 @@ import com.eaio.uuid.UUID;
 
 import io.coala.config.GlobalConfig;
 import io.coala.json.Wrapper.Util;
+import io.coala.math.DecimalUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.util.ArrayUtil;
-import io.coala.util.DecimalUtil;
 
 /**
  * {@link PseudoRandom} generates a stream of pseudo-random numbers, with an API

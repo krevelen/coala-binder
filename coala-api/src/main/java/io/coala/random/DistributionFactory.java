@@ -23,8 +23,8 @@ import java.math.BigDecimal;
 import java.util.stream.StreamSupport;
 
 import io.coala.exception.Thrower;
+import io.coala.math.DecimalUtil;
 import io.coala.math.WeightedValue;
-import io.coala.util.DecimalUtil;
 
 public class DistributionFactory implements ProbabilityDistribution.Factory
 {

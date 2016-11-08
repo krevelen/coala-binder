@@ -20,13 +20,13 @@ import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.measure.Measurable;
-import javax.measure.quantity.Quantity;
+import javax.measure.Quantity;
 import javax.naming.NamingException;
 
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import io.coala.dsol3.DsolTime.DsolQuantity;
 import io.coala.log.LogUtil;
 import net.jodah.concurrentunit.Waiter;
 import nl.tudelft.simulation.dsol.DSOLModel;
@@ -52,16 +52,16 @@ public class DsolSimTest
 
 	/** */
 	@SuppressWarnings( { "serial", "rawtypes" } )
-	public static class MyModel<Q extends Quantity> extends EventProducer
-		implements DSOLModel<Measurable<Q>, BigDecimal, DsolTime<Q>>
+	public static class MyModel<Q extends Quantity<Q>> extends EventProducer
+		implements DSOLModel<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
 	{
 		/** the scheduler {@link DEVSSimulator} */
-		private DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>> scheduler;
+		private DEVSSimulator<DsolQuantity<Q>, BigDecimal, DsolTime<Q>> scheduler;
 
 		private int jobCount = 0;
 
 		@Override
-		public final DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>>
+		public final DEVSSimulator<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
 			getSimulator()
 		{
 			return this.scheduler;
@@ -72,7 +72,7 @@ public class DsolSimTest
 		public void constructModel( final SimulatorInterface simulator )
 			throws SimRuntimeException, RemoteException
 		{
-			this.scheduler = (DEVSSimulator<Measurable<Q>, BigDecimal, DsolTime<Q>>) simulator;
+			this.scheduler = (DEVSSimulator<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>) simulator;
 
 			LOG.trace( "Schedulable job count: " + this.jobCount );
 			for( int i = 0; i < this.jobCount; i++ )

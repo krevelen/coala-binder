@@ -23,8 +23,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.ParseException;
 
-import javax.measure.DecimalMeasure;
-import javax.measure.quantity.Quantity;
+import javax.measure.Quantity;
 
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
@@ -73,12 +72,12 @@ public interface DistributionParsable<T>
 	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
 	 */
 	@SuppressWarnings( "unchecked" )
-	default <Q extends Quantity> AmountDistribution<Q>
+	default <Q extends Quantity<Q>> QuantityDistribution<Q>
 		parse( ProbabilityDistribution.Parser distParser, Class<Q> quantity )
 			throws ParseException
 	{
-		return (AmountDistribution<Q>) parseType( distParser,
-				DecimalMeasure.class ).toAmounts();
+		return (QuantityDistribution<Q>) parseType( distParser, Quantity.class )
+				.toQuantities();
 	}
 
 	/**

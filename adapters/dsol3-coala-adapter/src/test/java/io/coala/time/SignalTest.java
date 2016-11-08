@@ -31,8 +31,8 @@ public class SignalTest
 			signal.atEach(
 					Timing.of( "0 0 13 * * ?" ).offset( offset ).iterate(), t ->
 					{
-						LOG.trace( "t={}, dt={}, v={}",
-								t.prettify( Units.DAYS, 2 ), t.toDate( offset ),
+						LOG.trace( "t={}, dt={} (1pm), const={}",
+								t.prettify( TimeUnits.DAYS, 2 ), t.toDate( offset ),
 								signal.current() );
 					} );
 			LOG.trace( "scheduler initialized" );

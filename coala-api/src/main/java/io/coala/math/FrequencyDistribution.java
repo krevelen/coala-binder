@@ -1,20 +1,22 @@
 package io.coala.math;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import javax.measure.Measurable;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
-import javax.measure.quantity.Quantity;
-import javax.measure.unit.Unit;
-
-import org.jscience.physics.amount.Amount;
 
 import io.coala.exception.ExceptionFactory;
+import io.coala.exception.Thrower;
 import io.coala.util.Compare;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@link FrequencyDistribution} counts phenomena with a
@@ -31,22 +33,22 @@ import io.coala.util.Compare;
 public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, THIS>>
 {
 
-	Map<T, Amount<Dimensionless>> getFrequencies();
+	Map<T, BigDecimal> getFrequencies();
 
-	Amount<Dimensionless> getSumFrequency();
+	BigDecimal getSumFrequency();
 
 	T getMode();
 
-	THIS add( T phenomenon, Amount<Dimensionless> count );
+	THIS add( T phenomenon, Number count );
 
-	default THIS add( final T phenomenon, final long count )
+	default THIS add( final T phenomenon, final Quantity<Dimensionless> count )
 	{
-		return add( phenomenon, Amount.valueOf( count, Unit.ONE ) );
+		return add( phenomenon, count.getValue() );
 	}
 
 	default THIS add( final T phenomenon )
 	{
-		return add( phenomenon, Amount.ONE );
+		return add( phenomenon, BigDecimal.ONE );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -68,9 +70,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	@SuppressWarnings( "unchecked" )
 	default THIS add( final FrequencyDistribution<T, ?> frequencies )
 	{
-		for( Entry<T, Amount<Dimensionless>> entry : frequencies
-				.getFrequencies().entrySet() )
-			add( entry.getKey(), entry.getValue() );
+		frequencies.getFrequencies().forEach( this::add );
 		return (THIS) this;
 	}
 
@@ -79,24 +79,35 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		return getFrequencies().keySet();
 	}
 
-	default Amount<Dimensionless> frequencyOf( final T phenomenon )
+	default BigDecimal frequencyOf( final T phenomenon )
 	{
 		return getFrequencies().get( phenomenon );
 	}
 
-	default Amount<Dimensionless> proportionOf( final T phenomenon,
-		final Unit<Dimensionless> unit )
+	default BigDecimal proportionOf( final T phenomenon )
 	{
-		return frequencyOf( phenomenon ).divide( getSumFrequency() ).to( unit );
+		return frequencyOf( phenomenon ).divide( getSumFrequency() );
 	}
 
-	default Map<T, Amount<Dimensionless>>
+	default ComparableQuantity<Dimensionless> proportionOf( final T phenomenon,
+		final Unit<Dimensionless> unit )
+	{
+		return QuantityUtil.valueOf( proportionOf( phenomenon ) ).to( unit );
+	}
+
+	default Map<T, BigDecimal> toProportions()
+	{
+		return StreamSupport.stream( uniqueValues().spliterator(), true )
+				.collect( Collectors.toMap( value -> value,
+						value -> proportionOf( value ) ) );
+	}
+
+	default Map<T, ComparableQuantity<Dimensionless>>
 		toProportions( final Unit<Dimensionless> unit )
 	{
-		final Map<T, Amount<Dimensionless>> result = new HashMap<>();
-		for( T value : uniqueValues() )
-			result.put( value, proportionOf( value, unit ) );
-		return result;
+		return StreamSupport.stream( uniqueValues().spliterator(), true )
+				.collect( Collectors.toMap( value -> value,
+						value -> proportionOf( value, unit ) ) );
 	}
 
 	/**
@@ -119,20 +130,41 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		Range<T> getRange();
 
 		@Override
-		NavigableMap<T, Amount<Dimensionless>> getFrequencies();
+		NavigableMap<T, BigDecimal> getFrequencies();
 
 		@Override
-		NavigableMap<T, Amount<Dimensionless>>
-			toProportions( Unit<Dimensionless> unit );
+		default NavigableMap<T, BigDecimal> toProportions()
+		{
+			return StreamSupport.stream( uniqueValues().spliterator(), true )
+					.collect( Collectors.toMap( value -> value,
+							value -> proportionOf( value ),
+							( v1, v2 ) -> Thrower.throwNew(
+									IllegalStateException.class,
+									"merge {} and {} ?", v1, v2 ),
+							() -> new ConcurrentSkipListMap<>() ) );
+		}
 
-		NavigableMap<T, Amount<Dimensionless>> getCumulatives();
+		@Override
+		default NavigableMap<T, ComparableQuantity<Dimensionless>>
+			toProportions( final Unit<Dimensionless> unit )
+		{
+			return StreamSupport.stream( uniqueValues().spliterator(), true )
+					.collect( Collectors.toMap( value -> value,
+							value -> proportionOf( value, unit ),
+							( v1, v2 ) -> Thrower.throwNew(
+									IllegalStateException.class,
+									"merge {} and {} ?", v1, v2 ),
+							() -> new ConcurrentSkipListMap<>() ) );
+		}
 
-		Amount<Dimensionless> cumulativeFrequencyOf( T phenomenon );
+		NavigableMap<T, BigDecimal> getCumulatives();
 
-		Amount<Dimensionless> cumulativeProportionOf( T phenomenon,
+		BigDecimal cumulativeFrequencyOf( T phenomenon );
+
+		ComparableQuantity<Dimensionless> cumulativeProportionOf( T phenomenon,
 			Unit<Dimensionless> unit );
 
-		NavigableMap<T, Amount<Dimensionless>>
+		NavigableMap<T, ComparableQuantity<Dimensionless>>
 			toCumulativeProportions( Unit<Dimensionless> unit );
 
 	}
@@ -148,13 +180,14 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Interval<Q extends Quantity, THIS extends Interval<Q, THIS>>
-		extends Ordinal<Amount<Q>, THIS>
+	interface Interval<Q extends Quantity<Q>, THIS extends Interval<Q, THIS>>
+		extends Ordinal<ComparableQuantity<Q>, THIS>
 	{
 
-		NavigableMap<Amount<Q>, Bin<Amount<Q>>> getBins();
+		NavigableMap<ComparableQuantity<Q>, Bin<ComparableQuantity<Q>>>
+			getBins();
 
-		Amount<Q> getMean();
+		ComparableQuantity<Q> getMean();
 
 	}
 
@@ -169,11 +202,11 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Ratio<Q extends Quantity, THIS extends Ratio<Q, THIS>>
+	interface Ratio<Q extends Quantity<Q>, THIS extends Ratio<Q, THIS>>
 		extends Interval<Q, THIS>
 	{
 
-		Amount<Q> getSum();
+		ComparableQuantity<Q> getSum();
 
 	}
 
@@ -191,20 +224,20 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		implements FrequencyDistribution<T, THIS>
 	{
 
-		private final Map<T, Amount<Dimensionless>> frequencies;
+		private final Map<T, BigDecimal> frequencies;
 
-		private Amount<Dimensionless> sumFreq;
+		private BigDecimal sumFreq;
 
-		private Amount<Dimensionless> modeFreq;
+		private BigDecimal modeFreq;
 
 		private T mode;
 
 		public Simple()
 		{
-			this( new HashMap<T, Amount<Dimensionless>>() );
+			this( new HashMap<>() );
 		}
 
-		protected Simple( final Map<T, Amount<Dimensionless>> frequencies )
+		protected Simple( final Map<T, BigDecimal> frequencies )
 		{
 			this.frequencies = frequencies;
 
@@ -223,33 +256,32 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public Amount<Dimensionless> getSumFrequency()
+		public BigDecimal getSumFrequency()
 		{
 			return this.sumFreq;
 		}
 
 		@Override
-		public Map<T, Amount<Dimensionless>> getFrequencies()
+		public Map<T, BigDecimal> getFrequencies()
 		{
 			return this.frequencies;
 		}
 
 		protected void updateMode( final T phenomenon,
-			final Amount<Dimensionless> frequency )
+			final BigDecimal frequency )
 		{
-			if( !frequency.isLargerThan( this.modeFreq ) ) return;
+			if( Compare.le( frequency, this.modeFreq ) ) return;
 			this.mode = phenomenon;
 			this.modeFreq = frequency;
 		}
 
-		protected void updateSum( final Amount<Dimensionless> addendum )
+		protected void updateSum( final BigDecimal addendum )
 		{
-			this.sumFreq = this.sumFreq.plus( addendum );
+			this.sumFreq = this.sumFreq.add( addendum );
 		}
 
-		protected void put( final T phenomenon,
-			final Amount<Dimensionless> frequency,
-			final Amount<Dimensionless> delta )
+		protected void put( final T phenomenon, final BigDecimal frequency,
+			final BigDecimal delta )
 		{
 			synchronized( getFrequencies() )
 			{
@@ -260,18 +292,17 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public THIS add( final T phenomenon, final Amount<Dimensionless> count )
+		public THIS add( final T phenomenon, final Number c )
 		{
 			synchronized( getFrequencies() )
 			{
-				if( MeasureUtil.isNegative( count ) ) throw ExceptionFactory
-						.createUnchecked( "Can't add count {} (< 0) of {}",
-								count, phenomenon );
+				final BigDecimal count = DecimalUtil.valueOf( c );
+				if( count.signum() < 0 ) throw ExceptionFactory.createUnchecked(
+						"Can't add count {} (< 0) of {}", count, phenomenon );
 
-				final Amount<Dimensionless> oldFreq = getFrequencies()
-						.get( phenomenon );
-				final Amount<Dimensionless> newFreq = oldFreq == null ? count
-						: count.plus( oldFreq );
+				final BigDecimal oldFreq = getFrequencies().get( phenomenon );
+				final BigDecimal newFreq = oldFreq == null ? count
+						: count.add( oldFreq );
 				put( phenomenon, newFreq, count );
 				return (THIS) this;
 			}
@@ -310,7 +341,9 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		extends Simple<T, THIS> implements Ordinal<T, THIS>
 	{
 
-		private final NavigableMap<T, Amount<Dimensionless>> cumulatives;
+		protected static final BigDecimal TWO = new BigDecimal( 2 );
+
+		private final NavigableMap<T, BigDecimal> cumulatives;
 
 		private Range<T> range;
 
@@ -318,20 +351,17 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		public SimpleOrdinal()
 		{
-			this( new ConcurrentSkipListMap<T, Amount<Dimensionless>>() );
+			this( new ConcurrentSkipListMap<>() );
 		}
 
-		protected SimpleOrdinal(
-			final Map<T, Amount<Dimensionless>> frequencies )
+		protected SimpleOrdinal( final Map<T, BigDecimal> frequencies )
 		{
 			this( frequencies instanceof NavigableMap
-					? (NavigableMap<T, Amount<Dimensionless>>) frequencies
-					: new ConcurrentSkipListMap<T, Amount<Dimensionless>>(
-							frequencies ) );
+					? (NavigableMap<T, BigDecimal>) frequencies
+					: new ConcurrentSkipListMap<>( frequencies ) );
 		}
 
-		protected SimpleOrdinal(
-			final NavigableMap<T, Amount<Dimensionless>> frequencies )
+		protected SimpleOrdinal( final NavigableMap<T, BigDecimal> frequencies )
 		{
 			super( frequencies );
 
@@ -342,17 +372,15 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 			this.median = null;
 
 			// initialize cumulative frequencies and median
-			this.cumulatives = new ConcurrentSkipListMap<T, Amount<Dimensionless>>();
-			Amount<Dimensionless> cumulative = Amount.ZERO;
-			for( Entry<T, Amount<Dimensionless>> entry : frequencies
-					.entrySet() )
+			this.cumulatives = new ConcurrentSkipListMap<>();
+			BigDecimal cumulative = BigDecimal.ZERO;
+			for( Entry<T, BigDecimal> entry : frequencies.entrySet() )
 			{
-				cumulative = cumulative.plus( entry.getValue() );
+				cumulative = cumulative.add( entry.getValue() );
 				this.cumulatives.put( entry.getKey(), cumulative );
 			}
 
-			if( Compare.gt( cumulative, Amount.ZERO ) )
-				this.median = calcMedian();
+			if( cumulative.signum() > 0 ) this.median = calcMedian();
 		}
 
 		protected void updateRange( final T phenomenon )
@@ -367,15 +395,14 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		 * @param delta the difference to add
 		 */
 		protected void updateCumulatives(
-			final NavigableMap<T, Amount<Dimensionless>> tail,
-			final Amount<Dimensionless> delta )
+			final NavigableMap<T, BigDecimal> tail, final BigDecimal delta )
 		{
-			Amount<Dimensionless> cumulative = cumulativeFrequencyOf(
-					tail.firstKey() ).minus( frequencyOf( tail.firstKey() ) );
+			BigDecimal cumulative = cumulativeFrequencyOf( tail.firstKey() )
+					.subtract( frequencyOf( tail.firstKey() ) );
 			this.cumulatives.clear();
-			for( Entry<T, Amount<Dimensionless>> entry : tail.entrySet() )
+			for( Entry<T, BigDecimal> entry : tail.entrySet() )
 				this.cumulatives.put( entry.getKey(),
-						cumulative = cumulative.plus( entry.getValue() ) );
+						cumulative = cumulative.add( entry.getValue() ) );
 
 			final T last = getFrequencies().lastKey();
 			if( cumulativeFrequencyOf( last )
@@ -388,21 +415,19 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		protected T calcMedian()
 		{
-			final Amount<Dimensionless> semi = getSumFrequency().divide( 2 );
+			final BigDecimal semi = getSumFrequency().divide( TWO );
 			T median = getCumulatives().firstKey();
-			for( Entry<T, Amount<Dimensionless>> entry : getCumulatives()
-					.entrySet() )
+			for( Entry<T, BigDecimal> entry : getCumulatives().entrySet() )
 			{
-				if( entry.getValue().isGreaterThan( semi ) ) return median;
+				if( Compare.gt( entry.getValue(), semi ) ) return median;
 				median = entry.getKey();
 			}
 			return median;
 		}
 
 		@Override
-		protected void put( final T phenomenon,
-			final Amount<Dimensionless> frequency,
-			final Amount<Dimensionless> delta )
+		protected void put( final T phenomenon, final BigDecimal frequency,
+			final BigDecimal delta )
 		{
 			synchronized( getFrequencies() )
 			{
@@ -416,9 +441,9 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public NavigableMap<T, Amount<Dimensionless>> getFrequencies()
+		public NavigableMap<T, BigDecimal> getFrequencies()
 		{
-			return (NavigableMap<T, Amount<Dimensionless>>) super.getFrequencies();
+			return (NavigableMap<T, BigDecimal>) super.getFrequencies();
 		}
 
 		@Override
@@ -434,43 +459,47 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 		}
 
 		@Override
-		public NavigableMap<T, Amount<Dimensionless>> getCumulatives()
+		public NavigableMap<T, BigDecimal> getCumulatives()
 		{
 			return this.cumulatives;
 		}
 
 		@Override
-		public Amount<Dimensionless> cumulativeFrequencyOf( final T phenomenon )
+		public BigDecimal cumulativeFrequencyOf( final T phenomenon )
 		{
 			return getCumulatives().get( phenomenon );
 		}
 
 		@Override
-		public Amount<Dimensionless> cumulativeProportionOf( final T phenomenon,
-			final Unit<Dimensionless> unit )
+		public ComparableQuantity<Dimensionless> cumulativeProportionOf(
+			final T phenomenon, final Unit<Dimensionless> unit )
 		{
-			return cumulativeFrequencyOf( phenomenon )
-					.divide( getSumFrequency() ).to( unit );
+			return QuantityUtil.valueOf( cumulativeFrequencyOf( phenomenon )
+					.divide( getSumFrequency() ) ).to( unit );
 		}
 
 		@Override
-		public NavigableMap<T, Amount<Dimensionless>>
+		public NavigableMap<T, ComparableQuantity<Dimensionless>>
 			toProportions( final Unit<Dimensionless> unit )
 		{
-			final NavigableMap<T, Amount<Dimensionless>> result = new ConcurrentSkipListMap<>();
+			final NavigableMap<T, ComparableQuantity<Dimensionless>> result = new ConcurrentSkipListMap<>();
 			for( T value : uniqueValues() )
 				result.put( value, proportionOf( value, unit ) );
 			return result;
 		}
 
 		@Override
-		public NavigableMap<T, Amount<Dimensionless>>
+		public NavigableMap<T, ComparableQuantity<Dimensionless>>
 			toCumulativeProportions( final Unit<Dimensionless> unit )
 		{
-			final NavigableMap<T, Amount<Dimensionless>> result = new ConcurrentSkipListMap<>();
-			for( T value : uniqueValues() )
-				result.put( value, cumulativeProportionOf( value, unit ) );
-			return result;
+			return getCumulatives().entrySet().parallelStream().collect(
+					Collectors.toMap( e -> e.getKey(), e -> QuantityUtil
+							.valueOf( e.getValue().divide( getSumFrequency() ) )
+							.to( unit ),
+							( v1, v2 ) -> Thrower.throwNew(
+									IllegalStateException.class,
+									"merge {} and {} ?", v1, v2 ),
+							() -> new ConcurrentSkipListMap<>() ) );
 		}
 	}
 
@@ -484,28 +513,31 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	class SimpleInterval<Q extends Quantity, THIS extends SimpleInterval<Q, THIS>>
-		extends SimpleOrdinal<Amount<Q>, THIS> implements Interval<Q, THIS>
+	class SimpleInterval<Q extends Quantity<Q>, THIS extends SimpleInterval<Q, THIS>>
+		extends SimpleOrdinal<ComparableQuantity<Q>, THIS>
+		implements Interval<Q, THIS>
 	{
 
-		private NavigableMap<Amount<Q>, Bin<Amount<Q>>> bins;
+		private NavigableMap<ComparableQuantity<Q>, Bin<ComparableQuantity<Q>>> bins;
 
-		private Amount<Q> median;
+		private ComparableQuantity<Q> median;
 
-		private Amount<Q> sum;
+		private ComparableQuantity<Q> sum;
 
-		private Amount<Q> mean;
+		private ComparableQuantity<Q> mean;
 
+		@SuppressWarnings( "unchecked" )
 		@Override
-		protected Amount<Q> calcMedian()
+		protected ComparableQuantity<Q> calcMedian()
 		{
-			final boolean interpolate = !getSumFrequency().isExact()
-					|| getSumFrequency().getExactValue() % 2 == 0;
-			final Amount<Dimensionless> halfFreq = getSumFrequency()
-					.plus( Amount.ONE ).divide( 2 );
-			Entry<Amount<Q>, Amount<Dimensionless>> prev = getCumulatives()
+			final boolean interpolate = !DecimalUtil
+					.isExact( getSumFrequency() )
+					|| getSumFrequency().remainder( TWO ).signum() == 0;
+			final BigDecimal halfFreq = getSumFrequency().add( BigDecimal.ONE )
+					.divide( TWO );
+			Entry<ComparableQuantity<Q>, BigDecimal> prev = getCumulatives()
 					.firstEntry();
-			for( Entry<Amount<Q>, Amount<Dimensionless>> entry : getCumulatives()
+			for( Entry<ComparableQuantity<Q>, BigDecimal> entry : getCumulatives()
 					.tailMap( prev.getKey(), false ).entrySet() )
 			{
 				// first pass halfway for median
@@ -517,7 +549,8 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 				// interpolate? before- and after-half entries if uneven sumfreq
 				if( interpolate && prev != null
 						&& Compare.eq( prev.getValue(), halfFreq ) )
-					return prev.getKey().plus( entry.getKey() ).divide( 2 );
+					return (ComparableQuantity<Q>) prev.getKey()
+							.add( entry.getKey() ).divide( TWO );
 
 				// otherwise? return before/on-half entry upon passing
 				return prev.getKey();
@@ -525,11 +558,12 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 			return prev.getKey();
 		}
 
-		protected Bin<Amount<Q>> resolveBin( final Amount<Q> amount )
+		protected Bin<ComparableQuantity<Q>>
+			resolveBin( final ComparableQuantity<Q> amount )
 		{
 			// FIXME initialize and resolve bins, incl infinite extremes?
 
-			final Entry<?, Bin<Amount<Q>>> floor = getBins()
+			final Entry<?, Bin<ComparableQuantity<Q>>> floor = getBins()
 					.floorEntry( amount );
 //			Objects.requireNonNull( floor, "Amount out of range: " + amount );
 			if( floor != null ) return floor.getValue();
@@ -541,46 +575,44 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public THIS add( final Amount<Q> value,
-			final Amount<Dimensionless> count )
+		public THIS add( final ComparableQuantity<Q> value, final Number count )
 		{
 			synchronized( getFrequencies() )
 			{
-				final Bin<Amount<Q>> bin = resolveBin( value );
+				final Bin<ComparableQuantity<Q>> bin = resolveBin( value );
 				super.add( bin.getKernel(), count );
-				this.sum = this.sum.plus( value.times( count ) );
-				this.mean = this.sum.divide( getSumFrequency() )
-						.to( this.sum.getUnit() );
+				this.sum = this.sum.add( value.multiply( count ) );
+				this.mean = this.sum.divide( getSumFrequency() );
 				return (THIS) this;
 			}
 		}
 
 		@Override
-		public Amount<Q> getMedian()
+		public ComparableQuantity<Q> getMedian()
 		{
 			return this.median;
 		}
 
-		public Amount<Q> getSum()
+		public ComparableQuantity<Q> getSum()
 		{
 			return this.sum;
 		}
 
 		@Override
-		public NavigableMap<Amount<Q>, Bin<Amount<Q>>> getBins()
+		public NavigableMap<ComparableQuantity<Q>, Bin<ComparableQuantity<Q>>>
+			getBins()
 		{
 			return this.bins;
 		}
 
 		@Override
-		public Amount<Q> getMean()
+		public ComparableQuantity<Q> getMean()
 		{
 			return this.mean;
 		}
-
 	}
 
-	class SimpleRatio<Q extends Quantity, THIS extends SimpleRatio<Q, THIS>>
+	class SimpleRatio<Q extends Quantity<Q> & Comparable<Quantity<Q>>, THIS extends SimpleRatio<Q, THIS>>
 		extends SimpleInterval<Q, THIS> implements Ratio<Q, THIS>
 	{
 		// explicitly expose #getSum() used by SimpleInterval to calculate mean

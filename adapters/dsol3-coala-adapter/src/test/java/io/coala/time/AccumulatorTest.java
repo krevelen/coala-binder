@@ -21,22 +21,21 @@ package io.coala.time;
 
 import static org.aeonbits.owner.util.Collections.entry;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.concurrent.TimeoutException;
 
-import javax.measure.quantity.DataAmount;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+import javax.measure.Quantity;
+import javax.measure.Unit;
+import javax.measure.quantity.Length;
 
 import org.apache.logging.log4j.Logger;
-import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.time.Accumulator.Integrator;
 import rx.Observer;
+import tec.uom.se.unit.Units;
 
 /**
  * {@link AccumulatorTest} tests the {@link Accumulator}
@@ -53,11 +52,9 @@ public class AccumulatorTest
 	private static final Logger LOG = LogUtil
 			.getLogger( AccumulatorTest.class );
 
-	private void logPoint( final Accumulator<?> acc, final TimeSpan interval )
+	private void logPoint( final Accumulator<?> acc, final Duration interval )
 	{
-		LOG.trace( "{},{}", acc.now(),
-				BigDecimal.valueOf( acc.getAmount().getEstimatedValue() )
-						.setScale( 4, RoundingMode.HALF_UP ) );
+		LOG.trace( "{}", acc.now().prettify( 4 ) );
 		acc.after( interval ).call( this::logPoint, acc, interval );
 	}
 
@@ -71,7 +68,7 @@ public class AccumulatorTest
 	@Test
 	public void tesAccumulator() throws TimeoutException
 	{
-		final Unit<?> bps = SI.BIT.divide( SI.SECOND );
+		final Unit<?> mps = Units.METRE.divide( Units.SECOND );
 		final Dsol3Config config = Dsol3Config.of(
 				entry( Dsol3Config.ID_KEY, "accumTest" ),
 				entry( Dsol3Config.START_TIME_KEY, "5 s" ),
@@ -79,23 +76,24 @@ public class AccumulatorTest
 		LOG.info( "Starting DSOL test, config: {}", config.toYAML() );
 		final Scheduler scheduler = config.create( s ->
 		{
-			final Accumulator<DataAmount> acc = Accumulator.of( s,
-					Amount.valueOf( 120.4, SI.BIT ), Amount.valueOf( 2, bps ) );
+			final Accumulator<Length> acc = Accumulator.of( s,
+					QuantityUtil.valueOf( 120.4, Units.METRE ),
+					QuantityUtil.valueOf( 2, mps ) );
 
-			final TimeSpan delay = TimeSpan.valueOf( "1 s" );
+			final Duration delay = Duration.valueOf( "1 s" );
 			s.at( s.now() ).call( this::logPoint, acc, delay );
 
 			// schedule event at target level
-			final Amount<DataAmount> target = Amount.valueOf( 500, SI.BIT );
-			acc.at( target, t ->
-			{
-				LOG.info( "reached a={} at t={}", target, t );
-			} );
+			final Quantity<Length> target = QuantityUtil.valueOf( 500,
+					Units.METRE );
+			acc.at( target,
+					t -> LOG.info( "reached a={} at t={}", target, t ) );
 
 			// double the rate
-			acc.setIntegrator( Integrator.ofRate( Amount.valueOf( 4, bps ) ) );
+			acc.setIntegrator(
+					Integrator.ofRate( QuantityUtil.valueOf( 4, mps ) ) );
 //			assertThat( "Can't be null", acc, not( nullValue() ) );
-			LOG.info( "initialized, t={}", s.now() );
+			LOG.trace( "initialized, t={}", s.now() );
 		} );
 
 		scheduler.run();

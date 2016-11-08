@@ -15,7 +15,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import io.coala.json.Wrapper;
-import io.coala.util.DecimalUtil;
 
 /**
  * {@link WeightedValue}

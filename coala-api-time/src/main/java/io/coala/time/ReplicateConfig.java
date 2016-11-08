@@ -24,10 +24,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
-import java.util.regex.Pattern;
 
-import javax.measure.DecimalMeasure;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.Converter;
@@ -36,7 +34,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
-import io.coala.config.JsonConverter;
 import io.coala.json.JsonUtil;
 
 /**
@@ -57,7 +54,7 @@ public interface ReplicateConfig extends GlobalConfig
 
 	String TIME_UNIT_KEY = "replication.time-unit";
 
-	String TIME_UNIT_DEFAULT = Units.DAYS_ALIAS;
+	String TIME_UNIT_DEFAULT = TimeUnits.DAYS_LABEL;
 
 	String DURATION_KEY = "replication.duration";
 
@@ -89,7 +86,7 @@ public interface ReplicateConfig extends GlobalConfig
 	String rawTimeUnit();
 
 	@DefaultValue( "${" + TIME_UNIT_KEY + "}" )
-	@ConverterClass( UnitConverter.class )
+	@ConverterClass( TimeUnitsConverter.class )
 	Unit<?> timeUnit();
 
 	@Key( OFFSET_KEY )
@@ -102,34 +99,10 @@ public interface ReplicateConfig extends GlobalConfig
 
 	@Key( DURATION_KEY )
 	@DefaultValue( DURATION_DEFAULT )
-	String rawDuration();
+	BigDecimal rawDuration();
 
-	String VALUE_SEP = "|";
-
-	@DefaultValue( "${" + DURATION_KEY + "}" + VALUE_SEP + "${" + TIME_UNIT_KEY
-			+ "}" )
-	@ConverterClass( DurationConverter.class )
+	@DefaultValue( "${" + DURATION_KEY + "} ${" + TIME_UNIT_KEY + "}" )
 	Duration duration();
-
-	/**
-	 * {@link UnitConverter} as OWNER ignores {@link Unit#valueOf(CharSequence)}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	class UnitConverter implements Converter<Unit<?>>
-	{
-		static
-		{
-			Units.registerAliases();
-		}
-
-		@Override
-		public Unit<?> convert( final Method method, final String input )
-		{
-			return Unit.valueOf( input );
-		}
-	}
 
 	class InstantConverter implements Converter<Instant>
 	{
@@ -137,22 +110,6 @@ public interface ReplicateConfig extends GlobalConfig
 		public Instant convert( final Method method, final String input )
 		{
 			return Instant.parse( input );
-		}
-	}
-
-	class DurationConverter extends JsonConverter<Duration>
-	{
-		@Override
-		public Duration convert( final Method method, final String input )
-		{
-			final String[] split = input.split( Pattern.quote( VALUE_SEP ) );
-			final Duration result = super.convert( method, split[0] );
-			final Unit<?> unit = Unit
-					.valueOf( split.length == 2 ? split[1] : "" );
-			if( result.unit().isCompatible( Unit.ONE ) )
-				return Duration.of( result.unwrap().multiply(
-						DecimalMeasure.valueOf( BigDecimal.ONE, unit ) ) );
-			return result.to( unit );
 		}
 	}
 

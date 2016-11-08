@@ -17,10 +17,9 @@ package io.coala.math3;
 
 import java.math.BigDecimal;
 
-import javax.measure.DecimalMeasure;
+import javax.measure.Quantity;
 
 import org.apache.logging.log4j.Logger;
-import org.jscience.physics.amount.Amount;
 import org.junit.Test;
 
 import io.coala.bind.LocalBinder;
@@ -64,8 +63,8 @@ public class Math3ProbabilityDistributionTest
 		final DistributionParser parser = binder
 				.inject( DistributionParser.class );
 
-		final ProbabilityDistribution<DecimalMeasure> dist2 = parser
-				.parse( "const(2.01 day)", DecimalMeasure.class );
+		final ProbabilityDistribution<Quantity> dist2 = parser
+				.parse( "const(2.01 day)", Quantity.class );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw constant {}: {}", i, dist2.draw() );
 
@@ -75,8 +74,8 @@ public class Math3ProbabilityDistributionTest
 			LOG.trace( "draw BigDecimal {}: {}", i, dist1.draw() );
 
 //		LOG.trace( "amount {}", Amount.valueOf( 3.2, Unit.ONE ) );
-		final ProbabilityDistribution<Amount> dist0 = parser
-				.parse( "uniform-enum(2 ;3 )", Amount.class ); //± 1.1E-16
+		final ProbabilityDistribution<Quantity> dist0 = parser
+				.parse( "uniform-enum(2 ;3 )", Quantity.class ); //± 1.1E-16
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "draw Object {}: {}", i, dist0.draw() );
 

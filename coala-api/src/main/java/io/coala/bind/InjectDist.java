@@ -29,14 +29,15 @@ import java.math.BigDecimal;
 import java.util.function.Supplier;
 
 import javax.inject.Qualifier;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 
 import org.aeonbits.owner.Config;
 
 import io.coala.exception.Thrower;
-import io.coala.random.AmountDistribution;
+import io.coala.random.QuantityDistribution;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.ProbabilityDistribution.Parser;
+import tec.uom.se.AbstractUnit;
 
 /**
  * {@link InjectDist}
@@ -90,11 +91,11 @@ public @interface InjectDist
 				{
 					field.set( encloser, parsedDist );
 					return;
-				} else if( AmountDistribution.class
+				} else if( QuantityDistribution.class
 						.isAssignableFrom( field.getType() ) )
 				{
-					final Unit<?> unit = annot.unit().isEmpty() ? Unit.ONE
-							: Unit.valueOf( annot.unit() );
+					final Unit<?> unit = annot.unit().isEmpty() ? AbstractUnit.ONE
+							: AbstractUnit.parse( annot.unit() );
 //					final Class<?> fieldDim = TypeArguments
 //							.of( AmountDistribution.class, field.getType()
 //									.asSubclass( AmountDistribution.class ) )
@@ -109,7 +110,7 @@ public @interface InjectDist
 //					if( fieldDim == parsedDim )
 
 					// FIXME injects raw, check unit compatibility in helper method?
-					field.set( encloser, parsedDist.toAmounts( unit ) );
+					field.set( encloser, parsedDist.toQuantities( unit ) );
 
 //					else
 //						Thrower.throwNew( UnsupportedOperationException.class,

@@ -26,7 +26,7 @@ import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
-import io.coala.time.Units;
+import io.coala.time.TimeUnits;
 
 /**
  * {@link EnterpriseTest}
@@ -135,7 +135,7 @@ public class EnterpriseTest
 			final Sales sales = org1.specialist( Sales.class );
 			sales.setTotalValue( 0 );
 			sales.emit( FactKind.REQUESTED ).subscribe(
-					rq -> after( Duration.of( 1, Units.DAYS ) ).call( t ->
+					rq -> after( Duration.of( 1, TimeUnits.DAYS ) ).call( t ->
 					{
 						final Sale st = sales.respond( rq, FactKind.STATED )
 								.with( "stParam",

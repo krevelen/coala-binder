@@ -4,8 +4,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.text.ParseException;
 
-import javax.measure.quantity.Duration;
-import javax.measure.unit.NonSI;
+import javax.measure.quantity.Time;
 
 import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +13,7 @@ import org.junit.Test;
 
 import io.coala.bind.LocalConfig;
 import io.coala.random.DistributionParsable.FromString;
+import tec.uom.se.unit.Units;
 
 /**
  * {@link DistributionParserTest}
@@ -78,8 +78,8 @@ public class DistributionParserTest
 			LOG.trace( "`{}` #{}: {}", config.categoricalEnum(), i + 1,
 					categoricalEnum.draw() );
 
-		final AmountDistribution<Duration> gaussAmount = config.gaussAmount()
-				.parse( distParser ).toAmounts( NonSI.HOUR );
+		final QuantityDistribution<Time> gaussAmount = config.gaussAmount()
+				.parse( distParser ).toQuantities( Units.HOUR );
 		assertNotNull( "gaussAmount not set", gaussAmount );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "`{}` gaussian Amount #{}: {}", config.gaussAmount(),

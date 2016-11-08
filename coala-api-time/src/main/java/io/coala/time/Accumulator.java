@@ -23,12 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import javax.measure.quantity.Quantity;
+import javax.measure.Quantity;
 
 import org.apache.logging.log4j.Logger;
-import org.jscience.physics.amount.Amount;
 
 import io.coala.log.LogUtil;
+import io.coala.math.DecimalUtil;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
@@ -42,20 +42,19 @@ import rx.subjects.Subject;
  * @version $Id: 3c1bb7eab4725ffbc8a549da6b73f785a96e3e42 $
  * @author Rick van Krevelen
  */
-public class Accumulator<Q extends Quantity> implements Proactive
+public class Accumulator<Q extends Quantity<Q>> implements Proactive
 {
 
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Accumulator.class );
 
-	private final transient Subject<Amount<Q>, Amount<Q>> amounts = PublishSubject
-			.create();
+	private final transient Subject<Quantity<Q>, Quantity<Q>> amounts = PublishSubject.create();
 
 	private final transient Map<TargetAmount<Q>, Expectation> intercepts = new HashMap<>();
 
 	private Integrator<Q> integrator;
 
-	private Amount<Q> amount;
+	private Quantity<Q> amount;
 
 	private Scheduler scheduler;
 
@@ -85,18 +84,19 @@ public class Accumulator<Q extends Quantity> implements Proactive
 		recalculate();
 	}
 
+	@SuppressWarnings( "unchecked" )
 	protected synchronized void recalculate()
 	{
 		final Instant t0 = this.t, t1 = now();
 		if( t0.equals( t1 ) ) return;
 		this.t = t1;
-		final Amount<Q> delta = this.integrator.delta( t0, t1 );
-		final Amount<Q> amount = this.amount == null ? delta
-				: this.amount.plus( delta );
+		final Quantity<Q> delta = this.integrator.delta( t0, t1 );
+		final Quantity<Q> amount = this.amount == null ? delta
+				: this.amount.add( delta );
 		setAmount( amount );
 	}
 
-	public synchronized void setAmount( final Amount<Q> amount )
+	public synchronized void setAmount( final Quantity<Q> amount )
 	{
 		this.amount = amount;
 		this.amounts.onNext( amount );
@@ -121,11 +121,12 @@ public class Accumulator<Q extends Quantity> implements Proactive
 		scheduleReached( target );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	protected void scheduleReached( final TargetAmount<Q> target )
 	{
 		final Instant t1 = now();
 		final Instant t2 = this.integrator.when( t1,
-				target.amount.minus( this.amount ) );
+				(Q) target.amount.subtract( this.amount ) );
 		if( t2 == null || t2.compareTo( t1 ) <= 0 ) return; // no repeats, push onCompleted()?
 
 		// schedule repeat
@@ -139,37 +140,38 @@ public class Accumulator<Q extends Quantity> implements Proactive
 				this.intercepts.size() );
 	}
 
-	public void at( final Amount<Q> amount, final Consumer<Instant> observer )
+	public void at( final Quantity<Q> amount, final Consumer<Instant> observer )
 	{
 		scheduleReached( TargetAmount.of( amount, observer ) );
 	}
 
-	public Amount<Q> getAmount()
+	public Quantity<Q> getAmount()
 	{
 		recalculate();
 		return this.amount;
 	}
 
-	public Observable<Amount<Q>> emitAmounts()
+	public Observable<Quantity<Q>> emitAmounts()
 	{
 		return this.amounts.asObservable();
 	}
 
-	public static <Q extends Quantity> Accumulator<Q>
+	public static <Q extends Quantity<Q>> Accumulator<Q>
 		of( final Scheduler scheduler, final Integrator<Q> integrator )
 	{
 		return of( scheduler, null, integrator );
 	}
 
-	public static <Q extends Quantity> Accumulator<Q> of(
-		final Scheduler scheduler, final Amount<Q> initialAmount,
-		final Amount<?> initialRate )
+	public static <Q extends Quantity<Q>> Accumulator<Q> of(
+		final Scheduler scheduler, final Quantity<Q> initialAmount,
+		final Quantity<?> initialRate )
 	{
-		return of( scheduler, initialAmount, Integrator.ofRate( initialRate ) );
+		return of( scheduler, initialAmount,
+				Integrator.<Q>ofRate( initialRate ) );
 	}
 
-	public static <Q extends Quantity> Accumulator<Q> of(
-		final Scheduler scheduler, final Amount<Q> initialAmount,
+	public static <Q extends Quantity<Q>> Accumulator<Q> of(
+		final Scheduler scheduler, final Quantity<Q> initialAmount,
 		final Integrator<Q> integrator )
 	{
 		final Accumulator<Q> result = new Accumulator<>( scheduler );
@@ -178,13 +180,13 @@ public class Accumulator<Q extends Quantity> implements Proactive
 		return result;
 	}
 
-	static class TargetAmount<Q extends Quantity>
+	static class TargetAmount<Q extends Quantity<Q>>
 	{
-		Amount<Q> amount;
+		Quantity<Q> amount;
 		Consumer<Instant> consumer;
 
-		public static <Q extends Quantity> TargetAmount<Q>
-			of( final Amount<Q> amount, final Consumer<Instant> consumer )
+		public static <Q extends Quantity<Q>> TargetAmount<Q>
+			of( final Quantity<Q> amount, final Consumer<Instant> consumer )
 		{
 			final TargetAmount<Q> result = new TargetAmount<Q>();
 			result.amount = amount;
@@ -193,14 +195,14 @@ public class Accumulator<Q extends Quantity> implements Proactive
 		}
 	}
 
-	public interface Integrator<Q extends Quantity>
+	public interface Integrator<Q extends Quantity<Q>>
 	{
 		/**
 		 * @param start the interval start {@link Instant}
 		 * @param end the interval end {@link Instant}
 		 * @return the integral {@link Amount} of change
 		 */
-		Amount<Q> delta( Instant start, Instant end );
+		Q delta( Instant start, Instant end );
 
 		/**
 		 * @param now the current {@link Instant}
@@ -208,26 +210,25 @@ public class Accumulator<Q extends Quantity> implements Proactive
 		 * @return the next {@link Instant} (after {@code now}) when given
 		 *         {@link Amount} occurs again, or {@code null} if never
 		 */
-		Instant when( Instant now, Amount<Q> delta );
+		Instant when( Instant now, Q delta );
 
-		static <Q extends Quantity, R extends Quantity> Integrator<Q>
-			ofRate( final Amount<R> rate )
+		static <Q extends Quantity<Q>> Integrator<Q>
+			ofRate( final Quantity<?> rate )
 		{
 			return new Integrator<Q>()
 			{
 				@SuppressWarnings( "unchecked" )
 				@Override
-				public Amount<Q> delta( final Instant start, final Instant end )
+				public Q delta( final Instant start, final Instant end )
 				{
-					return (Amount<Q>) rate
-							.times( end.subtract( start ).toAmount() );
+					return (Q) rate.multiply( end.subtract( start ).unwrap() );
 				}
 
 				@Override
-				public Instant when( final Instant now, final Amount<Q> delta )
+				public Instant when( final Instant now, final Q delta )
 				{
-					final Amount<?> duration = delta.divide( rate );
-					return duration.getEstimatedValue() < 0 ? null
+					final Quantity<?> duration = delta.divide( rate );
+					return DecimalUtil.signum( duration.getValue() ) < 0 ? null
 							: now.add( duration );
 				}
 			};

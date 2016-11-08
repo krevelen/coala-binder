@@ -29,14 +29,15 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.measure.Measurable;
-import javax.measure.unit.Unit;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 
 import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.Thrower;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
-import io.coala.math.MeasureUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.math.WeightedValue;
 import io.coala.random.ProbabilityDistribution.Factory;
 import io.coala.util.InstanceParser;
@@ -70,9 +71,16 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 	 * <code>dist(arg1; arg2; &hellip;)</code> or
 	 * <code>dist(v1:w1; v2:w2; &hellip;)</code>
 	 */
+	public static final String DISTRIBUTION_FORMAT_REGEX = "^(?<" + DIST_GROUP
+			+ ">[^\\(]+)\\s*\\((?<" + PARAMS_GROUP + ">[^)]*)\\)$";
+
+	/**
+	 * matches string representations like:
+	 * <code>dist(arg1; arg2; &hellip;)</code> or
+	 * <code>dist(v1:w1; v2:w2; &hellip;)</code>
+	 */
 	public static final Pattern DISTRIBUTION_FORMAT = Pattern
-			.compile( "^(?<" + DIST_GROUP + ">[^\\(]+)\\s*\\((?<" + PARAMS_GROUP
-					+ ">[^)]*)\\)$" );
+			.compile( DISTRIBUTION_FORMAT_REGEX );
 
 	private final ProbabilityDistribution.Factory factory;
 
@@ -107,6 +115,11 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 				"Incorrect format, expected <dist>(p0;p1;p2), was: " + dist,
 				0 );
 		final List<WeightedValue<P>> params = new ArrayList<>();
+		
+		// FIXME register separate Jackson Module artefact
+		if( Quantity.class.isAssignableFrom( argType ) )
+			QuantityUtil.checkRegistered( JsonUtil.getJOM() ); 
+		
 		final InstanceParser<P> argParser = InstanceParser.of( argType );
 		for( String valuePair : m.group( PARAMS_GROUP )
 				.split( PARAM_SEPARATORS ) )
@@ -129,20 +142,19 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 		if( params.isEmpty() && argType.isEnum() )
 			for( P constant : argType.getEnumConstants() )
 			params.add( WeightedValue.of( constant, BigDecimal.ONE ) );
-		if( !Measurable.class.isAssignableFrom( argType ) || params.isEmpty() )
+		if( !Quantity.class.isAssignableFrom( argType ) || params.isEmpty() )
 			return parse( m.group( DIST_GROUP ), params );
 
 		// convert parameter to Number type and check quantity compatibility
-		final Unit<?> firstUnit = MeasureUtil
+		final Unit<?> firstUnit = QuantityUtil
 				.unitOf( params.get( 0 ).getValue() );
 		final List<WeightedValue<BigDecimal>> numbers = params.stream()
-				.map( wv -> WeightedValue.of(
-						MeasureUtil.toBigDecimal( (Measurable<?>) wv.getValue(),
-								firstUnit ),
+				.map( wv -> WeightedValue.of( QuantityUtil
+						.toBigDecimal( (Quantity<?>) wv.getValue(), firstUnit ),
 						wv.getWeight() ) )
 				.collect( Collectors.toList() );
 		return (ProbabilityDistribution<T>) parse( m.group( DIST_GROUP ),
-				numbers ).toAmounts( firstUnit );
+				numbers ).toQuantities( firstUnit );
 	}
 
 	/**

@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonInclude;

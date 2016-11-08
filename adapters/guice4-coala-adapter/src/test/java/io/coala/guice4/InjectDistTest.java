@@ -1,7 +1,6 @@
 package io.coala.guice4;
 
 import javax.inject.Singleton;
-import javax.measure.quantity.Duration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +8,7 @@ import org.junit.Test;
 
 import io.coala.bind.InjectDist;
 import io.coala.bind.LocalConfig;
-import io.coala.random.AmountDistribution;
+import io.coala.random.QuantityDistribution;
 import io.coala.random.DistributionFactory;
 import io.coala.random.DistributionParser;
 import io.coala.random.ProbabilityDistribution;
@@ -40,7 +39,7 @@ public class InjectDistTest
 		private ProbabilityDistribution<Boolean> bernoulli;
 
 		@InjectDist( value = " nOrMaL (10 ;.5 )", unit = "h" )
-		private AmountDistribution<Duration> gaussAmount;
+		private QuantityDistribution<javax.measure.quantity.Time> gaussAmount;
 
 		@InjectDist( value = " eNUM (hi:4 ; miD: 3 ;LO :.91 )",
 			paramType = HML.class )
