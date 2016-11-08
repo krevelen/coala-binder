@@ -99,9 +99,8 @@ public class LatLong implements Serializable
 	{
 		return this.radians != null ? this.radians
 				: (this.radians = this.coordinates.stream()
-						.map( c -> QuantityUtil.valueOf( c, Units.RADIAN )
-								.getValue() )
-						.map( DecimalUtil::toApfloat )
+						.map( c -> QuantityUtil.valueOf( c, Units.RADIAN ) )
+						.map( Quantity::getValue ).map( DecimalUtil::toApfloat )
 						.collect( Collectors.toList() ));
 	}
 
@@ -149,7 +148,7 @@ public class LatLong implements Serializable
 	 */
 	public int precision()
 	{
-		return Compare.min( QuantityUtil.precision( getCoordinates().get( 0 ) ),
-				QuantityUtil.precision( getCoordinates().get( 1 ) ) );
+		return getCoordinates().stream().map( QuantityUtil::precision )
+				.min( ( v1, v2 ) -> v1.compareTo( v2 ) ).orElse( 0 );
 	}
 }
