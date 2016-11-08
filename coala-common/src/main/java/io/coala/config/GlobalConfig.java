@@ -1,6 +1,5 @@
 package io.coala.config;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -13,6 +12,8 @@ import org.aeonbits.owner.Config.Separator;
 import org.aeonbits.owner.Config.Sources;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
+
+import io.coala.util.FileUtil;
 
 /**
  * {@link GlobalConfig} by default tries to load from a location specified with
@@ -90,7 +91,10 @@ public interface GlobalConfig extends YamlConfig
 		final Map<?, ?>... imports ) throws IOException
 	{
 		return ConfigFactory.create( GlobalConfig.class,
-				ConfigUtil.join( YamlUtil.flattenYaml( new File(yamlPath) ), imports ) );
+				ConfigUtil.join(
+						YamlUtil.flattenYaml(
+								FileUtil.toInputStream( yamlPath ) ),
+						imports ) );
 	}
 
 	static GlobalConfig openYAML( final Map<?, ?>... imports )

@@ -17,38 +17,25 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.persist;
+package io.coala.math;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.function.Consumer;
+import java.lang.reflect.Method;
 
-import io.coala.config.GlobalConfig;
+import io.coala.config.JsonConverter;
+import tec.uom.se.ComparableQuantity;
 
 /**
- * {@link JDBCConfig}
+ * {@link QuantityConverter}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface JDBCConfig extends GlobalConfig
+public class QuantityConverter extends JsonConverter<ComparableQuantity<?>>
 {
-	@Key( "jdbc.driver" )
-	String driver();
-
-	@Key( "jdbc.url" )
-	String url();
-
-	@Key( "jdbc.username" )
-	String username();
-
-	@Key( "jdbc.password" )
-	String password();
-
-	default void execute( final String sql, final Consumer<ResultSet> consumer )
-		throws SQLException, ClassNotFoundException
+	@Override
+	public ComparableQuantity<?> convert( final Method method,
+		final String input )
 	{
-		Class.forName( driver() );
-		JDBCUtil.execute( url(), username(), password(), sql, consumer );
+		return QuantityUtil.valueOf( input );
 	}
 }

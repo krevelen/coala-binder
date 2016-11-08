@@ -19,7 +19,6 @@
  */
 package io.coala.inter;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -131,26 +130,5 @@ public interface Invoker
 							.rethrowUnchecked( (Throwable) result[0] );
 					return result[0];
 				} );
-	}
-
-	/**
-	 * @param t
-	 * @param field
-	 * @param binder
-	 */
-	static void injectProxy( final Object encloser, final Field field,
-		final Supplier<Invoker> invoker )
-	{
-		try
-		{
-			field.setAccessible( true );
-			final InjectProxy annot = field.getAnnotation( InjectProxy.class );
-			field.set( encloser,
-					createProxy( field.getType(), URI.create( annot.value() ),
-							Duration.parse( annot.timeout() ), invoker ) );
-		} catch( final Throwable e )
-		{
-			Thrower.rethrowUnchecked( e );
-		}
 	}
 }

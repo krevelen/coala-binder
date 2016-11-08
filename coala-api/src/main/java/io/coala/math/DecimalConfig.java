@@ -17,30 +17,35 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.random;
+package io.coala.math;
 
-import java.lang.reflect.Method;
+import java.math.MathContext;
+import java.math.RoundingMode;
 
-import org.aeonbits.owner.Config;
-import org.aeonbits.owner.Converter;
+import io.coala.config.GlobalConfig;
 
 /**
- * {@link DistributionConverter} utility for {@link Config}-interfaces
+ * {@link DecimalConfig}
  * 
- * @param <T>
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class DistributionConverter<T>
-	implements Converter<DistributionParsable<T>>
+public interface DecimalConfig extends GlobalConfig
 {
-	@Override
-	public DistributionParsable<T> convert( final Method method,
-		final String input )
+	String PRECISION_KEY = "decimal.precision";
+
+	String ROUNDING_MODE_KEY = "decimal.rounding-mode";
+
+	@Key( PRECISION_KEY )
+	@DefaultValue( "16" )
+	int precision();
+
+	@Key( ROUNDING_MODE_KEY )
+	@DefaultValue( "HALF_UP" )
+	RoundingMode roundingMode();
+
+	default MathContext createMathContext()
 	{
-		return ( p, t ) ->
-		{
-			return p.parse( input, t );
-		};
+		return new MathContext( precision(), roundingMode() );
 	}
 }

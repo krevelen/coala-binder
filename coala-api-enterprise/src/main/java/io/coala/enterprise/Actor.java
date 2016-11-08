@@ -27,18 +27,24 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
 import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalBinding;
 import io.coala.bind.LocalContextual;
 import io.coala.bind.LocalId;
+import io.coala.enterprise.FactExchange.Direction;
+import io.coala.exception.Thrower;
+import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.time.Instant;
+import io.coala.time.Proactive;
+import io.coala.time.Scheduler;
 import io.coala.util.ReflectUtil;
 import io.coala.util.TypeArguments;
 import rx.Observable;
@@ -52,28 +58,14 @@ import rx.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Actor<F extends Fact>
-	extends Identified.Ordinal<Actor.ID>, Observer<F>
+public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
+	Observer<Fact>, Proactive, LocalBinding
 {
 
 	/**
 	 * @return the properties {@link Map} as used for extended getters/setters
 	 */
 	Map<String, Object> properties();
-
-	/**
-	 * @param actorKind
-	 * @return an actor view that for performing the initiator-side of its
-	 *         transaction type (and all its subtypes)
-	 */
-	<A extends Actor<T>, T extends F> A asInitiator( Class<A> actorKind );
-
-	/**
-	 * @param actorKind
-	 * @return an actor view that for performing the executor-side of its
-	 *         transaction type (and all its subtypes)
-	 */
-	<A extends Actor<T>, T extends F> A asExecutor( Class<A> actorKind );
 
 	/**
 	 * @return an {@link Observable} stream of all generated or received
@@ -136,32 +128,6 @@ public interface Actor<F extends Fact>
 	}
 
 	/**
-	 * @return all {@link #emit()} where {@link Fact#isOutgoing() isOutgoing()}
-	 *         {@code == true}
-	 */
-	default Observable<F> outgoing()
-	{
-		return emit().filter( Fact::isOutgoing );
-	}
-
-	default <T extends F> Observable<T> outgoing( final Class<T> tranKind )
-	{
-		return outgoing().ofType( tranKind );
-	}
-
-	default <T extends F> Observable<T> outgoing( final Class<T> tranKind,
-		final FactKind kind )
-	{
-		return outgoing( tranKind ).filter( f -> f.kind() == kind );
-	}
-
-	@SuppressWarnings( "unchecked" )
-	default Class<F> tranKind()
-	{
-		return (Class<F>) TypeArguments.of( Actor.class, getClass() ).get( 0 );
-	}
-
-	/**
 	 * @param tranKind the type of {@link Fact} to initiate or continue
 	 * @param initiatorRef the initiator {@link Actor.ID}
 	 * @param executorRef the executor {@link Actor.ID}
@@ -180,7 +146,7 @@ public interface Actor<F extends Fact>
 	@SuppressWarnings( "unchecked" )
 	default F initiate( final Actor.ID executorRef, final Map<?, ?>... params )
 	{
-		return initiate( tranKind(), executorRef, null, null, params );
+		return initiate( specialism(), executorRef, null, null, params );
 	}
 
 	/**
@@ -208,7 +174,7 @@ public interface Actor<F extends Fact>
 	default F initiate( final Actor.ID executorRef, final Fact.ID cause,
 		final Map<?, ?>... params )
 	{
-		return initiate( tranKind(), executorRef, cause, null, params );
+		return initiate( specialism(), executorRef, cause, null, params );
 	}
 
 	/**
@@ -238,7 +204,7 @@ public interface Actor<F extends Fact>
 	default F initiate( final Actor.ID executorRef, final Instant expire,
 		final Map<?, ?>... params )
 	{
-		return initiate( tranKind(), executorRef, null, expire, params );
+		return initiate( specialism(), executorRef, null, expire, params );
 	}
 
 	/**
@@ -302,17 +268,81 @@ public interface Actor<F extends Fact>
 				cause.id(), expire, params );
 	}
 
+	Actor<Fact> main();
+
+	/**
+	 * @param healthAdvisorName
+	 * @return
+	 */
+	default Actor.ID peerRef( final String name )
+	{
+		return main().id().peerRef( name );
+	}
+
+	Class<F> specialism();
+
+	/**
+	 * @param actorKind
+	 * @return an actor view for performing either or both of the initiator and
+	 *         executor sides of its transaction sub-type(s)
+	 */
+	default <A extends Actor<T>, T extends F> ID specialist(
+		final Class<A> actorKind, final ThrowingConsumer<A, ?> consumer )
+	{
+		try
+		{
+			final A specialist = specialist( actorKind );
+			consumer.accept( specialist );
+			return specialist.id();
+		} catch( final Throwable e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
+	}
+
+	/**
+	 * @param actorKind
+	 * @return an actor view for performing either or both of the initiator and
+	 *         executor sides of its transaction sub-type(s)
+	 */
+	default <A extends Actor<T>, T extends F> A
+		specialist( final Class<A> actorKind )
+	{
+		return specialist( actorKind, this );
+	}
+
+	/**
+	 * @param actorKind
+	 * @param actorImpl
+	 * @return an actor view for performing either or both of the initiator and
+	 *         executor sides of its transaction sub-type(s)
+	 */
+	<A extends Actor<T>, T extends F> A specialist( Class<A> actorKind,
+		Actor<? super T> actorImpl );
+
 	default <S extends F> Actor<S> specializeIn( final Class<S> tranKind )
 	{
 		final Actor<F> parent = this;
 		return new Actor<S>()
 		{
-			private final ID id = ID.of( tranKind, parent.id() );
+			private final ID specialistId = ID.of( tranKind, main().id() );
 
 			@Override
 			public ID id()
 			{
-				return this.id;
+				return this.specialistId;
+			}
+
+			@Override
+			public Actor<Fact> main()
+			{
+				return parent.main();
+			}
+
+			@Override
+			public Class<S> specialism()
+			{
+				return tranKind;
 			}
 
 			@Override
@@ -334,23 +364,16 @@ public interface Actor<F extends Fact>
 			}
 
 			@Override
-			public void onNext( final S fact )
+			public void onNext( final Fact fact )
 			{
 				parent.onNext( fact );
 			}
 
 			@Override
-			public <A extends Actor<T>, T extends S> A
-				asInitiator( final Class<A> actorKind )
+			public <A extends Actor<T>, T extends S> A specialist(
+				final Class<A> actorKind, final Actor<? super T> actorImpl )
 			{
-				return parent.asInitiator( actorKind );
-			}
-
-			@Override
-			public <A extends Actor<T>, T extends S> A
-				asExecutor( final Class<A> actorKind )
-			{
-				return parent.asExecutor( actorKind );
+				return parent.specialist( actorKind, actorImpl );
 			}
 
 			@Override
@@ -364,7 +387,19 @@ public interface Actor<F extends Fact>
 			@Override
 			public Map<String, Object> properties()
 			{
-				return parent.properties();
+				return parent.properties(); // TODO localize properties?
+			}
+
+			@Override
+			public Scheduler scheduler()
+			{
+				return parent.scheduler();
+			}
+
+			@Override
+			public LocalBinder binder()
+			{
+				return parent.binder();
 			}
 		};
 	}
@@ -393,13 +428,26 @@ public interface Actor<F extends Fact>
 	}
 
 	/**
+	 * @param actorKind the type of {@link Actor} to mimic
+	 * @param impl an implementation to route calls to
+	 * @return the {@link Proxy} instance
+	 */
+	@SuppressWarnings( "unchecked" )
+	default <A extends Actor<T>, T extends F> A
+		proxyAs( final Actor<? super T> impl, final Class<A> actorKind )
+	{
+		return proxyAs( impl, actorKind, null );
+	}
+
+	/**
+	 * @param impl the implementation to route calls to
 	 * @param actorType the type of {@link Actor} to mimic
 	 * @param callObserver an {@link Observer} of method call, or {@code null}
 	 * @return the {@link Proxy} instance
 	 */
 	@SuppressWarnings( "unchecked" )
 	static <A extends Actor<T>, F extends Fact, T extends F> A proxyAs(
-		final Actor<F> impl, final Class<A> actorType,
+		final Actor<? super T> impl, final Class<A> actorType,
 		final Observer<Method> callObserver )
 	{
 		final A proxy = (A) Proxy.newProxyInstance( actorType.getClassLoader(),
@@ -424,7 +472,7 @@ public interface Actor<F extends Fact>
 				} catch( final Exception ignore )
 				{
 					LogUtil.getLogger( Fact.class ).warn(
-							"{}method call failed: {}",
+							"bean {}method call failed: {}",
 							method.isDefault() ? "default " : "", method,
 							ignore );
 				}
@@ -485,11 +533,20 @@ public interface Actor<F extends Fact>
 					: of( raw.unwrap().toString(), raw.parentRef() );
 		}
 
-		/** @return the derived root parent's {@link ID} */
-		public ID organization()
+		/** @return the recursed root ancestor {@link ID} */
+		public ID organizationRef()
 		{
 			for( LocalId id = this;; id = id.parentRef() )
 				if( id.parentRef() instanceof ID == false ) return (ID) id;
+		}
+
+		/**
+		 * @param name
+		 * @return
+		 */
+		public ID peerRef( final String name )
+		{
+			return of( name, parentRef() );
 		}
 	}
 
@@ -516,6 +573,12 @@ public interface Actor<F extends Fact>
 		@Inject
 		private transient Transaction.Factory txFactory;
 
+		@Inject
+		private transient Scheduler scheduler;
+
+		@Inject
+		private transient LocalBinder binder;
+
 		private ID id;
 
 		@Inject
@@ -524,16 +587,16 @@ public interface Actor<F extends Fact>
 			// empty bean constructor
 		}
 
-		public Simple( final ID id, final Transaction.Factory txFactory )
-		{
-			this.id = id;
-			this.txFactory = txFactory;
-		}
-
 		@Override
 		public ID id()
 		{
 			return this.id;
+		}
+
+		@Override
+		public Actor<Fact> main()
+		{
+			return this;
 		}
 
 		@Override
@@ -554,32 +617,29 @@ public interface Actor<F extends Fact>
 						final Transaction<T> tx = this.txFactory.create( tid,
 								tranKind, initiatorRef, executorRef );
 						// tx -> actor (committed facts)
-						tx.commits().subscribe( this::onNext, this::onError,
+						tx.commits().subscribe( main()::onNext, main()::onError,
 								() -> this.txs.remove( tid ) );
 						return tx;
 					} );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		@Override
-		public <A extends Actor<F>, F extends Fact> A
-			asInitiator( final Class<A> actorKind )
+		public Class<Fact> specialism()
 		{
-			return ((Actor<? super F>) this.specialists.computeIfAbsent(
-					TypeArguments.of( Actor.class, actorKind ).get( 0 ),
-					key -> this.specializeIn( (Class<F>) key ) ))
-							.proxyAs( actorKind );
+			return Fact.class;
 		}
 
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public <A extends Actor<F>, F extends Fact> A
-			asExecutor( final Class<A> actorKind )
+		public <A extends Actor<F>, F extends Fact> A specialist(
+			final Class<A> actorKind, final Actor<? super F> actorImpl )
 		{
-			return ((Actor<? super F>) this.specialists.computeIfAbsent(
-					TypeArguments.of( Actor.class, actorKind ).get( 0 ),
-					key -> this.specializeIn( (Class<F>) key ) ))
-							.proxyAs( actorKind );
+			final Class<F> specialism = (Class<F>) TypeArguments
+					.of( Actor.class, actorKind ).get( 0 );
+			final Actor<? super F> specialist = (Actor<? super F>) this.specialists
+					.computeIfAbsent( specialism,
+							key -> actorImpl.specializeIn( (Class<F>) key ) );
+			return specialist.proxyAs( specialist, actorKind );
 		}
 
 		@Override
@@ -593,7 +653,9 @@ public interface Actor<F extends Fact>
 		public <F extends Fact> Observable<F> emit( final Class<F> tranKind )
 		{
 			return (Observable<F>) this.typeemit.computeIfAbsent( tranKind,
-					emit()::ofType );
+					key -> emit()
+							.filter( f -> key.isAssignableFrom( f.type() ) )
+							.map( tranKind::cast ) );
 		}
 
 		@Override
@@ -611,7 +673,42 @@ public interface Actor<F extends Fact>
 		@Override
 		public void onNext( final Fact fact )
 		{
-			this.emit.onNext( fact );
+			try
+			{
+				this.emit.onNext( fact );
+			} catch( final Exception e )
+			{
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public Scheduler scheduler()
+		{
+			return this.scheduler;
+		}
+
+		@Override
+		public LocalBinder binder()
+		{
+			return this.binder;
+		}
+
+		private Simple withId( final ID id )
+		{
+			this.id = id;
+			return this;
+		}
+
+		/**
+		 * @param factExchange
+		 * @return
+		 */
+		private Simple withExchangeDirection( final FactExchange factExchange,
+			final Direction direction )
+		{
+			factExchange.register( this, direction );
+			return this;
 		}
 	}
 
@@ -652,13 +749,16 @@ public interface Actor<F extends Fact>
 			@Inject
 			private transient Transaction.Factory txFactory;
 
+			@Inject
+			private transient FactExchange factExchange;
+
 			@Override
 			public Actor<Fact> create( final ID id )
 			{
-				return this.localCache.computeIfAbsent( id, k ->
-				{
-					return new Simple( id, this.txFactory );
-				} );
+				return this.localCache.computeIfAbsent( id.organizationRef(),
+						orgRef -> this.binder.inject( Simple.class )
+								.withId( id ).withExchangeDirection(
+										this.factExchange, Direction.BIDI ) );
 			}
 
 			@Override

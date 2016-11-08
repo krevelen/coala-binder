@@ -25,12 +25,9 @@ import java.time.temporal.ChronoField;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.measure.DecimalMeasure;
-import javax.measure.Measurable;
-import javax.measure.Measure;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
@@ -38,11 +35,12 @@ import org.joda.time.DateTime;
 import org.joda.time.ReadableDuration;
 import org.joda.time.ReadableInstant;
 import org.joda.time.format.DateTimeFormatter;
-import org.jscience.physics.amount.Amount;
 
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil.Pretty;
-import io.coala.math.MeasureUtil;
+import io.coala.math.DecimalUtil;
+import io.coala.math.QuantityUtil;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
@@ -86,8 +84,7 @@ import io.coala.math.MeasureUtil;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
-public class Instant extends Wrapper.Simple<TimeSpan>
-	implements Comparable<Instant>
+public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 {
 
 	/**
@@ -127,22 +124,22 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 * 
 	 * @see java.time.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
-	 * @see DecimalMeasure
+	 * @see Quantity
 	 */
 	public static Instant of( final String value )
 	{
-		return of( TimeSpan.valueOf( value ) );
+		return of( QuantityUtil.parseDuration( value ) );
 	}
 
 	public static Instant of( final ReadableDuration millis )
 	{
-		return of( millis.getMillis(), Units.MILLIS );
+		return of( millis.getMillis(), TimeUnits.MILLIS );
 	}
 
 	public static Instant of( final ReadableInstant instant,
 		final ReadableInstant offset )
 	{
-		return of( instant.getMillis() - offset.getMillis(), Units.MILLIS );
+		return of( instant.getMillis() - offset.getMillis(), TimeUnits.MILLIS );
 	}
 
 	/**
@@ -152,7 +149,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Instant of( final Date value, final Date offset )
 	{
-		return of( value.getTime() - offset.getTime(), Units.MILLIS );
+		return of( value.getTime() - offset.getTime(), TimeUnits.MILLIS );
 	}
 
 	/**
@@ -163,37 +160,13 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	public static Instant of( final java.time.Instant value,
 		final java.time.Instant offset )
 	{
-		return of( TimeSpan.of( DecimalMeasure.valueOf(
+		return of( QuantityUtil.valueOf(
 				BigDecimal.valueOf( value.get( ChronoField.NANO_OF_SECOND ) )
 						.add( BigDecimal
 								.valueOf( value
 										.get( ChronoField.INSTANT_SECONDS ) )
 								.multiply( BigDecimal.TEN.pow( 9 ) ) ),
-				Units.NANOS ) ) );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value the {@link Amount} (of
-	 *            {@link javax.measure.quantity.Duration Duration} or
-	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
-	 */
-	public static Instant of( final Amount value )
-	{
-		return of( TimeSpan.of( value ) );
-	}
-
-	/**
-	 * {@link Instant} static factory method
-	 * 
-	 * @param value the {@link Measure} (of
-	 *            {@link javax.measure.quantity.Duration Duration} or
-	 *            {@link javax.measure.unit.Unit#ONE dimensionless})
-	 */
-	public static Instant of( final Measure value )
-	{
-		return of( TimeSpan.of( value ) );
+				TimeUnits.NANOS ) );
 	}
 
 	/**
@@ -203,7 +176,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Instant of( final Number units )
 	{
-		return of( TimeSpan.of( units ) );
+		return of( QuantityUtil.valueOf( units ) );
 	}
 
 	/**
@@ -213,37 +186,41 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 */
 	public static Instant of( final Number value, final Unit<?> unit )
 	{
-		return of( TimeSpan.of( value, unit ) );
+		return of( QuantityUtil.valueOf( value, unit ) );
 	}
 
 	/**
 	 * {@link Instant} static factory method
 	 * 
-	 * @param value the {@link TimeSpan}
+	 * @param value the {@link Quantity}
 	 */
-	public static Instant of( final TimeSpan value )
+	public static Instant of( final Quantity<?> value )
+	{
+		return of( QuantityUtil.valueOf( value ) );
+	}
+
+	/**
+	 * {@link Instant} static factory method
+	 * 
+	 * @param value the {@link Quantity}
+	 */
+	public static Instant of( final ComparableQuantity<?> value )
 	{
 		return Util.of( value, Instant.class );
 	}
 
 	/** the ZERO */
-	public static final Instant ZERO = of( TimeSpan.ZERO );
+	public static final Instant ZERO = of( QuantityUtil.ZERO );
 
 	/** the ONE */
-	public static final Instant ONE = of( TimeSpan.ONE );
+	public static final Instant ONE = of( QuantityUtil.ONE );
 
 	public Unit<?> unit()
 	{
 		return unwrap().getUnit();
 	}
 
-	@Override
-	public int compareTo( final Instant that )
-	{
-		return Util.compare( this, that );
-	}
-
-	public Instant multiply( final Measurable<Dimensionless> multiplicand )
+	public Instant multiply( final Quantity multiplicand )
 	{
 		return of( unwrap().multiply( multiplicand ) );
 	}
@@ -253,7 +230,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return of( unwrap().multiply( multiplicand ) );
 	}
 
-	public Instant divide( final Measurable<Dimensionless> divisor )
+	public Instant divide( final Quantity divisor )
 	{
 		return of( unwrap().divide( divisor ) );
 	}
@@ -265,17 +242,17 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 
 	public Instant add( final Duration augend )
 	{
-		return of( unwrap().add( augend.unwrap() ) );
+		return add( augend.unwrap() );
 	}
 
-	public Instant add( final Measurable<?> augend )
+	public Instant add( final Quantity augend )
 	{
 		return of( unwrap().add( augend ) );
 	}
 
 	public Instant add( final Number augend )
 	{
-		return of( unwrap().add( augend ) );
+		return add( QuantityUtil.valueOf( augend, unit() ) );
 	}
 
 	public Instant subtract( final Duration subtrahend )
@@ -288,24 +265,24 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return Duration.of( unwrap().subtract( subtrahend.unwrap() ) );
 	}
 
-	public Instant subtract( final Measurable<?> subtrahend )
+	public Instant subtract( final Quantity subtrahend )
 	{
 		return of( unwrap().subtract( subtrahend ) );
 	}
 
 	public Instant subtract( final Number subtrahend )
 	{
-		return of( unwrap().subtract( subtrahend ) );
+		return subtract( QuantityUtil.valueOf( subtrahend, unit() ) );
 	}
 
 	public long toMillisLong()
 	{
-		return unwrap().longValue( Units.MILLIS );
+		return unwrap().to( TimeUnits.MILLIS ).getValue().longValue();
 	}
 
 	public long toNanosLong()
 	{
-		return unwrap().longValue( Units.NANOS );
+		return unwrap().to( TimeUnits.NANOS ).getValue().longValue();
 	}
 
 	public Date toDate( final Date offset )
@@ -354,19 +331,10 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 		return offset.plusNanos( toNanosLong() );
 	}
 
-	/** @return the JSR-275 {@link Measurable} implementation of an instant */
-	public TimeSpan toMeasure()
+	/** @return the JSR-363 {@link Quantity} implementation of an instant */
+	public ComparableQuantity<?> toMeasure()
 	{
 		return unwrap();
-	}
-
-	/**
-	 * @return the JScience {@link Amount} precision implementation of an
-	 *         instant
-	 */
-	public Amount toAmount()
-	{
-		return MeasureUtil.toAmount( unwrap() );
 	}
 
 	/**
@@ -376,7 +344,7 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 */
 	public Duration toDuration( final Instant offset )
 	{
-		return Duration.of( unwrap().subtract( offset.unwrap() ) );
+		return subtract( offset );
 	}
 
 	/**
@@ -385,17 +353,19 @@ public class Instant extends Wrapper.Simple<TimeSpan>
 	 */
 	public Instant to( final Unit unit )
 	{
-		return of( MeasureUtil.toUnit( toMeasure(), unit ) );
+		return of( unwrap().to( unit ) );
 	}
 
 	public Pretty prettify( final int scale )
 	{
-		return unwrap().prettify( scale );
+		return prettify( unit(), scale );
 	}
 
-	public Pretty prettify( final Unit<?> unit, final int scale )
+	public Pretty prettify( final Unit unit, final int scale )
 	{
-		return unwrap().prettify( unit, scale );
+		return wrapToString( () -> DecimalUtil
+				.toScale( unwrap().to( unit ).getValue(), scale ).toString()
+				+ unit );
 	}
 
 	public Pretty prettify( final Date offset )

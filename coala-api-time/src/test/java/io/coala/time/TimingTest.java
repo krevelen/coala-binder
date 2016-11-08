@@ -3,18 +3,14 @@ package io.coala.time;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.comparesEqualTo;
 
-import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.LocalDateTime;
-
-import javax.measure.DecimalMeasure;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.exception.Thrower;
-import io.coala.math.MeasureUtil;
 
 /**
  * {@link TimingTest}
@@ -28,16 +24,17 @@ public class TimingTest
 	/** */
 	private static final Logger LOG = LogManager.getLogger( TimingTest.class );
 
+	@SuppressWarnings( "rawtypes" )
 	@Test
 	public void testInstant()
 	{
-		final DecimalMeasure<javax.measure.quantity.Duration> millis = DecimalMeasure
-				.valueOf( BigDecimal.valueOf( System.currentTimeMillis() ),
-						Units.MILLIS );
+		final Instant millis = Instant.of( System.currentTimeMillis(),
+				TimeUnits.MILLIS );
 		assertThat( "should be equal",
-				MeasureUtil.toUnit( MeasureUtil.toUnit( millis, Units.DAYS ),
-						Units.MILLIS ),
+				millis.to( TimeUnits.DAYS ).to( TimeUnits.MILLIS ),
 				comparesEqualTo( millis ) );
+		LOG.info( "millis = {} as years = {}", millis,
+				millis.to( TimeUnits.ANNUM ) );
 	}
 
 	@Test
@@ -51,7 +48,7 @@ public class TimingTest
 		Timing.of( pattern ).offset( offset ).stream().subscribe( t ->
 		{
 			LOG.trace( "pattern includes t: {} == {}",
-					t.prettify( Units.DAYS, 2 ), t.prettify( offset ) );
+					t.prettify( TimeUnits.DAYS, 2 ), t.prettify( offset ) );
 		}, e ->
 		{
 			LOG.error( "Problem in pattern", e );

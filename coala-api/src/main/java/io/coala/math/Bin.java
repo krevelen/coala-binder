@@ -21,16 +21,14 @@ package io.coala.math;
 
 import java.util.function.BiFunction;
 
-import javax.measure.quantity.Quantity;
-
-import org.jscience.physics.amount.Amount;
+import javax.measure.Quantity;
 
 import io.coala.util.Comparison;
 
 /**
  * {@link Bin}
  * 
- * @param <Q> the {@link Quantity} of extreme {@link Amount} values
+ * @param <Q> the {@link Quantity} of extreme values
  * @version $Id$
  * @author Rick van Krevelen
  */
@@ -43,16 +41,16 @@ public class Bin<V extends Comparable<?>> extends Range<V>
 				Extreme.upper( unit, true ), unit );
 	}
 
-	public static <Q extends Quantity> Bin<Amount<Q>>
-		of( final Amount<Q> minIncl, final Amount<Q> maxExcl )
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity<Q> & Comparable<Q>> Bin<Q>
+		of( final Q minIncl, final Q maxExcl )
 	{
-		return of( minIncl, maxExcl,
-				(BiFunction<Amount<Q>, Amount<Q>, Amount<Q>>)
-				// disambiguated
-				( a, b ) ->
-				{
-					return a.plus( b ).divide( 2 );
-				} );
+		return of( minIncl, maxExcl, (BiFunction<Q, Q, Q>)
+		// disambiguated
+		( a, b ) ->
+		{
+			return (Q) a.add( b ).divide( 2 );
+		} );
 	}
 
 	public static <V extends Comparable<?>> Bin<V> of( final V minIncl,

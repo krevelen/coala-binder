@@ -105,7 +105,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	 * 
 	 * @return the {@link Fact} again to allow chaining
 	 */
-	default <F extends Fact> F commit()
+	default Fact commit()
 	{
 		return commit( kind().isTerminal() );
 	}
@@ -145,24 +145,34 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	}
 
 	/**
-	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
-	 *         in the same {@link Actor.ID#organization()}
+	 * @param id
+	 * @return
 	 */
-	@JsonIgnore // derived  
-	default boolean isIncoming()
+	@JsonIgnore
+	default boolean isIncoming( final Actor.ID id )
 	{
-		return creatorRef().organization()
-				.equals( responderRef().organization() );
+		return id.organizationRef().equals( responderRef().organizationRef() );
+	}
+
+	/**
+	 * @param id
+	 * @return
+	 */
+	@JsonIgnore
+	default boolean isOutgoing( final Actor.ID id )
+	{
+		return !isIncoming( id );
 	}
 
 	/**
 	 * @return {@code true} iff {@link #creator()} and {@link #responder()} are
-	 *         in a different {@link Actor.ID#organization()}
+	 *         in the same {@link Actor.ID#organizationRef()}
 	 */
-	@JsonIgnore // derived  
-	default boolean isOutgoing()
+	@JsonIgnore
+	default boolean isInternal()
 	{
-		return !isIncoming();
+		return !creatorRef().organizationRef()
+				.equals( responderRef().organizationRef() );
 	}
 
 	/** @return */
@@ -690,7 +700,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 			@SuppressWarnings( "rawtypes" )
 			@Inject
-			private FactBank.Factory bankFactory;
+			private FactBank bank;
 
 			@Override
 			public <F extends Fact> F create( final Class<F> tranKind,
@@ -714,7 +724,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 			@Override
 			public FactBank<?> factBank()
 			{
-				return this.bankFactory.create();
+				return this.bank;
 			}
 		}
 	}

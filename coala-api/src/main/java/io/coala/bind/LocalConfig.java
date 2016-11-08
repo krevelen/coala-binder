@@ -129,7 +129,12 @@ public interface LocalConfig extends GlobalConfig
 		return subConfig( BINDER_KEY, BinderConfig.class, imports );
 	}
 
-	default LocalBinder create( final Map<Class<?>, ?> bindImports )
+	default LocalBinder createBinder()
+	{
+		return createBinder( Collections.emptyMap() );
+	}
+
+	default LocalBinder createBinder( final Map<Class<?>, ?> bindImports )
 	{
 		return Instantiator.instantiate( binderConfig().binderType(), this,
 				bindImports );
@@ -156,11 +161,10 @@ public interface LocalConfig extends GlobalConfig
 					.split( Id.IdConfig.ID_SEPARATOR_DEFAULT );
 			return split.length == 1
 					? LocalId.of( split[0], LocalId.of( CONTEXT_DEFAULT ) )
-					: LocalId.of( split[1],
-							LocalId.of( split[0].isEmpty()
-									|| split[0].equals( ID_DEFAULT )
-											? CONTEXT_DEFAULT
-											: new UUID( split[0] ) ) );
+					: LocalId.of( split[1], LocalId.of(
+							split[0].isEmpty() || split[0].equals( ID_DEFAULT )
+									? CONTEXT_DEFAULT
+									: new UUID( split[0] ) ) );
 		}
 	}
 

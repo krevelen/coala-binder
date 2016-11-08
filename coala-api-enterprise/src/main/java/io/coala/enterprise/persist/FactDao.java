@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;

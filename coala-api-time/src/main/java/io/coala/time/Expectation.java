@@ -1,5 +1,7 @@
 package io.coala.time;
 
+import javax.measure.Quantity;
+
 import io.coala.json.Wrapper;
 import io.coala.time.Proactive.FutureSelf;
 import rx.Subscription;
@@ -47,7 +49,12 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 		return FutureSelf.of( this.self, unwrap().add( delay.unwrap() ) );
 	}
 
-	public FutureSelf thenAfter( final TimeSpan delay )
+	public FutureSelf thenAfter( final Number delay )
+	{
+		return FutureSelf.of( this.self, unwrap().add( delay ) );
+	}
+
+	public FutureSelf thenAfter( final Quantity<?> delay )
 	{
 		return FutureSelf.of( this.self, unwrap().add( delay ) );
 	}

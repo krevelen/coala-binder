@@ -17,20 +17,26 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.random;
+package io.coala.bind;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.math.BigDecimal;
+import java.lang.reflect.Field;
+import java.net.URI;
+import java.time.Duration;
+import java.util.function.Supplier;
 
 import javax.inject.Qualifier;
-import javax.measure.unit.Unit;
+
+import io.coala.exception.Thrower;
+import io.coala.inter.Invoker;
 
 /**
- * {@link InjectDist}
+ * {@link InjectProxy} this field should be a proxy with specified
+ * {@link #value() address}
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -39,19 +45,41 @@ import javax.measure.unit.Unit;
 @Documented
 @Retention( RetentionPolicy.RUNTIME )
 @Target( ElementType.FIELD )
-public @interface InjectDist
+public @interface InjectProxy
 {
+
 	String value();
 
-	Class<?> paramType() default BigDecimal.class;
-
 	/**
-	 * FIXME may trigger {@link javax.measure.converter.ConversionException} as
-	 * injection does not check unit compatibility in
-	 * {@link io.coala.random.ProbabilityDistribution#injectDistribution(Object, Field, Parser)}
-	 * 
-	 * @return the unit label, to be parsed by
-	 *         {@link Unit#valueOf(CharSequence)}, default is {@link Unit#ONE}
+	 * @return the timeout duration
+	 * @see Duration#parse(CharSequence)
 	 */
-	String unit() default "";
+	String timeout() default Invoker.SYNC_TIMEOUT_DEFAULT;
+
+	class Util
+	{
+
+		/**
+		 * @param t
+		 * @param field
+		 * @param binder
+		 */
+		public static void injectProxy( final Object encloser,
+			final Field field, final Supplier<Invoker> invoker )
+		{
+			try
+			{
+				field.setAccessible( true );
+				final InjectProxy annot = field
+						.getAnnotation( InjectProxy.class );
+				field.set( encloser,
+						Invoker.createProxy( field.getType(),
+								URI.create( annot.value() ),
+								Duration.parse( annot.timeout() ), invoker ) );
+			} catch( final Throwable e )
+			{
+				Thrower.rethrowUnchecked( e );
+			}
+		}
+	}
 }

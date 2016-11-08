@@ -15,7 +15,6 @@
  */
 package io.coala.random;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.List;
@@ -24,15 +23,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.inject.Provider;
-import javax.measure.quantity.Quantity;
-import javax.measure.unit.Unit;
-
-import org.aeonbits.owner.Config;
-import org.jscience.physics.amount.Amount;
+import javax.measure.Quantity;
+import javax.measure.Unit;
+import javax.measure.quantity.Dimensionless;
 
 import io.coala.exception.Thrower;
 import io.coala.math.FrequencyDistribution;
-import io.coala.math.MeasureUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.math.WeightedValue;
 import io.coala.util.Instantiator;
 import rx.functions.Func0;
@@ -83,20 +80,13 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	 */
 	static <T> ProbabilityDistribution<T> createDeterministic( final T value )
 	{
-		return () ->
-		{
-			return value;
-		};
+		return () -> value;
 	}
 
 	static ProbabilityDistribution<Boolean>
 		createBernoulli( final PseudoRandom rng, final Number probability )
 	{
-		final double p = probability.doubleValue();
-		return () ->
-		{
-			return rng.nextDouble() < p;
-		};
+		return () -> rng.nextDouble() < probability.doubleValue();
 	}
 
 	/**
@@ -127,10 +117,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	 */
 	static <T> ProbabilityDistribution<T> of( final Provider<T> provider )
 	{
-		return () ->
-		{
-			return provider.get();
-		};
+		return () -> provider.get();
 	}
 
 	/**
@@ -140,19 +127,13 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	 */
 	static <T> ProbabilityDistribution<T> of( final Supplier<T> func )
 	{
-		return () ->
-		{
-			return func.get();
-		};
+		return () -> func.get();
 	}
 
 	default <R> ProbabilityDistribution<R>
 		apply( final Function<T, R> transform )
 	{
-		return () ->
-		{
-			return transform.apply( this.draw() );
-		};
+		return () -> transform.apply( this.draw() );
 	}
 
 	/**
@@ -168,10 +149,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	default <E extends Enum<E>> ProbabilityDistribution<E>
 		toEnum( final Class<E> enumType )
 	{
-		return apply( n ->
-		{
-			return enumType.getEnumConstants()[((Number) n).intValue()];
-		} );
+		return apply(
+				n -> enumType.getEnumConstants()[((Number) n).intValue()] );
 	}
 
 	/**
@@ -185,56 +164,44 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	default <S> ProbabilityDistribution<S>
 		toInstancesOf( final Class<S> valueType )
 	{
-		return apply( arg ->
-		{
-			return Instantiator.instantiate( valueType, arg );
-		} );
+		return apply( arg -> Instantiator.instantiate( valueType, arg ) );
 	}
 
 	/**
 	 * @param <Q> the measurement {@link Quantity} to assign
-	 * @return an {@link AmountDistribution} {@link ProbabilityDistribution} for
-	 *         measure {@link Amount}s from drawn {@link Number}s, with an
+	 * @return an {@link QuantityDistribution} {@link ProbabilityDistribution}
+	 *         for {@link Quantity measures} from drawn {@link Number}s, with an
 	 *         attempt to maintain exactness
 	 */
 	@SuppressWarnings( "unchecked" )
-	default <Q extends Quantity> AmountDistribution<Q> toAmounts()
+	default QuantityDistribution<Dimensionless> toQuantities()
 	{
-		return (AmountDistribution<Q>) toAmounts( Unit.ONE );
+		return toQuantities( QuantityUtil.PURE );
 	}
 
 	/**
 	 * @param <Q> the measurement {@link Quantity} to assign
 	 * @param unit the {@link Unit} of measurement to assign
-	 * @return an {@link AmountDistribution} for measure {@link Amount}s from
+	 * @return an {@link QuantityDistribution} for measure {@link Amount}s from
 	 *         drawn {@link Number}s, with an attempt to maintain exactness
 	 */
 	@SuppressWarnings( "unchecked" )
-	default <Q extends Quantity> AmountDistribution<Q>
-		toAmounts( final Unit<Q> unit )
+	default <Q extends Quantity<Q>> QuantityDistribution<Q>
+		toQuantities( final Unit<Q> unit )
 	{
-		if( this instanceof AmountDistribution )
-			return (AmountDistribution<Q>) this;
+		if( this instanceof QuantityDistribution )
+			return (QuantityDistribution<Q>) this;
 
-//		final List<Class<?>> args = TypeArguments
-//				.of( ProbabilityDistribution.class, getClass() );
-//		if( !args.isEmpty() && args.get( 0 ) != null /* no runtime type yet */ )
-//		{
-//			if( Amount.class.isAssignableFrom( args.get( 0 ) ) )
-//				return AmountDistribution
-//						.of( (ProbabilityDistribution<Amount<Q>>) this );
-//			if( !Number.class.isAssignableFrom( args.get( 0 ) ) )
-//				return Thrower.throwNew( UnsupportedOperationException.class,
-//						"No default conversion from {} to Amounts",
-//						args.get( 0 ) );
-//		}
-		return AmountDistribution.of( () ->
+		return QuantityDistribution.of( () ->
 		{
 			final T result = draw();
-			if( !Amount.class.isAssignableFrom( result.getClass() ) )
-				return (Amount<Q>) MeasureUtil.toAmount( (Number) draw(),
+			if( Quantity.class.isAssignableFrom( result.getClass() ) )
+				return ((Quantity<Q>) draw()).to( unit );
+			if( Number.class.isAssignableFrom( result.getClass() ) )
+				return (Quantity<Q>) QuantityUtil.valueOf( (Number) draw(),
 						unit );
-			return (Amount<Q>) result;
+			return Thrower.throwNew( IllegalArgumentException.class,
+					"Can't convert to Quantity: {}", result );
 		} );
 	}
 
@@ -459,8 +426,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		/**
 		 * The Gamma distribution family also includes
 		 * <a href="https://www.wikiwand.com/en/Erlang_distribution">Erlang
-		 * distributions</a> (where shape <em>k</em> is an integer) <img alt=
-		 * "Probability density function" height="150" src=
+		 * distributions</a> (where shape <em>k</em> is an integer)
+		 * <img alt= "Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Gamma_distribution_pdf.svg/650px-Gamma_distribution_pdf.svg.png"/>
 		 * 
 		 * @param shape &alpha; or <em>k</em>
@@ -694,7 +661,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 
 		Factory getFactory();
 
-		<Q extends Quantity> AmountDistribution<Q> fitNormal(
+		<Q extends Quantity<Q>> QuantityDistribution<Q> fitNormal(
 			FrequencyDistribution.Interval<Q, ?> values, Unit<Q> unit );
 
 		// wavelets, e.g.https://github.com/cscheiblich/JWave  => pdf?
@@ -705,84 +672,4 @@ public interface ProbabilityDistribution<T> //extends Serializable
 //		polynomial regression ( Number... initialCoefficients ) => pdf?
 
 	}
-
-	/**
-	 * @param encloser
-	 * @param field
-	 * @param binder
-	 */
-	static void injectDistribution( final Object encloser, final Field field,
-		final Supplier<Parser> parser )
-	{
-		if( !ProbabilityDistribution.class.isAssignableFrom( field.getType() ) )
-			Thrower.throwNew( UnsupportedOperationException.class,
-					"@{} only injects extensions of {}",
-					InjectDist.class.getSimpleName(), Config.class );
-		field.setAccessible( true );
-		final InjectDist annot = field.getAnnotation( InjectDist.class );
-		try
-		{
-			final ProbabilityDistribution<?> parsedDist = parser.get()
-					.parse( annot.value(), annot.paramType() );
-			if( field.getType().isAssignableFrom( parsedDist.getClass() ) )
-			{
-				field.set( encloser, parsedDist );
-				return;
-			} else if( AmountDistribution.class
-					.isAssignableFrom( field.getType() ) )
-			{
-				final Unit<?> unit = annot.unit().isEmpty() ? Unit.ONE
-						: Unit.valueOf( annot.unit() );
-//				final Class<?> fieldDim = TypeArguments
-//						.of( AmountDistribution.class, field.getType()
-//								.asSubclass( AmountDistribution.class ) )
-//						.get( 0 );
-//				final Class<?> parsedDim = TypeArguments.of( Unit.class, unit
-//						.getStandardUnit().getClass().asSubclass( Unit.class ) )
-//						.get( 0 );
-//
-//				LogUtil.getLogger( ProbabilityDistribution.class ).trace(
-//						"Convert amounts from parsed {} to injected {}",
-//						parsedDim, fieldDim );
-//				if( fieldDim == parsedDim )
-
-				// FIXME injects raw, check unit compatibility in helper method?
-				field.set( encloser, parsedDist.toAmounts( unit ) );
-
-//				else
-//					Thrower.throwNew( UnsupportedOperationException.class,
-//							"Can't convert amounts from parsed {} to injected {}",
-//							parsedDim.getTypeName(), fieldDim.getTypeName() );
-			} else
-				Thrower.throwNew( UnsupportedOperationException.class,
-						"Can't convert values from parsed {} to injected {}",
-						parsedDist.getClass().getTypeName(),
-						field.getType().getTypeName() );
-//			final Class<?> fieldValueType = TypeArguments
-//					.of( ProbabilityDistribution.class, field.getType()
-//							.asSubclass( ProbabilityDistribution.class ) )
-//					.get( 0 );
-//			final Class<?> parsedValueType = TypeArguments
-//					.of( ProbabilityDistribution.class, parsedDist.getClass() )
-//					.get( 0 );
-//			if( fieldValueType == null
-//					|| fieldValueType.isAssignableFrom( parsedValueType ) )
-//				field.set( encloser, parsedDist );
-//			else if( Amount.class.isAssignableFrom( fieldValueType )
-//					&& Number.class.isAssignableFrom( parsedValueType ) )
-//			{
-//				final Unit<?> unit = annot.unit().isEmpty() ? Unit.ONE
-//						: Unit.valueOf( annot.unit() );
-//				field.set( encloser, parsedDist.toAmounts( unit ) );
-//			} else
-//				Thrower.throwNew( UnsupportedOperationException.class,
-//						"Can't convert values from parsed {} to injected {}",
-//						InjectDist.class.getSimpleName(), parsedValueType,
-//						fieldValueType );
-		} catch( final Exception e )
-		{
-			Thrower.rethrowUnchecked( e );
-		}
-	}
-
 }

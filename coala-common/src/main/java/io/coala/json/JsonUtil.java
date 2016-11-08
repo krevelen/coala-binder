@@ -19,16 +19,12 @@ import java.beans.PropertyEditorSupport;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.stream.Collectors;
-
-import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
@@ -43,7 +39,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.coala.exception.Thrower;
 import io.coala.json.DynaBean.BeanProxy;
-import io.coala.log.LogUtil;
 import io.coala.util.TypeArguments;
 
 /**
@@ -54,9 +49,6 @@ import io.coala.util.TypeArguments;
  */
 public class JsonUtil
 {
-
-	/** */
-	private static final Logger LOG = LogUtil.getLogger( JsonUtil.class );
 
 	/** */
 	private static final ObjectMapper JOM = new ObjectMapper();
@@ -78,9 +70,12 @@ public class JsonUtil
 		final Module[] modules = { new JodaModule(), new UUIDModule(),
 				new JavaTimeModule() };
 		om.registerModules( modules );
-		LOG.trace( "Using jackson v: {} with modules: {}", om.version(),
-				Arrays.asList( modules ).stream().map( m -> m.getModuleName() )
-						.collect( Collectors.toList() ) );
+		
+		// Log4j2 may cause recursive call, when initialization is during logging event
+//		System.err.println( "Using jackson v: " + om.version() + " with: "
+//				+ Arrays.asList( modules ).stream()
+//						.map( m -> m.getModuleName() )
+//						.collect( Collectors.toList() ) );
 	}
 
 	/** */

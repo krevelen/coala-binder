@@ -31,23 +31,27 @@ import java.util.function.Function;
  * @author Rick van Krevelen
  */
 public interface ConditionalDistribution<T, C>
-//extends ProbabilityDistribution<T>
 {
 
 	T draw( C condition );
 
+	/**
+	 * @param <T> the type of value drawn by the conditional distributions
+	 * @param <C> the type of condition for selecting a distribution
+	 * @param <X> the type of parameter for generating a distribution
+	 * @param distGen
+	 * @param distParameter1
+	 * @return
+	 */
 	static <T, C, X> ConditionalDistribution<T, C> of(
 		final Function<X, ProbabilityDistribution<T>> distGen,
 		final Function<C, X> distParameter1 )
 	{
 		final Map<C, ProbabilityDistribution<T>> distCache = new HashMap<>();
-		return ( c ) ->
-		{
-			return distCache.computeIfAbsent( c, t ->
-			{
-				return distGen.apply( distParameter1.apply( t ) );
-			} ).draw();
-		};
+		return c -> distCache
+				.computeIfAbsent( c,
+						t -> distGen.apply( distParameter1.apply( t ) ) )
+				.draw();
 	}
 
 	static <T, C, X, Y> ConditionalDistribution<T, C> of(
@@ -56,27 +60,17 @@ public interface ConditionalDistribution<T, C>
 		final Function<C, Y> distParameter2 )
 	{
 		final Map<C, ProbabilityDistribution<T>> distCache = new HashMap<>();
-		return ( c ) ->
-		{
-			return distCache.computeIfAbsent( c, t ->
-			{
-				return distGen.apply( distParameter1.apply( t ),
-						distParameter2.apply( t ) );
-			} ).draw();
-		};
+		return c -> distCache.computeIfAbsent( c, t -> distGen
+				.apply( distParameter1.apply( t ), distParameter2.apply( t ) ) )
+				.draw();
 	}
 
 	static <T, C, X> ConditionalDistribution<T, C> of(
 		final Function<X, ProbabilityDistribution<T>> distGen,
 		final Map<C, X> conditionalParam1cache, final X defaultParam1 )
 	{
-		return of( distGen, c ->
-		{
-			return conditionalParam1cache.computeIfAbsent( c, key ->
-			{
-				return defaultParam1;
-			} );
-		} );
+		return of( distGen, c -> conditionalParam1cache.computeIfAbsent( c,
+				key -> defaultParam1 ) );
 	}
 
 	static <T, C, X, Y> ConditionalDistribution<T, C> of(
@@ -84,18 +78,10 @@ public interface ConditionalDistribution<T, C>
 		final Map<C, X> conditionalParam1cache, final X defaultParam1,
 		final Map<C, Y> conditionalParam2cache, final Y defaultParam2 )
 	{
-		return of( distGen, c ->
-		{
-			return conditionalParam1cache.computeIfAbsent( c, key ->
-			{
-				return defaultParam1;
-			} );
-		}, c ->
-		{
-			return conditionalParam2cache.computeIfAbsent( c, key ->
-			{
-				return defaultParam2;
-			} );
-		} );
+		return of( distGen,
+				c -> conditionalParam1cache.computeIfAbsent( c,
+						key -> defaultParam1 ),
+				c -> conditionalParam2cache.computeIfAbsent( c,
+						key -> defaultParam2 ) );
 	}
 }

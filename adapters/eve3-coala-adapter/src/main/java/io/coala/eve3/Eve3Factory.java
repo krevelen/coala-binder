@@ -32,8 +32,8 @@ import com.almende.eve.state.file.FileStateConfig;
 import com.almende.util.jackson.JOM;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.coala.bind.InjectConfig;
 import io.coala.bind.LocalId;
-import io.coala.config.InjectConfig;
 import io.coala.json.JsonUtil;
 
 /**

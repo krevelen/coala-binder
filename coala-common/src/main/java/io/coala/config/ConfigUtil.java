@@ -15,8 +15,6 @@
  */
 package io.coala.config;
 
-import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,19 +37,12 @@ import java.util.stream.Collectors;
 
 import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
-import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
-import org.aeonbits.owner.Factory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.coala.config.InjectConfig.Scope;
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
-import io.coala.log.LogUtil;
-import io.coala.name.Identified;
-import io.coala.util.FileUtil;
-import io.coala.util.ObjectsUtil;
 import io.coala.util.Util;
 
 /**
@@ -327,10 +318,8 @@ public class ConfigUtil implements Util
 	{
 		final Map<String, Object> result = export( config, (Pattern) null );
 		if( maps != null ) for( Map<?, ?> map : maps )
-			if( map != null ) map.forEach( ( key, value ) ->
-			{
-				result.put( key.toString(), value.toString() );
-			} );
+			if( map != null ) map.forEach( ( key, value ) -> result
+					.put( key.toString(), value.toString() ) );
 		return result;
 	}
 
@@ -356,10 +345,10 @@ public class ConfigUtil implements Util
 	{
 		final Map<String, String> result = new TreeMap<>();
 		if( keyFilter == null )
-			for( String key : config.propertyNames() )
-				result.put( key, config.getProperty( key ) );
+			config.propertyNames().forEach(
+					key -> result.put( key, config.getProperty( key ) ) );
 		else
-			for( String key : config.propertyNames() )
+			config.propertyNames().forEach( key ->
 			{
 				final Matcher m = keyFilter.matcher( key );
 				if( m.find() )
@@ -369,17 +358,10 @@ public class ConfigUtil implements Util
 							: m.groupCount() > 1 ? m.group( 1 ) : m.group( 0 );
 					result.put( replace, config.getProperty( key ) );
 				}
-			}
-		return result.entrySet().stream().filter( e ->
-		{
-			return e.getValue() != null;
-		} ).collect( Collectors.toMap( e ->
-		{
-			return e.getKey();
-		}, e ->
-		{
-			return resolve( e.getValue(), result );
-		} ) );
+			} );
+		return result.entrySet().stream().filter( e -> e.getValue() != null )
+				.collect( Collectors.toMap( e -> e.getKey(),
+						e -> resolve( e.getValue(), result ) ) );
 	}
 
 	static final Pattern KEY_PATTERN = Pattern.compile(
@@ -433,7 +415,7 @@ public class ConfigUtil implements Util
 	 * @return the expanded path
 	 * @see org.aeonbits.owner.ConfigURIFactory
 	 */
-	private static String expand( final String source )
+	public static String expand( final String source )
 	{
 		String path = source.replaceAll( "\\\\", "/" );
 		final StringBuffer sb = new StringBuffer();
@@ -453,85 +435,6 @@ public class ConfigUtil implements Util
 		if( path.startsWith( CLASSPATH_PROTOCOL ) )
 			path = path.substring( CLASSPATH_PROTOCOL.length() );
 		return path;
-	}
-
-	/**
-	 * TODO: implement {@link Factory} for local context?
-	 * 
-	 * @param encloser
-	 * @param field
-	 * @param binder
-	 */
-	public static void injectConfig( final Object encloser, final Field field,
-		final Object binder )
-	{
-		final InjectConfig annot = field.getAnnotation( InjectConfig.class );
-		if( !Config.class.isAssignableFrom( field.getType() )
-				&& annot.configType() == null )
-			Thrower.throwNew( UnsupportedOperationException.class,
-					"@{} only injects extensions of {}",
-					InjectConfig.class.getSimpleName(), Config.class );
-		final List<Map<?, ?>> imports = new ArrayList<>();
-		if( annot != null && annot.yamlURI().length != 0 )
-		{
-			for( String yamlURI : annot.yamlURI() )
-				try
-				{
-					LogUtil.getLogger( ConfigUtil.class )
-							.trace( "Import YAML from {}", yamlURI );
-					final InputStream is = FileUtil
-							.toInputStream( expand( yamlURI ) );
-					if( is != null ) imports.add( YamlUtil.flattenYaml( is ) );
-				} catch( final Exception e )
-				{
-					Thrower.rethrowUnchecked( e );
-				}
-		}
-		final Map<?, ?>[] importsArray = imports
-				.toArray( new Map[imports.size()] );
-		final Scope scope = annot != null ? annot.value() : Scope.DEFAULT;
-		try
-		{
-			final boolean direct = annot
-					.configType() == InjectConfig.VoidConfig.class;
-			final Class<? extends Config> configType = direct
-					? field.getType().asSubclass( Config.class )
-					: annot.configType();
-			field.setAccessible( true );
-			final Object key;
-			switch( scope )
-			{
-			case BINDER:
-				key = binder;
-				break;
-			case FIELD:
-				key = field;
-				break;
-			case ID:
-				key = encloser instanceof Identified<?>
-						? ObjectsUtil.defaultIfNull(
-								((Identified<?>) encloser).id(), encloser )
-						: encloser;
-				break;
-			case NONE:
-				key = null;
-				break;
-			default:
-			case DEFAULT:
-				key = configType;
-				break;
-			}
-			final Config config = key == null
-					? ConfigFactory.create( configType, importsArray )
-					: ConfigCache.getOrCreate( key, configType, importsArray );
-			final Object value = direct ? config
-					: configType.getDeclaredMethod( annot.key() )
-							.invoke( config );
-			field.set( encloser, value );
-		} catch( final Throwable e )
-		{
-			Thrower.rethrowUnchecked( e );
-		}
 	}
 
 	/**

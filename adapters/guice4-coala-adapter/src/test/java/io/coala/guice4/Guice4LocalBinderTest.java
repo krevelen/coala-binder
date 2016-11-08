@@ -10,14 +10,14 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.bind.BinderConfig;
+import io.coala.bind.InjectConfig;
+import io.coala.bind.InjectLogger;
 import io.coala.bind.Launcher.LaunchConfig;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.bind.ProviderConfig;
-import io.coala.config.InjectConfig;
-import io.coala.config.InjectConfig.Scope;
+import io.coala.bind.InjectConfig.Scope;
 import io.coala.config.YamlUtil;
-import io.coala.log.InjectLogger;
 import io.coala.log.LogUtil;
 
 /**

@@ -2,13 +2,12 @@ package io.coala.math;
 
 import java.util.Objects;
 
-import javax.measure.quantity.Quantity;
-import javax.measure.unit.Unit;
-
-import org.jscience.physics.amount.Amount;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 
 import io.coala.util.Compare;
 import io.coala.util.Comparison;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@link Range}
@@ -218,10 +217,10 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 		return new Range<T>( minimum, maximum );
 	}
 
-	public static <Q extends Quantity> Range<Amount<Q>> of( final Number min,
-		final Number max, final Unit<Q> unit )
+	public static <Q extends Quantity<Q>> Range<ComparableQuantity<Q>>
+		of( final Number min, final Number max, final Unit<Q> unit )
 	{
-		return of( min == null ? null : MeasureUtil.toAmount( min, unit ),
-				max == null ? null : MeasureUtil.toAmount( max, unit ) );
+		return of( min == null ? null : QuantityUtil.valueOf( min, unit ),
+				max == null ? null : QuantityUtil.valueOf( max, unit ) );
 	}
 }

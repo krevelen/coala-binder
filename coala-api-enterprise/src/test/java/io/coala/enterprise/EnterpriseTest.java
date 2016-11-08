@@ -2,7 +2,6 @@ package io.coala.enterprise;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,6 +17,7 @@ import org.junit.Test;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
+import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.exception.ExceptionStream;
 import io.coala.log.LogUtil;
 import io.coala.time.Duration;
@@ -26,8 +26,7 @@ import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
-import io.coala.time.Units;
-import net.jodah.concurrentunit.Waiter;
+import io.coala.time.TimeUnits;
 
 /**
  * {@link EnterpriseTest}
@@ -132,13 +131,11 @@ public class EnterpriseTest
 			}, e -> LOG.error( "Problem", e ) );
 
 			final AtomicInteger counter = new AtomicInteger( 0 );
-			final Procurement proc = org1.asInitiator( //Sale.class,
-					Procurement.class );
-			final Sales sales = org1.asExecutor( //Sale.class, 
-					Sales.class );
+			final Procurement proc = org1.specialist( Procurement.class );
+			final Sales sales = org1.specialist( Sales.class );
 			sales.setTotalValue( 0 );
 			sales.emit( FactKind.REQUESTED ).subscribe(
-					rq -> after( Duration.of( 1, Units.DAYS ) ).call( t ->
+					rq -> after( Duration.of( 1, TimeUnits.DAYS ) ).call( t ->
 					{
 						final Sale st = sales.respond( rq, FactKind.STATED )
 								.with( "stParam",
@@ -213,38 +210,28 @@ public class EnterpriseTest
 				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );
 
 		// configure tooling
-//		final LocalConfig config = LocalConfig.builder().withId( "world1" )
-//				.withProvider( Scheduler.class, Dsol3Scheduler.class )
-//				.withProvider( Actor.Factory.class,
-//						Actor.Factory.LocalCaching.class )
-//				.withProvider( Transaction.Factory.class,
-//						Transaction.Factory.LocalCaching.class )
-//				.withProvider( Fact.Factory.class,
-//						Fact.Factory.SimpleProxies.class )
-//				.withProvider( FactBank.Factory.class,
-//						FactBank.Factory.LocalJPA.class )
-//				.build();
-		final LocalBinder binder = LocalConfig
-				.openYAML( "world1.yaml", "my-world" )
-				.create( Collections.singletonMap( EntityManagerFactory.class,
-						HibHikHypConfig.createEMF() ) );
+		final LocalBinder binder = LocalConfig.builder().withId( "world1" )
+				.withProvider( Scheduler.class, Dsol3Scheduler.class )
+				.withProvider( Actor.Factory.class,
+						Actor.Factory.LocalCaching.class )
+				.withProvider( Transaction.Factory.class,
+						Transaction.Factory.LocalCaching.class )
+				.withProvider( Fact.Factory.class,
+						Fact.Factory.SimpleProxies.class )
+				.withProvider( FactBank.class, FactBank.SimpleJPA.class )
+				.withProvider( FactExchange.class,
+						FactExchange.SimpleBus.class )
+				.build()
+//		final LocalBinder binder = LocalConfig
+//				.openYAML( "world1.yaml", "my-world" )
+				.createBinder(
+						Collections.singletonMap( EntityManagerFactory.class,
+								HibHikHypConfig.createEMF() ) );
 
 		LOG.info( "Starting EO test, config: {}", binder );
 		final Scheduler scheduler = binder.inject( World.class ).scheduler();
 
-		final Waiter waiter = new Waiter();
-		scheduler.time().subscribe( time ->
-		{
-			// virtual time passes...
-		}, error ->
-		{
-			waiter.rethrow( error );
-		}, () ->
-		{
-			waiter.resume();
-		} );
-		scheduler.resume();
-		waiter.await( 15, TimeUnit.SECONDS );
+		scheduler.run();
 
 //		CountDownLatch latch = new CountDownLatch( 1 );
 //		World world = binder.inject( World.class );
@@ -256,8 +243,8 @@ public class EnterpriseTest
 //		latch.await();
 //		System.out.println( "End reached!" );
 
-		for( Object f : binder.inject( FactBank.Factory.class ).create().find()
-				.toBlocking().toIterable() )
+		for( Object f : binder.inject( FactBank.class ).find().toBlocking()
+				.toIterable() )
 			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
 					((World.Sale) f).getRqParam() );
 
