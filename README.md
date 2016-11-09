@@ -5,11 +5,12 @@ Common Ontological Abstraction Layer for Agents --- a binder for reuse of agent 
 
 - Functional style : [Java8](https://github.com/java8/Java8InAction) and [RxJava](https://github.com/ReactiveX/RxJava) v1.1, adding utilities including `Instantiator`, `Caller`, `Thrower`, `TypeArguments`, etc.
 - Logging : [Logging-Log4j2](https://github.com/apache/logging-log4j2) v2.6 and [SLF4J](https://github.com/qos-ch/slf4j) v1.7
-- JSON and YAML de/serializing : [Jackson](https://github.com/FasterXML/jackson) v2.8 and YAML de/serializing : [Snakeyaml](https://github.com/FasterXML/jackson-dataformat-yaml) v1.15, with `DynaBean` and `Wrapper` utilities
+- JSON and YAML de/serializing : [Jackson](https://github.com/FasterXML/jackson) v2.8 and [Snakeyaml](https://github.com/FasterXML/jackson-dataformat-yaml) v1.15, with `Wrapper` API for JSON-transparent `DynaBean` decoration (using `java.lang.reflect.Proxy` and `java.beans.Introspector`)
 - Configuring : [Owner](https://github.com/lviggiano/owner) v1.0, adding utilities for `Config` *nesting*, by filtering on entry key namespace, and `JSON` / `YAML` to `Properties` / `XML` converters, by flattening (export) and expanding (import) entry keys
 - Naming : JSON-transparent `Id` wrappers and `Identified` utilities
 - JDBC and JPA persistence utilities
 - JAXP, JAXB, and StAX parsing and streaming utilities (for XML)
+- Crypto utilities
 
 # COALA API
 - `javax.inject` / [JSR-330](https://github.com/javax-inject/javax-inject) (DI v1.0) compatibility, using `@Inject`, `@Singleton` and `@Qualifier` in `LocalBinder` reference implementation in __`guice4-coala-adapter`__ : [Guice](https://github.com/google/guice) v4.1
