@@ -5,7 +5,7 @@ Common Ontological Abstraction Layer for Agents &mdash; a contextual binder for 
 
 - Functional style with asynchronous callbacks : [Java8](https://github.com/java8/Java8InAction) and [RxJava](https://github.com/ReactiveX/RxJava) v1.1, adding utilities including `Instantiator`, `Caller`, `Thrower`, `TypeArguments`, etc.
 - `java.sql` and `javax.persistence` utilities for JDBC (JSR-114, v4.0/JSR-221) data sources and JPA (v1.0/JSR-220, v2.0/JSR-317, v2.1/JSR-338) persistence providers
-- `javax.xml` and `javax.xml.bind` utilities with JAXP, JAXB, and StAX parsing and streaming
+- `javax.xml`, `javax.xml.bind` and `javax.xml.stream` utilities for parsing ([JAXP](https://jaxp.java.net/) v1.6/JSR-206), binding ([JAXB](https://jaxb.java.net/) v1.0/JSR-31, v2.0/[JSR-222](https://jcp.org/en/jsr/detail?id=222)), and handling streams ([StAX/JSR-173](https://java.net/projects/stax-spec)) of XML documents
 - `javax.crypto` cipher and cryptography utilities
 - `Pretty` printing and other logging utilities using [Log4j2](https://github.com/apache/logging-log4j2) v2.6 and [SLF4J](https://github.com/qos-ch/slf4j) v1.7
 - `Wrapper` API for JSON-transparent `DynaBean` decoration (using `java.lang.reflect.Proxy` and `java.beans.Introspector`) supporting JSON and YAML de/serializing using [Jackson](https://github.com/FasterXML/jackson) v2.8 and [Snakeyaml](https://github.com/FasterXML/jackson-dataformat-yaml) v1.15
@@ -16,8 +16,8 @@ Common Ontological Abstraction Layer for Agents &mdash; a contextual binder for 
   - `org.aeonbits.owner.Config` *nesting*, by filtering on entry key namespace
 
 # COALA API
-- `javax.measure` / [JSR-363](http://unitsofmeasurement.github.io/) utilities, extended with floating point precision using [Apfloat](http://www.apfloat.org/apfloat_java/) v1.8.2
-- `PseudoRandom` and `ProbabilityDistribution`, and `QuantityDistribution` fluent APIs with reference implementations in __`math3-coala-adapter`__ :  [Commons-Math](https://github.com/apache/commons-math) v3.6
+- `javax.measure` / [JSR-363](http://unitsofmeasurement.github.io/) utilities, extended with floating point precision using [Apfloat](http://www.apfloat.org/apfloat_java/) v1.8
+- `PseudoRandom`, `ProbabilityDistribution`, and `QuantityDistribution` fluent APIs with reference implementations in __`math3-coala-adapter`__ :  [Commons-Math](https://github.com/apache/commons-math) v3.6
 - `LocalBinder` contextual binder API with reference implementation in __`guice4-coala-adapter`__ : [Guice](https://github.com/google/guice) v4.1, featuring:
   - `javax.inject` / [JSR-330](https://github.com/javax-inject/javax-inject) (DI v1.0) standards-based `@Inject`, `@Singleton` and `@Qualifier`
   - `@InjectLogger`, `@InjectDist`, and `@InjectConfig` custom injection annotations
@@ -25,7 +25,7 @@ Common Ontological Abstraction Layer for Agents &mdash; a contextual binder for 
   - Locally configurable binding context (`java.util.Properties`, `XML`, `JSON`, and `YAML` formats), useful in heterogeneous agent-oriented models and methods
 
 # COALA Time API
-- `Instant` wrapping a JSR-363 `Quantity<?>` for `Dimensionless` or `Time` quantities measured from a common offset (e.g. the minix epoch or a modeled start unit or date), also supports ISO 8601 dates and times using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision calendar system, and [Joda Time](https://github.com/JodaOrg/joda-time)
+- `Instant` wrapping a JSR-363 `Quantity<?>` for `Dimensionless` or `Time` quantities measured from a common offset (e.g. the minix epoch or a modeled start unit or date), also supports ISO 8601 dates and times using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision calendar system, and [Joda Time](https://github.com/JodaOrg/joda-time) instants
 - `Duration` wrapping a JSR-363 `Quantity` for relative `Dimensionless` or `Time` quantities, also supports ISO 8601 calendar-based periods using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision durations and [Joda Time](https://github.com/JodaOrg/joda-time) periods
 - `Timing` iteration patterns, supporting [`CRON` expression](https://www.wikiwand.com/en/Cron#CRON_expression) : [Quartz](https://github.com/quartz-scheduler/quartz) v2.2 and  `iCal` [RFC 2445](https://www.ietf.org/rfc/rfc2445.txt) recurrence rule parsing : [Google RFC 2445](https://github.com/jcvanderwal/google-rfc-2445) v20110304 
 - `Scheduler` fluent API with reference implementation in __`dsol3-coala-adapter`__ : [DSOL](http://www.simulation.tudelft.nl/simulation/index.php/dsol-3-java-7) v3.0
@@ -64,17 +64,17 @@ First, add the following to the `<project>` tag of your Maven project's `pom.xml
 		<artifactId>coala-api-enterprise</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
-	<dependency> <!-- for the Guice4 adapter of io.coala.bind.LocalBinder -->
+	<dependency> <!-- for the Guice4 adapter of COALA LocalBinder -->
 		<groupId>io.coala</groupId>
 		<artifactId>guice4-coala-adapter</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
-	<dependency> <!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
+	<dependency> <!-- for the DSOL3 adapter of COALA Scheduler -->
 		<groupId>io.coala</groupId>
 		<artifactId>dsol3-coala-adapter</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
-	<dependency> <!-- for the commons-math3 adapter of io.coala.math.ProbabilityDistribution -->
+	<dependency> <!-- for the commons-math3 adapter of COALA PseudoRandom and ProbabilityDistribution -->
 		<groupId>io.coala</groupId>
 		<artifactId>math3-coala-adapter</artifactId>
 		<version>${coala.version}</version>
@@ -92,10 +92,10 @@ Create the LocalBinder for the `my-world` container from a YAML formatted file w
 LocalBinder binder = LocalConfig.openYAML( "my-config.yaml", "my-world" ).create();
 ```
 
-and provide your `my-config.yaml` file located either in the class-path, relative to the current `${user.dir}` working directory, or at some absolute path or URL:
+and provide your `my-config.yaml` file located either in the class-path, relative to the current `${user.dir}` working directory, or at some (absolute) path or URL:
 
 ```yaml
- # my-config.yaml
+# my-config.yaml
 my-world:
   binder:
     impl: io.coala.guice4.Guice4LocalBinder
@@ -112,21 +112,25 @@ my-world:
     - impl: io.coala.enterprise.Fact$Factory$SimpleProxies
       bindings:
       - type: io.coala.enterprise.Fact$Factory
-    - impl: io.coala.enterprise.FactBank$Factory$InMemory
+    - impl: io.coala.enterprise.FactBank$Factory$SimpleCache
       bindings:
       - type: io.coala.enterprise.FactBank$Factory
+    - impl: "io.coala.enterprise.FactExchange$SimpleBus"
+      bindings:
+      - type: "io.coala.enterprise.FactExchange"
 ```
  
 #### B. Configure programmatically (e.g. unit testing)
-Alternatively, create the LocalBinder for the `world1` container and launch programmatically in Java:
+Alternatively, create the LocalBinder for the `my-world` container and launch programmatically in Java:
 
 ```java
-LocalBinder binder = LocalConfig.builder().withId( "world1" )
+LocalBinder binder = LocalConfig.builder().withId( "my-world" )
 	.withProvider( Scheduler.class, Dsol3Scheduler.class )
 	.withProvider( Actor.Factory.class, Actor.Factory.LocalCaching.class )
 	.withProvider( Transaction.Factory.class, Transaction.Factory.LocalCaching.class )
 	.withProvider( Fact.Factory.class, Fact.Factory.SimpleProxies.class )
-	.withProvider( FactBank.Factory.class, FactBank.Factory.InMemory.class )
+	.withProvider( FactBank.class, FactBank.SimpleCache.class )
+	.withProvider( FactExchange.class, FactExchange.SimpleBus.class )
 	.build().create();
 ```
 
@@ -146,7 +150,7 @@ System.out.println( "End reached!" );
 
 ## Example Usage: Supplier and Consumer Performing Sale Transactions
 
-Suppose we have a *World1* with two organizations trading as *Supplier1* and 
+Suppose we have a *World* with two organizations trading as *Supplier1* and 
 *Consumer1* via their respective *Sales* and *Procurement* departments 
 in a monthly pattern. We could implement this as follows:
 
@@ -160,7 +164,7 @@ public class World implements Proactive
 	/** The local {@link Actor.Factory} for (cached) {@link Actor} objects */
 	private final Actor.Factory actors;
 	
-	/** (dependency-injectable) {@link World} constructor */
+	/** dependency-injectable {@link World} constructor */
 	@Inject 
 	public World( Scheduler scheduler, Actor.Factory actors )
 	{
