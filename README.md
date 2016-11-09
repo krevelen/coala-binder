@@ -1,9 +1,34 @@
 # COALA
 Common Ontological Abstraction Layer for Agents --- a binder for reuse of agent code across AOSE/MASs and M&amp;S/ABMs
 
+## Common
+
+- Functional style : [Java8](https://github.com/java8/Java8InAction) and [RxJava](https://github.com/ReactiveX/RxJava) v1.1, adding utilities including `Instantiator`, `Caller`, `Thrower`, `TypeArguments`, etc.
+- Logging : [Logging-Log4j2](https://github.com/apache/logging-log4j2) v2.6 and [SLF4J](https://github.com/qos-ch/slf4j) v1.7
+- JSON and YAML de/serializing : [Jackson](https://github.com/FasterXML/jackson) v2.8 and YAML de/serializing : [Snakeyaml](https://github.com/FasterXML/jackson-dataformat-yaml) v1.15, with `DynaBean` and `Wrapper` utilities
+- Configuring : [Owner](https://github.com/lviggiano/owner) v1.0, adding utilities for `Config` *nesting*, by filtering on entry key namespace, and `JSON` / `YAML` to `Properties` / `XML` converters, by flattening (export) and expanding (import) entry keys
+- Naming : JSON-transparent `Id` wrappers and `Identified` utilities
+- JDBC and JPA persistence utilities
+- JAXP, JAXB, and StAX parsing and streaming utilities (for XML)
+
+# COALA API
+- `javax.inject` / [JSR-330](https://github.com/javax-inject/javax-inject) (DI v1.0) compatibility, using `@Inject`, `@Singleton` and `@Qualifier` in `LocalBinder` reference implementation in __`guice4-coala-adapter`__ : [Guice](https://github.com/google/guice) v4.1
+  - Configurable using Properties, XML, JSON, and YAML formats and builder pattern
+  - Mutable and just-in-time (JIT) binding
+  - Locally configurable binding context, useful in heterogeneous agent-oriented models and methods
+  - Custom injection: `@InjectLogger`, `@InjectDist`, `@InjectConfig`
+- `PseudoRandom` and `ProbabilityDistribution` reference implementations in __`math3-coala-adapter`__ :  [Commons-Math](https://github.com/apache/commons-math) v3.6
+- `javax.measure` / [JSR-363](http://unitsofmeasurement.github.io/) support, including a fluent `QuantityDistribution` API, extended with floating point precision using [Apfloat](http://www.apfloat.org/apfloat_java/) v1.8.2
+
+# COALA Time API
+- `Instant` wrapping a JSR-363 `Quantity<?>` for `Dimensionless` or `Time` quantities measured from a common offset (e.g. the minix epoch or a modeled start unit or date), also supports ISO 8601 dates and times using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision calendar system, and [Joda Time](https://github.com/JodaOrg/joda-time)
+- `Duration` wrapping a JSR-363 `Quantity` for relative `Dimensionless` or `Time` quantities, also supports ISO 8601 calendar-based periods using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision durations and [Joda Time](https://github.com/JodaOrg/joda-time) periods
+- `Timing` iteration patterns, supporting [`CRON` expression](https://www.wikiwand.com/en/Cron#CRON_expression) : [Quartz](https://github.com/quartz-scheduler/quartz) v2.2 and  `iCal` [RFC 2445](https://www.ietf.org/rfc/rfc2445.txt) recurrence rule parsing : [Google RFC 2445](https://github.com/jcvanderwal/google-rfc-2445) v20110304 
+- `Scheduler` fluent API with reference implementation in __`dsol3-coala-adapter`__ : [DSOL](http://www.simulation.tudelft.nl/simulation/index.php/dsol-3-java-7) v3.0
+
 # COALA Enterprise API
 
-This extension of the *coala-api-time* API provides a kind of domain specific language (DSL) for modeling, simulating, exchanging and persisting organization interactions using the [Enterprise Ontology](http://www.springer.com/gp/book/9783540291695) by [Jan Dietz](https://www.wikiwand.com/en/Jan_Dietz), in particular the PSI or &psi;-theory of *Performance in Social Interaction*, which Johan den Haan explains briefly in [this blog entry](http://www.theenterprisearchitect.eu/blog/2009/10/10/modeling-an-organization-using-enterprise-ontology/).
+This extension of the *coala-api-time* API provides a kind of domain specific language (DSL) for modeling, simulating, exchanging and persisting organization interactions using the [Enterprise Ontology](http://www.springer.com/gp/book/9783540291695) by [Jan Dietz](https://www.wikiwand.com/en/Jan_Dietz), a highly generic approach to describing [the deep structure of business processes](https://www.researchgate.net/publication/220426381_The_deep_structure_of_business_processes). In particular this API implements the PSI or &psi;-theory of *Performance in Social Interaction*, which Johan den Haan explains briefly in [this blog entry](http://www.theenterprisearchitect.eu/blog/2009/10/10/modeling-an-organization-using-enterprise-ontology/).
 
 ## Getting started
 
@@ -118,12 +143,14 @@ in a monthly pattern. We could implement this as follows:
 
 ```java
 @Singleton // inject the same instance across the container
-public static class World implements Proactive
+public class World implements Proactive
 {
 	/** The local {@link Scheduler} for generating proactive behavior */
 	private final Scheduler scheduler;
+	
 	/** The local {@link Actor.Factory} for (cached) {@link Actor} objects */
 	private final Actor.Factory actors;
+	
 	/** (dependency-injectable) {@link World} constructor */
 	@Inject 
 	public World( Scheduler scheduler, Actor.Factory actors )
@@ -132,7 +159,8 @@ public static class World implements Proactive
 		this.scheduler = scheduler;
 		scheduler.onReset( this::init ); // initialize upon scheduler reset
 	}
-	@Override // Proactive#scheduler()
+	
+	@Override
 	public scheduler(){ return this.scheduler; }
 	
 	/** A type of {@link Fact} reflecting the {@link Sale} transaction kind */
@@ -149,7 +177,7 @@ public static class World implements Proactive
 	{
 		// 1. create the "Supplier1" organization with "Sales" dept
 		Actor<Fact> supplier1 = this.actors.create( "Supplier1" );
-		SalesDept salesDept = supplier1.asExecutor( SalesDept.class );
+		SalesDept salesDept = supplier1.specialist( SalesDept.class );
 		
 		// 2. add "Sale" execution behavior to "Sales" dept
 		salesDept.emit( FactKind.REQUESTED ).subscribe( 
@@ -158,7 +186,7 @@ public static class World implements Proactive
 				
 		// 3. create the "Consumer1" organization with "Buying" dept
 		Actor<Fact> consumer1 = this.actors.create( "Consumer1" );
-		BuyingDept buyingDept = consumer1.asInitiator( BuyingDept.class );
+		BuyingDept buyingDept = consumer1.specialist( BuyingDept.class );
 		
 		// 4. add "Sale" acceptance behavior to "Buying" dept
 		buyingDept.emit( FactKind.STATED ).subscribe( 
