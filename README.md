@@ -1,25 +1,28 @@
 # COALA
-Common Ontological Abstraction Layer for Agents --- a binder for reuse of agent code across AOSE/MASs and M&amp;S/ABMs
+Common Ontological Abstraction Layer for Agents &mdash; a contextual binder for reuse of heterogeneous agent code across AOSE/MASs and M&amp;S/ABMs
 
 ## Common
 
-- Functional style : [Java8](https://github.com/java8/Java8InAction) and [RxJava](https://github.com/ReactiveX/RxJava) v1.1, adding utilities including `Instantiator`, `Caller`, `Thrower`, `TypeArguments`, etc.
-- Logging : [Logging-Log4j2](https://github.com/apache/logging-log4j2) v2.6 and [SLF4J](https://github.com/qos-ch/slf4j) v1.7
-- JSON and YAML de/serializing : [Jackson](https://github.com/FasterXML/jackson) v2.8 and [Snakeyaml](https://github.com/FasterXML/jackson-dataformat-yaml) v1.15, with `Wrapper` API for JSON-transparent `DynaBean` decoration (using `java.lang.reflect.Proxy` and `java.beans.Introspector`)
-- Configuring : [Owner](https://github.com/lviggiano/owner) v1.0, adding utilities for `Config` *nesting*, by filtering on entry key namespace, and `JSON` / `YAML` to `Properties` / `XML` converters, by flattening (export) and expanding (import) entry keys
-- Naming : JSON-transparent `Id` wrappers and `Identified` utilities
-- JDBC and JPA persistence utilities
-- JAXP, JAXB, and StAX parsing and streaming utilities (for XML)
-- Crypto utilities
+- Functional style with asynchronous callbacks : [Java8](https://github.com/java8/Java8InAction) and [RxJava](https://github.com/ReactiveX/RxJava) v1.1, adding utilities including `Instantiator`, `Caller`, `Thrower`, `TypeArguments`, etc.
+- `java.sql` and `javax.persistence` utilities for JDBC (JSR-114, v4.0/JSR-221) data sources and JPA (v1.0/JSR-220, v2.0/JSR-317, v2.1/JSR-338) persistence providers
+- `javax.xml` and `javax.xml.bind` utilities with JAXP, JAXB, and StAX parsing and streaming
+- `javax.crypto` cipher and cryptography utilities
+- `Pretty` printing and other logging utilities using [Log4j2](https://github.com/apache/logging-log4j2) v2.6 and [SLF4J](https://github.com/qos-ch/slf4j) v1.7
+- `Wrapper` API for JSON-transparent `DynaBean` decoration (using `java.lang.reflect.Proxy` and `java.beans.Introspector`) supporting JSON and YAML de/serializing using [Jackson](https://github.com/FasterXML/jackson) v2.8 and [Snakeyaml](https://github.com/FasterXML/jackson-dataformat-yaml) v1.15
+- `Id` and `Identified` naming utilities for JSON-transparent name decoration
+- Configuration utilities using [Owner](https://github.com/lviggiano/owner) v1.0 for
+  - `YamlConfig` API for `JSON`/`YAML` &harr; `java.util.Properties` / `XML` conversion, 
+  - flattening (export) and expanding (import) configuration entry keys, using the hierarchical `.`-format, and 
+  - `org.aeonbits.owner.Config` *nesting*, by filtering on entry key namespace
 
 # COALA API
-- `javax.inject` / [JSR-330](https://github.com/javax-inject/javax-inject) (DI v1.0) compatibility, using `@Inject`, `@Singleton` and `@Qualifier` in `LocalBinder` reference implementation in __`guice4-coala-adapter`__ : [Guice](https://github.com/google/guice) v4.1
-  - Configurable using Properties, XML, JSON, and YAML formats and builder pattern
+- `javax.measure` / [JSR-363](http://unitsofmeasurement.github.io/) utilities, extended with floating point precision using [Apfloat](http://www.apfloat.org/apfloat_java/) v1.8.2
+- `PseudoRandom` and `ProbabilityDistribution`, and `QuantityDistribution` fluent APIs with reference implementations in __`math3-coala-adapter`__ :  [Commons-Math](https://github.com/apache/commons-math) v3.6
+- `LocalBinder` contextual binder API with reference implementation in __`guice4-coala-adapter`__ : [Guice](https://github.com/google/guice) v4.1, featuring:
+  - `javax.inject` / [JSR-330](https://github.com/javax-inject/javax-inject) (DI v1.0) standards-based `@Inject`, `@Singleton` and `@Qualifier`
+  - `@InjectLogger`, `@InjectDist`, and `@InjectConfig` custom injection annotations
   - Mutable and just-in-time (JIT) binding
-  - Locally configurable binding context, useful in heterogeneous agent-oriented models and methods
-  - Custom injection: `@InjectLogger`, `@InjectDist`, `@InjectConfig`
-- `PseudoRandom` and `ProbabilityDistribution` reference implementations in __`math3-coala-adapter`__ :  [Commons-Math](https://github.com/apache/commons-math) v3.6
-- `javax.measure` / [JSR-363](http://unitsofmeasurement.github.io/) support, including a fluent `QuantityDistribution` API, extended with floating point precision using [Apfloat](http://www.apfloat.org/apfloat_java/) v1.8.2
+  - Locally configurable binding context (`java.util.Properties`, `XML`, `JSON`, and `YAML` formats), useful in heterogeneous agent-oriented models and methods
 
 # COALA Time API
 - `Instant` wrapping a JSR-363 `Quantity<?>` for `Dimensionless` or `Time` quantities measured from a common offset (e.g. the minix epoch or a modeled start unit or date), also supports ISO 8601 dates and times using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision calendar system, and [Joda Time](https://github.com/JodaOrg/joda-time)
@@ -39,7 +42,7 @@ First, add the following to the `<project>` tag of your Maven project's `pom.xml
 ```xml
 <properties>
 	:
-	<coala.version>0.2.0-b4</coala.version>
+	<coala.version>0.2.0-b5</coala.version>
 </properties>
 
 <repositories>
@@ -69,6 +72,11 @@ First, add the following to the `<project>` tag of your Maven project's `pom.xml
 	<dependency> <!-- for the DSOL3 adapter of io.coala.time.Scheduler -->
 		<groupId>io.coala</groupId>
 		<artifactId>dsol3-coala-adapter</artifactId>
+		<version>${coala.version}</version>
+	</dependency>
+	<dependency> <!-- for the commons-math3 adapter of io.coala.math.ProbabilityDistribution -->
+		<groupId>io.coala</groupId>
+		<artifactId>math3-coala-adapter</artifactId>
 		<version>${coala.version}</version>
 	</dependency>
 </dependencies>
