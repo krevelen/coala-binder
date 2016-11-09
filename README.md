@@ -5,7 +5,7 @@ Common Ontological Abstraction Layer for Agents &mdash; a contextual binder for 
 
 - Functional style with asynchronous callbacks : [Java8](https://github.com/java8/Java8InAction) and [RxJava](https://github.com/ReactiveX/RxJava) v1.1, adding utilities including `Instantiator`, `Caller`, `Thrower`, `TypeArguments`, etc.
 - `java.sql` and `javax.persistence` utilities for JDBC (JSR-114, v4.0/JSR-221) data sources and JPA (v1.0/JSR-220, v2.0/JSR-317, v2.1/JSR-338) persistence providers
-- `javax.xml`, `javax.xml.bind` and `javax.xml.stream` utilities for parsing ([JAXP](https://jaxp.java.net/) v1.6/JSR-206), binding ([JAXB](https://jaxb.java.net/) v1.0/JSR-31, v2.0/[JSR-222](https://jcp.org/en/jsr/detail?id=222)), and handling streams ([StAX/JSR-173](https://java.net/projects/stax-spec)) of XML documents
+- `javax.xml`, `javax.xml.bind` and `javax.xml.stream` utilities for XML document parsing ([JAXP](https://jaxp.java.net/) v1.6/JSR-206), binding ([JAXB](https://jaxb.java.net/) v2.0/[JSR-222](https://jcp.org/en/jsr/detail?id=222)), and stream handling ([StAX/JSR-173](https://java.net/projects/stax-spec))
 - `javax.crypto` cipher and cryptography utilities
 - `Pretty` printing and other logging utilities using [Log4j2](https://github.com/apache/logging-log4j2) v2.6 and [SLF4J](https://github.com/qos-ch/slf4j) v1.7
 - `Wrapper` API for JSON-transparent `DynaBean` decoration (using `java.lang.reflect.Proxy` and `java.beans.Introspector`) supporting JSON and YAML de/serializing using [Jackson](https://github.com/FasterXML/jackson) v2.8 and [Snakeyaml](https://github.com/FasterXML/jackson-dataformat-yaml) v1.15
@@ -17,8 +17,8 @@ Common Ontological Abstraction Layer for Agents &mdash; a contextual binder for 
 
 # COALA API
 - `javax.measure` / [JSR-363](http://unitsofmeasurement.github.io/) utilities, extended with floating point precision using [Apfloat](http://www.apfloat.org/apfloat_java/) v1.8
-- `PseudoRandom`, `ProbabilityDistribution`, and `QuantityDistribution` fluent APIs with reference implementations in __`math3-coala-adapter`__ :  [Commons-Math](https://github.com/apache/commons-math) v3.6
-- `LocalBinder` contextual binder API with reference implementation in __`guice4-coala-adapter`__ : [Guice](https://github.com/google/guice) v4.1, featuring:
+- `PseudoRandom`, `ProbabilityDistribution`, and `QuantityDistribution` fluent APIs with reference implementations in __`math3-coala-adapter`__ using [Commons-Math](https://github.com/apache/commons-math) v3.6
+- `LocalBinder` contextual binder API with reference implementation in __`guice4-coala-adapter`__ using [Guice](https://github.com/google/guice) v4.1, featuring:
   - `javax.inject` / [JSR-330](https://github.com/javax-inject/javax-inject) (DI v1.0) standards-based `@Inject`, `@Singleton` and `@Qualifier`
   - `@InjectLogger`, `@InjectDist`, and `@InjectConfig` custom injection annotations
   - Mutable and just-in-time (JIT) binding
@@ -27,12 +27,18 @@ Common Ontological Abstraction Layer for Agents &mdash; a contextual binder for 
 # COALA Time API
 - `Instant` wrapping a JSR-363 `Quantity<?>` for `Dimensionless` or `Time` quantities measured from a common offset (e.g. the minix epoch or a modeled start unit or date), also supports ISO 8601 dates and times using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision calendar system, and [Joda Time](https://github.com/JodaOrg/joda-time) instants
 - `Duration` wrapping a JSR-363 `Quantity` for relative `Dimensionless` or `Time` quantities, also supports ISO 8601 calendar-based periods using the standard `java.time` / [JSR-310](http://openjdk.java.net/projects/threeten/) nano-precision durations and [Joda Time](https://github.com/JodaOrg/joda-time) periods
-- `Timing` iteration patterns, supporting [`CRON` expression](https://www.wikiwand.com/en/Cron#CRON_expression) : [Quartz](https://github.com/quartz-scheduler/quartz) v2.2 and  `iCal` [RFC 2445](https://www.ietf.org/rfc/rfc2445.txt) recurrence rule parsing : [Google RFC 2445](https://github.com/jcvanderwal/google-rfc-2445) v20110304 
-- `Scheduler` fluent API with reference implementation in __`dsol3-coala-adapter`__ : [DSOL](http://www.simulation.tudelft.nl/simulation/index.php/dsol-3-java-7) v3.0
+- `Timing` iteration patterns, supporting [`CRON` expression](https://www.wikiwand.com/en/Cron#CRON_expression) using [Quartz](https://github.com/quartz-scheduler/quartz) v2.2 and  `iCal` [RFC 2445](https://www.ietf.org/rfc/rfc2445.txt) recurrence rule parsing : [Google RFC 2445](https://github.com/jcvanderwal/google-rfc-2445) v20110304 
+- `Scheduler` fluent API with reference implementation in __`dsol3-coala-adapter`__ using [DSOL](http://www.simulation.tudelft.nl/simulation/index.php/dsol-3-java-7) v3.0
 
 # COALA Enterprise API
 
-This extension of the *coala-api-time* API provides a kind of domain specific language (DSL) for modeling, simulating, exchanging and persisting organization interactions using the [Enterprise Ontology](http://www.springer.com/gp/book/9783540291695) by [Jan Dietz](https://www.wikiwand.com/en/Jan_Dietz), a highly generic approach to describing [the deep structure of business processes](https://www.researchgate.net/publication/220426381_The_deep_structure_of_business_processes). In particular this API implements the PSI or &psi;-theory of *Performance in Social Interaction*, which Johan den Haan explains briefly in [this blog entry](http://www.theenterprisearchitect.eu/blog/2009/10/10/modeling-an-organization-using-enterprise-ontology/).
+The Enterprise API provides a kind of domain specific language (DSL) for modeling, simulating, exchanging and persisting organization interactions using the [Enterprise Ontology](http://www.springer.com/gp/book/9783540291695) by [Jan Dietz](https://www.wikiwand.com/en/Jan_Dietz), a highly generic approach to describing [the deep structure of business processes](https://www.researchgate.net/publication/220426381_The_deep_structure_of_business_processes). In particular this API implements the PSI or &psi;-theory of *Performance in Social Interaction*, which Johan den Haan explains briefly in [this blog entry](http://www.theenterprisearchitect.eu/blog/2009/10/10/modeling-an-organization-using-enterprise-ontology/), providing the following features:
+
+- `Actor` a performer role of some organization able to coordinate production outcomes by initiating and/or executing transactions
+- `Transaction` context for any coordination `Fact` pertaining to a specific production outcome (of a product, decision, service, etc.)
+- `Fact` representing a speech act from some `Actor` within the context of some `Transaction` coordinating some production
+- `FactBank` for persistence of each `Fact`
+- `FactExchange` for communication of each inter-subjective `Fact` between each `Actor` involved
 
 ## Getting started
 
@@ -209,10 +215,6 @@ public class World implements Proactive
 		Timing timing = Timing.valueOf( "0 0 0 30 * ? *" );
 		atEach( timing.offset( this.actors.offset() ).iterate(), 
 			t -> buyingDept.initiate( supplier1.id() ).commit() )
-		
-		// 6. make facts between them 'inter-subjective' (ie. known to both actors)
-		supplier1.outgoing().subscribe(consumer1);
-		consumer1.outgoing().subscribe(supplier1);
 	}
 }
 ```
