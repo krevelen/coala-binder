@@ -20,12 +20,12 @@
 	</description>
 
 	<properties>
-		<joda-time.version>2.9.4</joda-time.version>
+		<joda-time.version>2.9.5</joda-time.version>
 		<uuid.version>3.4.0</uuid.version>
-		<jackson.version>2.8.3</jackson.version>
-		<rxjava.version>1.1.9</rxjava.version>
+		<jackson.version>2.8.4</jackson.version>
+		<rxjava.version>1.2.2</rxjava.version>
 		<owner.version>1.0.9</owner.version>
-		<log4j2.version>2.6.2</log4j2.version>
+		<log4j2.version>2.7</log4j2.version>
 
 		<!-- testing -->
 		<woodstox.version>5.0.3</woodstox.version>
@@ -130,17 +130,17 @@
 			<version>1.2.0</version> <scope>test</scope> </dependency> -->
 		<!-- Joda DateTime, Interval, Duration etc. standard implementations -->
 
-		<!-- Jackson JSON <-> Java object mapping -->
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
 		<!-- Jackson JSON <-> Java object mapping for Joda-time objects -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-joda</artifactId>
 			<version>${jackson.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>joda-time</groupId>
+					<artifactId>joda-time</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<!-- Jackson JSON <-> Java object mapping for YAML formats -->
 		<dependency>

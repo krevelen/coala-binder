@@ -116,7 +116,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	/**
 	 * @param multiplier the scaling factor
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#times(long)
+	 * @see Quantity#multiply(Number)
 	 */
 	default QuantityDistribution<Q> multiply( final Number multiplier )
 	{
@@ -127,7 +127,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param multiplier the measure multiplier {@link Amount}
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#times(Amount)
+	 * @see Quantity#multiply(Quantity)
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	default <R extends Quantity<R>> QuantityDistribution<R>
@@ -139,7 +139,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	/**
 	 * @param divisor the exact divisor
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#divide(long)
+	 * @see Quantity#divide(Number)
 	 */
 	default QuantityDistribution<Q> divide( final Number divisor )
 	{
@@ -150,7 +150,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param divisor the divisor {@link Amount}
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#divide(Amount)
+	 * @see Quantity#divide(Quantity)
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	default <R extends Quantity<R>> QuantityDistribution<R>
@@ -161,7 +161,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#inverse()
+	 * @see Quantity#inverse()
 	 */
 	default QuantityDistribution<?> inverse()
 	{
@@ -170,7 +170,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#abs()
+	 * @see QuantityUtil#abs(Quantity)
 	 */
 	default QuantityDistribution<Q> abs()
 	{
@@ -180,7 +180,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#sqrt()
+	 * @see QuantityUtil#sqrt(Quantity)
 	 */
 	default QuantityDistribution<?> sqrt()
 	{
@@ -191,7 +191,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param n the root's order (n != 0)
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#root(int)
+	 * @see QuantityUtil#root(Quantity,int)
 	 */
 	default QuantityDistribution<?> root( final int n )
 	{
@@ -202,7 +202,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param exp the exponent
 	 * @return <code>this<sup>exp</sup></code>
-	 * @see Amount#pow(int)
+	 * @see QuantityUtil#pow(Quantity,int)
 	 */
 	default QuantityDistribution<?> pow( final int exp )
 	{
@@ -213,11 +213,10 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param exp the exponent
 	 * @return <code>this<sup>exp</sup></code>
-	 * @see Amount#pow(int)
+	 * @see QuantityUtil#pow(Quantity,int)
 	 */
 	default ProbabilityDistribution<Number> pow( final Number exp )
 	{
-		final QuantityDistribution<?> self = this;
-		return () -> QuantityUtil.pow( self.draw(), exp );
+		return () -> QuantityUtil.pow( draw(), exp );
 	}
 }

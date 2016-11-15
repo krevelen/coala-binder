@@ -19,6 +19,7 @@
  */
 package io.coala.exception;
 
+import java.lang.reflect.Constructor;
 import java.text.MessageFormat;
 
 /**

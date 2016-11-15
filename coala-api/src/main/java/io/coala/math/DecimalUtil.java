@@ -264,7 +264,8 @@ public class DecimalUtil implements Util
 	{
 		Apfloat result = Apfloat.ZERO;
 		for( Apfloat p : probabilities )
-			result = result.subtract( p.multiply( ApfloatMath.log( p, TWO ) ) );
+			result = result.subtract( p.equals( Apint.ZERO ) ? Apint.ZERO
+					: p.multiply( ApfloatMath.log( p, TWO ) ) );
 		return result;
 	}
 

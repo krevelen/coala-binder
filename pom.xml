@@ -76,7 +76,7 @@
 		<project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
 
 		<!-- set reporting versions (e.g. unit test code coverage) -->
-		<cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
+		<maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
 		<jacoco-maven-plugin.version>0.7.7.201606060606</jacoco-maven-plugin.version>
 		<jacoco.covered-ratio>0.0</jacoco.covered-ratio>
 
@@ -139,11 +139,6 @@
 			<dependency>
 				<groupId>${project.groupId}</groupId>
 				<artifactId>coala-api</artifactId>
-				<version>${project.parent.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>coala-api-capability</artifactId>
 				<version>${project.parent.version}</version>
 			</dependency>
 			<dependency>
@@ -308,22 +303,6 @@
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
 
-								<!-- Configure "org.codehaus.mojo:cobertura-maven-plugin:clean" goal 
-									execution in Eclipse IDE -->
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.codehaus.mojo</groupId>
-										<artifactId>cobertura-maven-plugin</artifactId>
-										<versionRange>[0.0.0,)</versionRange>
-										<goals>
-											<goal>clean</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore />
-									</action>
-								</pluginExecution>
-
 								<!-- Configure "org.jacoco:jacoco-maven-plugin:{prepare-agent,report,check}" 
 									goal execution in Eclipse IDE -->
 								<pluginExecution>
@@ -399,30 +378,6 @@
 				<executions> <execution> <goals> <goal>site</goal> </goals> <phase>deploy</phase> 
 				</execution> </executions> </plugin> -->
 
-			<!-- see http://mojo.codehaus.org/cobertura-maven-plugin/usage.html -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>cobertura-maven-plugin</artifactId>
-				<version>${cobertura-maven-plugin.version}</version>
-				<configuration>
-					<instrumentation>
-						<ignores>
-							<ignore>io.coala.boringcode.*</ignore>
-						</ignores>
-						<excludes>
-							<exclude>io/coala/dullcode/**/*.class</exclude>
-						</excludes>
-					</instrumentation>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>clean</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -468,18 +423,13 @@
 
 	<reporting>
 		<plugins>
-			<!-- see http://mojo.codehaus.org/cobertura-maven-plugin/usage.html -->
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>cobertura-maven-plugin</artifactId>
-				<version>${cobertura-maven-plugin.version}</version>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>cobertura</report>
-						</reports>
-					</reportSet>
-				</reportSets>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>${maven-javadoc-plugin.version}</version>
+				<configuration>
+					<failOnError>false</failOnError>
+				</configuration>
 			</plugin>
 		</plugins>
 	</reporting>
