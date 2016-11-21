@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -209,6 +210,19 @@ public class ConfigUtil implements Util
 		return result;
 	}
 
+	@SuppressWarnings( "unchecked" )
+	protected static Map<Object, Object> joinLeafAndNodes( final Object key,
+		final Object value )
+	{
+		return value == null ? // new node 
+				new TreeMap<Object, Object>()
+				: value instanceof String ? // convert leaf node
+						new TreeMap<Object, Object>(
+								Collections.singletonMap( "", value ) )
+						: // already exists
+						(Map<Object, Object>) value;
+	}
+
 	/**
 	 * Get or create the node for some (String/Integer) key-path
 	 * 
@@ -222,26 +236,25 @@ public class ConfigUtil implements Util
 	{
 		if( path == null || path.isEmpty() ) return tree;
 		final String first = path.remove( 0 );
-		Map<Object, Object> node;
 		try
 		{
-			node = (Map<Object, Object>) tree.get( Integer.parseInt( first ) );
-		} catch( final NumberFormatException e )
+			return nodeForPath( (Map<Object, Object>) tree.compute(
+					Integer.parseInt( first ), ConfigUtil::joinLeafAndNodes ),
+					path );
+		} catch( final NumberFormatException nfe )
 		{
-			node = (Map<Object, Object>) tree.get( first );
-		}
-		if( node == null )
-		{
-			node = new TreeMap<>();
 			try
 			{
-				tree.put( Integer.parseInt( first ), node );
-			} catch( final NumberFormatException e )
+				return nodeForPath( (Map<Object, Object>) tree.compute( first,
+						ConfigUtil::joinLeafAndNodes ), path );
+			} catch( final ClassCastException cce )
 			{
-				tree.put( first, node );
+				cce.printStackTrace();
+				System.err.println( "path: " + path + ", first: " + first
+						+ ", tree: " + tree.get( first ) );
+				return tree;
 			}
 		}
-		return nodeForPath( node, path );
 	}
 
 	/**
