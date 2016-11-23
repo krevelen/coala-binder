@@ -214,26 +214,41 @@ public class LogUtil implements Util
 		return result;
 	}
 
+	/**
+	 * {@link Pretty}
+	 * 
+	 * @version $Id$
+	 * @author Rick van Krevelen
+	 */
 	public static interface Pretty
 	{
 		@Override
 		String toString();
+
+		/**
+		 * @param supplier the function to decorate in {@link #toString()} calls
+		 * @return a decorator {@link Object} to help delay {@link #toString()}
+		 *         call until absolutely necessary (e.g. for logging at a
+		 *         desired level)
+		 */
+		static Pretty of( final Supplier<String> supplier )
+		{
+			return new Pretty()
+			{
+				private String cache = null;
+
+				@Override
+				public String toString()
+				{
+					return this.cache != null ? this.cache
+							: (this.cache = supplier.get());
+				}
+			};
+		}
 	}
 
-	/**
-	 * @param supplier the function to decorate in {@link #toString()} calls
-	 * @return a decorator {@link Object} to help delay {@link #toString()} call
-	 *         until absolutely necessary (e.g. for logging at a desired level)
-	 */
 	public static Pretty wrapToString( final Supplier<String> supplier )
 	{
-		return new Pretty()
-		{
-			@Override
-			public String toString()
-			{
-				return supplier.get();
-			}
-		};
+		return Pretty.of( supplier );
 	}
 }

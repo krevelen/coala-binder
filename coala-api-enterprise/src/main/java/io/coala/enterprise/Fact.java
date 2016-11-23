@@ -455,11 +455,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 						.toPlainString() + unit ) );
 	}
 
-	default Object prettify()
-	{
-		return prettify( DateTimeFormatter.ISO_LOCAL_DATE_TIME );
-	}
-
 	default Pretty prettify( final DateFormat formatter )
 	{
 		return wrapToString( () -> toString( formatter.format(
@@ -604,7 +599,10 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		@Override
 		public String toString()
 		{
-			return toString( occur() );
+			final ZonedDateTime offset = offset();
+			return toString( offset == null ? occur()
+					: DateTimeFormatter.ISO_LOCAL_DATE_TIME
+							.format( occur().toJava8( offset ) ) );
 		}
 
 		@Override

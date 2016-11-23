@@ -372,11 +372,13 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return XmlUtil.toXML( toJava8( offset ) );
 	}
 
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final int scale )
 	{
 		return prettify( unit(), scale );
 	}
 
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final Unit unit, final int scale )
 	{
 		return wrapToString( () -> DecimalUtil

@@ -324,11 +324,13 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return org.joda.time.Duration.millis( toMillisLong() );
 	}
 
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final int scale )
 	{
 		return prettify( unit(), scale );
 	}
 
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final Unit unit, final int scale )
 	{
 		return wrapToString( () -> DecimalUtil

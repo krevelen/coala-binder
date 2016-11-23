@@ -176,11 +176,7 @@ public class DecimalUtil implements Util
 														value.doubleValue() );
 	}
 
-	/**
-	 * @param value
-	 * @param scale
-	 * @return
-	 */
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public static BigDecimal toScale( final Number value, final int scale )
 	{
 		return valueOf( value ).setScale( scale,
@@ -190,6 +186,7 @@ public class DecimalUtil implements Util
 	/**
 	 * @param value the {@link BigDecimal} to round
 	 * @return the rounded value
+	 * @see BigDecimal.setScale(int, RoundingMode)
 	 */
 	public static int toInt( final Number value )
 	{
@@ -200,6 +197,7 @@ public class DecimalUtil implements Util
 	/**
 	 * @param value the {@link BigDecimal} to round
 	 * @return the rounded value
+	 * @see BigDecimal.setScale(int, RoundingMode)
 	 */
 	public static long toLong( final Number value )
 	{
