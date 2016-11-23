@@ -15,8 +15,6 @@
  */
 package io.coala.time;
 
-import static io.coala.log.LogUtil.wrapToString;
-
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.time.LocalDateTime;
@@ -381,46 +379,46 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final Unit unit, final int scale )
 	{
-		return wrapToString( () -> DecimalUtil
+		return Pretty.of( () -> DecimalUtil
 				.toScale( unwrap().to( unit ).getValue(), scale ).toString()
 				+ unit );
 	}
 
 	public Pretty prettify( final Date offset )
 	{
-		return wrapToString( () -> toDate( offset ).toString() );
+		return Pretty.of( () -> toDate( offset ).toString() );
 	}
 
 	public Pretty prettify( final Date offset, final DateFormat formatter )
 	{
-		return wrapToString( () -> formatter.format( toDate( offset ) ) );
+		return Pretty.of( () -> formatter.format( toDate( offset ) ) );
 	}
 
 	public Pretty prettify( final LocalDateTime offset )
 	{
-		return wrapToString( () -> toJava8( offset ).toString() );
+		return Pretty.of( () -> toJava8( offset ).toString() );
 	}
 
 	public Pretty prettify( final ZonedDateTime offset )
 	{
-		return wrapToString( () -> toJava8( offset ).toString() );
+		return Pretty.of( () -> toJava8( offset ).toString() );
 	}
 
 	public Pretty prettify( final ZonedDateTime offset,
 		final java.time.format.DateTimeFormatter formatter )
 	{
-		return wrapToString( () -> formatter.format( toJava8( offset ) ) );
+		return Pretty.of( () -> formatter.format( toJava8( offset ) ) );
 	}
 
 	public Pretty prettify( final DateTime offset )
 	{
-		return wrapToString( () -> toJoda( offset ).toString() );
+		return Pretty.of( () -> toJoda( offset ).toString() );
 	}
 
 	public Object prettify( final DateTime offset,
 		final DateTimeFormatter formatter )
 	{
-		return wrapToString( () -> formatter.print( toJoda( offset ) ) );
+		return Pretty.of( () -> formatter.print( toJoda( offset ) ) );
 	}
 
 }

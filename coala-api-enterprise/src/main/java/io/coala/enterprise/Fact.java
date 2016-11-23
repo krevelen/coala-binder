@@ -19,8 +19,6 @@
  */
 package io.coala.enterprise;
 
-import static io.coala.log.LogUtil.wrapToString;
-
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -30,6 +28,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.text.DateFormat;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +44,6 @@ import javax.transaction.Transactional;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import java.time.format.DateTimeFormatter;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -443,27 +441,27 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	@SuppressWarnings( "unchecked" )
 	default Pretty prettify( final Unit<?> unit )
 	{
-		return wrapToString( () -> toString(
+		return Pretty.of( () -> toString(
 				occur().to( unit ).decimal().toPlainString() + unit ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
 	default Pretty prettify( final Unit<?> unit, final int scale )
 	{
-		return wrapToString( () -> toString(
+		return Pretty.of( () -> toString(
 				DecimalUtil.toScale( occur().to( unit ).decimal(), scale )
 						.toPlainString() + unit ) );
 	}
 
 	default Pretty prettify( final DateFormat formatter )
 	{
-		return wrapToString( () -> toString( formatter.format(
+		return Pretty.of( () -> toString( formatter.format(
 				occur().toDate( Date.from( offset().toInstant() ) ) ) ) );
 	}
 
 	default Pretty prettify( final DateTimeFormatter java8Formatter )
 	{
-		return wrapToString( () -> toString(
+		return Pretty.of( () -> toString(
 				java8Formatter.format( occur().toJava8( offset() ) ) ) );
 	}
 
@@ -471,7 +469,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		prettify( final org.joda.time.format.DateTimeFormatter jodaFormatter )
 	{
 		final ZonedDateTime zdt = offset();
-		return wrapToString( () -> toString( jodaFormatter.print(
+		return Pretty.of( () -> toString( jodaFormatter.print(
 				occur().toJoda( new DateTime( zdt.toInstant().toEpochMilli(),
 						DateTimeZone.forTimeZone( TimeZone
 								.getTimeZone( zdt.getZone() ) ) ) ) ) ) );
@@ -517,8 +515,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 		public Pretty prettyHash()
 		{
-			return LogUtil.wrapToString(
-					() -> Integer.toHexString( unwrap().hashCode() ) );
+			return LogUtil.Pretty
+					.of( () -> Integer.toHexString( unwrap().hashCode() ) );
 		}
 
 		/** @return an {@link ID} with specified {@link UUID} */

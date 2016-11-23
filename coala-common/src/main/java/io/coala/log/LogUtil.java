@@ -222,6 +222,7 @@ public class LogUtil implements Util
 	 */
 	public static interface Pretty
 	{
+		/** @return (cached) result of some {@link String} {@link Supplier} */
 		@Override
 		String toString();
 
@@ -247,7 +248,7 @@ public class LogUtil implements Util
 		}
 	}
 
-	public static Pretty wrapToString( final Supplier<String> supplier )
+	public static Pretty toCachedString( final Supplier<String> supplier )
 	{
 		return Pretty.of( supplier );
 	}

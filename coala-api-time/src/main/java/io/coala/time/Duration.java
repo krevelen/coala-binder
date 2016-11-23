@@ -15,8 +15,6 @@
  */
 package io.coala.time;
 
-import static io.coala.log.LogUtil.wrapToString;
-
 import java.math.BigDecimal;
 import java.util.concurrent.TimeUnit;
 
@@ -333,7 +331,7 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final Unit unit, final int scale )
 	{
-		return wrapToString( () -> DecimalUtil
+		return Pretty.of( () -> DecimalUtil
 				.toScale( unwrap().to( unit ).getValue(), scale ).toString()
 				+ unit );
 	}
