@@ -22,6 +22,7 @@ package io.coala.enterprise;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -268,15 +269,30 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 				cause.id(), expire, params );
 	}
 
-	Actor<Fact> main();
+	default Factory factory()
+	{
+		return binder().inject( Factory.class );
+	}
+
+	default ZonedDateTime offset()
+	{
+		return factory().offset();
+	}
+
+	default Unit<?> timeUnit()
+	{
+		return factory().timeUnit();
+	}
+
+	Actor<Fact> root();
 
 	/**
-	 * @param healthAdvisorName
-	 * @return
+	 * @param name the peer name
+	 * @return a new {@link Actor.ID} with the same {@link #parentRef()}
 	 */
 	default Actor.ID peerRef( final String name )
 	{
-		return main().id().peerRef( name );
+		return root().id().peerRef( name );
 	}
 
 	Class<F> specialism();
@@ -286,7 +302,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @return an actor view for performing either or both of the initiator and
 	 *         executor sides of its transaction sub-type(s)
 	 */
-	default <A extends Actor<T>, T extends F> ID specialist(
+	default <A extends Actor<T>, T extends F> Actor.ID specialist(
 		final Class<A> actorKind, final ThrowingConsumer<A, ?> consumer )
 	{
 		try
@@ -325,7 +341,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		final Actor<F> parent = this;
 		return new Actor<S>()
 		{
-			private final ID specialistId = ID.of( tranKind, main().id() );
+			private final ID specialistId = ID.of( tranKind, root().id() );
 
 			@Override
 			public ID id()
@@ -334,9 +350,9 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			}
 
 			@Override
-			public Actor<Fact> main()
+			public Actor<Fact> root()
 			{
-				return parent.main();
+				return parent.root();
 			}
 
 			@Override
@@ -541,8 +557,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		}
 
 		/**
-		 * @param name
-		 * @return
+		 * @param name the peer name
+		 * @return a new {@link ID} with the same {@link #parentRef()}
 		 */
 		public ID peerRef( final String name )
 		{
@@ -594,7 +610,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		}
 
 		@Override
-		public Actor<Fact> main()
+		public Actor<Fact> root()
 		{
 			return this;
 		}
@@ -617,7 +633,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 						final Transaction<T> tx = this.txFactory.create( tid,
 								tranKind, initiatorRef, executorRef );
 						// tx -> actor (committed facts)
-						tx.commits().subscribe( main()::onNext, main()::onError,
+						tx.commits().subscribe( root()::onNext, root()::onError,
 								() -> this.txs.remove( tid ) );
 						return tx;
 					} );
@@ -721,8 +737,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	interface Factory extends LocalContextual
 	{
 
-		/** @return the {@link java.time.Instant} UTC offset of virtual time */
-		java.time.Instant offset();
+		/** @return the {@link ZonedDateTime} offset of virtual time */
+		ZonedDateTime offset();
 
 		/** @return the {@link Unit} of virtual time */
 		Unit<?> timeUnit();
@@ -774,7 +790,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			}
 
 			@Override
-			public java.time.Instant offset()
+			public ZonedDateTime offset()
 			{
 				return this.txFactory.offset();
 			}

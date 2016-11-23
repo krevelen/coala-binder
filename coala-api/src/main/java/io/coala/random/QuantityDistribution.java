@@ -20,19 +20,19 @@
 package io.coala.random;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import io.coala.math.QuantityUtil;
-import rx.functions.Func1;
 
 /**
  * {@link QuantityDistribution} is a {@link ProbabilityDistribution} for
- * {@link Amount}s of some {@link Quantity}, decorated with arithmetic
- * transforms of e.g. {@link Amount#times(double)} etc.
+ * {@link Quantity}s of some {@link Quantity}, decorated with arithmetic
+ * transforms of e.g. {@link Quantity#times(double)} etc.
  * 
- * @param <Q> the type of {@link Quantity} for produced {@link Amount}s
+ * @param <Q> the type of {@link Quantity} for produced {@link Quantity}s
  * @version $Id$
  * @author Rick van Krevelen
  */
@@ -50,7 +50,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <Q> the measurement {@link Quantity} to assign
 	 * @param dist the {@link ProbabilityDistribution} to wrap
 	 * @param unit the {@link Unit} of measurement to assign
-	 * @return an {@link QuantityDistribution} for {@link Amount}s from drawn
+	 * @return an {@link QuantityDistribution} for {@link Quantity}s from drawn
 	 *         {@link Number}s, with an attempt to maintain exactness
 	 */
 	public static <N extends Number, Q extends Quantity<Q>>
@@ -74,7 +74,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
-	 * @param transform a unary {@link Func1} to transform {@link Amount}s
+	 * @param transform a unary {@link Function} to transform {@link Quantity}s
 	 * @return a chained {@link QuantityDistribution}
 	 */
 	default <R extends Quantity<R>> QuantityDistribution<R>
@@ -84,9 +84,21 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	}
 
 	/**
+	 * @param <R> the new type after transformation
+	 * @param transform a unary {@link Function} to transform {@link Quantity}s
+	 * @return a {@link ProbabilityDistribution}
+	 */
+	default <R> ProbabilityDistribution<R>
+		map( final Function<Quantity<Q>, R> transform )
+	{
+		return ProbabilityDistribution
+				.of( (Supplier<R>) () -> transform.apply( draw() ) );
+	}
+
+	/**
 	 * @param unit the {@link Unit} to convert to
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#to(Unit)
+	 * @see Quantity#to(Unit)
 	 */
 	default QuantityDistribution<Q> to( final Unit<Q> unit )
 	{
@@ -94,9 +106,9 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	}
 
 	/**
-	 * @param augend the {@link Amount} to be added
+	 * @param augend the {@link Quantity} to be added
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#plus(Amount)
+	 * @see Quantity#plus(Quantity)
 	 */
 	default QuantityDistribution<Q> add( final Quantity<Q> augend )
 	{
@@ -104,9 +116,9 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	}
 
 	/**
-	 * @param subtrahend the {@link Amount} to be subtracted
+	 * @param subtrahend the {@link Quantity} to be subtracted
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#minus(Amount)
+	 * @see Quantity#minus(Quantity)
 	 */
 	default QuantityDistribution<Q> subtract( final Quantity<Q> subtrahend )
 	{
@@ -125,7 +137,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
-	 * @param multiplier the measure multiplier {@link Amount}
+	 * @param multiplier the measure multiplier {@link Quantity}
 	 * @return a chained {@link QuantityDistribution}
 	 * @see Quantity#multiply(Quantity)
 	 */
@@ -148,7 +160,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
-	 * @param divisor the divisor {@link Amount}
+	 * @param divisor the divisor {@link Quantity}
 	 * @return a chained {@link QuantityDistribution}
 	 * @see Quantity#divide(Quantity)
 	 */

@@ -16,8 +16,10 @@
 package io.coala.time;
 
 import java.text.ParseException;
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
@@ -64,13 +66,13 @@ public interface Timing extends Wrapper<String>
 {
 
 	/**
-	 * @param offset the absolute epoch {@link java.time.Instant} start date
+	 * @param offsetUtc the absolute epoch {@link java.time.Instant} start date
 	 * @param max the maximum number of iterations to generate (if possible)
 	 * @return an {@link Iterable} stream of {@link Instant}s following this
 	 *         {@link Timing} pattern calculated from given offset
 	 * @throws Exception for instance a {@link ParseException}
 	 */
-	Iterable<Instant> iterate( java.time.Instant offset, Long max )
+	Iterable<Instant> iterate( java.time.Instant offsetUtc, Long max )
 		throws ParseException;
 
 	/**
@@ -84,33 +86,43 @@ public interface Timing extends Wrapper<String>
 	}
 
 	/**
-	 * @param offset the {@link LocalDateTime} start date in default time zone
+	 * @param offset the {@link ZonedDateTime} start date in default time zone
 	 * @return this {@link Timing} to allow chaining
 	 */
-	default Timing offset( final LocalDateTime offset )
-	{
-		return offset( offset.atZone( ZoneId.systemDefault() ).toInstant() );
-	}
-
-	/**
-	 * @param offset the absolute epoch {@link java.time.Instant} start date
-	 * @return this {@link Timing} to allow chaining
-	 */
-	default Timing offset( final Date offset )
+	default Timing offset( final ZonedDateTime offset )
 	{
 		return offset( offset.toInstant() );
 	}
 
 	/**
-	 * @param offset the absolute epoch {@link ReadableInstant} start date
+	 * @param offsetUtc the {@link LocalDateTime} start date, assuming zone is
+	 *            {@link ZoneOffset#UTC}
+	 * @return this {@link Timing} to allow chaining
+	 */
+	default Timing offset( final LocalDateTime offsetUtc )
+	{
+		return offset( offsetUtc.atZone( ZoneOffset.UTC ) );
+	}
+
+	/**
+	 * @param offsetUtc the absolute epoch {@link java.time.Instant} start date
+	 * @return this {@link Timing} to allow chaining
+	 */
+	default Timing offset( final Date offsetUtc )
+	{
+		return offset( offsetUtc.toInstant() );
+	}
+
+	/**
+	 * @param offset the {@link ReadableInstant} start date
 	 * @return this {@link Timing} to allow chaining
 	 */
 	default Timing offset( final ReadableInstant offset )
 	{
-		return offset( new Date( offset.getMillis() ) );
+		return offset( java.time.Instant.ofEpochMilli( offset.getMillis() ) );
 	}
 
-	default Timing offset( final java.time.Instant offset )
+	default Timing offset( final java.time.Instant offsetUtc )
 	{
 		final Timing self = this;
 		return new Timing()
@@ -130,7 +142,7 @@ public interface Timing extends Wrapper<String>
 			@Override
 			public java.time.Instant offset()
 			{
-				return offset;
+				return offsetUtc;
 			}
 
 			@Override
@@ -143,11 +155,11 @@ public interface Timing extends Wrapper<String>
 	}
 
 	/**
-	 * @return the offset {@link Date}
+	 * @return the offset {@link Date}, default is {@link Clock#systemUTC()}
 	 */
 	default java.time.Instant offset()
 	{
-		return java.time.Instant.now();
+		return Clock.systemUTC().instant();
 	}
 
 	default Timing max( final Long max )

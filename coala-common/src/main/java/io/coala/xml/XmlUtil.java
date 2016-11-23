@@ -21,6 +21,10 @@ package io.coala.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -28,6 +32,7 @@ import java.util.Date;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
@@ -246,52 +251,81 @@ public class XmlUtil
 
 	/**
 	 * @param date a JAXP {@link XMLGregorianCalendar}
-	 * @return
+	 * @return a UTC {@link Date}
 	 */
 	public static Date toDate( final XMLGregorianCalendar date )
 	{
-		return toDateTime( date ).toDate();
+		return toJoda( date ).toDate();
+	}
+
+	/**
+	 * @param dt a JAXP {@link XMLGregorianCalendar}
+	 * @return a Joda {@link DateTime}
+	 */
+	public static DateTime toJoda( final XMLGregorianCalendar dt )
+	{
+		final DateTimeZone timeZone = dt
+				.getTimezone() == DatatypeConstants.FIELD_UNDEFINED
+						? DateTimeZone.UTC
+						: DateTimeZone.forOffsetMillis(
+								dt.getTimezone() * 60 * 1000 );
+		return new DateTime( dt.getYear(), dt.getMonth(), dt.getDay(),
+				dt.getHour(), dt.getMinute(), dt.getSecond(),
+				dt.getMillisecond(), timeZone );
 	}
 
 	/**
 	 * @param date a JAXP {@link XMLGregorianCalendar}
-	 * @return
+	 * @return a JSR-310 {@link ZonedDateTime}
 	 */
-	public static DateTime toDateTime( final XMLGregorianCalendar date )
+	public static ZonedDateTime toJava8( final XMLGregorianCalendar dt )
 	{
-		final DateTimeZone timeZone = date
+		final ZoneOffset zone = dt
 				.getTimezone() == DatatypeConstants.FIELD_UNDEFINED
-						? DateTimeZone.getDefault()
-						: DateTimeZone.forOffsetMillis(
-								date.getTimezone() * 60 * 1000 );
-		return new DateTime( date.getYear(), date.getMonth(), date.getDay(),
-				date.getHour(), date.getMinute(), date.getSecond(),
-				date.getMillisecond(), timeZone );
+						? ZoneOffset.UTC
+						: ZoneOffset.ofTotalSeconds( dt.getTimezone() * 60 );
+		return ZonedDateTime.of( dt.getYear(), dt.getMonth(), dt.getDay(),
+				dt.getHour(), dt.getMinute(), dt.getSecond(),
+				1000000 * dt.getMillisecond(), zone );
+	}
+
+	/**
+	 * @param dt a JSR-310 {@link ZonedDateTime}
+	 * @return a JAXP {@link XMLGregorianCalendar}
+	 */
+	public static XMLGregorianCalendar toXML( final ZonedDateTime dt )
+	{
+		return getDatatypeFactory().newXMLGregorianCalendar(
+				BigInteger.valueOf( dt.getYear() ), dt.getMonthValue(),
+				dt.getDayOfMonth(), dt.getHour(), dt.getMinute(),
+				dt.getSecond(), dt.getNano() == 0 ? BigDecimal.ZERO
+						: BigDecimal.valueOf( dt.getNano(), 9 ),
+				TimeZone.getTimeZone( dt.getZone() ).getRawOffset() / 60000 );
 	}
 
 	/**
 	 * @param calendar
 	 * @return a JAXP {@link XMLGregorianCalendar}
 	 */
-	public static XMLGregorianCalendar toDateTime( final Calendar calendar )
+	public static XMLGregorianCalendar toXML( final Calendar calendar )
 	{
-		return toDateTime( new DateTime( calendar ) );
+		return toXML( new DateTime( calendar ) );
+	}
+
+	/**
+	 * @param dateUtc
+	 * @return a JAXP {@link XMLGregorianCalendar}
+	 */
+	public static XMLGregorianCalendar toXML( final Date dateUtc )
+	{
+		return toXML( new DateTime( dateUtc, DateTimeZone.getDefault() ) );
 	}
 
 	/**
 	 * @param date
 	 * @return a JAXP {@link XMLGregorianCalendar}
 	 */
-	public static XMLGregorianCalendar toDateTime( final Date date )
-	{
-		return toDateTime( new DateTime( date, DateTimeZone.getDefault() ) );
-	}
-
-	/**
-	 * @param date
-	 * @return a JAXP {@link XMLGregorianCalendar}
-	 */
-	public static XMLGregorianCalendar toDateTime( final DateTime date )
+	public static XMLGregorianCalendar toXML( final DateTime date )
 	{
 		final XMLGregorianCalendar result = getDatatypeFactory()
 				.newXMLGregorianCalendar();
@@ -314,7 +348,7 @@ public class XmlUtil
 	public static org.joda.time.Duration toDuration( final Duration duration,
 		final XMLGregorianCalendar startInstant )
 	{
-		return toInterval( duration, startInstant ).toDuration();
+		return toJoda( duration, startInstant ).toDuration();
 	}
 
 	/**
@@ -322,10 +356,10 @@ public class XmlUtil
 	 * @param startInstant a JAXP {@link XMLGregorianCalendar}
 	 * @return the {@link Interval}
 	 */
-	public static Interval toInterval( final Duration duration,
+	public static Interval toJoda( final Duration duration,
 		final XMLGregorianCalendar startInstant )
 	{
-		return toInterval( duration, toDateTime( startInstant ) );
+		return toJoda( duration, toJoda( startInstant ) );
 	}
 
 	/**
@@ -333,7 +367,7 @@ public class XmlUtil
 	 * @param startInstant
 	 * @return the {@link Interval}
 	 */
-	public static Interval toInterval( final Duration duration,
+	public static Interval toJoda( final Duration duration,
 		final DateTime offset )
 	{
 		return new Interval( offset,
@@ -344,16 +378,16 @@ public class XmlUtil
 	 * @param interval
 	 * @return a JAXP {@link Duration}
 	 */
-	public static Duration toDuration( final Interval interval )
+	public static Duration toXML( final Interval interval )
 	{
-		return toDuration( interval.toPeriod() );
+		return toXML( interval.toPeriod() );
 	}
 
 	/**
 	 * @param period
 	 * @return a JAXP {@link Duration}
 	 */
-	public static Duration toDuration( final Period period )
+	public static Duration toXML( final Period period )
 	{
 		return getDatatypeFactory().newDuration( true, period.getYears(),
 				period.getMonths(), period.getDays(), period.getHours(),
@@ -364,16 +398,16 @@ public class XmlUtil
 	 * @param duration the {@link org.joda.time.Duration} to convert
 	 * @return a JAXP {@link Duration}
 	 */
-	public static Duration toDuration( final org.joda.time.Duration duration )
+	public static Duration toXML( final org.joda.time.Duration duration )
 	{
-		return toDuration( duration.getMillis() );
+		return toXML( duration.getMillis() );
 	}
 
 	/**
 	 * @param millis
 	 * @return a JAXP {@link Duration}
 	 */
-	public static Duration toDuration( final long millis )
+	public static Duration toXML( final long millis )
 	{
 		return getDatatypeFactory().newDuration( millis );
 	}

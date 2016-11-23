@@ -19,6 +19,8 @@
  */
 package io.coala.enterprise;
 
+import static io.coala.log.LogUtil.wrapToString;
+
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -26,15 +28,24 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.text.DateFormat;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.measure.Unit;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import java.time.format.DateTimeFormatter;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -60,6 +71,7 @@ import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
+import io.coala.math.DecimalUtil;
 import io.coala.name.Identified;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
@@ -72,11 +84,6 @@ import rx.Observer;
  * 
  * @version $Id$
  * @author Rick van Krevelen
- */
-/*
- * @JsonAutoDetect( fieldVisibility = Visibility.ANY, getterVisibility =
- * Visibility.NONE, isGetterVisibility = Visibility.NONE, setterVisibility =
- * Visibility.NONE )
  */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 {
@@ -128,36 +135,24 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		return Objects.requireNonNull( transaction() ).kind();
 	}
 
-	/** @return */
-	// derived @JsonIgnore 
 	default Actor.ID creatorRef()
 	{
 		return kind().originatorRoleType() == RoleKind.EXECUTOR
 				? transaction().executorRef() : transaction().initiatorRef();
 	}
 
-	/** @return */
-	// derived @JsonIgnore 
 	default Actor.ID responderRef()
 	{
 		return kind().responderRoleKind() == RoleKind.EXECUTOR
 				? transaction().executorRef() : transaction().initiatorRef();
 	}
 
-	/**
-	 * @param id
-	 * @return
-	 */
 	@JsonIgnore
 	default boolean isIncoming( final Actor.ID id )
 	{
 		return id.organizationRef().equals( responderRef().organizationRef() );
 	}
 
-	/**
-	 * @param id
-	 * @return
-	 */
 	@JsonIgnore
 	default boolean isOutgoing( final Actor.ID id )
 	{
@@ -185,9 +180,9 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 	/** @return */
 	@JsonProperty( OCCUR_POSIX_PROPERTY )
-	default java.time.Instant occurUtc()
+	default ZonedDateTime occurUtc()
 	{
-		return occur().toDate( transaction().offset() );
+		return occur().toJava8( offset() );
 	}
 
 	/** @return */
@@ -196,10 +191,9 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 	/** @return */
 	@JsonProperty( EXPIRE_POSIX_PROPERTY )
-	default java.time.Instant expirePosixSec()
+	default ZonedDateTime expirePosixSec()
 	{
-		return expire() == null ? null
-				: expire().toDate( transaction().offset() );
+		return expire() == null ? null : expire().toJava8( offset() );
 	}
 
 	/** @return */
@@ -213,6 +207,11 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	 * @return the properties {@link Map} as used for extended getters/setters
 	 */
 	Map<String, Object> properties();
+
+	default ZonedDateTime offset()
+	{
+		return transaction().offset();
+	}
 
 	/**
 	 * Useful as {@link JsonAnySetter}
@@ -427,6 +426,62 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		return null;
 	}
 
+	default String toString( final Object occur )
+	{
+		return type().getSimpleName() + '['
+				+ Integer.toHexString( id().unwrap().hashCode() ) + '|' + kind()
+				+ '|' + creatorRef().parentRef().unwrap() + "->"
+				+ responderRef().parentRef().unwrap() + '|' + occur + ']'
+				+ (properties().isEmpty() ? "" : properties());
+	}
+
+	default Pretty prettify( final int scale )
+	{
+		return prettify( occur().unit(), scale );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Pretty prettify( final Unit<?> unit )
+	{
+		return wrapToString( () -> toString(
+				occur().to( unit ).decimal().toPlainString() + unit ) );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Pretty prettify( final Unit<?> unit, final int scale )
+	{
+		return wrapToString( () -> toString(
+				DecimalUtil.toScale( occur().to( unit ).decimal(), scale )
+						.toPlainString() + unit ) );
+	}
+
+	default Object prettify()
+	{
+		return prettify( DateTimeFormatter.ISO_LOCAL_DATE_TIME );
+	}
+
+	default Pretty prettify( final DateFormat formatter )
+	{
+		return wrapToString( () -> toString( formatter.format(
+				occur().toDate( Date.from( offset().toInstant() ) ) ) ) );
+	}
+
+	default Pretty prettify( final DateTimeFormatter java8Formatter )
+	{
+		return wrapToString( () -> toString(
+				java8Formatter.format( occur().toJava8( offset() ) ) ) );
+	}
+
+	default Pretty
+		prettify( final org.joda.time.format.DateTimeFormatter jodaFormatter )
+	{
+		final ZonedDateTime zdt = offset();
+		return wrapToString( () -> toString( jodaFormatter.print(
+				occur().toJoda( new DateTime( zdt.toInstant().toEpochMilli(),
+						DateTimeZone.forTimeZone( TimeZone
+								.getTimeZone( zdt.getZone() ) ) ) ) ) ) );
+	}
+
 	/**
 	 * {@link ID}
 	 * 
@@ -549,10 +604,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		@Override
 		public String toString()
 		{
-			return type().getSimpleName() + '['
-					+ Integer.toHexString( id().unwrap().hashCode() ) + '|'
-					+ kind() + '|' + creatorRef() + '|' + occur() + ']'
-					+ properties();
+			return toString( occur() );
 		}
 
 		@Override

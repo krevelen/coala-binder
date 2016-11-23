@@ -1,10 +1,14 @@
 package io.coala.time;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.measure.Unit;
 import javax.measure.format.UnitFormat;
 import javax.measure.quantity.Frequency;
 import javax.measure.quantity.Time;
 
+import io.coala.exception.Thrower;
+import io.coala.math.QuantityUtil;
 import tec.uom.se.format.SimpleUnitFormat;
 import tec.uom.se.function.RationalConverter;
 import tec.uom.se.unit.TransformedUnit;
@@ -23,6 +27,11 @@ public class TimeUnits extends Units
 	public static final String MILLIS_LABEL = "ms";
 	public static final Unit<Time> MILLIS = new TransformedUnit<>( MILLIS_LABEL,
 			SECOND, new RationalConverter( 1, 1000 ) );
+
+	/** */
+	public static final String MICROS_LABEL = "µs";
+	public static final Unit<Time> MICROS = new TransformedUnit<>( MICROS_LABEL,
+			SECOND, new RationalConverter( 1, 1000000 ) );
 
 	/** */
 	public static final String NANOS_LABEL = "ns";
@@ -62,11 +71,40 @@ public class TimeUnits extends Units
 
 	static
 	{
+		UNIT_FORMAT.label( MILLIS, MILLIS.getSymbol() );
+		UNIT_FORMAT.label( MICROS, MICROS.getSymbol() );
+		UNIT_FORMAT.label( NANOS, NANOS.getSymbol() );
 		((SimpleUnitFormat) UNIT_FORMAT).alias( HOUR, HOURS.getSymbol() );
 		UNIT_FORMAT.label( DAY, DAY.getSymbol() );
 		((SimpleUnitFormat) UNIT_FORMAT).alias( DAY, DAYS.getSymbol() );
 		UNIT_FORMAT.label( DAILY, DAILY.getSymbol() );
 		UNIT_FORMAT.label( ANNUM, ANNUM.getSymbol() );
 		UNIT_FORMAT.label( ANNUAL, ANNUAL.getSymbol() );
+	}
+
+	public static Unit<?> resolve( final TimeUnit unit )
+	{
+		if( unit == null ) return QuantityUtil.PURE; // abstract time units
+		
+		switch( unit )
+		{
+		case DAYS:
+			return DAYS;
+		case HOURS:
+			return HOURS;
+		case MICROSECONDS:
+			return MICROS;
+		case MILLISECONDS:
+			return MILLIS;
+		case MINUTES:
+			return MINUTE;
+		case NANOSECONDS:
+			return NANOS;
+		case SECONDS:
+			return SECOND;
+		default:
+			return Thrower.throwNew( IllegalArgumentException.class,
+					"Time unit {} unknown", unit );
+		}
 	}
 }

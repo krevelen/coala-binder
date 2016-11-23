@@ -88,7 +88,7 @@ public interface FactExchange
 		 */
 		private Subscription subscribeOutgoing( final Actor<?> actor )
 		{
-			return actor.main().emit()
+			return actor.root().emit()
 					.filter( fact -> fact.isOutgoing( actor.id() ) )
 					.subscribe( this.bus );
 		}
