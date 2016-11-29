@@ -28,8 +28,6 @@ import javax.measure.Quantity;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
 
-import io.coala.random.ProbabilityDistribution.Parser;
-
 /**
  * {@link DistributionParsable}
  * 
@@ -37,47 +35,121 @@ import io.coala.random.ProbabilityDistribution.Parser;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface DistributionParsable<T>
+public interface DistributionParsable
 {
 	/**
 	 * @param <T> the type of values to draw
-	 * @param dist the {@link String} representation
 	 * @param paramType the type of parameter to parse
 	 * @return a {@link ProbabilityDistribution} of {@link T} values
 	 * @throws ParseException
 	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
 	 */
-	ProbabilityDistribution<T> parseType(
-		ProbabilityDistribution.Parser distParser, Class<?> paramType )
+	ProbabilityDistribution<?> parse( Class<?> paramType )
 		throws ParseException;
 
-	/**
-	 * @param <T> the type of values to draw
-	 * @param dist the {@link String} representation
-	 * @return a {@link ProbabilityDistribution} of {@link T} values
-	 * @throws ParseException
-	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
-	 */
-	default ProbabilityDistribution<T>
-		parse( ProbabilityDistribution.Parser distParser ) throws ParseException
+	default <T> ProbabilityDistribution<T>
+		parseAndDraw( final Class<T> valueType ) throws ParseException
 	{
-		return parseType( distParser, BigDecimal.class );
+		return parse( valueType ).ofType( valueType );
 	}
 
 	/**
-	 * @param <T> the type of values to draw
-	 * @param dist the {@link String} representation
-	 * @return a {@link ProbabilityDistribution} of {@link T} values
-	 * @throws ParseException
+	 * Parse numeric arguments using {@link BigDecimal#BigDecimal(String)}
+	 * 
+	 * @return a {@link ProbabilityDistribution} of {@link Number} values
+	 * @throws ParseException if the distribution does not accept
+	 *             {@link BigDecimal} parameters
+	 * @see {@link ProbabilityDistribution.Parser#parse(String)}
+	 */
+	@SuppressWarnings( "unchecked" )
+	default ProbabilityDistribution<?> parse() throws ParseException
+	{
+		return parse( null );
+	}
+
+	default ProbabilityDistribution<Number> parseAndDrawNumeric()
+		throws ParseException
+	{
+		return parse().ofType( Number.class );
+	}
+
+	/**
+	 * @param <Q> the type of {@link Quantity} to draw
+	 * @return a {@link QuantityDistribution}
+	 * @throws ParseException if the distribution does not accept
+	 *             {@link Quantity} parameters
+	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
+	 */
+	@SuppressWarnings( "unchecked" )
+	default QuantityDistribution<?> parseQuantity() throws ParseException
+	{
+		return parseQuantity( Quantity.class );
+	}
+
+	/**
+	 * @param <Q> the type of {@link Quantity} to draw
+	 * @param dimension the {@link Quantity} type
+	 * @return a {@link QuantityDistribution} of {@link Q} values
+	 * @throws ParseException if the distribution does not accept
+	 *             {@link Quantity} parameters
 	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
 	 */
 	@SuppressWarnings( "unchecked" )
 	default <Q extends Quantity<Q>> QuantityDistribution<Q>
-		parse( ProbabilityDistribution.Parser distParser, Class<Q> quantity )
-			throws ParseException
+		parseQuantity( final Class<Q> dimension ) throws ParseException
 	{
-		return (QuantityDistribution<Q>) parseType( distParser, Quantity.class )
-				.toQuantities();
+		return parse( Quantity.class ).toQuantities( dimension );
+	}
+
+	/**
+	 * "getter" for building result
+	 * 
+	 * @return the configured {@link ProbabilityDistribution.Parser}, default
+	 *         wraps a basic {@link DistributionFactory}
+	 */
+	default ProbabilityDistribution.Parser parser()
+	{
+		return new DistributionParser( DistributionFactory.instance() );
+	}
+
+	/**
+	 * builder-like "setter" to allow chaining
+	 * 
+	 * @param factory
+	 * @return reset the configured {@link ProbabilityDistribution.Parser},
+	 *         default wraps a basic {@link DistributionFactory}
+	 */
+	default DistributionParsable with( final DistributionFactory factory )
+	{
+		return with( new DistributionParser( factory ) );
+	}
+
+	/**
+	 * builder-like "setter" to allow chaining
+	 * 
+	 * @param parser
+	 * @return reset the configured {@link ProbabilityDistribution.Parser},
+	 *         default wraps a basic {@link DistributionFactory}
+	 */
+	default DistributionParsable
+		with( final ProbabilityDistribution.Parser parser )
+	{
+		final DistributionParsable self = this;
+		return new DistributionParsable()
+		{
+			@Override
+			public ProbabilityDistribution.Parser parser()
+			{
+				return parser;
+			}
+
+			@Override
+			public ProbabilityDistribution<?> parse( final Class<?> paramType )
+				throws ParseException
+			{
+				return self.parse( paramType );
+			}
+		};
 	}
 
 	/**
@@ -87,20 +159,20 @@ public interface DistributionParsable<T>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	public class FromString<T> implements Converter<DistributionParsable<T>>
+	public class FromString implements Converter<DistributionParsable>
 	{
-		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		@Override
-		public DistributionParsable<T> convert( final Method method,
+		public DistributionParsable convert( final Method method,
 			final String input )
 		{
 			return new DistributionParsable()
 			{
 				@Override
-				public ProbabilityDistribution parseType( final Parser p,
-					final Class t ) throws ParseException
+				public ProbabilityDistribution<?>
+					parse( final Class<?> paramType ) throws ParseException
 				{
-					return p.parse( input, t );
+					return paramType == null ? parser().parse( input )
+							: parser().parse( input, paramType );
 				}
 
 				@Override

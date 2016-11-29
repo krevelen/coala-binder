@@ -198,6 +198,11 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	@JsonProperty( CAUSE_REF_PROPERTY )
 	Fact.ID causeRef();
 
+	default ZonedDateTime offset()
+	{
+		return transaction().offset();
+	}
+
 	/**
 	 * Default storage for bean properties, also useful for reference by a
 	 * {@link JsonAnyGetter} or {@link JsonAnySetter} method
@@ -205,11 +210,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	 * @return the properties {@link Map} as used for extended getters/setters
 	 */
 	Map<String, Object> properties();
-
-	default ZonedDateTime offset()
-	{
-		return transaction().offset();
-	}
 
 	/**
 	 * Useful as {@link JsonAnySetter}
@@ -428,8 +428,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	{
 		return type().getSimpleName() + '['
 				+ Integer.toHexString( id().unwrap().hashCode() ) + '|' + kind()
-				+ '|' + creatorRef().parentRef().unwrap() + "->"
-				+ responderRef().parentRef().unwrap() + '|' + occur + ']'
+				+ '|' + creatorRef().organizationRef().unwrap() + "->"
+				+ responderRef().organizationRef().unwrap() + '|' + occur + ']'
 				+ (properties().isEmpty() ? "" : properties());
 	}
 

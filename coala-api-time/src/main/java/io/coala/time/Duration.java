@@ -32,6 +32,7 @@ import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
 import io.coala.math.QuantityUtil;
+import io.coala.util.Compare;
 import io.coala.xml.XmlUtil;
 import tec.uom.se.ComparableQuantity;
 
@@ -260,9 +261,25 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return of( QuantityUtil.pow( unwrap(), exponent ) );
 	}
 
-	/**
-	 * @return the absolute value
-	 */
+	@Override // make dimensionless #ZERO, #ONE commensurable with other units
+	public int compareTo( final Comparable that )
+	{
+		final int thatSignum = QuantityUtil
+				.signum( ((Duration) that).unwrap() );
+		return signum() == 0 ? thatSignum * -1
+				: thatSignum == 0 ? signum() : super.compareTo( that );
+	}
+
+	public Duration min( final Duration that )
+	{
+		return Compare.lt( that, this ) ? that : this;
+	}
+
+	public Duration max( final Duration that )
+	{
+		return Compare.gt( that, this ) ? that : this;
+	}
+
 	public Duration abs()
 	{
 		return signum() < 0 ? of( decimal().abs(), unit() ) : this;

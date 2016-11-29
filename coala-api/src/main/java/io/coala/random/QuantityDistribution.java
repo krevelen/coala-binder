@@ -20,12 +20,13 @@
 package io.coala.random;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import io.coala.math.QuantityUtil;
+import io.coala.util.Compare;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@link QuantityDistribution} is a {@link ProbabilityDistribution} for
@@ -84,15 +85,13 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	}
 
 	/**
-	 * @param <R> the new type after transformation
-	 * @param transform a unary {@link Function} to transform {@link Quantity}s
-	 * @return a {@link ProbabilityDistribution}
+	 * @param qty
+	 * @return
 	 */
-	default <R> ProbabilityDistribution<R>
-		map( final Function<Quantity<Q>, R> transform )
+	default <R extends Quantity<R>> QuantityDistribution<R>
+		asType( final Class<R> qty )
 	{
-		return ProbabilityDistribution
-				.of( (Supplier<R>) () -> transform.apply( draw() ) );
+		return transform( q -> q.asType( qty ) );
 	}
 
 	/**
@@ -178,6 +177,16 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	default QuantityDistribution<?> inverse()
 	{
 		return transform( Quantity::inverse );
+	}
+
+	default QuantityDistribution<Q> min(final ComparableQuantity<Q> qty2 )
+	{
+		return transform(qty1-> Compare.min( (ComparableQuantity<Q>)qty1, qty2 ));
+	}
+
+	default QuantityDistribution<Q> max(final ComparableQuantity<Q> qty2 )
+	{
+		return transform(qty1-> Compare.max( (ComparableQuantity<Q>)qty1, qty2 ));
 	}
 
 	/**

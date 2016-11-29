@@ -66,8 +66,7 @@ public interface GlobalConfig extends YamlConfig
 		final String base = base(),
 				sub = base == null ? baseKey : base + KEY_SEP + baseKey;
 		subMap.put( BASE_KEY, sub );
-		return ConfigCache.getOrCreate( sub, type,
-				ConfigUtil.join( subMap, imports ) );
+		return ConfigFactory.create( type, ConfigUtil.join( subMap, imports ) );
 	}
 
 	default <T extends GlobalConfig> Map<String, T> subConfigs(

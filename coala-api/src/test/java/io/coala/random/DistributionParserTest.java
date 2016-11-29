@@ -4,7 +4,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.text.ParseException;
 
-import javax.measure.quantity.Time;
+import javax.measure.Quantity;
 
 import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import io.coala.bind.LocalConfig;
 import io.coala.random.DistributionParsable.FromString;
-import tec.uom.se.unit.Units;
 
 /**
  * {@link DistributionParserTest}
@@ -38,21 +37,21 @@ public class DistributionParserTest
 
 		String BERNOULLI_DIST_DEFAULT = " BERNOULLI (  0.5 )";
 
-		String GAUSS_DIST_DEFAULT = "nOrMaL (10 ;.5 ) ";
+		String GAUSS_DIST_DEFAULT = "nOrMaL (10 day;.5 h ) ";
 
 		String CATEGORICAL_DIST_DEFAULT = "eNUM (hi:4 ; miD: 3 ;LO :.91 )";
 
 		@DefaultValue( BERNOULLI_DIST_DEFAULT )
 		@ConverterClass( FromString.class )
-		DistributionParsable<Boolean> bernoulli();
+		DistributionParsable bernoulliBoolean();
 
 		@DefaultValue( GAUSS_DIST_DEFAULT )
 		@ConverterClass( FromString.class )
-		DistributionParsable<Double> gaussAmount();
+		DistributionParsable gaussQuantity();
 
 		@DefaultValue( CATEGORICAL_DIST_DEFAULT )
 		@ConverterClass( FromString.class )
-		DistributionParsable<HML> categoricalEnum();
+		DistributionParsable categoricalEnum();
 	}
 
 	@Test
@@ -61,28 +60,27 @@ public class DistributionParserTest
 		final Config config = ConfigCache.getOrCreate( Config.class );
 		LOG.info( "Starting DistributionParser test, config: {}", config );
 
-		final ProbabilityDistribution.Parser distParser = new DistributionParser(
-				DistributionFactory.instance() );
-		final ProbabilityDistribution<Boolean> bernoulli = config.bernoulli()
-				.parse( distParser );
+		final ProbabilityDistribution<Boolean> bernoulli = config
+				.bernoulliBoolean().parse().ofType( Boolean.class );
 
 		assertNotNull( "bernoulli not set", bernoulli );
 		for( int i = 0; i < 10; i++ )
-			LOG.trace( "`{}` coin toss #{}: {}", config.bernoulli(), i + 1,
-					bernoulli.draw() ? "heads" : "tails" );
+			LOG.trace( "`{}` coin toss #{}: {}", config.bernoulliBoolean(),
+					i + 1, bernoulli.draw() ? "heads" : "tails" );
 
 		final ProbabilityDistribution<HML> categoricalEnum = config
-				.categoricalEnum().parseType( distParser, HML.class );
+				.categoricalEnum().parseAndDraw( HML.class );
 		assertNotNull( "categoricalEnum not set", categoricalEnum );
 		for( int i = 0; i < 10; i++ )
 			LOG.trace( "`{}` #{}: {}", config.categoricalEnum(), i + 1,
 					categoricalEnum.draw() );
 
-		final QuantityDistribution<Time> gaussAmount = config.gaussAmount()
-				.parse( distParser ).toQuantities( Units.HOUR );
-		assertNotNull( "gaussAmount not set", gaussAmount );
+		@SuppressWarnings( "unchecked" )
+		final QuantityDistribution<?> gaussAmount = config.gaussQuantity()
+				.parseQuantity().asType( Quantity.class );
+		assertNotNull( "gaussQuantity not set", gaussAmount );
 		for( int i = 0; i < 10; i++ )
-			LOG.trace( "`{}` gaussian Amount #{}: {}", config.gaussAmount(),
+			LOG.trace( "`{}` gaussian Quantity #{}: {}", config.gaussQuantity(),
 					i + 1, gaussAmount.draw() );
 
 		LOG.info( "Completed DistributionParser test" );

@@ -1,12 +1,17 @@
 package io.coala.math;
 
+import java.math.BigDecimal;
+import java.text.ParseException;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import io.coala.util.Compare;
 import io.coala.util.Comparison;
+import io.coala.util.InstanceParser;
 import tec.uom.se.ComparableQuantity;
 
 /**
@@ -18,6 +23,85 @@ import tec.uom.se.ComparableQuantity;
  */
 public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 {
+
+	public static final String LOWER_INCLUSIVE_GROUP = "lincl";
+
+	public static final String LOWER_VALUE_GROUP = "lower";
+
+	public static final String UPPER_VALUE_GROUP = "upper";
+
+	public static final String UPPER_INCLUSIVE_GROUP = "uincl";
+
+	public static final String LOWER_INCLUSIVENESS = "[\\u005B\\u003C\\u3008\\u2329]";
+
+	public static final String EXTREME_SEPARATORS = ":;";
+
+	public static final String UPPER_INCLUSIVENESS = "[\\u005D\\u003E\\u3009\\u232A]";
+
+	/**
+	 * matches string representations like: <code>&#x3008;&larr;; max]</code> or
+	 * <code>[0:15]</code>
+	 */
+	public static final String RANGE_FORMAT_REGEX = "^(?<"
+			+ LOWER_INCLUSIVE_GROUP + ">" + LOWER_INCLUSIVENESS + ")" + "\\s*"
+			+ "(?<" + LOWER_VALUE_GROUP + ">[^" + EXTREME_SEPARATORS + "]+)"
+			+ "\\s*[" + EXTREME_SEPARATORS + "]\\s*" + "(?<" + UPPER_VALUE_GROUP
+			+ ">[^>\\])]*)" + "\\s*(?<" + UPPER_INCLUSIVE_GROUP + ">"
+			+ UPPER_INCLUSIVENESS + ")$";
+
+	/**
+	 * matches string representations like: <code>&#x3008;&larr; ; inf></code>
+	 * or <code>[0:15]</code>
+	 */
+	public static final Pattern RANGE_FORMAT = Pattern
+			.compile( RANGE_FORMAT_REGEX );
+
+	/**
+	 * matches string representations like: <code>&#x3008;&larr;; +inf></code>
+	 * or <code>[0:15]</code>
+	 */
+	public static Range<BigDecimal> parse( final String range )
+		throws ParseException
+	{
+		return parse( range, BigDecimal.class );
+	}
+
+	/**
+	 * matches string representations like: <code>&#x3008;&larr;; +inf></code>
+	 * or <code>[0:15]</code>
+	 */
+	public static <T extends Comparable<?>> Range<T> parse( final String range,
+		final Class<T> valueType ) throws ParseException
+	{
+		final Matcher m = RANGE_FORMAT.matcher( range.trim() );
+		if( !m.find() ) throw new ParseException(
+				"Incorrect format, expected e.g. `[lower;upper>`, was: "
+						+ range,
+				0 );
+
+		final InstanceParser<T> argParser = InstanceParser.of( valueType );
+		T lower, upper;
+		Boolean lowerIncl, upperIncl;
+		try
+		{
+			lower = argParser.parse( m.group( LOWER_VALUE_GROUP ).trim() );
+			lowerIncl = m.group( LOWER_INCLUSIVE_GROUP ).equals( "[" );
+		} catch( Throwable e )
+		{
+			lower = null;
+			lowerIncl = null;
+		}
+		try
+		{
+			upper = argParser.parse( m.group( UPPER_VALUE_GROUP ).trim() );
+			upperIncl = m.group( UPPER_INCLUSIVE_GROUP ).equals( "]" );
+		} catch( Throwable e )
+		{
+			upper = null;
+			upperIncl = null;
+		}
+		return of( lower, lowerIncl, upper, upperIncl );
+	}
 
 	private Extreme<T> maximum;
 
@@ -85,6 +169,12 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 		return !isGreaterThan( value ) && !isLessThan( value );
 	}
 
+	public T crop( final T value )
+	{
+		return isLessThan( value ) ? getMaximum().getValue()
+				: isGreaterThan( value ) ? getMinimum().getValue() : value;
+	}
+
 	public boolean overlaps( final Range<T> that )
 	{
 		return intersect( that ) != null;
@@ -101,10 +191,10 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	{
 		return new StringBuilder()
 				.append( getMinimum().isInclusive() ? '[' : '<' )
-				.append( getMinimum().isInfinity() ? "←"
+				.append( getMinimum().isInfinity() ? "-inf" //"←"
 						: getMinimum().getValue() )
-				.append( ", " )
-				.append( getMaximum().isInfinity() ? "→"
+				.append( "; " )
+				.append( getMaximum().isInfinity() ? "+inf" //"→"
 						: getMaximum().getValue() )
 				.append( getMaximum().isInclusive() ? ']' : '>' ).toString();
 	}
@@ -116,6 +206,15 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 				.compareTo( that.getMinimum() );
 		return minComparison != 0 ? minComparison
 				: this.getMaximum().compareTo( that.getMaximum() );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	@Override
+	public boolean equals( final Object that )
+	{
+		return that != null && that instanceof Range
+				&& ((Range<T>) that).getMinimum().equals( getMinimum() )
+				&& ((Range<T>) that).getMaximum().equals( getMaximum() );
 	}
 
 	public static <T extends Comparable<?>> Range<T> infinite()

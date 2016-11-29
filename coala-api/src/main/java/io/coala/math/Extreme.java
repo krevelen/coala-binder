@@ -128,6 +128,20 @@ public class Extreme<T extends Comparable<?>> implements Comparable<Extreme<T>>
 		return compareWith( that ).toInt();
 	}
 
+	@SuppressWarnings( "unchecked" )
+	@Override
+	public boolean equals( final Object that )
+	{
+		return that != null && that instanceof Extreme
+				&& ((Extreme<T>) that).boundary.equals( this.boundary )
+				&& (this.inclusive == null
+						? ((Extreme<T>) that).inclusive == null
+						: this.inclusive
+								.equals( ((Extreme<T>) that).inclusive ))
+				&& (this.value == null ? ((Extreme<T>) that).value == null
+						: this.value.equals( ((Extreme<T>) that).value ));
+	}
+
 	/**
 	 * @param that
 	 * @return

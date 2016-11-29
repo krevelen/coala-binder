@@ -29,59 +29,98 @@ import java.util.function.Function;
  * 
  * @version $Id$
  * @author Rick van Krevelen
+ * 
+ * @param <T> the type of value to draw from the conditional distributions
+ * @param <C> the type of condition for selecting a distribution
  */
+@FunctionalInterface
 public interface ConditionalDistribution<T, C>
 {
 
 	T draw( C condition );
 
 	/**
+	 * Simple example usage for Bernoulli distributions
+	 * 
+	 * @param <C> the type of condition for selecting a distribution
+	 * @param rng a {@link PseudoRandom} number generator
+	 * @param probGen the probability generator, e.g. a {@link Map::get}
+	 * @return a {@link ConditionalDistribution}
+	 */
+	static <C> ConditionalDistribution<Boolean, C>
+		ofBernoulli( final PseudoRandom rng, final Function<C, Number> probGen )
+	{
+		return of( p -> ProbabilityDistribution.createBernoulli( rng, p ),
+				probGen );
+	}
+
+	/**
 	 * @param <T> the type of value drawn by the conditional distributions
 	 * @param <C> the type of condition for selecting a distribution
 	 * @param <X> the type of parameter for generating a distribution
-	 * @param distGen
-	 * @param distParameter1
-	 * @return
+	 * @param distGen distribution generator taking one parameter
+	 * @param param1Gen generator of the first parameter given the condition
+	 * @return a {@link ConditionalDistribution}
 	 */
 	static <T, C, X> ConditionalDistribution<T, C> of(
 		final Function<X, ProbabilityDistribution<T>> distGen,
-		final Function<C, X> distParameter1 )
+		final Function<C, X> param1Gen )
 	{
-		final Map<C, ProbabilityDistribution<T>> distCache = new HashMap<>();
-		return c -> distCache
-				.computeIfAbsent( c,
-						t -> distGen.apply( distParameter1.apply( t ) ) )
-				.draw();
+		return of( distGen, param1Gen, new HashMap<>() );
 	}
 
-	static <T, C, X, Y> ConditionalDistribution<T, C> of(
-		final BiFunction<X, Y, ProbabilityDistribution<T>> distGen,
-		final Function<C, X> distParameter1,
-		final Function<C, Y> distParameter2 )
-	{
-		final Map<C, ProbabilityDistribution<T>> distCache = new HashMap<>();
-		return c -> distCache.computeIfAbsent( c, t -> distGen
-				.apply( distParameter1.apply( t ), distParameter2.apply( t ) ) )
-				.draw();
-	}
-
+	/**
+	 * @param <T> the type of value drawn by the conditional distributions
+	 * @param <C> the type of condition for selecting a distribution
+	 * @param <X> the type of parameter for generating a distribution
+	 * @param distGen distribution generator taking one parameter
+	 * @param param1Gen generator of the first parameter given the condition
+	 * @param distCache caches previously generated distributions
+	 * @return a {@link ConditionalDistribution}
+	 */
 	static <T, C, X> ConditionalDistribution<T, C> of(
 		final Function<X, ProbabilityDistribution<T>> distGen,
-		final Map<C, X> conditionalParam1cache, final X defaultParam1 )
+		final Function<C, X> param1Gen,
+		final Map<C, ProbabilityDistribution<T>> distCache )
 	{
-		return of( distGen, c -> conditionalParam1cache.computeIfAbsent( c,
-				key -> defaultParam1 ) );
+		return c -> distCache.computeIfAbsent( c,
+				t -> distGen.apply( param1Gen.apply( t ) ) ).draw();
 	}
 
+	/**
+	 * @param <T> the type of value drawn by the conditional distributions
+	 * @param <C> the type of condition for selecting a distribution
+	 * @param <X> the type of the first distribution parameter
+	 * @param <Y> the type of the second distribution parameter
+	 * @param distGen distribution generator taking one parameter
+	 * @param param1Gen generator of the first parameter for some condition
+	 * @param param2Gen generator of the second parameter for some condition
+	 * @return a {@link ConditionalDistribution}
+	 */
 	static <T, C, X, Y> ConditionalDistribution<T, C> of(
 		final BiFunction<X, Y, ProbabilityDistribution<T>> distGen,
-		final Map<C, X> conditionalParam1cache, final X defaultParam1,
-		final Map<C, Y> conditionalParam2cache, final Y defaultParam2 )
+		final Function<C, X> param1Gen, final Function<C, Y> param2Gen )
 	{
-		return of( distGen,
-				c -> conditionalParam1cache.computeIfAbsent( c,
-						key -> defaultParam1 ),
-				c -> conditionalParam2cache.computeIfAbsent( c,
-						key -> defaultParam2 ) );
+		return of( distGen, param1Gen, param2Gen, new HashMap<>() );
+	}
+
+	/**
+	 * @param <T> the type of value drawn by the conditional distributions
+	 * @param <C> the type of condition for selecting a distribution
+	 * @param <X> the type of the first distribution parameter
+	 * @param <Y> the type of the second distribution parameter
+	 * @param distGen distribution generator taking one parameter
+	 * @param param1Gen generator of the first parameter for some condition
+	 * @param param2Gen generator of the second parameter for some condition
+	 * @param distCache caches previously generated distributions
+	 * @return a {@link ConditionalDistribution}
+	 */
+	static <T, C, X, Y> ConditionalDistribution<T, C> of(
+		final BiFunction<X, Y, ProbabilityDistribution<T>> distGen,
+		final Function<C, X> param1Gen, final Function<C, Y> param2Gen,
+		final Map<C, ProbabilityDistribution<T>> distCache )
+	{
+		return c -> distCache.computeIfAbsent( c, t -> distGen
+				.apply( param1Gen.apply( t ), param2Gen.apply( t ) ) ).draw();
 	}
 }

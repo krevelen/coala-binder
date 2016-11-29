@@ -235,11 +235,13 @@ public class QuantityUtil implements Util
 		{
 			try
 			{
-				final java.time.Duration java8iso = java.time.Duration.parse( qty );
+				final java.time.Duration java8iso = java.time.Duration
+						.parse( qty );
 				return valueOf(
 						BigDecimal.valueOf( java8iso.getSeconds() )
 								.add( java8iso.getNano() == 0 ? BigDecimal.ZERO
-										: BigDecimal.valueOf( java8iso.getNano() )
+										: BigDecimal
+												.valueOf( java8iso.getNano() )
 												.divide( BigDecimal.TEN
 														.pow( 9 ) ) ),
 						Units.SECOND );
@@ -415,6 +417,18 @@ public class QuantityUtil implements Util
 		doubleValue( final Quantity<?> qty, final Unit<Q> unit )
 	{
 		return DecimalUtil.doubleValue( valueOf( qty, unit ).getValue() );
+	}
+
+	public <Q extends Quantity<Q>> Quantity<Q> min(
+		final ComparableQuantity<Q> qty1, final ComparableQuantity<Q> qty2 )
+	{
+		return Compare.min( qty1, qty2 );
+	}
+
+	public <Q extends Quantity<Q>> Quantity<Q> max(
+		final ComparableQuantity<Q> qty1, final ComparableQuantity<Q> qty2 )
+	{
+		return Compare.max( qty1, qty2 );
 	}
 
 	public static boolean approximates( final Quantity<Angle> qty1,

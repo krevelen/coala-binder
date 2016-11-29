@@ -22,6 +22,7 @@ package io.coala.enterprise;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.measure.Unit;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
@@ -43,9 +46,11 @@ import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
+import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.Scheduler;
+import io.coala.time.Timing;
 import io.coala.util.ReflectUtil;
 import io.coala.util.TypeArguments;
 import rx.Observable;
@@ -67,6 +72,34 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @return the properties {@link Map} as used for extended getters/setters
 	 */
 	Map<String, Object> properties();
+
+	/**
+	 * Useful as {@link JsonAnySetter}
+	 * 
+	 * @param property the property (or bean attribute) to change
+	 * @param value the new value
+	 * @return the previous value, as per {@link Map#put(Object, Object)}
+	 */
+	default Object set( final String property, final Object value )
+	{
+		return properties().put( property, value );
+	}
+
+	/**
+	 * Builder-style bean property setter
+	 * 
+	 * @param property the property (or bean attribute) to change
+	 * @param value the new value
+	 * @return this {@link Actor} to allow chaining
+	 */
+	@SuppressWarnings( "unchecked" )
+	@JsonIgnore
+	default <A extends Actor<F>> A with( final String property,
+		final Object value )
+	{
+		set( property, value );
+		return (A) this;
+	}
 
 	/**
 	 * @return an {@link Observable} stream of all generated or received
@@ -93,6 +126,18 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	}
 
 	/**
+	 * @param factKind the {@link FactKind} to filter for
+	 * @param creatorRef the origin {@link Actor.ID} to filter for
+	 * @return an {@link Observable} of incoming {@link Fact}s
+	 */
+	default Observable<F> emit( final FactKind factKind,
+		final Actor.ID creatorRef )
+	{
+		return emit().filter( f -> f.kind().equals( factKind ) && f.creatorRef()
+				.organizationRef().equals( creatorRef.organizationRef() ) );
+	}
+
+	/**
 	 * @param tranKind the type of {@link Fact} to filter for
 	 * @param factKind the {@link FactKind} to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
@@ -111,8 +156,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	default <T extends F> Observable<T> emit( final Class<T> tranKind,
 		final Actor.ID creatorRef )
 	{
-		return emit( tranKind )
-				.filter( fact -> fact.creatorRef().equals( creatorRef ) );
+		return emit( tranKind ).filter( f -> f.creatorRef().organizationRef()
+				.equals( creatorRef.organizationRef() ) );
 	}
 
 	/**
@@ -124,8 +169,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	default <T extends F> Observable<T> emit( final Class<T> tranKind,
 		final FactKind factKind, final Actor.ID creatorRef )
 	{
-		return emit( tranKind, factKind )
-				.filter( fact -> fact.creatorRef().equals( creatorRef ) );
+		return emit( tranKind, factKind ).filter( fact -> fact.creatorRef()
+				.organizationRef().equals( creatorRef.organizationRef() ) );
 	}
 
 	/**
@@ -274,14 +319,37 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		return binder().inject( Factory.class );
 	}
 
+	default Unit<?> timeUnit()
+	{
+		return factory().timeUnit();
+	}
+
 	default ZonedDateTime offset()
 	{
 		return factory().offset();
 	}
 
-	default Unit<?> timeUnit()
+	default Observable<Instant> atEach( final Timing when )
 	{
-		return factory().timeUnit();
+		try
+		{
+			return atEach( when.offset( offset() ).iterate() );
+		} catch( final ParseException e )
+		{
+			return Observable.error( e );
+		}
+	}
+
+	default Observable<Expectation> atEach( final Timing when,
+		final ThrowingConsumer<Instant, ?> what )
+	{
+		try
+		{
+			return atEach( when.offset( offset() ).iterate(), what );
+		} catch( final ParseException e )
+		{
+			return Observable.error( e );
+		}
 	}
 
 	Actor<Fact> root();
