@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>io.coala</groupId>
+  <artifactId>coala</artifactId>
+  <version>0.2.0-b6-SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <timestamp>20161201.120134</timestamp>
+      <buildNumber>1</buildNumber>
+    </snapshot>
+    <lastUpdated>20161201120134</lastUpdated>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>0.2.0-b6-20161201.120134-1</value>
+        <updated>20161201120134</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+</metadata>
