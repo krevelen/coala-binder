@@ -191,10 +191,10 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	{
 		return new StringBuilder()
 				.append( getMinimum().isInclusive() ? '[' : '<' )
-				.append( getMinimum().isInfinity() ? "-inf" //"←"
+				.append( getMinimum().isInfinity() ? "-inf"
 						: getMinimum().getValue() )
 				.append( "; " )
-				.append( getMaximum().isInfinity() ? "+inf" //"→"
+				.append( getMaximum().isInfinity() ? "+inf"
 						: getMaximum().getValue() )
 				.append( getMaximum().isInclusive() ? ']' : '>' ).toString();
 	}
