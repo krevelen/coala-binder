@@ -19,6 +19,7 @@
  */
 package io.coala.enterprise;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -133,8 +134,8 @@ public interface Transaction<F extends Fact>
 
 	FactBank<F> factBank();
 
-	/** @return the {@link java.time.Instant} UTC offset of virtual time */
-	java.time.Instant offset();
+	/** @return the {@link ZonedDateTime} offset of virtual time */
+	ZonedDateTime offset();
 
 	/** @return the {@link Unit} of virtual time */
 	Unit<?> timeUnit();
@@ -205,7 +206,7 @@ public interface Transaction<F extends Fact>
 		final Class<F> kind, final Actor.ID initiatorRef,
 		final Actor.ID executorRef, final Scheduler scheduler,
 		final Fact.Factory factFactory, final Unit<?> timeUnit,
-		final java.time.Instant offset )
+		final ZonedDateTime offset )
 	{
 		return new Simple<F>( id, kind, initiatorRef, executorRef, scheduler,
 				factFactory, timeUnit, offset );
@@ -229,7 +230,7 @@ public interface Transaction<F extends Fact>
 		private transient Scheduler scheduler;
 		private transient Fact.Factory factFactory;
 		private transient FactBank<F> factBank = null;
-		private transient java.time.Instant offset = null;
+		private transient ZonedDateTime offset = null;
 		private transient Unit<?> timeUnit = null;
 
 		private Transaction.ID id;
@@ -248,7 +249,7 @@ public interface Transaction<F extends Fact>
 		public Simple( final Transaction.ID id, final Class<F> kind,
 			final Actor.ID initiatorRef, final Actor.ID executorRef,
 			final Scheduler scheduler, final Fact.Factory factFactory,
-			final Unit<?> timeUnit, final java.time.Instant offset )
+			final Unit<?> timeUnit, final ZonedDateTime offset )
 		{
 			this.id = id;
 			this.kind = kind;
@@ -386,7 +387,7 @@ public interface Transaction<F extends Fact>
 		}
 
 		@Override
-		public java.time.Instant offset()
+		public ZonedDateTime offset()
 		{
 			return this.offset;
 		}
@@ -409,8 +410,8 @@ public interface Transaction<F extends Fact>
 		<F extends Fact> Transaction<F> create( Transaction.ID id,
 			Class<F> factType, Actor.ID initiator, Actor.ID executor );
 
-		/** @return the {@link java.time.Instant} UTC offset of virtual time */
-		java.time.Instant offset();
+		/** @return the {@link ZonedDateTime} offset of virtual time */
+		ZonedDateTime offset();
 
 		/** @return the {@link Unit} of virtual time */
 		Unit<?> timeUnit();
@@ -429,7 +430,7 @@ public interface Transaction<F extends Fact>
 			@InjectConfig
 			private transient ReplicateConfig config;
 			private transient Unit<?> timeUnitCache;
-			private transient java.time.Instant offsetCache;
+			private transient ZonedDateTime offsetCache;
 
 			@SuppressWarnings( "unchecked" )
 			@Override
@@ -452,7 +453,7 @@ public interface Transaction<F extends Fact>
 			}
 
 			@Override
-			public java.time.Instant offset()
+			public ZonedDateTime offset()
 			{
 				return this.offsetCache != null ? this.offsetCache
 						: (this.offsetCache = ConfigUtil.cachedValue(

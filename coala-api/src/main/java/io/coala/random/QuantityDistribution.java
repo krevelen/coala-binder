@@ -25,14 +25,15 @@ import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import io.coala.math.QuantityUtil;
-import rx.functions.Func1;
+import io.coala.util.Compare;
+import tec.uom.se.ComparableQuantity;
 
 /**
  * {@link QuantityDistribution} is a {@link ProbabilityDistribution} for
- * {@link Amount}s of some {@link Quantity}, decorated with arithmetic
- * transforms of e.g. {@link Amount#times(double)} etc.
+ * {@link Quantity}s of some {@link Quantity}, decorated with arithmetic
+ * transforms of e.g. {@link Quantity#times(double)} etc.
  * 
- * @param <Q> the type of {@link Quantity} for produced {@link Amount}s
+ * @param <Q> the type of {@link Quantity} for produced {@link Quantity}s
  * @version $Id$
  * @author Rick van Krevelen
  */
@@ -50,7 +51,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <Q> the measurement {@link Quantity} to assign
 	 * @param dist the {@link ProbabilityDistribution} to wrap
 	 * @param unit the {@link Unit} of measurement to assign
-	 * @return an {@link QuantityDistribution} for {@link Amount}s from drawn
+	 * @return an {@link QuantityDistribution} for {@link Quantity}s from drawn
 	 *         {@link Number}s, with an attempt to maintain exactness
 	 */
 	public static <N extends Number, Q extends Quantity<Q>>
@@ -74,7 +75,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
-	 * @param transform a unary {@link Func1} to transform {@link Amount}s
+	 * @param transform a unary {@link Function} to transform {@link Quantity}s
 	 * @return a chained {@link QuantityDistribution}
 	 */
 	default <R extends Quantity<R>> QuantityDistribution<R>
@@ -84,9 +85,19 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	}
 
 	/**
+	 * @param qty
+	 * @return
+	 */
+	default <R extends Quantity<R>> QuantityDistribution<R>
+		asType( final Class<R> qty )
+	{
+		return transform( q -> q.asType( qty ) );
+	}
+
+	/**
 	 * @param unit the {@link Unit} to convert to
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#to(Unit)
+	 * @see Quantity#to(Unit)
 	 */
 	default QuantityDistribution<Q> to( final Unit<Q> unit )
 	{
@@ -94,9 +105,9 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	}
 
 	/**
-	 * @param augend the {@link Amount} to be added
+	 * @param augend the {@link Quantity} to be added
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#plus(Amount)
+	 * @see Quantity#plus(Quantity)
 	 */
 	default QuantityDistribution<Q> add( final Quantity<Q> augend )
 	{
@@ -104,9 +115,9 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	}
 
 	/**
-	 * @param subtrahend the {@link Amount} to be subtracted
+	 * @param subtrahend the {@link Quantity} to be subtracted
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#minus(Amount)
+	 * @see Quantity#minus(Quantity)
 	 */
 	default QuantityDistribution<Q> subtract( final Quantity<Q> subtrahend )
 	{
@@ -116,7 +127,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	/**
 	 * @param multiplier the scaling factor
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#times(long)
+	 * @see Quantity#multiply(Number)
 	 */
 	default QuantityDistribution<Q> multiply( final Number multiplier )
 	{
@@ -125,9 +136,9 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
-	 * @param multiplier the measure multiplier {@link Amount}
+	 * @param multiplier the measure multiplier {@link Quantity}
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#times(Amount)
+	 * @see Quantity#multiply(Quantity)
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	default <R extends Quantity<R>> QuantityDistribution<R>
@@ -139,7 +150,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	/**
 	 * @param divisor the exact divisor
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#divide(long)
+	 * @see Quantity#divide(Number)
 	 */
 	default QuantityDistribution<Q> divide( final Number divisor )
 	{
@@ -148,9 +159,9 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
-	 * @param divisor the divisor {@link Amount}
+	 * @param divisor the divisor {@link Quantity}
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#divide(Amount)
+	 * @see Quantity#divide(Quantity)
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	default <R extends Quantity<R>> QuantityDistribution<R>
@@ -161,16 +172,26 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 
 	/**
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#inverse()
+	 * @see Quantity#inverse()
 	 */
 	default QuantityDistribution<?> inverse()
 	{
 		return transform( Quantity::inverse );
 	}
 
+	default QuantityDistribution<Q> min(final ComparableQuantity<Q> qty2 )
+	{
+		return transform(qty1-> Compare.min( (ComparableQuantity<Q>)qty1, qty2 ));
+	}
+
+	default QuantityDistribution<Q> max(final ComparableQuantity<Q> qty2 )
+	{
+		return transform(qty1-> Compare.max( (ComparableQuantity<Q>)qty1, qty2 ));
+	}
+
 	/**
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#abs()
+	 * @see QuantityUtil#abs(Quantity)
 	 */
 	default QuantityDistribution<Q> abs()
 	{
@@ -180,7 +201,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	/**
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#sqrt()
+	 * @see QuantityUtil#sqrt(Quantity)
 	 */
 	default QuantityDistribution<?> sqrt()
 	{
@@ -191,7 +212,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param n the root's order (n != 0)
 	 * @return a chained {@link QuantityDistribution}
-	 * @see Amount#root(int)
+	 * @see QuantityUtil#root(Quantity,int)
 	 */
 	default QuantityDistribution<?> root( final int n )
 	{
@@ -202,7 +223,7 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param exp the exponent
 	 * @return <code>this<sup>exp</sup></code>
-	 * @see Amount#pow(int)
+	 * @see QuantityUtil#pow(Quantity,int)
 	 */
 	default QuantityDistribution<?> pow( final int exp )
 	{
@@ -213,11 +234,10 @@ public interface QuantityDistribution<Q extends Quantity<Q>>
 	 * @param <R> the new type of {@link Quantity} after transformation
 	 * @param exp the exponent
 	 * @return <code>this<sup>exp</sup></code>
-	 * @see Amount#pow(int)
+	 * @see QuantityUtil#pow(Quantity,int)
 	 */
 	default ProbabilityDistribution<Number> pow( final Number exp )
 	{
-		final QuantityDistribution<?> self = this;
-		return () -> QuantityUtil.pow( self.draw(), exp );
+		return () -> QuantityUtil.pow( draw(), exp );
 	}
 }

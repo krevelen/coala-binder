@@ -19,16 +19,16 @@
  */
 package io.coala.time;
 
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Map;
 
 import javax.measure.Unit;
 
 import org.aeonbits.owner.ConfigCache;
-import org.aeonbits.owner.Converter;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 
@@ -46,26 +46,16 @@ public interface ReplicateConfig extends GlobalConfig
 {
 	String ID_KEY = "replication.id";
 
-	String ID_DEFAULT = "repl0";
-
 	String SCHEDULER_TYPE_KEY = "replication.scheduler-type";
-
-	String SCHEDULER_TYPE_DEFAULT = "io.coala.dsol3.Dsol3Scheduler";
 
 	String TIME_UNIT_KEY = "replication.time-unit";
 
-	String TIME_UNIT_DEFAULT = TimeUnits.DAYS_LABEL;
-
 	String DURATION_KEY = "replication.duration";
-
-	String DURATION_DEFAULT = "300";
 
 	String OFFSET_KEY = "replication.offset";
 
-	String OFFSET_DEFAULT = "2020-01-01T00:00:00Z";
-
 	@Key( ID_KEY )
-	@DefaultValue( ID_DEFAULT )
+	@DefaultValue( "repl0" )
 	String rawId();
 
 	default <T> T id( final Class<T> idType )
@@ -78,39 +68,46 @@ public interface ReplicateConfig extends GlobalConfig
 	 * @return
 	 */
 	@Key( SCHEDULER_TYPE_KEY )
-	@DefaultValue( SCHEDULER_TYPE_DEFAULT )
+	@DefaultValue( "io.coala.dsol3.Dsol3Scheduler" )
 	Class<? extends Scheduler> schedulerType();
 
 	@Key( TIME_UNIT_KEY )
-	@DefaultValue( TIME_UNIT_DEFAULT )
+	@DefaultValue( TimeUnits.DAYS_LABEL )
 	String rawTimeUnit();
 
-	@DefaultValue( "${" + TIME_UNIT_KEY + "}" )
-	@ConverterClass( TimeUnitsConverter.class )
-	Unit<?> timeUnit();
+	default Unit<?> timeUnit()
+	{
+		return TimeUnits.UNIT_FORMAT.parse( rawTimeUnit() );
+	}
 
 	@Key( OFFSET_KEY )
-	@DefaultValue( OFFSET_DEFAULT )
+	@DefaultValue( "2020-01-01T00:00:00" )
 	String rawOffset();
 
-	@DefaultValue( "${" + OFFSET_KEY + "}" )
-	@ConverterClass( InstantConverter.class )
-	Instant offset();
+	/**
+	 * @return a {@link ZonedDateTime}, possibly converted from
+	 *         {@link LocalDateTime#parse(CharSequence)} at zone
+	 *         {@link ZoneId#systemDefault()}
+	 */
+	default ZonedDateTime offset()
+	{
+		try
+		{
+			return ZonedDateTime.parse( rawOffset() );
+		} catch( final Exception e )
+		{
+			return LocalDateTime.parse( rawOffset() )
+					.atZone( ZoneId.systemDefault() );
+		}
+	}
 
 	@Key( DURATION_KEY )
-	@DefaultValue( DURATION_DEFAULT )
+	@DefaultValue( "300" )
 	BigDecimal rawDuration();
 
-	@DefaultValue( "${" + DURATION_KEY + "} ${" + TIME_UNIT_KEY + "}" )
-	Duration duration();
-
-	class InstantConverter implements Converter<Instant>
+	default Duration duration()
 	{
-		@Override
-		public Instant convert( final Method method, final String input )
-		{
-			return Instant.parse( input );
-		}
+		return Duration.of( rawDuration(), timeUnit() );
 	}
 
 	static ReplicateConfig getOrCreate( final Map<?, ?>... imports )

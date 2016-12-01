@@ -67,7 +67,7 @@ public class ReplicateConfigTest
 			LOG.trace( "Id as static TestId  : {}", conf.id( TestId.class ) );
 			LOG.trace( "Time unit as Unit    : {}", conf.timeUnit() );
 			LOG.trace( "Offset as local Date : {}",
-					Date.from( conf.offset() ) );
+					Date.from( conf.offset().toInstant() ) );
 			LOG.trace( "Duration as Quantity : {}", conf.duration() );
 		} catch( final Exception e )
 		{

@@ -39,7 +39,7 @@ public interface GlobalConfig extends YamlConfig
 
 	String VALUE_SEP = ConfigUtil.CONFIG_VALUE_SEP;
 
-	String BASE_KEY = "path";
+	String BASE_KEY = "base";
 
 	/**
 	 * @return the key path or base for relative properties in config extensions
@@ -56,29 +56,26 @@ public interface GlobalConfig extends YamlConfig
 		return ConfigUtil.enumerate( this, prefix, null );
 	}
 
-	default <T extends GlobalConfig> T subConfig( final String subKey,
+	default <T extends GlobalConfig> T subConfig( final String baseKey,
 		final Class<T> type, final Map<?, ?>... imports )
 	{
 		final Pattern pattern = Pattern.compile(
-				"^" + Pattern.quote( subKey + KEY_SEP ) + "(?<sub>.*)" );
+				"^" + Pattern.quote( baseKey + KEY_SEP ) + "(?<sub>.*)" );
 		final Map<String, Object> subMap = ConfigUtil.export( this, pattern,
 				"${sub}" );
 		final String base = base(),
-				sub = base == null ? subKey : base + KEY_SEP + subKey;
+				sub = base == null ? baseKey : base + KEY_SEP + baseKey;
 		subMap.put( BASE_KEY, sub );
-		return ConfigCache.getOrCreate( sub, type,
-				ConfigUtil.join( subMap, imports ) );
+		return ConfigFactory.create( type, ConfigUtil.join( subMap, imports ) );
 	}
 
 	default <T extends GlobalConfig> Map<String, T> subConfigs(
-		final String subKey, final Class<T> type, final Map<?, ?>... imports )
+		final String baseKey, final Class<T> type, final Map<?, ?>... imports )
 	{
 		final Map<String, T> result = new TreeMap<>();
-		for( String key : enumerate( subKey + KEY_SEP ) )
+		for( String key : enumerate( baseKey + KEY_SEP ) )
 			result.put( key,
-					subConfig( subKey + KEY_SEP + key, type, imports ) );
-//		LogUtil.getLogger( GlobalConfig.class )
-//				.trace( "Got subConfigs for {}: {}", subKey, result );
+					subConfig( baseKey + KEY_SEP + key, type, imports ) );
 		return result;
 	}
 

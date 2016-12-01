@@ -15,19 +15,20 @@
  */
 package io.coala.time;
 
-import static io.coala.log.LogUtil.wrapToString;
-
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Converter;
@@ -40,6 +41,7 @@ import io.coala.json.Wrapper;
 import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
 import io.coala.math.QuantityUtil;
+import io.coala.xml.XmlUtil;
 import tec.uom.se.ComparableQuantity;
 
 /**
@@ -220,6 +222,16 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return unwrap().getUnit();
 	}
 
+	public Number value()
+	{
+		return unwrap().getValue();
+	}
+
+	public BigDecimal decimal()
+	{
+		return DecimalUtil.valueOf( value() );
+	}
+
 	public Instant multiply( final Quantity multiplicand )
 	{
 		return of( unwrap().multiply( multiplicand ) );
@@ -242,21 +254,25 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 
 	public Instant add( final Duration augend )
 	{
+		if( augend.isZero() ) return this;
 		return add( augend.unwrap() );
 	}
 
 	public Instant add( final Quantity augend )
 	{
+		if( QuantityUtil.signum( augend ) == 0 ) return this;
 		return of( unwrap().add( augend ) );
 	}
 
 	public Instant add( final Number augend )
 	{
+		if( DecimalUtil.signum( augend ) == 0 ) return this;
 		return add( QuantityUtil.valueOf( augend, unit() ) );
 	}
 
 	public Instant subtract( final Duration subtrahend )
 	{
+		if( subtrahend.isZero() ) return this;
 		return of( unwrap().subtract( subtrahend.unwrap() ) );
 	}
 
@@ -267,147 +283,142 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 
 	public Instant subtract( final Quantity subtrahend )
 	{
+		if( QuantityUtil.signum( subtrahend ) == 0 ) return this;
 		return of( unwrap().subtract( subtrahend ) );
 	}
 
 	public Instant subtract( final Number subtrahend )
 	{
+		if( DecimalUtil.signum( subtrahend ) == 0 ) return this;
 		return subtract( QuantityUtil.valueOf( subtrahend, unit() ) );
+	}
+
+	public Instant to( final Unit unit )
+	{
+		return unit().equals( unit ) ? this : of( unwrap().to( unit ) );
+	}
+
+	public Instant to( final TimeUnit unit )
+	{
+		return to( TimeUnits.resolve( unit ) );
 	}
 
 	public long toMillisLong()
 	{
-		return unwrap().to( TimeUnits.MILLIS ).getValue().longValue();
+		return to( TimeUnits.MILLIS ).value().longValue();
 	}
 
 	public long toNanosLong()
 	{
-		return unwrap().to( TimeUnits.NANOS ).getValue().longValue();
+		return to( TimeUnits.NANOS ).value().longValue();
 	}
 
-	public Date toDate( final Date offset )
+	/** @return a UTC {@link Date} */
+	public Date toDate( final Date offsetUtc )
 	{
-		return new Date( offset.getTime() + toMillisLong() );
+		return new Date( offsetUtc.getTime() + toMillisLong() );
 	}
 
-	public Calendar toDate( final Calendar offset )
+	/** @return a {@link Calendar} */
+	public Calendar toCalendar( final Calendar offset )
 	{
 		final Calendar result = Calendar.getInstance( offset.getTimeZone() );
 		result.setTimeInMillis( offset.getTimeInMillis() + toMillisLong() );
 		return result;
 	}
 
-	/** @return the Joda {@link ReadableInstant} implementation of an instant */
-	public DateTime toDate( final ReadableInstant offset )
+	/** @return a JSR-310 {@link LocalTime} (zone and date-less) instant */
+	public LocalTime toJava8( final LocalTime offset )
+	{
+		return offset.plusNanos( toNanosLong() );
+	}
+
+	/** @return a JSR-310 UTC {@link java.time.Instant} */
+	public java.time.Instant toJava8( final java.time.Instant offsetUtc )
+	{
+		return offsetUtc.plusNanos( toNanosLong() );
+	}
+
+	/** @return a JSR-310 {@link LocalDateTime} instant */
+	public LocalDateTime toJava8( final LocalDateTime offset )
+	{
+		return offset.plusNanos( toNanosLong() );
+	}
+
+	/** @return a JSR-310 {@link ZonedDateTime} instant */
+	public ZonedDateTime toJava8( final ZonedDateTime offset )
+	{
+		return offset.plusNanos( toNanosLong() );
+	}
+
+	/** @return a JSR-363 {@link Quantity} */
+	public ComparableQuantity<?> toQuantity()
+	{
+		return unwrap();
+	}
+
+	/** @return a Joda {@link ReadableInstant} */
+	public DateTime toJoda( final ReadableInstant offset )
 	{
 		return new DateTime( offset.getMillis() + toMillisLong(),
 				offset.getZone() );
 	}
 
-	/**
-	 * @return the JSR-310 {@link LocalTime} implementation of a (zone and
-	 *         date-less) instant
-	 */
-	public LocalTime toDate( final LocalTime offset )
+	/** @return a JAXP {@link XMLGregorianCalendar} */
+	public XMLGregorianCalendar toXML( final ZonedDateTime offset )
 	{
-		return offset.plusNanos( toNanosLong() );
+		return XmlUtil.toXML( toJava8( offset ) );
 	}
 
-	/**
-	 * @return the JSR-310 {@link LocalDateTime} implementation of a (zone-less)
-	 *         instant
-	 */
-	public LocalDateTime toDate( final LocalDateTime offset )
-	{
-		return offset.plusNanos( toNanosLong() );
-	}
-
-	/**
-	 * @return the JSR-310 {@link java.time.Instant} implementation of an
-	 *         instant
-	 */
-	public java.time.Instant toDate( final java.time.Instant offset )
-	{
-		return offset.plusNanos( toNanosLong() );
-	}
-
-	/** @return the JSR-363 {@link Quantity} implementation of an instant */
-	public ComparableQuantity<?> toMeasure()
-	{
-		return unwrap();
-	}
-
-	/**
-	 * @param offset the instant that is considered the ZERO
-	 * @return the (possibly negative) {@link Duration} of this instant since
-	 *         specified {@code offset}
-	 */
-	public Duration toDuration( final Instant offset )
-	{
-		return subtract( offset );
-	}
-
-	/**
-	 * @param unit
-	 * @return
-	 */
-	public Instant to( final Unit unit )
-	{
-		return of( unwrap().to( unit ) );
-	}
-
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final int scale )
 	{
 		return prettify( unit(), scale );
 	}
 
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final Unit unit, final int scale )
 	{
-		return wrapToString( () -> DecimalUtil
+		return Pretty.of( () -> DecimalUtil
 				.toScale( unwrap().to( unit ).getValue(), scale ).toString()
 				+ unit );
 	}
 
 	public Pretty prettify( final Date offset )
 	{
-		return wrapToString( () -> toDate( offset ).toString() );
+		return Pretty.of( () -> toDate( offset ).toString() );
 	}
 
 	public Pretty prettify( final Date offset, final DateFormat formatter )
 	{
-		return wrapToString( () -> formatter.format( toDate( offset ) ) );
+		return Pretty.of( () -> formatter.format( toDate( offset ) ) );
 	}
 
 	public Pretty prettify( final LocalDateTime offset )
 	{
-		return wrapToString( () -> toDate( offset ).toString() );
+		return Pretty.of( () -> toJava8( offset ).toString() );
 	}
 
-	public Pretty prettify( final java.time.Instant offset )
+	public Pretty prettify( final ZonedDateTime offset )
 	{
-		return wrapToString( () -> toDate( offset ).toString() );
+		return Pretty.of( () -> toJava8( offset ).toString() );
 	}
 
-	public Pretty prettify( final java.time.Instant offset,
+	public Pretty prettify( final ZonedDateTime offset,
 		final java.time.format.DateTimeFormatter formatter )
 	{
-		return wrapToString( () -> formatter.format( toDate( offset ) ) );
+		return Pretty.of( () -> formatter.format( toJava8( offset ) ) );
 	}
 
 	public Pretty prettify( final DateTime offset )
 	{
-		return wrapToString( () -> toDate( offset ).toString() );
+		return Pretty.of( () -> toJoda( offset ).toString() );
 	}
 
-	/**
-	 * @param offset
-	 * @param formatter
-	 * @return
-	 */
 	public Object prettify( final DateTime offset,
 		final DateTimeFormatter formatter )
 	{
-		return wrapToString( () -> formatter.print( toDate( offset ) ) );
+		return Pretty.of( () -> formatter.print( toJoda( offset ) ) );
 	}
 
 }

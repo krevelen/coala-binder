@@ -26,15 +26,24 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.text.DateFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.measure.Unit;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -60,6 +69,7 @@ import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
+import io.coala.math.DecimalUtil;
 import io.coala.name.Identified;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
@@ -72,11 +82,6 @@ import rx.Observer;
  * 
  * @version $Id$
  * @author Rick van Krevelen
- */
-/*
- * @JsonAutoDetect( fieldVisibility = Visibility.ANY, getterVisibility =
- * Visibility.NONE, isGetterVisibility = Visibility.NONE, setterVisibility =
- * Visibility.NONE )
  */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 {
@@ -128,36 +133,24 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		return Objects.requireNonNull( transaction() ).kind();
 	}
 
-	/** @return */
-	// derived @JsonIgnore 
 	default Actor.ID creatorRef()
 	{
 		return kind().originatorRoleType() == RoleKind.EXECUTOR
 				? transaction().executorRef() : transaction().initiatorRef();
 	}
 
-	/** @return */
-	// derived @JsonIgnore 
 	default Actor.ID responderRef()
 	{
 		return kind().responderRoleKind() == RoleKind.EXECUTOR
 				? transaction().executorRef() : transaction().initiatorRef();
 	}
 
-	/**
-	 * @param id
-	 * @return
-	 */
 	@JsonIgnore
 	default boolean isIncoming( final Actor.ID id )
 	{
 		return id.organizationRef().equals( responderRef().organizationRef() );
 	}
 
-	/**
-	 * @param id
-	 * @return
-	 */
 	@JsonIgnore
 	default boolean isOutgoing( final Actor.ID id )
 	{
@@ -185,9 +178,9 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 	/** @return */
 	@JsonProperty( OCCUR_POSIX_PROPERTY )
-	default java.time.Instant occurUtc()
+	default ZonedDateTime occurUtc()
 	{
-		return occur().toDate( transaction().offset() );
+		return occur().toJava8( offset() );
 	}
 
 	/** @return */
@@ -196,15 +189,19 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 	/** @return */
 	@JsonProperty( EXPIRE_POSIX_PROPERTY )
-	default java.time.Instant expirePosixSec()
+	default ZonedDateTime expirePosixSec()
 	{
-		return expire() == null ? null
-				: expire().toDate( transaction().offset() );
+		return expire() == null ? null : expire().toJava8( offset() );
 	}
 
 	/** @return */
 	@JsonProperty( CAUSE_REF_PROPERTY )
 	Fact.ID causeRef();
+
+	default ZonedDateTime offset()
+	{
+		return transaction().offset();
+	}
 
 	/**
 	 * Default storage for bean properties, also useful for reference by a
@@ -427,6 +424,57 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		return null;
 	}
 
+	default String toString( final Object occur )
+	{
+		return type().getSimpleName() + '['
+				+ Integer.toHexString( id().unwrap().hashCode() ) + '|' + kind()
+				+ '|' + creatorRef().organizationRef().unwrap() + "->"
+				+ responderRef().organizationRef().unwrap() + '|' + occur + ']'
+				+ (properties().isEmpty() ? "" : properties());
+	}
+
+	default Pretty prettify( final int scale )
+	{
+		return prettify( occur().unit(), scale );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Pretty prettify( final Unit<?> unit )
+	{
+		return Pretty.of( () -> toString(
+				occur().to( unit ).decimal().toPlainString() + unit ) );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Pretty prettify( final Unit<?> unit, final int scale )
+	{
+		return Pretty.of( () -> toString(
+				DecimalUtil.toScale( occur().to( unit ).decimal(), scale )
+						.toPlainString() + unit ) );
+	}
+
+	default Pretty prettify( final DateFormat formatter )
+	{
+		return Pretty.of( () -> toString( formatter.format(
+				occur().toDate( Date.from( offset().toInstant() ) ) ) ) );
+	}
+
+	default Pretty prettify( final DateTimeFormatter java8Formatter )
+	{
+		return Pretty.of( () -> toString(
+				java8Formatter.format( occur().toJava8( offset() ) ) ) );
+	}
+
+	default Pretty
+		prettify( final org.joda.time.format.DateTimeFormatter jodaFormatter )
+	{
+		final ZonedDateTime zdt = offset();
+		return Pretty.of( () -> toString( jodaFormatter.print(
+				occur().toJoda( new DateTime( zdt.toInstant().toEpochMilli(),
+						DateTimeZone.forTimeZone( TimeZone
+								.getTimeZone( zdt.getZone() ) ) ) ) ) ) );
+	}
+
 	/**
 	 * {@link ID}
 	 * 
@@ -467,8 +515,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 		public Pretty prettyHash()
 		{
-			return LogUtil.wrapToString(
-					() -> Integer.toHexString( unwrap().hashCode() ) );
+			return LogUtil.Pretty
+					.of( () -> Integer.toHexString( unwrap().hashCode() ) );
 		}
 
 		/** @return an {@link ID} with specified {@link UUID} */
@@ -549,10 +597,10 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		@Override
 		public String toString()
 		{
-			return type().getSimpleName() + '['
-					+ Integer.toHexString( id().unwrap().hashCode() ) + '|'
-					+ kind() + '|' + creatorRef() + '|' + occur() + ']'
-					+ properties();
+			final ZonedDateTime offset = offset();
+			return toString( offset == null ? occur()
+					: DateTimeFormatter.ISO_LOCAL_DATE_TIME
+							.format( occur().toJava8( offset ) ) );
 		}
 
 		@Override

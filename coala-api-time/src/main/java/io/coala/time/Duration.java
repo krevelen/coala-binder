@@ -15,7 +15,8 @@
  */
 package io.coala.time;
 
-import static io.coala.log.LogUtil.wrapToString;
+import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
@@ -31,6 +32,8 @@ import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
 import io.coala.math.QuantityUtil;
+import io.coala.util.Compare;
+import io.coala.xml.XmlUtil;
 import tec.uom.se.ComparableQuantity;
 
 /**
@@ -145,7 +148,8 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	 */
 	public static Duration of( final ReadableDuration value )
 	{
-		return of( QuantityUtil.valueOf( value.getMillis(), TimeUnits.MILLIS ) );
+		return of(
+				QuantityUtil.valueOf( value.getMillis(), TimeUnits.MILLIS ) );
 	}
 
 	/**
@@ -197,13 +201,13 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	 */
 	public static Duration between( final Instant i1, final Instant i2 )
 	{
-		return i1.compareTo( i2 ) > 0 ? i1.subtract( i2 ) : i2.subtract( i1 );
+		return i1.subtract( i2 ).abs();
 	}
 
-	/** */
+	/** a pure/{@link Dimensionless} duration of zero */
 	public static final Duration ZERO = Duration.of( QuantityUtil.ZERO );
 
-	/** */
+	/** a pure/{@link Dimensionless} duration of one */
 	public static final Duration ONE = Duration.of( QuantityUtil.ONE );
 
 	public Unit<?> unit()
@@ -211,9 +215,25 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return unwrap().getUnit();
 	}
 
-	public Duration to( final Unit unit )
+	public Number value()
 	{
-		return of( unwrap().to( unit ) );
+		return unwrap().getValue();
+	}
+
+	public BigDecimal decimal()
+	{
+		return DecimalUtil.valueOf( value() );
+	}
+
+	public int signum()
+	{
+		return DecimalUtil.signum( value() );
+	}
+
+	@JsonIgnore
+	public boolean isZero()
+	{
+		return signum() == 0;
 	}
 
 	public int intValue()
@@ -241,6 +261,30 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return of( QuantityUtil.pow( unwrap(), exponent ) );
 	}
 
+	@Override // make dimensionless #ZERO, #ONE commensurable with other units
+	public int compareTo( final Comparable that )
+	{
+		final int thatSignum = QuantityUtil
+				.signum( ((Duration) that).unwrap() );
+		return signum() == 0 ? thatSignum * -1
+				: thatSignum == 0 ? signum() : super.compareTo( that );
+	}
+
+	public Duration min( final Duration that )
+	{
+		return Compare.lt( that, this ) ? that : this;
+	}
+
+	public Duration max( final Duration that )
+	{
+		return Compare.gt( that, this ) ? that : this;
+	}
+
+	public Duration abs()
+	{
+		return signum() < 0 ? of( decimal().abs(), unit() ) : this;
+	}
+
 	public Duration floor()
 	{
 		return of( QuantityUtil.floor( unwrap() ) );
@@ -249,6 +293,16 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	public Duration ceil()
 	{
 		return of( QuantityUtil.ceil( unwrap() ) );
+	}
+
+	public Duration to( final Unit unit )
+	{
+		return of( unwrap().to( unit ) );
+	}
+
+	public Duration to( final TimeUnit unit )
+	{
+		return to( TimeUnits.resolve( unit ) );
 	}
 
 	public long toMillisLong()
@@ -261,37 +315,40 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return QuantityUtil.longValue( unwrap(), TimeUnits.NANOS );
 	}
 
-	/**
-	 * @return the Joda {@link ReadableDuration} implementation of a time span
-	 */
-	public ReadableDuration toJoda()
+	/** @return a JAXP {@link javax.xml.datatype.Duration} */
+	public javax.xml.datatype.Duration toXML()
 	{
-		return org.joda.time.Duration.millis( toMillisLong() );
+		return XmlUtil.toXML( toMillisLong() );
 	}
 
-	/**
-	 * @return a JRE8 {@link java.time.Duration} implementation of a time span
-	 */
-	public java.time.Duration toJSR310()
+	/** @return a JSR-310 {@link java.time.Duration} */
+	public java.time.Duration toJava8()
 	{
 		return java.time.Duration.ofNanos( toNanosLong() );
 	}
 
-	/** @return the JSR-363 {@link Quantity} implementation of a time span */
-	@JsonIgnore
-	public ComparableQuantity toMeasure()
+	/** @return a JSR-363 {@link Quantity} */
+	public ComparableQuantity toQuantity()
 	{
 		return unwrap();
 	}
 
+	/** @return a Joda {@link org.joda.time.Duration} */
+	public org.joda.time.Duration toJoda()
+	{
+		return org.joda.time.Duration.millis( toMillisLong() );
+	}
+
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final int scale )
 	{
 		return prettify( unit(), scale );
 	}
 
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public Pretty prettify( final Unit unit, final int scale )
 	{
-		return wrapToString( () -> DecimalUtil
+		return Pretty.of( () -> DecimalUtil
 				.toScale( unwrap().to( unit ).getValue(), scale ).toString()
 				+ unit );
 	}

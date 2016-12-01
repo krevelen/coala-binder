@@ -32,8 +32,8 @@ public class SignalTest
 					Timing.of( "0 0 13 * * ?" ).offset( offset ).iterate(), t ->
 					{
 						LOG.trace( "t={}, dt={} (1pm), const={}",
-								t.prettify( TimeUnits.DAYS, 2 ), t.toDate( offset ),
-								signal.current() );
+								t.prettify( TimeUnits.DAYS, 2 ),
+								t.prettify( offset ), signal.current() );
 					} );
 			LOG.trace( "scheduler initialized" );
 		} );

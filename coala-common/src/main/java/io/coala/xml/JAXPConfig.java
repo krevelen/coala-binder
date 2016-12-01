@@ -19,6 +19,8 @@
  */
 package io.coala.xml;
 
+import java.util.Collections;
+
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -50,7 +52,10 @@ public interface JAXPConfig extends GlobalConfig, YamlConfig
 	static JAXPConfig getOrCreate()
 	{
 		return ConfigCache.getOrCreate( JAXPConfig.class,
-				System.getProperties(), System.getenv() );
+				System.getProperties(), System.getenv(),
+				Collections.singletonMap(
+						DatatypeFactory.DATATYPEFACTORY_PROPERTY,
+						DatatypeFactory.DATATYPEFACTORY_IMPLEMENTATION_CLASS ) );
 	}
 
 	/**

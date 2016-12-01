@@ -66,8 +66,7 @@ public class Id<T> extends Wrapper.Simple<T>
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	public static <
-		T extends OrdinalChild<C, P>, C extends Comparable, P extends Comparable>
+	public static <T extends OrdinalChild<C, P>, C extends Comparable, P extends Comparable>
 		T of( final T id, final C child, final P parent )
 	{
 		return (T) ((T) id.wrap( child )).parent( parent );
@@ -129,25 +128,21 @@ public class Id<T> extends Wrapper.Simple<T>
 		extends Ordinal<T>
 	{
 
-		/** the configured PATH_SEP constant */
-		public static String ID_SEP_REGEX;
-
-		static
+		/**
+		 * @param value the wrapped value
+		 * @param parent the {@link Id}'s parent value
+		 * @param wrapper the {@link OrdinalChild} object to (re)use
+		 * @return the updated {@link OrdinalChild} object
+		 */
+		@SuppressWarnings( "unchecked" )
+		public static <S extends Comparable, P extends Comparable, T extends OrdinalChild<S, P>>
+			T of( final S value, final P parent, final T wrapper )
 		{
-			ID_SEP_REGEX = IdConfig.INSTANCE.separator();
-//			IdConfig.INSTANCE.addPropertyChangeListener(
-//					IdConfig.ID_SEPARATOR_KEY, new PropertyChangeListener()
-//					{
-//						@Override
-//						public void
-//							propertyChange( final PropertyChangeEvent evt )
-//						{
-//							ID_SEP = IdConfig.INSTANCE.separator();
-//							LOG.trace( evt.getPropertyName() + " now: "
-//									+ evt.getNewValue() );
-//						}
-//					} );
+			return (T) wrapper.wrap( value );
 		}
+
+		/** the configured {@link IdConfig#ID_SEPARATOR_KEY} constant */
+		public static final String ID_SEP_REGEX = IdConfig.INSTANCE.separator();
 
 		/** */
 		@JsonProperty //("parent")

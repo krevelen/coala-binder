@@ -45,6 +45,11 @@ import tec.uom.se.unit.Units;
 public class QuantityUtil implements Util
 {
 
+	static
+	{
+		SimpleUnitFormat.getInstance().label( Units.DEGREE_ANGLE, "deg" );
+	}
+
 	public static final SimpleModule JSON_MODULE = new SimpleModule()
 			.addKeyDeserializer( Quantity.class, new KeyDeserializer()
 			{
@@ -213,30 +218,30 @@ public class QuantityUtil implements Util
 	 *    "-P-6H+3M"  -> parses as "+6 hours and -3 minutes"
 	 * </pre>
 	 * 
-	 * @param measure the {@link String} representation of a duration
+	 * @param qty the {@link String} representation of a (relative) duration
 	 * @return a {@linkComparableQuantity}
 	 * 
 	 * @see tec.uom.se.format.QuantityFormat#getInstance(tec.uom.se.format.FormatBehavior)
 	 * @see java.time.Duration#parse(String)
 	 * @see org.joda.time.format.ISOPeriodFormat#standard()
 	 */
-	public static final ComparableQuantity<?>
-		parseDuration( final String measure )
+	public static final ComparableQuantity<?> parseDuration( final String qty )
 	{
-		if( measure == null ) return null;
+		if( qty == null ) return null;
 		try
 		{
-			return valueOf( measure );
+			return valueOf( qty );
 		} catch( final Exception e )
 		{
 			try
 			{
-				final java.time.Duration temp = java.time.Duration
-						.parse( measure );
+				final java.time.Duration java8iso = java.time.Duration
+						.parse( qty );
 				return valueOf(
-						BigDecimal.valueOf( temp.getSeconds() )
-								.add( temp.getNano() == 0 ? BigDecimal.ZERO
-										: BigDecimal.valueOf( temp.getNano() )
+						BigDecimal.valueOf( java8iso.getSeconds() )
+								.add( java8iso.getNano() == 0 ? BigDecimal.ZERO
+										: BigDecimal
+												.valueOf( java8iso.getNano() )
 												.divide( BigDecimal.TEN
 														.pow( 9 ) ) ),
 						Units.SECOND );
@@ -244,10 +249,10 @@ public class QuantityUtil implements Util
 			{
 				try
 				{
-					final Period joda = Period.parse( measure );
+					final Period jodaIso = Period.parse( qty );
 					return valueOf(
 							BigDecimal
-									.valueOf( joda.toStandardDuration()
+									.valueOf( jodaIso.toStandardDuration()
 											.getMillis() )
 									.divide( BigDecimal.TEN.pow( 3 ) ),
 							Units.SECOND );
@@ -256,7 +261,7 @@ public class QuantityUtil implements Util
 					return Thrower.throwNew( IllegalArgumentException.class,
 							"Unable to parse '{}' with JSR-363: '{}'"
 									+ ", JSR-310: '{}', Joda: '{}'",
-							measure, parsedStringOrMessage( e ), f.getMessage(),
+							qty, parsedStringOrMessage( e ), f.getMessage(),
 							g.getMessage() );
 				}
 			}
@@ -274,22 +279,22 @@ public class QuantityUtil implements Util
 						: e.getMessage();
 	}
 
-	public static String toString( final Quantity<?> amount )
+	public static String toString( final Quantity<?> qty )
 	{
-		return toBigDecimal( amount ).toPlainString() + " " + amount.getUnit();
+		return toBigDecimal( qty ).toPlainString() + " " + qty.getUnit();
 	}
 
-	public static String toString( final Quantity<?> amount, final int scale )
+	public static String toString( final Quantity<?> qty, final int scale )
 	{
-		return toBigDecimal( amount ).setScale( scale, RoundingMode.HALF_UP )
-				.toPlainString() + " " + amount.getUnit();
+		return toBigDecimal( qty ).setScale( scale, RoundingMode.HALF_UP )
+				.toPlainString() + " " + qty.getUnit();
 	}
 
 	@SuppressWarnings( "unchecked" )
 	public static <Q extends Quantity<Q>> Number
-		toNumber( final Quantity<?> amount, final Unit<Q> unit )
+		toNumber( final Quantity<?> qty, final Unit<Q> unit )
 	{
-		return ((Quantity<Q>) amount).to( unit ).getValue();
+		return ((Quantity<Q>) qty).to( unit ).getValue();
 	}
 
 	public static BigDecimal toBigDecimal( final Quantity<?> amount )
@@ -299,10 +304,9 @@ public class QuantityUtil implements Util
 
 	@SuppressWarnings( "unchecked" )
 	public static <Q extends Quantity<Q>> BigDecimal
-		toBigDecimal( final Quantity<?> amount, final Unit<Q> unit )
+		toBigDecimal( final Quantity<?> qty, final Unit<Q> unit )
 	{
-		return DecimalUtil
-				.valueOf( ((Quantity<Q>) amount).to( unit ).getValue() );
+		return DecimalUtil.valueOf( ((Quantity<Q>) qty).to( unit ).getValue() );
 	}
 
 	public static boolean isNegative( final Quantity<?> amount )
@@ -311,167 +315,122 @@ public class QuantityUtil implements Util
 	}
 
 	/**
-	 * @param amount
-	 * @param exponent
-	 * @return
 	 * @see DecimalUtil#pow(double,double)
 	 */
-	public static Quantity<?> pow( final Quantity<?> amount,
-		final int exponent )
+	public static Quantity<?> pow( final Quantity<?> qty, final int exponent )
 	{
-		return valueOf( DecimalUtil.pow( amount.getValue(), exponent ),
-				amount.getUnit().pow( exponent ) );
+		return valueOf( DecimalUtil.pow( qty.getValue(), exponent ),
+				qty.getUnit().pow( exponent ) );
 	}
 
 	/**
-	 * @param measure
-	 * @param exponent
 	 * @return value of undefined unit
 	 * @see Math#pow(double,double)
 	 */
-	public static Number pow( final Quantity<?> measure, final Number exponent )
+	public static Number pow( final Quantity<?> qty, final Number exponent )
 	{
-		return DecimalUtil.pow( measure.getValue(), exponent );
+		return DecimalUtil.pow( qty.getValue(), exponent );
 	}
 
 	/**
-	 * @param measure
-	 * @return
 	 * @see Math#floor(double)
 	 */
 	public static <Q extends Quantity<Q>> Quantity<Q>
-		floor( final Quantity<Q> measure )
+		floor( final Quantity<Q> qty )
 	{
-		return DecimalUtil.isExact( measure.getValue() ) ? measure
-				: valueOf( DecimalUtil.floor( measure.getValue() ),
-						measure.getUnit() );
+		return DecimalUtil.isExact( qty.getValue() ) ? qty
+				: valueOf( DecimalUtil.floor( qty.getValue() ), qty.getUnit() );
 	}
 
 	/**
-	 * @param measure
-	 * @return
 	 * @see Math#ceil(double)
 	 */
 	public static <Q extends Quantity<Q>> Quantity<Q>
-		ceil( final Quantity<Q> measure )
+		ceil( final Quantity<Q> qty )
 	{
-		return DecimalUtil.isExact( measure.getValue() ) ? measure
-				: valueOf( DecimalUtil.ceil( measure.getValue() ),
-						measure.getUnit() );
+		return DecimalUtil.isExact( qty.getValue() ) ? qty
+				: valueOf( DecimalUtil.ceil( qty.getValue() ), qty.getUnit() );
 	}
 
 	/**
-	 * @param t
-	 * @return
 	 */
 	public static <Q extends Quantity<Q>> Quantity<Q>
-		abs( final Quantity<Q> measure )
+		abs( final Quantity<Q> qty )
 	{
-		return DecimalUtil.signum( measure.getValue() ) >= 0 ? measure
-				: valueOf( DecimalUtil.abs( measure.getValue() ),
-						measure.getUnit() );
+		return DecimalUtil.signum( qty.getValue() ) >= 0 ? qty
+				: valueOf( DecimalUtil.abs( qty.getValue() ), qty.getUnit() );
 	}
 
-	public static Quantity<?> sqrt( final Quantity<?> measure )
+	public static Quantity<?> sqrt( final Quantity<?> quantity )
 	{
-		return root( measure, 2 );
+		return root( quantity, 2 );
 	}
 
-	public static Quantity<?> root( final Quantity<?> measure, final int n )
+	public static Quantity<?> root( final Quantity<?> qty, final int n )
 	{
-		return valueOf( DecimalUtil.root( measure.getValue(), n ),
-				measure.getUnit().root( n ) );
+		return valueOf( DecimalUtil.root( qty.getValue(), n ),
+				qty.getUnit().root( n ) );
 	}
 
-	/**
-	 * @param qty
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> int intValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.intValue( qty.getValue() );
 	}
 
-	/**
-	 * @param qty
-	 * @param unit
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> int intValue( final Quantity<?> qty,
 		final Unit<Q> unit )
 	{
 		return DecimalUtil.intValue( valueOf( qty, unit ).getValue() );
 	}
 
-	/**
-	 * @param qty
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> long
 		longValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.longValue( qty.getValue() );
 	}
 
-	/**
-	 * @param qty
-	 * @param unit
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> long longValue( final Quantity<?> qty,
 		final Unit<Q> unit )
 	{
 		return DecimalUtil.longValue( valueOf( qty, unit ).getValue() );
 	}
 
-	/**
-	 * @param qty
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> float
 		floatValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.floatValue( qty.getValue() );
 	}
 
-	/**
-	 * @param qty
-	 * @param unit
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> float
 		floatValue( final Quantity<?> qty, final Unit<Q> unit )
 	{
 		return DecimalUtil.floatValue( valueOf( qty, unit ).getValue() );
 	}
 
-	/**
-	 * @param qty
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> double
 		doubleValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.doubleValue( qty.getValue() );
 	}
 
-	/**
-	 * @param qty
-	 * @param unit
-	 * @return
-	 */
 	public static <Q extends Quantity<Q>> double
 		doubleValue( final Quantity<?> qty, final Unit<Q> unit )
 	{
 		return DecimalUtil.doubleValue( valueOf( qty, unit ).getValue() );
 	}
 
-	/**
-	 * @param qty1
-	 * @param qty2
-	 * @param precision
-	 * @return
-	 */
+	public <Q extends Quantity<Q>> Quantity<Q> min(
+		final ComparableQuantity<Q> qty1, final ComparableQuantity<Q> qty2 )
+	{
+		return Compare.min( qty1, qty2 );
+	}
+
+	public <Q extends Quantity<Q>> Quantity<Q> max(
+		final ComparableQuantity<Q> qty1, final ComparableQuantity<Q> qty2 )
+	{
+		return Compare.max( qty1, qty2 );
+	}
+
 	public static boolean approximates( final Quantity<Angle> qty1,
 		final Quantity<Angle> qty2, final int precision )
 	{
@@ -483,27 +442,26 @@ public class QuantityUtil implements Util
 	}
 
 	/**
-	 * @param quantity
-	 * @return
 	 * @see BigDecimal#precision()
 	 */
-	public static int precision( final Quantity<Angle> quantity )
+	public static int precision( final Quantity<Angle> qty )
 	{
-		return DecimalUtil.valueOf( quantity.getValue() ).precision();
+		return DecimalUtil.valueOf( qty.getValue() ).precision();
 	}
 
 	/**
-	 * @param quantity
-	 * @return
 	 * @see BigDecimal#scale()
 	 */
-	public static int scale( final Quantity<Angle> quantity )
+	public static int scale( final Quantity<Angle> qty )
 	{
-		return DecimalUtil.valueOf( quantity.getValue() ).scale();
+		return DecimalUtil.valueOf( qty.getValue() ).scale();
 	}
-	
-	static
+
+	/**
+	 * @see BigDecimal#signum()
+	 */
+	public static int signum( final Quantity<?> qty )
 	{
-		SimpleUnitFormat.getInstance().label( Units.DEGREE_ANGLE, "deg" );
+		return DecimalUtil.signum( qty.getValue() );
 	}
 }

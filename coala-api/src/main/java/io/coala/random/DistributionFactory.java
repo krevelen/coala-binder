@@ -26,11 +26,24 @@ import io.coala.exception.Thrower;
 import io.coala.math.DecimalUtil;
 import io.coala.math.WeightedValue;
 
+/**
+ * The basic {@link DistributionFactory} only supports deterministic,
+ * categorical, uniform, empirical, triangular, bernoulli and gaussian/normal
+ * distributions
+ * 
+ * @version $Id$
+ * @author Rick van Krevelen
+ */
 public class DistributionFactory implements ProbabilityDistribution.Factory
 {
 
 	private static DistributionFactory INSTANCE = null;
 
+	/**
+	 * @return a basic {@link DistributionFactory} that only supports
+	 *         deterministic, categorical, uniform, empirical, triangular,
+	 *         bernoulli and gaussian/normal distributions
+	 */
 	public static DistributionFactory instance()
 	{
 		return INSTANCE != null ? INSTANCE = null

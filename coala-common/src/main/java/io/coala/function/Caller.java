@@ -77,7 +77,7 @@ public interface Caller<T, U, R, E extends Throwable>
 	 * {@link #getCallable()}, i.e. which ignores its input
 	 * 
 	 * @param input a {@link T} to ignore
-	 * @throws Exception
+	 * @throws E
 	 */
 	default R ignore( final T input ) throws E
 	{

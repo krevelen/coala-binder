@@ -109,7 +109,7 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	public static FactDao create( final EntityManager em, final Fact fact )
 	{
 		final Transaction<?> tx = Objects.requireNonNull( fact.transaction() );
-		final Date offset = Date.from( tx.offset() );
+		final Date offset = Date.from( tx.offset().toInstant() );
 		final Unit<?> unit = tx.timeUnit();
 		final Instant occur = Objects.requireNonNull( fact.occur() );
 		final Instant expire = fact.expire();

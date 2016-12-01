@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 
 import javax.inject.Singleton;
 
+import rx.Observable;
 import rx.Subscription;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
@@ -69,6 +70,8 @@ public interface FactExchange
 	List<Subscription> register( Actor<?> actor, boolean incoming,
 		boolean outgoing );
 
+	Observable<Fact> snif();
+
 	@Singleton
 	class SimpleBus implements FactExchange
 	{
@@ -81,14 +84,13 @@ public interface FactExchange
 			return this.bus.filter( fact -> fact.isIncoming( actor.id() ) )
 					.subscribe( actor );
 		}
-
 		/**
 		 * @return all {@link #emit() emitted Facts} where
 		 *         {@link Fact#isInternal() outgoing} {@code == true}
 		 */
 		private Subscription subscribeOutgoing( final Actor<?> actor )
 		{
-			return actor.main().emit()
+			return actor.root().emit()
 					.filter( fact -> fact.isOutgoing( actor.id() ) )
 					.subscribe( this.bus );
 		}
@@ -114,6 +116,12 @@ public interface FactExchange
 						switchSub( subs == null ? null : subs.get( 1 ),
 								outgoing,
 								() -> subscribeOutgoing( actor ) ) ) );
+		}
+
+		@Override
+		public Observable<Fact> snif()
+		{
+			return this.bus.asObservable();
 		}
 	}
 }

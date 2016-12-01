@@ -32,7 +32,6 @@ import io.coala.math.FrequencyDistribution;
 import io.coala.math.QuantityUtil;
 import io.coala.math.WeightedValue;
 import io.coala.util.Instantiator;
-import rx.functions.Func0;
 
 /**
  * {@link ProbabilityDistribution} is similar to a {@link javax.inject.Provider}
@@ -83,6 +82,11 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		return () -> value;
 	}
 
+	/**
+	 * @param rng the {@link PseudoRandom} number generator
+	 * @param probability the probability of drawing {@link Boolean#TRUE}
+	 * @return a <a href="">Bernoulli</a> {@link ProbabilityDistribution}
+	 */
 	static ProbabilityDistribution<Boolean>
 		createBernoulli( final PseudoRandom rng, final Number probability )
 	{
@@ -91,9 +95,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 
 	/**
 	 * @param <T> the type of value
-	 * @param callable the {@link Callable} providing values, for JRE8
+	 * @param callable the {@link Callable} for drawing values
 	 * @return a decorator {@link ProbabilityDistribution}
-	 * @see https://github.com/orfjackal/retrolambda
 	 */
 	static <T> ProbabilityDistribution<T> of( final Callable<T> callable )
 	{
@@ -112,8 +115,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 
 	/**
 	 * @param <T> the type of value
-	 * @param provider the {@link Provider} providing values
-	 * @return a decorator {@link ProbabilityDistribution}
+	 * @param provider the {@link Provider} for drawing values
+	 * @return a {@link ProbabilityDistribution}
 	 */
 	static <T> ProbabilityDistribution<T> of( final Provider<T> provider )
 	{
@@ -122,24 +125,28 @@ public interface ProbabilityDistribution<T> //extends Serializable
 
 	/**
 	 * @param <T> the type of value
-	 * @param func the {@link Func0} providing values, for rxJava
-	 * @return a decorator {@link ProbabilityDistribution}
+	 * @param func the {@link Supplier} for drawing values
+	 * @return a {@link ProbabilityDistribution}
 	 */
 	static <T> ProbabilityDistribution<T> of( final Supplier<T> func )
 	{
 		return () -> func.get();
 	}
 
-	default <R> ProbabilityDistribution<R>
-		apply( final Function<T, R> transform )
+	default <R> ProbabilityDistribution<R> map( final Function<T, R> transform )
 	{
 		return () -> transform.apply( this.draw() );
 	}
 
+	default <R> ProbabilityDistribution<R> ofType( final Class<R> valueType )
+	{
+		return map( valueType::cast );
+	}
+
 	/**
-	 * transforms {@link int} draws from this {@link ProbabilityDistribution} in
-	 * the index range <em>{0, &hellip;, n-1}</em> of the specified {@link Enum}
-	 * type's constants
+	 * transforms {@link Number#intValue()} draws from this Number
+	 * {@link ProbabilityDistribution} in the index range <em>{0, &hellip;,
+	 * n-1}</em> of the specified {@link Enum} type's constants
 	 * 
 	 * @param <E> the type of {@link Enum} value to produce
 	 * @param enumType the {@link Class} to resolve
@@ -149,8 +156,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	default <E extends Enum<E>> ProbabilityDistribution<E>
 		toEnum( final Class<E> enumType )
 	{
-		return apply(
-				n -> enumType.getEnumConstants()[((Number) n).intValue()] );
+		return map( n -> enumType.getEnumConstants()[((Number) n).intValue()] );
 	}
 
 	/**
@@ -164,14 +170,13 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	default <S> ProbabilityDistribution<S>
 		toInstancesOf( final Class<S> valueType )
 	{
-		return apply( arg -> Instantiator.instantiate( valueType, arg ) );
+		return map( arg -> Instantiator.instantiate( valueType, arg ) );
 	}
 
 	/**
 	 * @param <Q> the measurement {@link Quantity} to assign
-	 * @return an {@link QuantityDistribution} {@link ProbabilityDistribution}
-	 *         for {@link Quantity measures} from drawn {@link Number}s, with an
-	 *         attempt to maintain exactness
+	 * @return a {@link QuantityDistribution} transforming {@link #draw()}
+	 *         results into {@link Quantity quantity}, preserving precision
 	 */
 	@SuppressWarnings( "unchecked" )
 	default QuantityDistribution<Dimensionless> toQuantities()
@@ -182,8 +187,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	/**
 	 * @param <Q> the measurement {@link Quantity} to assign
 	 * @param unit the {@link Unit} of measurement to assign
-	 * @return an {@link QuantityDistribution} for measure {@link Amount}s from
-	 *         drawn {@link Number}s, with an attempt to maintain exactness
+	 * @return an {@link QuantityDistribution} for measure {@link Quantity}s
+	 *         from drawn {@link Number}s, with an attempt to maintain exactness
 	 */
 	@SuppressWarnings( "unchecked" )
 	default <Q extends Quantity<Q>> QuantityDistribution<Q>
@@ -196,13 +201,29 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		{
 			final T result = draw();
 			if( Quantity.class.isAssignableFrom( result.getClass() ) )
-				return ((Quantity<Q>) draw()).to( unit );
+				return ((Quantity<Q>) result).to( unit );
 			if( Number.class.isAssignableFrom( result.getClass() ) )
-				return (Quantity<Q>) QuantityUtil.valueOf( (Number) draw(),
+				return (Quantity<Q>) QuantityUtil.valueOf( (Number) result,
 						unit );
 			return Thrower.throwNew( IllegalArgumentException.class,
 					"Can't convert to Quantity: {}", result );
 		} );
+	}
+
+	/**
+	 * @param <Q> the {@link Quantity} type
+	 * @param qty the {@link Quantity} to cast to
+	 * @return an {@link QuantityDistribution} for measure {@link Quantity}s
+	 */
+	@SuppressWarnings( "unchecked" )
+	default <Q extends Quantity<Q>> QuantityDistribution<Q>
+		toQuantities( final Class<Q> qty )
+	{
+		if( this instanceof QuantityDistribution )
+			return (QuantityDistribution<Q>) this;
+
+		return QuantityDistribution
+				.of( () -> ((Quantity<Q>) draw()).asType( qty ) );
 	}
 
 	/**
@@ -627,6 +648,27 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			throws ParseException
 		{
 			return parse( dist, BigDecimal.class );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		default QuantityDistribution<?> parseQuantity( final String dist )
+			throws ParseException
+		{
+			return parseQuantity( dist, Quantity.class );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		default <Q extends Quantity<Q>> QuantityDistribution<?> parseQuantity(
+			final String dist, final Class<Q> qty ) throws ParseException
+		{
+			return parse( dist, Quantity.class ).toQuantities( qty );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		default <Q extends Quantity<Q>> QuantityDistribution<?> parseQuantity(
+			final String dist, final Unit<Q> unit ) throws ParseException
+		{
+			return parse( dist, Quantity.class ).toQuantities( unit );
 		}
 
 		/**

@@ -116,7 +116,7 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 				0 );
 		final List<WeightedValue<P>> params = new ArrayList<>();
 		
-		// FIXME register separate Jackson Module artefact
+		// FIXME register separate Jackson Module artifact
 		if( Quantity.class.isAssignableFrom( argType ) )
 			QuantityUtil.checkRegistered( JsonUtil.getJOM() ); 
 		

@@ -176,11 +176,7 @@ public class DecimalUtil implements Util
 														value.doubleValue() );
 	}
 
-	/**
-	 * @param value
-	 * @param scale
-	 * @return
-	 */
+	/** @see BigDecimal.setScale(int, RoundingMode) */
 	public static BigDecimal toScale( final Number value, final int scale )
 	{
 		return valueOf( value ).setScale( scale,
@@ -190,6 +186,7 @@ public class DecimalUtil implements Util
 	/**
 	 * @param value the {@link BigDecimal} to round
 	 * @return the rounded value
+	 * @see BigDecimal.setScale(int, RoundingMode)
 	 */
 	public static int toInt( final Number value )
 	{
@@ -200,6 +197,7 @@ public class DecimalUtil implements Util
 	/**
 	 * @param value the {@link BigDecimal} to round
 	 * @return the rounded value
+	 * @see BigDecimal.setScale(int, RoundingMode)
 	 */
 	public static long toLong( final Number value )
 	{
@@ -264,7 +262,8 @@ public class DecimalUtil implements Util
 	{
 		Apfloat result = Apfloat.ZERO;
 		for( Apfloat p : probabilities )
-			result = result.subtract( p.multiply( ApfloatMath.log( p, TWO ) ) );
+			result = result.subtract( p.equals( Apint.ZERO ) ? Apint.ZERO
+					: p.multiply( ApfloatMath.log( p, TWO ) ) );
 		return result;
 	}
 

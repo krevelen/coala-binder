@@ -121,7 +121,7 @@ public class EnterpriseTest
 			LOG.trace( "initialized organization" );
 
 			final DateTime offset = new DateTime(
-					this.actors.offset().toEpochMilli() );
+					this.actors.offset().toInstant().toEpochMilli() );
 			LOG.trace( "initialized occurred and expired fact sniffing" );
 
 			org1.emit().subscribe( fact ->
