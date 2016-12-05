@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.TreeMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -76,7 +76,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	private final Subject<Scheduler, Scheduler> reset = PublishSubject.create();
 
 	/** the listeners */
-	private final NavigableMap<Instant, Subject<Instant, Instant>> listeners = new ConcurrentSkipListMap<>();
+	private final NavigableMap<Instant, Subject<Instant, Instant>> listeners = new TreeMap<>();
 
 //	@InjectConfig
 	private Dsol3Config config;
@@ -123,7 +123,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 			{
 				final Instant t = ((DsolTime) event.getContent()).toInstant();
 
-				synchronized( this.listeners )
+//				synchronized( this.listeners )
 				{
 					if( this.last != null && Compare.eq( t, this.last ) )
 						return;
@@ -149,7 +149,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 			// observe simulation completed
 			this.scheduler.addListener( event ->
 			{
-				synchronized( this.listeners )
+//				synchronized( this.listeners )
 				{
 					// publish end time
 					final Instant t = this.scheduler.getSimulatorTime()
@@ -260,7 +260,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	public Expectation schedule( final Instant when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		synchronized( this.listeners )
+//		synchronized( this.listeners )
 		{
 			return Expectation.of( this, when,
 					this.listeners.computeIfAbsent( when, t ->

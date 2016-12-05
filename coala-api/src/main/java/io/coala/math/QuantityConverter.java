@@ -21,11 +21,17 @@ package io.coala.math;
 
 import java.lang.reflect.Method;
 
+import org.aeonbits.owner.Config;
+
 import io.coala.config.JsonConverter;
 import tec.uom.se.ComparableQuantity;
 
 /**
- * {@link QuantityConverter}
+ * {@link QuantityConverter} will parse a raw {@link ComparableQuantity}.
+ * <p>
+ * <b>WARNING</b>: {@link ClassCastException} (due to parsed vs. declared
+ * {@link Quantity} dimension mismatch) is only thrown at run-time upon access
+ * to the respective {@link Config} property's proxy method access
  * 
  * @version $Id$
  * @author Rick van Krevelen

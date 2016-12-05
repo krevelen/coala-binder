@@ -66,67 +66,61 @@ public class Compare implements Util
 	}
 
 	/**
-	 * @param <T> the type of {@link Comparable}
-	 * @param o1 a {@link T} value
-	 * @param o2 a {@link T} value
+	 * @param o1 a {@link Comparable} value
+	 * @param o2 a {@link Comparable} value
 	 * @return <code>o1 = o2</code>
 	 */
-	public static <T> boolean eq( final Comparable<?> o1, final T o2 )
+	public static boolean eq( final Comparable<?> o1, final Object o2 )
 	{
 		return Comparison.compare( o1, o2 ) == 0;
 	}
 
 	/**
-	 * @param <T> the type of {@link Comparable}
-	 * @param o1 a {@link T} value
-	 * @param o2 a {@link T} value
-	 * @return <code>o1 <> o2</code>
+	 * @param o1 a {@link Comparable} value
+	 * @param o2 a {@link Comparable} value
+	 * @return <code>o1 &ne;  o2</code>
 	 */
-	public static <T> boolean ne( final Comparable<?> o1, final T o2 )
+	public static boolean ne( final Comparable<?> o1, final Object o2 )
 	{
 		return Comparison.compare( o1, o2 ) == 0;
 	}
 
 	/**
-	 * @param <T> the type of {@link Comparable}
-	 * @param o1 a {@link T} value
-	 * @param o2 a {@link T} value
+	 * @param o1 a {@link Comparable} value
+	 * @param o2 a {@link Comparable} value
 	 * @return <code>o1 < o2</code>
 	 */
-	public static <T> boolean lt( final Comparable<?> o1, final T o2 )
+	public static boolean lt( final Comparable<?> o1, final Object o2 )
 	{
 		return Comparison.compare( o1, o2 ) < 0;
 	}
 
 	/**
-	 * @param <T> the type of {@link Comparable}
-	 * @param o1 a {@link T} value
-	 * @param o2 a {@link T} value
-	 * @return <code>o1 =< o2</code>
+	 * @param o1 a {@link Comparable} value
+	 * @param o2 a {@link Comparable} value
+	 * @return <code>o1 &le; o2</code>
 	 */
-	public static <T> boolean le( final Comparable<?> o1, final T o2 )
+	public static boolean le( final Comparable<?> o1, final Object o2 )
 	{
 		return Comparison.compare( o1, o2 ) <= 0;
 	}
 
 	/**
-	 * @param <T> the type of {@link Comparable}
-	 * @param o1 a {@link T} value
-	 * @param o2 a {@link T} value
+	 * @param o1 a {@link Comparable} value
+	 * @param o2 a {@link Comparable} value
 	 * @return <code>o1 > o2</code>
 	 */
-	public static <T> boolean gt( final Comparable<?> o1, final T o2 )
+	public static boolean gt( final Comparable<?> o1, final Object o2 )
 	{
 		return Comparison.compare( o1, o2 ) > 0;
 	}
 
 	/**
-	 * @param <T> the type of {@link Comparable}
-	 * @param o1 a {@link T} value
-	 * @param o2 a {@link T} value
-	 * @return <code>o1 >= o2</code>
+	 * @param o1 a {@link Comparable} value
+	 * @param o2 a {@link Comparable} value
+	 * @return <code>o1 &ge; o2</code>
 	 */
-	public static <T> boolean ge( final Comparable<?> o1, final T o2 )
+	public static boolean ge( final Comparable<?> o1, final Object o2 )
 	{
 		return Comparison.compare( o1, o2 ) >= 0;
 	}
