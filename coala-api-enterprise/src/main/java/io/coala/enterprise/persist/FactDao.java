@@ -146,7 +146,7 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	protected Date created;
 
 	@Id
-	@GeneratedValue( strategy = GenerationType.IDENTITY )
+	@GeneratedValue( strategy = GenerationType.AUTO ) // IDENTITY unsupported in Neo4J
 	@Column( name = "PK", nullable = false, updatable = false )
 	protected Integer pk;
 

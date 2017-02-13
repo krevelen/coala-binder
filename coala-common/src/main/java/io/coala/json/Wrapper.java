@@ -72,11 +72,12 @@ import io.coala.util.TypeArguments;
 //	property = "@class" )
 public interface Wrapper<T>
 {
+	String WRAP_PROPERTY = "wrap";
 
 	/**
 	 * @return the wrapped value
 	 */
-//	@JsonGetter( "value" )
+//	@JsonProperty( "value" )
 	T unwrap();
 
 	/**

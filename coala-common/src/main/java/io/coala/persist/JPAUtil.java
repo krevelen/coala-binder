@@ -67,7 +67,11 @@ public class JPAUtil
 			{
 				latch.countDown();
 			}
-		}, e -> error.add( e ) );
+		}, e ->
+		{
+			error.add( e );
+			latch.countDown();
+		} );
 		try
 		{
 			latch.await();//( 1, TimeUnit.SECONDS );

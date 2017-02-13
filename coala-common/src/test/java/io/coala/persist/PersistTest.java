@@ -19,6 +19,7 @@
  */
 package io.coala.persist;
 
+import java.net.URI;
 import java.sql.SQLException;
 
 import javax.persistence.Column;
@@ -124,7 +125,7 @@ public class PersistTest
 //		@DefaultValue( "jdbc:mysql://localhost/testdb" )
 //		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
 		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
-		String url();
+		URI url();
 
 		@Key( "hibernate.hikari.dataSource.user" )
 		@DefaultValue( "sa" )

@@ -256,9 +256,12 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 				&& ((Range<T>) that).getUpper().equals( getUpper() );
 	}
 
+	private static final Range<?> INFINITE = of( null, null, null, null );
+
+	@SuppressWarnings( "unchecked" )
 	public static <T extends Comparable<?>> Range<T> infinite()
 	{
-		return of( null, null, null, null );
+		return (Range<T>) INFINITE;//of( null, null, null, null );
 	}
 
 	/**

@@ -214,7 +214,7 @@ public final class DynaBean implements Cloneable, Comparable
 		return this.dynamicProperties;
 	}
 
-	protected void set( final Map<String, Object> values )
+	protected void set( final Map<String, ?> values )
 	{
 		Map<String, Object> map = getOrCreateMap();
 		synchronized( map )
@@ -314,9 +314,10 @@ public final class DynaBean implements Cloneable, Comparable
 		/**
 		 * {@link DynaBeanInvocationHandler} constructor
 		 */
+		@SafeVarargs
 		public DynaBeanInvocationHandler( final ObjectMapper om,
 			final Class<?> type, final DynaBean bean,
-			final Properties... imports )
+			final Map<String, ?>... imports )
 		{
 			this.type = type;
 			this.bean = bean;
@@ -365,7 +366,8 @@ public final class DynaBean implements Cloneable, Comparable
 								}
 							} );
 				}
-			}
+			} else if( imports != null ) for( Map<String, ?> imp : imports )
+				this.bean.set( imp );
 			this.config = config;
 
 			// TODO use event listeners of Mutable interface to dynamically add
@@ -377,17 +379,22 @@ public final class DynaBean implements Cloneable, Comparable
 		public Object invoke( final Object proxy, final Method method,
 			final Object[] args ) throws Throwable
 		{
-			// LOG.trace("Calling " + this.type.getSimpleName() + "#"
-			// + method.getName() + "()");
+			if( method.isDefault() )
+				return ReflectUtil.invokeDefaultMethod( proxy, method, args );
 
 			final String beanProp = method.getName();
+//			LOG.trace( "Calling {} {}::{}({})",
+//					method.getReturnType().getSimpleName(),
+//					this.type.getSimpleName(), beanProp, args == null
+//							? Collections.emptyList() : Arrays.asList( args ) );
+
 			switch( args == null ? 0 : args.length )
 			{
 			case 0:
 				if( beanProp.equals( "toString" ) )
 				{
 					if( Wrapper.class.isAssignableFrom( this.type ) )
-						return this.bean.get( "wrap" );
+						return this.bean.get( Wrapper.WRAP_PROPERTY );
 					JsonUtil.checkRegistered( JsonUtil.getJOM(), this.type );
 					return this.bean.toString();
 				}
@@ -398,49 +405,61 @@ public final class DynaBean implements Cloneable, Comparable
 				// if (method.getName().equals("getClass"))
 				// return this.type;
 
-				if( !method.getReturnType().equals( Void.TYPE ) )
+				Object result = this.bean.any().get( beanProp );
+				if( result == null )
 				{
-					if( method.isDefault() ) return ReflectUtil
-							.invokeDefaultMethod( proxy, method, args );
-
-					Object result = this.bean.any().get( beanProp );
-					if( result == null )
+					if( this.config != null )
 					{
-						if( this.config != null )
+						// cache (immutable) result
+						result = method.invoke( this.config, args );
+						if( this.config instanceof Mutable == false )
+							this.bean.any().put( beanProp, result );
+					} else
+						try
 						{
-							result = method.invoke( this.config, args );
-							// LOG.trace(
-							// "Property {}#{}() == {} [current Config]",
-							// this.type.getSimpleName(), beanProp, result);
+							return ReflectUtil.invokeAsBean(
+									this.bean.dynamicProperties, this.type,
+									method, args );
+						} catch( final Exception e )
+						{
+							// ignoring non-bean method
 						}
-						// else
-						// LOG.trace("Property {}#{}() == null [no config]",
-						// this.type.getSimpleName(), beanProp);
-					}
-					return result;
 				}
-				break;
+				return result;
 
 			case 1:
 				if( beanProp.equals( "equals" ) )
 					return this.bean.equals( args[0] );
 
-				final DynaBean.BeanProxy comparable = this.type
+				final DynaBean.BeanProxy annot = this.type
 						.getAnnotation( DynaBean.BeanProxy.class );
-				if( beanProp.equals( "compareTo" ) && comparable != null )
-					return DynaBean.getComparator( comparable ).compare(
+				if( beanProp.equals( "compareTo" ) && annot != null )
+					return DynaBean.getComparator( annot ).compare(
 							(Comparable) this.bean, (Comparable) args[0] );
 
+				// assume setter method, e.g. void setVal()
 				if( method.getParameterTypes().length == 1
 						&& method.getParameterTypes()[0]
 								.isAssignableFrom( args[0].getClass() )
 				//&& method.getName().startsWith( "set" ) )
 				//&& method.getReturnType().equals( Void.TYPE ) 
-				)
+				) try
 				{
-					this.bean.set( beanProp, args[0] );
-					return null; // setters return void
+					return ReflectUtil.invokeAsBean(
+							this.bean.dynamicProperties, this.type, method,
+							args );
+				} catch( final Exception e )
+				{
+					// non-bean method, assume setter, e.g. val(..), withVal(..)
+					return this.bean.set( beanProp, args[0] );
 				}
+
+				LOG.warn( "{} ({}) unknown: {}#{}({})",
+						DynaBean.class.getSimpleName(),
+						method.getReturnType().isPrimitive() ? "primitive"
+								: "Object",
+						this.type.getSimpleName(), beanProp,
+						Arrays.asList( args ) );
 				break;
 			}
 
@@ -450,12 +469,12 @@ public final class DynaBean implements Cloneable, Comparable
 				return method.invoke( this.config, args );
 			}
 
-			if( method.getReturnType().equals( Void.TYPE ) )
-			{
-				LOG.warn( "Ignoring call to: void " + this.type.getSimpleName()
-						+ "#" + beanProp + "(" + Arrays.asList( args ) + ")" );
-				return null;
-			}
+//			if( method.getReturnType().equals( Void.TYPE ) )
+//			{
+//				LOG.warn( "Ignoring call to: void " + this.type.getSimpleName()
+//						+ "#" + beanProp + "(" + Arrays.asList( args ) + ")" );
+//				return null;
+//			}
 
 			throw ExceptionFactory.createUnchecked(
 					"{} ({}) value not set: {}#{}({})",
@@ -572,9 +591,10 @@ public final class DynaBean implements Cloneable, Comparable
 	 * @param <T>
 	 * @return
 	 */
+	@SafeVarargs
 	static final <S, T> JsonDeserializer<T> createJsonDeserializer(
 		final ObjectMapper om, final Class<T> resultType,
-		final Properties... imports )
+		final Map<String, ?>... imports )
 	{
 		return new JsonDeserializer<T>()
 		{
@@ -691,8 +711,9 @@ public final class DynaBean implements Cloneable, Comparable
 	}
 
 	/** */
+	@SafeVarargs
 	public static <T> void registerType( final ObjectMapper om,
-		final Class<T> type, final Properties... imports )
+		final Class<T> type, final Map<String, ?>... imports )
 	{
 		// TODO implement dynamic generic Converter(s) for JSON bean
 		// properties ?
@@ -758,8 +779,9 @@ public final class DynaBean implements Cloneable, Comparable
 	 * @param imports default value {@link Properties} of the bean
 	 * @return a {@link Proxy} instance backed by an empty {@link DynaBean}
 	 */
+	@SafeVarargs
 	public static <T> T proxyOf( final Class<T> type,
-		final Properties... imports )
+		final Map<String, ?>... imports )
 	{
 		return proxyOf( type, new DynaBean(), imports );
 	}
@@ -770,8 +792,9 @@ public final class DynaBean implements Cloneable, Comparable
 	 * @param imports default value {@link Properties} of the bean
 	 * @return a {@link Proxy} instance backed by an empty {@link DynaBean}
 	 */
+	@SafeVarargs
 	public static <T> T proxyOf( final Class<T> type, final DynaBean bean,
-		final Properties... imports )
+		final Map<String, ?>... imports )
 	{
 		return proxyOf( JsonUtil.getJOM(), type, bean, imports );
 	}
@@ -785,7 +808,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <T> T proxyOf( final ObjectMapper om, final Class<T> type,
-		final DynaBean bean, final Properties... imports )
+		final DynaBean bean, final Map<String, ?>... imports )
 	{
 //		if( !type.isAnnotationPresent( BeanProxy.class ) )
 //			throw ExceptionFactory.createUnchecked( "{} is not a @{}", type,
@@ -794,6 +817,12 @@ public final class DynaBean implements Cloneable, Comparable
 		return (T) Proxy.newProxyInstance( type.getClassLoader(),
 				new Class[]
 		{ type }, new DynaBeanInvocationHandler( om, type, bean, imports ) );
+	}
+
+	public static Class<?> typeOf( final Object proxy )
+	{
+		return ((DynaBeanInvocationHandler) Proxy
+				.getInvocationHandler( proxy )).type;
 	}
 
 	/**
@@ -814,8 +843,9 @@ public final class DynaBean implements Cloneable, Comparable
 		 *            has a public zero-arg constructor
 		 * @return the new {@link ProxyProvider} instance
 		 */
+		@SafeVarargs
 		public static <T> ProxyProvider<T> of( final Class<T> proxyType,
-			final Properties... imports )
+			final Map<String, ?>... imports )
 		{
 			return of( JsonUtil.getJOM(), proxyType, imports );
 		}
@@ -826,8 +856,9 @@ public final class DynaBean implements Cloneable, Comparable
 		 *            has a public zero-arg constructor
 		 * @return the new {@link ProxyProvider} instance
 		 */
+		@SafeVarargs
 		public static <T> ProxyProvider<T> of( final ObjectMapper om,
-			final Class<T> proxyType, final Properties... imports )
+			final Class<T> proxyType, final Map<String, ?>... imports )
 		{
 			return new ProxyProvider<T>( om, proxyType, new DynaBean(),
 					imports );
@@ -840,10 +871,11 @@ public final class DynaBean implements Cloneable, Comparable
 		 * @param cache the {@link Map} of previously created instances
 		 * @return the cached (new) {@link ProxyProvider} instance
 		 */
+		@SafeVarargs
 		public static <T> ProxyProvider<T> of( final ObjectMapper om,
 			final Class<T> beanType,
 			final Map<Class<?>, ProxyProvider<?>> cache,
-			final Properties... imports )
+			final Map<String, ?>... imports )
 		{
 			if( cache == null ) return of( om, beanType, imports );
 
@@ -871,7 +903,7 @@ public final class DynaBean implements Cloneable, Comparable
 		private final DynaBean bean;
 
 		/** */
-		private final Properties[] imports;
+		private final Map<String, ?>[] imports;
 
 		/**
 		 * {@link ProxyProvider} constructor
@@ -881,8 +913,9 @@ public final class DynaBean implements Cloneable, Comparable
 		 * @param bean the (possibly prepared) {@link DynaBean}
 		 * @param imports
 		 */
+		@SafeVarargs
 		public ProxyProvider( final ObjectMapper om, final Class<T> proxyType,
-			final DynaBean bean, final Properties... imports )
+			final DynaBean bean, final Map<String, ?>... imports )
 		{
 			this.om = om;
 			this.proxyType = proxyType;
