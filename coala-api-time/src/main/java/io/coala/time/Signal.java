@@ -114,9 +114,11 @@ public interface Signal<T> extends Proactive
 		public Simple( final Scheduler scheduler, final Range<Instant> domain,
 			final Function<Instant, T> function )
 		{
-			if( domain.isGreaterThan( scheduler.now() ) ) throw ExceptionFactory
-					.createUnchecked( "Currently t={} past domain: {}",
-							scheduler.now(), domain );
+			if( !domain.getMaximum().isInfinity()
+					&& domain.isLessThan( scheduler.now() ) )
+				throw ExceptionFactory.createUnchecked(
+						"Currently t={} already past domain: {}",
+						scheduler.now(), domain );
 			this.scheduler = scheduler;
 			this.domain = domain;
 			this.function = function;

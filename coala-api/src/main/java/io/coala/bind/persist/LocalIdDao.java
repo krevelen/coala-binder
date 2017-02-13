@@ -59,12 +59,18 @@ import io.coala.persist.UUIDToByteConverter;
  */
 @Entity( name = LocalIdDao.ENTITY_NAME )
 @Cacheable
-@Table( name = "LOCAL_IDS",
+@Table( name = "LOCAL_IDS"
+// NOTE: multi-column constraints unsupported in Neo4J
+	,
 	uniqueConstraints =
-{ @UniqueConstraint( columnNames = { LocalIdDao.CONTEXT_COLUMN_NAME,
-				LocalIdDao.VALUE_COLUMN_NAME } ),
+	{
 		@UniqueConstraint( columnNames =
-		{ LocalIdDao.CONTEXT_COLUMN_NAME, LocalIdDao.PARENT_COLUMN_NAME } ) } )
+	{ LocalIdDao.CONTEXT_COLUMN_NAME,
+				LocalIdDao.VALUE_COLUMN_NAME } ),
+			@UniqueConstraint(
+				columnNames =
+			{ LocalIdDao.CONTEXT_COLUMN_NAME,
+				LocalIdDao.PARENT_COLUMN_NAME } ) } )
 @Inheritance( strategy = InheritanceType.SINGLE_TABLE )
 public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 {
@@ -112,7 +118,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	}
 
 	@Id
-	@GeneratedValue( strategy = GenerationType.IDENTITY )
+	@GeneratedValue( strategy = GenerationType.AUTO ) // IDENTITY unsupported in Neo4J
 	@Column( name = "PK", nullable = false, updatable = false,
 		insertable = false )
 	public Integer pk;

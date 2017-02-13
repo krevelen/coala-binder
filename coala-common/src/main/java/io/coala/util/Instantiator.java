@@ -140,17 +140,16 @@ public class Instantiator<T>
 	 *            imports (i.e. {@link Properties Properties[]})
 	 * @return the newly constructed instance
 	 */
+	@SuppressWarnings( "unchecked" )
 	public T instantiate( final Object... args )
 	{
-		if( ClassUtil.isAbstract( this.type ) )
-		{
-			final Properties[] imports = args == null ? null
-					: new Properties[args.length];
-			for( int i = 0; i < args.length; i++ )
-				imports[i] = (Properties) args[i];
-			return ProxyProvider.of( JsonUtil.getJOM(), this.type, imports )
-					.get();
-		}
+		if( ClassUtil
+				.isAbstract(
+						this.type ) ) { return ProxyProvider
+								.of( JsonUtil.getJOM(), this.type,
+										args == null ? null
+												: (Map<String, ?>[]) args )
+								.get(); }
 		if( this.constructor != null ) try
 		{
 			return this.constructor.newInstance( args );
@@ -170,12 +169,9 @@ public class Instantiator<T>
 					this.type.getEnclosingClass(), this.type );
 		try
 		{
-			return this.type
-					.getConstructor( this.type.isMemberClass()
-							? new Class<?>[]
-							{ args[0].getClass() }
-							: new Class<?>[0] )
-					.newInstance( args );
+			return this.type.getConstructor( this.type.isMemberClass()
+					? new Class<?>[]
+			{ args[0].getClass() } : new Class<?>[0] ).newInstance( args );
 		} catch( final Throwable e )
 		{
 			return Thrower.rethrowUnchecked( e );

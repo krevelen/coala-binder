@@ -207,8 +207,9 @@ public class JsonUtil
 	 * @param resultType the type of result {@link Object}
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
+	@SafeVarargs
 	public static <T> T valueOf( final InputStream json,
-		final Class<T> resultType, final Properties... imports )
+		final Class<T> resultType, final Map<String,?>... imports )
 	{
 		if( json == null ) return null;
 		try
@@ -228,8 +229,9 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
+	@SafeVarargs
 	public static <T> T valueOf( final String json, final Class<T> resultType,
-		final Properties... imports )
+		final Map<String,?>... imports )
 	{
 		return valueOf( getJOM(), json, resultType, imports );
 	}
@@ -241,8 +243,9 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
+	@SafeVarargs
 	public static <T> T valueOf( final ObjectMapper om, final String json,
-		final Class<T> resultType, final Properties... imports )
+		final Class<T> resultType, final Map<String,?>... imports )
 	{
 		if( json == null || json.equalsIgnoreCase( "null" ) ) return null;
 		try
@@ -263,8 +266,9 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
+	@SafeVarargs
 	public static <T> T valueOf( final TreeNode tree, final Class<T> resultType,
-		final Properties... imports )
+		final Map<String,?>... imports )
 	{
 		return valueOf( getJOM(), tree, resultType, imports );
 	}
@@ -276,8 +280,9 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
+	@SafeVarargs
 	public static <T> T valueOf( final ObjectMapper om, final TreeNode tree,
-		final Class<T> resultType, final Properties... imports )
+		final Class<T> resultType, final Map<String,?>... imports )
 	{
 		if( tree == null ) return null;
 		// TODO add work-around for Wrapper sub-types?
@@ -302,8 +307,9 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
+	@SafeVarargs
 	public static <T> T valueOf( final String json,
-		final TypeReference<T> typeReference, final Properties... imports )
+		final TypeReference<T> typeReference, final Map<String,?>... imports )
 	{
 		return valueOf( getJOM(), json, typeReference, imports );
 	}
@@ -317,7 +323,7 @@ public class JsonUtil
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <T> T valueOf( final ObjectMapper om, final String json,
-		final TypeReference<T> typeReference, final Properties... imports )
+		final TypeReference<T> typeReference, final Map<String,?>... imports )
 	{
 		if( json == null ) return null;
 		try
@@ -375,9 +381,10 @@ public class JsonUtil
 	 * @param imports the {@link Properties} instances for default values, etc.
 	 * @return
 	 */
+	@SafeVarargs
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	public static <T> Class<T> checkRegistered( final ObjectMapper om,
-		final Class<T> type, final Properties... imports )
+		final Class<T> type, final Map<String,?>... imports )
 	{
 		synchronized( JSON_REGISTRATION_CACHE )
 		{
@@ -386,7 +393,7 @@ public class JsonUtil
 					key -> new HashSet<>() );
 			if( type.getPackage() == Object.class.getPackage()
 					|| type.getPackage() == Collection.class.getPackage()
-					|| type.isPrimitive()
+					// || type.isPrimitive() already checked at st
 					// assume java.lang.* and java.util.* are already mapped
 					|| TreeNode.class.isAssignableFrom( type )
 					|| cache.contains( type ) )
@@ -422,8 +429,9 @@ public class JsonUtil
 		}
 	}
 
+	@SafeVarargs
 	public static <T> Class<T> checkRegisteredMembers( final ObjectMapper om,
-		final Class<T> type, final Properties... imports )
+		final Class<T> type, final Map<String,?>... imports )
 	{
 		for( Method method : type.getDeclaredMethods() )
 			if( method.getParameterCount() == 0

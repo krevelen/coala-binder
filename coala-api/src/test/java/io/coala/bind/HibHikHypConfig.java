@@ -19,6 +19,7 @@
  */
 package io.coala.bind;
 
+import java.net.URI;
 import java.util.Map;
 
 import javax.persistence.EntityManagerFactory;
@@ -75,7 +76,7 @@ interface HibHikHypConfig extends HibernateJPAConfig
 	@DefaultValue( "jdbc:hsqldb:file:target/testdb2" )
 //	@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
 //	@DefaultValue( "jdbc:mysql://localhost/testdb" )
-	String url();
+	URI url();
 
 	/**
 	 * @param imports additional {@link EntityManagerFactory} configuration

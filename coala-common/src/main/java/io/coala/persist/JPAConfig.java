@@ -15,6 +15,7 @@
  */
 package io.coala.persist;
 
+import java.net.URI;
 import java.util.Map;
 
 import javax.persistence.CacheRetrieveMode;
@@ -34,23 +35,31 @@ import io.coala.log.LogUtil;
  */
 public interface JPAConfig extends GlobalConfig
 {
-	@Key( "javax.persistence.jdbc.driver" )
-	String driver();
-
-	@Key( "javax.persistence.jdbc.url" )
-	String url();
-
-	@Key( "javax.persistence.jdbc.user" )
-	String username();
-
-	@Key( "javax.persistence.jdbc.password" )
-	String password();
+	String JPA_JDBC_DRIVER_KEY = "javax.persistence.jdbc.driver";
+	
+	String JPA_JDBC_URL_KEY = "javax.persistence.jdbc.url";
+	
+	String JPA_JDBC_USER_KEY = "javax.persistence.jdbc.user" ;
+	
+	String JPA_JDBC_PASSWORD_KEY = "javax.persistence.jdbc.password";
 
 	/** the SHARED_CACHE_MODE_KEY as per {@link SharedCacheMode} */
 	String SHARED_CACHE_MODE_KEY = "javax.persistence.sharedCache.mode";
 
 	/** the CACHE_RETRIEVE_MODE_KEY as per {@link CacheRetrieveMode} */
 	String CACHE_RETRIEVE_MODE_KEY = "javax.persistence.cache.retrieveMode";
+	
+	@Key( JPA_JDBC_DRIVER_KEY )
+	Class<?> driver();
+
+	@Key( JPA_JDBC_URL_KEY )
+	URI url();
+
+	@Key( JPA_JDBC_USER_KEY)
+	String username();
+
+	@Key( JPA_JDBC_PASSWORD_KEY )
+	String password();
 
 	String NAME_DELIMITER = ",";
 
