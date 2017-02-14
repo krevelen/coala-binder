@@ -20,7 +20,9 @@
 package io.coala.bind.persist;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.persistence.Cacheable;
@@ -41,6 +43,12 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -48,7 +56,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
+import io.coala.persist.Persistable;
 import io.coala.persist.UUIDToByteConverter;
+import rx.Observable;
 
 /**
  * Although this {@link LocalIdDao} implements the {@link BindableDao}, it does
@@ -82,6 +92,76 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 
 	public static final String CONTEXT_COLUMN_NAME = "CONTEXT";
 
+	/**
+	 * retrieve all {@link LocalIdDao}s in the context of given
+	 * {@link LocalBinder} synchronously
+	 * 
+	 * @param em the session or {@link EntityManager}
+	 * @param binder the {@link LocalBinder} to help instantiate
+	 * @return a {@link Stream} of {@link LocalId} instances, if any
+	 */
+	@Transactional
+	public static List<LocalIdDao> findAllSync( final EntityManager em,
+		final LocalBinder binder )
+	{
+		return findAllSync( em, binder.id().contextRef() );
+	}
+
+	/**
+	 * retrieve all {@link LocalIdDao}s in the context of given
+	 * {@link LocalBinder} synchronously
+	 * 
+	 * @param em the session or {@link EntityManager}
+	 * @param binder the {@link LocalBinder} to help instantiate
+	 * @return a {@link Stream} of {@link LocalId} instances, if any
+	 */
+	@Transactional
+	public static List<LocalIdDao> findAllSync( final EntityManager em,
+		final UUID contextRef )
+	{
+//		em.createQuery( "SELECT d FROM " + LocalIdDao.ENTITY_NAME
+//				+ " d WHERE d.contextRef=?1", LocalIdDao.class )
+//				.setParameter( 1, binder.id().contextRef() );
+
+		final CriteriaBuilder cb = em.getCriteriaBuilder();
+		final CriteriaQuery<LocalIdDao> qry = cb
+				.createQuery( LocalIdDao.class );
+		final Root<LocalIdDao> root = qry.from( qry.getResultType() );
+		final ParameterExpression<UUID> param = cb.parameter( UUID.class );
+		final Predicate pred = cb.equal( root.get( "contextRef" ), param );
+
+		return em.createQuery( qry.select( root ).where( pred ) )
+				.setParameter( param, contextRef ).getResultList();
+	}
+
+	/**
+	 * retrieve all {@link LocalIdDao}s in the context of given
+	 * {@link LocalBinder} asynchronously (using page buffers)
+	 * 
+	 * @param em the session or {@link EntityManager}
+	 * @param contextRef the {@link UUID} of the relevant context
+	 * @param pageSize the page buffer size
+	 * @return a {@link Stream} of {@link LocalId} instances, if any
+	 */
+	@Transactional
+	public static Observable<LocalIdDao> findAllAsync( final EntityManager em,
+		final UUID contextRef, //final CriteriaQuery<LocalIdDao> query,
+		final int pageSize )
+	{
+		final CriteriaBuilder cb = em.getCriteriaBuilder();
+		final ParameterExpression<UUID> ctxParam = cb.parameter( UUID.class );
+		return Persistable
+				.findAsync( em, LocalIdDao.class, pageSize, "pk",
+						qry -> em
+								.createQuery(
+										qry.where( cb.equal(
+												qry.from( LocalIdDao.class )
+														.get( "contextRef" ),
+												ctxParam ) ) )
+								.setParameter( ctxParam, contextRef ) );
+	}
+
+	@Transactional
 	public static LocalIdDao find( final EntityManager em, final LocalId id )
 	{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );
@@ -102,6 +182,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		}
 	}
 
+	@Transactional
 	public static LocalIdDao create( final EntityManager em, final LocalId id )
 	{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );

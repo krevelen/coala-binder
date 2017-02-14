@@ -19,10 +19,10 @@
  */
 package io.coala.bind;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
-import javax.persistence.EntityManagerFactory;
+import java.util.Arrays;
 
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
@@ -31,7 +31,6 @@ import com.eaio.uuid.UUID;
 
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
-import io.coala.persist.JPAUtil;
 
 /**
  * {@link LocalIdTest}
@@ -45,51 +44,25 @@ public class LocalIdTest
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( LocalIdTest.class );
 
-	@Test //( expected = PersistenceException.class )
-	public void testLocalId()
+	@Test
+	public void testJson()
 	{
-		LOG.info( "Starting test of: {}", LocalId.class.getSimpleName() );
-
-		final LocalId id1 = LocalId.of( "role", LocalId.of( "org",
-				LocalId.of( "agent", LocalId.of( new UUID() ) ) ) );
-
-		final LocalId id2 = LocalId.of( "role", LocalId.of( "org",
-				LocalId.of( "agent", LocalId.of( new UUID() ) ) ) );
-
-		final LocalId id3 = LocalId.of( "role", LocalId.of( "org",
-				LocalId.of( "", LocalId.of( new UUID() ) ) ) );
-
-		final EntityManagerFactory emf = HibHikHypConfig.createEMF();
-		JPAUtil.session( emf, em ->
+		for( LocalId id : Arrays.asList(
+				LocalId.of( "role",
+						LocalId.of( "org",
+								LocalId.of( "agent",
+										LocalId.of( new UUID() ) ) ) ),
+				LocalId.of( "role",
+						LocalId.of( "org",
+								LocalId.of( "agent",
+										LocalId.of( new UUID() ) ) ) ),
+				LocalId.of( "role", LocalId.of( "org",
+						LocalId.of( "", LocalId.of( new UUID() ) ) ) ) ) )
 		{
-			id1.persist( em );
-			LOG.trace( "a Persisted: {}", id1 );
-		} );
-		JPAUtil.session( emf, em ->
-		{
-			id1.persist( em );
-			LOG.trace( "b Persisted: {}", id1 );
-		} );
-		JPAUtil.session( emf, em ->
-		{
-			id2.persist( em );
-			LOG.trace( "c Persisted: {}", id2 );
-		} );
-		JPAUtil.session( emf, em ->
-		{
-			id1.persist( em );
-			LOG.trace( "d Persisted: {}", id1 );
-			id2.persist( em );
-			LOG.trace( "e Persisted: {}", id2 );
-			id3.persist( em );
-			LOG.trace( "f Persisted: {}", id3 );
-		} );
-		final List<LocalId> list = new ArrayList<>();
-		JPAUtil.session( emf,
-				em -> id1.findAll( em, null ).forEach( list::add ) );
-		LOG.trace( "SELECT all: {}", list );
-		list.forEach( id -> LOG.trace( "stringify {} -> {} -> {}", id,
-				JsonUtil.stringify( id ),
-				JsonUtil.valueOf( JsonUtil.stringify( id ), LocalId.class ) ) );
+			final String json = JsonUtil.stringify( id );
+			LOG.info( "Testing {} <-> {}", id, json );
+			assertThat( id + "<->" + json,
+					JsonUtil.valueOf( json, LocalId.class ), equalTo( id ) );
+		}
 	}
 }

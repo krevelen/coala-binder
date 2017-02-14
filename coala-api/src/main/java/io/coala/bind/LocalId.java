@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -38,6 +39,7 @@ import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
+import rx.Observable;
 
 /**
  * {@link LocalId} is a recursive child-parent id pair with a {@link UUID} as
@@ -53,6 +55,9 @@ import io.coala.persist.Persistable;
 public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	implements Persistable<LocalIdDao>
 {
+	/**
+	 * {@link JsonExport} tells Jackson how to write a {@link LocalId} as JSON
+	 */
 	public static class JsonExport extends JsonSerializer<LocalId>
 	{
 		@Override
@@ -63,6 +68,9 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		}
 	}
 
+	/**
+	 * {@link FromStringConverter} tells Jackson how to read a {@link LocalId}
+	 */
 	public static class FromStringConverter
 		extends StdConverter<String, LocalId>
 	{
@@ -132,33 +140,49 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		throw new IllegalArgumentException();
 	}
 
-	public Stream<LocalId> find( final EntityManager em,
-		final LocalBinder binder, final String query )
-	{
-		return em.createQuery( query, LocalIdDao.class ).getResultList()
-				.stream().map( dao ->
-				{
-					return dao.restore( binder );
-				} );
-	}
-
-	public Stream<LocalId> findAll( final EntityManager em,
-		final LocalBinder binder )
-	{
-		return find( em, binder,
-				"SELECT dao FROM " + LocalIdDao.ENTITY_NAME + " dao" );
-	}
-
 	private transient Integer pk = null;
 
 	@Override
 	public LocalIdDao persist( final EntityManager em )
 	{
 		if( this.pk != null ) return em.find( LocalIdDao.class, this.pk ); // cached?
-		final LocalIdDao result = JPAUtil.<LocalIdDao> findOrCreate( em,
+		final LocalIdDao result = JPAUtil.<LocalIdDao>findOrCreate( em,
 				() -> LocalIdDao.find( em, this ),
 				() -> LocalIdDao.create( em, this ) );
 		this.pk = result.pk;
 		return result;
+	}
+
+	/**
+	 * restore all {@link LocalId}s in the context of given {@link LocalBinder}
+	 * synchronously
+	 * 
+	 * @param em the session or {@link EntityManager}
+	 * @param binder the {@link LocalBinder} to help instantiate
+	 * @return a {@link Stream} of {@link LocalId} instances, if any
+	 */
+	@Transactional
+	public static Stream<LocalId> findAllSync( final EntityManager em,
+		final UUID contextRef )
+	{
+		return LocalIdDao.findAllSync( em, contextRef ).stream()
+				.map( dao -> dao.restore( null ) );
+	}
+
+	/**
+	 * restore all {@link LocalId}s in the context of given {@link LocalBinder}
+	 * asynchronously (using page buffers)
+	 * 
+	 * @param em the session or {@link EntityManager}
+	 * @param contextRef the {@link UUID} of the relevant context
+	 * @param pageSize the page buffer size
+	 * @return an {@link Observable} stream of {@link LocalId} instances, if any
+	 */
+	@Transactional
+	public static Observable<LocalId> findAllAsync( final EntityManager em,
+		final UUID contextRef, final int pageSize )
+	{
+		return LocalIdDao.findAllAsync( em, contextRef, pageSize )
+				.map( dao -> dao.restore( null ) );
 	}
 }

@@ -232,7 +232,7 @@ public class LogUtil implements Util
 		 *         call until absolutely necessary (e.g. for logging at a
 		 *         desired level)
 		 */
-		static Pretty of( final Supplier<String> supplier )
+		static Pretty of( final Supplier<?> supplier )
 		{
 			return new Pretty()
 			{
@@ -241,14 +241,15 @@ public class LogUtil implements Util
 				@Override
 				public String toString()
 				{
-					return this.cache != null ? this.cache
-							: (this.cache = supplier.get());
+					if( this.cache != null ) return this.cache;
+					final Object obj = supplier.get();
+					return (this.cache = obj == null ? null : obj.toString());
 				}
 			};
 		}
 	}
 
-	public static Pretty toCachedString( final Supplier<String> supplier )
+	public static Pretty toCachedString( final Supplier<?> supplier )
 	{
 		return Pretty.of( supplier );
 	}
