@@ -108,21 +108,18 @@ public interface Persistable<DAO extends Persistable.Dao>
 	{
 		try
 		{
-			// select only primary keys first
+			// first select only primary key attributes synchronously
 			final CriteriaBuilder cb = em.getCriteriaBuilder();
 			final CriteriaQuery<Object> pkQry = cb.createQuery();
 			final Path<Object> pkPath = pkQry.from( entityType ).get( pkName );
-			pkQry.select( pkPath ).distinct( true );
+			pkQry.select( pkPath ).distinct( true ); // FIXME why so many joins?
 			final List<?> pks = (restrictor == null ? em.createQuery( pkQry )
 					: restrictor.apply( pkQry )).getResultList();
 
-			System.out.println( "Buffering " + pks );
-			// FIXME why are pages handled twice????
-			// stream full results in page buffers of specified pageSize>=1
+			// then stream full entities obtained in buffers of given pageSize
 			return Observable.from( pks ).buffer( Math.max( 1, pageSize ) )
 					.flatMap( page ->
 					{
-						System.out.println( "Page " + page );
 						try
 						{
 							// query filtering primary keys in current page only
