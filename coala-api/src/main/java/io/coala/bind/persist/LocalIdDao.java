@@ -45,7 +45,6 @@ import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
@@ -67,7 +66,7 @@ import rx.Observable;
  * @version $Id$
  * @author Rick van Krevelen
  */
-@Entity( name = LocalIdDao.ENTITY_NAME )
+@Entity //( name = LocalIdDao.ENTITY_NAME )
 @Cacheable
 @Table( name = "LOCAL_IDS"
 // NOTE: multi-column constraints unsupported in Neo4J
@@ -84,7 +83,7 @@ import rx.Observable;
 @Inheritance( strategy = InheritanceType.SINGLE_TABLE )
 public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 {
-	public static final String ENTITY_NAME = "LOCAL_ID";
+//	public static final String ENTITY_NAME = "LOCAL_ID";
 
 	public static final String VALUE_COLUMN_NAME = "VALUE";
 
@@ -104,7 +103,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	public static List<LocalIdDao> findAllSync( final EntityManager em,
 		final LocalBinder binder )
 	{
-		return findAllSync( em, binder.id().contextRef() );
+		return findAll( em, binder.id().contextRef() );
 	}
 
 	/**
@@ -116,7 +115,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
 	@Transactional
-	public static List<LocalIdDao> findAllSync( final EntityManager em,
+	public static List<LocalIdDao> findAll( final EntityManager em,
 		final UUID contextRef )
 	{
 //		em.createQuery( "SELECT d FROM " + LocalIdDao.ENTITY_NAME
@@ -127,11 +126,11 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		final CriteriaQuery<LocalIdDao> qry = cb
 				.createQuery( LocalIdDao.class );
 		final Root<LocalIdDao> root = qry.from( qry.getResultType() );
-		final ParameterExpression<UUID> param = cb.parameter( UUID.class );
-		final Predicate pred = cb.equal( root.get( "contextRef" ), param );
+//		final ParameterExpression<UUID> param = cb.parameter( UUID.class );
+		final Predicate pred = cb.equal( root.get( "contextRef" ), contextRef );
 
 		return em.createQuery( qry.select( root ).where( pred ) )
-				.setParameter( param, contextRef ).getResultList();
+				/* .setParameter( param, contextRef ) */.getResultList();
 	}
 
 	/**
@@ -144,21 +143,17 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
 	@Transactional
+	@Deprecated
 	public static Observable<LocalIdDao> findAllAsync( final EntityManager em,
-		final UUID contextRef, //final CriteriaQuery<LocalIdDao> query,
-		final int pageSize )
+		final UUID contextRef, final int pageSize )
 	{
 		final CriteriaBuilder cb = em.getCriteriaBuilder();
-		final ParameterExpression<UUID> ctxParam = cb.parameter( UUID.class );
-		return Persistable
-				.findAsync( em, LocalIdDao.class, pageSize, "pk",
-						qry -> em
-								.createQuery(
-										qry.where( cb.equal(
-												qry.from( LocalIdDao.class )
-														.get( "contextRef" ),
-												ctxParam ) ) )
-								.setParameter( ctxParam, contextRef ) );
+//		final ParameterExpression<UUID> ctxParam = cb.parameter( UUID.class );
+		return Persistable.findAsync( em, LocalIdDao.class, pageSize, "pk",
+				qry ->
+				// FIXME restrictor function fails to filter correct contextRef
+				em.createQuery( qry.where( cb.equal( qry.from( LocalIdDao.class ).get( "contextRef" ), contextRef ) ) )
+		/* .setParameter( ctxParam, contextRef ) */ );
 	}
 
 	@Transactional
@@ -167,15 +162,19 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );
 		final LocalIdDao parentRef = id.parentRef().parentRef() == null ? null
 				: find( em, id.parentRef() );
-		final UUID context = Objects.requireNonNull( id.contextRef() );
+		final UUID contextRef = Objects.requireNonNull( id.contextRef() );
 		try
 		{
+			final CriteriaBuilder cb = em.getCriteriaBuilder();
+			final CriteriaQuery<LocalIdDao> qry = cb
+					.createQuery( LocalIdDao.class );
+			final Root<LocalIdDao> root = qry.from( LocalIdDao.class );
 			return em
-					.createQuery( "SELECT d FROM " + ENTITY_NAME
-							+ " d WHERE d.value=?1 AND d.parentRef=?2"
-							+ " AND d.contextRef=?3", LocalIdDao.class )
-					.setParameter( 1, value ).setParameter( 2, parentRef )
-					.setParameter( 3, context ).getSingleResult();
+					.createQuery( qry.select( root ).where( cb.and(
+							cb.equal( root.get( "contextRef" ), contextRef ),
+							cb.equal( root.get( "value" ), value ),
+							cb.equal( root.get( "parentRef" ), parentRef ) ) ) )
+					.getSingleResult();
 		} catch( final NoResultException ignore )
 		{
 			return null;

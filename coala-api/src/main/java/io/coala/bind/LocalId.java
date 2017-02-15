@@ -165,7 +165,7 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	public static Stream<LocalId> findAllSync( final EntityManager em,
 		final UUID contextRef )
 	{
-		return LocalIdDao.findAllSync( em, contextRef ).stream()
+		return LocalIdDao.findAll( em, contextRef ).stream()
 				.map( dao -> dao.restore( null ) );
 	}
 
@@ -179,6 +179,7 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	 * @return an {@link Observable} stream of {@link LocalId} instances, if any
 	 */
 	@Transactional
+	@Deprecated
 	public static Observable<LocalId> findAllAsync( final EntityManager em,
 		final UUID contextRef, final int pageSize )
 	{

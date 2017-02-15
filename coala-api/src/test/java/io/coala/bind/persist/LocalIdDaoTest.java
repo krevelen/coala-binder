@@ -19,10 +19,9 @@
  */
 package io.coala.bind.persist;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.fail;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.RollbackException;
@@ -30,6 +29,7 @@ import javax.persistence.RollbackException;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.eaio.uuid.UUID;
@@ -67,19 +67,24 @@ public class LocalIdDaoTest
 	@Test( expected = RollbackException.class )
 	public void testSyncConstraint1()
 	{
+		final String role = "role", org = "org", agent = "agent";
 		final UUID contextRef = new UUID();
-		final LocalId id1 = LocalId.of( "role", LocalId.of( "org",
-				LocalId.of( "agent", LocalId.of( contextRef ) ) ) );
+		final LocalId id1 = LocalId.of( role, LocalId.of( org,
+				LocalId.of( agent, LocalId.of( contextRef ) ) ) );
+		final LocalId id2 = LocalId.of( role, LocalId.of( org,
+				LocalId.of( agent, LocalId.of( new UUID() ) ) ) );
 		try
 		{
 			JPAUtil.session( emf, em ->
 			{
 				id1.persist( em );
-				final List<LocalIdDao> list = LocalIdDao.findAllSync( em,
-						contextRef );
-				LOG.info( "SELECT all: {}",
-						list.stream().map( dao -> dao.restore( null ) )
-								.collect( Collectors.toList() ) );
+				id2.persist( em );
+				LocalId.findAllSync( em, contextRef ).forEach( id ->
+				{
+					LOG.info( "Sync retrieved: {}", id );
+					assertThat( "contextRef match", id.contextRef(),
+							equalTo( contextRef ) );
+				} );
 			} );
 		} catch( final Exception e )
 		{
@@ -88,37 +93,43 @@ public class LocalIdDaoTest
 
 		JPAUtil.session( emf, em ->
 		{
-			LocalId.of( "role",
-					LocalId.of( "org",
-							LocalId.of( "agent", LocalId.of( contextRef ) ) ) )
+			// persist new wrapper instances to avoid matching cached entities
+			LocalId.of( role,
+					LocalId.of( org,
+							LocalId.of( agent, LocalId.of( contextRef ) ) ) )
 					.persist( em );
-			fail( "Should have thrown constraint violation" );
+			fail( "Throw constraint violation" );
 		} );
 	}
 
+	@SuppressWarnings( "deprecation" )
+	@Ignore
 	@Test( expected = RollbackException.class )
 	public void testAsyncConstraint2()
 	{
+		final String role = "role", org = "org", agent = "agent";
 		final UUID contextRef = new UUID();
-		final LocalId id3 = LocalId.of( "role", LocalId.of( "org",
-				LocalId.of( "", LocalId.of( contextRef ) ) ) );
+		final LocalId id3 = LocalId.of( role, LocalId.of( org,
+				LocalId.of( agent, LocalId.of( contextRef ) ) ) );
 		JPAUtil.session( emf, em ->
 		{
 			id3.persist( em );
-			LocalIdDao.findAllAsync( em, contextRef, 2 ).subscribe(
-					dao -> LOG.info( "Async retrieved: {}",
-							LogUtil.toCachedString(
-									() -> dao.restore( null ) ) ),
-					e -> fail( e.getMessage() ) );
+			LocalId.findAllAsync( em, contextRef, 2 ).subscribe( id ->
+			{
+				LOG.info( "Async retrieved: {}", id );
+				assertThat( "contextRef match", id.contextRef(),
+						equalTo( contextRef ) );
+			}, e -> fail( e.getMessage() ) );
 		} );
 
 		JPAUtil.session( emf, em ->
 		{
-			LocalId.of( "role",
-					LocalId.of( "org",
-							LocalId.of( "", LocalId.of( contextRef ) ) ) )
+			// persist new wrapper instances to avoid matching cached entities
+			LocalId.of( role,
+					LocalId.of( org,
+							LocalId.of( agent, LocalId.of( contextRef ) ) ) )
 					.persist( em );
-			fail( "Should have thrown constraint violation" );
+			fail( "Throw constraint violation" );
 		} );
 	}
 }

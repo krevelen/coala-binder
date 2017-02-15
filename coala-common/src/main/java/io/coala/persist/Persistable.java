@@ -28,7 +28,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.transaction.Transactional;
 
@@ -111,8 +110,8 @@ public interface Persistable<DAO extends Persistable.Dao>
 			// first select only primary key attributes synchronously
 			final CriteriaBuilder cb = em.getCriteriaBuilder();
 			final CriteriaQuery<Object> pkQry = cb.createQuery();
-			final Path<Object> pkPath = pkQry.from( entityType ).get( pkName );
-			pkQry.select( pkPath ).distinct( true ); // FIXME why so many joins?
+			pkQry.select( pkQry.from( entityType ).get( pkName ) )
+					.distinct( true ); // FIXME why so many joins?
 			final List<?> pks = (restrictor == null ? em.createQuery( pkQry )
 					: restrictor.apply( pkQry )).getResultList();
 
@@ -122,13 +121,14 @@ public interface Persistable<DAO extends Persistable.Dao>
 					{
 						try
 						{
+							final CriteriaQuery<DAO> pgQry = cb
+									.createQuery( entityType );
 							// query filtering primary keys in current page only
 							final Predicate pkFilter = cb.disjunction();
 							for( Object pk : page )
-								pkFilter.getExpressions()
-										.add( cb.equal( pkPath, pk ) );
-							final CriteriaQuery<DAO> pgQry = cb
-									.createQuery( entityType );
+								pkFilter.getExpressions().add( cb.equal(
+										pgQry.from( entityType ).get( pkName ),
+										pk ) );
 							return Observable
 									.from( em
 											.createQuery( pgQry
