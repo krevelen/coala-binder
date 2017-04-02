@@ -352,10 +352,9 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 			return PublishSubject.<FactDao>create( sub ->
 			{
 				// One session for each fact
-				facts.subscribe( fact ->
-				{
-					JPAUtil.session( this.emf, fact::persist );
-				}, e -> sub.onError( e ), () -> sub.onCompleted() );
+				facts.subscribe(
+						fact -> JPAUtil.session( this.emf, fact::persist ),
+						sub::onError, () -> sub.onCompleted() );
 
 				// One session for all facts
 //				JPAUtil.session( this.emf ).subscribe( em ->

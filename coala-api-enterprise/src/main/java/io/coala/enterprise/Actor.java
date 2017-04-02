@@ -825,7 +825,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		@Singleton
 		class LocalCaching implements Factory
 		{
-			private final transient Map<ID, Simple> localCache = new ConcurrentHashMap<>();
+			private final transient Map<ID, Actor.Simple> localCache = new ConcurrentHashMap<>();
 
 			@Inject
 			private transient LocalBinder binder;
@@ -840,7 +840,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			public Actor<Fact> create( final ID id )
 			{
 				return this.localCache.computeIfAbsent( id.organizationRef(),
-						orgRef -> this.binder.inject( Simple.class )
+						orgRef -> this.binder.inject( Actor.Simple.class )
 								.withId( id ).withExchangeDirection(
 										this.factExchange, Direction.BIDI ) );
 			}

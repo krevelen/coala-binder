@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
+import io.coala.math.QuantityJsonModule;
 import io.coala.math.QuantityUtil;
 import io.coala.math.WeightedValue;
 import io.coala.random.ProbabilityDistribution.Factory;
@@ -118,7 +119,7 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 		
 		// FIXME register separate Jackson Module artifact
 		if( Quantity.class.isAssignableFrom( argType ) )
-			QuantityUtil.checkRegistered( JsonUtil.getJOM() ); 
+			QuantityJsonModule.checkRegistered( JsonUtil.getJOM() ); 
 		
 		final InstanceParser<P> argParser = InstanceParser.of( argType );
 		for( String valuePair : m.group( PARAMS_GROUP )

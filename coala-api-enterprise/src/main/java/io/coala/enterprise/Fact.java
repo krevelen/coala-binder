@@ -70,6 +70,7 @@ import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
+import io.coala.math.QuantityJsonModule;
 import io.coala.name.Identified;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
@@ -373,6 +374,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		try
 		{
 			Simple.checkRegistered( om );
+			QuantityJsonModule.checkRegistered( om );
 			final Simple result = JsonUtil.valueOf( om, json, Simple.class );
 			fromJSON( om, json, factType, result.properties() );
 			return result.proxyAs( factType, null );

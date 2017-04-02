@@ -9,7 +9,8 @@ import io.coala.util.Comparison;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class Extreme<T extends Comparable<?>> implements Comparable<Extreme<T>>
+@SuppressWarnings( "rawtypes" )
+public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 {
 
 	public enum Inclusiveness
@@ -154,7 +155,9 @@ public class Extreme<T extends Comparable<?>> implements Comparable<Extreme<T>>
 
 		if( that.isInfinity() ) return that.compareLimit();
 
-		final Comparison valueCmp = Comparison.of( this.value, that.value );
+		@SuppressWarnings( "unchecked" )
+		final Comparison valueCmp = Comparison.of( (Comparable) this.value,
+				that.value );
 		if( valueCmp != Comparison.EQUIVALENT ) return valueCmp;
 
 		// equivalent values, check inclusiveness

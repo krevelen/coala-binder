@@ -334,13 +334,17 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		ProbabilityDistribution<Long> createPascal( Number r, Number p );
 
 		/**
-		 * Typically used for: event rate = hazard (Cox) = incidence
-		 * (epidemiology) = how frequent? <br/>
+		 * (Poisson limit theorem: poisson(m) ~ binomial(m, n->inf)) describes:
+		 * event rate (frequency) = hazard (Cox) = incidence (epidemiology) =
+		 * how often? <br/>
 		 * <img alt= "Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Poisson_pmf.svg/650px-Poisson_pmf.svg.png"/>
 		 * 
 		 * @param mean &mu; or &lambda;
 		 * @return a Poisson {@link ProbabilityDistribution}
+		 * @see <a href="http://stats.stackexchange.com/a/2094">mathematical
+		 *      relation with Exponential (= how soon?)</a>
+		 * @see #createExponential(Number)
 		 * @see <a href="https://www.wikiwand.com/en/Poisson_distribution">
 		 *      Wikipedia</a> and <a href=
 		 *      "https://www.wolframalpha.com/input/?i=poisson+distribution">
@@ -407,11 +411,16 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			createChiSquared( Number degreesOfFreedom );
 
 		/**
+		 * (specific case of Gamma) describes: time between events = how
+		 * soon?<br/>
 		 * <img alt="Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Exponential_pdf.svg/650px-Exponential_pdf.svg.png"/>
 		 * 
 		 * @param mean &lambda;
 		 * @return a (negative) exponential {@link ProbabilityDistribution}
+		 * @see #createPoisson(Number) @ see
+		 *      <a href="http://stats.stackexchange.com/a/2094">relation with
+		 *      Poisson</a>
 		 * @see <a href="https://www.wikiwand.com/en/Exponential_distribution">
 		 *      Wikipedia</a> and <a href=
 		 *      "https://www.wolframalpha.com/input/?i=exponential+distribution">

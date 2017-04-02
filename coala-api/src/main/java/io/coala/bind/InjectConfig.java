@@ -34,9 +34,12 @@ import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Factory;
 
+import com.fasterxml.jackson.core.TreeNode;
+
 import io.coala.config.ConfigUtil;
 import io.coala.config.YamlUtil;
 import io.coala.exception.Thrower;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.name.Identified;
 import io.coala.util.FileUtil;
@@ -127,33 +130,48 @@ public @interface InjectConfig
 	{
 
 		/**
+		 * @param encloser
+		 * @param field
+		 * @param params
+		 */
+		public static void injectParams( final Object encloser,
+			final Field field, final TreeNode params )
+		{
+			try
+			{
+				System.out.println( "inject params: " + params );
+				field.setAccessible( true );
+				field.set( encloser,
+						JsonUtil.valueOf( params, field.getType() ) );
+			} catch( final Throwable e )
+			{
+				Thrower.rethrowUnchecked( e );
+			}
+		}
+
+		/**
 		 * TODO: implement {@link Factory} for local context?
 		 * 
 		 * @param encloser
 		 * @param field
-		 * @param binder
+		 * @param binderHash
 		 */
 		public static void injectConfig( final Object encloser,
-			final Field field, final Object binder )
+			final Field field, final String binderHash )
 		{
-			if( binder instanceof LocalBinder ) try
-			{
-				field.setAccessible( true );
-				field.set( encloser,
-						((LocalBinder) binder).inject( field.getType() ) );
-				System.err.println( "Provided config from binder" );
-				return;
-			} catch( final Exception e )
-			{
-				// ignore
-			}
+			/*
+			 * if( binder instanceof LocalBinder ) try { field.setAccessible(
+			 * true ); field.set( encloser, ((LocalBinder) binder).inject(
+			 * field.getType() ) ); return; } catch( final Exception e ) { //
+			 * ignore }
+			 */
+			if( !Config.class.isAssignableFrom( field.getType() ) )
+				Thrower.throwNew( UnsupportedOperationException.class,
+						"@{} injects only bind parameters or {} extensions",
+						InjectConfig.class.getSimpleName(), Config.class );
+
 			final InjectConfig annot = field
 					.getAnnotation( InjectConfig.class );
-			if( !Config.class.isAssignableFrom( field.getType() )
-					&& annot.configType() == null )
-				Thrower.throwNew( UnsupportedOperationException.class,
-						"@{} only injects extensions of {}",
-						InjectConfig.class.getSimpleName(), Config.class );
 			final List<Map<?, ?>> imports = new ArrayList<>();
 			if( annot != null && annot.yamlURI().length != 0 )
 			{
@@ -186,8 +204,7 @@ public @interface InjectConfig
 				switch( scope )
 				{
 				case BINDER:
-					key = configType.getName() + '@'
-							+ Integer.toHexString( binder.hashCode() );
+					key = configType.getName() + '@' + binderHash;
 					break;
 				case FIELD:
 					key = field;

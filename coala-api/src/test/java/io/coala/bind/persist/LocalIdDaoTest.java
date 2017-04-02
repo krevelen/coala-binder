@@ -23,9 +23,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.fail;
 
+import java.net.URI;
+
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.RollbackException;
 
+import org.aeonbits.owner.ConfigFactory;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -36,6 +39,7 @@ import com.eaio.uuid.UUID;
 
 import io.coala.bind.LocalId;
 import io.coala.log.LogUtil;
+import io.coala.persist.HikariHibernateJPAConfig;
 import io.coala.persist.JPAUtil;
 
 /**
@@ -52,10 +56,24 @@ public class LocalIdDaoTest
 
 	private static EntityManagerFactory emf = null;
 
+	public interface MyJPAConfig extends HikariHibernateJPAConfig
+	{
+		@DefaultValue( "localid_test_pu" ) // match persistence.xml
+		@Key( JPA_UNIT_NAMES_KEY )
+		String[] jpaUnitNames();
+
+//		@DefaultValue( "jdbc:mysql://localhost/testdb" )
+//		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
+//		@DefaultValue( "jdbc:neo4j:bolt://192.168.99.100:7687/db/data" )
+		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
+		@Key( HIKARI_DATASOURCE_URL_KEY )
+		URI jdbcUrl();
+	}
+
 	@BeforeClass
 	public static void createEMF()
 	{
-		emf = HibHikHypConfig.createEMF();
+		emf = ConfigFactory.create( MyJPAConfig.class ).createEMF();
 	}
 
 	@AfterClass

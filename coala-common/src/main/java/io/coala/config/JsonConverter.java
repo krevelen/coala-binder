@@ -20,28 +20,31 @@
 package io.coala.config;
 
 import java.lang.reflect.Method;
-import java.util.Objects;
+
+import javax.servlet.jsp.jstl.core.Config;
 
 import org.aeonbits.owner.Converter;
 
+import com.fasterxml.jackson.core.TreeNode;
+
 import io.coala.json.JsonUtil;
-import io.coala.util.TypeArguments;
 
 /**
- * {@link JsonConverter}
+ * {@link JsonConverter} is a {@link Config} converter for {@link TreeNode}
+ * values
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class JsonConverter<T> implements Converter<T>
+public class JsonConverter implements Converter<Object>
 {
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public T convert( final Method method, final String input )
+	public Object convert( final Method method, final String input )
 	{
-		final Class<T> returnType = (Class<T>) TypeArguments
-				.of( JsonConverter.class, getClass() ).get( 0 );
-		Objects.requireNonNull( returnType );
-		return JsonUtil.valueOf( "\"" + input + "\"", returnType );
+//		final Class<?> returnType = (Class<T>) TypeArguments
+//				.of( JsonConverter.class, getClass() ).get( 0 );
+//		Objects.requireNonNull( returnType );
+		return JsonUtil.valueOf( /* "\"" + */ input /* + "\"" */, method.getReturnType() );
 	}
 }

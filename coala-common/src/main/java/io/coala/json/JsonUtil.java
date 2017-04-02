@@ -87,6 +87,7 @@ public class JsonUtil
 	/**
 	 * @param object the object to serialize/marshal
 	 * @return the (minimal) JSON representation
+	 * @see #toJSON(Object)
 	 */
 	public static String stringify( final Object object )
 	{
@@ -105,6 +106,7 @@ public class JsonUtil
 	/**
 	 * @param object the object to serialize/marshal
 	 * @return the (pretty) JSON representation
+	 * @see #stringify(Object)
 	 */
 	public static String toJSON( final Object object )
 	{

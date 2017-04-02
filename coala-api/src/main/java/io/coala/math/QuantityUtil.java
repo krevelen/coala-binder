@@ -1,10 +1,7 @@
 package io.coala.math;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
@@ -15,17 +12,6 @@ import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Time;
 
 import org.joda.time.Period;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.KeyDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import io.coala.exception.Thrower;
 import io.coala.util.Compare;
@@ -47,55 +33,18 @@ public class QuantityUtil implements Util
 
 	static
 	{
+		// add unit labels
 		SimpleUnitFormat.getInstance().label( Units.DEGREE_ANGLE, "deg" );
 	}
-
-	public static final SimpleModule JSON_MODULE = new SimpleModule()
-			.addKeyDeserializer( Quantity.class, new KeyDeserializer()
-			{
-				@Override
-				public Object deserializeKey( final String key,
-					final DeserializationContext ctxt )
-				{
-					return QuantityUtil.valueOf( key );
-				}
-			} )
-			.addDeserializer( Quantity.class, new JsonDeserializer<Quantity>()
-			{
-				@Override
-				public Quantity deserialize( final JsonParser p,
-					final DeserializationContext ctxt ) throws IOException
-				{
-					if( p.getCurrentToken().isNumeric() )
-						return QuantityUtil.valueOf( p.getNumberValue() );
-
-					if( p.getCurrentToken().isScalarValue() )
-						return QuantityUtil.valueOf( p.getValueAsString() );
-
-					final TreeNode tree = p.readValueAsTree();
-					if( tree.size() == 0 ) return null;
-
-					return Thrower.throwNew( IOException.class,
-							"Problem parsing {} from {}",
-							Quantity.class.getSimpleName(), tree );
-				}
-			} ).addSerializer( new StdSerializer<Quantity>( Quantity.class )
-			{
-				@Override
-				public void serialize( final Quantity value,
-					final JsonGenerator gen,
-					final SerializerProvider serializers ) throws IOException
-				{
-					gen.writeString( QuantityUtil.toString( value ) );
-				}
-			} );
 
 	/** dimension one, for pure or {@link Dimensionless} quantities */
 	public static final Unit<Dimensionless> PURE = AbstractUnit.ONE;
 
+	/** the number ZERO */
 	public static final ComparableQuantity<Dimensionless> ZERO = valueOf(
 			BigDecimal.ZERO, PURE );
 
+	/** the number ONE */
 	public static final ComparableQuantity<Dimensionless> ONE = valueOf(
 			BigDecimal.ONE, PURE );
 
@@ -104,14 +53,6 @@ public class QuantityUtil implements Util
 	 */
 	private QuantityUtil()
 	{
-	}
-
-	private static final Set<ObjectMapper> JSON_REGISTERED = new HashSet<>();
-
-	public synchronized static void checkRegistered( final ObjectMapper om )
-	{
-		if( !JSON_REGISTERED.contains( om ) )
-			JSON_REGISTERED.add( om.registerModule( JSON_MODULE ) );
 	}
 
 	/**

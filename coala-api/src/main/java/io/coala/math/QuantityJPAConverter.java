@@ -17,36 +17,32 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.persist;
+package io.coala.math;
 
+import javax.measure.Quantity;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-import com.fasterxml.jackson.core.TreeNode;
-
-import io.coala.json.JsonUtil;
-
 /**
- * {@link JsonToStringConverter} converts Strings to/from Json trees, an
- * intermediate form useful for lazy deserialization, e.g. into run-time or
- * abstract types
+ * {@link QuantityJPAConverter} converts Strings to/from measure Quantities
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
+@SuppressWarnings( "rawtypes" )
 @Converter( autoApply = true )
-public class JsonToStringConverter
-	implements AttributeConverter<TreeNode, String>
+public class QuantityJPAConverter
+	implements AttributeConverter<Quantity, String>
 {
 	@Override
-	public String convertToDatabaseColumn( final TreeNode attribute )
+	public String convertToDatabaseColumn( final Quantity attribute )
 	{
-		return JsonUtil.stringify( attribute );
+		return QuantityUtil.toString( attribute );
 	}
 
 	@Override
-	public TreeNode convertToEntityAttribute( final String dbData )
+	public Quantity convertToEntityAttribute( final String dbData )
 	{
-		return JsonUtil.toTree( dbData );
+		return QuantityUtil.valueOf( dbData );
 	}
 }

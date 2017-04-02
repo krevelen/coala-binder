@@ -16,15 +16,17 @@
 package io.coala.persist;
 
 import java.net.URI;
+import java.sql.Driver;
 import java.util.Map;
 
 import javax.persistence.CacheRetrieveMode;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.SharedCacheMode;
+import javax.persistence.spi.PersistenceProvider;
 
-import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 
 /**
@@ -33,77 +35,98 @@ import io.coala.log.LogUtil;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface JPAConfig extends GlobalConfig
+public interface JPAConfig extends GlobalConfig, JDBCConfig
 {
+	String NAME_DELIMITER = ",";
+
+	String JPA_UNIT_NAMES_KEY = "javax.persistence.unit-names";
+
+	String JPA_PROVIDER_KEY = "javax.persistence.provider";
+
 	String JPA_JDBC_DRIVER_KEY = "javax.persistence.jdbc.driver";
-	
+
 	String JPA_JDBC_URL_KEY = "javax.persistence.jdbc.url";
-	
-	String JPA_JDBC_USER_KEY = "javax.persistence.jdbc.user" ;
-	
+
+	String JPA_JDBC_USER_KEY = "javax.persistence.jdbc.user";
+
 	String JPA_JDBC_PASSWORD_KEY = "javax.persistence.jdbc.password";
 
 	/** the SHARED_CACHE_MODE_KEY as per {@link SharedCacheMode} */
-	String SHARED_CACHE_MODE_KEY = "javax.persistence.sharedCache.mode";
+	String JPA_SHARED_CACHE_MODE_KEY = "javax.persistence.sharedCache.mode";
 
 	/** the CACHE_RETRIEVE_MODE_KEY as per {@link CacheRetrieveMode} */
-	String CACHE_RETRIEVE_MODE_KEY = "javax.persistence.cache.retrieveMode";
-	
+	String JPA_CACHE_RETRIEVE_MODE_KEY = "javax.persistence.cache.retrieveMode";
+
 	@Key( JPA_JDBC_DRIVER_KEY )
-	Class<?> driver();
+	Class<? extends Driver> jdbcDriver();
 
 	@Key( JPA_JDBC_URL_KEY )
-	URI url();
+	URI jdbcUrl();
 
-	@Key( JPA_JDBC_USER_KEY)
-	String username();
+	@Key( JPA_JDBC_USER_KEY )
+	String jdbcUsername();
 
 	@Key( JPA_JDBC_PASSWORD_KEY )
-	String password();
+	String jdbcPassword();
+	
+	@Override
+	default String jdbcPasswordKey()
+	{
+		return JPA_JDBC_PASSWORD_KEY;
+	}
 
-	String NAME_DELIMITER = ",";
-
-	@Key( "javax.persistence.unit.names" )
+	@Key( JPA_UNIT_NAMES_KEY )
 	@Separator( NAME_DELIMITER )
-	String[] persistenceUnitNames();
+	String[] jpaUnitNames();
 
-	@Key( SHARED_CACHE_MODE_KEY )
+	@Key( JPA_PROVIDER_KEY )
+	Class<? extends PersistenceProvider> jpaProvider();
+
+	/** @see SharedCacheMode#ENABLE_SELECTIVE */
+	@Key( JPA_SHARED_CACHE_MODE_KEY )
 	@DefaultValue( "ENABLE_SELECTIVE" )
-	SharedCacheMode sharedCacheMode();
+	SharedCacheMode jpaSharedCacheMode();
 
-	@Key( CACHE_RETRIEVE_MODE_KEY )
-	@DefaultValue( "USE" ) // BYPASS = off, REFRESH = update from query
-	CacheRetrieveMode cacheRetrieveMode();
-
-//	@Key( "javax.persistence.provider" )
-//	Class<?> provider();
+	/**
+	 * <dl>
+	 * <dt>{@link CacheRetrieveMode#USE USE}</dt>
+	 * <dd>Read entity data from the cache</dd>
+	 * <dt>{@link CacheRetrieveMode#BYPASS BYPASS}</dt>
+	 * <dd>Bypass the cache: get data directly from the database</dd>
+	 * <dt>{@code REFRESH}</dt>
+	 * <dd>update from query?</dd>
+	 * </dl>
+	 */
+	@Key( JPA_CACHE_RETRIEVE_MODE_KEY )
+	@DefaultValue( "USE" ) // 
+	CacheRetrieveMode jpaCacheRetrieveMode();
 
 	/**
 	 * @param imports additional configuration
 	 * @return the (expensive) {@link EntityManagerFactory}
 	 */
-	default EntityManagerFactory
-		createEntityManagerFactory( final Map<?, ?>... imports )
+	default EntityManagerFactory createEMF( final Map<?, ?>... imports )
 	{
-		return createEntityManagerFactory(
-				String.join( NAME_DELIMITER, persistenceUnitNames() ),
+		return createEMF( String.join( NAME_DELIMITER, jpaUnitNames() ),
 				imports );
 	}
 
 	/**
-	 * @param persistenceUnitNames the entity persistence unit name(s)
+	 * @param jpaUnitNames the entity persistence unit name(s)
 	 * @param imports additional configuration
 	 * @return the (expensive) {@link EntityManagerFactory}
 	 */
-	default EntityManagerFactory createEntityManagerFactory(
-		final String persistenceUnitNames, final Map<?, ?>... imports )
+	default EntityManagerFactory createEMF( final String jpaUnitNames,
+		final Map<?, ?>... imports )
 	{
-		final Map<String, Object> config = ConfigUtil.export( this, imports );
-		config.put( SHARED_CACHE_MODE_KEY, sharedCacheMode() ); // deser
-		config.put( CACHE_RETRIEVE_MODE_KEY, cacheRetrieveMode() ); // deser
-		LogUtil.getLogger( JPAConfig.class ).trace( "JPA config: {}", config );
-		return Persistence.createEntityManagerFactory( persistenceUnitNames,
-				config );
+		final Map<String, Object> config = export( imports );
+		config.put( JPA_SHARED_CACHE_MODE_KEY, jpaSharedCacheMode() ); // deser
+		config.put( JPA_CACHE_RETRIEVE_MODE_KEY, jpaCacheRetrieveMode() ); // deser
+		LogUtil.getLogger( JPAConfig.class ).trace(
+				"Creating persistence units {} with config: {}", jpaUnitNames,
+				JsonUtil.toJSON( config ) );
+		config.put( jdbcPasswordKey(), jdbcPassword() ); // prompt
+		return Persistence.createEntityManagerFactory( jpaUnitNames, config );
 	}
 
 }

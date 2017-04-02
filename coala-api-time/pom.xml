@@ -46,6 +46,13 @@
 	<dependencies>
 
 		<dependency>
+			<!-- Java Enterprise eXtension APIs, including JPA 2.1 -->
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>coala-api</artifactId>
 			<version>${project.version}</version>
@@ -86,12 +93,8 @@
 			<artifactId>joda-time</artifactId>
 			<version>${joda-time.version}</version>
 		</dependency>
-<!-- 		<dependency>
-			<groupId>io.reactivex</groupId>
-			<artifactId>rxjava-joins</artifactId>
-			<version>${rxjava-joins.version}</version>
-		</dependency>
- -->
+		<!-- <dependency> <groupId>io.reactivex</groupId> <artifactId>rxjava-joins</artifactId> 
+			<version>${rxjava-joins.version}</version> </dependency> -->
 		<dependency>
 			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>

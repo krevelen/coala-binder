@@ -21,7 +21,8 @@ import tec.uom.se.ComparableQuantity;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
+@SuppressWarnings( "rawtypes" )
+public class Range<T extends Comparable> implements Comparable<Range<T>>
 {
 
 	public static final String LOWER_INCLUSIVE_GROUP = "lincl";
@@ -103,9 +104,9 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 		return of( lower, lowerIncl, upper, upperIncl );
 	}
 
-	private Extreme<T> maximum;
+	private Extreme<T> upper;
 
-	private Extreme<T> minimum;
+	private Extreme<T> lower;
 
 	protected Range()
 	{
@@ -118,20 +119,20 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 		Objects.requireNonNull( minimum );
 		Objects.requireNonNull( maximum );
 
-		this.minimum = Compare.min( minimum, maximum );
-		this.maximum = Compare.max( minimum, maximum );
+		this.lower = Compare.min( minimum, maximum );
+		this.upper = Compare.max( minimum, maximum );
 	}
 
 	/** @return the minimum value, or {@code null} for (negative) infinity */
-	public Extreme<T> getMinimum()
+	public Extreme<T> getLower()
 	{
-		return this.minimum;
+		return this.lower;
 	}
 
 	/** @return the maximum value, or {@code null} for (positive) infinity */
-	public Extreme<T> getMaximum()
+	public Extreme<T> getUpper()
 	{
-		return this.maximum;
+		return this.upper;
 	}
 
 	/**
@@ -139,11 +140,12 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	 * @return {@code true} iff this {@link Range} has a finite minimum that is
 	 *         greater than specified value, {@code false} otherwise
 	 */
+	@SuppressWarnings( "unchecked" )
 	public boolean isGreaterThan( final T value )
 	{
-		final T min = getMinimum().getValue();
+		final T min = getLower().getValue();
 		if( min == null ) return false;
-		return getMinimum().isInclusive() ? Comparison.lt( value, min )
+		return getLower().isInclusive() ? Comparison.lt( value, min )
 				: Comparison.le( value, min );
 	}
 
@@ -152,11 +154,12 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	 * @return {@code true} iff this {@link Range} has a finite maximum that is
 	 *         smaller than specified value, {@code false} otherwise
 	 */
+	@SuppressWarnings( "unchecked" )
 	public boolean isLessThan( final T value )
 	{
-		final T max = getMaximum().getValue();
+		final T max = getUpper().getValue();
 		if( max == null ) return false;
-		return getMaximum().isInclusive() ? Comparison.gt( value, max )
+		return getUpper().isInclusive() ? Comparison.gt( value, max )
 				: Comparison.ge( value, max );
 	}
 
@@ -171,8 +174,8 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 
 	public T crop( final T value )
 	{
-		return isLessThan( value ) ? getMaximum().getValue()
-				: isGreaterThan( value ) ? getMinimum().getValue() : value;
+		return isLessThan( value ) ? getUpper().getValue()
+				: isGreaterThan( value ) ? getLower().getValue() : value;
 	}
 
 	public boolean overlaps( final Range<T> that )
@@ -182,30 +185,30 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 
 	public Range<T> intersect( final Range<T> that )
 	{
-		return of( Compare.max( this.getMinimum(), that.getMinimum() ),
-				Compare.min( this.getMaximum(), that.getMaximum() ) );
+		return of( Compare.max( this.getLower(), that.getLower() ),
+				Compare.min( this.getUpper(), that.getUpper() ) );
 	}
 
 	@Override
 	public String toString()
 	{
 		return new StringBuilder()
-				.append( getMinimum().isInclusive() ? '[' : '<' )
-				.append( getMinimum().isInfinity() ? "-inf"
-						: getMinimum().getValue() )
+				.append( getLower().isInclusive() ? '[' : '<' )
+				.append( getLower().isInfinity() ? "-inf"
+						: getLower().getValue() )
 				.append( "; " )
-				.append( getMaximum().isInfinity() ? "+inf"
-						: getMaximum().getValue() )
-				.append( getMaximum().isInclusive() ? ']' : '>' ).toString();
+				.append( getUpper().isInfinity() ? "+inf"
+						: getUpper().getValue() )
+				.append( getUpper().isInclusive() ? ']' : '>' ).toString();
 	}
 
 	@Override
 	public int compareTo( final Range<T> that )
 	{
-		final int minComparison = this.getMinimum()
-				.compareTo( that.getMinimum() );
+		final int minComparison = this.getLower()
+				.compareTo( that.getLower() );
 		return minComparison != 0 ? minComparison
-				: this.getMaximum().compareTo( that.getMaximum() );
+				: this.getUpper().compareTo( that.getUpper() );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -213,8 +216,8 @@ public class Range<T extends Comparable<?>> implements Comparable<Range<T>>
 	public boolean equals( final Object that )
 	{
 		return that != null && that instanceof Range
-				&& ((Range<T>) that).getMinimum().equals( getMinimum() )
-				&& ((Range<T>) that).getMaximum().equals( getMaximum() );
+				&& ((Range<T>) that).getLower().equals( getLower() )
+				&& ((Range<T>) that).getUpper().equals( getUpper() );
 	}
 
 	private static final Range<?> INFINITE = of( null, null, null, null );

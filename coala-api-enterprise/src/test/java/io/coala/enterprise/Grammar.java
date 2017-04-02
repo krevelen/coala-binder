@@ -16,7 +16,7 @@
 package io.coala.enterprise;
 
 /**
- * {@link Grammar}
+ * {@link Grammar} work in progress
  */
 public interface Grammar
 {

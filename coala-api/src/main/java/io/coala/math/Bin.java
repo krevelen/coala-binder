@@ -32,7 +32,8 @@ import io.coala.util.Comparison;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class Bin<V extends Comparable<?>> extends Range<V>
+@SuppressWarnings( "rawtypes" )
+public class Bin<V extends Comparable> extends Range<V>
 {
 
 	public static <V extends Comparable<?>> Bin<V> of( final V unit )
@@ -47,10 +48,7 @@ public class Bin<V extends Comparable<?>> extends Range<V>
 	{
 		return of( minIncl, maxExcl, (BiFunction<Q, Q, Q>)
 		// disambiguated
-		( a, b ) ->
-		{
-			return (Q) a.add( b ).divide( 2 );
-		} );
+		( a, b ) -> (Q) a.add( b ).divide( 2 ) );
 	}
 
 	public static <V extends Comparable<?>> Bin<V> of( final V minIncl,
@@ -89,10 +87,12 @@ public class Bin<V extends Comparable<?>> extends Range<V>
 		this.kernel = kernel;
 	}
 
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	@Override
 	public int compareTo( final Range<V> o )
 	{
-		return Comparison.compare( getKernel(), ((Bin<?>) o).getKernel() );
+		return Comparison.compare( (Comparable) getKernel(),
+				((Bin) o).getKernel() );
 	}
 
 	public V getKernel()

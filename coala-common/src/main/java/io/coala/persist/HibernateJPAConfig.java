@@ -15,7 +15,8 @@
  */
 package io.coala.persist;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import java.net.URI;
+import java.sql.Driver;
 
 /**
  * {@link HibernateJPAConfig}
@@ -26,113 +27,112 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public interface HibernateJPAConfig extends JPAConfig
 {
 
-//	@DefaultValue( "org.hibernate.ejb.HibernatePersistence" )
-//	Class<?> provider();
+	String HIBERNATE_SCHEMA_POLICY_KEY = "hibernate.hbm2ddl.auto";
 
-//	@Key( "hibernate.dialect" )
-//	@DefaultValue( "org.hibernate.dialect.HSQLDialect" )
-//	// TODO add defaults for MySQL, Oracle, PostgreSQL, etc.
-//	String hibernateDialect();
+	String HIBERNATE_DEFAULT_SCHEMA_KEY = "hibernate.default_schema";
 
-	/**
-	 * {@link SchemaPolicy} NOTE: don't use "update" in production, see
-	 * http://stackoverflow.com/a/221422
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	enum SchemaPolicy
+	String HIBERNATE_SQL_SHOW_KEY = "hibernate.show_sql";
+
+	String HIBERNATE_SQL_USE_COMMENTS_KEY = "hibernate.use_sql_comments";
+
+	String HIBERNATE_SQL_FORMAT_KEY = "hibernate.format_sql";
+
+	String HIBERNATE_CONNECTION_PROVIDER_KEY = "hibernate.connection.provider_class";
+
+	String HIBERNATE_CONNECTION_DRIVER_KEY = "hibernate.connection.driver_class";
+
+	String HIBERNATE_CONNECTION_ISOLATION_KEY = "hibernate.connection.isolation";
+
+	String HIBERNATE_CONNECTION_AUTOCOMMIT_KEY = "hibernate.connection.autocommit";
+
+	String HIBERNATE_CONNECTION_URL_KEY = "hibernate.connection.url";
+
+	String HIBERNATE_CONNECTION_USERNAME_KEY = "hibernate.connection.username";
+
+	String HIBERNATE_CONNECTION_PASSWORD_KEY = "hibernate.connection.password";
+
+	String HIBERNATE_DATASOURCE_CLASS_KEY = "hibernate.hikari.dataSourceClassName";
+
+	String HIBERNATE_DATASOURCE_URL_KEY = "hibernate.hikari.dataSource.url";
+
+	String HIBERNATE_DATASOURCE_USERNAME_KEY = "hibernate.hikari.dataSource.user";
+
+	String HIBERNATE_DATASOURCE_PASSWORD_KEY = "hibernate.hikari.dataSource.password";
+
+	String HIBERNATE_DIALECT_KEY = "hibernate.dialect";
+
+//	@Key("hibernate.search.default.directory_provider")
+//	@DefaultValue("ram")
+//	String hibernateSearchDirectoryProvider();
+
+	// ignored by EMF, only checked in persistence.xml or static JPA resolution
+//	@Key( JPA_PROVIDER_KEY )
+//	@DefaultValue( "org.hibernate.jpa.HibernatePersistenceProvider" )
+//	Class<? extends PersistenceProvider> jpaProvider();
+
+	@Key( HIBERNATE_CONNECTION_DRIVER_KEY )
+	Class<? extends Driver> jdbcDriver();
+
+	@Key( HIBERNATE_CONNECTION_URL_KEY )
+	URI jdbcUrl();
+
+	@Key( HIBERNATE_CONNECTION_USERNAME_KEY )
+	String jdbcUsername();
+
+	@Key( HIBERNATE_CONNECTION_PASSWORD_KEY )
+	String jdbcPassword();
+	
+	@Override
+	default String jdbcPasswordKey()
 	{
-
-		/** */
-		create,
-
-		/** */
-		create_drop( "create-drop" ),
-
-		/** */
-		update,
-
-		/** */
-		none,
-
-		/** */
-		validate;
-
-		private final String value;
-
-		private SchemaPolicy()
-		{
-			this( null );
-		}
-
-		private SchemaPolicy( final String value )
-		{
-			this.value = value;
-		}
-
-		@Override
-		@JsonValue
-		public String toString()
-		{
-			return this.value == null ? name() : this.value;
-		}
+		return HIBERNATE_CONNECTION_PASSWORD_KEY;
 	}
 
-	String SCHEMA_POLICY_KEY = "hibernate.hbm2ddl.auto";
+//	@Key( HIBERNATE_DIALECT_KEY ) // FIXME determined by JDBC driver or provider
+//		Class<?> // extends org.hibernate.dialect.Dialect
+//		hibernateDialect();
 
-	String DEFAULT_SCHEMA_KEY = "hibernate.default_schema";
-
-	String SHOW_SQL_KEY = "hibernate.show_sql";
-	
-	String USE_SQL_COMMENTS_KEY = "hibernate.use_sql_comments";
-
-	String FORMAT_SQL_KEY = "hibernate.format_sql";
-
-	String CONNECTION_PROVIDER_CLASS_KEY = "hibernate.connection.provider_class";
-
-	@Key( SCHEMA_POLICY_KEY )
+	/**
+	 * Policy for database schema validation or export upon SessionFactory
+	 * creation, see
+	 * https://docs.jboss.org/hibernate/orm/5.0/manual/en-US/html/ch03.html
+	 * <dl>
+	 * <dt>{@link HibernateSchemaPolicy#none none}</dt>
+	 * <dd></dd>
+	 * <dt>{@link HibernateSchemaPolicy#validate validate}</dt>
+	 * <dd></dd>
+	 * <dt>{@link HibernateSchemaPolicy#create create}</dt>
+	 * <dd></dd>
+	 * <dt>{@link HibernateSchemaPolicy#create_drop create-drop}</dt>
+	 * <dd></dd>
+	 * <dt>{@link HibernateSchemaPolicy#update update}</dt>
+	 * <dd>DON'T USE {@code update} in production, see
+	 * http://stackoverflow.com/a/221422</dd>
+	 * </dl>
+	 */
+	@Key( HIBERNATE_SCHEMA_POLICY_KEY )
 	@DefaultValue( "update" )
-	SchemaPolicy hibernateSchemaPolicy();
+	HibernateSchemaPolicy hibernateSchemaPolicy();
 
-	@Key( DEFAULT_SCHEMA_KEY )
-//	@DefaultValue( "MY_SCHEMA" )
+	@Key( HIBERNATE_DEFAULT_SCHEMA_KEY )
+//	@DefaultValue( "PUBLIC" )
 	String hibernateDefaultSchema();
 
-	@Key( SHOW_SQL_KEY )
-	@DefaultValue( "false" )
+	@Key( HIBERNATE_SQL_SHOW_KEY )
+	@DefaultValue( "" + false )
 	boolean hibernateShowSQL();
 
-	@Key( USE_SQL_COMMENTS_KEY )
-	@DefaultValue( "false" )
+	@Key( HIBERNATE_SQL_USE_COMMENTS_KEY )
+	@DefaultValue( "" + false )
 	boolean hibernateUseSQLComments();
 
-	@Key( FORMAT_SQL_KEY )
-	@DefaultValue( "false" )
+	@Key( HIBERNATE_SQL_FORMAT_KEY )
+	@DefaultValue( "" + false )
 	boolean hibernateFormatSQL();
 
-	@Key( CONNECTION_PROVIDER_CLASS_KEY )
-	@DefaultValue( "org.hibernate.connection.C3P0ConnectionProvider" )
-	String hibernateConnectionProviderClass();
-
-	@Key( "hibernate.c3p0.min_size" )
-	@DefaultValue( "5" )
-	int hibernateConnectionPoolMinimumSize();
-
-	@Key( "hibernate.c3p0.max_size" )
-	@DefaultValue( "20" )
-	int hibernateConnectionPoolMaximumSize();
-
-	@Key( "hibernate.c3p0.timeout" )
-	@DefaultValue( "500" )
-	int hibernateConnectionPoolTimeoutMillis();
-
-	@Key( "hibernate.c3p0.max_statements" )
-	@DefaultValue( "50" )
-	int hibernateConnectionPoolMaximumStatements();
-
-	@Key( "hibernate.c3p0.idle_test_period" )
-	@DefaultValue( "2000" )
-	int hibernateConnectionPoolIdleTestPeriodMillis();
+	@Key( HIBERNATE_CONNECTION_PROVIDER_KEY )
+//	@DefaultValue( "org.hibernate.connection.C3P0ConnectionProvider" )
+		Class<?> // extends org.hibernate.engine.jdbc.connections.spi.ConnectionProvider
+		hibernateConnectionProviderClass();
 
 }

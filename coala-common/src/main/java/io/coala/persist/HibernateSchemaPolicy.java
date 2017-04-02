@@ -17,25 +17,51 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.math;
+package io.coala.persist;
 
-import java.lang.reflect.Method;
-
-import io.coala.config.JsonConverter;
-import tec.uom.se.ComparableQuantity;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * {@link QuantityConverter}
+ * {@link HibernateSchemaPolicy} NOTE: don't use "update" in production, see
+ * http://stackoverflow.com/a/221422
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class QuantityConverter extends JsonConverter<ComparableQuantity<?>>
+public enum HibernateSchemaPolicy
 {
-	@Override
-	public ComparableQuantity<?> convert( final Method method,
-		final String input )
+
+	/** */
+	create,
+
+	/** */
+	create_drop( "create-drop" ),
+
+	/** */
+	update,
+
+	/** */
+	none,
+
+	/** */
+	validate;
+
+	private final String value;
+
+	private HibernateSchemaPolicy()
 	{
-		return QuantityUtil.valueOf( input );
+		this( null );
+	}
+
+	private HibernateSchemaPolicy( final String value )
+	{
+		this.value = value;
+	}
+
+	@Override
+	@JsonValue
+	public String toString()
+	{
+		return this.value == null ? name() : this.value;
 	}
 }

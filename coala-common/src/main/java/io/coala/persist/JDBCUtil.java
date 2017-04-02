@@ -15,6 +15,7 @@
  */
 package io.coala.persist;
 
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -48,13 +49,13 @@ public class JDBCUtil
 	 * @param consumer
 	 * @throws SQLException
 	 */
-	public static void execute( final String url, final String username,
+	public static void execute( final URI url, final String username,
 		final String password, final String sql,
 		final Consumer<ResultSet> consumer ) throws SQLException
 	{
 		// FIXME use connection pool with time-outs?
-		try( final Connection conn = DriverManager.getConnection( url, username,
-				password );
+		try( final Connection conn = DriverManager
+				.getConnection( url.toASCIIString(), username, password );
 				final Statement stmt = conn.createStatement();
 				final ResultSet rs = stmt.executeQuery( sql ); )
 		{

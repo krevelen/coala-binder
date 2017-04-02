@@ -17,36 +17,26 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.persist;
+package io.coala.math;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import java.lang.reflect.Method;
 
-import com.fasterxml.jackson.core.TreeNode;
+import org.aeonbits.owner.Converter;
 
-import io.coala.json.JsonUtil;
+import tec.uom.se.ComparableQuantity;
 
 /**
- * {@link JsonToStringConverter} converts Strings to/from Json trees, an
- * intermediate form useful for lazy deserialization, e.g. into run-time or
- * abstract types
+ * {@link QuantityConfigConverter} for OWNER-based configurations
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-@Converter( autoApply = true )
-public class JsonToStringConverter
-	implements AttributeConverter<TreeNode, String>
+public class QuantityConfigConverter implements Converter<ComparableQuantity<?>>
 {
 	@Override
-	public String convertToDatabaseColumn( final TreeNode attribute )
+	public ComparableQuantity<?> convert( final Method method,
+		final String input )
 	{
-		return JsonUtil.stringify( attribute );
-	}
-
-	@Override
-	public TreeNode convertToEntityAttribute( final String dbData )
-	{
-		return JsonUtil.toTree( dbData );
+		return QuantityUtil.valueOf( input );
 	}
 }

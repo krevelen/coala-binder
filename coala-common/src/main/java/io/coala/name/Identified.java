@@ -56,13 +56,68 @@ public interface Identified<T>
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	interface Ordinal<T extends Comparable<? super T>>
+	@SuppressWarnings( "rawtypes" )
+	interface Ordinal<T extends Comparable>
 		extends Identified<T>, Comparable<Identified<T>>
 	{
+		@SuppressWarnings( "unchecked" )
 		@Override
 		default int compareTo( final Identified<T> o )
 		{
 			return id().compareTo( (T) o.id() );
+		}
+	}
+
+	class Simple<T> implements Identified<T>
+	{
+
+		protected static <T extends Simple<ID>, ID> T of( final T result,
+			final ID id )
+		{
+			result.id = id;
+			return result;
+		}
+
+		public static <T> Simple<T> of( final T id )
+		{
+			return of( new Simple<T>(), id );
+		}
+
+		protected T id;
+
+		@Override
+		public T id()
+		{
+			return this.id;
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return Identified.hashCode( this );
+		}
+
+		@Override
+		public boolean equals( final Object that )
+		{
+			return Identified.equals( this, that );
+		}
+
+		@Override
+		public String toString()
+		{
+			return Identified.toString( this );
+		}
+	}
+
+	@SuppressWarnings( "rawtypes" )
+	class SimpleOrdinal<T extends Comparable> extends Simple<T>
+		implements Ordinal<T>
+	{
+		public static <T extends Comparable> SimpleOrdinal<T>
+			of( final T id )
+		{
+			return of( new SimpleOrdinal<T>(), id );
 		}
 	}
 }

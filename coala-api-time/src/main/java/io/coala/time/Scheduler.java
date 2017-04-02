@@ -2,6 +2,7 @@ package io.coala.time;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -52,7 +53,13 @@ public interface Scheduler extends Proactive, Runnable
 	default void run()
 	{
 		resume();
-		time().toBlocking().last();
+		try
+		{
+			time().toBlocking().last();
+		} catch( final NoSuchElementException e )
+		{
+			// ignore
+		}
 	}
 
 	/** continue executing scheduled events until completion */

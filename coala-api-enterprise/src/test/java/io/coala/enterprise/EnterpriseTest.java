@@ -1,6 +1,7 @@
 package io.coala.enterprise;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,6 +11,7 @@ import javax.inject.Singleton;
 import javax.persistence.EntityManagerFactory;
 
 import org.aeonbits.owner.ConfigCache;
+import org.aeonbits.owner.ConfigFactory;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.junit.BeforeClass;
@@ -20,25 +22,40 @@ import io.coala.bind.LocalConfig;
 import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.exception.ExceptionStream;
 import io.coala.log.LogUtil;
+import io.coala.persist.HikariHibernateJPAConfig;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
-import io.coala.time.Timing;
 import io.coala.time.TimeUnits;
+import io.coala.time.Timing;
 
 /**
  * {@link EnterpriseTest}
+ * 
+ * TODO specialized logging adding e.g. Timed#now() and Identified#id()
  * 
  * @version $Id: 44fed16f2368cf0e2f826585d7b9e1902919166d $
  * @author Rick van Krevelen
  */
 public class EnterpriseTest
 {
-
-	/** TODO specialized logging adding e.g. Timed#now() and Identified#id() */
 	private static final Logger LOG = LogUtil.getLogger( EnterpriseTest.class );
+
+	public interface MyJPAConfig extends HikariHibernateJPAConfig
+	{
+		@DefaultValue( "fact_test_pu" ) // match persistence.xml
+		@Key( JPA_UNIT_NAMES_KEY )
+		String[] jpaUnitNames();
+
+//		@DefaultValue( "jdbc:mysql://localhost/testdb" )
+//		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
+//		@DefaultValue( "jdbc:neo4j:bolt://192.168.99.100:7687/db/data" )
+		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
+		@Key( HIKARI_DATASOURCE_URL_KEY )
+		URI jdbcUrl();
+	}
 
 	@SuppressWarnings( "serial" )
 	@Singleton
@@ -224,9 +241,9 @@ public class EnterpriseTest
 				.build()
 //		final LocalBinder binder = LocalConfig
 //				.openYAML( "world1.yaml", "my-world" )
-				.createBinder(
-						Collections.singletonMap( EntityManagerFactory.class,
-								HibHikHypConfig.createEMF() ) );
+				.createBinder( Collections
+						.singletonMap( EntityManagerFactory.class, ConfigFactory
+								.create( MyJPAConfig.class ).createEMF() ) );
 
 		LOG.info( "Starting EO test, config: {}", binder );
 		final Scheduler scheduler = binder.inject( World.class ).scheduler();

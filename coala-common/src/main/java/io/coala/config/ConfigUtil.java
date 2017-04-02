@@ -41,6 +41,7 @@ import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
@@ -277,6 +278,7 @@ public class ConfigUtil implements Util
 	public static JsonNode expand( final String keySep, final Map<?, ?> props,
 		final String... baseKeys )
 	{
+		if( props == null || props.isEmpty() ) return NullNode.getInstance();
 		final Pattern splitter = Pattern.compile( Pattern.quote( keySep ) );
 		final Map<Object, Object> result = new HashMap<>();
 		final String prefix = baseKeys == null || baseKeys.length == 0 ? null
@@ -332,7 +334,7 @@ public class ConfigUtil implements Util
 		final Map<String, Object> result = export( config, (Pattern) null );
 		if( maps != null ) for( Map<?, ?> map : maps )
 			if( map != null ) map.forEach( ( key, value ) -> result
-					.put( key.toString(), value.toString() ) );
+					.put( key.toString(), value/* .toString() */ ) );
 		return result;
 	}
 
@@ -374,7 +376,10 @@ public class ConfigUtil implements Util
 			} );
 		return result.entrySet().stream().filter( e -> e.getValue() != null )
 				.collect( Collectors.toMap( e -> e.getKey(),
-						e -> resolve( e.getValue(), result ) ) );
+						e -> resolve( e.getValue(), result ), ( o1, o2 ) -> o1
+								.toString()
+								+ o2,
+						() -> new TreeMap<String, Object>() ) );
 	}
 
 	static final Pattern KEY_PATTERN = Pattern.compile(

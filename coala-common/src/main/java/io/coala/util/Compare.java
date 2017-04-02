@@ -19,13 +19,16 @@ public class Compare implements Util
 		// empty
 	}
 
-	public static <T extends Comparable<?>> T max( final T o1, final T o2 )
+	public static <T extends Comparable<? super T>> T max( final T o1,
+		final T o2 )
 	{
 		return lt( o1, o2 ) ? o2 : o1;
 	}
 
+	@SafeVarargs
 	@SuppressWarnings( "unchecked" )
-	public static <T extends Comparable<?>> T max( final T o1, final T... o )
+	public static <T extends Comparable<? super T>> T max( final T o1,
+		final T... o )
 	{
 		T result = o1;
 		if( o != null ) for( T o2 : o )
@@ -33,7 +36,7 @@ public class Compare implements Util
 		return result;
 	}
 
-	public static <T extends Comparable<?>> T max( final Iterable<T> o )
+	public static <T extends Comparable<? super T>> T max( final Iterable<T> o )
 	{
 		Objects.requireNonNull( o );
 		T result = null;
@@ -42,13 +45,15 @@ public class Compare implements Util
 		return result;
 	}
 
-	public static <T extends Comparable<?>> T min( final T o1, final T o2 )
+	public static <T extends Comparable<? super T>> T min( final T o1,
+		final T o2 )
 	{
 		return gt( o1, o2 ) ? o2 : o1;
 	}
 
-	@SuppressWarnings( "unchecked" )
-	public static <T extends Comparable<?>> T min( final T o1, final T... o )
+	@SafeVarargs
+	public static <T extends Comparable<? super T>> T min( final T o1,
+		final T... o )
 	{
 		T result = o1;
 		if( o != null ) for( T o2 : o )
@@ -56,7 +61,7 @@ public class Compare implements Util
 		return result;
 	}
 
-	public static <T extends Comparable<?>> T min( final Iterable<T> o )
+	public static <T extends Comparable<? super T>> T min( final Iterable<T> o )
 	{
 		Objects.requireNonNull( o );
 		T result = null;
@@ -71,7 +76,7 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 = o2</code>
 	 */
-	public static <T> boolean eq( final Comparable<?> o1, final T o2 )
+	public static <T> boolean eq( final Comparable<? super T> o1, final T o2 )
 	{
 		return Comparison.compare( o1, o2 ) == 0;
 	}
@@ -82,7 +87,7 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 <> o2</code>
 	 */
-	public static <T> boolean ne( final Comparable<?> o1, final T o2 )
+	public static <T> boolean ne( final Comparable<? super T> o1, final T o2 )
 	{
 		return Comparison.compare( o1, o2 ) == 0;
 	}
@@ -93,7 +98,7 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 < o2</code>
 	 */
-	public static <T> boolean lt( final Comparable<?> o1, final T o2 )
+	public static <T> boolean lt( final Comparable<? super T> o1, final T o2 )
 	{
 		return Comparison.compare( o1, o2 ) < 0;
 	}
@@ -104,7 +109,7 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 =< o2</code>
 	 */
-	public static <T> boolean le( final Comparable<?> o1, final T o2 )
+	public static <T> boolean le( final Comparable<? super T> o1, final T o2 )
 	{
 		return Comparison.compare( o1, o2 ) <= 0;
 	}
@@ -115,7 +120,7 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 > o2</code>
 	 */
-	public static <T> boolean gt( final Comparable<?> o1, final T o2 )
+	public static <T> boolean gt( final Comparable<? super T> o1, final T o2 )
 	{
 		return Comparison.compare( o1, o2 ) > 0;
 	}
@@ -126,7 +131,7 @@ public class Compare implements Util
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 >= o2</code>
 	 */
-	public static <T> boolean ge( final Comparable<?> o1, final T o2 )
+	public static <T> boolean ge( final Comparable<? super T> o1, final T o2 )
 	{
 		return Comparison.compare( o1, o2 ) >= 0;
 	}

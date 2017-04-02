@@ -181,7 +181,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		}
 	}
 
-	@Transactional
+	@Transactional // not really
 	public static LocalIdDao create( final EntityManager em, final LocalId id )
 	{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );

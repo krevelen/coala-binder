@@ -18,6 +18,7 @@ package io.coala.time;
 import java.text.ParseException;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -102,6 +103,16 @@ public interface Timing extends Wrapper<String>
 	default Timing offset( final LocalDateTime offsetUtc )
 	{
 		return offset( offsetUtc.atZone( ZoneOffset.UTC ) );
+	}
+
+	/**
+	 * @param offsetUtc the {@link LocalDateTime} start date, assuming zone is
+	 *            {@link ZoneOffset#UTC}
+	 * @return this {@link Timing} to allow chaining
+	 */
+	default Timing offset( final OffsetDateTime offset )
+	{
+		return offset( offset.toZonedDateTime() );
 	}
 
 	/**

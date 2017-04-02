@@ -14,9 +14,11 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.aeonbits.owner.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -102,10 +104,25 @@ public class Guice4LocalBinder implements LocalBinder
 								} else if( field.isAnnotationPresent(
 										InjectConfig.class ) )
 								{
-									typeEncounter.register(
-											(MembersInjector<T>) t -> InjectConfig.Util
-													.injectConfig( t, field,
-															binder ) );
+									typeEncounter
+											.register( (MembersInjector<T>) t ->
+											{
+												if( Config.class
+														.isAssignableFrom( field
+																.getType() ) )
+													InjectConfig.Util
+															.injectConfig( t,
+																	field,
+																	Integer.toHexString(
+																			binder.hashCode() ) );
+												else
+													InjectConfig.Util
+															.injectParams( t,
+																	field,
+																	binder.params
+																			.get( field
+																					.getDeclaringClass() ) );
+											} );
 								} else if( field.isAnnotationPresent(
 										InjectProxy.class ) )
 								{
@@ -162,6 +179,8 @@ public class Guice4LocalBinder implements LocalBinder
 					final boolean initable = binding.initable();
 					final Collection<BindingConfig> typeKeys = binding
 							.bindingConfigs().values();
+					final JsonNode params = binding.params();
+					if( params != null ) binder.params.put( impl, params );
 
 					LocalProvider<?> provider = null;
 
@@ -374,6 +393,8 @@ public class Guice4LocalBinder implements LocalBinder
 			.create();
 
 	private final transient Map<Class<?>, MutableProvider<?>> mutables = new HashMap<>();
+
+	private final transient Map<Class<?>, JsonNode> params = new HashMap<>();
 
 	private final transient List<Class<?>> initable = new ArrayList<>();
 

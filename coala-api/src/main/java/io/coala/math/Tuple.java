@@ -33,6 +33,7 @@ import io.coala.util.Comparison;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@SuppressWarnings( "rawtypes" )
 public class Tuple implements Comparable<Tuple>
 {
 	public static Tuple of( final Comparable<?> o )
@@ -55,14 +56,14 @@ public class Tuple implements Comparable<Tuple>
 		return new Tuple( list );
 	}
 
-	private List<? extends Comparable<?>> list;
+	private List<? extends Comparable> list;
 
 	public Tuple( final List<? extends Comparable<?>> values )
 	{
 		this.list = Collections.unmodifiableList( values );
 	}
 
-	public List<? extends Comparable<?>> values()
+	public List<? extends Comparable> values()
 	{
 		return this.list;
 	}
@@ -73,6 +74,7 @@ public class Tuple implements Comparable<Tuple>
 		return values().hashCode();
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public int compareTo( final Tuple that )
 	{

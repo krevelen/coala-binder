@@ -66,7 +66,7 @@ public interface Persistable<DAO extends Persistable.Dao>
 		}
 	}
 
-	@Transactional
+	@Transactional // not really
 	DAO persist( EntityManager em );
 
 	@SuppressWarnings( "unchecked" )

@@ -15,24 +15,32 @@
  */
 package io.coala.persist;
 
+import javax.persistence.spi.PersistenceProvider;
+
 import com.impetus.kundera.Constants;
+import com.impetus.kundera.loader.GenericClientFactory;
 
 /**
- * {@link KunderaJPAConfig}
+ * {@link KunderaHibernateJPAConfig} work in progress
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface KunderaJPAConfig extends HibernateJPAConfig
+public interface KunderaHibernateJPAConfig extends HibernateJPAConfig
 {
+	String KUNDERA_CLIENT_LOOKUP_KEY = "kundera.client.lookup.class";
 
-	@Key( "javax.persistence.provider" )
+//	@Key( "kundera.annotations.scan.package" )
+//	@DefaultValue( "nl.rivm.cib.episim.persist" )
+//	String kunderaAnnotationsScanPackage();
+
+	@Key( JPA_PROVIDER_KEY )
 	@DefaultValue( "com.impetus.kundera.KunderaPersistence" )
-	Class<?> provider();
+	Class<? extends PersistenceProvider> jpaProvider();
 
-	@Key( "kundera.client.lookup.class" )
+	@Key( KUNDERA_CLIENT_LOOKUP_KEY )
 	@DefaultValue( Constants.RDBMS_CLIENT_FACTORY )
 	// TODO add defaults for Neo4J, Redis, Spark, Mongo, etc.
-	String kunderaClientLookupClass();
+	Class<? extends GenericClientFactory> kunderaClientLookupClass();
 
 }

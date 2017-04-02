@@ -20,7 +20,11 @@
 package io.coala.bind;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
 
 /**
@@ -54,6 +58,18 @@ public interface ProviderConfig extends GlobalConfig
 
 	@Key( IMPLEMENTATION_KEY )
 	Class<?> implementation();
+
+	String PARAMETERS_KEY = "params";
+
+//	@Key( PARAMETERS_KEY )
+//	@ConverterClass( JsonConverter.class )
+	default JsonNode params()
+	{
+		final Pattern pattern = Pattern.compile( "^"
+				+ Pattern.quote( PARAMETERS_KEY + KEY_SEP ) + "(?<sub>.*)" );
+		return ConfigUtil
+				.expand( ConfigUtil.export( this, pattern, "${sub}" ) );
+	}
 
 	String BINDINGS_KEY = "bindings";
 

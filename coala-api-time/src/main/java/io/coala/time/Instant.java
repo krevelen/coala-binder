@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.util.Calendar;
@@ -81,7 +82,6 @@ import tec.uom.se.ComparableQuantity;
  * <dd>limitations similar to Joda's time API (millisecond precision only)</dd>
  * </dl>
  * 
- * @date $Date$
  * @version $Id: 67f38cc7a8b7a6c4b7c7fc62ef53a3a464ef0d5e $
  * @author Rick van Krevelen
  */
@@ -208,7 +208,7 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	 */
 	public static Instant of( final ComparableQuantity<?> value )
 	{
-		return Util.of( value, Instant.class );
+		return new Instant( value );
 	}
 
 	/** the ZERO */
@@ -216,6 +216,17 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 
 	/** the ONE */
 	public static final Instant ONE = of( QuantityUtil.ONE );
+
+	// for JSON deserialization
+	public Instant()
+	{
+
+	}
+
+	public Instant( final ComparableQuantity<?> value )
+	{
+		wrap( value );
+	}
 
 	public Unit<?> unit()
 	{
@@ -345,6 +356,12 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return offset.plusNanos( toNanosLong() );
 	}
 
+	/** @return a JSR-310 {@link OffsetDateTime} instant */
+	public OffsetDateTime toJava8( final OffsetDateTime offset )
+	{
+		return offset.plusNanos( toNanosLong() );
+	}
+
 	/** @return a JSR-310 {@link ZonedDateTime} instant */
 	public ZonedDateTime toJava8( final ZonedDateTime offset )
 	{
@@ -395,6 +412,11 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	}
 
 	public Pretty prettify( final LocalDateTime offset )
+	{
+		return Pretty.of( () -> toJava8( offset ).toString() );
+	}
+
+	public Pretty prettify( final OffsetDateTime offset )
 	{
 		return Pretty.of( () -> toJava8( offset ).toString() );
 	}

@@ -49,11 +49,11 @@ public enum Comparison
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public static <T> int compare( final Comparable<?> o1, final T o2 )
+	public static <T> int compare( final Comparable<? super T> o1, final T o2 )
 	{
 		Objects.requireNonNull( o1 );
 		Objects.requireNonNull( o2 );
-		return ((Comparable<? super T>) o1).compareTo( o2 );
+		return o1.compareTo( o2 );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -71,7 +71,7 @@ public enum Comparison
 		return comparison == 0 ? EQUIVALENT : comparison < 0 ? LESSER : GREATER;
 	}
 
-	public static <T> Comparison of( final Comparable<?> o1, final T o2 )
+	public static <T> Comparison of( final Comparable<? super T> o1, final T o2 )
 	{
 		return of( compare( o1, o2 ) );
 	}
@@ -88,7 +88,7 @@ public enum Comparison
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 = o2</code>
 	 */
-	public static boolean eq( final Comparable<?> o1, final Object o2 )
+	public static <T> boolean eq( final Comparable<? super T> o1, final T o2 )
 	{
 		return of( o1, o2 ) == EQUIVALENT;
 	}
@@ -99,7 +99,7 @@ public enum Comparison
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 < o2</code>
 	 */
-	public static boolean lt( final Comparable<?> o1, final Object o2 )
+	public static <T> boolean lt( final Comparable<? super T> o1, final T o2 )
 	{
 		return of( o1, o2 ) == LESSER;
 	}
@@ -110,7 +110,7 @@ public enum Comparison
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 =< o2</code>
 	 */
-	public static boolean le( final Comparable<?> o1, final Object o2 )
+	public static <T> boolean le( final Comparable<? super T> o1, final T o2 )
 	{
 		return of( o1, o2 ) != GREATER;
 	}
@@ -121,7 +121,7 @@ public enum Comparison
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 > o2</code>
 	 */
-	public static boolean gt( final Comparable<?> o1, final Object o2 )
+	public static <T> boolean gt( final Comparable<? super T> o1, final T o2 )
 	{
 		return of( o1, o2 ) == GREATER;
 	}
@@ -132,46 +132,46 @@ public enum Comparison
 	 * @param o2 a {@link T} value
 	 * @return <code>o1 >= o2</code>
 	 */
-	public static boolean ge( final Comparable<?> o1, final Object o2 )
+	public static <T> boolean ge( final Comparable<? super T> o1, final T o2 )
 	{
 		return of( o1, o2 ) != LESSER;
 	}
 
-	public static Matcher is( final Comparable<?> self )
+	public static <T> Matcher<T> is( final Comparable<T> self )
 	{
-		return new Matcher( self );
+		return new Matcher<T>( self );
 	}
 
-	public static class Matcher
+	public static class Matcher<T>
 	{
-		private final Comparable<?> self;
+		private final Comparable<T> self;
 
-		private Matcher( final Comparable<?> self )
+		private Matcher( final Comparable<T> self )
 		{
 			this.self = self;
 		}
 
-		public boolean eq( final Object other )
+		public boolean eq( final T other )
 		{
 			return Comparison.eq( this.self, other );
 		}
 
-		public boolean lt( final Object other )
+		public boolean lt( final T other )
 		{
 			return Comparison.lt( this.self, other );
 		}
 
-		public boolean le( final Object other )
+		public boolean le( final T other )
 		{
 			return Comparison.le( this.self, other );
 		}
 
-		public boolean gt( final Object other )
+		public boolean gt( final T other )
 		{
 			return Comparison.gt( this.self, other );
 		}
 
-		public boolean ge( final Object other )
+		public boolean ge( final T other )
 		{
 			return Comparison.ge( this.self, other );
 		}

@@ -4,13 +4,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.comparesEqualTo;
 
 import java.text.ParseException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
-
-import io.coala.exception.Thrower;
 
 /**
  * {@link TimingTest}
@@ -40,20 +38,15 @@ public class TimingTest
 	@Test
 	public void testCron() throws ParseException
 	{
-		final String pattern = "0 0 0 14 * ? 2016";
-		final LocalDateTime offset = LocalDateTime
-				.parse( "2016-08-22T11:55:12" );
+		// FIXME offsets in past are not handled (at all?)
+		final String pattern = "0 0 0 14 * ? 2017";
+		final OffsetDateTime offset = OffsetDateTime
+				.parse( "2017-08-22T11:55:12+02:00" );
 		LOG.info( "Testing Timing pattern: {} with offset: {}", pattern,
 				offset );
-		Timing.of( pattern ).offset( offset ).stream().subscribe( t ->
-		{
+		for( Instant t : Timing.of( pattern ).offset( offset ).iterate() )
 			LOG.trace( "pattern includes t: {} == {}",
 					t.prettify( TimeUnits.DAYS, 2 ), t.prettify( offset ) );
-		}, e ->
-		{
-			LOG.error( "Problem in pattern", e );
-			Thrower.rethrowUnchecked( e );
-		} );
 		LOG.info( "test: done" );
 	}
 

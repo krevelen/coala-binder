@@ -21,29 +21,22 @@ public interface Signal<T> extends Proactive
 	/** @return the domain interval as {@link Range} of {@link Instant}s */
 	Range<Instant> domain();
 
-	/** @return the {@link Function} generating the signaled values */
-//	Function<Instant, T> getFunction();
-
 	/**
 	 * @return the evaluated result, or {@code null} if not in {@link #domain()}
 	 */
 	T current();
+	
+//	void set(T current);
 
 	/** @return an {@link Observable} stream of {@link T} evaluations */
 	Observable<T> emitValues();
 
-	<U> Signal<U> transform( Function<T, U> transform );
+	<U> Signal<U> map( Function<T, U> transform );
 
 	default Observable<Signal<T>> on( final T target )
 	{
 		Objects.requireNonNull( target );
-		return emitValues().filter( value ->
-		{
-			return value.equals( target );
-		} ).map( v ->
-		{
-			return this;
-		} );
+		return emitValues().filter( v -> v.equals( target ) ).map( v -> this );
 	}
 
 	/**
@@ -51,8 +44,6 @@ public interface Signal<T> extends Proactive
 	 * {@code <T, Instant>} {@link #get(Instant)}
 	 * 
 	 * @param <T>
-	 * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
-	 * @author Rick van Krevelen
 	 */
 	public static class TimeInvariant<T>
 	{
@@ -93,6 +84,12 @@ public interface Signal<T> extends Proactive
 					TimeInvariant.of( constant )::get );
 		}
 
+		public static <T> Signal<T> of( final Scheduler scheduler,
+			final Function<Instant, T> function )
+		{
+			return of( scheduler, Range.infinite(), function );
+		}
+
 		public static <T> Simple<T> of( final Scheduler scheduler,
 			final Range<Instant> domain, final Function<Instant, T> function )
 		{
@@ -109,12 +106,12 @@ public interface Signal<T> extends Proactive
 
 		private volatile Instant now;
 
-		private volatile T cache;
+		protected volatile T cache;
 
 		public Simple( final Scheduler scheduler, final Range<Instant> domain,
 			final Function<Instant, T> function )
 		{
-			if( !domain.getMaximum().isInfinity()
+			if( !domain.getUpper().isInfinity()
 					&& domain.isLessThan( scheduler.now() ) )
 				throw ExceptionFactory.createUnchecked(
 						"Currently t={} already past domain: {}",
@@ -191,7 +188,7 @@ public interface Signal<T> extends Proactive
 		}
 
 		@Override
-		public <U> Signal<U> transform( Function<T, U> transform )
+		public <U> Signal<U> map( Function<T, U> transform )
 		{
 			return of( scheduler(), domain(),
 					partialTransform( getFunction(), transform ) );
