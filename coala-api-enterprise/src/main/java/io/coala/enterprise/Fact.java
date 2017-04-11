@@ -26,6 +26,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -86,22 +87,22 @@ import rx.Observer;
  */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 {
-	String TRANSACTION_PROPERTY = "transaction";
+	String TRANSACTION_JSON_PROPERTY = "transaction";
 
-	String KIND_PROPERTY = "kind";
+	String KIND_JSON_PROPERTY = "kind";
 
-	String OCCUR_PROPERTY = "occur";
+	String OCCUR_JSON_PROPERTY = "occur";
 
-	String OCCUR_POSIX_PROPERTY = "occurPosixSec";
+	String OCCUR_POSIX_JSON_PROPERTY = "occurPosixMS";
 
-	String EXPIRE_PROPERTY = "expire";
+	String EXPIRE_JSON_PROPERTY = "expire";
 
-	String EXPIRE_POSIX_PROPERTY = "expirePosixSec";
+	String EXPIRE_POSIX_JSON_PROPERTY = "expirePosixMS";
 
-	String CAUSE_REF_PROPERTY = "causeRef";
+	String CAUSE_REF_JSON_PROPERTY = "causeRef";
 
 	/** @return */
-	@JsonProperty( TRANSACTION_PROPERTY )
+	@JsonProperty( TRANSACTION_JSON_PROPERTY )
 	<F extends Fact> Transaction<F> transaction();
 
 	<F extends Fact> F self(); // "this" points to impl, not proxy
@@ -170,33 +171,45 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	}
 
 	/** @return */
-	@JsonProperty( KIND_PROPERTY )
+	@JsonProperty( KIND_JSON_PROPERTY )
 	FactKind kind();
 
 	/** @return */
-	@JsonProperty( OCCUR_PROPERTY )
+	@JsonProperty( OCCUR_JSON_PROPERTY )
 	Instant occur();
 
 	/** @return */
-	@JsonProperty( OCCUR_POSIX_PROPERTY )
-	default ZonedDateTime occurUtc()
+	default ZonedDateTime occurPosix()
 	{
 		return occur().toJava8( offset() );
 	}
 
 	/** @return */
-	@JsonProperty( EXPIRE_PROPERTY )
+	@JsonProperty( OCCUR_POSIX_JSON_PROPERTY )
+	default BigInteger occurPosixMillis()
+	{
+		return DecimalUtil.toMillis( occurPosix() );
+	}
+
+	/** @return */
+	@JsonProperty( EXPIRE_JSON_PROPERTY )
 	Instant expire();
 
 	/** @return */
-	@JsonProperty( EXPIRE_POSIX_PROPERTY )
-	default ZonedDateTime expirePosixSec()
+	default ZonedDateTime expirePosix()
 	{
 		return expire() == null ? null : expire().toJava8( offset() );
 	}
 
 	/** @return */
-	@JsonProperty( CAUSE_REF_PROPERTY )
+	@JsonProperty( EXPIRE_POSIX_JSON_PROPERTY )
+	default BigInteger expirePosixMillis()
+	{
+		return DecimalUtil.toMillis( expirePosix() );
+	}
+
+	/** @return */
+	@JsonProperty( CAUSE_REF_JSON_PROPERTY )
 	Fact.ID causeRef();
 
 	default ZonedDateTime offset()
@@ -264,8 +277,9 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	default Stream<Fact> findAll( final EntityManager em,
 		final LocalBinder binder )
 	{
+		// TODO use criteria builder
 		return find( em, binder,
-				"SELECT dao FROM " + FactDao.ENTITY_NAME + " dao" );
+				"SELECT dao FROM " + FactDao.class.getSimpleName() + " dao" );
 	}
 
 	/**
@@ -376,7 +390,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 			Simple.checkRegistered( om );
 			QuantityJsonModule.checkRegistered( om );
 			final Simple result = JsonUtil.valueOf( om, json, Simple.class );
-			fromJSON( om, json, factType, result.properties() );
+			treeToMap( om, json, factType, result.properties() );
 			return result.proxyAs( factType, null );
 		} catch( final Exception e )
 		{
@@ -396,8 +410,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	 * @return the properties again, to allow chaining
 	 * @throws IntrospectionException
 	 */
-	static <T extends Fact> Map<String, Object> fromJSON( final ObjectMapper om,
-		final TreeNode json, final Class<T> factType,
+	static <T extends Fact> Map<String, Object> treeToMap(
+		final ObjectMapper om, final TreeNode json, final Class<T> factType,
 		final Map<String, Object> properties )
 	{
 		try
@@ -548,7 +562,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		/**
 		 * @param om
 		 */
-		public static void checkRegistered( ObjectMapper om )
+		public static void checkRegistered( final ObjectMapper om )
 		{
 			JsonUtil.checkRegisteredMembers( om, Simple.class );
 			TX_MODULE_CACHE.computeIfAbsent( om, key ->

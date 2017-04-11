@@ -15,6 +15,9 @@
  */
 package io.coala.persist;
 
+import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+
 /**
  * {@link C3P0HibernateJPAConfig}
  * 
@@ -24,38 +27,27 @@ package io.coala.persist;
 public interface C3P0HibernateJPAConfig extends HibernateJPAConfig
 {
 
-	String HIBERNATE_C3P0_MIN_SIZE_KEY = "hibernate.c3p0.min_size";
-
-	String HIBERNATE_C3P0_MAX_SIZE_KEY = "hibernate.c3p0.max_size";
-
-	String HIBERNATE_C3P0_TIMEOUT_KEY = "hibernate.c3p0.timeout";
-
-	String HIBERNATE_C3P0_MAX_STATEMENTS_KEY = "hibernate.c3p0.max_statements";
-
-	String HIBERNATE_C3P0_IDLE_TEST_PERIOD_KEY = "hibernate.c3p0.idle_test_period";
-
-	@Key( HIBERNATE_CONNECTION_PROVIDER_KEY )
+	@Key( AvailableSettings.CONNECTION_PROVIDER )
 	@DefaultValue( "org.hibernate.connection.C3P0ConnectionProvider" )
-	Class<? // extends org.hibernate.engine.jdbc.connections.spi.ConnectionProvider
-			> hibernateConnectionProviderClass();
+	Class<? extends ConnectionProvider> hibernateConnectionProvider();
 
-	@Key( HIBERNATE_C3P0_MIN_SIZE_KEY )
+	@Key( AvailableSettings.C3P0_MIN_SIZE )
 	@DefaultValue( "" + 5 )
 	int hibernateConnectionPoolMinimumSize();
 
-	@Key( HIBERNATE_C3P0_MAX_SIZE_KEY )
+	@Key( AvailableSettings.C3P0_MAX_SIZE )
 	@DefaultValue( "" + 20 )
 	int hibernateConnectionPoolMaximumSize();
 
-	@Key( HIBERNATE_C3P0_TIMEOUT_KEY )
+	@Key( AvailableSettings.C3P0_TIMEOUT )
 	@DefaultValue( "" + 500 )
 	int hibernateConnectionPoolTimeoutMillis();
 
-	@Key( HIBERNATE_C3P0_MAX_STATEMENTS_KEY )
+	@Key( AvailableSettings.C3P0_MAX_STATEMENTS )
 	@DefaultValue( "" + 50 )
 	int hibernateConnectionPoolMaximumStatements();
 
-	@Key( HIBERNATE_C3P0_IDLE_TEST_PERIOD_KEY )
+	@Key( AvailableSettings.C3P0_IDLE_TEST_PERIOD )
 	@DefaultValue( "" + 2000 )
 	int hibernateConnectionPoolIdleTestPeriodMillis();
 

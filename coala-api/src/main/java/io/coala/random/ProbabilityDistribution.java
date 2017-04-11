@@ -38,10 +38,19 @@ import io.coala.util.Instantiator;
  * but rather a factory that generates values that vary according to some
  * distribution
  * 
+ * <p>
+ * TODO: provide #toString() as reverse of {@link Parser#parse(String)},
+ * #error(), #fitResidual(), #probabilityOf(T t), #cumulativeProbabilityOf(T t),
+ * &hellip;
+ * 
+ * see continuous: https://www.wikiwand.com/en/Probability_density_function and
+ * discrete: https://www.wikiwand.com/en/Probability_mass_function
+ * 
  * @param <T>
  * @version $Id$
  * @author Rick van Krevelen
  */
+@FunctionalInterface
 public interface ProbabilityDistribution<T> //extends Serializable
 {
 
@@ -49,10 +58,6 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	 * @return the next pseudo-random sample
 	 */
 	T draw();
-
-	// continuous: https://www.wikiwand.com/en/Probability_density_function
-	// discrete: https://www.wikiwand.com/en/Probability_mass_function
-	// TODO probabilityOf(T value), cumulativeProbabilityOf(T value)
 
 	/**
 	 * From

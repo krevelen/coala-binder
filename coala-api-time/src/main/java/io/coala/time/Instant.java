@@ -314,17 +314,19 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return to( TimeUnits.resolve( unit ) );
 	}
 
+	/** @return the total amount of (virtual) milliseconds */
 	public long toMillisLong()
 	{
 		return to( TimeUnits.MILLIS ).value().longValue();
 	}
 
+	/** @return the total amount of (virtual) nanoseconds */
 	public long toNanosLong()
 	{
 		return to( TimeUnits.NANOS ).value().longValue();
 	}
 
-	/** @return a UTC {@link Date} */
+	/** @return a posix {@link Date} */
 	public Date toDate( final Date offsetUtc )
 	{
 		return new Date( offsetUtc.getTime() + toMillisLong() );
@@ -333,6 +335,7 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	/** @return a {@link Calendar} */
 	public Calendar toCalendar( final Calendar offset )
 	{
+		// TODO test if JapaneseImperialCalendar offset types are preserved
 		final Calendar result = Calendar.getInstance( offset.getTimeZone() );
 		result.setTimeInMillis( offset.getTimeInMillis() + toMillisLong() );
 		return result;

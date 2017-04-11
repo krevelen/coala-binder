@@ -15,8 +15,6 @@
  */
 package io.coala.persist;
 
-import javax.persistence.spi.PersistenceProvider;
-
 import com.impetus.kundera.Constants;
 import com.impetus.kundera.loader.GenericClientFactory;
 
@@ -30,13 +28,9 @@ public interface KunderaHibernateJPAConfig extends HibernateJPAConfig
 {
 	String KUNDERA_CLIENT_LOOKUP_KEY = "kundera.client.lookup.class";
 
-//	@Key( "kundera.annotations.scan.package" )
-//	@DefaultValue( "nl.rivm.cib.episim.persist" )
-//	String kunderaAnnotationsScanPackage();
-
-	@Key( JPA_PROVIDER_KEY )
-	@DefaultValue( "com.impetus.kundera.KunderaPersistence" )
-	Class<? extends PersistenceProvider> jpaProvider();
+//	@Key( JPA_PROVIDER_KEY )
+//	@DefaultValue( "com.impetus.kundera.KunderaPersistence" )
+//	Class<? extends PersistenceProvider> jpaProvider();
 
 	@Key( KUNDERA_CLIENT_LOOKUP_KEY )
 	@DefaultValue( Constants.RDBMS_CLIENT_FACTORY )

@@ -30,6 +30,7 @@ import javax.persistence.RollbackException;
 
 import org.aeonbits.owner.ConfigFactory;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.cfg.AvailableSettings;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -66,7 +67,7 @@ public class LocalIdDaoTest
 //		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
 //		@DefaultValue( "jdbc:neo4j:bolt://192.168.99.100:7687/db/data" )
 		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
-		@Key( HIKARI_DATASOURCE_URL_KEY )
+		@Key( AvailableSettings.URL )
 		URI jdbcUrl();
 	}
 

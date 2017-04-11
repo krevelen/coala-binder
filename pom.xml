@@ -119,6 +119,8 @@
 		<exec-maven-plugin.version>1.5.0</exec-maven-plugin.version>
 		<maven-assembly-plugin.version>2.6</maven-assembly-plugin.version>
 		<build-helper-maven-plugin.version>1.10</build-helper-maven-plugin.version>
+		<!-- for JPA metamodel generation, see https://docs.jboss.org/hibernate/orm/5.0/topical/html/metamodelgen/MetamodelGenerator.html -->
+		<maven-processor-plugin.version>3.2.0</maven-processor-plugin.version>
 	</properties>
 
 	<distributionManagement>
@@ -200,6 +202,12 @@
 
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>org.bsc.maven</groupId>
+					<artifactId>maven-processor-plugin</artifactId>
+					<version>${maven-processor-plugin.version}</version>
+				</plugin>
+				
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>${maven-compiler-plugin.version}</version>
@@ -299,6 +307,25 @@
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
+
+								<!-- Configure "org.bsc.maven:maven-processor-plugin:process" goal 
+									execution in Eclipse IDE -->
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.bsc.maven</groupId>
+										<artifactId>maven-processor-plugin</artifactId>
+										<versionRange>[1.0.0,)</versionRange>
+										<goals>
+											<goal>process</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute>
+											<runOnConfiguration>true</runOnConfiguration>
+											<runOnIncremental>false</runOnIncremental>
+										</execute>
+									</action>
+								</pluginExecution>
 
 								<!-- Configure "org.jacoco:jacoco-maven-plugin:{prepare-agent,report,check}" 
 									goal execution in Eclipse IDE -->

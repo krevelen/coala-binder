@@ -1,5 +1,6 @@
 package io.coala.math;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Objects;
@@ -9,6 +10,12 @@ import java.util.regex.Pattern;
 import javax.measure.Quantity;
 import javax.measure.Unit;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
+import io.coala.exception.Thrower;
 import io.coala.util.Compare;
 import io.coala.util.Comparison;
 import io.coala.util.InstanceParser;
@@ -22,8 +29,24 @@ import tec.uom.se.ComparableQuantity;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
+@JsonSerialize( using = Range.JsonSer.class )
 public class Range<T extends Comparable> implements Comparable<Range<T>>
 {
+	@SuppressWarnings( "serial" )
+	public static class JsonSer extends StdSerializer<Range>
+	{
+		public JsonSer()
+		{
+			super( Range.class );
+		}
+
+		@Override
+		public void serialize( final Range value, final JsonGenerator gen,
+			final SerializerProvider provider ) throws IOException
+		{
+			gen.writeString( value.toString() );
+		}
+	}
 
 	public static final String LOWER_INCLUSIVE_GROUP = "lincl";
 
@@ -72,13 +95,12 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 * or <code>[0:15]</code>
 	 */
 	public static <T extends Comparable<?>> Range<T> parse( final String range,
-		final Class<T> valueType ) throws ParseException
+		final Class<T> valueType ) //throws ParseException
 	{
 		final Matcher m = RANGE_FORMAT.matcher( range.trim() );
-		if( !m.find() ) throw new ParseException(
+		if( !m.find() ) Thrower.throwNew( IllegalArgumentException.class,
 				"Incorrect format, expected e.g. `[lower;upper>`, was: "
-						+ range,
-				0 );
+						+ range );
 
 		final InstanceParser<T> argParser = InstanceParser.of( valueType );
 		T lower, upper;
@@ -166,6 +188,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	/**
 	 * @param value the {@link T} to test
 	 * @return {@code true} iff this {@link Range} contains specified value
+	 *         (i.e. is greater nor lesser)
 	 */
 	public Boolean contains( final T value )
 	{
@@ -205,8 +228,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	@Override
 	public int compareTo( final Range<T> that )
 	{
-		final int minComparison = this.getLower()
-				.compareTo( that.getLower() );
+		final int minComparison = this.getLower().compareTo( that.getLower() );
 		return minComparison != 0 ? minComparison
 				: this.getUpper().compareTo( that.getUpper() );
 	}

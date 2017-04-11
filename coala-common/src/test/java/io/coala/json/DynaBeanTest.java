@@ -38,7 +38,7 @@ public class DynaBeanTest
 			final Map<String, ?> meta )
 		{
 			return DynaBean.proxyOf( MyIdentifiedBeanProxy.class,
-					Collections.singletonMap( ID_KEY, id ), meta );
+					Collections.singletonMap( ID_JSON_PROPERTY, id ), meta );
 		}
 
 		String value1();

@@ -85,10 +85,7 @@ public interface Scheduler extends Proactive, Runnable
 	default Expectation schedule( final Instant when,
 		final ThrowingRunnable<?> what )
 	{
-		return schedule( when, t ->
-		{
-			what.run();
-		} );
+		return schedule( when, t -> what.run() );
 	}
 
 	/**
@@ -134,10 +131,7 @@ public interface Scheduler extends Proactive, Runnable
 	default <T> Observable<Expectation> schedule( final Iterable<Instant> when,
 		final ThrowingRunnable<?> what )
 	{
-		return schedule( when, t ->
-		{
-			what.run();
-		} );
+		return schedule( when, t -> what.run() );
 	}
 
 	/**
@@ -267,10 +261,7 @@ public interface Scheduler extends Proactive, Runnable
 	default <T> Observable<Expectation> schedule(
 		final Observable<Instant> when, final ThrowingRunnable<?> what )
 	{
-		return schedule( when, t ->
-		{
-			what.run();
-		} );
+		return schedule( when, t -> what.run() );
 	}
 
 	/**

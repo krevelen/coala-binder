@@ -18,6 +18,9 @@ package io.coala.persist;
 import java.net.URI;
 import java.sql.Driver;
 
+import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+
 /**
  * {@link HibernateJPAConfig}
  * 
@@ -27,70 +30,29 @@ import java.sql.Driver;
 public interface HibernateJPAConfig extends JPAConfig
 {
 
-	String HIBERNATE_SCHEMA_POLICY_KEY = "hibernate.hbm2ddl.auto";
+	@Key( AvailableSettings.DATASOURCE )
+	String jdbcDatasourceJNDI();
 
-	String HIBERNATE_DEFAULT_SCHEMA_KEY = "hibernate.default_schema";
-
-	String HIBERNATE_SQL_SHOW_KEY = "hibernate.show_sql";
-
-	String HIBERNATE_SQL_USE_COMMENTS_KEY = "hibernate.use_sql_comments";
-
-	String HIBERNATE_SQL_FORMAT_KEY = "hibernate.format_sql";
-
-	String HIBERNATE_CONNECTION_PROVIDER_KEY = "hibernate.connection.provider_class";
-
-	String HIBERNATE_CONNECTION_DRIVER_KEY = "hibernate.connection.driver_class";
-
-	String HIBERNATE_CONNECTION_ISOLATION_KEY = "hibernate.connection.isolation";
-
-	String HIBERNATE_CONNECTION_AUTOCOMMIT_KEY = "hibernate.connection.autocommit";
-
-	String HIBERNATE_CONNECTION_URL_KEY = "hibernate.connection.url";
-
-	String HIBERNATE_CONNECTION_USERNAME_KEY = "hibernate.connection.username";
-
-	String HIBERNATE_CONNECTION_PASSWORD_KEY = "hibernate.connection.password";
-
-	String HIBERNATE_DATASOURCE_CLASS_KEY = "hibernate.hikari.dataSourceClassName";
-
-	String HIBERNATE_DATASOURCE_URL_KEY = "hibernate.hikari.dataSource.url";
-
-	String HIBERNATE_DATASOURCE_USERNAME_KEY = "hibernate.hikari.dataSource.user";
-
-	String HIBERNATE_DATASOURCE_PASSWORD_KEY = "hibernate.hikari.dataSource.password";
-
-	String HIBERNATE_DIALECT_KEY = "hibernate.dialect";
-
-//	@Key("hibernate.search.default.directory_provider")
-//	@DefaultValue("ram")
-//	String hibernateSearchDirectoryProvider();
-
-	// ignored by EMF, only checked in persistence.xml or static JPA resolution
-//	@Key( JPA_PROVIDER_KEY )
-//	@DefaultValue( "org.hibernate.jpa.HibernatePersistenceProvider" )
-//	Class<? extends PersistenceProvider> jpaProvider();
-
-	@Key( HIBERNATE_CONNECTION_DRIVER_KEY )
+	@Key( AvailableSettings.DRIVER )
 	Class<? extends Driver> jdbcDriver();
 
-	@Key( HIBERNATE_CONNECTION_URL_KEY )
+	@Key( AvailableSettings.URL )
 	URI jdbcUrl();
 
-	@Key( HIBERNATE_CONNECTION_USERNAME_KEY )
+	@Key( AvailableSettings.USER )
 	String jdbcUsername();
 
-	@Key( HIBERNATE_CONNECTION_PASSWORD_KEY )
+	@Key( AvailableSettings.PASS )
 	String jdbcPassword();
-	
+
 	@Override
 	default String jdbcPasswordKey()
 	{
-		return HIBERNATE_CONNECTION_PASSWORD_KEY;
+		return AvailableSettings.PASS;
 	}
 
-//	@Key( HIBERNATE_DIALECT_KEY ) // FIXME determined by JDBC driver or provider
-//		Class<?> // extends org.hibernate.dialect.Dialect
-//		hibernateDialect();
+//	@Key( AvailableSettings.DIALECT ) // is resolved per JDBC driver or provider
+//	Class<?> hibernateDialect();
 
 	/**
 	 * Policy for database schema validation or export upon SessionFactory
@@ -110,29 +72,25 @@ public interface HibernateJPAConfig extends JPAConfig
 	 * http://stackoverflow.com/a/221422</dd>
 	 * </dl>
 	 */
-	@Key( HIBERNATE_SCHEMA_POLICY_KEY )
+	@Key( AvailableSettings.HBM2DDL_AUTO )
 	@DefaultValue( "update" )
 	HibernateSchemaPolicy hibernateSchemaPolicy();
 
-	@Key( HIBERNATE_DEFAULT_SCHEMA_KEY )
-//	@DefaultValue( "PUBLIC" )
+	@Key( AvailableSettings.DEFAULT_SCHEMA )
 	String hibernateDefaultSchema();
 
-	@Key( HIBERNATE_SQL_SHOW_KEY )
-	@DefaultValue( "" + false )
+	@Key( AvailableSettings.SHOW_SQL )
 	boolean hibernateShowSQL();
 
-	@Key( HIBERNATE_SQL_USE_COMMENTS_KEY )
-	@DefaultValue( "" + false )
+	@Key( AvailableSettings.USE_SQL_COMMENTS )
 	boolean hibernateUseSQLComments();
 
-	@Key( HIBERNATE_SQL_FORMAT_KEY )
-	@DefaultValue( "" + false )
+	@Key( AvailableSettings.FORMAT_SQL )
 	boolean hibernateFormatSQL();
 
-	@Key( HIBERNATE_CONNECTION_PROVIDER_KEY )
+	@Key( AvailableSettings.CONNECTION_PROVIDER )
 //	@DefaultValue( "org.hibernate.connection.C3P0ConnectionProvider" )
-		Class<?> // extends org.hibernate.engine.jdbc.connections.spi.ConnectionProvider
-		hibernateConnectionProviderClass();
+//	@DefaultValue( "org.hibernate.hikaricp.internal.HikariCPConnectionProvider" )
+	Class<? extends ConnectionProvider> hibernateConnectionProvider();
 
 }

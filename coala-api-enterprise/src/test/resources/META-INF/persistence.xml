@@ -9,7 +9,7 @@
 		transaction-type="RESOURCE_LOCAL">
 		<!-- <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider> -->
 
-		<!-- JPA needs all entities enumerated when in Java SE runtime :( -->
+		<!-- List all @Entities: no JPA auto-discovery in Java SE runtime :( -->
 		<class>io.coala.bind.persist.LocalIdDao</class>
 		<class>io.coala.enterprise.persist.FactDao</class>
 

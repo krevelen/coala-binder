@@ -53,7 +53,7 @@ public class JDBCUtil
 		final String password, final String sql,
 		final Consumer<ResultSet> consumer ) throws SQLException
 	{
-		// FIXME use connection pool with time-outs?
+		// FIXME use data-source connection pool with time-outs?
 		try( final Connection conn = DriverManager
 				.getConnection( url.toASCIIString(), username, password );
 				final Statement stmt = conn.createStatement();

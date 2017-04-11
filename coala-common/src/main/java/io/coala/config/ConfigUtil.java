@@ -15,6 +15,7 @@
  */
 package io.coala.config;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +46,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
+import io.coala.util.FileUtil;
 import io.coala.util.Util;
 
 /**
@@ -467,5 +469,16 @@ public class ConfigUtil implements Util
 		return (T) CONFIG_VALUE_CACHE
 				.computeIfAbsent( config, key -> new ConcurrentHashMap<>() )
 				.computeIfAbsent( supplier, Supplier::get );
+	}
+
+	/**
+	 * @param string
+	 * @throws IOException
+	 */
+	public static Properties load( final String path ) throws IOException
+	{
+		final Properties result = new Properties();
+		result.load( FileUtil.toInputStream( path ) );
+		return result;
 	}
 }

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
+import javax.persistence.Basic;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -60,36 +60,62 @@ import io.coala.persist.UUIDToByteConverter;
 import rx.Observable;
 
 /**
- * Although this {@link LocalIdDao} implements the {@link BindableDao}, it does
- * not require to be @{@link Inject}ed e.g. by a {@link LocalBinder}
+ * {@link LocalIdDao} is a data access object for {@link LocalId} values with
+ * JPA attributes available in generated {@link LocalIdDao_} meta-model entity.
+ * <p>
+ * Note: {@link #restore(LocalBinder)} ignores the {@link LocalBinder} argument
+ * so it may be left {@code null}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-@Entity //( name = LocalIdDao.ENTITY_NAME )
+@Entity
 @Cacheable
-@Table( name = "LOCAL_IDS"
+@Table( name = "LOCAL_IDS", uniqueConstraints =
 // NOTE: multi-column constraints unsupported in Neo4J
-	,
-	uniqueConstraints =
-	{
-		@UniqueConstraint( columnNames =
-	{ LocalIdDao.CONTEXT_COLUMN_NAME,
+{ @UniqueConstraint( columnNames = { LocalIdDao.CONTEXT_COLUMN_NAME,
 				LocalIdDao.VALUE_COLUMN_NAME } ),
-			@UniqueConstraint(
-				columnNames =
-			{ LocalIdDao.CONTEXT_COLUMN_NAME,
-				LocalIdDao.PARENT_COLUMN_NAME } ) } )
+		@UniqueConstraint( columnNames =
+		{ LocalIdDao.CONTEXT_COLUMN_NAME, LocalIdDao.PARENT_COLUMN_NAME } ) } )
 @Inheritance( strategy = InheritanceType.SINGLE_TABLE )
 public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 {
-//	public static final String ENTITY_NAME = "LOCAL_ID";
-
+	/** constant used in {@link Table @Table} column constraint specification */
 	public static final String VALUE_COLUMN_NAME = "VALUE";
 
+	/** constant used in {@link Table @Table} column constraint specification */
 	public static final String PARENT_COLUMN_NAME = "PARENT_ID";
 
+	/** constant used in {@link Table @Table} column constraint specification */
 	public static final String CONTEXT_COLUMN_NAME = "CONTEXT";
+
+	@Id
+	@GeneratedValue( strategy = GenerationType.AUTO )
+	// GenerationType.IDENTITY strategy unsupported in Neo4J
+	@Column( name = "PK", nullable = false, updatable = false,
+		insertable = false )
+	public Integer pk;
+
+	/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
+	@JsonIgnore
+	@Temporal( TemporalType.TIMESTAMP )
+	@Column( name = "CREATED_TS", insertable = false, updatable = false,
+		columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+	protected Date created;
+
+	@Column( name = VALUE_COLUMN_NAME, nullable = false, updatable = false )
+	protected String value;
+
+	@ManyToOne( fetch = FetchType.LAZY )
+	@JoinColumn( name = PARENT_COLUMN_NAME, nullable = true, updatable = false )
+	protected LocalIdDao parentRef;
+
+	@JsonIgnore
+	@Basic // for meta-model, see http://stackoverflow.com/q/27333779/1418999
+	@Column( name = CONTEXT_COLUMN_NAME, nullable = false, updatable = false,
+		length = 16, columnDefinition = "BINARY(16)" )
+	@Convert( converter = UUIDToByteConverter.class )
+	protected UUID contextRef;
 
 	/**
 	 * retrieve all {@link LocalIdDao}s in the context of given
@@ -127,7 +153,8 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 				.createQuery( LocalIdDao.class );
 		final Root<LocalIdDao> root = qry.from( qry.getResultType() );
 //		final ParameterExpression<UUID> param = cb.parameter( UUID.class );
-		final Predicate pred = cb.equal( root.get( "contextRef" ), contextRef );
+		final Predicate pred = cb.equal( root.get( LocalIdDao_.contextRef ),
+				contextRef );
 
 		return em.createQuery( qry.select( root ).where( pred ) )
 				/* .setParameter( param, contextRef ) */.getResultList();
@@ -148,12 +175,12 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		final UUID contextRef, final int pageSize )
 	{
 		final CriteriaBuilder cb = em.getCriteriaBuilder();
-//		final ParameterExpression<UUID> ctxParam = cb.parameter( UUID.class );
-		return Persistable.findAsync( em, LocalIdDao.class, pageSize, "pk",
-				qry ->
-				// FIXME restrictor function fails to filter correct contextRef
-				em.createQuery( qry.where( cb.equal( qry.from( LocalIdDao.class ).get( "contextRef" ), contextRef ) ) )
-		/* .setParameter( ctxParam, contextRef ) */ );
+		return Persistable
+				.findAsync( em, LocalIdDao.class, pageSize, LocalIdDao_.pk,
+						qry -> em.createQuery( qry.where( cb.equal(
+								qry.from( LocalIdDao.class )
+										.get( LocalIdDao_.contextRef ),
+								contextRef ) ) ) );
 	}
 
 	@Transactional
@@ -170,10 +197,11 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 					.createQuery( LocalIdDao.class );
 			final Root<LocalIdDao> root = qry.from( LocalIdDao.class );
 			return em
-					.createQuery( qry.select( root ).where( cb.and(
-							cb.equal( root.get( "contextRef" ), contextRef ),
-							cb.equal( root.get( "value" ), value ),
-							cb.equal( root.get( "parentRef" ), parentRef ) ) ) )
+					.createQuery( qry.select( root ).where( cb.and( cb.equal(
+							root.get( LocalIdDao_.contextRef ), contextRef ),
+							cb.equal( root.get( LocalIdDao_.value ), value ),
+							cb.equal( root.get( LocalIdDao_.parentRef ),
+									parentRef ) ) ) )
 					.getSingleResult();
 		} catch( final NoResultException ignore )
 		{
@@ -197,48 +225,14 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		return result;
 	}
 
-	@Id
-	@GeneratedValue( strategy = GenerationType.AUTO ) // IDENTITY unsupported in Neo4J
-	@Column( name = "PK", nullable = false, updatable = false,
-		insertable = false )
-	public Integer pk;
-
-	/** time stamp of insert, as per http://stackoverflow.com/a/3107628 */
-	@Temporal( TemporalType.TIMESTAMP )
-	@Column( name = "CREATED_TS", insertable = false, updatable = false,
-		columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-	@JsonIgnore
-	protected Date created;
-
-//		/** automated time stamp of last update (typically never changes) */
-//		@Version
-//		@Temporal( TemporalType.TIMESTAMP )
-//		@Column( name = "UPDATED_TS", insertable = false, updatable = false,
-//			columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
-//		@JsonIgnore
-//		protected Date updated;
-
-	@Column( name = VALUE_COLUMN_NAME, nullable = false, updatable = false )
-	protected String value;
-
-	@ManyToOne( fetch = FetchType.LAZY )
-	@JoinColumn( name = PARENT_COLUMN_NAME, nullable = true, updatable = false )
-	protected LocalIdDao parentRef;
-
-	@JsonIgnore
-	@Column( name = CONTEXT_COLUMN_NAME, nullable = false, updatable = false,
-		length = 16, columnDefinition = "BINARY(16)" )
-	@Convert( converter = UUIDToByteConverter.class )
-	protected UUID contextRef;
-
 	@Override
-	public LocalId restore( final LocalBinder binder )
+	public LocalId restore( final LocalBinder ignore )
 	{
 		final String value = Objects.requireNonNull( this.value );
 		return LocalId.of( value,
 				this.parentRef == null
 						? LocalId
 								.of( Objects.requireNonNull( this.contextRef ) )
-						: this.parentRef.restore( binder ) );
+						: this.parentRef.restore( ignore ) );
 	}
 }

@@ -13,6 +13,7 @@ import javax.persistence.EntityManagerFactory;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.cfg.AvailableSettings;
 import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,7 +54,7 @@ public class EnterpriseTest
 //		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
 //		@DefaultValue( "jdbc:neo4j:bolt://192.168.99.100:7687/db/data" )
 		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
-		@Key( HIKARI_DATASOURCE_URL_KEY )
+		@Key( AvailableSettings.URL )
 		URI jdbcUrl();
 	}
 
@@ -208,11 +209,10 @@ public class EnterpriseTest
 	}
 
 	@Test
-	public void testEnterpriseOntology()
-		throws TimeoutException, IOException, InterruptedException
+	public void testFactDeser()
 	{
 		LOG.trace( "Deser: ",
-				Fact.fromJSON( "{"
+				World.Sale.fromJSON( "{"
 						+ "\"id\":\"1a990581-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"occurrence\":{},\"transaction\":{"
 						+ "\"kind\":\"io.coala.enterprise.EnterpriseTest$World$Sale\""
@@ -220,8 +220,13 @@ public class EnterpriseTest
 						+ ",\"initiatorRef\":\"eoSim-org1-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ ",\"executorRef\":\"eoSim-org2-sales@17351a00-863a-11e6-8b9d-c47d461717bb\""
 						+ "}" + ",\"kind\":\"REQUESTED\",\"expiration\":{}"
-						+ ",\"rqParam\":\"123 ms\"" + "}", World.Sale.class ) );
+						+ ",\"rqParam\":\"123 ms\"" + "}" ) );
+	}
 
+	@Test
+	public void testEnterpriseOntology()
+		throws TimeoutException, IOException, InterruptedException
+	{
 		// configure replication FIXME via LocalConfig?
 		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
 				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );

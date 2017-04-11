@@ -19,94 +19,102 @@
  */
 package io.coala.enterprise;
 
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-
-import org.apache.logging.log4j.Logger;
+import javax.persistence.NoResultException;
 
 import io.coala.bind.LocalBinder;
 import io.coala.enterprise.Fact.ID;
 import io.coala.enterprise.persist.FactDao;
-import io.coala.log.LogUtil;
 import io.coala.math.Range;
 import io.coala.persist.JPAUtil;
 import io.coala.time.Instant;
 import rx.Observable;
-import rx.subjects.PublishSubject;
 
 /**
- * {@link FactBank}
+ * {@link FactBank} provides Fact persistence via {@link #saveAsync(Observable)}
  * 
- * @param <F>
+ * <ul>
+ * Reference implementations:
+ * <li>{@link SimpleCache}
+ * <li>{@link SimpleJPA} using the {@link FactDao}
+ * <a href="https://www.wikiwand.com/en/Data_access_object">data access
+ * object</a>
+ * <li>SimpleORM (TODO, using e.g. <a href="http://ormlite.com/">ORMlite</a> or
+ * <a href="https://empire-db.apache.org">Empire-DB</a>)
+ * </ul>
+ * 
+ * @param <F> the root {@link Fact} type supported
+ * @param <DAO> the type of data access object
  * @version $Id$
  * @author Rick van Krevelen
  */
 public interface FactBank<F extends Fact> extends AutoCloseable
 {
 
-	/**
-	 * @param fact
-	 */
-	Observable<FactDao> saveAsync( Observable<F> fact );
+	/** @return a type-argument free root instance, useful for casting */
+	FactBank<Fact> root();
 
 	/**
-	 * @param fact
+	 * @param facts the {@link Observable} stream of {@link Fact facts} to store
+	 *            lazily (upon subscription)
+	 * @return an asynchronous {@link Observable} stream of generated {@link DAO
+	 *         data access objects}
 	 */
-	default Iterable<FactDao> saveSync( final Observable<F> fact )
+	Observable<?> saveAsync( Observable<F> facts );
+
+	/**
+	 * @param facts the {@link Observable} stream of {@link Fact facts} to store
+	 *            immediately
+	 * @return a synchronous {@link Iterable} stream of generated {@link DAO
+	 *         data access objects}
+	 */
+	default Iterable<?> saveSync( final Observable<F> facts )
 	{
-		return saveAsync( fact ).toBlocking().toIterable();
+		return saveAsync( facts ).toBlocking().toIterable();
 	}
 
-	static Logger logger()
-	{
-		return LogUtil.getLogger( FactBank.class );
-	}
-
 	/**
 	 * @param fact
 	 */
-	default FactDao save( final F fact )
+	default Object save( final F fact )
 	{
-		for( FactDao dao : saveSync( Observable.just( fact ) ) )
+		for( Object dao : saveSync( Observable.just( fact ) ) )
 			return dao;
 		return null;
 	}
 
 	/**
-	 * @param fact
+	 * @param facts the {@link F[] fact} array to store immediately
 	 */
 	@SuppressWarnings( "unchecked" )
 	default void save( final F... facts )
 	{
-		for( FactDao dao : saveSync( Observable.from( facts ) ) )
-			logger().trace( "saved: {}", dao );
+		saveSync( Observable.from( facts ) );
 	}
 
 	/**
-	 * @param fact
+	 * @param facts the {@link Iterable} stream of {@link Fact facts} to store
+	 *            immediately
 	 */
 	default void save( final Iterable<F> facts )
 	{
-		for( FactDao dao : saveSync( Observable.from( facts ) ) )
-			logger().trace( "saved: {}", dao );
+		saveSync( Observable.from( facts ) );
 	}
 
 	/**
-	 * @param fact
+	 * @param facts the {@link Stream} of {@link Fact facts} to store
+	 *            immediately
 	 */
 	default void save( final Stream<F> facts )
 	{
-		save( () -> facts.iterator() );
+		save( (Iterable<F>) () -> facts.iterator() );
 	}
 
 	default Class<F> transactionKindFilter()
@@ -139,6 +147,11 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		return null; // default: any
 	}
 
+	default Actor.ID responderFilter()
+	{
+		return null; // default: any
+	}
+
 	default Range<Instant> occurrenceFilter()
 	{
 		return null; // default: any
@@ -161,13 +174,41 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	F find( Fact.ID id );
 
 	/**
-	 * @return an {@link Iterable} of the matching {@link Fact}s
+	 * @return an asynchronous {@link Observable} stream of matching
+	 *         {@link Fact}s, re-created for each subscription
 	 */
-	Observable<F> find();
+	Observable<F> find( Class<?> typeFilter, Actor.ID initiatorFilter,
+		Actor.ID executorFilter, FactKind kindFilter, Fact.ID causeFilter,
+		Actor.ID creatorFilter, Actor.ID responderFilter,
+		Range<Instant> occurrenceFilter, Range<Instant> expirationFilter,
+		Map<String, Object> propertiesFilter );
 
-	default Iterable<F> iterable()
+	/**
+	 * @return an asynchronous {@link Observable} stream of matching
+	 *         {@link Fact}s, re-created for each subscription
+	 */
+	default Observable<F> find()
+	{
+		return find( transactionKindFilter(), initiatorFilter(),
+				executorFilter(), kindFilter(), causeFilter(), creatorFilter(),
+				responderFilter(), occurrenceFilter(), expirationFilter(),
+				propertiesFilter() );
+	}
+
+	/**
+	 * @return a synchronous {@link Iterable} stream of matching {@link Fact}s
+	 */
+	default Iterable<F> findIterable()
 	{
 		return find().toBlocking().toIterable();
+	}
+
+	/**
+	 * @return a synchronous (parallel) {@link Stream} of matching {@link Fact}s
+	 */
+	default Stream<F> findStream( final boolean parallel )
+	{
+		return StreamSupport.stream( findIterable().spliterator(), parallel );
 	}
 
 	/**
@@ -176,7 +217,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	 */
 	default FactBank<F> matchKind( final FactKind factKind )
 	{
-		return new FactBank.Wrapper<F>( this )
+		return new FactBank.Filtered<F>( this )
 		{
 			@Override
 			public FactKind kindFilter()
@@ -187,28 +228,22 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	}
 
 	/**
-	 * @param causeId the cause {@link Fact.ID} to match
+	 * FIXME this override does not work
+	 * 
+	 * @param tranKind the transaction kind ({@link Fact} type) to match
 	 * @return an {@link Iterable} of the matching {@link Fact}s
 	 */
 	default <T extends Fact> FactBank<T>
 		matchTransactionKind( final Class<T> tranKind )
 	{
-		final FactBank<?> self = this;
-		return new FactBank.Wrapper<T>( self )
+		final FactBank<?> me = this;
+		return new FactBank.Filtered<T>( me )
 		{
-
 			@Override
 			public T find( final Fact.ID id )
 			{
-				final Fact result = self.find( id );
+				final Fact result = me.find( id );
 				return result == null ? null : result.proxyAs( tranKind, null );
-			}
-
-			@Override
-			public Observable<T> find()
-			{
-				return self.find()
-						.map( fact -> fact.proxyAs( tranKind, null ) );
 			}
 
 			@Override
@@ -220,74 +255,142 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	}
 
 	/**
-	 * @param causeId the cause {@link Fact.ID} to match
+	 * @param causeRef the cause {@link Fact.ID} to match
 	 * @return an {@link Iterable} of the matching {@link Fact}s
 	 */
-	default FactBank<F> matchCause( final Fact.ID causeId )
+	default FactBank<F> matchCause( final Fact.ID causeRef )
 	{
-		return new FactBank.Wrapper<F>( this )
+		return new FactBank.Filtered<F>( this )
 		{
 			@Override
 			public Fact.ID causeFilter()
 			{
-				return causeId;
+				return causeRef;
 			}
 		};
 	}
 
 	/**
-	 * {@link Wrapper} simple decorator for custom overrides
+	 * @param initiatorRef the initiator {@link Actor.ID} to match
+	 * @return an {@link Iterable} of the matching {@link Fact}s
+	 */
+	default FactBank<F> matchInitiator( final Actor.ID initiatorRef )
+	{
+		return new FactBank.Filtered<F>( this )
+		{
+			@Override
+			public Actor.ID initiatorFilter()
+			{
+				return initiatorRef;
+			}
+		};
+	}
+
+	/**
+	 * @param executorRef the executor {@link Actor.ID} to match
+	 * @return an {@link Iterable} of the matching {@link Fact}s
+	 */
+	default FactBank<F> matchExecutor( final Actor.ID executorRef )
+	{
+		return new FactBank.Filtered<F>( this )
+		{
+			@Override
+			public Actor.ID executorFilter()
+			{
+				return executorRef;
+			}
+		};
+	}
+
+	/**
+	 * @param creatorRef the creator {@link Actor.ID} to match
+	 * @return an {@link Iterable} of the matching {@link Fact}s
+	 */
+	default FactBank<F> matchCreator( final Actor.ID creatorRef )
+	{
+		return new FactBank.Filtered<F>( this )
+		{
+			@Override
+			public Actor.ID creatorFilter()
+			{
+				return creatorRef;
+			}
+		};
+	}
+
+	/**
+	 * @param responderRef the initiator {@link Actor.ID} to match
+	 * @return an {@link Iterable} of the matching {@link Fact}s
+	 */
+	default FactBank<F> matchResponder( final Actor.ID responderRef )
+	{
+		return new FactBank.Filtered<F>( this )
+		{
+			@Override
+			public Actor.ID responderFilter()
+			{
+				return responderRef;
+			}
+		};
+	}
+
+	/**
+	 * {@link Filtered} simple decorator for custom filter overrides
 	 * 
 	 * @param <T>
-	 * @version $Id$
-	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	class Wrapper<T extends Fact> implements FactBank<T>
+	class Filtered<T extends Fact> implements FactBank<T>
 	{
-		protected final FactBank bank;
+		protected final FactBank self;
 
-		Wrapper( final FactBank bank )
+		Filtered( final FactBank self )
 		{
-			this.bank = bank;
+			this.self = self;
+		}
+
+		@Override
+		public FactBank<Fact> root()
+		{
+			return this.self.root();
 		}
 
 		@Override
 		public void close() throws Exception
 		{
-			this.bank.close();
+			this.self.close();
 		}
 
 		@Override
-		public Observable<FactDao> saveAsync( final Observable<T> fact )
+		public Observable<?> saveAsync( final Observable<T> fact )
 		{
-			return this.bank.saveAsync( (Observable<?>) fact );
+			return this.self.saveAsync( (Observable<?>) fact );
 		}
 
 		@Override
 		public T find( final Fact.ID id )
 		{
-			return (T) this.bank.find( id );
+			return (T) this.self.find( id );
 		}
 
 		@Override
-		public Observable<T> find()
+		public Observable<T> find( final Class<?> typeFilter,
+			final Actor.ID initiatorFilter, final Actor.ID executorFilter,
+			final FactKind kindFilter, final Fact.ID causeFilter,
+			final Actor.ID creatorFilter, final Actor.ID responderFilter,
+			final Range<Instant> occurrenceFilter,
+			final Range<Instant> expirationFilter,
+			final Map<String, Object> propertiesFilter )
 		{
-			return (Observable<T>) this.bank.find();
-		}
-
-		@Override
-		public Class<T> transactionKindFilter()
-		{
-			return (Class<T>) this.bank.transactionKindFilter();
+			return (Observable<T>) this.self.find( typeFilter, initiatorFilter,
+					executorFilter, kindFilter, causeFilter, creatorFilter,
+					responderFilter, occurrenceFilter, expirationFilter,
+					propertiesFilter );
 		}
 	}
 
 	/**
 	 * {@link SimpleCache}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
 	 */
 	@Singleton
 	public class SimpleCache implements FactBank<Fact>
@@ -295,13 +398,15 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		private final Map<ID, Fact> cache = new TreeMap<>();
 
 		@Override
-		public Observable<FactDao> saveAsync( final Observable<Fact> facts )
+		public FactBank<Fact> root()
 		{
-			return facts.map( fact ->
-			{
-				this.cache.put( fact.id(), fact );
-				return null;
-			} );
+			return this;
+		}
+
+		@Override
+		public Observable<?> saveAsync( final Observable<Fact> facts )
+		{
+			return facts.map( fact -> this.cache.put( fact.id(), fact ) );
 		}
 
 		@Override
@@ -311,9 +416,51 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		}
 
 		@Override
-		public Observable<Fact> find()
+		public Observable<Fact> find( final Class<?> typeFilter,
+			final Actor.ID initiatorFilter, final Actor.ID executorFilter,
+			final FactKind kindFilter, final Fact.ID causeFilter,
+			final Actor.ID creatorFilter, final Actor.ID responderFilter,
+			final Range<Instant> occurrenceFilter,
+			final Range<Instant> expirationFilter,
+			final Map<String, Object> propertiesFilter )
 		{
-			return Observable.from( this.cache.values() );
+			Observable<Fact> result = Observable.from( this.cache.values() );
+
+			if( typeFilter != null ) result = result
+					.filter( f -> typeFilter.equals( f.transaction().kind() ) );
+
+			if( initiatorFilter != null )
+				result = result.filter( f -> initiatorFilter
+						.equals( f.transaction().initiatorRef() ) );
+			if( executorFilter != null )
+				result = result.filter( f -> executorFilter
+						.equals( f.transaction().executorRef() ) );
+			if( kindFilter != null )
+				result = result.filter( f -> kindFilter.equals( f.kind() ) );
+			if( causeFilter != null ) result = result
+					.filter( f -> causeFilter.equals( f.causeRef() ) );
+			if( creatorFilter != null ) result = result
+					.filter( f -> creatorFilter.equals( f.creatorRef() ) );
+			if( responderFilter != null ) result = result
+					.filter( f -> responderFilter.equals( f.responderRef() ) );
+			if( occurrenceFilter != null ) result = result
+					.filter( f -> occurrenceFilter.contains( f.occur() ) );
+			if( expirationFilter != null ) result = result
+					.filter( f -> expirationFilter.contains( f.expire() ) );
+			if( propertiesFilter != null ) result = result.filter( f ->
+			{
+				for( Map.Entry<?, ?> entry : propertiesFilter.entrySet() )
+				{
+					final Object value = f.properties().get( entry.getKey() );
+					if( entry.getValue() == null )
+					{
+						if( value != null ) return false;
+					} else if( !entry.getValue().equals( value ) ) return false;
+				}
+				return true;
+			} );
+
+			return result;
 		}
 
 		@Override
@@ -325,19 +472,28 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 
 	/**
 	 * {@link SimpleJPA}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
 	 */
 	@Singleton
-	public class SimpleJPA implements FactBank<Fact>
+	public class SimpleJPA implements FactBank<Fact>, AutoCloseable
 	{
 
 		@Inject
 		private LocalBinder binder;
 
+		/** only needed for the timeunit */
+		@Inject
+		private Transaction.Factory txFactory;
+
+		// FIXME inject (global) JPAConfig, (re-)create expensive EMF on demand?
+
 		@Inject
 		private EntityManagerFactory emf;
+
+		@Override
+		public FactBank<Fact> root()
+		{
+			return this;
+		}
 
 		@Override
 		public void close() throws Exception
@@ -346,15 +502,15 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		}
 
 		@Override
-		public Observable<FactDao> saveAsync( final Observable<Fact> facts )
+		public Observable<?> saveAsync( final Observable<Fact> facts )
 		{
 			// TODO defer: facts.observeOn( ... ) & rejoin at sim::onCompleted ?
-			return PublishSubject.<FactDao>create( sub ->
+			return Observable.<FactDao>create( sub ->
 			{
 				// One session for each fact
 				facts.subscribe(
 						fact -> JPAUtil.session( this.emf, fact::persist ),
-						sub::onError, () -> sub.onCompleted() );
+						sub::onError, sub::onCompleted );
 
 				// One session for all facts
 //				JPAUtil.session( this.emf ).subscribe( em ->
@@ -363,7 +519,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 //					{
 //						em.flush();
 //						sub.onNext( fact.persist( em ) );
-//					}, e -> sub.onError( e ), () -> sub.onCompleted() );
+//					}, sub::onError, sub::onCompleted );
 //			}, e -> sub.onError( e ), () -> sub.onCompleted() );
 			} ).asObservable();
 		}
@@ -371,68 +527,42 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		@Override
 		public Fact find( final Fact.ID id )
 		{
-			return JPAUtil.session( this.emf ).toBlocking().first()
-					.createQuery( "SELECT f FROM " + FactDao.ENTITY_NAME
-							+ " AS f WHERE f.ID=?1", FactDao.class )
-					.setParameter( 1, id.unwrap() ).getSingleResult()
-					.restore( this.binder );
+			try
+			{
+				return JPAUtil.session( this.emf ).map(
+						em -> FactDao.find( em, id ).restore( this.binder ) )
+						.toBlocking().first();
+			} catch( final NoResultException empty )
+			{
+				return null;
+			}
 		}
 
 		@Override
-		public Observable<Fact> find()
+		public Observable<Fact> find( final Class<?> typeFilter,
+			final Actor.ID initiatorFilter, final Actor.ID executorFilter,
+			final FactKind kindFilter, final Fact.ID causeFilter,
+			final Actor.ID creatorFilter, final Actor.ID responderFilter,
+			final Range<Instant> occurrenceFilter,
+			final Range<Instant> expirationFilter,
+			final Map<String, Object> propertiesFilter )
 		{
-//			final Class<?> type = transactionKindFilter();
-//			final CoordinationFactKind kind = kindFilter();
-//			final CoordinationFact.ID cause = causeFilter();
-//			final CompositeActor.ID initiator = initiatorFilter();
-//			final CompositeActor.ID executor = executorFilter();
-//			final CompositeActor.ID creator = creatorFilter();
-//			final Range<Instant> occurrence = occurrenceFilter();
-//			final Range<Instant> expiration = expirationFilter();
-//			final Map<String, Object> properties = propertiesFilter();
-
-			// TODO: chunking, two-step streaming, sorted by creation time-stamp
 			return Observable.create( sub ->
 			{
 				JPAUtil.session( this.emf ).subscribe( em ->
 				{
-					final CriteriaBuilder cb = em.getCriteriaBuilder();
-					final CriteriaQuery<FactDao> q = cb
-							.createQuery( FactDao.class );
-					final Root<FactDao> d = q.from( FactDao.class );
-					q.select( d );
-
-					// TODO first (1) fetch id's sorted by time-stamp, 
-					// then (2) fetch full Dao upon (chunked) traversal
-
-//					@SuppressWarnings( "rawtypes" )
-//					final ParameterExpression<Class> typeParam = cb
-//							.parameter( Class.class );
-//					if( type != null )
-//						q.where( cb.equal( d.get( "transaction" ).get( "kind" ),
-//								typeParam ) );
-//					final ParameterExpression<CoordinationFactKind> kindParam = cb
-//							.parameter( CoordinationFactKind.class );
-//					if( kind != null ) q.where( cb
-//							.equal( d.get( Dao.KIND_ATTR_NAME ), kindParam ) );
-
-					final TypedQuery<FactDao> query = em.createQuery( q );
-
-//					if( type != null ) query.setParameter( typeParam, type );
-//					if( kind != null ) query.setParameter( kindParam, kind );
-
-					final List<FactDao> list = query.getResultList();
-					list.stream().map( dao -> dao.restore( this.binder ) )
-							.forEach( sub::onNext );
-					sub.onCompleted();
+					Observable
+							.from( FactDao.find( em,
+									this.binder.id().contextRef(),
+									this.txFactory.timeUnit(), typeFilter,
+									initiatorFilter, executorFilter, kindFilter,
+									causeFilter, creatorFilter, responderFilter,
+									occurrenceFilter, expirationFilter,
+									propertiesFilter ) )
+							.map( dao -> dao.restore( this.binder ) )
+							.subscribe( sub );
 				}, sub::onError );
 			} );
-		}
-
-		@Override
-		public Class<Fact> transactionKindFilter()
-		{
-			return Fact.class;
 		}
 	}
 }

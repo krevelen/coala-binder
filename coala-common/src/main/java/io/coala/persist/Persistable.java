@@ -29,6 +29,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
+import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -102,7 +103,8 @@ public interface Persistable<DAO extends Persistable.Dao>
 	 */
 	@Transactional
 	static <DAO> Observable<DAO> findAsync( final EntityManager em,
-		final Class<DAO> entityType, final int pageSize, final String pkName,
+		final Class<DAO> entityType, final int pageSize,
+		final SingularAttribute<? super DAO, ?> pkAttr,
 		final Function<CriteriaQuery<?>, TypedQuery<?>> restrictor )
 	{
 		try
@@ -110,7 +112,7 @@ public interface Persistable<DAO extends Persistable.Dao>
 			// first select only primary key attributes synchronously
 			final CriteriaBuilder cb = em.getCriteriaBuilder();
 			final CriteriaQuery<Object> pkQry = cb.createQuery();
-			pkQry.select( pkQry.from( entityType ).get( pkName ) )
+			pkQry.select( pkQry.from( entityType ).get( pkAttr ) )
 					.distinct( true ); // FIXME why so many joins?
 			final List<?> pks = (restrictor == null ? em.createQuery( pkQry )
 					: restrictor.apply( pkQry )).getResultList();
@@ -127,7 +129,7 @@ public interface Persistable<DAO extends Persistable.Dao>
 							final Predicate pkFilter = cb.disjunction();
 							for( Object pk : page )
 								pkFilter.getExpressions().add( cb.equal(
-										pgQry.from( entityType ).get( pkName ),
+										pgQry.from( entityType ).get( pkAttr ),
 										pk ) );
 							return Observable
 									.from( em

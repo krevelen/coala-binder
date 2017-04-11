@@ -23,7 +23,9 @@ import javax.persistence.CacheRetrieveMode;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.SharedCacheMode;
-import javax.persistence.spi.PersistenceProvider;
+import javax.persistence.spi.PersistenceUnitInfo;
+
+import org.aeonbits.owner.Config.Sources;
 
 import io.coala.config.GlobalConfig;
 import io.coala.json.JsonUtil;
@@ -35,27 +37,72 @@ import io.coala.log.LogUtil;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Sources( "classpath:jpa.properties" )
 public interface JPAConfig extends GlobalConfig, JDBCConfig
 {
 	String NAME_DELIMITER = ",";
 
+	/** @see PersistenceUnitInfo#getPersistenceUnitName() */
 	String JPA_UNIT_NAMES_KEY = "javax.persistence.unit-names";
 
-	String JPA_PROVIDER_KEY = "javax.persistence.provider";
+	/**
+	 * @deprecated not a persistence property (anymore)
+	 * @see Persistence#PERSISTENCE_PROVIDER
+	 * @see PersistenceUnitInfo#getPersistenceProviderClassName()
+	 */
+	String JPA_PROVIDER_KEY = Persistence.PERSISTENCE_PROVIDER;
 
+	/**
+	 * not a persistence property
+	 * 
+	 * @see javax.sql.DataSource
+	 */
+	String JPA_JTA_DATASOURCE_KEY = "javax.persistence.jta-data-source";
+
+	/**
+	 * not a persistence property
+	 * 
+	 * @see javax.sql.DataSource
+	 */
+	String JPA_NON_JTA_DATASOURCE_KEY = "javax.persistence.non-jta-data-source";
+
+	/** @see java.sql.DriverManager */
 	String JPA_JDBC_DRIVER_KEY = "javax.persistence.jdbc.driver";
 
+	/** @see java.sql.DriverManager */
 	String JPA_JDBC_URL_KEY = "javax.persistence.jdbc.url";
 
+	/** @see java.sql.DriverManager */
 	String JPA_JDBC_USER_KEY = "javax.persistence.jdbc.user";
 
+	/** @see java.sql.DriverManager */
 	String JPA_JDBC_PASSWORD_KEY = "javax.persistence.jdbc.password";
 
-	/** the SHARED_CACHE_MODE_KEY as per {@link SharedCacheMode} */
+	/**
+	 * the SHARED_CACHE_MODE_KEY as per {@link SharedCacheMode}
+	 * 
+	 * @see PersistenceUnitInfo#getSharedCacheMode()
+	 */
 	String JPA_SHARED_CACHE_MODE_KEY = "javax.persistence.sharedCache.mode";
 
 	/** the CACHE_RETRIEVE_MODE_KEY as per {@link CacheRetrieveMode} */
 	String JPA_CACHE_RETRIEVE_MODE_KEY = "javax.persistence.cache.retrieveMode";
+
+	/**
+	 * see also http://stackoverflow.com/a/3218191/1418999
+	 * 
+	 * @see PersistenceUnitInfo#getNonJtaDataSource()
+	 */
+	@Key( JPA_NON_JTA_DATASOURCE_KEY )
+	String jdbcDatasourceNonJtaJNDI();
+
+	/**
+	 * see also http://stackoverflow.com/a/3218191/1418999
+	 * 
+	 * @see PersistenceUnitInfo#getJtaDataSource()
+	 */
+	@Key( JPA_JTA_DATASOURCE_KEY )
+	String jdbcDatasourceJNDI();
 
 	@Key( JPA_JDBC_DRIVER_KEY )
 	Class<? extends Driver> jdbcDriver();
@@ -68,21 +115,22 @@ public interface JPAConfig extends GlobalConfig, JDBCConfig
 
 	@Key( JPA_JDBC_PASSWORD_KEY )
 	String jdbcPassword();
-	
+
 	@Override
 	default String jdbcPasswordKey()
 	{
 		return JPA_JDBC_PASSWORD_KEY;
 	}
 
+	/** @see PersistenceUnitInfo#getPersistenceUnitName() */
 	@Key( JPA_UNIT_NAMES_KEY )
 	@Separator( NAME_DELIMITER )
 	String[] jpaUnitNames();
 
-	@Key( JPA_PROVIDER_KEY )
-	Class<? extends PersistenceProvider> jpaProvider();
-
-	/** @see SharedCacheMode#ENABLE_SELECTIVE */
+	/**
+	 * @see SharedCacheMode#ENABLE_SELECTIVE
+	 * @see PersistenceUnitInfo#getSharedCacheMode()
+	 */
 	@Key( JPA_SHARED_CACHE_MODE_KEY )
 	@DefaultValue( "ENABLE_SELECTIVE" )
 	SharedCacheMode jpaSharedCacheMode();

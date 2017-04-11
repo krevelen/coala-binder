@@ -18,7 +18,7 @@ package io.coala.name;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@link Identified} wraps an identifier *
+ * {@link Identified} wraps an identifier
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -28,10 +28,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public interface Identified<T>
 {
 
-	String ID_KEY = "id";
+	String ID_JSON_PROPERTY = "id";
 
 	/** @return the (ordinal) identifier */
-	@JsonProperty( ID_KEY )
+	@JsonProperty( ID_JSON_PROPERTY )
 	T id();
 
 	static int hashCode( final Identified<?> self )
@@ -114,8 +114,7 @@ public interface Identified<T>
 	class SimpleOrdinal<T extends Comparable> extends Simple<T>
 		implements Ordinal<T>
 	{
-		public static <T extends Comparable> SimpleOrdinal<T>
-			of( final T id )
+		public static <T extends Comparable> SimpleOrdinal<T> of( final T id )
 		{
 			return of( new SimpleOrdinal<T>(), id );
 		}

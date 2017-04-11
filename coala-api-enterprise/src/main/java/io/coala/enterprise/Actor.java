@@ -25,6 +25,7 @@ import java.lang.reflect.Proxy;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
@@ -42,6 +43,7 @@ import io.coala.bind.LocalContextual;
 import io.coala.bind.LocalId;
 import io.coala.enterprise.FactExchange.Direction;
 import io.coala.exception.Thrower;
+import io.coala.function.ThrowingBiConsumer;
 import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
 import io.coala.name.Id;
@@ -107,8 +109,44 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 */
 	Observable<F> emit();
 
+	@FunctionalInterface
+	interface FactFilter //extends Func1<Fact, Boolean> 
+	{
+		Boolean match( Fact fact );
+
+		static FactFilter of( final FactKind factKind )
+		{
+			return f -> f.kind().equals( factKind );
+		}
+	}
+
+	FactFilter RQ_FILTER = FactFilter.of( FactKind.REQUESTED );
+
 	/**
-	 * @param tranKind the type of {@link Fact} to filter for
+	 * @param filter
+	 * @param handler
+	 * @return self
+	 */
+	default <A extends Actor<F>> A emit( final FactFilter filter,
+		final ThrowingBiConsumer<A, F, ?> handler )
+	{
+		@SuppressWarnings( "unchecked" )
+		final A self = (A) this;
+		emit().filter( filter::match ).subscribe( rq ->
+		{
+			try
+			{
+				handler.accept( self, rq );
+			} catch( final Throwable e )
+			{
+				Thrower.rethrowUnchecked( e );
+			}
+		}, e -> LogUtil.getLogger( getClass() ).error( "Problem", e ) );
+		return self;
+	}
+
+	/**
+	 * @param tranKind the {@link Fact} sub-type to filter for
 	 * @return an {@link Observable} of incoming {@link Fact}s
 	 */
 	default <T extends F> Observable<T> emit( final Class<T> tranKind )
@@ -569,55 +607,71 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	}
 
 	/**
-	 * {@link ID}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
+	 * {@link Actor.ID}
 	 */
 	@JsonDeserialize( converter = ID.FromStringConverter.class )
 	class ID extends LocalId
 	{
+
+		public static String SPECIALIST_NAME_POSTFIX = "Exec";
+
 		public static class FromStringConverter extends StdConverter<String, ID>
 		{
 			@Override
 			public ID convert( final String value )
 			{
-				return of( valueOf( value ) );
+				return of( LocalId.valueOf( value ) );
 			}
 		}
 
 		/**
 		 * @param name
 		 * @param parent
-		 * @return
+		 * @return an {@link Actor.ID}
 		 */
 		public static ID of( final Class<? extends Fact> tranKind,
 			final ID parent )
 		{
-			return Id.of( new ID(), tranKind.getSimpleName(), parent );
+			return Id.of( new ID(),
+					tranKind.getSimpleName() + SPECIALIST_NAME_POSTFIX,
+					parent );
 		}
 
 		/**
 		 * @param name
 		 * @param parent
-		 * @return
+		 * @return an {@link Actor.ID}
 		 */
-		public static ID of( final String name, final LocalId parent )
+		public static ID of( final Comparable<?> name, final LocalId parent )
 		{
 			return Id.of( new ID(), name, parent );
 		}
 
 		/**
 		 * @param raw
-		 * @return
+		 * @return an {@link Actor.ID} for {@link Actor} references, or
+		 *         {@link LocalId} for {@link LocalContextual} references
+		 */
+		public static LocalId ofParent( final LocalId raw )
+		{
+			return raw == null ? null
+					: raw.parentRef() == null ? raw
+							: ID.of( raw.unwrap(), raw.parentRef() );
+		}
+
+		/**
+		 * @param raw
+		 * @return an {@link Actor.ID}
 		 */
 		public static ID of( final LocalId raw )
 		{
-			return raw == null || raw.parentRef() == null ? null
-					: of( raw.unwrap().toString(), raw.parentRef() );
+			Objects.requireNonNull( raw );
+			Objects.requireNonNull( raw.parentRef(),
+					"LocalContextual identifier? " + raw.unwrap() );
+			return ID.of( raw.unwrap(), ofParent( raw.parentRef() ) );
 		}
 
-		/** @return the recursed root ancestor {@link ID} */
+		/** @return the recursed root ancestor {@link Actor.ID} */
 		public ID organizationRef()
 		{
 			for( LocalId id = this;; id = id.parentRef() )
@@ -626,11 +680,11 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 
 		/**
 		 * @param name the peer name
-		 * @return a new {@link ID} with the same {@link #parentRef()}
+		 * @return a new {@link Actor.ID} with the same {@link #parentRef()}
 		 */
-		public ID peerRef( final String name )
+		public ID peerRef( final Comparable<?> name )
 		{
-			return of( name, parentRef() );
+			return ID.of( name, parentRef() );
 		}
 	}
 
@@ -797,7 +851,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	}
 
 	/**
-	 * {@link Factory}
+	 * {@link Factory} should ensure that created Actor.IDs are globally unique
 	 * 
 	 * @version $Id$
 	 * @author Rick van Krevelen
@@ -817,7 +871,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		 */
 		<F extends Fact> Actor<F> create( ID id );
 
-		default <F extends Fact> Actor<F> create( final String name )
+		default <F extends Fact> Actor<F> create( final Comparable<?> name )
 		{
 			return create( ID.of( name, id() ) );
 		}

@@ -91,11 +91,12 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		return Id.of( new LocalId(), contextId, null );
 	}
 
-	public static LocalId of( final String value, final LocalId parent )
+	public static LocalId of( final Comparable<?> value, final LocalId parent )
 	{
 		return Id.of( new LocalId(), value, parent );
 	}
 
+	/** @param value the {@link String} representation to deserialize */
 	public static LocalId valueOf( final String value )
 	{
 		String[] pair = value.split( "@" );

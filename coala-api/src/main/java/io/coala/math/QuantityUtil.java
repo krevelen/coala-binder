@@ -14,6 +14,7 @@ import javax.measure.quantity.Time;
 import org.joda.time.Period;
 
 import io.coala.exception.Thrower;
+import io.coala.json.JsonUtil;
 import io.coala.util.Compare;
 import io.coala.util.Util;
 import tec.uom.se.AbstractUnit;
@@ -35,6 +36,7 @@ public class QuantityUtil implements Util
 	{
 		// add unit labels
 		SimpleUnitFormat.getInstance().label( Units.DEGREE_ANGLE, "deg" );
+		QuantityJsonModule.checkRegistered( JsonUtil.getJOM() );
 	}
 
 	/** dimension one, for pure or {@link Dimensionless} quantities */
@@ -302,58 +304,110 @@ public class QuantityUtil implements Util
 				: valueOf( DecimalUtil.abs( qty.getValue() ), qty.getUnit() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity}
+	 * @return the square root {@link Quantity} value/unit
+	 * @see {@link DecimalUtil#root(Number,long)}
+	 * @see {@link Unit#root(int)}
+	 */
 	public static Quantity<?> sqrt( final Quantity<?> quantity )
 	{
 		return root( quantity, 2 );
 	}
 
+	/**
+	 * @param qty the {@link Quantity}
+	 * @return the root {@link Quantity} value/unit
+	 * @see {@link DecimalUtil#root(Number,long)}
+	 * @see {@link Unit#root(int)}
+	 */
 	public static Quantity<?> root( final Quantity<?> qty, final int n )
 	{
 		return valueOf( DecimalUtil.root( qty.getValue(), n ),
 				qty.getUnit().root( n ) );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated int value
+	 * @see {@link DecimalUtil#intValue(Number)}
+	 */
 	public static <Q extends Quantity<Q>> int intValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.intValue( qty.getValue() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated int value
+	 * @see {@link DecimalUtil#intValue(Number)}
+	 */
 	public static <Q extends Quantity<Q>> int intValue( final Quantity<?> qty,
 		final Unit<Q> unit )
 	{
 		return DecimalUtil.intValue( valueOf( qty, unit ).getValue() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated long value
+	 * @see {@link DecimalUtil#longValue(Number)}
+	 */
 	public static <Q extends Quantity<Q>> long
 		longValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.longValue( qty.getValue() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated long value
+	 * @see {@link DecimalUtil#longValue(Number)}
+	 */
 	public static <Q extends Quantity<Q>> long longValue( final Quantity<?> qty,
 		final Unit<Q> unit )
 	{
 		return DecimalUtil.longValue( valueOf( qty, unit ).getValue() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated float value
+	 * @see {@link DecimalUtil#floatValue(Number)
+	 */
 	public static <Q extends Quantity<Q>> float
 		floatValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.floatValue( qty.getValue() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated float value
+	 * @see {@link DecimalUtil#floatValue(Number)
+	 */
 	public static <Q extends Quantity<Q>> float
 		floatValue( final Quantity<?> qty, final Unit<Q> unit )
 	{
 		return DecimalUtil.floatValue( valueOf( qty, unit ).getValue() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated double value
+	 * @see {@link DecimalUtil#doubleValue(Number)
+	 */
 	public static <Q extends Quantity<Q>> double
 		doubleValue( final Quantity<?> qty )
 	{
 		return DecimalUtil.doubleValue( qty.getValue() );
 	}
 
+	/**
+	 * @param qty the {@link Quantity} to truncate
+	 * @return a truncated double value
+	 * @see {@link DecimalUtil#doubleValue(Number)
+	 */
 	public static <Q extends Quantity<Q>> double
 		doubleValue( final Quantity<?> qty, final Unit<Q> unit )
 	{
@@ -385,7 +439,7 @@ public class QuantityUtil implements Util
 	/**
 	 * @see BigDecimal#precision()
 	 */
-	public static int precision( final Quantity<Angle> qty )
+	public static int precision( final Quantity<?> qty )
 	{
 		return DecimalUtil.valueOf( qty.getValue() ).precision();
 	}
@@ -393,9 +447,19 @@ public class QuantityUtil implements Util
 	/**
 	 * @see BigDecimal#scale()
 	 */
-	public static int scale( final Quantity<Angle> qty )
+	public static int scale( final Quantity<?> qty )
 	{
 		return DecimalUtil.valueOf( qty.getValue() ).scale();
+	}
+
+	/**
+	 * @see DecimalUtil#toScale(Number, int)
+	 */
+	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
+		toScale( final Quantity<Q> qty, final int scale )
+	{
+		return QuantityUtil.valueOf(
+				DecimalUtil.toScale( qty.getValue(), scale ), qty.getUnit() );
 	}
 
 	/**

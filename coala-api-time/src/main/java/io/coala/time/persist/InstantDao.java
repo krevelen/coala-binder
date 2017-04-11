@@ -27,14 +27,22 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
 
 import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
 import io.coala.math.QuantityUtil;
+import io.coala.math.Range;
 import io.coala.time.Instant;
 
 /**
- * {@link InstantDao}
+ * {@link InstantDao} stores an {@link Instant} of (virtual) time, with JPA
+ * attributes specified in {@link #POSIX_ATTR_NAME}, {@link #NUM_ATTR_NAME} and
+ * {@link #STR_ATTR_NAME} as they are not in {@link InstantDao_} due to a bug
+ * with {@link Embeddable} managed types in the MetaModel generator (see
+ * https://hibernate.atlassian.net/browse/HHH-8714)
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -42,7 +50,7 @@ import io.coala.time.Instant;
 @Embeddable
 public class InstantDao implements BindableDao<Instant, InstantDao>
 {
-	/** the Java attribute name for the POSIX time value */
+	/** the Java attribute name for the POSIX virtual time value */
 	public static final String POSIX_ATTR_NAME = "posix";
 
 	/** the Java attribute name for the numeric virtual time value */
@@ -51,16 +59,16 @@ public class InstantDao implements BindableDao<Instant, InstantDao>
 	/** the Java attribute name for the exact virtual time descriptor */
 	public static final String STR_ATTR_NAME = "str";
 
-	/** derived, based on replication UTC offset */
+	/** derived POSIX virtual time, based on scenario UTC offset */
 	@Temporal( TemporalType.TIMESTAMP )
 	@Column
 	protected Date posix;
 
-	/** derived, based on replication time unit */
+	/** derived numeric virtual time, based on scenario time unit */
 	@Column
 	protected BigDecimal num;
 
-	/** exact precision, scale and unit description */
+	/** exact virtual time with JSR-310 precision, scale and unit description */
 	@Column
 	protected String str;
 
@@ -83,7 +91,8 @@ public class InstantDao implements BindableDao<Instant, InstantDao>
 		} else
 		{
 			result.posix = instant.toDate( offset );
-			result.num = QuantityUtil.toBigDecimal( instant.unwrap() );
+			result.num = QuantityUtil
+					.toBigDecimal( instant.unwrap().to( unit ) );
 			result.str = instant.toString();
 		}
 		return result;
@@ -94,5 +103,32 @@ public class InstantDao implements BindableDao<Instant, InstantDao>
 	{
 		return this.str == null ? null
 				: Instant.of( QuantityUtil.valueOf( this.str ) );
+	}
+
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public static void addRangeCriteria( final Predicate conjunction,
+		final CriteriaBuilder cb, final Path<?> instantDaoPath,
+		final Range<Instant> instantRange, final Unit timeUnit )
+	{
+		final Path<? extends Number> numPath = instantDaoPath
+				.get( NUM_ATTR_NAME );
+		if( instantRange.getLower() != null )
+		{
+			final Number lower = QuantityUtil.toBigDecimal(
+					instantRange.getLower().getValue().toQuantity(), timeUnit );
+			conjunction.getExpressions()
+					.add( instantRange.getLower().isInclusive()
+							? cb.ge( numPath, lower )
+							: cb.gt( numPath, lower ) );
+		}
+		if( instantRange.getUpper() != null )
+		{
+			final Number upper = QuantityUtil.toBigDecimal(
+					instantRange.getLower().getValue().toQuantity(), timeUnit );
+			conjunction.getExpressions()
+					.add( instantRange.getLower().isInclusive()
+							? cb.le( numPath, upper )
+							: cb.lt( numPath, upper ) );
+		}
 	}
 }

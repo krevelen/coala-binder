@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import org.aeonbits.owner.ConfigCache;
@@ -176,38 +177,50 @@ public class DecimalUtil implements Util
 														value.doubleValue() );
 	}
 
-	/** @see BigDecimal.setScale(int, RoundingMode) */
+	/**
+	 * for difference between scale (decimals) and precision (significance), see
+	 * e.g. http://stackoverflow.com/a/13461270/1418999
+	 * 
+	 * @param value the {@link Number} to scale
+	 * @param scale the number of decimals
+	 * @see BigDecimal.setScale(int, RoundingMode)
+	 */
 	public static BigDecimal toScale( final Number value, final int scale )
 	{
 		return valueOf( value ).setScale( scale,
 				DEFAULT_CONTEXT.getRoundingMode() );
 	}
 
+	public static BigDecimal round( final Number value )
+	{
+		return toScale( value, 0 );
+	}
+
 	/**
 	 * @param value the {@link BigDecimal} to round
-	 * @return the rounded value
+	 * @return the rounded int value
 	 * @see BigDecimal.setScale(int, RoundingMode)
 	 */
 	public static int toInt( final Number value )
 	{
 		return value instanceof Integer ? (Integer) value
-				: toScale( value, 0 ).intValue();
+				: round( value ).intValue();
 	}
 
 	/**
 	 * @param value the {@link BigDecimal} to round
-	 * @return the rounded value
+	 * @return the rounded long value
 	 * @see BigDecimal.setScale(int, RoundingMode)
 	 */
 	public static long toLong( final Number value )
 	{
 		return value instanceof Long ? (Long) value
-				: toScale( value, 0 ).longValue();
+				: round( value ).longValue();
 	}
 
 	/**
 	 * @param value the {@link Number} to truncate
-	 * @return an int
+	 * @return a truncated int value
 	 * @see BigDecimal#intValue()
 	 */
 	public static int intValue( final Number value )
@@ -218,7 +231,7 @@ public class DecimalUtil implements Util
 
 	/**
 	 * @param value the {@link Number} to truncate
-	 * @return a long
+	 * @return a truncated long value
 	 * @see BigDecimal#longValue()
 	 */
 	public static long longValue( final Number value )
@@ -229,7 +242,7 @@ public class DecimalUtil implements Util
 
 	/**
 	 * @param value the {@link Number} to truncate
-	 * @return a float
+	 * @return a truncated float value
 	 * @see BigDecimal#floatValue()
 	 */
 	public static float floatValue( final Number value )
@@ -240,7 +253,7 @@ public class DecimalUtil implements Util
 
 	/**
 	 * @param value the {@link Number} to truncate
-	 * @return a double
+	 * @return a truncated double value
 	 * @see BigDecimal#doubleValue()
 	 */
 	public static double doubleValue( final Number value )
@@ -411,5 +424,21 @@ public class DecimalUtil implements Util
 		return value instanceof Apfloat
 				? pow( (Apfloat) value, (long) exponent )
 				: valueOf( value ).pow( exponent, DEFAULT_CONTEXT );
+	}
+
+	public static final BigDecimal KILO = BigDecimal.TEN.pow( 3 );
+
+	public static final BigDecimal MEGA = BigDecimal.TEN.pow( 6 );
+
+	/**
+	 * @param posix the POSIX {@link ZonedDateTime} time stamp (seconds + nanos)
+	 * @return the rounded milliseconds
+	 */
+	public static BigInteger toMillis( final ZonedDateTime posix )
+	{
+		return posix == null ? null
+				: round( valueOf( posix.toEpochSecond() ).multiply( KILO )
+						.add( valueOf( posix.getNano() ).divide( MEGA ) ) )
+								.toBigIntegerExact();
 	}
 }

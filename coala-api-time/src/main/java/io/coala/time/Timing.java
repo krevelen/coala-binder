@@ -238,6 +238,17 @@ public interface Timing extends Wrapper<String>
 	 */
 	static Timing valueOf( final String pattern )
 	{
+		return of( pattern );
+	}
+
+	/**
+	 * @param pattern a formatted string, either {@link CronExpression CRON},
+	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
+	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
+	 * @return the new {@link Timing} pattern wrapper
+	 */
+	static Timing of( final String pattern )
+	{
 		try
 		{
 			return of( pattern, CronTiming.class );
@@ -261,17 +272,6 @@ public interface Timing extends Wrapper<String>
 				}
 			}
 		}
-	}
-
-	/**
-	 * @param pattern a formatted string, either {@link CronExpression CRON},
-	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
-	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
-	 * @return the new {@link Timing} pattern wrapper
-	 */
-	static Timing of( final String pattern )
-	{
-		return valueOf( pattern );
 	}
 
 	/**

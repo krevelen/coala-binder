@@ -170,7 +170,8 @@ public interface LocalConfig extends GlobalConfig
 
 	class JsonBuilder
 	{
-		private ObjectNode tree = JsonUtil.getJOM().createObjectNode();
+		private ObjectNode tree = JsonUtil.getJOM().createObjectNode()
+				.put( ID_KEY, "_binder" + (new UUID()).clockSeqAndNode );
 
 		private List<Map<?, ?>> configs = new ArrayList<>();
 

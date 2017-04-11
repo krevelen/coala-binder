@@ -34,6 +34,7 @@ import javax.sql.DataSource;
 import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 
+import org.aeonbits.owner.Config.Sources;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.Converter;
 
@@ -46,43 +47,64 @@ import io.coala.config.GlobalConfig;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@Sources( "classpath:jdbc.properties" )
 public interface JDBCConfig extends GlobalConfig
 {
+	/** no specification */
+	String DATASOURCE_KEY = "datasource";
+
+	/** no specification */
 	String DATASOURCE_DRIVER_KEY = "datasource.driver";
 
+	/** no specification */
 	String JDBC_DRIVER_KEY = "jdbc.driver";
 
+	/** no specification */
 	String JDBC_URL_KEY = "jdbc.url";
 
+	/** no specification */
 	String JDBC_USERNAME_KEY = "jdbc.username";
 
+	/** no specification */
 	String JDBC_PASSWORD_KEY = "jdbc.password";
 
+	/** no specification */
 	String JDBC_DATABASE_KEY = "jdbc.database";
 
+	/** no specification */
 	String JDBC_SERVER_KEY = "jdbc.server";
 
+	/** @see javax.sql.DataSource */
+	@Key( DATASOURCE_KEY )
+	String jdbcDatasourceJNDI();
+
+	/**
+	 * https://github.com/brettwooldridge/HikariCP#popular-datasource-class-names
+	 * 
+	 * @see javax.sql.DataSource
+	 */
+	@Key( DATASOURCE_DRIVER_KEY )
+	Class<? extends DataSource> jdbcDatasourceDriver();
+
+	/** @see java.sql.DriverManager */
 	@Key( JDBC_DRIVER_KEY )
 	Class<? extends Driver> jdbcDriver();
 
-	// see https://github.com/brettwooldridge/HikariCP#popular-datasource-class-names
-
-	@Key( DATASOURCE_DRIVER_KEY )
-	Class<? extends DataSource> datasourceDriver();
-
+	/** may be used as part of the {@link #jdbcUrl()} */
 	@Key( JDBC_DATABASE_KEY )
 	String jdbcDatabase();
 
+	/** may be used as part of the {@link #jdbcUrl()} */
 	@Key( JDBC_SERVER_KEY )
 	String jdbcServer();
 
+	/** @see java.sql.DriverManager */
 	@Key( JDBC_URL_KEY )
 	URI jdbcUrl();
 
+	/** @see java.sql.DriverManager */
 	@Key( JDBC_USERNAME_KEY )
 	String jdbcUsername();
-
-	String PASSWORD_PROMPT_VALUE = "prompt";
 
 //	@DefaultValue( PASSWORD_PROMPT_VALUE )
 	@Key( JDBC_PASSWORD_KEY )
@@ -100,14 +122,11 @@ public interface JDBCConfig extends GlobalConfig
 	}
 
 	/**
-	 * @return match {@link Key @Key} annotation/name of effective
-	 *         {@link #jdbcPassword()} override to mask password during export
+	 * @param sql the SQL statement
+	 * @param consumer a {@link ResultSet} handler
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
 	 */
-	default String jdbcPasswordKey()
-	{
-		return JDBC_PASSWORD_KEY;
-	}
-
 	default void execute( final String sql, final Consumer<ResultSet> consumer )
 		throws SQLException, ClassNotFoundException
 	{
@@ -116,16 +135,16 @@ public interface JDBCConfig extends GlobalConfig
 				consumer );
 	}
 
-	static void exec( final String sql, final Consumer<ResultSet> consumer )
-		throws ClassNotFoundException, SQLException
+	/**
+	 * @return name used in {@link Key @Key} annotation of effective
+	 *         {@link #jdbcPassword()} override, needed to mask password export
+	 */
+	default String jdbcPasswordKey()
 	{
-		getOrCreate().execute( sql, consumer );
+		return JDBC_PASSWORD_KEY;
 	}
 
-	static JDBCConfig getOrCreate( final Map<?, ?>... imports )
-	{
-		return ConfigCache.getOrCreate( JDBCConfig.class, imports );
-	}
+	String PASSWORD_PROMPT_VALUE = "prompt";
 
 	/**
 	 * {@link PasswordPromptConverter}
@@ -151,5 +170,16 @@ public interface JDBCConfig extends GlobalConfig
 					JOptionPane.QUESTION_MESSAGE ) == JOptionPane.OK_OPTION
 							? new String( pf.getPassword() ) : input;
 		}
+	}
+
+	static void exec( final String sql, final Consumer<ResultSet> consumer )
+		throws ClassNotFoundException, SQLException
+	{
+		getOrCreate().execute( sql, consumer );
+	}
+
+	static JDBCConfig getOrCreate( final Map<?, ?>... imports )
+	{
+		return ConfigCache.getOrCreate( JDBCConfig.class, imports );
 	}
 }
