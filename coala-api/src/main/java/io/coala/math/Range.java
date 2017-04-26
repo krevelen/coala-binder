@@ -209,6 +209,9 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 
 	public Range<T> intersect( final Range<T> that )
 	{
+		if( this.isGreaterThan( that.getUpper().getValue() )
+				|| this.isLessThan( that.getLower().getValue() ) )
+			return null;
 		return of( Compare.max( this.getLower(), that.getLower() ),
 				Compare.min( this.getUpper(), that.getUpper() ) );
 	}
@@ -223,11 +226,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	{
 		return new StringBuilder()
 				.append( getLower().isInclusive() ? '[' : '<' )
-				.append( getLower().isInfinity() ? "-inf"
-						: getLower().getValue() )
-				.append( "; " )
-				.append( getUpper().isInfinity() ? "+inf"
-						: getUpper().getValue() )
+				.append( getLower() ).append( "; " ).append( getUpper() )
 				.append( getUpper().isInclusive() ? ']' : '>' ).toString();
 	}
 

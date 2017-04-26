@@ -82,8 +82,14 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 		return this.value;
 	}
 
+	/** @return {@code true} iff this value not represents INFINITY */
+	public boolean isFinite()
+	{
+		return this.value != null;
+	}
+
 	/** @return {@code true} iff this value represents INFINITY */
-	public boolean isInfinity()
+	public boolean isInfinite()
 	{
 		return this.value == null;
 	}
@@ -91,13 +97,13 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 	/** @return {@code true} iff this value represents POSITIVE INFINITY */
 	public boolean isPositiveInfinity()
 	{
-		return isInfinity() && isUpperBoundary();
+		return isInfinite() && isUpperBoundary();
 	}
 
 	/** @return {@code true} iff this value represents NEGATIVE INFINITY */
 	public boolean isNegativeInfinity()
 	{
-		return isInfinity() && isLowerBoundary();
+		return isInfinite() && isLowerBoundary();
 	}
 
 	public boolean isInclusive()
@@ -126,6 +132,13 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 	}
 
 	@Override
+	public String toString()
+	{
+		return isPositiveInfinity() ? "+inf"
+				: isNegativeInfinity() ? "-inf" : getValue().toString();
+	}
+
+	@Override
 	public int compareTo( final Extreme<T> that )
 	{
 		return compareWith( that ).toInt();
@@ -151,11 +164,11 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 	 */
 	public Comparison compareWith( final Extreme<T> that )
 	{
-		if( isInfinity() ) return that.isInfinity()
+		if( isInfinite() ) return that.isInfinite()
 				? Comparison.of( this.boundary, that.boundary )
 				: this.compareLimit();
 
-		if( that.isInfinity() ) return that.compareLimit();
+		if( that.isInfinite() ) return that.compareLimit();
 
 		@SuppressWarnings( "unchecked" )
 		final Comparison valueCmp = Comparison.of( (Comparable) this.value,

@@ -111,7 +111,7 @@ public interface Signal<T> extends Proactive
 		public Simple( final Scheduler scheduler, final Range<Instant> domain,
 			final Function<Instant, T> function )
 		{
-			if( !domain.getUpper().isInfinity()
+			if( !domain.getUpper().isInfinite()
 					&& domain.isLessThan( scheduler.now() ) )
 				throw ExceptionFactory.createUnchecked(
 						"Currently t={} already past domain: {}",
