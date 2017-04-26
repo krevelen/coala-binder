@@ -5,9 +5,9 @@ import java.util.function.Function;
 
 import io.coala.exception.ExceptionFactory;
 import io.coala.math.Range;
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link Signal} produces values over some (in)finite interval for some period
@@ -96,7 +96,7 @@ public interface Signal<T> extends Proactive
 			return new Simple<T>( scheduler, domain, function );
 		}
 
-		private transient final Subject<T, T> values = PublishSubject.create();
+		private transient final Subject<T> values = PublishSubject.create();
 
 		private transient final Scheduler scheduler;
 
@@ -164,7 +164,7 @@ public interface Signal<T> extends Proactive
 					this.cache = null;
 				} else if( this.domain.isLessThan( this.now ) )
 				{
-					if( this.cache == null ) this.values.onCompleted();
+					if( this.cache == null ) this.values.onComplete();
 					this.cache = null;
 				} else
 				{
@@ -184,7 +184,7 @@ public interface Signal<T> extends Proactive
 		@Override
 		public Observable<T> emitValues()
 		{
-			return this.values.asObservable();
+			return this.values;
 		}
 
 		@Override

@@ -24,19 +24,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.coala.exception.ExceptionFactory;
+import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventInterface;
 import nl.tudelft.simulation.event.EventListenerInterface;
 import nl.tudelft.simulation.event.EventProducer;
 import nl.tudelft.simulation.event.EventType;
-import rx.Observable;
-import rx.Observer;
-import rx.Subscription;
-import rx.functions.Func1;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 /**
  * {@link DsolEventObservable}
@@ -49,12 +46,11 @@ public class DsolEventObservable implements EventListenerInterface
 {
 
 	/** listeners is the collection of interested listeners. */
-	private Map<EventListenerInterface, Subscription> subscriptions = Collections
-			.synchronizedMap(
-					new HashMap<EventListenerInterface, Subscription>() );
+	private Map<EventListenerInterface, Disposable> subscriptions = Collections
+			.synchronizedMap( new HashMap<>() );
 
 	/** the relay {@link rx.subjects.Subject} */
-	private final transient Subject<EventInterface, EventInterface> relay = PublishSubject
+	private final transient Subject<EventInterface> relay = PublishSubject
 			.create();
 
 	@Override
@@ -66,7 +62,7 @@ public class DsolEventObservable implements EventListenerInterface
 	/** publish {@link EventInterface events} as {@link rx.Observable} */
 	public final Observable<EventInterface> events()
 	{
-		return this.relay.asObservable();
+		return this.relay;
 	}
 
 	/**
@@ -75,14 +71,7 @@ public class DsolEventObservable implements EventListenerInterface
 	 */
 	public final Observable<EventInterface> events( final EventType eventType )
 	{
-		return events().filter( new Func1<EventInterface, Boolean>()
-		{
-			@Override
-			public Boolean call( final EventInterface event )
-			{
-				return event.getType().equals( eventType );
-			}
-		} );
+		return events().filter( event -> event.getType().equals( eventType ) );
 	}
 
 	public <T extends DsolEvent<?>> DsolEventObservable
@@ -110,15 +99,8 @@ public class DsolEventObservable implements EventListenerInterface
 	{
 		try
 		{
-			simulator.addListener( new EventListenerInterface()
-			{
-				@Override
-				public void notify( final EventInterface event )
-					throws RemoteException
-				{
-					relay.onCompleted();
-				}
-			}, SimulatorInterface.END_OF_REPLICATION_EVENT );
+			simulator.addListener( event -> relay.onComplete(),
+					SimulatorInterface.END_OF_REPLICATION_EVENT );
 		} catch( final RemoteException e )
 		{
 			this.relay.onError( e );
@@ -151,44 +133,15 @@ public class DsolEventObservable implements EventListenerInterface
 			return listener != null
 					&& !this.subscriptions.containsKey( listener )
 					&& null == this.subscriptions.put( listener,
-							events( eventType )
-									.subscribe( new Observer<EventInterface>()
-									{
-										@Override
-										public void onCompleted()
-										{
-											// 
-										}
-
-										@Override
-										public void onError( final Throwable e )
-										{
-											// 
-										}
-
-										@Override
-										public void
-											onNext( final EventInterface event )
-										{
-											try
-											{
-												listener.notify( event );
-											} catch( final RemoteException e )
-											{
-												throw ExceptionFactory
-														.createUnchecked( e,
-																"RMI problem" );
-											}
-										}
-									} ) );
+							events( eventType ).subscribe( listener::notify ) );
 		}
 	}
 
 	public final boolean removeListener( final EventListenerInterface listener )
 	{
-		final Subscription sub = this.subscriptions.get( listener );
-		if( sub == null || sub.isUnsubscribed() ) return false;
-		sub.unsubscribe();
+		final Disposable sub = this.subscriptions.get( listener );
+		if( sub == null || sub.isDisposed() ) return false;
+		sub.dispose();
 		return true;
 	}
 

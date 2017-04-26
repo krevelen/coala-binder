@@ -30,6 +30,7 @@ import javax.measure.quantity.Dimensionless;
 import io.coala.exception.Thrower;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.QuantityUtil;
+import io.coala.math.Range;
 import io.coala.math.WeightedValue;
 import io.coala.util.Instantiator;
 
@@ -416,12 +417,14 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			createChiSquared( Number degreesOfFreedom );
 
 		/**
-		 * (specific case of Gamma) describes: time between events = how
+		 * Exponential distribution (specific case of
+		 * {@link #createGamma(Number, Number) Gamma}) describes the time
+		 * between i.i.d. events given their mean rate or survival time = how
 		 * soon?<br/>
 		 * <img alt="Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Exponential_pdf.svg/650px-Exponential_pdf.svg.png"/>
 		 * 
-		 * @param mean &lambda;
+		 * @param rate &lambda; = 1/&beta; (rate = inverse survival)
 		 * @return a (negative) exponential {@link ProbabilityDistribution}
 		 * @see #createPoisson(Number) @ see
 		 *      <a href="http://stats.stackexchange.com/a/2094">relation with
@@ -465,8 +468,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		 * <img alt= "Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Gamma_distribution_pdf.svg/650px-Gamma_distribution_pdf.svg.png"/>
 		 * 
-		 * @param shape &alpha; or <em>k</em>
-		 * @param scale &beta; or &theta;
+		 * @param shape &alpha; = <em>k</em>
+		 * @param scale &theta; or 1/&beta; (scale = inverse rate)
 		 * @return a &Gamma; (gamma) {@link ProbabilityDistribution}
 		 * @see <a href="https://www.wikiwand.com/en/Gamma_distribution">
 		 *      Wikipedia</a> and <a href=
@@ -598,6 +601,14 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		ProbabilityDistribution<Long> createUniformDiscrete( Number min,
 			Number max );
 
+		default ProbabilityDistribution<Long>
+			createUniformDiscrete( final Range<? extends Number> range )
+		{
+			checkUniformRange( range );
+			return createUniformDiscrete( range.getLower().getValue(),
+					range.getUpper().getValue() );
+		}
+
 		/**
 		 * <img alt="Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Uniform_Distribution_PDF_SVG.svg/500px-Uniform_Distribution_PDF_SVG.svg.png"/>
@@ -613,6 +624,14 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		 */
 		ProbabilityDistribution<Double> createUniformContinuous( Number min,
 			Number max );
+
+		default ProbabilityDistribution<Double>
+			createUniformContinuous( final Range<? extends Number> range )
+		{
+			checkUniformRange( range );
+			return createUniformContinuous( range.getLower().getValue(),
+					range.getUpper().getValue() );
+		}
 
 		/**
 		 * wraps a {@link #createUniformDiscrete(Number, Number)} over the full
@@ -644,6 +663,16 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		 */
 		ProbabilityDistribution<Double> createWeibull( Number alpha,
 			Number beta );
+
+		static void checkUniformRange( final Range<? extends Number> range )
+		{
+			if( range.getLower().isInclusive()
+					&& range.getLower().isInclusive() )
+				return;
+
+			Thrower.throwNew( IllegalArgumentException.class,
+					"Exclusive/infinite bounds not allowed: {}", range );
+		}
 	}
 
 	interface Parser

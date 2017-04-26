@@ -38,20 +38,18 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.KeyDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
-import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-import io.coala.json.DynaBean.ProxyProvider;
+import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;
@@ -74,10 +72,13 @@ public interface Wrapper<T>
 {
 	String WRAP_PROPERTY = "wrap";
 
+	String UNWRAP_PROPERTY = "unwrap";
+
 	/**
 	 * @return the wrapped value
 	 */
 //	@JsonProperty( "value" )
+//	@JsonValue
 	T unwrap();
 
 	/**
@@ -113,19 +114,25 @@ public interface Wrapper<T>
 		 *         {@link JsonToken#VALUE_NUMBER_INT} or
 		 *         {@link JsonToken#VALUE_NUMBER_FLOAT}
 		 */
-		Class<?> numberAs() default Empty.class;
+		Class<?> numberAs()
+
+		default Empty.class;
 
 		/**
 		 * @return the value sub-type to parse in case of a
 		 *         {@link JsonNodeType#STRING} or {@link JsonToken#VALUE_STRING}
 		 */
-		Class<?> stringAs() default Empty.class;
+		Class<?> stringAs()
+
+		default Empty.class;
 
 		/**
 		 * @return the value sub-type to parse in case of a
 		 *         {@link JsonNodeType#OBJECT} or {@link JsonToken#START_OBJECT}
 		 */
-		Class<?> objectAs() default Empty.class;
+		Class<?> objectAs()
+
+		default Empty.class;
 
 		/**
 		 * @return the value sub-type to parse in case of a
@@ -234,6 +241,177 @@ public interface Wrapper<T>
 		}
 	}
 
+	@SuppressWarnings( "serial" )
+	class JsonSerializer//<S, T extends Wrapper<S>>
+		extends StdSerializer<Wrapper<?>>
+	{
+		private final JavaType valueType;
+
+		public JsonSerializer( final ObjectMapper om,
+			final Class<? extends Wrapper<?>> wrapperType )
+		{
+			this( om.getTypeFactory().constructType( wrapperType ) );
+		}
+
+		public JsonSerializer( final JavaType wrapperType )
+		{
+			super( wrapperType );
+			this.valueType = Util.resolveValueType( wrapperType );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		@Override
+		public void serialize( final Wrapper<?> wrapper,
+			final JsonGenerator jgen, final SerializerProvider provider )
+			throws IOException, JsonProcessingException
+		{
+			final Object value = wrapper == null ? null : wrapper.unwrap();
+			if( value == null )
+				jgen.writeNull();
+//			else if( value.getClass() == String.class )
+//				jgen.writeString( (String) value ); // avoid extra quotes
+//			else if( value instanceof Number )
+//				jgen.writeNumber(
+//						value instanceof BigDecimal ? (BigDecimal) value
+//								: BigDecimal.valueOf(
+//										((Number) value).doubleValue() ) );
+			else
+			{
+//				final com.fasterxml.jackson.databind.JsonSerializer<?> ser = provider
+//						.findValueSerializer( this.valueType );
+//				if( ser instanceof MapSerializer )
+//				{
+//					final com.fasterxml.jackson.databind.JsonSerializer<?> keySer = ((MapSerializer) ser)
+//							.getKeySerializer();
+//					if( keySer == null )
+//					{
+//						final MapType type = (MapType) this.valueType;
+//						// use om.writerFor() to handle map types, see http://stackoverflow.com/a/13944325/1418999
+//						final String json = ((ObjectMapper) jgen.getCodec())
+//								.writerFor( type ).writeValueAsString( value );
+//						Util.LOG.trace( "Serialized {} to {}", type, json );
+//						return;
+//					}
+//				}
+				final ObjectMapper om = (ObjectMapper) jgen.getCodec();
+//				final String json = om.writerFor( this.valueType )
+//						.writeValueAsString( value );
+//				Util.LOG.trace( "Serializing wrapped {} value: {} -> {}",
+//						this.valueType, value, json );
+				om.writerFor( this.valueType ).writeValue( jgen, value );
+//				((com.fasterxml.jackson.databind.JsonSerializer<? super Object>) ser)
+//						.serialize( value, jgen, provider );
+			}
+		}
+	}
+
+	@SuppressWarnings( "serial" )
+	class JsonKeySerializer//<S, T extends Wrapper<S>>
+		extends StdSerializer<Wrapper<?>>
+	{
+		private final JavaType valueType;
+
+		public JsonKeySerializer( final ObjectMapper om,
+			final Class<? extends Wrapper<?>> wrapperType )
+		{
+			this( om.getTypeFactory().constructType( wrapperType ) );
+		}
+
+		public JsonKeySerializer( final JavaType wrapperType )
+		{
+			super( wrapperType );
+			this.valueType = Util.resolveValueType( wrapperType );
+		}
+
+		@Override
+		public void serialize( final Wrapper<?> wrapper,
+			final JsonGenerator jgen, final SerializerProvider serializers )
+			throws IOException, JsonProcessingException
+		{
+			final Object value = wrapper.unwrap() == null ? null
+					: wrapper.unwrap();
+			final ObjectMapper om = (ObjectMapper) jgen.getCodec();
+			// allow any java type as key, see http://heli0s.darktech.org/jackson-serialize-map-with-non-string-key-in-fact-with-any-serializable-key-and-abstract-classes/
+			final String json = om.writerFor( this.valueType )
+					.writeValueAsString( value );
+//			Util.LOG.trace( "Serialized {} value {} as key field name: {}",
+//					wrapper.getClass(), value, json );
+			jgen.writeFieldName( json );
+		}
+	}
+
+	@SuppressWarnings( { "serial", "rawtypes", "unchecked" } )
+	class JsonDeserializer<S, T extends Wrapper<S>> extends StdDeserializer<T>
+	{
+		private final Provider<T> wrapperProvider;
+		private final JavaType valueType;
+		private final JavaPolymorph annot;
+
+		@SuppressWarnings( "rawtypes" )
+		public JsonDeserializer( final ObjectMapper om, final Class<T> type )
+		{
+			this( Instantiator.providerOf( type ),
+					om.getTypeFactory().constructType( type ),
+					type.getAnnotation( JavaPolymorph.class ) );
+		}
+
+		public JsonDeserializer( final Provider<T> wrapperProvider,
+			final JavaType wrapperType, final JavaPolymorph annot )
+		{
+			super( wrapperType );
+			this.wrapperProvider = wrapperProvider;
+			this.valueType = Util.resolveValueType( wrapperType );
+			this.annot = annot;
+		}
+
+		@Override
+		public T deserialize( final JsonParser jp,
+			final DeserializationContext ctxt )
+			throws IOException, JsonProcessingException
+		{
+			final String json = jp.getText();
+			if( json == null || json.length() == 0
+					|| json.equalsIgnoreCase( "null" ) )
+				return null;
+
+			final ObjectMapper om = (ObjectMapper) jp.getCodec();
+			final JavaType valueType = this.annot == null ? this.valueType
+					: om.getTypeFactory()
+							.constructType( Util.resolveAnnotType( this.annot,
+									this.valueType.getRawClass(),
+									jp.getCurrentToken() ) );
+			final Object value = om.readerFor( valueType ).readValue( jp );
+
+			final T result = this.wrapperProvider.get();
+			result.wrap( (S) value );
+			return result;
+		}
+	}
+
+	@SuppressWarnings( "serial" )
+	class JsonKeyDeserializer extends KeyDeserializer
+	{
+		private final ObjectMapper om;
+		private final JavaType wrapperType;
+
+		public JsonKeyDeserializer( final ObjectMapper om,
+			final Class<? extends Wrapper<?>> type )
+		{
+			this.om = om;
+			this.wrapperType = om.getTypeFactory().constructType( type );
+		}
+
+		@Override
+		public Wrapper<?> deserializeKey( final String key,
+			final DeserializationContext ctxt )
+			throws IOException, JsonProcessingException
+		{
+			Util.LOG.trace( "deser field name: {}", key );
+			// allow any java type as key, see http://heli0s.darktech.org/jackson-serialize-map-with-non-string-key-in-fact-with-any-serializable-key-and-abstract-classes/
+			return this.om.readValue( key, this.wrapperType );
+		}
+	}
+
 	/**
 	 * {@link Util} provides global utility functions
 	 * 
@@ -262,216 +440,94 @@ public interface Wrapper<T>
 		public static <S, T extends Wrapper<S>> void
 			registerType( final ObjectMapper om, final Class<T> type )
 		{
-			// LOG.trace("Resolving value type arg for: " + type.getName());
-			@SuppressWarnings( "unchecked" )
-			final Class<S> valueType = (Class<S>) TypeArguments
-					.of( Wrapper.class, type ).get( 0 );
-			// LOG.trace("Resolved value type arg: " + valueType);
-			registerValueType( om, type, valueType );
+			om.registerModule( new SimpleModule()
+					.addSerializer( type, new JsonSerializer( om, type ) )
+					.addDeserializer( type,
+							new JsonDeserializer<S, T>( om, type ) )
+					.addKeySerializer( type, new JsonKeySerializer( om, type ) )
+					.addKeyDeserializer( type,
+							new JsonKeyDeserializer( om, type ) ) );
+
+			// LOG.trace("Resolving value type arg for {}", type);
+//			@SuppressWarnings( "unchecked" )
+//			final List<Class<?>> typeArgs = TypeArguments.of( Wrapper.class,
+//					type );
+//			if( typeArgs.size() != 1 )
+//				Thrower.throwNew( IllegalArgumentException.class,
+//						"Expecting 1 type argument of Wrapper extension {}",
+//						type );
+
+//			final Class<S> valueType = (Class<S>) typeArgs.get( 0 );
+//			LOG.trace( "Resolved {}'s Wrapper type arg: {}", type.getTypeName(),
+//					valueType );
+////			if( Map.class.isAssignableFrom( valueType ) )
+////				LOG.trace( "Resolved {}'s Map type args: {}", valueType,
+////						TypeArguments.of( Map.class,
+////								valueType.asSubclass( Map.class ) ) );
+//			if( valueType == null )
+//				Thrower.throwNew( IllegalArgumentException.class,
+//						"Could not determine value type for {}, got: {}", type,
+//						valueType );
+//			registerValueType( om, type, valueType );
 		}
 
 		/**
 		 * @param om the {@link ObjectMapper} to register with
 		 * @param type the {@link Wrapper} sub-type to register
-		 * @param valueType the wrapped type to de/serialize
-		 */
-		public static <S, T extends Wrapper<S>> void registerValueType(
-			final ObjectMapper om, final Class<T> type,
-			final Class<S> valueType )
-		{
-			om.registerModule( new SimpleModule()
-					.addSerializer( type,
-							createJsonSerializer( type, valueType ) )
-					.addDeserializer( type,
-							createJsonDeserializer( type, valueType ) )
-					.addKeyDeserializer( type,
-							createJsonKeyDeserializer( type, valueType ) ) );
-		}
-
-		/**
-		 * @param type the wrapper type to serialize
-		 * @param valueType the wrapped type to serialize
-		 * @return the {@link JsonSerializer}
-		 */
-		public static final <S, T extends Wrapper<S>> JsonSerializer<T>
-			createJsonSerializer( final Class<T> type,
-				final Class<S> valueType )
-		{
-			return new JsonSerializer<T>()
-			{
-				@Override
-				public void serialize( final T value, final JsonGenerator jgen,
-					final SerializerProvider serializers )
-					throws IOException, JsonProcessingException
-				{
-//					LOG.trace( "Finding serializer for {} value: {} ({})", type,
-//							value.unwrap(), value.unwrap().getClass() );
-					if( value == null || value.unwrap() == null )
-						jgen.writeNull();
-					else if( value.unwrap().getClass() == String.class )
-						jgen.writeString( (String) value.unwrap() );
-					else if( value.unwrap() instanceof Number )
-						jgen.writeNumber( value.unwrap() instanceof BigDecimal
-								? (BigDecimal) value.unwrap()
-								: BigDecimal.valueOf( ((Number) value.unwrap())
-										.doubleValue() ) );
-					else
-						serializers.findValueSerializer( valueType, null )
-								.serialize( value.unwrap(), jgen, serializers );
-				}
-
-				@Override
-				public void serializeWithType( final T value,
-					final JsonGenerator jgen,
-					final SerializerProvider serializers,
-					final TypeSerializer typeSer ) throws IOException
-				{
-					if( value.unwrap() == null )
-						jgen.writeNull();
-					else
-						serializers
-								.findValueSerializer( value.unwrap().getClass(),
-										null )
-								.serialize( value.unwrap(), jgen, serializers );
-				}
-			};
-		}
-
-		/**
-		 * @param type the wrapper type to deserialize
 		 * @param valueType the wrapped type to deserialize
-		 * @return the {@link JsonDeserializer}
 		 */
-		public static final <S, T extends Wrapper<S>> JsonDeserializer<T>
-			createJsonDeserializer( final Class<T> type,
-				final Class<S> valueType )
-		{
-			return new JsonDeserializer<T>()
-			{
-				private final Instantiator<T> provider = Instantiator
-						.of( type );
-
-				@Override
-				public T deserializeWithType( final JsonParser jp,
-					final DeserializationContext ctxt,
-					final TypeDeserializer typeDeserializer )
-					throws IOException, JsonProcessingException
-				{
-					return deserialize( jp, ctxt );
-				}
-
-				@Override
-				public T deserialize( final JsonParser jp,
-					final DeserializationContext ctxt )
-					throws IOException, JsonProcessingException
-				{
-//					LOG.trace( "parsing {} as {}", jp.getText(),
-//							type.getName() );
-
-					if( jp.getText() == null || jp.getText().length() == 0
-							|| jp.getText().equalsIgnoreCase( "null" ) )
-						return null;
-
-					final JavaPolymorph annot = type
-							.getAnnotation( JavaPolymorph.class );
-
-					final S value; // = jp.readValueAs(valueType)
-
-					if( annot == null )
-					{
-//						LOG.trace( "parsing {} as {}", jp.getText(),
-//								type.getName() );
-						value = jp.readValueAs( valueType );
-					} else
-					{
-						final Class<? extends S> valueSubtype = resolveAnnotType(
-								annot, valueType, jp.getCurrentToken() );
-						// LOG.trace("parsing " + jp.getCurrentToken() + " ("
-						// + jp.getText() + ") as "
-						// + valueSubtype.getName());
-						value = jp.readValueAs( valueSubtype );
-
-						// final JsonNode tree = jp.readValueAsTree();
-						// final Class<? extends S> valueSubtype =
-						// resolveSubtype(
-						// annot, valueType, tree.getNodeType());
-						// LOG.trace("parsing " + tree.getNodeType() + " as "
-						// + valueSubtype.getName());
-						// value = JsonUtil.getJOM().treeToValue(tree,
-						// valueSubtype);
-					}
-
-					final T result = this.provider.instantiate();
-					result.wrap( value );
-					return result;
-				}
-			};
-		}
-
-		/**
-		 * @param type the wrapper type to deserialize
-		 * @param valueType the wrapped type to deserialize
-		 * @return the {@link JsonDeserializer}
-		 */
-		public static final <S, T extends Wrapper<S>> KeyDeserializer
-			createJsonKeyDeserializer( final Class<T> type,
-				final Class<S> valueType )
-		{
-			return new KeyDeserializer()
-			{
-				private final Instantiator<T> provider = Instantiator
-						.of( type );
-
-				@Override
-				public Object deserializeKey( final String key,
-					final DeserializationContext ctxt )
-					throws IOException, JsonProcessingException
-				{
-					if( key == null || key.length() == 0
-							|| key.equalsIgnoreCase( "null" ) )
-						return null;
-
-					// FIXME assumes a Wrapper<String> for now
-					@SuppressWarnings( "unchecked" )
-					final S value = (S) key;
-					final T result = this.provider.instantiate();
-					result.wrap( value );
-					return result;
-				}
-			};
-		}
-
-		/**
-		 * @param json the JSON representation {@link String}
-		 * @return the deserialized {@link Wrapper} sub-type
-		 */
-		@SuppressWarnings( "unchecked" )
-		@Deprecated
-		public static <S, T extends Wrapper<S>> T valueOf( final String json )
-		{
-			/*
-			 * try { final Method method =
-			 * Util.class.getDeclaredMethod("valueOf", String.class);
-			 * // @SuppressWarnings("unchecked") final ParameterizedType type =
-			 * (ParameterizedType) ((TypeVariable<?>) method
-			 * .getGenericReturnType()).getBounds()[0];
-			 * 
-			 * @SuppressWarnings("unchecked") final Class<T> beanType =
-			 * (Class<T>) type.getRawType(); LOG.trace(
-			 * "Resolved run-time return type to: " + type); return
-			 * valueOf(json, beanType); } catch (final Exception e) {
-			 * e.printStackTrace(); throw ExceptionBuilder.unchecked(
-			 * "Problem determining return type for this method", e) .build(); }
-			 */
-
-			// FIXME assumes Wrapper<String> for now, determine actual @class
-			return (T) JsonUtil.valueOf( json,
-					new TypeReference<Wrapper.SimpleOrdinal<String>>()
-					{
-					} );
-		}
+//		public static <S, T extends Wrapper<S>> void registerValueType(
+//			final ObjectMapper om, final Class<T> type,
+//			final Class<S> valueType )
+//		{
+//			Objects.requireNonNull( valueType ); // for deserialization
+//			if( valueType.getGenericSuperclass() instanceof ParameterizedType )
+//				LOG.trace(
+//						"creating serializers for generic parameterized type: "
+//								+ valueType.getGenericSuperclass() );
+//			else
+//				LOG.trace( "creating serializers for type: "
+//						+ valueType.getTypeName() );
+//			om.registerModule( new SimpleModule()
+//					.addSerializer( type, createJsonSerializer( om, type ) )
+//					.addDeserializer( type,
+//							createJsonDeserializer( type, valueType ) )
+//					.addKeySerializer( type, createJsonKeySerializer( type ) )
+//					.addKeyDeserializer( type,
+//							createJsonKeyDeserializer( type, valueType ) ) );
+//		}
 
 //		private static final Map<Class<?>, Provider<?>> DYNABEAN_PROVIDER_CACHE = new HashMap<>();
+
+		@SuppressWarnings( "unchecked" )
+		public <S, T extends Wrapper<S>> Class<S> resolveValueType(
+			final ObjectMapper om, final Class<T> wrapperType )
+		{
+			return (Class<S>) resolveValueType(
+					om.getTypeFactory().constructType( wrapperType ) )
+							.getRawClass();
+		}
+
+		public static JavaType resolveValueType( final JavaType wrapperType )
+		{
+			JavaType valueType = null;
+			JavaType superType = wrapperType;
+			while( valueType == null
+					&& superType.getRawClass() != Object.class )
+			{
+				for( JavaType intf : superType.getInterfaces() )
+					if( intf.getRawClass() == Wrapper.class )
+						return intf.containedType( 0 );
+//				Util.LOG.trace(
+//						"Looked in {} interfaces: {}, on to supertype: {}",
+//						superType, superType.getInterfaces(),
+//						superType.getSuperClass() );
+				superType = superType.getSuperClass();
+			}
+			return Thrower.throwNew( IllegalStateException.class,
+					"UNEXPECTED : could not resolve Wrapper type argument for {}",
+					wrapperType );
+		}
 
 		/**
 		 * @param json the JSON representation {@link String}
@@ -482,7 +538,7 @@ public interface Wrapper<T>
 			final Class<T> type )
 		{
 			if( type.isInterface() )
-				return valueOf( json, ProxyProvider.of( type ).get() );
+				return valueOf( json, DynaBean.ProxyProvider.of( type ).get() );
 			return valueOf( json, Instantiator.of( type ) );
 		}
 
@@ -602,11 +658,9 @@ public interface Wrapper<T>
 		{
 			if( self == null ) return other == null ? 0 : -1;
 			if( other == null ) return 1;
-			if( !(self instanceof Wrapper) )
-				return other instanceof Wrapper
-						? compare( self,
-								(Comparable) ((Wrapper) other).unwrap() )
-						: self.compareTo( other );
+			if( !(self instanceof Wrapper) ) return other instanceof Wrapper
+					? compare( self, (Comparable) ((Wrapper) other).unwrap() )
+					: self.compareTo( other );
 			if( !(other instanceof Wrapper) )
 				return compare( (Comparable) ((Wrapper) self).unwrap(), other );
 			return compare( (Comparable) ((Wrapper) self).unwrap(),
@@ -631,7 +685,7 @@ public interface Wrapper<T>
 
 		/**
 		 * @param annot the {@link JavaPolymorph} annotated values
-		 * @param valueType the wrapped type
+		 * @param valueType the wrapped value (super) type
 		 * @param jsonToken the {@link JsonToken} being parsed
 		 * @return the corresponding {@link Wrapper} sub-type to generate
 		 */

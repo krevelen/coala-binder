@@ -23,12 +23,10 @@ import java.io.IOException;
 import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -39,7 +37,7 @@ import io.coala.exception.Thrower;
 import io.coala.name.Id;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link LocalId} is a recursive child-parent id pair with a {@link UUID} as
@@ -50,7 +48,7 @@ import rx.Observable;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
-@JsonSerialize( using = LocalId.JsonExport.class ) // override Wrapper tooling
+@JsonSerialize( using = LocalId.JsonSerializer.class ) // override Wrapper tooling
 @JsonDeserialize( converter = LocalId.FromStringConverter.class )
 public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	implements Persistable<LocalIdDao>
@@ -58,7 +56,8 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	/**
 	 * {@link JsonExport} tells Jackson how to write a {@link LocalId} as JSON
 	 */
-	public static class JsonExport extends JsonSerializer<LocalId>
+	public static class JsonSerializer
+		extends com.fasterxml.jackson.databind.JsonSerializer<LocalId>
 	{
 		@Override
 		public void serialize( final LocalId value, final JsonGenerator jgen,
@@ -81,16 +80,19 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 		}
 	}
 
+	/** @return a (root) context {@link LocalId} */
 	public static LocalId create()
 	{
 		return of( new UUID() );
 	}
 
+	/** @return a (root) context {@link LocalId} */
 	public static LocalId of( final UUID contextId )
 	{
 		return Id.of( new LocalId(), contextId, null );
 	}
 
+	/** @return a (sub) context {@link LocalId} */
 	public static LocalId of( final Comparable<?> value, final LocalId parent )
 	{
 		return Id.of( new LocalId(), value, parent );
@@ -162,7 +164,7 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	 * @param binder the {@link LocalBinder} to help instantiate
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
-	@Transactional
+	//@Transactional
 	public static Stream<LocalId> findAllSync( final EntityManager em,
 		final UUID contextRef )
 	{
@@ -179,7 +181,7 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	 * @param pageSize the page buffer size
 	 * @return an {@link Observable} stream of {@link LocalId} instances, if any
 	 */
-	@Transactional
+	//@Transactional
 	@Deprecated
 	public static Observable<LocalId> findAllAsync( final EntityManager em,
 		final UUID contextRef, final int pageSize )

@@ -29,9 +29,9 @@ import org.apache.logging.log4j.Logger;
 
 import io.coala.log.LogUtil;
 import io.coala.math.DecimalUtil;
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link Accumulator}
@@ -48,7 +48,8 @@ public class Accumulator<Q extends Quantity<Q>> implements Proactive
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Accumulator.class );
 
-	private final transient Subject<Quantity<Q>, Quantity<Q>> amounts = PublishSubject.create();
+	private final transient Subject<Quantity<Q>> amounts = PublishSubject
+			.create();
 
 	private final transient Map<TargetAmount<Q>, Expectation> intercepts = new HashMap<>();
 
@@ -153,7 +154,7 @@ public class Accumulator<Q extends Quantity<Q>> implements Proactive
 
 	public Observable<Quantity<Q>> emitAmounts()
 	{
-		return this.amounts.asObservable();
+		return this.amounts;
 	}
 
 	public static <Q extends Quantity<Q>> Accumulator<Q>

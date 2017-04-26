@@ -15,7 +15,6 @@
  */
 package io.coala.json;
 
-import java.beans.PropertyEditorSupport;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -25,13 +24,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.Callable;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
@@ -39,7 +42,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.coala.exception.Thrower;
 import io.coala.json.DynaBean.BeanProxy;
-import io.coala.util.TypeArguments;
+import io.coala.log.LogUtil;
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * {@link JsonUtil}
@@ -70,7 +75,7 @@ public class JsonUtil
 		final Module[] modules = { new JodaModule(), new UUIDModule(),
 				new JavaTimeModule() };
 		om.registerModules( modules );
-		
+
 		// Log4j2 may cause recursive call, when initialization is during logging event
 //		System.err.println( "Using jackson v: " + om.version() + " with: "
 //				+ Arrays.asList( modules ).stream()
@@ -94,7 +99,8 @@ public class JsonUtil
 		final ObjectMapper om = getJOM();
 		try
 		{
-			checkRegistered( om, object.getClass() );
+			if( REGISTER_ON_SERIALIZE && object != null )
+				checkRegistered( om, object.getClass() );
 			return om.writer().writeValueAsString( object );
 		} catch( final JsonProcessingException e )
 		{
@@ -113,6 +119,8 @@ public class JsonUtil
 		return toJSON( getJOM(), object );
 	}
 
+	private static final Boolean REGISTER_ON_SERIALIZE = true;
+
 	/**
 	 * @param object the object to serialize/marshal as (pretty) JSON
 	 * @return the (pretty) JSON representation
@@ -121,6 +129,8 @@ public class JsonUtil
 	{
 		try
 		{
+			if( REGISTER_ON_SERIALIZE && object != null )
+				checkRegistered( om, object.getClass() );
 			return om
 					// .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 					.writer().withDefaultPrettyPrinter()
@@ -140,9 +150,9 @@ public class JsonUtil
 		final ObjectMapper om = getJOM();
 		try
 		{
-			// checkRegistered(om, object.getClass());
+			if( REGISTER_ON_SERIALIZE && object != null )
+				checkRegistered( om, object.getClass() );
 			return om.valueToTree( object );
-//			return om.readTree( stringify( object ) );
 		} catch( final Exception e )
 		{
 			return Thrower.rethrowUnchecked( e );
@@ -205,13 +215,54 @@ public class JsonUtil
 	}
 
 	/**
+	 * TODO split into common parsing Observable with JsonParser provider
+	 * 
+	 * @param json the JSON array {@link InputStream}
+	 * @param resultType the type of {@link Object} in the JSON array
+	 * @return the parsed/deserialized/unmarshalled {@link Object}
+	 */
+	@SafeVarargs
+	public static <T> Observable<T> readArrayAsync(
+		final Callable<InputStream> json, final Class<T> resultType,
+		final Map<String, ?>... imports )
+	{
+		return Observable.<T>create( emitter ->
+		{
+			try
+			{
+				final ObjectMapper om = getJOM();
+				if( REGISTER_ON_SERIALIZE )
+					checkRegistered( om, resultType, imports );
+				final InputStream is = json.call();
+				final JsonParser jp = om.getFactory().createParser( is );
+				final ObjectReader jr = om.readerFor(
+						om.getTypeFactory().constructType( resultType ) );
+
+				while( jp.nextToken() != JsonToken.START_ARRAY )
+					LogUtil.getLogger( JsonUtil.class ).warn(
+							"Ignoring unexpected token: {}", jp.getText() );
+
+				while( jp.nextToken() != JsonToken.END_ARRAY )
+					emitter.onNext( jr.readValue( jp ) );
+				LogUtil.getLogger( JsonUtil.class ).trace(
+						"Completed reading: {}", resultType.getSimpleName() );
+				emitter.onComplete();
+				emitter.setCancellable( is::close );
+			} catch( final Exception e )
+			{
+				emitter.onError( e );
+			}
+		} ).subscribeOn( Schedulers.io() );
+	}
+
+	/**
 	 * @param json the {@link InputStream}
 	 * @param resultType the type of result {@link Object}
 	 * @return the parsed/deserialized/unmarshalled {@link Object}
 	 */
 	@SafeVarargs
 	public static <T> T valueOf( final InputStream json,
-		final Class<T> resultType, final Map<String,?>... imports )
+		final Class<T> resultType, final Map<String, ?>... imports )
 	{
 		if( json == null ) return null;
 		try
@@ -233,7 +284,7 @@ public class JsonUtil
 	 */
 	@SafeVarargs
 	public static <T> T valueOf( final String json, final Class<T> resultType,
-		final Map<String,?>... imports )
+		final Map<String, ?>... imports )
 	{
 		return valueOf( getJOM(), json, resultType, imports );
 	}
@@ -247,7 +298,7 @@ public class JsonUtil
 	 */
 	@SafeVarargs
 	public static <T> T valueOf( final ObjectMapper om, final String json,
-		final Class<T> resultType, final Map<String,?>... imports )
+		final Class<T> resultType, final Map<String, ?>... imports )
 	{
 		if( json == null || json.equalsIgnoreCase( "null" ) ) return null;
 		try
@@ -270,7 +321,7 @@ public class JsonUtil
 	 */
 	@SafeVarargs
 	public static <T> T valueOf( final TreeNode tree, final Class<T> resultType,
-		final Map<String,?>... imports )
+		final Map<String, ?>... imports )
 	{
 		return valueOf( getJOM(), tree, resultType, imports );
 	}
@@ -284,7 +335,7 @@ public class JsonUtil
 	 */
 	@SafeVarargs
 	public static <T> T valueOf( final ObjectMapper om, final TreeNode tree,
-		final Class<T> resultType, final Map<String,?>... imports )
+		final Class<T> resultType, final Map<String, ?>... imports )
 	{
 		if( tree == null ) return null;
 		// TODO add work-around for Wrapper sub-types?
@@ -311,7 +362,7 @@ public class JsonUtil
 	 */
 	@SafeVarargs
 	public static <T> T valueOf( final String json,
-		final TypeReference<T> typeReference, final Map<String,?>... imports )
+		final TypeReference<T> typeReference, final Map<String, ?>... imports )
 	{
 		return valueOf( getJOM(), json, typeReference, imports );
 	}
@@ -325,7 +376,7 @@ public class JsonUtil
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <T> T valueOf( final ObjectMapper om, final String json,
-		final TypeReference<T> typeReference, final Map<String,?>... imports )
+		final TypeReference<T> typeReference, final Map<String, ?>... imports )
 	{
 		if( json == null ) return null;
 		try
@@ -338,36 +389,6 @@ public class JsonUtil
 		{
 			Thrower.rethrowUnchecked( e );
 			return null;
-		}
-	}
-
-	public static class JsonPropertyEditor<E> extends PropertyEditorSupport
-	{
-		/** */
-		private Class<E> type;
-
-		@SuppressWarnings( { "unchecked" } )
-		private JsonPropertyEditor()
-		{
-			this.type = (Class<E>) TypeArguments
-					.of( JsonPropertyEditor.class, getClass() ).get( 0 );
-		}
-
-		@Override
-		public void setAsText( final String json )
-			throws IllegalArgumentException
-		{
-			try
-			{
-				setValue( JsonUtil.valueOf( json, this.type ) );
-			} catch( final Throwable e )
-			{
-				throw new IllegalArgumentException(
-						"Problem editing property of type: "
-								+ this.type.getName() + " from JSON value: "
-								+ json,
-						e );
-			}
 		}
 	}
 
@@ -386,7 +407,7 @@ public class JsonUtil
 	@SafeVarargs
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	public static <T> Class<T> checkRegistered( final ObjectMapper om,
-		final Class<T> type, final Map<String,?>... imports )
+		final Class<T> type, final Map<String, ?>... imports )
 	{
 		synchronized( JSON_REGISTRATION_CACHE )
 		{
@@ -395,7 +416,6 @@ public class JsonUtil
 					key -> new HashSet<>() );
 			if( type.getPackage() == Object.class.getPackage()
 					|| type.getPackage() == Collection.class.getPackage()
-					// || type.isPrimitive() already checked at st
 					// assume java.lang.* and java.util.* are already mapped
 					|| TreeNode.class.isAssignableFrom( type )
 					|| cache.contains( type ) )
@@ -433,7 +453,7 @@ public class JsonUtil
 
 	@SafeVarargs
 	public static <T> Class<T> checkRegisteredMembers( final ObjectMapper om,
-		final Class<T> type, final Map<String,?>... imports )
+		final Class<T> type, final Map<String, ?>... imports )
 	{
 		for( Method method : type.getDeclaredMethods() )
 			if( method.getParameterCount() == 0

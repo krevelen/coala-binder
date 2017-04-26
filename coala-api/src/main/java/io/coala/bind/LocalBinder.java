@@ -20,7 +20,7 @@ import javax.inject.Singleton;
 
 import io.coala.name.Identified;
 import io.coala.util.Instantiator;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link LocalBinder} maintains {@link LocalProvider} bindings for providing

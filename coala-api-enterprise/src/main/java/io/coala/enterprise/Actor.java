@@ -19,6 +19,7 @@
  */
 package io.coala.enterprise;
 
+import java.beans.PropertyChangeEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -33,7 +34,6 @@ import javax.inject.Singleton;
 import javax.measure.Unit;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
@@ -45,6 +45,7 @@ import io.coala.enterprise.FactExchange.Direction;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingBiConsumer;
 import io.coala.function.ThrowingConsumer;
+import io.coala.json.Attributed;
 import io.coala.log.LogUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
@@ -55,10 +56,15 @@ import io.coala.time.Scheduler;
 import io.coala.time.Timing;
 import io.coala.util.ReflectUtil;
 import io.coala.util.TypeArguments;
-import rx.Observable;
-import rx.Observer;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link Actor} can handle multiple {@link Transaction} types or kinds
@@ -67,60 +73,42 @@ import rx.subjects.Subject;
  * @author Rick van Krevelen
  */
 public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
-	Observer<Fact>, Proactive, LocalBinding
+	Observer<Fact>, Proactive, LocalBinding, Attributed
 {
 
-	/**
-	 * @return the properties {@link Map} as used for extended getters/setters
-	 */
-	Map<String, Object> properties();
-
-	/**
-	 * Useful as {@link JsonAnySetter}
-	 * 
-	 * @param property the property (or bean attribute) to change
-	 * @param value the new value
-	 * @return the previous value, as per {@link Map#put(Object, Object)}
-	 */
-	default Object set( final String property, final Object value )
+	/** setup hook triggered after instantiation/injection is complete */
+	default void onInit()
 	{
-		return properties().put( property, value );
+		// empty
 	}
 
 	/**
-	 * Builder-style bean property setter
+	 * Builder-style setter
 	 * 
 	 * @param property the property (or bean attribute) to change
 	 * @param value the new value
-	 * @return this {@link Actor} to allow chaining
+	 * @return this {@link Actor} cast to run-time role() type to allow chaining
+	 * @see #with(String, Object, Class)
 	 */
 	@SuppressWarnings( "unchecked" )
-	@JsonIgnore
 	default <A extends Actor<F>> A with( final String property,
 		final Object value )
 	{
-		set( property, value );
-		return (A) this;
+		return (A) with( property, value, (Class<A>) role() );
 	}
+
+	Observable<PropertyChangeEvent> emitChanges();
 
 	/**
-	 * @return an {@link Observable} stream of all generated or received
-	 *         {@link Fact}s
+	 * TODO {@link Flowable} or {@link Observable} / {@link Single} /
+	 * {@link Maybe} / {@link Completable}? see
+	 * http://stackoverflow.com/a/40326875 and
+	 * http://stackoverflow.com/a/42526830
+	 * 
+	 * @return an {@link Observable} of incoming {@link Fact}s, incl other
+	 *         transaction kinds (e.g. pm/dc/st) than own specialty {@link F}
 	 */
-	Observable<F> emit();
-
-	@FunctionalInterface
-	interface FactFilter //extends Func1<Fact, Boolean> 
-	{
-		Boolean match( Fact fact );
-
-		static FactFilter of( final FactKind factKind )
-		{
-			return f -> f.kind().equals( factKind );
-		}
-	}
-
-	FactFilter RQ_FILTER = FactFilter.of( FactKind.REQUESTED );
+	Observable<Fact> emitFacts();
 
 	/**
 	 * @param filter
@@ -128,11 +116,11 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @return self
 	 */
 	default <A extends Actor<F>> A emit( final FactFilter filter,
-		final ThrowingBiConsumer<A, F, ?> handler )
+		final ThrowingBiConsumer<A, Fact, ?> handler )
 	{
 		@SuppressWarnings( "unchecked" )
 		final A self = (A) this;
-		emit().filter( filter::match ).subscribe( rq ->
+		emitFacts().filter( filter::match ).subscribe( rq ->
 		{
 			try
 			{
@@ -147,20 +135,21 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 
 	/**
 	 * @param tranKind the {@link Fact} sub-type to filter for
-	 * @return an {@link Observable} of incoming {@link Fact}s
+	 * @return an {@link Observable} of incoming {@link Fact}s, incl other
+	 *         transaction kinds (e.g. pm/dc/st) than own specialty {@link F}
 	 */
-	default <T extends F> Observable<T> emit( final Class<T> tranKind )
+	default <T extends Fact> Observable<T> emit( final Class<T> tranKind )
 	{
-		return emit().ofType( tranKind );
+		return emitFacts().ofType( tranKind );
 	}
 
 	/**
 	 * @param factKind the {@link FactKind} to filter for
-	 * @return an {@link Observable} of incoming {@link Fact}s
+	 * @return an {@link Observable} of incoming (specialism) {@link Fact}s
 	 */
 	default Observable<F> emit( final FactKind factKind )
 	{
-		return emit().filter( f -> f.kind().equals( factKind ) );
+		return emit( specialism() ).filter( f -> f.kind().equals( factKind ) );
 	}
 
 	/**
@@ -171,16 +160,18 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	default Observable<F> emit( final FactKind factKind,
 		final Actor.ID creatorRef )
 	{
-		return emit().filter( f -> f.kind().equals( factKind ) && f.creatorRef()
-				.organizationRef().equals( creatorRef.organizationRef() ) );
+		return emit( specialism() ).filter( f -> f.kind().equals( factKind )
+				&& f.creatorRef().organizationRef()
+						.equals( creatorRef.organizationRef() ) );
 	}
 
 	/**
 	 * @param tranKind the type of {@link Fact} to filter for
 	 * @param factKind the {@link FactKind} to filter for
-	 * @return an {@link Observable} of incoming {@link Fact}s
+	 * @return an {@link Observable} of incoming {@link Fact}s, incl other
+	 *         transaction kinds (e.g. pm/dc/st) than own specialty {@link F}
 	 */
-	default <T extends F> Observable<T> emit( final Class<T> tranKind,
+	default <T extends Fact> Observable<T> emit( final Class<T> tranKind,
 		final FactKind factKind )
 	{
 		return emit( tranKind ).filter( f -> f.kind().equals( factKind ) );
@@ -211,6 +202,20 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 				.organizationRef().equals( creatorRef.organizationRef() ) );
 	}
 
+	@FunctionalInterface
+	interface FactFilter //extends Func1<Fact, Boolean> 
+	{
+		Boolean match( Fact fact );
+
+		static FactFilter of( final FactKind factKind )
+		{
+			return f -> f.kind().equals( factKind );
+		}
+	}
+
+	/** @deprecated may change */
+	FactFilter RQ_FILTER = FactFilter.of( FactKind.REQUESTED );
+
 	/**
 	 * @param tranKind the type of {@link Fact} to initiate or continue
 	 * @param initiatorRef the initiator {@link Actor.ID}
@@ -239,7 +244,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param tranKind the type of {@link Fact} being coordinated
 	 * @param executorRef a {@link Actor.ID} of the intended executor
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return the initial request {@link Fact}
+	 * @return the initial request {@link Fact} FIXME replace by chaining API
+	 *         {@link #with(String, Object)}
 	 */
 	default <T extends Fact> T initiate( final Class<T> tranKind,
 		final Actor.ID executorRef, final Map<?, ?>... params )
@@ -251,14 +257,15 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * create a request initiating a new {@link Transaction}
 	 * 
 	 * @param executorRef a {@link Actor.ID} of the intended executor
-	 * @param cause the {@link Fact} triggering the request, or {@code null}
+	 * @param causeRef the {@link Fact} triggering the request, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return the initial request {@link Fact}
+	 * @return the initial request {@link Fact} FIXME replace by chaining APIs
+	 *         #causeRef(Fact.ID) and {@link #with(String, Object)}
 	 */
-	default F initiate( final Actor.ID executorRef, final Fact.ID cause,
+	default F initiate( final Actor.ID executorRef, final Fact.ID causeRef,
 		final Map<?, ?>... params )
 	{
-		return initiate( specialism(), executorRef, cause, null, params );
+		return initiate( specialism(), executorRef, causeRef, null, params );
 	}
 
 	/**
@@ -266,15 +273,16 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * 
 	 * @param tranKind the type of {@link Fact} being coordinated
 	 * @param executorRef a {@link Actor.ID} of the intended executor
-	 * @param cause the {@link Fact} triggering the request, or {@code null}
+	 * @param causeRef the {@link Fact} triggering the request, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return the initial request {@link Fact}
+	 * @return the initial request {@link Fact} FIXME replace by chaining APIs
+	 *         #causeRef(Fact.ID) and {@link #with(String, Object)}
 	 */
 	default <T extends Fact> T initiate( final Class<T> tranKind,
-		final Actor.ID executorRef, final Fact.ID cause,
+		final Actor.ID executorRef, final Fact.ID causeRef,
 		final Map<?, ?>... params )
 	{
-		return initiate( tranKind, executorRef, cause, null, params );
+		return initiate( tranKind, executorRef, causeRef, null, params );
 	}
 
 	/**
@@ -283,7 +291,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param executorRef a {@link Actor.ID} of the intended executor
 	 * @param expire the expire {@link Instant} of the request, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return the initial request {@link Fact}
+	 * @return the initial request {@link Fact} FIXME replace by chaining APIs
+	 *         #expire(Instant) and {@link #with(String, Object)}
 	 */
 	default F initiate( final Actor.ID executorRef, final Instant expire,
 		final Map<?, ?>... params )
@@ -298,7 +307,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param executorRef a {@link Actor.ID} of the intended executor
 	 * @param expire the expire {@link Instant} of the request, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return the initial request {@link Fact}
+	 * @return the initial request {@link Fact} FIXME replace by chaining APIs
+	 *         #expire(Instant) and {@link #with(String, Object)}
 	 */
 	default <T extends Fact> T initiate( final Class<T> tranKind,
 		final Actor.ID executorRef, final Instant expire,
@@ -312,24 +322,27 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * 
 	 * @param tranKind the type of {@link Fact} being coordinated
 	 * @param executorRef a {@link Actor.ID} of the intended executor
-	 * @param cause the {@link Fact} triggering the request, or {@code null}
+	 * @param causeRef the {@link Fact} triggering the request, or {@code null}
 	 * @param expire the expire {@link Instant} of the request, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return the initial request {@link Fact}
+	 * @return the initial request {@link Fact} FIXME replace by chaining APIs
+	 *         #expire(Instant), #causeRef(Fact.ID) and
+	 *         {@link #with(String, Object)}
 	 */
 	default <T extends Fact> T initiate( final Class<T> tranKind,
-		final Actor.ID executorRef, final Fact.ID cause, final Instant expire,
-		final Map<?, ?>... params )
+		final Actor.ID executorRef, final Fact.ID causeRef,
+		final Instant expire, final Map<?, ?>... params )
 	{
 		return transact( tranKind, id(), executorRef )
-				.generate( FactKind.REQUESTED, cause, expire, params );
+				.generate( FactKind.REQUESTED, causeRef, expire, params );
 	}
 
 	/**
 	 * @param cause the {@link Fact} triggering the response
 	 * @param factKind the {@link FactKind} of response
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return a response {@link Fact}
+	 * @return a response {@link Fact} FIXME replace by chaining API
+	 *         {@link #with(String, Object)}
 	 */
 	default F respond( final F cause, final FactKind factKind,
 		final Map<?, ?>... params )
@@ -338,11 +351,12 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	}
 
 	/**
-	 * @param cause the {@link Fact} triggering the response
+	 * @param cause the {@link Fact} triggering the response, for reference
 	 * @param factKind the {@link FactKind} of the response
 	 * @param expire the expire {@link Instant} of the response, or {@code null}
 	 * @param params additional property (or bean attribute) values, if any
-	 * @return a response {@link Fact}
+	 * @return a response {@link Fact} FIXME replace by chaining APIs
+	 *         #expire(Instant) and {@link #with(String, Object)}
 	 */
 	@SuppressWarnings( "unchecked" )
 	default F respond( final F cause, final FactKind factKind,
@@ -401,6 +415,10 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		return root().id().peerRef( name );
 	}
 
+	/** @return the role or "concrete" type of {@link Actor} */
+	<A extends Actor<? extends F>> Class<A> role();
+
+	/** @return the type of fact or agendum handled by this {@link #role()} */
 	Class<F> specialism();
 
 	/**
@@ -468,15 +486,21 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			}
 
 			@Override
-			public Observable<S> emit()
+			public Observable<Fact> emitFacts()
 			{
-				return parent.emit( tranKind );
+				return parent.emitFacts();
 			}
 
 			@Override
-			public void onCompleted()
+			public void onSubscribe( final Disposable d )
 			{
-				parent.onCompleted();
+				parent.onSubscribe( d );
+			}
+
+			@Override
+			public void onComplete()
+			{
+				parent.onComplete();
 			}
 
 			@Override
@@ -522,6 +546,18 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			public LocalBinder binder()
 			{
 				return parent.binder();
+			}
+
+			@Override
+			public <A extends Actor<? extends S>> Class<A> role()
+			{
+				return parent.role();
+			}
+
+			@Override
+			public Observable<PropertyChangeEvent> emitChanges()
+			{
+				return parent.emitChanges();
 			}
 		};
 	}
@@ -690,23 +726,27 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 
 	class Simple implements Actor<Fact>
 	{
-		public static Simple of( final LocalBinder binder, final ID id )
+		public static Simple of( final LocalBinder binder, final ID id,
+			final Class<? extends Actor<?>> role )
 		{
 			final Simple result = binder.inject( Simple.class );
 			result.id = id;
+			result.role = role;
 			return result;
 		}
 
 		private transient final Map<Transaction.ID, Transaction<?>> txs = new ConcurrentHashMap<>();
 
-		private transient final Subject<Fact, Fact> emit = PublishSubject
-				.create();
+		private transient final Subject<Fact> facts = PublishSubject.create();
 
 		private transient final Map<Class<?>, Observable<?>> typeemit = new ConcurrentHashMap<>();
 
 		private transient final Map<Class<?>, Actor<?>> specialists = new ConcurrentHashMap<>();
 
 		private transient final Map<String, Object> properties = new ConcurrentHashMap<>();
+
+		private transient final Subject<PropertyChangeEvent> changes = PublishSubject
+				.create();
 
 		@Inject
 		private transient Transaction.Factory txFactory;
@@ -716,6 +756,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 
 		@Inject
 		private transient LocalBinder binder;
+
+		private transient Class<? extends Actor<?>> role = null;
 
 		private ID id;
 
@@ -743,6 +785,23 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			return this.properties;
 		}
 
+		@JsonAnySetter
+		@Override
+		public Object set( final String propertyName, final Object newValue )
+		{
+			final Object oldValue = properties().put( propertyName, newValue );
+			final Actor<?> self = this;
+			this.changes.onNext( new PropertyChangeEvent( self, propertyName,
+					oldValue, newValue ) );
+			return oldValue;
+		}
+
+		@Override
+		public Observable<PropertyChangeEvent> emitChanges()
+		{
+			return this.changes;
+		}
+
 		@Override
 		@SuppressWarnings( "unchecked" )
 		public <T extends Fact> Transaction<T> transact(
@@ -761,6 +820,13 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 					} );
 		}
 
+		@SuppressWarnings( "unchecked" )
+		@Override
+		public <A extends Actor<? extends Fact>> Class<A> role()
+		{
+			return (Class<A>) this.role;
+		}
+
 		@Override
 		public Class<Fact> specialism()
 		{
@@ -777,13 +843,15 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			final Actor<? super F> specialist = (Actor<? super F>) this.specialists
 					.computeIfAbsent( specialism,
 							key -> actorImpl.specializeIn( (Class<F>) key ) );
-			return specialist.proxyAs( specialist, actorKind );
+			final A result = specialist.proxyAs( specialist, actorKind );
+			result.onInit();
+			return result;
 		}
 
 		@Override
-		public Observable<Fact> emit()
+		public Observable<Fact> emitFacts()
 		{
-			return this.emit.asObservable();
+			return this.facts;
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -791,21 +859,27 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		public <F extends Fact> Observable<F> emit( final Class<F> tranKind )
 		{
 			return (Observable<F>) this.typeemit.computeIfAbsent( tranKind,
-					key -> emit()
+					key -> emitFacts()
 							.filter( f -> key.isAssignableFrom( f.type() ) )
 							.map( tranKind::cast ) );
 		}
 
 		@Override
-		public void onCompleted()
+		public void onSubscribe( final Disposable d )
 		{
-			this.emit.onCompleted();
+			this.facts.onSubscribe( d );
+		}
+
+		@Override
+		public void onComplete()
+		{
+			this.facts.onComplete();
 		}
 
 		@Override
 		public void onError( final Throwable e )
 		{
-			this.emit.onError( e );
+			this.facts.onError( e );
 		}
 
 		@Override
@@ -813,7 +887,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		{
 			try
 			{
-				this.emit.onNext( fact );
+				this.facts.onNext( fact );
 			} catch( final Exception e )
 			{
 				e.printStackTrace();
@@ -891,12 +965,18 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			private transient FactExchange factExchange;
 
 			@Override
-			public Actor<Fact> create( final ID id )
+			public Actor.Simple create( final ID id )
 			{
 				return this.localCache.computeIfAbsent( id.organizationRef(),
-						orgRef -> this.binder.inject( Actor.Simple.class )
-								.withId( id ).withExchangeDirection(
-										this.factExchange, Direction.BIDI ) );
+						orgRef ->
+						{
+							final Actor.Simple result = this.binder
+									.inject( Actor.Simple.class ).withId( id )
+									.withExchangeDirection( this.factExchange,
+											Direction.BIDI );
+							result.onInit();
+							return result;
+						} );
 			}
 
 			@Override

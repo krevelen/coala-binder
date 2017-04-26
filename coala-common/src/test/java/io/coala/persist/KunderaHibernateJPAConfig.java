@@ -15,8 +15,8 @@
  */
 package io.coala.persist;
 
-import com.impetus.kundera.Constants;
-import com.impetus.kundera.loader.GenericClientFactory;
+//import com.impetus.kundera.Constants;
+//import com.impetus.kundera.loader.GenericClientFactory;
 
 /**
  * {@link KunderaHibernateJPAConfig} work in progress
@@ -32,9 +32,9 @@ public interface KunderaHibernateJPAConfig extends HibernateJPAConfig
 //	@DefaultValue( "com.impetus.kundera.KunderaPersistence" )
 //	Class<? extends PersistenceProvider> jpaProvider();
 
-	@Key( KUNDERA_CLIENT_LOOKUP_KEY )
-	@DefaultValue( Constants.RDBMS_CLIENT_FACTORY )
-	// TODO add defaults for Neo4J, Redis, Spark, Mongo, etc.
-	Class<? extends GenericClientFactory> kunderaClientLookupClass();
+//	@Key( KUNDERA_CLIENT_LOOKUP_KEY )
+//	@DefaultValue( Constants.RDBMS_CLIENT_FACTORY )
+//	// TODO add defaults for Neo4J, Redis, Spark, Mongo, etc.
+//	Class<? extends GenericClientFactory> kunderaClientLookupClass();
 
 }

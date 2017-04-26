@@ -35,7 +35,7 @@ import io.coala.enterprise.persist.FactDao;
 import io.coala.math.Range;
 import io.coala.persist.JPAUtil;
 import io.coala.time.Instant;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link FactBank} provides Fact persistence via {@link #saveAsync(Observable)}
@@ -77,7 +77,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	 */
 	default Iterable<?> saveSync( final Observable<F> facts )
 	{
-		return saveAsync( facts ).toBlocking().toIterable();
+		return saveAsync( facts ).blockingIterable();
 	}
 
 	/**
@@ -96,7 +96,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	@SuppressWarnings( "unchecked" )
 	default void save( final F... facts )
 	{
-		saveSync( Observable.from( facts ) );
+		saveSync( Observable.fromArray( facts ) );
 	}
 
 	/**
@@ -105,7 +105,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	 */
 	default void save( final Iterable<F> facts )
 	{
-		saveSync( Observable.from( facts ) );
+		saveSync( Observable.fromIterable( facts ) );
 	}
 
 	/**
@@ -198,17 +198,18 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	/**
 	 * @return a synchronous {@link Iterable} stream of matching {@link Fact}s
 	 */
-	default Iterable<F> findIterable()
+	default Iterable<F> findAsIterable()
 	{
-		return find().toBlocking().toIterable();
+		return find().blockingIterable();
 	}
 
 	/**
-	 * @return a synchronous (parallel) {@link Stream} of matching {@link Fact}s
+	 * @return a synchronous (parallel) {@link Stream} of {@link Fact}s matching
+	 *         the specified filters
 	 */
-	default Stream<F> findStream( final boolean parallel )
+	default Stream<F> findAsStream( final boolean parallel )
 	{
-		return StreamSupport.stream( findIterable().spliterator(), parallel );
+		return StreamSupport.stream( findAsIterable().spliterator(), parallel );
 	}
 
 	/**
@@ -406,7 +407,11 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		@Override
 		public Observable<?> saveAsync( final Observable<Fact> facts )
 		{
-			return facts.map( fact -> this.cache.put( fact.id(), fact ) );
+			return facts.map( fact ->
+			{
+				this.cache.put( fact.id(), fact );
+				return fact;
+			} );
 		}
 
 		@Override
@@ -424,7 +429,8 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 			final Range<Instant> expirationFilter,
 			final Map<String, Object> propertiesFilter )
 		{
-			Observable<Fact> result = Observable.from( this.cache.values() );
+			Observable<Fact> result = Observable
+					.fromIterable( this.cache.values() );
 
 			if( typeFilter != null ) result = result
 					.filter( f -> typeFilter.equals( f.transaction().kind() ) );
@@ -510,7 +516,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 				// One session for each fact
 				facts.subscribe(
 						fact -> JPAUtil.session( this.emf, fact::persist ),
-						sub::onError, sub::onCompleted );
+						sub::onError, sub::onComplete );
 
 				// One session for all facts
 //				JPAUtil.session( this.emf ).subscribe( em ->
@@ -521,7 +527,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 //						sub.onNext( fact.persist( em ) );
 //					}, sub::onError, sub::onCompleted );
 //			}, e -> sub.onError( e ), () -> sub.onCompleted() );
-			} ).asObservable();
+			} );
 		}
 
 		@Override
@@ -531,7 +537,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 			{
 				return JPAUtil.session( this.emf ).map(
 						em -> FactDao.find( em, id ).restore( this.binder ) )
-						.toBlocking().first();
+						.blockingFirst();
 			} catch( final NoResultException empty )
 			{
 				return null;
@@ -547,12 +553,13 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 			final Range<Instant> expirationFilter,
 			final Map<String, Object> propertiesFilter )
 		{
-			return Observable.create( sub ->
+			// FIXME switch to safe rx patterns
+			return Observable.unsafeCreate( sub ->
 			{
 				JPAUtil.session( this.emf ).subscribe( em ->
 				{
 					Observable
-							.from( FactDao.find( em,
+							.fromIterable( FactDao.find( em,
 									this.binder.id().contextRef(),
 									this.txFactory.timeUnit(), typeFilter,
 									initiatorFilter, executorFilter, kindFilter,
@@ -560,7 +567,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 									occurrenceFilter, expirationFilter,
 									propertiesFilter ) )
 							.map( dao -> dao.restore( this.binder ) )
-							.subscribe( sub );
+							.safeSubscribe( sub );
 				}, sub::onError );
 			} );
 		}

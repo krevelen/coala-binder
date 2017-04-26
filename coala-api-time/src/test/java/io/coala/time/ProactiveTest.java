@@ -59,10 +59,10 @@ public class ProactiveTest
 			}
 		};
 
-		LOG.trace( "testing t+1 == " + Instant.ONE );
+		LOG.trace( "testing t+1 == " + Instant.of( 1 ) );
 		assertThat( "FutureSelf#after(t) time is added to Timed#now()",
 				model.after( Duration.ONE ).now(),
-				comparesEqualTo( Instant.ONE ) );
+				comparesEqualTo( Instant.of( 1 ) ) );
 
 		LOG.trace( "testing t+3 != " + Instant.of( 2 ) );
 		assertThat( "FutureSelf#after(t) time is added to Timed#now()",

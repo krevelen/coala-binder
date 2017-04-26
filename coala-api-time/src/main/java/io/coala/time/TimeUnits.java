@@ -1,16 +1,15 @@
 package io.coala.time;
 
-import java.math.BigDecimal;
 import java.util.concurrent.TimeUnit;
 
 import javax.measure.Unit;
 import javax.measure.format.UnitFormat;
+import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Frequency;
 import javax.measure.quantity.Time;
 
 import io.coala.exception.Thrower;
 import io.coala.math.QuantityUtil;
-import tec.uom.se.ComparableQuantity;
 import tec.uom.se.format.SimpleUnitFormat;
 import tec.uom.se.function.RationalConverter;
 import tec.uom.se.unit.TransformedUnit;
@@ -24,8 +23,11 @@ import tec.uom.se.unit.Units;
  */
 public class TimeUnits extends Units
 {
-	public static final ComparableQuantity<Time> ZERO = QuantityUtil
-			.valueOf( BigDecimal.ZERO, SECOND );
+//	public static final ComparableQuantity<Time> ZERO = QuantityUtil
+//			.valueOf( BigDecimal.ZERO, SECOND );
+
+	/** */
+	public static final Unit<Dimensionless> STEPS = QuantityUtil.PURE;
 
 	/** */
 	public static final String MILLIS_LABEL = "ms";

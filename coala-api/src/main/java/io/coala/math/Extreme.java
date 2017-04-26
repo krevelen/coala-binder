@@ -1,5 +1,7 @@
 package io.coala.math;
 
+import java.util.function.Function;
+
 import io.coala.util.Comparison;
 
 /**
@@ -196,5 +198,11 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 		final Inclusiveness inclusiveness, final BoundaryPosition position )
 	{
 		return new Extreme<T>( value, inclusiveness, position );
+	}
+
+	public <R extends Comparable> Extreme<R> map( final Function<T, R> mapper )
+	{
+		final R newVal = getValue() == null ? null : mapper.apply( getValue() );
+		return of( newVal, this.inclusive, this.boundary );
 	}
 }

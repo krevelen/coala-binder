@@ -17,42 +17,28 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.eve3;
+package io.coala.json;
 
-import java.lang.reflect.Method;
-import java.net.URI;
+import java.beans.PropertyEditorSupport;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import io.coala.exception.Thrower;
 
-import io.coala.bind.LocalBinder;
-import io.coala.inter.Invoker;
-import io.reactivex.Observable;
-
-/**
- * {@link Eve3Invoker}
- * 
- * @version $Id$
- * @author Rick van Krevelen
- */
-@Singleton
-public class Eve3Invoker implements Invoker
+// TODO find a use case with BeanUtils.getPropertyDescriptors ...
+public class JsonPropertyEditor extends PropertyEditorSupport
 {
-	@Inject
-	private LocalBinder binder;
-
-	@Inject
-	private Eve3Factory eve3;
-
-	@SuppressWarnings( "unchecked" )
 	@Override
-	public <T> Observable<T> invoke( final URI target, final Method method,
-		final Object... args )
+	public void setAsText( final String json )
+		throws IllegalArgumentException
 	{
-		return Observable.unsafeCreate( subscriber ->
+		try
 		{
-			this.eve3.getAgent( this.binder.id() ).call( target, method, args,
-					subscriber );
-		} );
+			Class<?> type = // TypeArguments.of( JsonPropertyEditor.class, getClass() ).get( 0 );
+					getValue().getClass();
+			setValue( JsonUtil.valueOf( json, type ) );
+		} catch( final Throwable e )
+		{
+			Thrower.throwNew( IllegalArgumentException.class, e,
+					"Problem editing property from JSON: {}", json );
+		}
 	}
 }

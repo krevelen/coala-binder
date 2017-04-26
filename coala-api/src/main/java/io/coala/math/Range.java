@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,7 +23,7 @@ import io.coala.util.InstanceParser;
 import tec.uom.se.ComparableQuantity;
 
 /**
- * {@link Range}
+ * {@link Range} similarities to Range in guava, easymock, jsr-330?
  * 
  * @param <T>
  * @version $Id$
@@ -210,6 +211,11 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	{
 		return of( Compare.max( this.getLower(), that.getLower() ),
 				Compare.min( this.getUpper(), that.getUpper() ) );
+	}
+
+	public <R extends Comparable> Range<R> map( final Function<T, R> mapper )
+	{
+		return of( getLower().map( mapper ), getUpper().map( mapper ) );
 	}
 
 	@Override

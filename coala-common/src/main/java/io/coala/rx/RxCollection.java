@@ -15,16 +15,19 @@
  */
 package io.coala.rx;
 
+import java.beans.PropertyChangeEvent;
 import java.util.Collection;
 import java.util.Iterator;
 
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link RxCollection} is a {@link Collection} that emits events on content
  * changes
+ * 
+ * TODO create RxMap extend {@link Map} that emits {@link PropertyChangeEvent}
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -43,29 +46,28 @@ public interface RxCollection<T> extends Collection<T>
 		return new RxCollection<T>()
 		{
 
-			private final Subject<T, T> add = PublishSubject.create();
+			private final Subject<T> add = PublishSubject.create();
 
-			private final Subject<T, T> remove = PublishSubject.create();
+			private final Subject<T> remove = PublishSubject.create();
 
-			private final Subject<Integer, Integer> size = PublishSubject
-					.create();
+			private final Subject<Integer> size = PublishSubject.create();
 
 			@Override
 			public Observable<T> onAdd()
 			{
-				return this.add.asObservable();
+				return this.add;
 			}
 
 			@Override
 			public Observable<T> onRemove()
 			{
-				return this.remove.asObservable();
+				return this.remove;
 			}
 
 			@Override
 			public Observable<Integer> onSize()
 			{
-				return this.size.asObservable();
+				return this.size;
 			}
 
 			@Override

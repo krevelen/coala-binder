@@ -45,9 +45,9 @@ import io.coala.inter.Invoker;
 import io.coala.log.LogUtil;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.util.Instantiator;
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link Guice4LocalBinder}
@@ -389,7 +389,7 @@ public class Guice4LocalBinder implements LocalBinder
 		initTypesFor( this );
 	}
 
-	private final transient Subject<Class<?>, Class<?>> bindings = PublishSubject
+	private final transient Subject<Class<?>> bindings = PublishSubject
 			.create();
 
 	private final transient Map<Class<?>, MutableProvider<?>> mutables = new HashMap<>();
@@ -428,7 +428,7 @@ public class Guice4LocalBinder implements LocalBinder
 	@Override
 	public Observable<Class<?>> emitBindings()
 	{
-		return this.bindings.asObservable();
+		return this.bindings;
 	}
 
 	@SuppressWarnings( "unchecked" )

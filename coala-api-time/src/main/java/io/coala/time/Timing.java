@@ -40,7 +40,7 @@ import com.google.ical.compat.jodatime.DateTimeIteratorFactory;
 
 import io.coala.exception.Thrower;
 import io.coala.json.Wrapper;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link Timing} wraps a {@link String} representation of some calendar-based
@@ -221,7 +221,7 @@ public interface Timing extends Wrapper<String>
 	{
 		try
 		{
-			return Observable.from( iterate() );
+			return Observable.fromIterable( iterate() );
 		} catch( final Throwable e )
 		{
 			return Observable.error( e );

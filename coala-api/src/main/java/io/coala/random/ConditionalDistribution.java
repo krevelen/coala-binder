@@ -21,8 +21,12 @@ package io.coala.random;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import io.coala.exception.Thrower;
 
 /**
  * {@link ConditionalDistribution}
@@ -50,6 +54,8 @@ public interface ConditionalDistribution<T, C>
 	static <C> ConditionalDistribution<Boolean, C>
 		ofBernoulli( final PseudoRandom rng, final Function<C, Number> probGen )
 	{
+		Objects.requireNonNull( rng );
+		Objects.requireNonNull( probGen );
 		return of( p -> ProbabilityDistribution.createBernoulli( rng, p ),
 				probGen );
 	}
@@ -64,9 +70,56 @@ public interface ConditionalDistribution<T, C>
 	 */
 	static <T, C, X> ConditionalDistribution<T, C> of(
 		final Function<X, ProbabilityDistribution<T>> distGen,
-		final Function<C, X> param1Gen )
+		final Function<C, ? extends X> param1Gen )
 	{
+		Objects.requireNonNull( distGen );
+		Objects.requireNonNull( param1Gen );
 		return of( distGen, param1Gen, new HashMap<>() );
+	}
+
+	/**
+	 * @param <T> the type of value drawn by the conditional distributions
+	 * @param <C> the type of condition for selecting a distribution
+	 * @param <X> the type of parameter for generating a distribution
+	 * @param distGen distribution generator taking one parameter
+	 * @param param1Gen {@link Map} of the first parameters per condition
+	 * @return a {@link ConditionalDistribution}
+	 */
+	@SuppressWarnings( "unchecked" )
+	static <T, C, X> ConditionalDistribution<T, C> of(
+		final Function<X, ProbabilityDistribution<T>> distGen,
+		final Map<C, ? extends X> param1Gen )
+	{
+		Objects.requireNonNull( distGen );
+		Objects.requireNonNull( param1Gen );
+		if( param1Gen.isEmpty() ) Thrower
+				.throwNew( IllegalArgumentException.class, "Can't be empty" );
+		return param1Gen instanceof NavigableMap
+				? of( distGen, (NavigableMap<C, X>) param1Gen )
+				: of( distGen, param1Gen::get, new HashMap<>() );
+	}
+
+	/**
+	 * @param <T> the type of value drawn by the conditional distributions
+	 * @param <C> the type of condition for selecting a distribution
+	 * @param <X> the type of parameter for generating a distribution
+	 * @param distGen distribution generator taking one parameter
+	 * @param param1Gen {@link NavigableMap} of the nearest first parameter
+	 *            given the condition using {@link NavigableMap#floorEntry}
+	 * @return a {@link ConditionalDistribution}
+	 */
+	static <T, C, X> ConditionalDistribution<T, C> of(
+		final Function<X, ProbabilityDistribution<T>> distGen,
+		final NavigableMap<C, ? extends X> param1Gen )
+	{
+		Objects.requireNonNull( distGen );
+		Objects.requireNonNull( param1Gen );
+		Objects.requireNonNull( param1Gen.firstEntry() );
+		return of( distGen, k ->
+		{
+			final Map.Entry<C, ? extends X> floor = param1Gen.floorEntry( k );
+			return (floor == null ? param1Gen.firstEntry() : floor).getValue();
+		}, new HashMap<>() );
 	}
 
 	/**
@@ -80,9 +133,12 @@ public interface ConditionalDistribution<T, C>
 	 */
 	static <T, C, X> ConditionalDistribution<T, C> of(
 		final Function<X, ProbabilityDistribution<T>> distGen,
-		final Function<C, X> param1Gen,
+		final Function<C, ? extends X> param1Gen,
 		final Map<C, ProbabilityDistribution<T>> distCache )
 	{
+		Objects.requireNonNull( distGen );
+		Objects.requireNonNull( param1Gen );
+		Objects.requireNonNull( distCache );
 		return c -> distCache.computeIfAbsent( c,
 				t -> distGen.apply( param1Gen.apply( t ) ) ).draw();
 	}
@@ -99,8 +155,12 @@ public interface ConditionalDistribution<T, C>
 	 */
 	static <T, C, X, Y> ConditionalDistribution<T, C> of(
 		final BiFunction<X, Y, ProbabilityDistribution<T>> distGen,
-		final Function<C, X> param1Gen, final Function<C, Y> param2Gen )
+		final Function<C, ? extends X> param1Gen,
+		final Function<C, ? extends Y> param2Gen )
 	{
+		Objects.requireNonNull( distGen );
+		Objects.requireNonNull( param1Gen );
+		Objects.requireNonNull( param2Gen );
 		return of( distGen, param1Gen, param2Gen, new HashMap<>() );
 	}
 
@@ -117,9 +177,14 @@ public interface ConditionalDistribution<T, C>
 	 */
 	static <T, C, X, Y> ConditionalDistribution<T, C> of(
 		final BiFunction<X, Y, ProbabilityDistribution<T>> distGen,
-		final Function<C, X> param1Gen, final Function<C, Y> param2Gen,
+		final Function<C, ? extends X> param1Gen,
+		final Function<C, ? extends Y> param2Gen,
 		final Map<C, ProbabilityDistribution<T>> distCache )
 	{
+		Objects.requireNonNull( distGen );
+		Objects.requireNonNull( param1Gen );
+		Objects.requireNonNull( param2Gen );
+		Objects.requireNonNull( distCache );
 		return c -> distCache.computeIfAbsent( c, t -> distGen
 				.apply( param1Gen.apply( t ), param2Gen.apply( t ) ) ).draw();
 	}

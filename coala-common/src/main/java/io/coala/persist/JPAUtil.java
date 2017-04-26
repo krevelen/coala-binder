@@ -18,6 +18,7 @@ package io.coala.persist;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -26,9 +27,12 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.PersistenceException;
 
+import org.apache.logging.log4j.Logger;
+
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
-import rx.Observable;
+import io.coala.log.LogUtil;
+import io.reactivex.Observable;
 
 /**
  * {@link JPAUtil}
@@ -38,8 +42,8 @@ import rx.Observable;
  */
 public class JPAUtil
 {
-//	/** */
-//	private static final Logger LOG = LogUtil.getLogger( JPAUtil.class );
+	/** */
+	private static final Logger LOG = LogUtil.getLogger( JPAUtil.class );
 
 	private JPAUtil()
 	{
@@ -72,15 +76,18 @@ public class JPAUtil
 			error.add( e );
 			latch.countDown();
 		} );
-		try
-		{
-			latch.await();//( 1, TimeUnit.SECONDS );
-		} catch( final InterruptedException ignore )
-		{
-		}
-		if( !error.isEmpty() ) Thrower.rethrowUnchecked( error.get( 0 ) );
-//		if( latch.getCount() != 0 )
-//			Thrower.throwNew( TimeoutException.class, "JPA session time-out" );
+		int secs = 0;
+		while( latch.getCount() > 0 )
+			try
+			{
+				latch.await( 1, TimeUnit.SECONDS );
+				if( !error.isEmpty() )
+					Thrower.rethrowUnchecked( error.get( 0 ) );
+				else
+					LOG.trace( "JPA session taking >{} seconds", ++secs );
+			} catch( final InterruptedException ignore )
+			{
+			}
 	}
 
 	/**
@@ -102,7 +109,7 @@ public class JPAUtil
 				{
 					tran.commit();
 				}
-				sub.onCompleted();
+				sub.onComplete();
 			} catch( final Throwable e )
 			{
 				if( tran.isActive() )

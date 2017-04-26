@@ -22,6 +22,7 @@ import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
 import io.coala.dsol3.Dsol3Scheduler;
 import io.coala.exception.ExceptionStream;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.persist.HikariHibernateJPAConfig;
 import io.coala.time.Duration;
@@ -51,9 +52,9 @@ public class EnterpriseTest
 		String[] jpaUnitNames();
 
 //		@DefaultValue( "jdbc:mysql://localhost/testdb" )
-//		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
 //		@DefaultValue( "jdbc:neo4j:bolt://192.168.99.100:7687/db/data" )
-		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
+//		@DefaultValue( "jdbc:hsqldb:file:target/testdb" )
+		@DefaultValue( "jdbc:hsqldb:mem:mymemdb" )
 		@Key( AvailableSettings.URL )
 		URI jdbcUrl();
 	}
@@ -142,7 +143,7 @@ public class EnterpriseTest
 					this.actors.offset().toInstant().toEpochMilli() );
 			LOG.trace( "initialized occurred and expired fact sniffing" );
 
-			org1.emit().subscribe( fact ->
+			org1.emitFacts().subscribe( fact ->
 			{
 				LOG.trace( "t={}, occurred: {}", now().prettify( offset ),
 						fact );
@@ -176,6 +177,8 @@ public class EnterpriseTest
 
 						// de/serialization test
 						final String json = rq.toJSON();
+						LOG.trace( "de/serializing: {} as {} in {}", t,
+								JsonUtil.stringify( t ), json );
 						final String fact = Sale.fromJSON( json ).toString();
 						LOG.trace( "{} initiates: {} => {}", proc.id(), json,
 								fact );
@@ -265,8 +268,8 @@ public class EnterpriseTest
 //		latch.await();
 //		System.out.println( "End reached!" );
 
-		for( Object f : binder.inject( FactBank.class ).find().toBlocking()
-				.toIterable() )
+		for( Object f : binder.inject( FactBank.class ).find()
+				.blockingIterable() )
 			LOG.trace( "Fetched fact: {}, rqParam: {}", f,
 					((World.Sale) f).getRqParam() );
 

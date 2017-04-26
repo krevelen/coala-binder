@@ -14,11 +14,11 @@ import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
-import rx.Observable;
-import rx.Observer;
-import rx.Subscription;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link Scheduler}
@@ -38,12 +38,12 @@ public interface Scheduler extends Proactive, Runnable
 	/** @return an {@link Observable} stream of {@link Instant}s */
 	Observable<Instant> time();
 
-	default Subscription onReset( ThrowingRunnable<?> runnable )
+	default Disposable onReset( ThrowingRunnable<?> runnable )
 	{
 		return onReset( s -> runnable.run() );
 	}
 
-	Subscription onReset( ThrowingConsumer<Scheduler, ?> consumer );
+	Disposable onReset( ThrowingConsumer<Scheduler, ?> consumer );
 
 	/** continue executing scheduled events until completion */
 	void resume();
@@ -55,7 +55,7 @@ public interface Scheduler extends Proactive, Runnable
 		resume();
 		try
 		{
-			time().toBlocking().last();
+			time().blockingLast();
 		} catch( final NoSuchElementException e )
 		{
 			// ignore
@@ -150,8 +150,7 @@ public interface Scheduler extends Proactive, Runnable
 	default <T> Observable<Expectation> schedule( final Iterable<Instant> when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		final Subject<Expectation, Expectation> result = PublishSubject
-				.create();
+		final Subject<Expectation> result = PublishSubject.create();
 		schedule( when, result ).subscribe( t ->
 		{
 			try
@@ -162,12 +161,13 @@ public interface Scheduler extends Proactive, Runnable
 				LogUtil.getLogger( Scheduler.class )
 						.error( "Problem in " + what, e );
 //				Thrower.rethrowUnchecked( e );
+				result.onError( e );
 			}
 		}, e ->
 		{
 			// ignore errors, already passed to result Observable
 		} );
-		return result.asObservable();
+		return result;
 	}
 
 	/**
@@ -214,7 +214,7 @@ public interface Scheduler extends Proactive, Runnable
 	default Observable<Instant> schedule( final Iterable<Instant> when,
 		final Observer<Expectation> what )
 	{
-		final Subject<Instant, Instant> delayedCopy = PublishSubject.create();
+		final Subject<Instant> delayedCopy = PublishSubject.create();
 		// schedule first element from iterator
 		final Iterator<Instant> it = when.iterator();
 		if( !it.hasNext() ) return Observable.empty();
@@ -281,8 +281,7 @@ public interface Scheduler extends Proactive, Runnable
 		final Observable<Instant> when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
-		final Subject<Expectation, Expectation> result = PublishSubject
-				.create();
+		final Subject<Expectation> result = PublishSubject.create();
 		schedule( when, result ).subscribe( t ->
 		{
 			try
@@ -296,7 +295,7 @@ public interface Scheduler extends Proactive, Runnable
 		{
 			// ignore errors, already passed to result Observable
 		} );
-		return result.asObservable();
+		return result;
 	}
 
 	/**
@@ -343,17 +342,15 @@ public interface Scheduler extends Proactive, Runnable
 	default Observable<Instant> schedule( final Observable<Instant> when,
 		final Observer<Expectation> what )
 	{
-		final Subject<Instant, Instant> delayedCopy = PublishSubject.create();
+		final Subject<Instant> delayedCopy = PublishSubject.create();
 		return when.map( t ->
 		{
 			final Expectation exp = schedule( t, delayedCopy::onNext );
 			if( what != null ) what.onNext( exp );
 			return t;
-		} ).zipWith( delayedCopy, ( t, t0 ) ->
-		{
-			// merge "when" (observed eagerly) with "delayed" by scheduler
-			return t;
-		} );
+		} ).zipWith(
+				// merge "when" (observed eagerly) with "delayed" by scheduler
+				delayedCopy, ( t, t0 ) -> t );
 	}
 
 	interface Factory
@@ -378,7 +375,7 @@ public interface Scheduler extends Proactive, Runnable
 		{
 			return Observable.create( sub -> ids.subscribe(
 					id -> create( id, imports ).run( sub::onNext ),
-					sub::onError, sub::onCompleted ) );
+					sub::onError, sub::onComplete ) );
 		}
 
 		@Singleton

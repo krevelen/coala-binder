@@ -34,9 +34,9 @@ import javax.xml.bind.ValidationEvent;
 
 import io.coala.exception.Thrower;
 import io.coala.util.Instantiator;
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link JAXBCache}
@@ -49,8 +49,7 @@ public class JAXBCache<T>
 {
 
 	/** */
-	private final Subject<ValidationEvent, ValidationEvent> events = PublishSubject
-			.create();
+	private final Subject<ValidationEvent> events = PublishSubject.create();
 
 	/** */
 	private Class<T> objectFactoryType;
@@ -156,7 +155,7 @@ public class JAXBCache<T>
 
 	public Observable<ValidationEvent> validationEvents()
 	{
-		return this.events.asObservable();
+		return this.events;
 	}
 
 	/**

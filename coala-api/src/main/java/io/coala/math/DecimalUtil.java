@@ -441,4 +441,13 @@ public class DecimalUtil implements Util
 						.add( valueOf( posix.getNano() ).divide( MEGA ) ) )
 								.toBigIntegerExact();
 	}
+
+	/**
+	 * @param value
+	 * @return
+	 */
+	public static boolean isZero( final Number value )
+	{
+		return signum(value ) == 0;
+	}
 }

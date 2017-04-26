@@ -47,7 +47,6 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -57,7 +56,7 @@ import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
 import io.coala.persist.Persistable;
 import io.coala.persist.UUIDToByteConverter;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link LocalIdDao} is a data access object for {@link LocalId} values with
@@ -125,7 +124,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	 * @param binder the {@link LocalBinder} to help instantiate
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
-	@Transactional
+	//@Transactional
 	public static List<LocalIdDao> findAllSync( final EntityManager em,
 		final LocalBinder binder )
 	{
@@ -140,7 +139,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	 * @param binder the {@link LocalBinder} to help instantiate
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
-	@Transactional
+	//@Transactional
 	public static List<LocalIdDao> findAll( final EntityManager em,
 		final UUID contextRef )
 	{
@@ -169,7 +168,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	 * @param pageSize the page buffer size
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
-	@Transactional
+	//@Transactional
 	@Deprecated
 	public static Observable<LocalIdDao> findAllAsync( final EntityManager em,
 		final UUID contextRef, final int pageSize )
@@ -183,7 +182,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 								contextRef ) ) ) );
 	}
 
-	@Transactional
+	//@Transactional
 	public static LocalIdDao find( final EntityManager em, final LocalId id )
 	{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );
@@ -209,7 +208,7 @@ public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		}
 	}
 
-	@Transactional // not really
+	//@Transactional // not really
 	public static LocalIdDao create( final EntityManager em, final LocalId id )
 	{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );

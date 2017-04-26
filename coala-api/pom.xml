@@ -30,7 +30,7 @@
 		<jta.version>1.1</jta.version>
 		<hsqldb.version>2.3.4</hsqldb.version>
 		<hikari.version>2.4.7</hikari.version>
-		<hibernate.version>5.2.1.Final</hibernate.version>
+		<!-- <hibernate.version>5.2.1.Final</hibernate.version> -->
 
 		<easymock.version>3.2</easymock.version>
 	</properties>
@@ -77,8 +77,8 @@
 			<version>${apfloat.version}</version>
 		</dependency>
 
+		<!-- Java Enterprise eXtension APIs, incl JPA 2.1, used in DAOs -->
 		<dependency>
-			<!-- Java Enterprise eXtension APIs, including JPA 2.1 -->
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
 			<scope>provided</scope>
@@ -86,14 +86,6 @@
 
 		<!-- <dependency> <groupId>org.hdrhistogram</groupId> <artifactId>HdrHistogram</artifactId> 
 			<version>${HdrHistogram.version}</version> </dependency> -->
-
-		<!-- used in unit testing to create mock dependency instances -->
-		<dependency>
-			<groupId>org.easymock</groupId>
-			<artifactId>easymock</artifactId>
-			<version>${easymock.version}</version>
-			<scope>test</scope>
-		</dependency>
 
 		<dependency>
 			<!-- Used as unit testing framework, supports test-driven development -->
@@ -107,11 +99,18 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- used in unit testing to create mock dependency instances -->
+		<dependency>
+			<groupId>org.easymock</groupId>
+			<artifactId>easymock</artifactId>
+			<version>${easymock.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- javax.transaction needed BEFORE Hibernate (in Kundera RDBMS) -->
 		<dependency>
 			<groupId>javax.transaction</groupId>
 			<artifactId>jta</artifactId>
-			<version>${jta.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -133,13 +132,11 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
-			<version>${hibernate.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-hikaricp</artifactId>
-			<version>${hibernate.version}</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -170,20 +167,10 @@
 							<goal>process</goal>
 						</goals>
 						<phase>generate-sources</phase>
-						<configuration>
-							<processors>
-								<processor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor>
-							</processors>
-						</configuration>
 					</execution>
 				</executions>
-				<dependencies>
-					<dependency>
-						<groupId>org.hibernate</groupId>
-						<artifactId>hibernate-jpamodelgen</artifactId>
-						<version>${hibernate.version}</version>
-					</dependency>
-				</dependencies>
+				<!-- <dependencies> <dependency> <groupId>org.hibernate</groupId> <artifactId>hibernate-jpamodelgen</artifactId> 
+					<version>${hibernate.version}</version> </dependency> </dependencies> -->
 			</plugin>
 		</plugins>
 	</build>

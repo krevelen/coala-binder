@@ -38,6 +38,9 @@ import org.joda.time.ReadableDuration;
 import org.joda.time.ReadableInstant;
 import org.joda.time.format.DateTimeFormatter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import io.coala.json.Wrapper;
 import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
@@ -88,6 +91,12 @@ import tec.uom.se.ComparableQuantity;
 @SuppressWarnings( { "unchecked", "rawtypes" } )
 public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 {
+
+	/** the ZERO value in dimensionless units or {@link TimeUnits#STEPS} */
+	public static final Instant ZERO = of( BigDecimal.ZERO, TimeUnits.STEPS );
+
+//	/** the ONE */
+//	public static final Instant ONE = of( BigDecimal.ONE, TimeUnits.TICK );
 
 	/**
 	 * for {@link Config}'s "natural" value conversion for an {@link Instant}
@@ -211,12 +220,6 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return new Instant( value );
 	}
 
-	/** the ZERO */
-	public static final Instant ZERO = of( QuantityUtil.ZERO );
-
-	/** the ONE */
-	public static final Instant ONE = of( QuantityUtil.ONE );
-
 	// for JSON deserialization
 	public Instant()
 	{
@@ -226,6 +229,26 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	public Instant( final ComparableQuantity<?> value )
 	{
 		wrap( value );
+	}
+
+	@JsonIgnore
+	public boolean isZero()
+	{
+		return DecimalUtil.isZero( value() );
+	}
+
+	@JsonValue
+	@Override
+	public String toString()
+	{
+		return super.toString();
+	}
+	
+	@Override
+	public int compareTo( final Comparable that )
+	{
+		return this.isZero() // && that != null && that instanceof Instant
+				&& ((Instant) that).isZero() ? 0 : Util.compare( this, that );
 	}
 
 	public Unit<?> unit()

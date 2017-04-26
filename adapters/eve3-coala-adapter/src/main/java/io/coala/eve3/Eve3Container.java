@@ -39,7 +39,7 @@ import com.almende.util.callback.AsyncCallback;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.coala.log.LogUtil;
-import rx.Observer;
+import io.reactivex.Observer;
 
 /**
  * {@link Eve3Container} TODO allow multiple name-spaces and services
@@ -133,7 +133,7 @@ public interface Eve3Container extends Receiver, Initable, AgentInterface
 							public void onSuccess( final T result )
 							{
 								observer.onNext( result );
-								observer.onCompleted(); // just one result expected
+								observer.onComplete(); // just one result expected
 							}
 
 							@Override

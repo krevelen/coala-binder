@@ -46,7 +46,8 @@ public class LogUtil implements Util
 		if( !LogConfig.JUL_MANAGER_DEFAULT
 				.equals( System.getProperty( LogConfig.JUL_MANAGER_KEY ) ) )
 			getLogger( LogUtil.class ).trace(
-					"java.util.logging not bridged; set system property (-D) {}={}",
+					"java.util.logging not bridged to Log4j2; "
+							+ "set JVM system property (-D) {}={}",
 					LogConfig.JUL_MANAGER_KEY, LogConfig.JUL_MANAGER_DEFAULT );
 
 		Locale.setDefault( conf.locale() );

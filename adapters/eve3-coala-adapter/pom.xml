@@ -63,6 +63,13 @@
 			<artifactId>coala-api</artifactId>
 		</dependency>
 
+		<!-- Java Enterprise eXtension APIs, incl JPA 2.1, used in DAOs -->
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>javax-websocket-server-impl</artifactId>

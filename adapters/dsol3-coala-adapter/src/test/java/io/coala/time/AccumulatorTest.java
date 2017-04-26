@@ -34,7 +34,7 @@ import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
 import io.coala.math.QuantityUtil;
 import io.coala.time.Accumulator.Integrator;
-import rx.Observer;
+import io.reactivex.Observer;
 import tec.uom.se.unit.Units;
 
 /**

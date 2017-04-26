@@ -83,7 +83,7 @@ public class LocalIdDaoTest
 		if( emf != null ) emf.close();
 	}
 
-	@Test( expected = RollbackException.class )
+	@Test( expected = Exception.class )
 	public void testSyncConstraint1()
 	{
 		final String role = "role", org = "org", agent = "agent";

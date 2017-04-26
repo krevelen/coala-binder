@@ -383,18 +383,21 @@ public final class DynaBean implements Cloneable, Comparable
 				return ReflectUtil.invokeDefaultMethod( proxy, method, args );
 
 			final String beanProp = method.getName();
-//			LOG.trace( "Calling {} {}::{}({})",
-//					method.getReturnType().getSimpleName(),
-//					this.type.getSimpleName(), beanProp, args == null
-//							? Collections.emptyList() : Arrays.asList( args ) );
+//			LOG.trace( "Calling <{}> {}::{}({})",
+//					method.getReturnType().getSimpleName(), this.type,
+//					method.getName(), args == null ? "" : args );
 
 			switch( args == null ? 0 : args.length )
 			{
 			case 0:
+				if( beanProp.equals( Wrapper.UNWRAP_PROPERTY ) )
+					return this.bean.get( Wrapper.WRAP_PROPERTY );
+
 				if( beanProp.equals( "toString" ) )
 				{
 					if( Wrapper.class.isAssignableFrom( this.type ) )
-						return this.bean.get( Wrapper.WRAP_PROPERTY );
+						return this.bean.get( Wrapper.WRAP_PROPERTY )
+								.toString();
 					JsonUtil.checkRegistered( JsonUtil.getJOM(), this.type );
 					return this.bean.toString();
 				}
@@ -406,9 +409,9 @@ public final class DynaBean implements Cloneable, Comparable
 				// return this.type;
 
 				Object result = this.bean.any().get( beanProp );
-				if( result == null )
+				if( result == null ) // no value currently
 				{
-					if( this.config != null )
+					if( this.config != null ) // obtain value from config
 					{
 						// cache (immutable) result
 						result = method.invoke( this.config, args );
@@ -458,8 +461,7 @@ public final class DynaBean implements Cloneable, Comparable
 						DynaBean.class.getSimpleName(),
 						method.getReturnType().isPrimitive() ? "primitive"
 								: "Object",
-						this.type.getSimpleName(), beanProp,
-						Arrays.asList( args ) );
+						this.type, beanProp, Arrays.asList( args ) );
 				break;
 			}
 

@@ -27,10 +27,10 @@ import java.util.function.Supplier;
 
 import javax.inject.Singleton;
 
-import rx.Observable;
-import rx.Subscription;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link FactExchange}
@@ -55,19 +55,19 @@ public interface FactExchange
 		}
 	}
 
-	default List<Subscription> register( final Actor<?> actor )
+	default List<Disposable> register( final Actor<?> actor )
 	{
 		return register( actor, Direction.BIDI );
 	}
 
-	default List<Subscription> register( final Actor<?> actor,
+	default List<Disposable> register( final Actor<?> actor,
 		final Direction direction )
 	{
 		return register( actor, direction.isIncoming(),
 				direction.isOutgoing() );
 	}
 
-	List<Subscription> register( Actor<?> actor, boolean incoming,
+	List<Disposable> register( Actor<?> actor, boolean incoming,
 		boolean outgoing );
 
 	Observable<Fact> snif();
@@ -75,38 +75,39 @@ public interface FactExchange
 	@Singleton
 	class SimpleBus implements FactExchange
 	{
-		private final Map<Actor.ID, List<Subscription>> registry = new ConcurrentHashMap<>();
+		private final Map<Actor.ID, List<Disposable>> registry = new ConcurrentHashMap<>();
 
-		private final Subject<Fact, Fact> bus = PublishSubject.create();
+		private final Subject<Fact> bus = PublishSubject.create();
 
-		private Subscription subscribeIncoming( final Actor<?> actor )
+		private Disposable subscribeIncoming( final Actor<?> actor )
 		{
 			return this.bus.filter( fact -> fact.isIncoming( actor.id() ) )
-					.subscribe( actor );
+					.subscribe( actor::onNext );
 		}
+		
 		/**
-		 * @return all {@link #emit() emitted Facts} where
+		 * @return all {@link #emitFacts() emitted Facts} where
 		 *         {@link Fact#isInternal() outgoing} {@code == true}
 		 */
-		private Subscription subscribeOutgoing( final Actor<?> actor )
+		private Disposable subscribeOutgoing( final Actor<?> actor )
 		{
-			return actor.root().emit()
+			return actor.root().emitFacts()
 					.filter( fact -> fact.isOutgoing( actor.id() ) )
-					.subscribe( this.bus );
+					.subscribe( this.bus::onNext );
 		}
 
-		private Subscription switchSub( final Subscription current,
-			final boolean subscribe, final Supplier<Subscription> supplier )
+		private Disposable switchSub( final Disposable current,
+			final boolean subscribe, final Supplier<Disposable> supplier )
 		{
 			if( current == null ) return subscribe ? supplier.get() : null;
 			if( subscribe )
-				return current.isUnsubscribed() ? supplier.get() : current;
-			if( !current.isUnsubscribed() ) current.unsubscribe();
+				return current.isDisposed() ? supplier.get() : current;
+			if( !current.isDisposed() ) current.dispose();
 			return null;
 		}
 
 		@Override
-		public List<Subscription> register( final Actor<?> actor,
+		public List<Disposable> register( final Actor<?> actor,
 			final boolean incoming, final boolean outgoing )
 		{
 			return this.registry.compute( actor.id().organizationRef(), (
@@ -121,7 +122,7 @@ public interface FactExchange
 		@Override
 		public Observable<Fact> snif()
 		{
-			return this.bus.asObservable();
+			return this.bus;
 		}
 	}
 }

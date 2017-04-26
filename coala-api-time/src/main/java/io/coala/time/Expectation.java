@@ -4,7 +4,7 @@ import javax.measure.Quantity;
 
 import io.coala.json.Wrapper;
 import io.coala.time.Proactive.FutureSelf;
-import rx.Subscription;
+import io.reactivex.disposables.Disposable;
 
 /**
  * {@link Expectation} or anticipation confirms that an event is scheduled
@@ -17,7 +17,7 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 {
 	Proactive self;
 
-	Subscription subscription;
+	Disposable subscription;
 
 	public Expectation()
 	{
@@ -25,7 +25,7 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 	}
 
 	public Expectation( final Proactive self, final Instant when,
-		final Subscription subscription )
+		final Disposable subscription )
 	{
 		wrap( when );
 		this.self = self;
@@ -35,14 +35,14 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 	/** cancels the scheduled event */
 	public void remove()
 	{
-		this.subscription.unsubscribe();
+		this.subscription.dispose();
 	}
 
-	/** @return {@code true} iff the event was cancelled or has occurred */
-	public boolean isRemoved()
-	{
-		return this.subscription.isUnsubscribed();
-	}
+//	/** @return {@code true} iff the event was cancelled or has occurred */
+//	public boolean isRemoved()
+//	{
+//		return this.subscription.isUnsubscribed();
+//	}
 
 	public FutureSelf thenAfter( final Duration delay )
 	{
@@ -60,7 +60,7 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 	}
 
 	public static Expectation of( final Proactive self, final Instant when,
-		final Subscription subscription )
+		final Disposable subscription )
 	{
 		return new Expectation( self, when, subscription );
 	}

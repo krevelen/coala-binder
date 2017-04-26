@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.coala.json.JsonUtil;
 import io.coala.util.TypeArguments;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link Persistable}
@@ -118,8 +118,8 @@ public interface Persistable<DAO extends Persistable.Dao>
 					: restrictor.apply( pkQry )).getResultList();
 
 			// then stream full entities obtained in buffers of given pageSize
-			return Observable.from( pks ).buffer( Math.max( 1, pageSize ) )
-					.flatMap( page ->
+			return Observable.fromIterable( pks )
+					.buffer( Math.max( 1, pageSize ) ).flatMap( page ->
 					{
 						try
 						{
@@ -132,7 +132,7 @@ public interface Persistable<DAO extends Persistable.Dao>
 										pgQry.from( entityType ).get( pkAttr ),
 										pk ) );
 							return Observable
-									.from( em
+									.fromIterable( em
 											.createQuery( pgQry
 													.select( pgQry
 															.from( entityType ) )

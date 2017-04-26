@@ -22,10 +22,8 @@
 	<properties>
 		<google-rfc-2445.version>20110304</google-rfc-2445.version>
 		<quartz.version>2.2.3</quartz.version>
-		<joda-time.version>2.9.4</joda-time.version>
+		<joda-time.version>2.9.9</joda-time.version>
 		<rxjava-joins.version>0.22.0</rxjava-joins.version>
-		<!-- for JPA metamodel generation -->
-		<hibernate.version>5.2.1.Final</hibernate.version>
 	</properties>
 
 	<repositories>
@@ -123,20 +121,8 @@
 							<goal>process</goal>
 						</goals>
 						<phase>generate-sources</phase>
-						<configuration>
-							<processors>
-								<processor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</processor>
-							</processors>
-						</configuration>
 					</execution>
 				</executions>
-				<dependencies>
-					<dependency>
-						<groupId>org.hibernate</groupId>
-						<artifactId>hibernate-jpamodelgen</artifactId>
-						<version>${hibernate.version}</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 		</plugins>
 	</build>

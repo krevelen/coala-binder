@@ -51,9 +51,9 @@ import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link Transaction} is an instance of some {@link F transaction kind}
@@ -71,16 +71,23 @@ import rx.subjects.Subject;
 public interface Transaction<F extends Fact>
 	extends Proactive, Identified.Ordinal<Transaction.ID>
 {
+
+	String KIND_JSON_PROPERTY = "kind";
+
+	String INITIATOR_JSON_PROPERTY = "initiatorRef";
+
+	String EXECUTOR_JSON_PROPERTY = "executorRef";
+
 	/** @return */
-	@JsonProperty( "kind" )
+	@JsonProperty( KIND_JSON_PROPERTY )
 	Class<F> kind();
 
 	/** @return */
-	@JsonProperty( "initiatorRef" )
+	@JsonProperty( INITIATOR_JSON_PROPERTY )
 	Actor.ID initiatorRef();
 
 	/** @return */
-	@JsonProperty( "executorRef" )
+	@JsonProperty( EXECUTOR_JSON_PROPERTY )
 	Actor.ID executorRef();
 
 	/**
@@ -223,7 +230,7 @@ public interface Transaction<F extends Fact>
 	@JsonInclude( Include.NON_NULL )
 	class Simple<F extends Fact> implements Transaction<F>
 	{
-		private transient final Subject<F, F> commits = PublishSubject.create();
+		private transient final Subject<F> commits = PublishSubject.create();
 		private transient final Map<Fact.ID, Expectation> pending = new ConcurrentHashMap<>();
 		private transient final Set<UUID> committedIds = Collections
 				.synchronizedSet( new HashSet<>() );
@@ -251,12 +258,12 @@ public interface Transaction<F extends Fact>
 			final Scheduler scheduler, final Fact.Factory factFactory,
 			final Unit<?> timeUnit, final ZonedDateTime offset )
 		{
-			this.id = id;
-			this.kind = kind;
-			this.initiatorRef = initiatorRef;
-			this.executorRef = executorRef;
-			this.scheduler = scheduler;
-			this.factFactory = factFactory;
+			this.id = Objects.requireNonNull( id );
+			this.kind = Objects.requireNonNull( kind );
+			this.initiatorRef = Objects.requireNonNull( initiatorRef );
+			this.executorRef = Objects.requireNonNull( executorRef );
+			this.scheduler = Objects.requireNonNull( scheduler );
+			this.factFactory = Objects.requireNonNull( factFactory );
 			this.factBank = factFactory.factBank() == null ? null
 					: factFactory.factBank().matchTransactionKind( kind );
 			this.timeUnit = timeUnit;
@@ -365,7 +372,7 @@ public interface Transaction<F extends Fact>
 				if( cleanUp )
 				{
 					this.terminated = true;
-					this.commits.onCompleted();
+					this.commits.onComplete();
 					this.pending.values().forEach( Expectation::remove );
 					this.pending.clear();
 					this.committedIds.clear();
@@ -383,7 +390,7 @@ public interface Transaction<F extends Fact>
 		@Override
 		public Observable<F> commits()
 		{
-			return this.commits.asObservable();
+			return this.commits;
 		}
 
 		@Override

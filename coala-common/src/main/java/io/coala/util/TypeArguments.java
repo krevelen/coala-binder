@@ -76,31 +76,24 @@ public class TypeArguments
 				// there is no useful information for us in raw types, so just
 				// keep going.
 
-				if( genericAncestorType.isInterface() )
+				if( !genericAncestorType.isInterface() )
+					type = typeClass.getGenericSuperclass();
+				else // walk the generic (and parameterized) interfaces
 				{
 					Type intfType = null;
 					Class<? super S> superClass = typeClass;
 					while( intfType == null && superClass != Object.class )
 					{
-//						LOG.trace( "Finding "
-//								+ genericAncestorType
-//								+ " among interfaces of "
-//								+ superClass.getSimpleName() + ": "
-//								+ Arrays.asList(
-//										superClass.getGenericInterfaces() ) );
+//						LOG.trace( "Finding {} among interfaces of {}: {}",
+//								genericAncestorType, superClass.getSimpleName(),
+//								superClass.getGenericInterfaces() );
 						for( Type intf : superClass.getGenericInterfaces() )
 						{
+							// extended interface is raw, not yet parameterized
 							if( intf instanceof ParameterizedType == false )
 							{
-//								LOG.trace(
-//										"super {} not parameterized, extensions {}",
-//										intf, Arrays.asList( ((Class) intf)
-//												.getInterfaces() ) );
 								if( intf == genericAncestorType )
 								{
-									// FIXME causes infinite loop; use gentyref?
-//									if( ((Class)intf).getTypeParameters().length > 0 )
-//										return of( (Class)intf, concreteDescendantType );
 									final Class<?> intfRaw = (Class<?>) intf;
 									LOG.warn(
 											"Not (yet) parameterized: generic "
@@ -114,54 +107,37 @@ public class TypeArguments
 										result.add( null );
 									return result;
 								}
-								for( Type extIntf : ((Class<?>) intf)
-										.getGenericInterfaces() )
-									if( extIntf instanceof ParameterizedType
-											&& ((ParameterizedType) extIntf)
-													.getRawType().equals(
-															genericAncestorType ) )
-									{
-//										LOG.trace(
-//												"Found target {} as extension with args {}",
-//												genericAncestorType,
-//												((ParameterizedType) extIntf)
-//														.getActualTypeArguments() );
-										type = (ParameterizedType) extIntf;
-										break;
-									}
+
 								continue;
 							}
 
 							final ParameterizedType parameterizedIntf = (ParameterizedType) intf;
 							final Type rawIntf = parameterizedIntf.getRawType();
 							if( !genericAncestorType.equals( rawIntf ) )
+							{
+//								type = intf;
+//								intfType = intf;
+//								typeClass = (Class<S>) ClassUtil
+//										.toClass( type );
 								continue;
+							}
+//							LOG.trace( "matched intf: {} args {} <- actual: {}",
+//									rawIntf,
+//									ClassUtil.toClass( rawIntf )
+//											.getTypeParameters(),
+//									parameterizedIntf
+//											.getActualTypeArguments() );
 
-//							LOG.trace(
-//									"supertype params: "
-//											+ Arrays.asList( superClass
-//													.getTypeParameters() )
-//											+ ", intf params: "
-//											+ Arrays.asList( ClassUtil
-//													.toClass( rawIntf )
-//													.getTypeParameters() )
-//											+ ", actual args: "
-//											+ Arrays.asList( parameterizedIntf
-//													.getActualTypeArguments() ) );
-
-							if( superClass.getTypeParameters().length > 0 )
+							if( !concreteDescendantType.isInterface() )
 								return of( superClass, concreteDescendantType );
-							// intfType=getClass(rawIntf);
+
 							type = parameterizedIntf;
 						}
 						superClass = (Class<? super S>) superClass
 								.getSuperclass();
 						if( superClass == null ) break; // eg. generic interface
 					}
-					// if (intfType == null)
-					// type = typeClass.getGenericSuperclass();
-				} else
-					type = typeClass.getGenericSuperclass();
+				}
 
 				if( type == null )
 				{
@@ -190,9 +166,7 @@ public class TypeArguments
 						return Collections.emptyList();
 					}
 				}
-				// LOG.trace(String.format("Trying generic super of %s: %s",
-				// typeClass.getSimpleName(), type));
-			} else
+			} else // type not a Class (thus Parameterized)
 			{
 				final ParameterizedType parameterizedType = (ParameterizedType) type;
 				final Class<?> rawType = (Class<?>) parameterizedType
@@ -211,22 +185,13 @@ public class TypeArguments
 				if( !genericAncestorType.equals( rawType ) )
 				{
 					type = rawType.getGenericSuperclass();
-					// LOG.trace(String.format(
-					// "Trying generic super of child %s: %s", rawType,
-					// type));
 				}
-				// else // done climbing the hierarchy
-				// LOG.trace("Matched generic " + type + " to ancestor: "
-				// + genericAncestorType);
 			}
 			typeClass = (Class<S>) ClassUtil.toClass( type );
-			// LOG.trace("Trying generic " + typeClass + " from: "
-			// + Arrays.asList(typeClass.getGenericInterfaces()));
 		}
 
 		// finally, for each actual type argument provided to baseClass,
-		// determine (if possible)
-		// the raw class for that type argument.
+		// determine (if possible) the raw class for that type argument.
 		final Type[] actualTypeArguments;
 		if( type instanceof Class )
 		{

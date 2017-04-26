@@ -22,6 +22,10 @@ import io.coala.time.Instant;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.util.Compare;
+import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
@@ -29,10 +33,6 @@ import nl.tudelft.simulation.dsol.formalisms.eventscheduling.SimEvent;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulatorInterface;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
-import rx.Observable;
-import rx.Subscription;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 /**
  * {@link Dsol3Scheduler}
@@ -70,13 +70,13 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	private static final Logger LOG = LogUtil.getLogger( Dsol3Scheduler.class );
 
 	/** the time */
-	private final Subject<Instant, Instant> time = PublishSubject.create();
+	private final Subject<Instant> time = PublishSubject.create();
 
 	/** the time */
-	private final Subject<Scheduler, Scheduler> reset = PublishSubject.create();
+	private final Subject<Scheduler> reset = PublishSubject.create();
 
 	/** the listeners */
-	private final NavigableMap<Instant, Subject<Instant, Instant>> listeners = new ConcurrentSkipListMap<>();
+	private final NavigableMap<Instant, Subject<Instant>> listeners = new ConcurrentSkipListMap<>();
 
 //	@InjectConfig
 	private Dsol3Config config;
@@ -140,7 +140,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 						{
 							// execution errors already propagated
 						}
-						timeProxy.onCompleted();
+						timeProxy.onComplete();
 						return null; // i.e. remove proxy for current instant
 					} );
 				}
@@ -160,10 +160,10 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 					// unsubscribe all event listeners
 					this.listeners.values().removeIf( timeProxy ->
 					{
-						timeProxy.onCompleted();
+						timeProxy.onComplete();
 						return true;
 					} );
-					this.time.onCompleted();
+					this.time.onComplete();
 
 					// clean up
 					this.scheduler.cleanUp();
@@ -232,7 +232,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	}
 
 	@Override
-	public Subscription onReset( final ThrowingConsumer<Scheduler, ?> consumer )
+	public Disposable onReset( final ThrowingConsumer<Scheduler, ?> consumer )
 	{
 		return this.reset.subscribe( s ->
 		{
@@ -252,7 +252,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	@Override
 	public Observable<Instant> time()
 	{
-		return this.time.asObservable();
+		return this.time;
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -266,8 +266,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 					this.listeners.computeIfAbsent( when, t ->
 					{
 						// create missing proxy and schedule the "onNext" call
-						final Subject<Instant, Instant> result = PublishSubject
-								.create();
+						final Subject<Instant> result = PublishSubject.create();
 						try
 						{
 							this.scheduler

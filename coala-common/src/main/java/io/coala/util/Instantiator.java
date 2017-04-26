@@ -143,13 +143,10 @@ public class Instantiator<T>
 	@SuppressWarnings( "unchecked" )
 	public T instantiate( final Object... args )
 	{
-		if( ClassUtil
-				.isAbstract(
-						this.type ) ) { return ProxyProvider
-								.of( JsonUtil.getJOM(), this.type,
-										args == null ? null
-												: (Map<String, ?>[]) args )
-								.get(); }
+		if( ClassUtil.isAbstract( this.type ) )
+			return ProxyProvider.of( JsonUtil.getJOM(), this.type
+			// FIXME apply args for JSON-based instantiations 
+			).get();
 		if( this.constructor != null ) try
 		{
 			return this.constructor.newInstance( args );

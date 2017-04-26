@@ -24,11 +24,10 @@ import org.apache.logging.log4j.Logger;
 import io.coala.exception.ExceptionFactory;
 import io.coala.log.LogUtil;
 import io.coala.util.Util;
-import rx.Observable;
-import rx.Observable.OnSubscribe;
-import rx.Observer;
-import rx.Subscriber;
-import rx.functions.Function;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 
 /**
  * {@link RxUtil} provides some
@@ -52,15 +51,15 @@ public class RxUtil implements Util
 	}
 
 	/**
-	 * {@link ThrowingFunc1} TODO find a native way to map throwing functions in
-	 * rxJava
+	 * {@link ThrowingFunc1} TODO apply a native way to map throwing functions
+	 * in rxJava
 	 * 
-	 * @param <S> the source type
-	 * @param <T> the result type
+	 * @param <T> the input value type
+	 * @param <R> the result type
 	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
-	public static interface ThrowingFunc1<S, T> extends Function
+	public static interface ThrowingFunc1<T, R> extends Function<T, R>
 	{
 
 		/**
@@ -68,7 +67,7 @@ public class RxUtil implements Util
 		 * @return
 		 * @throws Throwable
 		 */
-		T call( S t1 ) throws Throwable;
+		R call( T t1 ) throws Throwable;
 	}
 
 	/**
@@ -79,38 +78,40 @@ public class RxUtil implements Util
 	public static <S, T> Observable<T> map( final Observable<S> source,
 		final ThrowingFunc1<S, T> func )
 	{
-		return Observable.create( new OnSubscribe<T>()
+		return Observable.create( sub ->
 		{
-			@Override
-			public void call( final Subscriber<? super T> sub )
+			source.subscribe( new Observer<S>()
 			{
-				source.subscribe( new Observer<S>()
+				@Override
+				public void onComplete()
 				{
-					@Override
-					public void onCompleted()
-					{
-						sub.onCompleted();
-					}
+					sub.onComplete();
+				}
 
-					@Override
-					public void onError( final Throwable e )
+				@Override
+				public void onError( final Throwable e )
+				{
+					sub.onError( e );
+				}
+
+				@Override
+				public void onNext( final S s )
+				{
+					try
+					{
+						sub.onNext( func.call( s ) );
+					} catch( final Throwable e )
 					{
 						sub.onError( e );
 					}
+				}
 
-					@Override
-					public void onNext( final S s )
-					{
-						try
-						{
-							sub.onNext( func.call( s ) );
-						} catch( final Throwable e )
-						{
-							sub.onError( e );
-						}
-					}
-				} );
-			}
+				@Override
+				public void onSubscribe( final Disposable d )
+				{
+					// FIXME what to do here?
+				}
+			} );
 		} );
 	}
 
@@ -139,7 +140,7 @@ public class RxUtil implements Util
 	public static <T> T awaitFirst( final Observable<T> source,
 		final long timeout, final TimeUnit unit )
 	{
-		final List<T> list = awaitAll( source.first(), timeout, unit );
+		final List<T> list = awaitAll( source.take( 1 ), timeout, unit );
 		if( list.isEmpty() ) throw new NullPointerException(
 				"No first element: nothing emitted" );
 		return list.get( 0 );
@@ -177,28 +178,11 @@ public class RxUtil implements Util
 		final long startTime = System.currentTimeMillis();
 		final long maxDuration = unit == null ? 0
 				: TimeUnit.MILLISECONDS.convert( timeout, unit );
-		source.toList().subscribe( new Observer<List<T>>()
+		source.toList().subscribe( ( list, e ) ->
 		{
-			@Override
-			public void onNext( final List<T> input )
+			synchronized( container )
 			{
-				synchronized( container )
-				{
-					container[0] = input;
-					latch.countDown();
-				}
-			}
-
-			@Override
-			public void onCompleted()
-			{
-				latch.countDown();
-			}
-
-			@Override
-			public void onError( final Throwable e )
-			{
-				container[0] = e;
+				container[0] = list == null ? list : e;
 				latch.countDown();
 			}
 		} );

@@ -28,6 +28,8 @@ import org.junit.Test;
 
 import io.coala.dsol3.DsolTime.DsolQuantity;
 import io.coala.log.LogUtil;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import net.jodah.concurrentunit.Waiter;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
@@ -36,7 +38,6 @@ import nl.tudelft.simulation.dsol.formalisms.eventscheduling.Executable;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 import nl.tudelft.simulation.event.EventProducer;
-import rx.Observer;
 
 /**
  * {@link DsolSimTest}
@@ -125,7 +126,7 @@ public class DsolSimTest
 				.ofType( DsolEvent.class ).subscribe( new Observer<DsolEvent>()
 				{
 					@Override
-					public void onCompleted()
+					public void onComplete()
 					{
 						waiter.resume();
 					}
@@ -141,6 +142,13 @@ public class DsolSimTest
 					{
 						LOG.trace( "Observed {}, t={}", t,
 								model.getSimulator().getSimulatorTime() );
+					}
+
+					@Override
+					public void onSubscribe( final Disposable d )
+					{
+						// TODO Auto-generated method stub
+						
 					}
 				} );
 

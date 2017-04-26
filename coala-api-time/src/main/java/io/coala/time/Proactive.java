@@ -32,7 +32,7 @@ import io.coala.function.ThrowingBiConsumer;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
 import io.coala.util.Comparison;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link Proactive}

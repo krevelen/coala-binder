@@ -30,7 +30,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import io.coala.exception.Thrower;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link Invoker}

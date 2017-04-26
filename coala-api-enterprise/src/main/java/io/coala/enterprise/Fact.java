@@ -22,6 +22,7 @@ package io.coala.enterprise;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -47,7 +48,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.eaio.uuid.UUID;
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -67,6 +67,7 @@ import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
 import io.coala.enterprise.persist.FactDao;
 import io.coala.exception.Thrower;
+import io.coala.json.Attributed;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
@@ -77,7 +78,10 @@ import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
 import io.coala.time.Instant;
 import io.coala.util.ReflectUtil;
-import rx.Observer;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link Fact}
@@ -85,7 +89,8 @@ import rx.Observer;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
+public interface Fact
+	extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>, Attributed//<Fact>
 {
 	String TRANSACTION_JSON_PROPERTY = "transaction";
 
@@ -105,16 +110,32 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	@JsonProperty( TRANSACTION_JSON_PROPERTY )
 	<F extends Fact> Transaction<F> transaction();
 
-	<F extends Fact> F self(); // "this" points to impl, not proxy
+	<F extends Fact> F self(); // "this" points to concrete impl, not proxy
+
+	/**
+	 * Builder-style bean property setter
+	 * 
+	 * @param property the property (or bean attribute) to change
+	 * @param value the new value
+	 * @return this {@link Fact} to allow chaining
+	 * @see #with(String, Object, Class)
+	 */
+	@SuppressWarnings( "unchecked" )
+	@JsonIgnore
+	default <F extends Fact> F with( final String property, final Object value )
+	{
+		return (F) with( property, value, (Class<F>) type() );
+	}
 
 	/**
 	 * Commit (i.e. save &amp; send) this {@link Fact}
 	 * 
 	 * @return the {@link Fact} again to allow chaining
 	 */
-	default Fact commit()
+	@SuppressWarnings( "unchecked" )
+	default <F extends Fact> F commit()
 	{
-		return commit( kind().isTerminal() );
+		return (F) commit( kind().isTerminal() );
 	}
 
 	/**
@@ -215,41 +236,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 	default ZonedDateTime offset()
 	{
 		return transaction().offset();
-	}
-
-	/**
-	 * Default storage for bean properties, also useful for reference by a
-	 * {@link JsonAnyGetter} or {@link JsonAnySetter} method
-	 * 
-	 * @return the properties {@link Map} as used for extended getters/setters
-	 */
-	Map<String, Object> properties();
-
-	/**
-	 * Useful as {@link JsonAnySetter}
-	 * 
-	 * @param property the property (or bean attribute) to change
-	 * @param value the new value
-	 * @return the previous value, as per {@link Map#put(Object, Object)}
-	 */
-	default Object set( final String property, final Object value )
-	{
-		return properties().put( property, value );
-	}
-
-	/**
-	 * Builder-style bean property setter
-	 * 
-	 * @param property the property (or bean attribute) to change
-	 * @param value the new value
-	 * @return this {@link Fact} to allow chaining
-	 */
-	@SuppressWarnings( "unchecked" )
-	@JsonIgnore
-	default <F extends Fact> F with( final String property, final Object value )
-	{
-		set( property, value );
-		return (F) this;
 	}
 
 	/**
@@ -493,9 +479,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 
 	/**
 	 * {@link ID}
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
 	 */
 	@JsonDeserialize( converter = ID.FromStringConverter.class )
 	class ID extends LocalId
@@ -585,7 +568,10 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		private FactKind kind;
 		private Instant expiration;
 		private Fact.ID causeRef;
-		private Map<String, Object> properties = new HashMap<>();
+
+		private transient final Map<String, Object> properties = new HashMap<>();
+		private transient final Subject<PropertyChangeEvent> changes = PublishSubject
+				.create();
 
 		/**
 		 * {@link Simple} zero-arg bean constructor
@@ -600,10 +586,11 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 			final Instant expiration, final Fact.ID causeRef,
 			final Map<?, ?>... properties )
 		{
-			this.id = id;
-			this.occurrence = occurrence;
-			this.transaction = transaction;
-			this.kind = kind;
+
+			this.id = Objects.requireNonNull( id );
+			this.occurrence = Objects.requireNonNull( occurrence );
+			this.transaction = Objects.requireNonNull( transaction );
+			this.kind = Objects.requireNonNull( kind );
 			this.expiration = expiration;
 			this.causeRef = causeRef;
 			if( properties != null ) for( Map<?, ?> map : properties )
@@ -663,20 +650,26 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 		}
 
 		@Override
-		@JsonAnyGetter
 		public Map<String, Object> properties()
 		{
 			return this.properties;
 		}
 
-		@Override
 		@JsonAnySetter
-		public Object set( final String key, final Object value )
+		@Override
+		public Object set( final String propertyName, final Object newValue )
 		{
-//			if( key.toString().equals( "h" ) )
-//				new IllegalStateException( "put " + key + "=" + value )
-//						.printStackTrace();
-			return properties().put( key, value );
+			final Object oldValue = properties().put( propertyName, newValue );
+			this.changes.onNext(
+					new PropertyChangeEvent( self() == null ? this : self(),
+							propertyName, oldValue, newValue ) );
+			return oldValue;
+		}
+
+		@Override
+		public Observable<PropertyChangeEvent> emitChanges()
+		{
+			return this.changes;
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -732,7 +725,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>
 			Instant expiration, Fact.ID causeRef, Map<?, ?>... properties )
 		{
 			return create( tranKind, id, transaction, factKind,
-					transaction.now(), expiration, causeRef, properties );
+					Objects.requireNonNull( transaction.now() ), expiration,
+					causeRef, properties );
 		}
 
 		/**

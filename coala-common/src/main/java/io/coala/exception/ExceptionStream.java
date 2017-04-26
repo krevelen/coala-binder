@@ -1,10 +1,10 @@
 package io.coala.exception;
 
 import io.coala.json.Contextual;
-import rx.Observable;
-import rx.Observer;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * {@link ExceptionStream} wraps a {@link Subject} for {@link Contextual}
@@ -50,11 +50,11 @@ public class ExceptionStream<T extends Throwable & Contextual>
 	 */
 	public static Observable<? extends Throwable> asObservable()
 	{
-		return getInstance().subject.asObservable();
+		return getInstance().subject;
 	}
 
 	/** */
-	private final Subject<T, T> subject = PublishSubject.create();
+	private final Subject<T> subject = PublishSubject.create();
 
 	/**
 	 * {@link ExceptionStream} singleton constructor
@@ -66,8 +66,8 @@ public class ExceptionStream<T extends Throwable & Contextual>
 			@Override
 			public void run()
 			{
-				setName( ExceptionStream.class.getSimpleName() );
-				subject.onCompleted();
+				this.setName( ExceptionStream.class.getSimpleName() );
+				subject.onComplete();
 			}
 		} );
 	}

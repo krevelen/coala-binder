@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.ConfigCache;
@@ -48,6 +49,22 @@ public interface YamlConfig extends Accessible
 		for( int i = 0; imports != null && i < imports.length; i++ )
 			total[i + 1] = imports[i];
 		return ConfigCache.getOrCreate( configType, total );
+	}
+
+	default Map<String, Object> export( final Map<?, ?>... maps )
+	{
+		return ConfigUtil.export( this, maps );
+	}
+
+	default Map<String, Object> export( final Pattern keyFilter )
+	{
+		return ConfigUtil.export( this, keyFilter );
+	}
+
+	default Map<String, Object> export( final Pattern keyFilter,
+		final String keyReplacement )
+	{
+		return ConfigUtil.export( this, keyFilter, keyReplacement );
 	}
 
 	default JsonNode toJSON( final String... baseKeys )

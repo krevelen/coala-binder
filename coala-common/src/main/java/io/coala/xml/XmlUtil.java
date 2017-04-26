@@ -51,7 +51,7 @@ import org.joda.time.Period;
 
 import io.coala.function.ThrowingSupplier;
 import io.coala.log.LogUtil;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * {@link XmlUtil}
@@ -222,7 +222,7 @@ public class XmlUtil
 						errorOffset = offset;
 					}
 				}
-				sub.onCompleted();
+				sub.onComplete();
 			} catch( final Throwable e )
 			{
 				sub.onError( e );
