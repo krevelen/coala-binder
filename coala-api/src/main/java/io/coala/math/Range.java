@@ -3,7 +3,9 @@ package io.coala.math;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.SortedMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -158,18 +160,53 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 		return this.upper;
 	}
 
+	/** convenience method */
+	public T lowerValue()
+	{
+		return getLower().getValue();
+	}
+
+	/** convenience method */
+	public T upperValue()
+	{
+		return getUpper().getValue();
+	}
+
+	/** convenience method */
+	public boolean lowerInclusive()
+	{
+		return getLower().isInclusive();
+	}
+
+	/** convenience method */
+	public boolean upperInclusive()
+	{
+		return getUpper().isInclusive();
+	}
+
+	/** convenience method */
+	public boolean lowerFinite()
+	{
+		return getLower().isFinite();
+	}
+
+	/** convenience method */
+	public boolean upperFinite()
+	{
+		return getUpper().isFinite();
+	}
+
 	/**
 	 * @param value the {@link T} to test
 	 * @return {@code true} iff this {@link Range} has a finite minimum that is
 	 *         greater than specified value, {@code false} otherwise
 	 */
 	@SuppressWarnings( "unchecked" )
-	public boolean isGreaterThan( final T value )
+	public boolean gt( final T value )
 	{
-		final T min = getLower().getValue();
-		if( min == null ) return false;
-		return getLower().isInclusive() ? Comparison.lt( value, min )
-				: Comparison.le( value, min );
+		return lowerFinite()
+				&& (lowerInclusive() ? Comparison.lt( value, lowerValue() )
+						: Comparison.le( value, lowerValue() ));
 	}
 
 	/**
@@ -178,12 +215,11 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 *         smaller than specified value, {@code false} otherwise
 	 */
 	@SuppressWarnings( "unchecked" )
-	public boolean isLessThan( final T value )
+	public boolean lt( final T value )
 	{
-		final T max = getUpper().getValue();
-		if( max == null ) return false;
-		return getUpper().isInclusive() ? Comparison.gt( value, max )
-				: Comparison.ge( value, max );
+		return upperFinite()
+				&& (upperInclusive() ? Comparison.gt( value, upperValue() )
+						: Comparison.ge( value, upperValue() ));
 	}
 
 	/**
@@ -193,13 +229,12 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 */
 	public Boolean contains( final T value )
 	{
-		return !isGreaterThan( value ) && !isLessThan( value );
+		return !gt( value ) && !lt( value );
 	}
 
 	public T crop( final T value )
 	{
-		return isLessThan( value ) ? getUpper().getValue()
-				: isGreaterThan( value ) ? getLower().getValue() : value;
+		return lt( value ) ? upperValue() : gt( value ) ? lowerValue() : value;
 	}
 
 	public boolean overlaps( final Range<T> that )
@@ -209,8 +244,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 
 	public Range<T> intersect( final Range<T> that )
 	{
-		if( this.isGreaterThan( that.getUpper().getValue() )
-				|| this.isLessThan( that.getLower().getValue() ) )
+		if( this.gt( that.upperValue() ) || this.lt( that.lowerValue() ) )
 			return null;
 		return of( Compare.max( this.getLower(), that.getLower() ),
 				Compare.min( this.getUpper(), that.getUpper() ) );
@@ -224,10 +258,9 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	@Override
 	public String toString()
 	{
-		return new StringBuilder()
-				.append( getLower().isInclusive() ? '[' : '<' )
+		return new StringBuilder().append( lowerInclusive() ? '[' : '<' )
 				.append( getLower() ).append( "; " ).append( getUpper() )
-				.append( getUpper().isInclusive() ? ']' : '>' ).toString();
+				.append( upperInclusive() ? ']' : '>' ).toString();
 	}
 
 	@Override
@@ -247,7 +280,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 				&& ((Range<T>) that).getUpper().equals( getUpper() );
 	}
 
-	private static final Range<?> INFINITE = of( null, null, null, null );
+	private static final Range<?> INFINITE = of( null, false, null, false );
 
 	@SuppressWarnings( "unchecked" )
 	public static <T extends Comparable<?>> Range<T> infinite()
@@ -309,7 +342,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 */
 	public static <T extends Comparable<?>> Range<T> of( final T value )
 	{
-		return of( value, true, value, true );
+		return of( value, value );
 	}
 
 	/**
@@ -334,8 +367,9 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 		final Boolean minimumInclusive, final T maximum,
 		final Boolean maximumInclusive )
 	{
-		return of( Extreme.lower( minimum, minimumInclusive ),
-				Extreme.upper( maximum, maximumInclusive ) );
+		return of(
+				Extreme.lower( minimum, minimumInclusive && minimum != null ),
+				Extreme.upper( maximum, maximumInclusive && maximum != null ) );
 	}
 
 	/**
@@ -346,7 +380,8 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	public static <T extends Comparable<?>> Range<T>
 		of( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
-		return new Range<T>( minimum, maximum );
+		return Compare.gt( minimum, maximum ) ? null // undefined
+				: new Range<T>( minimum, maximum );
 	}
 
 	public static <Q extends Quantity<Q>> Range<ComparableQuantity<Q>>
@@ -354,5 +389,30 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	{
 		return of( min == null ? null : QuantityUtil.valueOf( min, unit ),
 				max == null ? null : QuantityUtil.valueOf( max, unit ) );
+	}
+
+	/**
+	 * @param map the source mapping
+	 * @return a submap view containing values with intersecting keys
+	 */
+	public <V> SortedMap<T, V> subMap( final SortedMap<T, V> map )
+	{
+		return map.subMap( lowerValue(), upperValue() );
+	}
+
+	/**
+	 * @param map the source mapping
+	 * @param floorLower include the lower bound by flooring it (if possible)
+	 * @return a submap view containing values with intersecting keys
+	 */
+	public <V> SortedMap<T, V> subMap( final NavigableMap<T, V> map,
+		final boolean floorLower )
+	{
+		if( map.isEmpty() ) return map;
+		final T floor = floorLower && lowerFinite()
+				? map.floorKey( lowerValue() ) : null;
+		final T from = floor != null ? floor : lowerValue();
+		return map.subMap( from, lowerInclusive() || from.equals( floor ),
+				upperValue(), upperInclusive() );
 	}
 }

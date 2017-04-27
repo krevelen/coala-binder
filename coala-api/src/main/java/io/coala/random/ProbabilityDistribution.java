@@ -605,8 +605,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			createUniformDiscrete( final Range<? extends Number> range )
 		{
 			checkUniformRange( range );
-			return createUniformDiscrete( range.getLower().getValue(),
-					range.getUpper().getValue() );
+			return createUniformDiscrete( range.lowerValue(),
+					range.upperValue() );
 		}
 
 		/**
@@ -629,8 +629,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			createUniformContinuous( final Range<? extends Number> range )
 		{
 			checkUniformRange( range );
-			return createUniformContinuous( range.getLower().getValue(),
-					range.getUpper().getValue() );
+			return createUniformContinuous( range.lowerValue(),
+					range.upperValue() );
 		}
 
 		/**
@@ -666,8 +666,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 
 		static void checkUniformRange( final Range<? extends Number> range )
 		{
-			if( range.getLower().isInclusive()
-					&& range.getLower().isInclusive() )
+			if( range.lowerInclusive()
+					&& range.upperInclusive() )
 				return;
 
 			Thrower.throwNew( IllegalArgumentException.class,

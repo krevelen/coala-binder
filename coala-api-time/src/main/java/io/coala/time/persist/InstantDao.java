@@ -112,23 +112,13 @@ public class InstantDao implements BindableDao<Instant, InstantDao>
 	{
 		final Path<? extends Number> numPath = instantDaoPath
 				.get( NUM_ATTR_NAME );
-		if( instantRange.getLower() != null )
-		{
-			final Number lower = QuantityUtil.toBigDecimal(
-					instantRange.getLower().getValue().toQuantity(), timeUnit );
-			conjunction.getExpressions()
-					.add( instantRange.getLower().isInclusive()
-							? cb.ge( numPath, lower )
-							: cb.gt( numPath, lower ) );
-		}
-		if( instantRange.getUpper() != null )
-		{
-			final Number upper = QuantityUtil.toBigDecimal(
-					instantRange.getLower().getValue().toQuantity(), timeUnit );
-			conjunction.getExpressions()
-					.add( instantRange.getLower().isInclusive()
-							? cb.le( numPath, upper )
-							: cb.lt( numPath, upper ) );
-		}
+		final Number lower = QuantityUtil.toBigDecimal(
+				instantRange.lowerValue().toQuantity(), timeUnit );
+		conjunction.getExpressions().add( instantRange.lowerInclusive()
+				? cb.ge( numPath, lower ) : cb.gt( numPath, lower ) );
+		final Number upper = QuantityUtil.toBigDecimal(
+				instantRange.lowerValue().toQuantity(), timeUnit );
+		conjunction.getExpressions().add( instantRange.lowerInclusive()
+				? cb.le( numPath, upper ) : cb.lt( numPath, upper ) );
 	}
 }

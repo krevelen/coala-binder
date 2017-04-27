@@ -25,7 +25,7 @@ public interface Signal<T> extends Proactive
 	 * @return the evaluated result, or {@code null} if not in {@link #domain()}
 	 */
 	T current();
-	
+
 //	void set(T current);
 
 	/** @return an {@link Observable} stream of {@link T} evaluations */
@@ -111,8 +111,7 @@ public interface Signal<T> extends Proactive
 		public Simple( final Scheduler scheduler, final Range<Instant> domain,
 			final Function<Instant, T> function )
 		{
-			if( !domain.getUpper().isInfinite()
-					&& domain.isLessThan( scheduler.now() ) )
+			if( domain.upperFinite() && domain.lt( scheduler.now() ) )
 				throw ExceptionFactory.createUnchecked(
 						"Currently t={} already past domain: {}",
 						scheduler.now(), domain );
@@ -159,10 +158,10 @@ public interface Signal<T> extends Proactive
 			if( this.now == null || !this.now.equals( now() ) )
 			{
 				this.now = now();
-				if( this.now == null || this.domain.isGreaterThan( this.now ) )
+				if( this.now == null || this.domain.gt( this.now ) )
 				{
 					this.cache = null;
-				} else if( this.domain.isLessThan( this.now ) )
+				} else if( this.domain.lt( this.now ) )
 				{
 					if( this.cache == null ) this.values.onComplete();
 					this.cache = null;
