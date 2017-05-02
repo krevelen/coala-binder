@@ -15,6 +15,7 @@
  */
 package io.coala.json;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -44,7 +45,7 @@ import io.coala.exception.Thrower;
 import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.exceptions.Exceptions;
 
 /**
  * {@link JsonUtil}
@@ -226,33 +227,56 @@ public class JsonUtil
 		final Callable<InputStream> json, final Class<T> resultType,
 		final Map<String, ?>... imports )
 	{
-		return Observable.<T>create( emitter ->
+		final ObjectMapper om = getJOM();
+		if( REGISTER_ON_SERIALIZE ) checkRegistered( om, resultType, imports );
+		return readArrayAsync(
+				() -> om.getFactory().createParser( json.call() ),
+				() -> om.readerFor(
+						om.getTypeFactory().constructType( resultType ) ) );
+	}
+
+	/**
+	 * @param json the JSON array {@link InputStream}
+	 * @param resultType the type of {@link Object} in the JSON array
+	 * @return the parsed/deserialized/unmarshalled {@link Object}
+	 */
+	public static <T> Observable<T> readArrayAsync(
+		final Callable<JsonParser> jpFactory,
+		final Callable<ObjectReader> orFactory )
+	{
+		return Observable.using( jpFactory, jp ->
 		{
-			try
+			return Observable.<T>create( emitter ->
 			{
-				final ObjectMapper om = getJOM();
-				if( REGISTER_ON_SERIALIZE )
-					checkRegistered( om, resultType, imports );
-				final InputStream is = json.call();
-				final JsonParser jp = om.getFactory().createParser( is );
-				final ObjectReader jr = om.readerFor(
-						om.getTypeFactory().constructType( resultType ) );
+				try
+				{
+					while( jp.nextToken() != JsonToken.START_ARRAY )
+					{
+						if( jp.nextToken() == null )
+							Thrower.throwNew( IllegalStateException.class,
+									"Empty input, file exists?" );
 
-				while( jp.nextToken() != JsonToken.START_ARRAY )
-					LogUtil.getLogger( JsonUtil.class ).warn(
-							"Ignoring unexpected token: {}", jp.getText() );
+						LogUtil.getLogger( JsonUtil.class ).warn(
+								"Ignoring unexpected token: {}", jp.getText() );
+					}
+					final ObjectReader or = orFactory.call();
 
-				while( jp.nextToken() != JsonToken.END_ARRAY )
-					emitter.onNext( jr.readValue( jp ) );
-				LogUtil.getLogger( JsonUtil.class ).trace(
-						"Completed reading: {}", resultType.getSimpleName() );
-				emitter.onComplete();
-				emitter.setCancellable( is::close );
-			} catch( final Exception e )
-			{
-				emitter.onError( e );
-			}
-		} ).subscribeOn( Schedulers.io() );
+					int i = 0;
+					T t = null;
+					while( jp.nextToken() != JsonToken.END_ARRAY )
+					{
+						emitter.onNext( t = or.readValue( jp ) );
+						i++;
+					}
+					emitter.onComplete();
+					LogUtil.getLogger( JsonUtil.class ).trace( "Parsed {} x {}",
+							i, t == null ? "?" : t.getClass().getSimpleName() );
+				} catch( final IOException e )
+				{
+					throw Exceptions.propagate( e );
+				}
+			} );
+		}, JsonParser::close );
 	}
 
 	/**

@@ -163,9 +163,9 @@ public abstract class Math3ProbabilityDistribution<S>
 	{
 		Objects.requireNonNull( valueWeights );
 		final List<Pair<T, Double>> result = new ArrayList<>();
-		for( WeightedValue<T> p : valueWeights )
-			result.add(
-					Pair.create( p.getValue(), p.getWeight().doubleValue() ) );
+		for( WeightedValue<T> wv : valueWeights )
+			result.add( Pair.create( Objects.requireNonNull( wv.getValue() ),
+					Objects.requireNonNull( wv.getWeight() ).doubleValue() ) );
 		return result;
 	}
 

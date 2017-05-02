@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import io.coala.exception.Thrower;
+import io.coala.function.ThrowingFunction;
 import io.coala.util.Compare;
 import io.coala.util.Comparison;
 import io.coala.util.InstanceParser;
@@ -59,11 +60,11 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 
 	public static final String UPPER_INCLUSIVE_GROUP = "uincl";
 
-	public static final String LOWER_INCLUSIVENESS = "[\\u005B\\u003C\\u3008\\u2329]";
+	public static final String LOWER_INCLUSIVENESS = "[\\(\\u005B\\u003C\\u3008\\u2329]";
 
 	public static final String EXTREME_SEPARATORS = ":;";
 
-	public static final String UPPER_INCLUSIVENESS = "[\\u005D\\u003E\\u3009\\u232A]";
+	public static final String UPPER_INCLUSIVENESS = "[\\)\\u005D\\u003E\\u3009\\u232A]";
 
 	/**
 	 * matches string representations like: <code>&#x3008;&larr;; max]</code> or
@@ -90,7 +91,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	public static Range<BigDecimal> parse( final String range )
 		throws ParseException
 	{
-		return parse( range, BigDecimal.class );
+		return parse( range, BigDecimal::new );
 	}
 
 	/**
@@ -100,31 +101,43 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	public static <T extends Comparable<?>> Range<T> parse( final String range,
 		final Class<T> valueType ) //throws ParseException
 	{
+		return parse( range, InstanceParser.of( valueType )::parse );
+	}
+
+	/**
+	 * @param timeRange
+	 * @param valueType
+	 * @return
+	 */
+	public static <T extends Comparable<?>> Range<T> parse( final String range,
+		final ThrowingFunction<String, T, ?> argParser )
+	{
 		final Matcher m = RANGE_FORMAT.matcher( range.trim() );
 		if( !m.find() ) Thrower.throwNew( IllegalArgumentException.class,
 				"Incorrect format, expected e.g. `[lower;upper>`, was: "
 						+ range );
 
-		final InstanceParser<T> argParser = InstanceParser.of( valueType );
 		T lower, upper;
-		Boolean lowerIncl, upperIncl;
+		boolean lowerIncl, upperIncl;
 		try
 		{
-			lower = argParser.parse( m.group( LOWER_VALUE_GROUP ).trim() );
+			lower = argParser.apply( m.group( LOWER_VALUE_GROUP ).trim() );
 			lowerIncl = m.group( LOWER_INCLUSIVE_GROUP ).equals( "[" );
 		} catch( Throwable e )
 		{
+			// assume infinity if not parsable (e.g. '-inf')
 			lower = null;
-			lowerIncl = null;
+			lowerIncl = false;
 		}
 		try
 		{
-			upper = argParser.parse( m.group( UPPER_VALUE_GROUP ).trim() );
+			upper = argParser.apply( m.group( UPPER_VALUE_GROUP ).trim() );
 			upperIncl = m.group( UPPER_INCLUSIVE_GROUP ).equals( "]" );
 		} catch( Throwable e )
 		{
+			// assume infinity if not parsable (e.g. '+inf')
 			upper = null;
-			upperIncl = null;
+			upperIncl = false;
 		}
 		return of( lower, lowerIncl, upper, upperIncl );
 	}
@@ -141,11 +154,14 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	public Range( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
 		// sanity check
-		Objects.requireNonNull( minimum );
-		Objects.requireNonNull( maximum );
+		if( Compare.gt(
+				Objects.requireNonNull( minimum, "Minimum can't be null" ),
+				Objects.requireNonNull( maximum, "Maximum can't be null" ) ) )
+			Thrower.throwNew( IllegalArgumentException.class,
+					"Range undefined, min: {}, max: {}", minimum, maximum );
 
-		this.lower = Compare.min( minimum, maximum );
-		this.upper = Compare.max( minimum, maximum );
+		this.lower = minimum;
+		this.upper = maximum;
 	}
 
 	/** @return the minimum value, or {@code null} for (negative) infinity */
@@ -364,8 +380,8 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 * @return the {@link Range} instance
 	 */
 	public static <T extends Comparable<?>> Range<T> of( final T minimum,
-		final Boolean minimumInclusive, final T maximum,
-		final Boolean maximumInclusive )
+		final boolean minimumInclusive, final T maximum,
+		final boolean maximumInclusive )
 	{
 		return of(
 				Extreme.lower( minimum, minimumInclusive && minimum != null ),
@@ -380,8 +396,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	public static <T extends Comparable<?>> Range<T>
 		of( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
-		return Compare.gt( minimum, maximum ) ? null // undefined
-				: new Range<T>( minimum, maximum );
+		return new Range<T>( minimum, maximum );
 	}
 
 	public static <Q extends Quantity<Q>> Range<ComparableQuantity<Q>>
@@ -403,16 +418,20 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	/**
 	 * @param map the source mapping
 	 * @param floorLower include the lower bound by flooring it (if possible)
-	 * @return a submap view containing values with intersecting keys
+	 * @return a submap view containing values of intersecting keys
 	 */
 	public <V> SortedMap<T, V> subMap( final NavigableMap<T, V> map,
 		final boolean floorLower )
 	{
 		if( map.isEmpty() ) return map;
+		// use previous key if floorLower==true (and finite lower bound)
 		final T floor = floorLower && lowerFinite()
 				? map.floorKey( lowerValue() ) : null;
-		final T from = floor != null ? floor : lowerValue();
-		return map.subMap( from, lowerInclusive() || from.equals( floor ),
-				upperValue(), upperInclusive() );
+		final T from = floor != null ? floor
+				: lowerFinite() ? lowerValue() : map.firstKey();
+		final boolean fromIncl = lowerInclusive() || !lowerFinite();
+		final T to = upperFinite() ? upperValue() : map.lastKey();
+		final boolean toIncl = upperInclusive() || !upperFinite();
+		return map.subMap( from, fromIncl, to, toIncl );
 	}
 }

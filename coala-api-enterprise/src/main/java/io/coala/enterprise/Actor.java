@@ -614,6 +614,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		{
 			try
 			{
+				System.err.println( "call " + self + " # " + method );
 				final Object result = method.isDefault()
 						&& Proxy.isProxyClass( self.getClass() )
 								? ReflectUtil.invokeDefaultMethod( self, method,
@@ -757,7 +758,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		@Inject
 		private transient LocalBinder binder;
 
-		private transient Class<? extends Actor<?>> role = null;
+		@SuppressWarnings( "rawtypes" )
+		private transient Class<? extends Actor> role = Actor.class;
 
 		private ID id;
 

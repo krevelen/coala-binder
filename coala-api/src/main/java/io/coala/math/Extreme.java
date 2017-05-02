@@ -40,10 +40,10 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 	{
 
 		/** also has lower {@link #ordinal()} for natural ordering */
-		LOWER( Comparison.LESSER ),
+		LOWER( Comparison.GREATER ),
 
 		/** also has higher {@link #ordinal()} for natural ordering */
-		UPPER( Comparison.GREATER );
+		UPPER( Comparison.LESSER );
 
 		/** the infinity comparison value */
 		private final Comparison limitComparison;
@@ -54,8 +54,8 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 		}
 
 		/**
-		 * @return the {@link Comparison} for finite values at the (infinite)
-		 *         limit of this {@link BoundaryPosition} position
+		 * @return the {@link Comparison} for finite values toward the
+		 *         (infinite) limit of this {@link BoundaryPosition} position
 		 */
 		public Comparison compareLimit()
 		{
