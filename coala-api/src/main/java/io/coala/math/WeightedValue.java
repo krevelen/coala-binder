@@ -4,15 +4,15 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import io.coala.json.Wrapper;
 
@@ -40,13 +40,17 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 		return new WeightedValue<V>( value, weight );
 	}
 
-	public static <V> Set<WeightedValue<V>>
+	public static <V> WeightedValue<V>
+		of( final Map.Entry<V, ? extends Number> entry )
+	{
+		return of( entry.getKey(), entry.getValue() );
+	}
+
+	public static <V> List<WeightedValue<V>>
 		of( final Map<V, ? extends Number> weights )
 	{
-		final Set<WeightedValue<V>> result = new HashSet<>();
-		weights.forEach(
-				( value, weight ) -> result.add( of( value, weight ) ) );
-		return result;
+		return weights.entrySet().stream().map( WeightedValue::of )
+				.collect( Collectors.toList() );
 	}
 
 	/** */

@@ -49,10 +49,10 @@ import io.coala.xml.XmlUtil;
 import tec.uom.se.ComparableQuantity;
 
 /**
- * {@linkplain Instant} is a {@link Wrapper} of a {@linkplain TimeSpan} value
- * measuring a duration since the EPOCH (1970-01-01T00:00:00Z) that provides a
- * {@link #valueOf(String)} method to allow loading as {@link Converter
- * configuration} value, as per
+ * {@linkplain Instant} is a {@link Wrapper} of a
+ * {@linkplain ComparableQuantity} value measuring a duration since the EPOCH
+ * (1970-01-01T00:00:00Z) that provides a {@link #valueOf(String)} method to
+ * allow loading as {@link Converter configuration} value, as per
  * {@link org.aeonbits.owner.Converters#CLASS_WITH_VALUE_OF_METHOD}
  * <p>
  * We considered various temporal measure implementations, including
@@ -243,7 +243,7 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	{
 		return super.toString();
 	}
-	
+
 	@Override
 	public int compareTo( final Comparable that )
 	{

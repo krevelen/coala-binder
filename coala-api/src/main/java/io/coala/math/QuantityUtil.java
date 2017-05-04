@@ -15,6 +15,7 @@ import org.joda.time.Period;
 
 import io.coala.exception.Thrower;
 import io.coala.json.JsonUtil;
+import io.coala.log.LogUtil.Pretty;
 import io.coala.util.Compare;
 import io.coala.util.Util;
 import tec.uom.se.AbstractUnit;
@@ -468,5 +469,19 @@ public class QuantityUtil implements Util
 	public static int signum( final Quantity<?> qty )
 	{
 		return DecimalUtil.signum( qty.getValue() );
+	}
+
+	/** @return a {@link Pretty} wrapper for lazy {@link #toString()} */
+	public static <Q extends Quantity<Q>> Pretty pretty( final Quantity<Q> qty,
+		final int scale )
+	{
+		return Pretty.of( () -> toScale( qty, scale ) );
+	}
+
+	/** @return a {@link Pretty} wrapper for lazy {@link #toString()} */
+	public static <Q extends Quantity<Q>> Pretty pretty( final Quantity<Q> qty,
+		final Unit<Q> unit, final int scale )
+	{
+		return Pretty.of( () -> toScale( qty.to( unit ), scale ) );
 	}
 }
