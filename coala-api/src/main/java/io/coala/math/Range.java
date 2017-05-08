@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.function.Function;
@@ -410,7 +411,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 * @param map the source mapping
 	 * @return a submap view containing values with intersecting keys
 	 */
-	public <V> SortedMap<T, V> subMap( final SortedMap<T, V> map )
+	public <V> SortedMap<T, V> apply( final SortedMap<T, V> map )
 	{
 		return map.subMap( lowerValue(), upperValue() );
 	}
@@ -418,9 +419,9 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	/**
 	 * @param map the source mapping
 	 * @param floorLower include the lower bound by flooring it (if possible)
-	 * @return a submap view containing values of intersecting keys
+	 * @return a SortedMap view containing only values of intersecting keys
 	 */
-	public <V> SortedMap<T, V> subMap( final NavigableMap<T, V> map,
+	public <V> NavigableMap<T, V> subMap( final NavigableMap<T, V> map,
 		final boolean floorLower )
 	{
 		if( map.isEmpty() ) return map;
@@ -433,5 +434,25 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 		final T to = upperFinite() ? upperValue() : map.lastKey();
 		final boolean toIncl = upperInclusive() || !upperFinite();
 		return map.subMap( from, fromIncl, to, toIncl );
+	}
+
+	/**
+	 * @param set
+	 * @param floorLower include the lower bound by flooring it (if possible)
+	 * @return a subset view containing values of intersecting keys
+	 */
+	public NavigableSet<T> apply( final NavigableSet<T> set,
+		final boolean floorLower )
+	{
+		if( set.isEmpty() ) return set;
+		// use previous key if floorLower==true (and finite lower bound)
+		final T floor = floorLower && lowerFinite() ? set.floor( lowerValue() )
+				: null;
+		final T from = floor != null ? floor
+				: lowerFinite() ? lowerValue() : set.first();
+		final boolean fromIncl = lowerInclusive() || !lowerFinite();
+		final T to = upperFinite() ? upperValue() : set.last();
+		final boolean toIncl = upperInclusive() || !upperFinite();
+		return set.subSet( from, fromIncl, to, toIncl );
 	}
 }

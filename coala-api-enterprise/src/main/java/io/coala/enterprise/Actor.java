@@ -614,7 +614,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		{
 			try
 			{
-				System.err.println( "call " + self + " # " + method );
+//				System.err.println( "call " + actorType.getSimpleName() + " # "
+//						+ method.getName() );
 				final Object result = method.isDefault()
 						&& Proxy.isProxyClass( self.getClass() )
 								? ReflectUtil.invokeDefaultMethod( self, method,

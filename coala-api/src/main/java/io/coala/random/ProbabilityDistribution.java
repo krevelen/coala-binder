@@ -18,11 +18,11 @@ package io.coala.random;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import javax.inject.Provider;
 import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
@@ -33,6 +33,8 @@ import io.coala.math.QuantityUtil;
 import io.coala.math.Range;
 import io.coala.math.WeightedValue;
 import io.coala.util.Instantiator;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 
 /**
  * {@link ProbabilityDistribution} is similar to a {@link javax.inject.Provider}
@@ -124,20 +126,20 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	 * @param provider the {@link Provider} for drawing values
 	 * @return a {@link ProbabilityDistribution}
 	 */
-	static <T> ProbabilityDistribution<T> of( final Provider<T> provider )
-	{
-		return () -> provider.get();
-	}
+//	static <T> ProbabilityDistribution<T> of( final Provider<T> provider )
+//	{
+//		return () -> provider.get();
+//	}
 
 	/**
 	 * @param <T> the type of value
 	 * @param func the {@link Supplier} for drawing values
 	 * @return a {@link ProbabilityDistribution}
 	 */
-	static <T> ProbabilityDistribution<T> of( final Supplier<T> func )
-	{
-		return () -> func.get();
-	}
+//	static <T> ProbabilityDistribution<T> of( final Supplier<T> func )
+//	{
+//		return () -> func.get();
+//	}
 
 	default <R> ProbabilityDistribution<R> map( final Function<T, R> transform )
 	{
@@ -289,8 +291,16 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		 *      "https://www.wolframalpha.com/input/?i=bernoulli+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		<T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
-			createCategorical( Iterable<WV> probabilities );
+		<T, WV extends WeightedValue<T>> Single<ProbabilityDistribution<T>>
+			createCategorical( Observable<WV> probabilities );
+
+		default <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
+			createCategorical( final Iterable<WV> probabilities )
+		{
+			return createCategorical( Observable
+					.fromIterable( Objects.requireNonNull( probabilities ) ) )
+							.blockingGet();
+		}
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -437,13 +447,37 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		ProbabilityDistribution<Double> createExponential( Number mean );
 
 		/**
-		 * @param values the <em>n</em> empirical values
+		 * @param observations the <em>n</em> empirical observations
+		 * @param binCount the number of observations per aggregate bin
 		 * @return an empirical {@link ProbabilityDistribution} of <em>n/10</em>
 		 *         bins without underlying probability mass function assumptions
 		 */
+		<T extends Number> ProbabilityDistribution<Double> createEmpirical(
+			Iterable<? extends Number> observations, int binCount );
+
 		@SuppressWarnings( "unchecked" )
-		<T extends Number> ProbabilityDistribution<Double>
-			createEmpirical( T... values );
+		default <T extends Number> ProbabilityDistribution<Double>
+			createEmpirical( T... values )
+		{
+			return createEmpirical( Observable.fromArray( values ) )
+					.blockingGet();
+		}
+
+		default <T extends Number> Single<ProbabilityDistribution<Double>>
+			createEmpirical( final Observable<T> values )
+		{
+			return createEmpirical( values, 10 );
+		}
+
+		default <T extends Number> Single<ProbabilityDistribution<Double>>
+			createEmpirical( final Observable<T> observations,
+				final int valuesPerBin )
+		{
+			final List<T> values = observations.toList().blockingGet();
+			// default to ~10 values per bin
+			final int binCount = Math.max( 1, values.size() / valuesPerBin );
+			return Single.just( createEmpirical( values, binCount ) );
+		}
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -646,8 +680,16 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		 *      "https://www.wolframalpha.com/input/?i=discrete+uniform+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
+		<T> Single<ProbabilityDistribution<T>>
+			createUniformCategorical( Observable<T> values );
+
 		@SuppressWarnings( "unchecked" )
-		<T> ProbabilityDistribution<T> createUniformCategorical( T... values );
+		default <T> ProbabilityDistribution<T>
+			createUniformCategorical( T... values )
+		{
+			return createUniformCategorical( Observable.fromArray( values ) )
+					.blockingGet();
+		}
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -666,9 +708,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 
 		static void checkUniformRange( final Range<? extends Number> range )
 		{
-			if( range.lowerInclusive()
-					&& range.upperInclusive() )
-				return;
+			if( range.lowerInclusive() && range.upperInclusive() ) return;
 
 			Thrower.throwNew( IllegalArgumentException.class,
 					"Exclusive/infinite bounds not allowed: {}", range );

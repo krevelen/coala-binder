@@ -218,7 +218,8 @@ public interface Scheduler extends Proactive, Runnable
 		// schedule first element from iterator
 		final Iterator<Instant> it = when.iterator();
 		if( !it.hasNext() ) return Observable.empty();
-		final Expectation exp0 = schedule( it.next(), delayedCopy::onNext );
+		final Instant t0 = it.next();
+		final Expectation exp0 = schedule( t0, delayedCopy::onNext );
 		if( what != null ) what.onNext( exp0 );
 		// schedule each following element upon merge with delayed previous
 		return delayedCopy.zipWith( () -> it, ( t, t_next ) ->

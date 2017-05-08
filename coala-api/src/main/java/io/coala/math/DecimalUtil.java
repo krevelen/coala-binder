@@ -324,6 +324,28 @@ public class DecimalUtil implements Util
 
 	/**
 	 * @param value
+	 * @param subtrahend
+	 * @return the {@link BigDecimal} subtraction
+	 */
+	public static BigDecimal subtract( final Number value,
+		final Number subtrahend )
+	{
+		return valueOf( value ).subtract( valueOf( subtrahend ),
+				DEFAULT_CONTEXT );
+	}
+
+	/**
+	 * @param value
+	 * @param augend
+	 * @return the {@link BigDecimal} addition
+	 */
+	public static BigDecimal add( final Number value, final Number augend )
+	{
+		return valueOf( value ).add( valueOf( augend ), DEFAULT_CONTEXT );
+	}
+
+	/**
+	 * @param value
 	 * @param multiplicand
 	 * @return the {@link BigDecimal} multiplication
 	 */
@@ -448,6 +470,6 @@ public class DecimalUtil implements Util
 	 */
 	public static boolean isZero( final Number value )
 	{
-		return signum(value ) == 0;
+		return signum( value ) == 0;
 	}
 }

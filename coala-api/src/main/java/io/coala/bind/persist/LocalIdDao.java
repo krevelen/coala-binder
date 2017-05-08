@@ -77,7 +77,8 @@ import io.reactivex.Observable;
 		@UniqueConstraint( columnNames =
 		{ LocalIdDao.CONTEXT_COLUMN_NAME, LocalIdDao.PARENT_COLUMN_NAME } ) } )
 @Inheritance( strategy = InheritanceType.SINGLE_TABLE )
-public class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
+//SINGLE_TABLE preferred, see https://en.wikibooks.org/wiki/Java_Persistence/Inheritance
+public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 {
 	/** constant used in {@link Table @Table} column constraint specification */
 	public static final String VALUE_COLUMN_NAME = "VALUE";

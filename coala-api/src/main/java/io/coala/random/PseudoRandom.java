@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.SortedMap;
 
@@ -37,11 +38,13 @@ import org.aeonbits.owner.Converter;
 import com.eaio.uuid.UUID;
 
 import io.coala.config.GlobalConfig;
+import io.coala.exception.Thrower;
 import io.coala.json.Wrapper.Util;
 import io.coala.math.DecimalUtil;
 import io.coala.name.Id;
 import io.coala.name.Identified;
 import io.coala.util.ArrayUtil;
+import io.reactivex.Observable;
 
 /**
  * {@link PseudoRandom} generates a stream of pseudo-random numbers, with an API
@@ -88,93 +91,170 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	/** @see Random#nextLong() */
 	long nextLong();
 
+	/** @see Random#nextInt(int) */
+	default long nextLong( long bound )
+	{
+		if( bound < 0 ) return Thrower.throwNew( IllegalArgumentException.class,
+				"bound < 0" );
+		long r = nextBigInteger( 1, 63 ).longValue();
+		long m = bound - 1;
+		if( (bound & m) == 0 ) // i.e., bound is a power of 2
+			r = (int) ((bound * (long) r) >> 31);
+		else
+		{
+			for( long u = r; u - (r = u % bound)
+					+ m < 0; u = nextBigInteger( 1, 63 ).longValue() )
+				;
+		}
+		return r;
+	}
+
 	/** @see Random#nextFloat() */
 	float nextFloat();
 
-	/** @see Random#nextDouble() */
+	/**
+	 * @return next {@link Double} (i.e. 64-bit precision) floating-point value
+	 *         &isin; [0,1]
+	 * 
+	 * @see Random#nextDouble()
+	 */
 	double nextDouble();
 
 	/** @see Random#nextGaussian() */
 	double nextGaussian();
 
-	/** draw with 128-bits precision (c.q. {@link MathContext#DECIMAL128}) */
+	/** @return next 128-bits positive {@link BigInteger} */
 	default BigInteger nextBigInteger()
 	{
-		return nextBigInteger( 128 );
+		return nextBigInteger( 1, 128 );
 	}
 
-	default BigInteger nextBigInteger( int numBits )
+	/** @return next numBits-precision {@link BigInteger} with given signum */
+	default BigInteger nextBigInteger( final int signum, final int numBits )
 	{
-		return new BigInteger( 1, nextBits( numBits ) );
+		return new BigInteger( signum, nextBits( numBits ) );
 	}
 
-	/**
-	 * draw &isin;[0,1], TODO: 128-bits precision (c.q.
-	 * {@link MathContext#DECIMAL128})
-	 */
+	/** @return next 64-bit/double precision {@link BigDecimal} &isin; [0,1] */
 	default BigDecimal nextBigDecimal()
 	{
 		return DecimalUtil.valueOf( nextDouble() );
 	}
 
+	/**
+	 * @return next <em>n</em>-bit precision {@link BigDecimal} &isin; [0,1],
+	 *         e.g. {@code numBits=128} for {@link MathContext#DECIMAL128}
+	 */
 	default BigDecimal nextBigDecimal( int numBits )
 	{
 		return DecimalUtil.valueOf( nextBits( numBits ) );
 	}
 
 	/**
-	 * @param elements
-	 * @return
+	 * @param elements an ordered collection
+	 * @return next element drawn with uniform probability
 	 */
 	default <E> E nextElement( final List<E> elements )
 	{
-		if( elements == null || elements.isEmpty() ) return null;
+		if( Objects.requireNonNull( elements ).isEmpty() )
+			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
 		if( elements.size() == 1 ) return elements.get( 0 );
 		return nextElement( elements, 0, elements.size() - 1 );
 	}
 
 	/**
-	 * @param elements
-	 * @return
+	 * 0 =< min =< max =< (n - 1)
+	 * 
+	 * @param elements non-empty ordered set
+	 * @param min lower index bound (inclusive) 0 =< min =< max
+	 * @param max upper index bound (exclusive) max > 0
+	 * @return element at the next index drawn with uniform probability
+	 * @see Random#nextInt(int)
 	 */
 	default <E> E nextElement( final List<E> elements, final int min,
 		final int max )
 	{
-		if( elements == null || elements.isEmpty() ) return null;
-		if( min < 0 || min >= elements.size() || max < min
-				|| max >= elements.size() )
-			throw new IllegalArgumentException();
+		// sanity check
+		if( Objects.requireNonNull( elements ).isEmpty() )
+			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
+		if( min < 0 ) return Thrower.throwNew( IllegalArgumentException.class,
+				"min < 0" );
+		if( min >= elements.size() ) return Thrower
+				.throwNew( ArrayIndexOutOfBoundsException.class, "min > size" );
+		if( max < min ) return Thrower.throwNew( IllegalArgumentException.class,
+				"max < min" );
+		if( max > elements.size() ) return Thrower
+				.throwNew( ArrayIndexOutOfBoundsException.class, "max > size" );
 		if( elements.size() == 1 ) return elements.get( 0 );
-		return elements.get( 1 + min + nextInt( max ) );
+		return elements.get( min + nextInt( max - min ) );
 	}
 
 	/**
-	 * NOTE that if the {@link Collection} is not ordered, e.g. a
-	 * {@link HashSet}, then results are not guaranteed reproducible
+	 * <b>NOTE</b> if the elements are not ordered, e.g. a {@link HashSet}, then
+	 * results are not guaranteed to be reproducible
 	 * 
 	 * @param elements the {@link Collection}
-	 * @return the next random element
+	 * @return element at the next index drawn with uniform probability
 	 */
 	default <E> E nextElement( final Collection<E> elements )
 	{
 		if( elements instanceof List ) return nextElement( (List<E>) elements );
-		if( elements == null || elements.isEmpty() ) return null;
+		if( Objects.requireNonNull( elements ).isEmpty() )
+			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
 		return nextElement( elements, elements.size() - 1 );
 	}
 
 	/**
-	 * NOTE that if the {@link Collection} is not ordered, e.g. a
-	 * {@link HashSet}, then results are not guaranteed reproducible
+	 * <b>NOTE</b> if the elements are not ordered, e.g. a {@link HashSet}, then
+	 * results are not guaranteed to be reproducible
 	 * 
 	 * @param elements the {@link Collection}
-	 * @return the next random element
+	 * @param max bound > 0 (exclusive)
+	 * @return element at the next index drawn with uniform probability
+	 * @see Random#nextInt(int)
 	 */
-	default <E> E nextElement( final Collection<E> elements, final int cutoff )
+	default <E> E nextElement( final Collection<E> elements, final long max )
 	{
 		if( elements instanceof List )
-			return nextElement( (List<E>) elements, 0, cutoff - 1 );
-		if( elements == null || elements.isEmpty() ) return null;
-		return nextElement( (Iterable<E>) elements, cutoff );
+			return nextElement( (List<E>) elements, 0, (int) max );
+		if( Objects.requireNonNull( elements ).isEmpty() )
+			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
+		return nextElement( (Iterable<E>) elements, max );
+	}
+
+	/**
+	 * <b>NOTE</b> if the elements are not ordered, e.g. a {@link HashSet}, then
+	 * results are not guaranteed to be reproducible
+	 * 
+	 * @param elements the {@link Iterable}
+	 * @param max bound > 0 (exclusive)
+	 * @return the next random element
+	 * @see Random#nextInt(int)
+	 */
+	default <E> E nextElement( final Iterable<E> elements, final long max )
+	{
+		if( elements instanceof List )
+			return nextElement( (List<E>) elements, 0, (int) max );
+
+		final Iterator<E> it = Objects.requireNonNull( elements ).iterator();
+		for( long i = 0, n = nextLong( max ); it.hasNext(); it.next() )
+			if( n == i++ ) return it.next();
+
+		return Thrower.throwNew( IllegalStateException.class, "unexpected" );
+	}
+
+	/**
+	 * <b>NOTE</b> if the elements are not {@link Observable#sorted()}, then
+	 * results are not guaranteed to be reproducible
+	 * 
+	 * @param elements the {@link Observable} stream
+	 * @param max bound > 0 (exclusive)
+	 * @return the next random element
+	 * @see Random#nextInt(int)
+	 */
+	default <E> E nextElement( final Observable<E> elements, final long max )
+	{
+		return elements.elementAt( nextLong( max - 1 ) ).blockingGet();
 	}
 
 	/**
@@ -183,43 +263,19 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	 */
 	default <K, V> Map.Entry<K, V> nextEntry( final SortedMap<K, V> elements )
 	{
-		if( elements == null || elements.isEmpty() ) return null;
 		return nextElement( elements.entrySet(), elements.size() );
 	}
 
 	/**
-	 * NOTE that if the {@link Map} is not ordered, e.g. a {@link HashMap}, then
-	 * results are not guaranteed reproducible
+	 * <b>NOTE</b> if the elements are not ordered, e.g. a {@link HashMap}, then
+	 * results are not guaranteed to be reproducible
 	 * 
 	 * @param elements the {@link Map}
 	 * @return the next random element
 	 */
 	default <K, V> Map.Entry<K, V> nextEntry( final Map<K, V> elements )
 	{
-		if( elements == null || elements.isEmpty() ) return null;
 		return nextElement( elements.entrySet(), elements.size() );
-	}
-
-	/**
-	 * NOTE that if the {@link Iterable} is not ordered, e.g. a {@link HashSet},
-	 * then results are not guaranteed reproducible
-	 * 
-	 * @param elements the {@link Iterable}
-	 * @param bound n
-	 * @return the next random element
-	 */
-	default <E> E nextElement( final Iterable<E> elements, final int bound )
-	{
-		if( elements instanceof List )
-			return nextElement( (List<E>) elements, 0, bound - 1 );
-		if( elements == null || bound < 1 ) return null;
-		final Iterator<E> it = elements.iterator();
-		for( int i = 0, n = nextInt( bound ); it.hasNext(); i++ )
-			if( i == n )
-				return it.next();
-			else
-				it.next();
-		throw new IllegalStateException();
 	}
 
 	/**

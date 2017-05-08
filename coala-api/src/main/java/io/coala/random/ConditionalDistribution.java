@@ -63,6 +63,19 @@ public interface ConditionalDistribution<T, C>
 	/**
 	 * @param <T> the type of value drawn by the conditional distributions
 	 * @param <C> the type of condition for selecting a distribution
+	 * @param distGen distribution factory / generator / cache
+	 * @return a {@link ConditionalDistribution}
+	 */
+	static <T, C> ConditionalDistribution<T, C>
+		of( final Function<C, ProbabilityDistribution<T>> distGen )
+	{
+		Objects.requireNonNull( distGen );
+		return c -> distGen.apply( c ).draw();
+	}
+
+	/**
+	 * @param <T> the type of value drawn by the conditional distributions
+	 * @param <C> the type of condition for selecting a distribution
 	 * @param <X> the type of parameter for generating a distribution
 	 * @param distGen distribution generator taking one parameter
 	 * @param param1Gen generator of the first parameter given the condition

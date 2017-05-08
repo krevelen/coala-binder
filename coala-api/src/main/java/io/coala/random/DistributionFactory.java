@@ -20,11 +20,22 @@
 package io.coala.random;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import io.coala.exception.Thrower;
 import io.coala.math.DecimalUtil;
+import io.coala.math.Range;
 import io.coala.math.WeightedValue;
+import io.coala.util.Compare;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 
 /**
  * The basic {@link DistributionFactory} only supports deterministic,
@@ -90,26 +101,36 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 	}
 
 	@Override
-	public <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
-		createCategorical( final Iterable<WV> probabilities )
+	public <T, WV extends WeightedValue<T>> Single<ProbabilityDistribution<T>>
+		createCategorical( final Observable<WV> probabilities )
 	{
-		final BigDecimal total = StreamSupport
-				.stream( probabilities.spliterator(), true )
-				.map( wv -> DecimalUtil
-						.valueOf( wv.getWeight().doubleValue() ) )
-				.reduce( BigDecimal::add ).orElse( BigDecimal.ZERO );
-		return () ->
+		return Single.<ProbabilityDistribution<T>>fromCallable( () ->
 		{
-			BigDecimal sum = BigDecimal.ZERO,
-					stop = total.multiply( getStream().nextBigDecimal() );
-			for( WV wv : probabilities )
+			// async iteration
+			final Map<T, BigDecimal> map = probabilities
+					.toMap( wv -> wv.getValue(),
+							wv -> DecimalUtil.valueOf( wv.getWeight() ),
+							TreeMap::new )
+					.blockingGet();
+			// sanity check
+			if( map.isEmpty() ) return Thrower
+					.throwNew( IllegalArgumentException.class, "empty" );
+
+			// sync iteration
+			final BigDecimal total = map.values().parallelStream()
+					.reduce( BigDecimal::add ).orElse( BigDecimal.ZERO );
+			return () ->
 			{
-				sum = sum.add( DecimalUtil.valueOf( wv.getWeight() ) );
-				if( sum.compareTo( stop ) < 0 ) continue;
-				return wv.getValue();
-			}
-			return null;
-		};
+				final BigDecimal sum_n = DecimalUtil.multiply( total,
+						getStream().nextBigDecimal() );
+				BigDecimal sum_i = BigDecimal.ZERO;
+				for( Map.Entry<T, BigDecimal> wv : map.entrySet() )
+					if( Compare.ge( sum_i = sum_i.add( wv.getValue() ),
+							sum_n ) )
+						return wv.getKey();
+				return null;
+			};
+		} );
 	}
 
 	@Override
@@ -181,12 +202,41 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 				"exponential" );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	@Override
-	public <T extends Number> ProbabilityDistribution<Double>
-		createEmpirical( final T... values )
+	public <T extends Number> ProbabilityDistribution<Double> createEmpirical(
+		final Iterable<? extends Number> observations, final int binCount )
 	{
-		return () -> values[getStream().nextInt( values.length )].doubleValue();
+		// sanity check
+		if( binCount < 1 ) return Thrower
+				.throwNew( IllegalArgumentException.class, "n_bins < 1" );
+		final TreeMap<BigDecimal, Long> counts = StreamSupport
+				.stream( Objects.requireNonNull( observations ).spliterator(),
+						true )
+				.collect( Collectors.groupingBy( DecimalUtil::valueOf,
+						TreeMap::new, Collectors.counting() ) );
+		if( counts.size() < binCount ) return Thrower
+				.throwNew( IllegalArgumentException.class, "|n| < n_bins" );
+
+		final BigDecimal binSize = DecimalUtil.divide(
+				counts.lastKey().subtract( counts.firstKey() ), binCount );
+		final List<Range<BigDecimal>> bins = IntStream
+				.range( 0,
+						binCount - 1 )
+				.mapToObj( i -> Range.of(
+						counts.firstKey()
+								.add( DecimalUtil.multiply( binSize, i ) ),
+						true,
+						counts.firstKey()
+								.add( DecimalUtil.multiply( binSize, i + 1 ) ),
+						i == binCount - 1 ) )
+				.collect( Collectors.toList() );
+
+		// FIXME use Gaussians per bin, i.e. createNormal( bin_mean, bin_stdev )
+		final ConditionalDistribution<BigDecimal, Range<BigDecimal>> dist = ConditionalDistribution
+				.of( this::createCategorical, range -> WeightedValue
+						.listOf( range.apply( counts ) ) );
+
+		return () -> dist.draw( getStream().nextElement( bins ) ).doubleValue();
 	}
 
 	@Override
@@ -251,29 +301,45 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 				"student-t" );
 	}
 
+	public <T extends Number> ProbabilityDistribution<BigDecimal>
+		createTriangular( final Supplier<T> supplier, final T min, final T max,
+			final T mode )
+	{
+		final BigDecimal modeBD = DecimalUtil.valueOf( mode ),
+				minBD = DecimalUtil.valueOf( min ),
+				maxBD = DecimalUtil.valueOf( max ),
+				lower = modeBD.subtract( minBD ),
+				upper = maxBD.subtract( modeBD ),
+				total = maxBD.subtract( minBD ),
+				lowerDivTotal = DecimalUtil.divide( lower, total ),
+				lowerTimesTotal = DecimalUtil.multiply( lower, total ),
+				upperTimesTotal = DecimalUtil.multiply( upper, total );
+		return ProbabilityDistribution
+				.of( supplier::get ).map(
+						DecimalUtil::valueOf )
+				.map( p -> Compare.lt( p, lowerDivTotal )
+						? DecimalUtil.add( minBD,
+								DecimalUtil
+										.sqrt( p.multiply( lowerTimesTotal ) ) )
+						: DecimalUtil.subtract( maxBD,
+								DecimalUtil.sqrt( BigDecimal.ONE.subtract( p )
+										.multiply( upperTimesTotal ) ) ) );
+	}
+
 	@Override
 	public ProbabilityDistribution<Double> createTriangular( final Number min,
 		final Number max, final Number mode )
 	{
-		final double lower = mode.doubleValue() - min.doubleValue();
-		final double upper = max.doubleValue() - mode.doubleValue();
-		final double total = max.doubleValue() - min.doubleValue();
-		return () ->
-		{
-			final double p = getStream().nextDouble();
-			return p < lower / total
-					? min.doubleValue() + StrictMath.sqrt( p * lower * total )
-					: max.doubleValue()
-							- StrictMath.sqrt( (1 - p) * upper * total );
-		};
+		return createTriangular( getStream()::nextDouble, min, max, mode )
+				.map( DecimalUtil::doubleValue );
 	}
 
 	@Override
 	public ProbabilityDistribution<Long>
 		createUniformDiscrete( final Number min, final Number max )
 	{
-		return () -> (long) min.intValue()
-				+ getStream().nextInt( max.intValue() - min.intValue() );
+		final long lower = min.longValue();
+		return () -> lower + getStream().nextLong( max.longValue() - lower );
 	}
 
 	@Override
@@ -286,10 +352,14 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public <T> ProbabilityDistribution<T>
-		createUniformCategorical( final T... values )
+	public <T> Single<ProbabilityDistribution<T>>
+		createUniformCategorical( final Observable<T> values )
 	{
-		return () -> values[getStream().nextInt( values.length )];
+		return Single.<ProbabilityDistribution<T>>fromCallable( () ->
+		{
+			final List<T> list = values.toList().blockingGet();
+			return () -> getStream().nextElement( list );
+		} );
 	}
 
 	@Override

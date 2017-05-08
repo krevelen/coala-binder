@@ -47,7 +47,7 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 	}
 
 	public static <V> List<WeightedValue<V>>
-		of( final Map<V, ? extends Number> weights )
+		listOf( final Map<V, ? extends Number> weights )
 	{
 		return weights.entrySet().stream().map( WeightedValue::of )
 				.collect( Collectors.toList() );

@@ -16,11 +16,11 @@
 package io.coala.math3;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -62,12 +62,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.LocalBinder;
-import io.coala.exception.ExceptionFactory;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.WeightedValue;
-import io.coala.random.QuantityDistribution;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.PseudoRandom;
+import io.coala.random.QuantityDistribution;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import tec.uom.se.ComparableQuantity;
 
 /**
@@ -155,36 +156,15 @@ public abstract class Math3ProbabilityDistribution<S>
 	}
 
 	/**
-	 * @param valueWeights the {@link List} of {@link WeightedValue}s
-	 * @return a probability mass function as {@link List} of {@link Pair}s
-	 */
-	public static <T, WV extends WeightedValue<T>> List<Pair<T, Double>>
-		toPropabilityMassFunction( final Iterable<WV> valueWeights )
-	{
-		Objects.requireNonNull( valueWeights );
-		final List<Pair<T, Double>> result = new ArrayList<>();
-		for( WeightedValue<T> wv : valueWeights )
-			result.add( Pair.create( Objects.requireNonNull( wv.getValue() ),
-					Objects.requireNonNull( wv.getWeight() ).doubleValue() ) );
-		return result;
-	}
-
-	/**
 	 * @param <T> the type of value
 	 * @param values the value array
 	 * @return a probability mass function as {@link List} of {@link Pair}s
 	 */
-	@SuppressWarnings( "unchecked" )
 	public static <T> List<Pair<T, Double>>
-		toPropabilityMassFunction( final T... values )
+		toPropabilityMassFunction( final Observable<T> values )
 	{
 		final Double w = Double.valueOf( 1d );
-		final List<Pair<T, Double>> pmf = new ArrayList<>();
-		if( values == null || values.length == 0 )
-			throw ExceptionFactory.createUnchecked( "Must have some value(s)" );
-		for( T value : values )
-			pmf.add( Pair.create( value, w ) );
-		return pmf;
+		return values.map( t -> Pair.create( t, w ) ).toList().blockingGet();
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -271,14 +251,20 @@ public abstract class Math3ProbabilityDistribution<S>
 		}
 
 		@Override
-		public <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
-			createCategorical( final Iterable<WV> probabilities )
+		public <T, WV extends WeightedValue<T>>
+			Single<ProbabilityDistribution<T>>
+			createCategorical( final Observable<WV> probabilities )
 		{
-			return Math3ProbabilityDistribution
-					.of( new EnumeratedDistribution<T>( this.rng,
-							toPropabilityMassFunction( probabilities ) )
-			//, this.stream, probabilities
-			);
+			return Single.<ProbabilityDistribution<T>>fromCallable( () ->
+			{
+				return Math3ProbabilityDistribution.of(
+						new EnumeratedDistribution<T>( this.rng, probabilities
+								.map( wv -> Pair.create(
+										Objects.requireNonNull( wv.getValue() ),
+										Objects.requireNonNull( wv.getWeight() )
+												.doubleValue() ) )
+								.toList().blockingGet() ) );
+			} );
 		}
 
 		@Override
@@ -376,17 +362,17 @@ public abstract class Math3ProbabilityDistribution<S>
 			);
 		}
 
-		@SuppressWarnings( "unchecked" )
 		@Override
 		public <T extends Number> ProbabilityDistribution<Double>
-			createEmpirical( final T... values )
+			createEmpirical( final Iterable<? extends Number> observations,
+				final int binCount )
 		{
 			final EmpiricalDistribution result = new EmpiricalDistribution(
-					values.length / 10, this.rng );
-			result.load( toDoubles( values ) );
-			return Math3ProbabilityDistribution.of( result
-//					, this.stream, values 
-			);
+					binCount, this.rng );
+			result.load(
+					StreamSupport.stream( observations.spliterator(), true )
+							.mapToDouble( Number::doubleValue ).toArray() );
+			return Math3ProbabilityDistribution.of( result );
 		}
 
 		@Override
@@ -517,14 +503,15 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public <T> ProbabilityDistribution<T>
-			createUniformCategorical( final T... values )
+		public <T> Single<ProbabilityDistribution<T>>
+			createUniformCategorical( final Observable<T> values )
 		{
-			return Math3ProbabilityDistribution
-					.of( new EnumeratedDistribution<T>( this.rng,
-							toPropabilityMassFunction( values ) )
-//					, this.stream, values 
-			);
+			return Single.<ProbabilityDistribution<T>>fromCallable( () ->
+			{
+				return Math3ProbabilityDistribution
+						.of( new EnumeratedDistribution<T>( this.rng,
+								toPropabilityMassFunction( values ) ) );
+			} );
 		}
 	}
 

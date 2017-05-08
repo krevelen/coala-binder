@@ -27,7 +27,6 @@ import static org.apfloat.ApfloatMath.sin;
 import static org.apfloat.ApfloatMath.sqrt;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,6 +44,12 @@ import io.coala.util.Compare;
 import tec.uom.se.ComparableQuantity;
 import tec.uom.se.unit.Units;
 
+/**
+ * {@link LatLong}
+ * 
+ * @version $Id$
+ * @author Rick van Krevelen
+ */
 public class LatLong implements Serializable
 {
 
@@ -120,15 +125,39 @@ public class LatLong implements Serializable
 	 * <a href="https://www.wikiwand.com/en/Haversine_formula">haversine
 	 * formula</a> for great-circle distance
 	 * <p>
-	 * TODO maintain {@link BigDecimal} math precision for sqrt, pow, sin, cos,
-	 * asin, abs arithmetic functions
-	 * 
+	 * NOTE does not take into account any (standard) <a
+	 * href=https://www.wikiwand.com/en/Geodesy>geodesy</a> or any geoidal
+	 * undulation from the ideal or <a
+	 * href=https://www.wikiwand.com/en/Reference_ellipsoid>reference
+	 * ellipsoid</a>
 	 * 
 	 * @param that another {@link LatLong}
 	 * @param unit the {@link Unit} of {@link Angle} measurement
 	 * @return the {@link Amount} of central {@link Angle}
 	 */
 	public ComparableQuantity<Angle> angularDistance( final LatLong that )
+	{
+		return QuantityUtil.valueOf( angularDistance( that ), this.unit );
+	}
+
+	/**
+	 * Calculates the angular distance or central angle between two points on a
+	 * sphere, using the half-versed-sine or
+	 * <a href="https://www.wikiwand.com/en/Haversine_formula">haversine
+	 * formula</a> for great-circle distance
+	 * <p>
+	 * NOTE does not take into account any (standard) <a
+	 * href=https://www.wikiwand.com/en/Geodesy>geodesy</a> or any geoidal
+	 * undulation from the ideal or <a
+	 * href=https://www.wikiwand.com/en/Reference_ellipsoid>reference
+	 * ellipsoid</a>
+	 * 
+	 * @param that another {@link LatLong}
+	 * @param unit the {@link Unit} of {@link Angle} measurement
+	 * @return the {@link ComparableQuantity} of central {@link Angle}
+	 */
+	public ComparableQuantity<Angle> angularDistance( final LatLong that,
+		final Unit<Angle> unit )
 	{
 		final Apfloat lat1 = this.getRadians().get( 0 );
 		final Apfloat lon1 = this.getRadians().get( 1 );
@@ -142,14 +171,8 @@ public class LatLong implements Serializable
 												.divide( TWO ) ), TWO ) ) ) ) ) )
 				.precision( Compare.min( lat1.precision(), lon1.precision(),
 						lat2.precision(), lon2.precision() ) );
-		return QuantityUtil.valueOf( DecimalUtil.valueOf( dist ),
-				Units.RADIAN );
-	}
-
-	public ComparableQuantity<Angle> angularDistance( final LatLong that,
-		final Unit<Angle> unit )
-	{
-		return QuantityUtil.valueOf( angularDistance( that ), unit );
+		return QuantityUtil.valueOf( DecimalUtil.valueOf( dist ), Units.RADIAN )
+				.to( unit );
 	}
 
 	/**
