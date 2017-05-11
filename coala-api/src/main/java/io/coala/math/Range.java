@@ -267,9 +267,14 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 				Compare.min( this.getUpper(), that.getUpper() ) );
 	}
 
-	public <R extends Comparable> Range<R> map( final Function<T, R> mapper )
+	public <R extends Comparable<? super R>> Range<R>
+		map( final Function<T, R> mapper )
 	{
-		return of( getLower().map( mapper ), getUpper().map( mapper ) );
+		final R lower = lowerFinite() ? mapper.apply( lowerValue() ) : null;
+		final R upper = upperFinite() ? mapper.apply( upperValue() ) : null;
+		return Compare.gt( lower, upper )
+				? of( upper, upperInclusive(), lower, lowerInclusive() )
+				: of( lower, lowerInclusive(), upper, upperInclusive() );
 	}
 
 	@Override
