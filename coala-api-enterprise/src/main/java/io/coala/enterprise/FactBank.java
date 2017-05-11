@@ -19,6 +19,7 @@
  */
 package io.coala.enterprise;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -32,9 +33,12 @@ import javax.persistence.NoResultException;
 import io.coala.bind.LocalBinder;
 import io.coala.enterprise.Fact.ID;
 import io.coala.enterprise.persist.FactDao;
+import io.coala.log.LogUtil;
+import io.coala.math.QuantityUtil;
 import io.coala.math.Range;
 import io.coala.persist.JPAUtil;
 import io.coala.time.Instant;
+import io.coala.time.Scheduler;
 import io.reactivex.Observable;
 
 /**
@@ -394,6 +398,53 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 	 * {@link SimpleCache}
 	 */
 	@Singleton
+	public class SimpleDrain implements FactBank<Fact>
+	{
+		@Override
+		public FactBank<Fact> root()
+		{
+			return this;
+		}
+
+		@Override
+		public Observable<?> saveAsync( final Observable<Fact> facts )
+		{
+			return facts.map( f ->
+			{
+				LogUtil.getLogger( SimpleDrain.class ).trace( "Drained {}", f );
+				return f;
+			} );
+		}
+
+		@Override
+		public Fact find( final ID id )
+		{
+			return null;
+		}
+
+		@Override
+		public Observable<Fact> find( final Class<?> typeFilter,
+			final Actor.ID initiatorFilter, final Actor.ID executorFilter,
+			final FactKind kindFilter, final Fact.ID causeFilter,
+			final Actor.ID creatorFilter, final Actor.ID responderFilter,
+			final Range<Instant> occurrenceFilter,
+			final Range<Instant> expirationFilter,
+			final Map<String, Object> propertiesFilter )
+		{
+			return Observable.empty();
+		}
+
+		@Override
+		public void close() throws Exception
+		{
+			// empty
+		}
+	}
+
+	/**
+	 * {@link SimpleCache}
+	 */
+	@Singleton
 	public class SimpleCache implements FactBank<Fact>
 	{
 		private final Map<ID, Fact> cache = new TreeMap<>();
@@ -488,7 +539,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 
 		/** only needed for the timeunit */
 		@Inject
-		private Transaction.Factory txFactory;
+		private Scheduler scheduler;
 
 		// FIXME inject (global) JPAConfig, (re-)create expensive EMF on demand?
 
@@ -544,6 +595,12 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 			}
 		}
 
+		private BigDecimal normalize( final Instant t )
+		{
+			return QuantityUtil.toBigDecimal( t.toQuantity(),
+					this.scheduler.timeUnit() );
+		}
+
 		@Override
 		public Observable<Fact> find( final Class<?> typeFilter,
 			final Actor.ID initiatorFilter, final Actor.ID executorFilter,
@@ -560,11 +617,11 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 				{
 					Observable
 							.fromIterable( FactDao.find( em,
-									this.binder.id().contextRef(),
-									this.txFactory.timeUnit(), typeFilter,
+									this.binder.id().contextRef(), typeFilter,
 									initiatorFilter, executorFilter, kindFilter,
 									causeFilter, creatorFilter, responderFilter,
-									occurrenceFilter, expirationFilter,
+									occurrenceFilter.map( this::normalize ),
+									expirationFilter.map( this::normalize ),
 									propertiesFilter ) )
 							.map( dao -> dao.restore( this.binder ) )
 							.safeSubscribe( sub );

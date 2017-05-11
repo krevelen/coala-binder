@@ -421,7 +421,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 * @param floorLower include the lower bound by flooring it (if possible)
 	 * @return a SortedMap view containing only values of intersecting keys
 	 */
-	public <V> NavigableMap<T, V> subMap( final NavigableMap<T, V> map,
+	public <V> NavigableMap<T, V> apply( final NavigableMap<T, V> map,
 		final boolean floorLower )
 	{
 		if( map.isEmpty() ) return map;

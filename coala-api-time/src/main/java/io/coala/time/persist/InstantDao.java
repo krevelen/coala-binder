@@ -105,19 +105,16 @@ public class InstantDao implements BindableDao<Instant, InstantDao>
 				: Instant.of( QuantityUtil.valueOf( this.str ) );
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public static void addRangeCriteria( final Predicate conjunction,
 		final CriteriaBuilder cb, final Path<?> instantDaoPath,
-		final Range<Instant> instantRange, final Unit timeUnit )
+		final Range<BigDecimal> instantRange )
 	{
 		final Path<? extends Number> numPath = instantDaoPath
 				.get( NUM_ATTR_NAME );
-		final Number lower = QuantityUtil.toBigDecimal(
-				instantRange.lowerValue().toQuantity(), timeUnit );
+		final Number lower = instantRange.lowerValue();
 		conjunction.getExpressions().add( instantRange.lowerInclusive()
 				? cb.ge( numPath, lower ) : cb.gt( numPath, lower ) );
-		final Number upper = QuantityUtil.toBigDecimal(
-				instantRange.lowerValue().toQuantity(), timeUnit );
+		final Number upper = instantRange.lowerValue();
 		conjunction.getExpressions().add( instantRange.lowerInclusive()
 				? cb.le( numPath, upper ) : cb.lt( numPath, upper ) );
 	}

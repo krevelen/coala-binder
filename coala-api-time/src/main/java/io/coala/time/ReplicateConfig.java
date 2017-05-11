@@ -20,11 +20,15 @@
 package io.coala.time;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Year;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.measure.Unit;
 
@@ -77,7 +81,10 @@ public interface ReplicateConfig extends GlobalConfig
 
 	default Unit<?> timeUnit()
 	{
-		return TimeUnits.UNIT_FORMAT.parse( rawTimeUnit() );
+		final String value = Objects.requireNonNull( rawTimeUnit(),
+				TIME_UNIT_KEY + " not set" );
+		return value == null ? TimeUnits.STEPS
+				: TimeUnits.UNIT_FORMAT.parse( value );
 	}
 
 	@Key( OFFSET_KEY )
@@ -85,19 +92,45 @@ public interface ReplicateConfig extends GlobalConfig
 	String rawOffset();
 
 	/**
-	 * @return a {@link ZonedDateTime}, possibly converted from
-	 *         {@link LocalDateTime#parse(CharSequence)} at zone
-	 *         {@link ZoneId#systemDefault()}
+	 * @return a {@link ZonedDateTime}, possibly derived via {@link Year} (at
+	 *         {@linkplain Year#atDay day 1}) or {@link YearMonth} (at
+	 *         {@linkplain YearMonth#atDay day 1}) &rarr; {@link LocalDate} (at
+	 *         {@linkplain LocalDate#atStartOfDay start of day}) &rarr;
+	 *         {@link LocalDateTime} (at {@linkplain ZoneId#systemDefault system
+	 *         default zone})
 	 */
 	default ZonedDateTime offset()
 	{
+		final String value = Objects.requireNonNull( rawOffset(),
+				OFFSET_KEY + " not set" );
 		try
 		{
-			return ZonedDateTime.parse( rawOffset() );
-		} catch( final Exception e )
+			return ZonedDateTime.parse( value );
+		} catch( final Exception e1 )
 		{
-			return LocalDateTime.parse( rawOffset() )
-					.atZone( ZoneId.systemDefault() );
+			try
+			{
+				return LocalDateTime.parse( value )
+						.atZone( ZoneId.systemDefault() );
+			} catch( final Exception e2 )
+			{
+				try
+				{
+					return LocalDate.parse( value )
+							.atStartOfDay( ZoneId.systemDefault() );
+				} catch( final Exception e3 )
+				{
+					try
+					{
+						return YearMonth.parse( value ).atDay( 1 )
+								.atStartOfDay( ZoneId.systemDefault() );
+					} catch( final Exception e4 )
+					{
+						return Year.parse( value ).atDay( 1 )
+								.atStartOfDay( ZoneId.systemDefault() );
+					}
+				}
+			}
 		}
 	}
 
@@ -107,7 +140,8 @@ public interface ReplicateConfig extends GlobalConfig
 
 	default Duration duration()
 	{
-		return Duration.of( rawDuration(), timeUnit() );
+		return Duration.of( Objects.requireNonNull( rawDuration(),
+				DURATION_KEY + " not set" ), timeUnit() );
 	}
 
 	static ReplicateConfig getOrCreate( final Map<?, ?>... imports )

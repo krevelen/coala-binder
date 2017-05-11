@@ -24,7 +24,6 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.math.BigInteger;
@@ -77,7 +76,6 @@ import io.coala.name.Identified;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
 import io.coala.time.Instant;
-import io.coala.util.ReflectUtil;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.subjects.PublishSubject;
@@ -89,8 +87,8 @@ import io.reactivex.subjects.Subject;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface Fact
-	extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>, Attributed//<Fact>
+public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
+	Attributed.Publisher
 {
 	String TRANSACTION_JSON_PROPERTY = "transaction";
 
@@ -235,7 +233,7 @@ public interface Fact
 
 	default ZonedDateTime offset()
 	{
-		return transaction().offset();
+		return transaction().scheduler().offset();
 	}
 
 	/**
@@ -280,57 +278,14 @@ public interface Fact
 
 	/**
 	 * @param subtype the type of {@link Fact} to mimic
-	 * @param callObserver an {@link Observer} of method call, or {@code null}
+	 * @param callObserver an (optional) {@link Observer} of methods called
 	 * @return the {@link Proxy} instance
 	 */
 	@SuppressWarnings( "unchecked" )
 	default <F extends Fact> F proxyAs( final Class<F> subtype,
 		final Observer<Method> callObserver )
 	{
-		return proxyAs( this, subtype, callObserver );
-	}
-
-	/**
-	 * @param subtype the type of {@link Fact} to mimic
-	 * @param callObserver an {@link Observer} of method call, or {@code null}
-	 * @return the {@link Proxy} instance
-	 */
-	@SuppressWarnings( "unchecked" )
-	static <F extends Fact> F proxyAs( final Fact impl, final Class<F> subtype,
-		final Observer<Method> callObserver )
-	{
-		final F proxy = (F) Proxy.newProxyInstance( subtype.getClassLoader(),
-				new Class<?>[]
-		{ subtype }, ( self, method, args ) ->
-		{
-			try
-			{
-				final Object result = method.isDefault()
-						&& Proxy.isProxyClass( self.getClass() )
-								? ReflectUtil.invokeDefaultMethod( self, method,
-										args )
-								: method.invoke( impl, args );
-				if( callObserver != null ) callObserver.onNext( method );
-				return result;
-			} catch( Throwable e )
-			{
-				if( e instanceof IllegalArgumentException ) try
-				{
-					return ReflectUtil.invokeAsBean( impl.properties(), subtype,
-							method, args );
-				} catch( final Exception ignore )
-				{
-					LogUtil.getLogger( Fact.class ).warn(
-							"{}method call failed: {}",
-							method.isDefault() ? "default " : "", method,
-							ignore );
-				}
-				if( e instanceof InvocationTargetException ) e = e.getCause();
-				if( callObserver != null ) callObserver.onError( e );
-				throw e;
-			}
-		} );
-		return proxy;
+		return Attributed.createProxyInstance( this, subtype, callObserver );
 	}
 
 	// @JsonValue
@@ -690,9 +645,9 @@ public interface Fact
 		public <F extends Fact> F proxyAs( final Class<F> subtype,
 			final Observer<Method> callObserver )
 		{
-			final F proxy = Fact.proxyAs( this, subtype, callObserver );
-			this.proxy = proxy;
-			return proxy;
+			this.proxy = Attributed.createProxyInstance( this, subtype,
+					callObserver );
+			return (F) this.proxy;
 		}
 	}
 

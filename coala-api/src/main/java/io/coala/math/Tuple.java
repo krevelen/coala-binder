@@ -27,7 +27,7 @@ import java.util.List;
 import io.coala.util.Comparison;
 
 /**
- * {@link Tuple} is a {@link List} of any {@link Comparable} entries, made
+ * {@link Tuple} is a fixed-size vector of any {@link Comparable} entries, made
  * ordinal with a piece-wise comparison implementation
  * 
  * @version $Id$
@@ -47,7 +47,7 @@ public class Tuple implements Comparable<Tuple>
 		return of( Arrays.asList( o ) );
 	}
 
-	public static <T extends Comparable<?>> Tuple of( final Iterable<T> values )
+	public static <T extends Comparable<?>> Tuple of( final List<T> values )
 	{
 		if( values instanceof List ) return new Tuple( (List<T>) values );
 		final List<T> list = new ArrayList<>();

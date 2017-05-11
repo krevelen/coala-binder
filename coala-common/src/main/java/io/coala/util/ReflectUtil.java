@@ -1,6 +1,5 @@
 package io.coala.util;
 
-import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -9,13 +8,17 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import javax.inject.Inject;
 
 import io.coala.exception.Thrower;
+import io.reactivex.Observer;
 
 /**
  * {@link ReflectUtil}
@@ -31,6 +34,59 @@ public class ReflectUtil implements Util
 	 */
 	private ReflectUtil()
 	{
+		// empty
+	}
+
+	/**
+	 * <p>
+	 * TODO enable/recognize builder-type (i.e. chaining 'with*') setters?
+	 * 
+	 * @param impl
+	 * @param intfType
+	 * @param properties
+	 * @param callObserver
+	 * @return
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <T> T createProxyInstance( final Object impl,
+		final Class<T> intfType, final Supplier<Map<String, Object>> properties,
+		final Observer<Method> callObserver )
+	{
+		return (T) Proxy.newProxyInstance( intfType.getClassLoader(),
+				new Class<?>[]
+		{ intfType }, ( proxy, method, args ) ->
+		{
+			try
+			{
+				final Object result;
+				if( method.isDefault() )
+				{
+					// method is Java8 'default' declaration
+					result = invokeDefaultMethod( proxy, method, args );
+				} else if( method.getDeclaringClass().isInstance( impl ) )
+				{
+					// method declared in intfType and/or impl
+					result = method.invoke( impl, args );
+				} else
+				{
+					// bean read(get)/write(set) method
+					result = invokeAsBean( properties.get(), intfType, method,
+							args == null || args.length == 0 ? null : args[0] );
+				}
+				if( callObserver != null ) callObserver.onNext( method );
+				return result;
+
+			} catch( final Throwable e )
+			{
+//				LogUtil.getLogger( ReflectUtil.class )
+//						.warn( LogUtil.messageOf( "Failed call {}(..) @ {}: {}",
+//								method.getName(), intfType.getSimpleName() ),
+//								e );
+//				if( e instanceof InvocationTargetException ) e = e.getCause();
+				if( callObserver != null ) callObserver.onError( e );
+				throw e;
+			}
+		} );
 	}
 
 	public static Method getAccessibleMethod( final Class<?> valueType,
@@ -94,30 +150,60 @@ public class ReflectUtil implements Util
 		}
 	}
 
+	private static final Map<Method, PropertyDescriptor> BEAN_INFO_CACHE = new HashMap<>();
+
 	/**
 	 * match bean read method to bean property
-	 * <p>
-	 * TODO enable/recognize builder-type (i.e. chaining 'with*') setters?
 	 * 
-	 * @param beanType
-	 * @param properties
-	 * @param method
-	 * @param args
-	 * @return
-	 * @throws IntrospectionException
+	 * @param properties the value store
+	 * @param beanType the concrete bean type
+	 * @param method the called read(get)/write(set)-method
+	 * @param value the value to set, or {@code null} to remove
+	 * @return the current (get) or previous (set) value (possibly {@code null})
 	 */
 	public static Object invokeAsBean( final Map<String, Object> properties,
-		final Class<?> beanType, final Method method, final Object... args )
-		throws IntrospectionException
+		final Class<?> beanType, final Method method, final Object value )
 	{
-		final BeanInfo beanInfo = Introspector.getBeanInfo( beanType );
-		for( PropertyDescriptor pd : beanInfo.getPropertyDescriptors() )
-			if( method.equals( pd.getReadMethod() ) )
-				return properties.get( pd.getName() );
-			else if( method.equals( pd.getWriteMethod() ) )
-				return properties.put( pd.getName(), args[0] );
-		return Thrower.throwNew( IllegalArgumentException.class,
-				"Can't invoke {} as bean method", method );
+		final PropertyDescriptor prop = BEAN_INFO_CACHE.computeIfAbsent( method,
+				key ->
+				{
+					try
+					{
+						for( PropertyDescriptor pd : Introspector
+								.getBeanInfo( beanType )
+								.getPropertyDescriptors() )
+							if( method.equals( pd.getReadMethod() )
+									|| method.equals( pd.getWriteMethod() ) )
+								return pd;
+
+						// see http://stackoverflow.com/q/185004/1418999
+						for( Class<?> intf : beanType.getInterfaces() )
+							for( PropertyDescriptor pd : Introspector
+									.getBeanInfo( intf )
+									.getPropertyDescriptors() )
+								if( method.equals( pd.getReadMethod() )
+										|| method
+												.equals( pd.getWriteMethod() ) )
+									return pd;
+						return null;
+					} catch( final IntrospectionException e )
+					{
+						return Thrower.rethrowUnchecked( e );
+					}
+				} );
+		if( prop == null )
+			return Thrower.throwNew( IllegalArgumentException.class,
+					"Not a bean write(set)/read(get)-method"
+							+ ", or undeclared in (interfaces of) {}: {}",
+					beanType, method );
+
+		if( method.equals( prop.getReadMethod() ) )
+			return properties.get( prop.getName() );
+
+		// some stores can't accept null-values, so remove them
+		if( value == null ) return properties.remove( prop.getName() );
+
+		return properties.put( prop.getName(), value );
 	}
 
 	/**

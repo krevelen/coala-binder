@@ -183,9 +183,13 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 								contextRef ) ) ) );
 	}
 
+//	private static final Map<LocalId, LocalIdDao> cache = new ConcurrentHashMap<>();
+
 	//@Transactional
 	public static LocalIdDao find( final EntityManager em, final LocalId id )
 	{
+//		return cache.computeIfAbsent( id, key ->
+//		{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );
 		final LocalIdDao parentRef = id.parentRef().parentRef() == null ? null
 				: find( em, id.parentRef() );
@@ -196,17 +200,21 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 			final CriteriaQuery<LocalIdDao> qry = cb
 					.createQuery( LocalIdDao.class );
 			final Root<LocalIdDao> root = qry.from( LocalIdDao.class );
-			return em
-					.createQuery( qry.select( root ).where( cb.and( cb.equal(
-							root.get( LocalIdDao_.contextRef ), contextRef ),
-							cb.equal( root.get( LocalIdDao_.value ), value ),
-							cb.equal( root.get( LocalIdDao_.parentRef ),
-									parentRef ) ) ) )
+			final Predicate filter = cb.and();
+			filter.getExpressions().add( cb
+					.equal( root.get( LocalIdDao_.contextRef ), contextRef ) );
+			filter.getExpressions()
+					.add( cb.equal( root.get( LocalIdDao_.value ), value ) );
+			filter.getExpressions().add(
+//			parentRef != null ? cb.isNull( root.get( LocalIdDao_.parentRef ) ) :
+					cb.equal( root.get( LocalIdDao_.parentRef ), parentRef ) );
+			return em.createQuery( qry.select( root ).where( filter ) )
 					.getSingleResult();
 		} catch( final NoResultException ignore )
 		{
 			return null;
 		}
+//		} );
 	}
 
 	//@Transactional // not really
@@ -214,7 +222,7 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );
 		final LocalIdDao parentRef = Objects.requireNonNull( id.parentRef() )
-				.parentRef() == null ? null : id.parentRef().persist( em );
+				.parentRef() == null ? null : id.persist( em );
 		final UUID contextRef = Objects.requireNonNull( id.contextRef() );
 
 		final LocalIdDao result = new LocalIdDao();

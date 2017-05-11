@@ -27,9 +27,32 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import io.coala.exception.Thrower;
+import io.coala.math.Tuple;
 
 /**
- * {@link ConditionalDistribution}
+ * {@link ConditionalDistribution} maps conditions to their respective
+ * <em>univariate</em> distributions.
+ * 
+ * <p>
+ * HINT For multi-dimensional conditions consider using {@link Tuple}s, e.g.
+ * 
+ * <pre>
+ * {@code 
+ProbabilityDistribution.Factory myDistFactory = ...
+Map<Tuple, Collection<WeigtedValue<T>>> myWeightsSupplier = ...
+ConditionalDistribution<T, Tuple> myConditionalDist = 
+    ConditionalDistribution.of( myDistFactory::createCategorical, myWeightsSupplier )
+}
+ * </pre>
+ * 
+ * <p>
+ * NOTE For <em>multivariate</em> distributions in discrete cases, consider
+ * using {@link Tuple}s as result categories (e.g.
+ * {@link ProbabilityDistribution.Factory#createCategorical categorical} or
+ * {@link ProbabilityDistribution.Factory#createEmpirical empirical}
+ * distributions), or in continuous cases, using e.g. Gaussian
+ * {@link ProbabilityDistribution.Factory#createMultinormal multinormal}
+ * 
  * 
  * @version $Id$
  * @author Rick van Krevelen

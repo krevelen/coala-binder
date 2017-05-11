@@ -20,18 +20,16 @@
 package io.coala.enterprise;
 
 import java.beans.PropertyChangeEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.text.ParseException;
-import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.Unit;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -54,7 +52,6 @@ import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
-import io.coala.util.ReflectUtil;
 import io.coala.util.TypeArguments;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -73,13 +70,20 @@ import io.reactivex.subjects.Subject;
  * @author Rick van Krevelen
  */
 public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
-	Observer<Fact>, Proactive, LocalBinding, Attributed
+	Observer<Fact>, Proactive, LocalBinding, Attributed.Publisher
 {
 
 	/** setup hook triggered after instantiation/injection is complete */
 	default void onInit()
 	{
-		// empty
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default <A extends Actor<F>> A onRequest( final BiConsumer<A, F> rq )
+	{
+		emit( FactKind.REQUESTED ).subscribe( f -> rq.accept( (A) this, f ),
+				this::onError );
+		return (A) this;
 	}
 
 	/**
@@ -96,8 +100,6 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	{
 		return (A) with( property, value, (Class<A>) role() );
 	}
-
-	Observable<PropertyChangeEvent> emitChanges();
 
 	/**
 	 * TODO {@link Flowable} or {@link Observable} / {@link Single} /
@@ -371,21 +373,11 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		return binder().inject( Factory.class );
 	}
 
-	default Unit<?> timeUnit()
-	{
-		return factory().timeUnit();
-	}
-
-	default ZonedDateTime offset()
-	{
-		return factory().offset();
-	}
-
 	default Observable<Instant> atEach( final Timing when )
 	{
 		try
 		{
-			return atEach( when.offset( offset() ).iterate() );
+			return atEach( when.offset( scheduler().offset() ).iterate() );
 		} catch( final ParseException e )
 		{
 			return Observable.error( e );
@@ -397,7 +389,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	{
 		try
 		{
-			return atEach( when.offset( offset() ).iterate(), what );
+			return atEach( when.offset( scheduler().offset() ).iterate(), what );
 		} catch( final ParseException e )
 		{
 			return Observable.error( e );
@@ -418,7 +410,10 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	/** @return the role or "concrete" type of {@link Actor} */
 	<A extends Actor<? extends F>> Class<A> role();
 
-	/** @return the type of fact or agendum handled by this {@link #role()} */
+	/**
+	 * @return the transaction kind (Fact type arument) or agendum handled by
+	 *         this {@link #role()}
+	 */
 	Class<F> specialism();
 
 	/**
@@ -431,9 +426,9 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	{
 		try
 		{
-			final A specialist = specialist( actorKind );
-			consumer.accept( specialist );
-			return specialist.id();
+			final A role = subRole( actorKind );
+			consumer.accept( role );
+			return role.id();
 		} catch( final Throwable e )
 		{
 			return Thrower.rethrowUnchecked( e );
@@ -446,7 +441,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 *         executor sides of its transaction sub-type(s)
 	 */
 	default <A extends Actor<T>, T extends F> A
-		specialist( final Class<A> actorKind )
+		subRole( final Class<A> actorKind )
 	{
 		return specialist( actorKind, this );
 	}
@@ -455,7 +450,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param actorKind
 	 * @param actorImpl
 	 * @return an actor view for performing either or both of the initiator and
-	 *         executor sides of its transaction sub-type(s)
+	 *         executor sides of its transaction kind (fact type argument)
 	 */
 	<A extends Actor<T>, T extends F> A specialist( Class<A> actorKind,
 		Actor<? super T> actorImpl );
@@ -582,7 +577,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	default <A extends Actor<T>, T extends F> A
 		proxyAs( final Class<A> actorKind, final Observer<Method> callObserver )
 	{
-		return proxyAs( this, actorKind, callObserver );
+		return Attributed.createProxyInstance( this, actorKind, callObserver );
 	}
 
 	/**
@@ -594,54 +589,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	default <A extends Actor<T>, T extends F> A
 		proxyAs( final Actor<? super T> impl, final Class<A> actorKind )
 	{
-		return proxyAs( impl, actorKind, null );
-	}
-
-	/**
-	 * @param impl the implementation to route calls to
-	 * @param actorType the type of {@link Actor} to mimic
-	 * @param callObserver an {@link Observer} of method call, or {@code null}
-	 * @return the {@link Proxy} instance
-	 */
-	@SuppressWarnings( "unchecked" )
-	static <A extends Actor<T>, F extends Fact, T extends F> A proxyAs(
-		final Actor<? super T> impl, final Class<A> actorType,
-		final Observer<Method> callObserver )
-	{
-		final A proxy = (A) Proxy.newProxyInstance( actorType.getClassLoader(),
-				new Class<?>[]
-		{ actorType }, ( self, method, args ) ->
-		{
-			try
-			{
-//				System.err.println( "call " + actorType.getSimpleName() + " # "
-//						+ method.getName() );
-				final Object result = method.isDefault()
-						&& Proxy.isProxyClass( self.getClass() )
-								? ReflectUtil.invokeDefaultMethod( self, method,
-										args )
-								: method.invoke( impl, args );
-				if( callObserver != null ) callObserver.onNext( method );
-				return result;
-			} catch( Throwable e )
-			{
-				if( e instanceof IllegalArgumentException ) try
-				{
-					return ReflectUtil.invokeAsBean( impl.properties(),
-							actorType, method, args );
-				} catch( final Exception ignore )
-				{
-					LogUtil.getLogger( Fact.class ).warn(
-							"bean {}method call failed: {}",
-							method.isDefault() ? "default " : "", method,
-							ignore );
-				}
-				if( e instanceof InvocationTargetException ) e = e.getCause();
-				if( callObserver != null ) callObserver.onError( e );
-				throw e;
-			}
-		} );
-		return proxy;
+		return Attributed.createProxyInstance( impl, actorKind, null );
 	}
 
 	/**
@@ -936,12 +884,6 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	interface Factory extends LocalContextual
 	{
 
-		/** @return the {@link ZonedDateTime} offset of virtual time */
-		ZonedDateTime offset();
-
-		/** @return the {@link Unit} of virtual time */
-		Unit<?> timeUnit();
-
 		/**
 		 * @param id the {@link ID} of the new {@link Actor}
 		 * @return a (cached) {@link Actor}
@@ -960,9 +902,6 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 
 			@Inject
 			private transient LocalBinder binder;
-
-			@Inject
-			private transient Transaction.Factory txFactory;
 
 			@Inject
 			private transient FactExchange factExchange;
@@ -992,18 +931,6 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			public LocalId id()
 			{
 				return this.binder.id();
-			}
-
-			@Override
-			public ZonedDateTime offset()
-			{
-				return this.txFactory.offset();
-			}
-
-			@Override
-			public Unit<?> timeUnit()
-			{
-				return this.txFactory.timeUnit();
 			}
 		}
 	}

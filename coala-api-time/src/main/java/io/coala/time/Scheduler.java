@@ -1,12 +1,15 @@
 package io.coala.time;
 
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.measure.Unit;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalBinding;
@@ -14,6 +17,7 @@ import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
 import io.coala.log.LogUtil;
+import io.coala.util.Instantiator;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
@@ -35,15 +39,24 @@ public interface Scheduler extends Proactive, Runnable
 		return this;
 	}
 
+	/** @return the current {@link ReplicateConfig} */
+	ReplicateConfig config();
+
 	/** @return an {@link Observable} stream of {@link Instant}s */
 	Observable<Instant> time();
+
+	Disposable onReset( ThrowingConsumer<Scheduler, ?> consumer );
 
 	default Disposable onReset( ThrowingRunnable<?> runnable )
 	{
 		return onReset( s -> runnable.run() );
 	}
 
-	Disposable onReset( ThrowingConsumer<Scheduler, ?> consumer );
+	/** @return the {@link ZonedDateTime} offset of virtual time */
+	ZonedDateTime offset();
+
+	/** @return the {@link Unit} of virtual time */
+	Unit<?> timeUnit();
 
 	/** continue executing scheduled events until completion */
 	void resume();
@@ -107,7 +120,8 @@ public interface Scheduler extends Proactive, Runnable
 	 * {@link #schedule(Iterable)} and eagerly in {@link #schedule(Observable)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
-	 * @return an {@link Observable} stream of delayed {@link Instant}s
+	 * @return an {@link Observable} stream of delayed {@link Instant}s pushed
+	 *         to any {@link Observable#subscribe} caller
 	 */
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> schedule( final Iterable<Instant> when )
@@ -126,7 +140,7 @@ public interface Scheduler extends Proactive, Runnable
 	 * @param what the {@link Runnable} to execute upon each {@link Instant}
 	 * @return an {@link Observable} stream of {@link Expectation}s for each
 	 *         next {@link Instant}, until completion of simulation time or
-	 *         observed instants or an error occurs
+	 *         source instants or an error occurs
 	 */
 	default <T> Observable<Expectation> schedule( final Iterable<Instant> when,
 		final ThrowingRunnable<?> what )
@@ -138,14 +152,15 @@ public interface Scheduler extends Proactive, Runnable
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
 	 * <p>
 	 * NOTE that the {@link Instant} stream is consumed lazily in
-	 * {@link #schedule(Iterable, ThrowingConsumer)} and eagerly in
-	 * {@link #schedule(Observable, ThrowingConsumer)}
+	 * {@link #schedule(Iterable, ThrowingConsumer)} and IRREPRODUCIBLY parallel
+	 * in {@link #schedule(Observable, ThrowingConsumer)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @param what the {@link Consumer} to execute upon each {@link Instant}
 	 * @return an {@link Observable} stream of {@link Expectation}s for each
-	 *         next {@link Instant}, until completion of simulation time or
-	 *         observed instants or an error occurs
+	 *         next {@link Instant} pushed to any {@link Observable#subscribe}
+	 *         caller until completion of simulation time or source instants or
+	 *         an error occurs
 	 */
 	default <T> Observable<Expectation> schedule( final Iterable<Instant> when,
 		final ThrowingConsumer<Instant, ?> what )
@@ -160,56 +175,40 @@ public interface Scheduler extends Proactive, Runnable
 			{
 				LogUtil.getLogger( Scheduler.class )
 						.error( "Problem in " + what, e );
-//				Thrower.rethrowUnchecked( e );
 				result.onError( e );
 			}
 		}, e ->
 		{
-			// ignore errors, already passed to result Observable
+			// ignore errors, already passed to result Observable by catch(){..}
 		} );
 		return result;
 	}
 
 	/**
 	 * Schedule a stream of values resulting from executing a {@link Callable}
-	 * <p>
-	 * NOTE that the {@link Instant} stream is consumed lazily in
-	 * {@link #schedule(Iterable, Callable)} and eagerly in
-	 * {@link #schedule(Observable, Callable)}
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @param what the {@link Callable} to execute upon each {@link Instant}
-	 * @return an {@link Observable} stream of results, until completion of
+	 * @return an {@link Observable} stream of results pushed to any
+	 *         {@link Observable#subscribe} caller until completion of
 	 *         simulation time or observed instants or an error occurs
 	 */
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default <R> Observable<R> schedule( final Iterable<Instant> when,
 		final Callable<R> what )
 	{
-		return schedule( when ).map( t ->
-		{
-			try
-			{
-				return what.call();
-			} catch( final Throwable e )
-			{
-				return Thrower.rethrowUnchecked( e );
-			}
-		} );
+		return schedule( when ).map( t -> what.call() );
 	}
 
 	/**
 	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
-	 * and optionally observe each {@link Expectation}
-	 * <p>
-	 * NOTE that the {@link Instant} stream is consumed lazily in
-	 * {@link #schedule(Iterable, Observer)} and eagerly in
-	 * {@link #schedule(Observable, Observer)}
+	 * and optionally observe each prior {@link Expectation}, e.g. to cancel one
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
 	 * @param what (optional) {@link Observer} of {@link Expectation}s for each
 	 *            upcoming {@link Instant}
 	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
+	 *         pushed to any {@link Observable#subscribe} caller
 	 */
 	default Observable<Instant> schedule( final Iterable<Instant> when,
 		final Observer<Expectation> what )
@@ -227,18 +226,17 @@ public interface Scheduler extends Proactive, Runnable
 			final Expectation exp = schedule( t_next, delayedCopy::onNext );
 			if( what != null ) what.onNext( exp );
 			return t;
-		} );
+		} )/* .serialize() */;
 	}
 
 	/**
 	 * Delay a stream of {@link Instant}s scheduled on this {@link Scheduler}
 	 * <p>
-	 * NOTE that the {@link Instant} stream is consumed eagerly in
-	 * {@link #schedule(Observable, Observer)} and lazily in
-	 * {@link #schedule(Iterable, Observer)}
+	 * NOTE ensure REPRODUCIBLE scheduling with {@link Observable#serialize()}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
+	 *         pushed to any {@link Observable#subscribe} caller
 	 */
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> schedule( final Observable<Instant> when )
@@ -249,15 +247,14 @@ public interface Scheduler extends Proactive, Runnable
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
 	 * <p>
-	 * NOTE that the {@link Instant} stream is consumed eagerly in
-	 * {@link #schedule(Observer, Observer)} and lazily in
-	 * {@link #schedule(Iterable, Observer)}
+	 * NOTE ensure REPRODUCIBLE scheduling with {@link Observable#serialize()}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @param what the {@link Runnable} to execute upon each {@link Instant}
 	 * @return an {@link Observable} stream of {@link Expectation}s for each
-	 *         next {@link Instant}, until completion of simulation time or
-	 *         observed instants or an error occurs
+	 *         next {@link Instant} pushed to any {@link Observable#subscribe}
+	 *         caller until completion of simulation time or source instants or
+	 *         an error occurs
 	 */
 	default <T> Observable<Expectation> schedule(
 		final Observable<Instant> when, final ThrowingRunnable<?> what )
@@ -268,15 +265,14 @@ public interface Scheduler extends Proactive, Runnable
 	/**
 	 * Schedule a stream of {@link Expectation}s for execution of {@code what}
 	 * <p>
-	 * NOTE that the {@link Instant} stream is consumed eagerly in
-	 * {@link #schedule(Observable, ThrowingConsumer)} and lazily in
-	 * {@link #schedule(Iterable, ThrowingConsumer)}
+	 * NOTE ensure REPRODUCIBLE scheduling with {@link Observable#serialize()}
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @param what the {@link Consumer} to execute upon each {@link Instant}
 	 * @return an {@link Observable} stream of {@link Expectation}s for each
-	 *         next {@link Instant}, until completion of simulation time or
-	 *         observed instants or an error occurs
+	 *         next {@link Instant} pushed to any {@link Observable#subscribe}
+	 *         caller, until completion of simulation time or source instants or
+	 *         an error occurs
 	 */
 	default <T> Observable<Expectation> schedule(
 		final Observable<Instant> when,
@@ -294,7 +290,7 @@ public interface Scheduler extends Proactive, Runnable
 			}
 		}, e ->
 		{
-			// ignore errors, already passed to result Observable
+			// consume errors, as they are already passed to result Observable
 		} );
 		return result;
 	}
@@ -308,7 +304,8 @@ public interface Scheduler extends Proactive, Runnable
 	 * 
 	 * @param when the {@link Observable} stream of {@link Instant}s
 	 * @param what the {@link Callable} to execute upon each {@link Instant}
-	 * @return an {@link Observable} stream of results, until completion of
+	 * @return an {@link Observable} stream of results, pushed to any
+	 *         {@link Observable#subscribe} caller until completion of
 	 *         simulation time or observed of instants or an error occurs
 	 */
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
@@ -339,6 +336,7 @@ public interface Scheduler extends Proactive, Runnable
 	 * @param what (optional) {@link Observer} of {@link Expectation}s for each
 	 *            upcoming {@link Instant}
 	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
+	 *         pushed to any {@link Observable#subscribe} caller
 	 */
 	default Observable<Instant> schedule( final Observable<Instant> when,
 		final Observer<Expectation> what )
@@ -354,10 +352,16 @@ public interface Scheduler extends Proactive, Runnable
 				delayedCopy, ( t, t0 ) -> t );
 	}
 
+	/**
+	 * {@link Factory}
+	 */
 	interface Factory
 	{
 
-		Scheduler create( ReplicateConfig config );
+		default Scheduler create( ReplicateConfig config )
+		{
+			return Instantiator.instantiate( config.schedulerType() );
+		}
 
 		default Scheduler create( final Map<?, ?>... imports )
 		{
@@ -380,15 +384,20 @@ public interface Scheduler extends Proactive, Runnable
 		}
 
 		@Singleton
-		class Inject implements Factory, LocalBinding
+		class Rebinder implements Factory, LocalBinding
 		{
+			@Inject
 			private LocalBinder binder;
 
 			@Override
 			public Scheduler create( final ReplicateConfig config )
 			{
+				// FIXME use some configuration mechanism during injection, rather than resetting 
 				binder().reset( ReplicateConfig.class, config );
-				return binder().inject( config.schedulerType() );
+				final Scheduler scheduler = binder()
+						.inject( config.schedulerType() );
+				binder().reset( Scheduler.class, scheduler );
+				return scheduler;
 			}
 
 			@Override

@@ -2,6 +2,7 @@ package io.coala.dsol3;
 
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -9,10 +10,12 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.measure.Quantity;
+import javax.measure.Unit;
 
 import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.InjectConfig;
+import io.coala.config.ConfigUtil;
 import io.coala.dsol3.DsolTime.DsolQuantity;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
@@ -94,6 +97,30 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 
 	/** the scheduler */
 	private DEVSSimulator<DsolQuantity<Q>, BigDecimal, DsolTime<Q>> scheduler;
+	private transient Unit<?> timeUnitCache;
+	private transient ZonedDateTime offsetCache;
+
+	@Override
+	public ReplicateConfig config()
+	{
+		return this.replConfig;
+	}
+
+	@Override
+	public ZonedDateTime offset()
+	{
+		return this.offsetCache != null ? this.offsetCache
+				: (this.offsetCache = ConfigUtil.cachedValue( config(),
+						config()::offset ));
+	}
+
+	@Override
+	public Unit<?> timeUnit()
+	{
+		return this.timeUnitCache != null ? this.timeUnitCache
+				: (this.timeUnitCache = ConfigUtil.cachedValue( config(),
+						config()::timeUnit ));
+	}
 
 	/**
 	 * {@link Dsol3Scheduler} constructor

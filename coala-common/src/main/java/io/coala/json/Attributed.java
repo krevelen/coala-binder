@@ -20,12 +20,15 @@
 package io.coala.json;
 
 import java.beans.PropertyChangeEvent;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
+import io.coala.util.ReflectUtil;
 import io.reactivex.Observable;
+import io.reactivex.Observer;
 
 /**
  * {@link Attributed} tags JSON compatible java beans
@@ -42,8 +45,6 @@ public interface Attributed
 	 */
 	@JsonAnyGetter
 	Map<String, Object> properties();
-
-	Observable<PropertyChangeEvent> emitChanges();
 
 	/**
 	 * Useful as {@link JsonAnySetter}
@@ -73,12 +74,25 @@ public interface Attributed
 		return type.cast( this );
 	}
 
-	default <T> Observable<T> emitChanges( final String propertyName,
-		final Class<T> propertyType )
+	interface Publisher extends Attributed
 	{
-		return emitChanges()
-				.filter( e -> propertyName.equals( e.getPropertyName() ) )
-				.map( e -> e.getNewValue() ).cast( propertyType );
+		Observable<PropertyChangeEvent> emitChanges();
+
+		default <T> Observable<T> emitChanges( final String propertyName,
+			final Class<T> propertyType )
+		{
+			return emitChanges()
+					.filter( e -> propertyName.equals( e.getPropertyName() ) )
+					.map( e -> e.getNewValue() ).cast( propertyType );
+		}
+	}
+
+	@SuppressWarnings( "unchecked" )
+	static <T> T createProxyInstance( final Attributed impl,
+		final Class<T> intf, final Observer<Method> callObserver )
+	{
+		return ReflectUtil.createProxyInstance( impl, intf, impl::properties,
+				callObserver );
 	}
 
 }

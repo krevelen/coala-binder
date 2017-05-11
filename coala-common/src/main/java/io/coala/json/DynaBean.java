@@ -268,7 +268,8 @@ public final class DynaBean implements Cloneable, Comparable
 	@Override
 	public int compareTo( final Object o )
 	{
-		throw new IllegalStateException( "Invocation should be intercepted" );
+		return Thrower.throwNew( IllegalStateException.class,
+				"Invocation should be intercepted" );
 	}
 
 	@Override
@@ -795,7 +796,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 * @return a {@link Proxy} instance backed by an empty {@link DynaBean}
 	 */
 	@SafeVarargs
-	public static <T> T proxyOf( final Class<T> type, final DynaBean bean,
+	protected static <T> T proxyOf( final Class<T> type, final DynaBean bean,
 		final Map<String, ?>... imports )
 	{
 		return proxyOf( JsonUtil.getJOM(), type, bean, imports );
@@ -809,7 +810,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 * @return a {@link Proxy} instance backed by an empty {@link DynaBean}
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static <T> T proxyOf( final ObjectMapper om, final Class<T> type,
+	protected static <T> T proxyOf( final ObjectMapper om, final Class<T> type,
 		final DynaBean bean, final Map<String, ?>... imports )
 	{
 //		if( !type.isAnnotationPresent( BeanProxy.class ) )

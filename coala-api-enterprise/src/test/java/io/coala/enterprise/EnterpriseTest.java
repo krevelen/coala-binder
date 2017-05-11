@@ -32,6 +32,7 @@ import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.TimeUnits;
 import io.coala.time.Timing;
+import io.coala.util.ReflectUtil;
 
 /**
  * {@link EnterpriseTest}
@@ -59,32 +60,42 @@ public class EnterpriseTest
 		URI jdbcUrl();
 	}
 
+	/**
+	 * {@link Valuable} super-interface to test {@link ReflectUtil#invokeAsBean}
+	 * coping with http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4275879
+	 */
+	public interface Valuable
+	{
+		/**
+		 * test {@link ReflectUtil#invokeAsBean} called by {@link Actor#proxyAs}
+		 */
+		Integer getTotalValue();
+
+		/**
+		 * test {@link ReflectUtil#invokeAsBean} called by {@link Actor#proxyAs}
+		 */
+		void setTotalValue( Integer totalValue );
+
+		/**
+		 * test {@link ReflectUtil#invokeDefaultMethod} called by
+		 * {@link Actor#proxyAs}
+		 */
+		default void addToTotal( Integer increment )
+		{
+			setTotalValue( getTotalValue() + increment );
+		}
+	}
+
 	@SuppressWarnings( "serial" )
 	@Singleton
 	public static class World implements Proactive
 	{
-		public interface Sales extends Actor<Sale>
+		public interface Sales extends Actor<Sale>, Valuable
 		{
-			Integer getTotalValue();
-
-			void setTotalValue( Integer totalValue );
-
-			default void addToTotal( Integer increment )
-			{
-				setTotalValue( getTotalValue() + increment );
-			}
 		}
 
-		public interface Procurement extends Actor<Sale>
+		public interface Procurement extends Actor<Sale>, Valuable
 		{
-			Integer getTotalValue();
-
-			void setTotalValue( Integer totalValue );
-
-			default void addToTotal( Integer increment )
-			{
-				setTotalValue( getTotalValue() + increment );
-			}
 		}
 
 		/**
@@ -140,7 +151,7 @@ public class EnterpriseTest
 			LOG.trace( "initialized organization" );
 
 			final DateTime offset = new DateTime(
-					this.actors.offset().toInstant().toEpochMilli() );
+					scheduler().offset().toInstant().toEpochMilli() );
 			LOG.trace( "initialized occurred and expired fact sniffing" );
 
 			org1.emitFacts().subscribe( fact ->
@@ -150,8 +161,8 @@ public class EnterpriseTest
 			}, e -> LOG.error( "Problem", e ) );
 
 			final AtomicInteger counter = new AtomicInteger( 0 );
-			final Procurement proc = org1.specialist( Procurement.class );
-			final Sales sales = org1.specialist( Sales.class );
+			final Procurement proc = org1.subRole( Procurement.class );
+			final Sales sales = org1.subRole( Sales.class );
 			sales.setTotalValue( 0 );
 			sales.emit( FactKind.REQUESTED ).subscribe(
 					rq -> after( Duration.of( 1, TimeUnits.DAYS ) ).call( t ->

@@ -17,6 +17,7 @@ package io.coala.time;
 
 import java.math.BigDecimal;
 import java.text.DateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -365,6 +366,13 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	}
 
 	/** @return a JSR-310 {@link LocalTime} (zone and date-less) instant */
+	public LocalDate toJava8( final LocalDate offset )
+	{
+		return offset.plusDays(
+				toQuantity( TimeUnits.DAYS ).getValue().longValue() );
+	}
+
+	/** @return a JSR-310 {@link LocalTime} (zone and date-less) instant */
 	public LocalTime toJava8( final LocalTime offset )
 	{
 		return offset.plusNanos( toNanosLong() );
@@ -394,10 +402,25 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return offset.plusNanos( toNanosLong() );
 	}
 
-	/** @return a JSR-363 {@link Quantity} */
+	/**
+	 * @param days
+	 * @return a JSR-363 {@link Quantity}
+	 */
 	public ComparableQuantity<?> toQuantity()
 	{
 		return unwrap();
+	}
+
+	public <Q extends Quantity<Q>> ComparableQuantity<Q>
+		toQuantity( final Class<Q> unit )
+	{
+		return unwrap().asType( unit );
+	}
+
+	public <Q extends Quantity<Q>> ComparableQuantity<Q>
+		toQuantity( final Unit<Q> unit )
+	{
+		return unwrap().to( unit );
 	}
 
 	/** @return a Joda {@link ReadableInstant} */
@@ -435,6 +458,11 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	public Pretty prettify( final Date offset, final DateFormat formatter )
 	{
 		return Pretty.of( () -> formatter.format( toDate( offset ) ) );
+	}
+
+	public Pretty prettify( final LocalDate offset )
+	{
+		return Pretty.of( () -> toJava8( offset ).toString() );
 	}
 
 	public Pretty prettify( final LocalDateTime offset )

@@ -42,7 +42,7 @@ public class BinTuple extends Tuple
 		return of( Arrays.asList( o ) );
 	}
 
-	public static <T extends Bin<?>> Tuple of( final List<T> values )
+	public static <T extends Bin<?>> BinTuple ofList( final List<T> values )
 	{
 		return new BinTuple( values );
 	}

@@ -19,6 +19,7 @@
  */
 package io.coala.enterprise.persist;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +82,7 @@ import io.coala.time.persist.InstantDao_;
  */
 @Entity
 @Table( name = "FACTS" )
-@Inheritance( strategy = InheritanceType.SINGLE_TABLE ) 
+@Inheritance( strategy = InheritanceType.SINGLE_TABLE )
 // SINGLE_TABLE preferred, see https://en.wikibooks.org/wiki/Java_Persistence/Inheritance
 public class FactDao implements BindableDao<Fact, FactDao>
 {
@@ -93,7 +94,7 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	protected Date created;
 
 	@Id
-	@GeneratedValue( strategy = GenerationType.AUTO ) 
+	@GeneratedValue( strategy = GenerationType.AUTO )
 	// GenerationType.IDENTITY strategy unsupported in Neo4J
 	@Column( name = "PK", nullable = false, updatable = false )
 	protected Integer pk;
@@ -218,14 +219,14 @@ public class FactDao implements BindableDao<Fact, FactDao>
 		}
 	}
 
-	@Transactional // not really
+	// @Transactional // not really
 	public static List<FactDao> find( final EntityManager em,
-		final UUID contextRef, final Unit<?> timeUnit,
-		final Class<?> typeFilter, final Actor.ID initiatorFilter,
-		final Actor.ID executorFilter, final FactKind kindFilter,
-		final Fact.ID causeFilter, final Actor.ID creatorFilter,
-		final Actor.ID responderFilter, final Range<Instant> occurrenceFilter,
-		final Range<Instant> expirationFilter,
+		final UUID contextRef, final Class<?> typeFilter,
+		final Actor.ID initiatorFilter, final Actor.ID executorFilter,
+		final FactKind kindFilter, final Fact.ID causeFilter,
+		final Actor.ID creatorFilter, final Actor.ID responderFilter,
+		final Range<BigDecimal> occurrenceFilter,
+		final Range<BigDecimal> expirationFilter,
 		final Map<String, Object> propertiesFilter )
 	{
 		final CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -256,12 +257,12 @@ public class FactDao implements BindableDao<Fact, FactDao>
 		if( causeFilter != null ) and.getExpressions().add( cb
 				.equal( root.get( FactDao_.causeRef ), causeFilter.unwrap() ) );
 		if( occurrenceFilter != null ) InstantDao.addRangeCriteria( and, cb,
-				root.get( FactDao_.occur ), occurrenceFilter, timeUnit );
+				root.get( FactDao_.occur ), occurrenceFilter );
 		if( expirationFilter != null ) InstantDao.addRangeCriteria( and, cb,
-				root.get( FactDao_.expire ), expirationFilter, timeUnit );
+				root.get( FactDao_.expire ), expirationFilter );
 		if( propertiesFilter != null )
 		{
-			// FIXME add like '"key":"value"' statements for each entry
+			// FIXME add %like% '"key":"value"' statements for each entry
 		}
 
 		// FIXME: chunking, two-step streaming (sorted by creation ts?)
@@ -280,8 +281,8 @@ public class FactDao implements BindableDao<Fact, FactDao>
 	public static FactDao create( final EntityManager em, final Fact fact )
 	{
 		final Transaction<?> tx = Objects.requireNonNull( fact.transaction() );
-		final Date offset = Date.from( tx.offset().toInstant() );
-		final Unit<?> unit = tx.timeUnit();
+		final Date offset = Date.from( tx.scheduler().offset().toInstant() );
+		final Unit<?> unit = tx.scheduler().timeUnit();
 		final Instant occur = Objects.requireNonNull( fact.occur() );
 		final Instant expire = fact.expire();
 		final ID causeRef = fact.causeRef();

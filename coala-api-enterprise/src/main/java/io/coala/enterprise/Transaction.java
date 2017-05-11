@@ -19,7 +19,6 @@
  */
 package io.coala.enterprise;
 
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.measure.Unit;
 
 import com.eaio.uuid.UUID;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -41,7 +39,6 @@ import com.fasterxml.jackson.databind.util.StdConverter;
 
 import io.coala.bind.InjectConfig;
 import io.coala.bind.LocalId;
-import io.coala.config.ConfigUtil;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
@@ -141,12 +138,6 @@ public interface Transaction<F extends Fact>
 
 	FactBank<F> factBank();
 
-	/** @return the {@link ZonedDateTime} offset of virtual time */
-	ZonedDateTime offset();
-
-	/** @return the {@link Unit} of virtual time */
-	Unit<?> timeUnit();
-
 	/**
 	 * {@link ID}
 	 * 
@@ -212,11 +203,10 @@ public interface Transaction<F extends Fact>
 	static <F extends Fact> Transaction<F> of( final Transaction.ID id,
 		final Class<F> kind, final Actor.ID initiatorRef,
 		final Actor.ID executorRef, final Scheduler scheduler,
-		final Fact.Factory factFactory, final Unit<?> timeUnit,
-		final ZonedDateTime offset )
+		final Fact.Factory factFactory )
 	{
 		return new Simple<F>( id, kind, initiatorRef, executorRef, scheduler,
-				factFactory, timeUnit, offset );
+				factFactory );
 	}
 
 	/**
@@ -237,8 +227,6 @@ public interface Transaction<F extends Fact>
 		private transient Scheduler scheduler;
 		private transient Fact.Factory factFactory;
 		private transient FactBank<F> factBank = null;
-		private transient ZonedDateTime offset = null;
-		private transient Unit<?> timeUnit = null;
 
 		private Transaction.ID id;
 		private Class<F> kind;
@@ -255,8 +243,7 @@ public interface Transaction<F extends Fact>
 
 		public Simple( final Transaction.ID id, final Class<F> kind,
 			final Actor.ID initiatorRef, final Actor.ID executorRef,
-			final Scheduler scheduler, final Fact.Factory factFactory,
-			final Unit<?> timeUnit, final ZonedDateTime offset )
+			final Scheduler scheduler, final Fact.Factory factFactory )
 		{
 			this.id = Objects.requireNonNull( id );
 			this.kind = Objects.requireNonNull( kind );
@@ -266,8 +253,6 @@ public interface Transaction<F extends Fact>
 			this.factFactory = Objects.requireNonNull( factFactory );
 			this.factBank = factFactory.factBank() == null ? null
 					: factFactory.factBank().matchTransactionKind( kind );
-			this.timeUnit = timeUnit;
-			this.offset = offset;
 		}
 
 		@Override
@@ -394,18 +379,6 @@ public interface Transaction<F extends Fact>
 		}
 
 		@Override
-		public ZonedDateTime offset()
-		{
-			return this.offset;
-		}
-
-		@Override
-		public Unit<?> timeUnit()
-		{
-			return this.timeUnit;
-		}
-
-		@Override
 		public FactBank<F> factBank()
 		{
 			return this.factBank;
@@ -416,12 +389,6 @@ public interface Transaction<F extends Fact>
 	{
 		<F extends Fact> Transaction<F> create( Transaction.ID id,
 			Class<F> factType, Actor.ID initiator, Actor.ID executor );
-
-		/** @return the {@link ZonedDateTime} offset of virtual time */
-		ZonedDateTime offset();
-
-		/** @return the {@link Unit} of virtual time */
-		Unit<?> timeUnit();
 
 		@Singleton
 		class LocalCaching implements Factory
@@ -436,8 +403,6 @@ public interface Transaction<F extends Fact>
 
 			@InjectConfig
 			private transient ReplicateConfig config;
-			private transient Unit<?> timeUnitCache;
-			private transient ZonedDateTime offsetCache;
 
 			@SuppressWarnings( "unchecked" )
 			@Override
@@ -450,29 +415,13 @@ public interface Transaction<F extends Fact>
 						{
 							final Transaction<?> tx = Transaction.of( id, kind,
 									initiatorRef, executorRef, this.scheduler,
-									this.factFactory, timeUnit(), offset() );
+									this.factFactory );
 							tx.commits().subscribe( f ->
 							{
 							}, e -> this.localCache.remove( id ),
 									() -> this.localCache.remove( id ) );
 							return tx;
 						} );
-			}
-
-			@Override
-			public ZonedDateTime offset()
-			{
-				return this.offsetCache != null ? this.offsetCache
-						: (this.offsetCache = ConfigUtil.cachedValue(
-								this.config, this.config::offset ));
-			}
-
-			@Override
-			public Unit<?> timeUnit()
-			{
-				return this.timeUnitCache != null ? this.timeUnitCache
-						: (this.timeUnitCache = ConfigUtil.cachedValue(
-								this.config, this.config::timeUnit ));
 			}
 		}
 	}
