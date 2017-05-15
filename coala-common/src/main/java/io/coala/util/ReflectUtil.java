@@ -12,6 +12,7 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -197,8 +198,9 @@ public class ReflectUtil implements Util
 							+ ", or undeclared in (interfaces of) {}: {}",
 					beanType, method );
 
-		if( method.equals( prop.getReadMethod() ) )
-			return properties.get( prop.getName() );
+		if( method.equals( prop.getReadMethod() ) ) return Objects
+				.requireNonNull( properties.get( prop.getName() ), "Missing "
+						+ prop.getName() + " in this " + beanType.getName() );
 
 		// some stores can't accept null-values, so remove them
 		if( value == null ) return properties.remove( prop.getName() );

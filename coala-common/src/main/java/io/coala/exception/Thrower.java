@@ -21,6 +21,8 @@ package io.coala.exception;
 
 import java.lang.reflect.Constructor;
 import java.text.MessageFormat;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * {@link Thrower}
@@ -55,6 +57,32 @@ public class Thrower
 	}
 
 	/**
+	 * @param type the {@link Function} to produce the actual Exception
+	 * @param message {@link Callable} message supplier
+	 * @param <R> the dynamic (void) return type
+	 * @param <E> the {@link Exception} type thrown
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <R, E extends Exception> R throwNew(
+		final Function<String, E> type, final Callable<String> message )
+		throws E
+	{
+		try
+		{
+			throw (E) type.apply( message.call() );
+		} catch( final Throwable e )
+		{
+			try
+			{
+				throw type.apply( e.getMessage() );
+			} catch( final Throwable e2 )
+			{
+				return rethrowUnchecked( e2 );
+			}
+		}
+	}
+
+	/**
 	 * @param type the {@link Exception} to throw using its {@code (String)}
 	 *            {@link Constructor}
 	 * @param messageFormat following {@link MessageFormat} syntax
@@ -63,18 +91,21 @@ public class Thrower
 	 * @param <R> the dynamic return type
 	 * @param <E> the {@link Exception} type thrown
 	 */
+	@SuppressWarnings( "unchecked" )
 	public static <R, E extends Exception> R throwNew( final Class<E> type,
 		final String messageFormat, final Object... args ) throws E
 	{
-		try
+		return throwNew( m ->
 		{
-			final String message = ExceptionBuilder
-					.format( messageFormat, args ).getFormattedMessage();
-			throw type.getConstructor( String.class ).newInstance( message );
-		} catch( final Throwable e )
-		{
-			return rethrowUnchecked( e );
-		}
+			try
+			{
+				return type.getConstructor( String.class ).newInstance( m );
+			} catch( final Throwable e )
+			{
+				return rethrowUnchecked( new IllegalStateException( m, e ) );
+			}
+		}, () -> ExceptionBuilder.format( messageFormat, args )
+				.getFormattedMessage() );
 	}
 
 	/**

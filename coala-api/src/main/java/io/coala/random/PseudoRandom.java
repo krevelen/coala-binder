@@ -91,22 +91,25 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	/** @see Random#nextLong() */
 	long nextLong();
 
-	/** @see Random#nextInt(int) */
-	default long nextLong( long bound )
+	/**
+	 * @param bound > 0 (exclusive)
+	 * @return 0 <= x < bound
+	 * @see Random#nextInt(int)
+	 */
+	default long nextLong( final long bound )
 	{
 		if( bound < 0 ) return Thrower.throwNew( IllegalArgumentException.class,
 				"bound < 0" );
-		long r = nextBigInteger( 1, 63 ).longValue();
-		long m = bound - 1;
-		if( (bound & m) == 0 ) // i.e., bound is a power of 2
-			r = (int) ((bound * (long) r) >> 31);
-		else
+
+		// skip 2^n matching, as per http://stackoverflow.com/a/2546186/1418999
+		long bits, val;
+		do
 		{
-			for( long u = r; u - (r = u % bound)
-					+ m < 0; u = nextBigInteger( 1, 63 ).longValue() )
-				;
-		}
-		return r;
+			bits = (nextLong() << 1) >>> 1;
+			val = bits % bound;
+		} while( bits - val + (bound - 1) < 0L );
+
+		return val;
 	}
 
 	/** @see Random#nextFloat() */
@@ -201,7 +204,7 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		if( elements instanceof List ) return nextElement( (List<E>) elements );
 		if( Objects.requireNonNull( elements ).isEmpty() )
 			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
-		return nextElement( elements, elements.size() - 1 );
+		return nextElement( elements, elements.size() );
 	}
 
 	/**
@@ -237,10 +240,17 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 			return nextElement( (List<E>) elements, 0, (int) max );
 
 		final Iterator<E> it = Objects.requireNonNull( elements ).iterator();
-		for( long i = 0, n = nextLong( max ); it.hasNext(); it.next() )
+
+		final long n = nextLong( max );
+		for( long i = 0; it.hasNext(); it.next() )
 			if( n == i++ ) return it.next();
 
-		return Thrower.throwNew( IllegalStateException.class, "unexpected" );
+		return Thrower.throwNew( IndexOutOfBoundsException.class,
+				"Out of bounds: " + max + " > size ("
+						+ (elements instanceof Collection
+								? ((Collection<E>) elements).size()
+								: elements.getClass().getSimpleName())
+						+ ")" );
 	}
 
 	/**

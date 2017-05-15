@@ -129,10 +129,10 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	{
 		String result = unwrap().toString();
 		for( LocalId id = parentRef(); id != null; id = id.parentRef() )
-			if( id.unwrap() instanceof UUID )
-				result += "@" + Integer.toHexString( id.unwrap().hashCode() );
-			else
+			if( id.unwrap() instanceof UUID == false )
 				result = id.unwrap() + ID_SEP_REGEX + result;
+//			else
+//				result += "@" + Integer.toHexString( id.unwrap().hashCode() );
 		return result;
 	}
 

@@ -23,9 +23,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.joda.time.DateTime;
@@ -41,6 +39,8 @@ import com.google.ical.compat.jodatime.DateTimeIteratorFactory;
 import io.coala.exception.Thrower;
 import io.coala.json.Wrapper;
 import io.reactivex.Observable;
+import tec.uom.se.format.FormatBehavior;
+import tec.uom.se.format.QuantityFormat;
 
 /**
  * {@link Timing} wraps a {@link String} representation of some calendar-based
@@ -56,8 +56,8 @@ import io.reactivex.Observable;
  * );</li>
  * <li>a relative {@linkplain Instant#of(String) ISO8601 period or duration}
  * (e.g. {@code "P2DT3H4M"});</li>
- * <li>a relative {@linkplain Amount#valueOf(CharSequence) scientific amount}
- * (e.g. units {@code "3 "} or duration {@code "27.5 µs"} );</li>
+ * <li>a relative {@link QuantityFormat#getInstance(FormatBehavior) scientific
+ * amount} (e.g. units {@code "3 "} or duration {@code "27.5 µs"} );</li>
  * </ul>
  * 
  * @version $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
@@ -150,6 +150,13 @@ public interface Timing extends Wrapper<String>
 				return self.wrap( value );
 			}
 
+			// propagate, otherwise default implementation becomes an "override"
+			@Override
+			public Long max()
+			{
+				return self.max();
+			}
+
 			@Override
 			public java.time.Instant offset()
 			{
@@ -188,6 +195,13 @@ public interface Timing extends Wrapper<String>
 			public Wrapper<String> wrap( final String value )
 			{
 				return self.wrap( value );
+			}
+
+			// propagate, otherwise default implementation becomes an "override"
+			@Override
+			public java.time.Instant offset()
+			{
+				return self.offset();
 			}
 
 			@Override
@@ -233,7 +247,8 @@ public interface Timing extends Wrapper<String>
 	 * 
 	 * @param pattern a formatted string, either {@link CronExpression CRON},
 	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
-	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
+	 *            iCal}, {@link DateTimeFormatter ISO8601} or
+	 *            {@link QuantityFormat#getInstance(FormatBehavior) Quantity}
 	 * @return the new {@link Timing} pattern wrapper
 	 */
 	static Timing valueOf( final String pattern )
@@ -243,8 +258,9 @@ public interface Timing extends Wrapper<String>
 
 	/**
 	 * @param pattern a formatted string, either {@link CronExpression CRON},
-	 *            {@link DateTimeIteratorFactory#createDateTimeIterator(String, org.joda.time.ReadableDateTime, DateTimeZone, boolean)
-	 *            iCal}, {@link DateTimeFormatter ISO8601} or {@link Measurable}
+	 *            {@link DateTimeIteratorFactory#createDateTimeIterator iCal},
+	 *            {@link DateTimeFormatter ISO8601} or
+	 *            {@link QuantityFormat#getInstance(FormatBehavior) Quantity}
 	 * @return the new {@link Timing} pattern wrapper
 	 */
 	static Timing of( final String pattern )
@@ -295,25 +311,24 @@ public interface Timing extends Wrapper<String>
 	class CronTiming extends Simple<String> implements Timing
 	{
 
-		private final static Map<String, CronTrigger> TRIGGERS = new HashMap<>();
-
 		@Override
-		public Iterable<Instant> iterate( final java.time.Instant offset,
+		public Iterable<Instant> iterate( final java.time.Instant offsetNanos,
 			final Long max )
 		{
-			final CronTrigger trigger = TRIGGERS.computeIfAbsent( unwrap(),
-					pattern ->
-					{
-						return TriggerBuilder.newTrigger().withSchedule(
-								CronScheduleBuilder.cronSchedule( pattern ) )
-								.build();
-					} );
+			final Date offsetMillis = Date.from( offsetNanos );
+			final CronTrigger trigger = TriggerBuilder.newTrigger()
+					.startAt( offsetMillis )
+					.withSchedule(
+							CronScheduleBuilder.cronSchedule( unwrap() ) )
+					.build();
+
 			return () ->
 			{
 				return new Iterator<Instant>()
 				{
-					private Date current = trigger
-							.getFireTimeAfter( Date.from( offset ) );
+					private Date current = trigger.getFireTimeAfter(
+							// just 1ms earlier, to make offset inclusive
+							new Date( offsetNanos.toEpochMilli() - 1 ) );
 					private long count = 0;
 
 					@Override
@@ -330,7 +345,7 @@ public interface Timing extends Wrapper<String>
 						this.current = trigger.getFireTimeAfter( this.current );
 						this.count++;
 						return Instant.of(
-								next.getTime() - offset.toEpochMilli(),
+								next.getTime() - offsetMillis.getTime(),
 								TimeUnits.MILLIS );
 					}
 				};

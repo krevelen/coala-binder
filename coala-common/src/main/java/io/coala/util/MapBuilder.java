@@ -32,8 +32,8 @@ import java.util.function.Supplier;
 
 /**
  * {@link MapBuilder} inspired by http://stackoverflow.com/a/32879629/1418999
- * and Guava's
- * http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Maps.html
+ * and Guava's Collection Utilities
+ * https://github.com/google/guava/wiki/CollectionUtilitiesExplained
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -54,14 +54,14 @@ public class MapBuilder<K, V, M extends Map<K, V>>
 
 	public MapBuilder<K, V, M> put( final K key, final V value )
 	{
-		this.map.put( Objects.requireNonNull( key, "missing key" ), value );
+		this.map.put( Objects.requireNonNull( key, "Missing key" ), value );
 		return this;
 	}
 
 	public MapBuilder<K, V, M>
 		putAll( final Map<? extends K, ? extends V> other )
 	{
-		this.map.putAll( Objects.requireNonNull( other, "missing map" ) );
+		this.map.putAll( Objects.requireNonNull( other, "Missing other map" ) );
 		return this;
 	}
 

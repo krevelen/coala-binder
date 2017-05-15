@@ -33,7 +33,6 @@ import javax.persistence.NoResultException;
 import io.coala.bind.LocalBinder;
 import io.coala.enterprise.Fact.ID;
 import io.coala.enterprise.persist.FactDao;
-import io.coala.log.LogUtil;
 import io.coala.math.QuantityUtil;
 import io.coala.math.Range;
 import io.coala.persist.JPAUtil;
@@ -411,7 +410,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 		{
 			return facts.map( f ->
 			{
-				LogUtil.getLogger( SimpleDrain.class ).trace( "Drained {}", f );
+//				LogUtil.getLogger( SimpleDrain.class ).trace( "Drained {}", f );
 				return f;
 			} );
 		}
