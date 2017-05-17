@@ -74,7 +74,7 @@ public class Thrower
 		{
 			try
 			{
-				throw type.apply( e.getMessage() );
+				throw type.apply( "no message: " + e.getMessage() );
 			} catch( final Throwable e2 )
 			{
 				return rethrowUnchecked( e2 );

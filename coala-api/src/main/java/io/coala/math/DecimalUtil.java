@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import org.aeonbits.owner.ConfigCache;
+// TODO move to own utility class
 import org.apfloat.Apfloat;
 import org.apfloat.ApfloatMath;
 import org.apfloat.Apint;
@@ -27,6 +28,9 @@ public class DecimalUtil implements Util
 	public static final MathContext DEFAULT_CONTEXT = ConfigCache
 			.getOrCreate( DecimalConfig.class ).createMathContext();
 
+	/** */
+	public static final BigDecimal ONE_HALF = BigDecimal.valueOf( 5, 1 );
+
 	/**
 	 * {@link DecimalUtil} inaccessible singleton constructor
 	 */
@@ -43,6 +47,11 @@ public class DecimalUtil implements Util
 	{
 		return bd.signum() == 0 || bd.scale() <= 0
 				|| bd.stripTrailingZeros().scale() <= 0;
+	}
+
+	public static class ApfloatUtil
+	{
+		
 	}
 
 	/**
