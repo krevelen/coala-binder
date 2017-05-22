@@ -11,3 +11,6 @@ dependency-reduced-pom.xml
 buildNumber.properties
 **/*~
 /repo-test/
+/adapters/
+/coala-api/
+/coala-common/
