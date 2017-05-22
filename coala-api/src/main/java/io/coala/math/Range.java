@@ -272,7 +272,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	{
 		final R lower = lowerFinite() ? mapper.apply( lowerValue() ) : null;
 		final R upper = upperFinite() ? mapper.apply( upperValue() ) : null;
-		return Compare.gt( lower, upper )
+		return lower != null && upper != null && Compare.gt( lower, upper )
 				? of( upper, upperInclusive(), lower, lowerInclusive() )
 				: of( lower, lowerInclusive(), upper, upperInclusive() );
 	}

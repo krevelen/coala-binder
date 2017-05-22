@@ -227,7 +227,7 @@ public interface Proactive extends Timed
 		 * @param call the {@link Callable} (method) to call when time comes
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default <R> Observable<R> call( final Callable<R> call )
+		default <R> Observable<R> emit( final Callable<R> call )
 		{
 			return scheduler().schedule( Observable.just( now() ), call );
 		}

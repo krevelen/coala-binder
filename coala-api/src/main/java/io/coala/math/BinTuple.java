@@ -57,12 +57,12 @@ public class BinTuple extends Tuple
 		super( values );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	public boolean contains( final Tuple tuple )
 	{
-		final List<Bin<?>> bins = (List<Bin<?>>) super.values();
+		@SuppressWarnings( "rawtypes" )
+		final List<Comparable> bins = super.values();
 		for( int i = 0, n = bins.size(); i < n; i++ )
-			if( !contains( bins.get( i ), tuple.values().get( i ) ) )
+			if( !contains( (Bin<?>) bins.get( i ), tuple.values().get( i ) ) )
 				return false;
 		return true;
 	}

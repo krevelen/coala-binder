@@ -56,14 +56,14 @@ public class Tuple implements Comparable<Tuple>
 		return new Tuple( list );
 	}
 
-	private List<? extends Comparable> list;
+	private List<Comparable> list;
 
 	public Tuple( final List<? extends Comparable<?>> values )
 	{
 		this.list = Collections.unmodifiableList( values );
 	}
 
-	public List<? extends Comparable> values()
+	public List<Comparable> values()
 	{
 		return this.list;
 	}

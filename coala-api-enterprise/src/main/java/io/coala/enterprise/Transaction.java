@@ -337,12 +337,12 @@ public interface Transaction<F extends Fact>
 				if( fact.causeRef() != null )
 					this.pending.remove( fact.causeRef() );
 				if( fact.expire() != null )
-					this.pending.put( fact.id(), at( fact.expire() ).call( () ->
-					{
-						if( onExpiration != null ) onExpiration.run();
-						this.pending
-								.remove( Objects.requireNonNull( fact.id() ) );
-					} ) );
+					this.pending.put( Objects.requireNonNull( fact.id() ),
+							at( fact.expire() ).call( () ->
+							{
+								if( onExpiration != null ) onExpiration.run();
+								this.pending.remove( fact.id() );
+							} ) );
 				else if( onExpiration != null )
 					return Thrower.throwNew( IllegalStateException.class,
 							"Expiration function never gets called: {}", fact );

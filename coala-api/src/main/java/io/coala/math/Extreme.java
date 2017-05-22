@@ -166,7 +166,7 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 	{
 		if( isInfinite() ) return that.isInfinite()
 				? Comparison.of( this.boundary, that.boundary )
-				: this.compareLimit();
+				: that.compareLimit();
 
 		if( that.isInfinite() ) return that.compareLimit();
 

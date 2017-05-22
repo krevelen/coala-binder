@@ -334,10 +334,8 @@ public class Guice4LocalBinder implements LocalBinder
 	private static synchronized Injector cachedInjectorFor(
 		final Guice4LocalBinder binder, final Map<?, ?>... imports )
 	{
-		return INJECTOR_CACHE.computeIfAbsent( binder.id, id ->
-		{
-			return createInjectorFor( binder, imports );
-		} );
+		return INJECTOR_CACHE.computeIfAbsent( binder.id,
+				id -> createInjectorFor( binder, imports ) );
 	}
 
 	/**

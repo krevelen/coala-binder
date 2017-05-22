@@ -3,6 +3,7 @@ package io.coala.util;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
@@ -228,16 +229,37 @@ public class ReflectUtil implements Util
 	public static Object invokeDefaultMethod( final Object proxy,
 		final Method method, final Object[] args ) throws Throwable
 	{
-		return lookup( method.getDeclaringClass() )
-				.unreflectSpecial( method, method.getDeclaringClass() )
-				.bindTo( proxy ).invokeWithArguments( args );
+		return cachedMethodHandle( method ).bindTo( proxy )
+				.invokeWithArguments( args );
+	}
+
+	private static final Map<Method, MethodHandle> UNREFLECT_CACHE = new ConcurrentHashMap<>();
+
+	/**
+	 * @param method the (raw) {@link Method} declaration
+	 * @return the {@link MethodHandle} for direct execution, 
+	 */
+	public static MethodHandle cachedMethodHandle( final Method method )
+	{
+		return UNREFLECT_CACHE.computeIfAbsent( method, key ->
+		{
+			try
+			{
+				return cachedLookupInstance( method.getDeclaringClass() )
+						.unreflectSpecial( method, method.getDeclaringClass() );
+			} catch( final Throwable e )
+			{
+				return Thrower.rethrowUnchecked( e );
+			}
+		} );
 	}
 
 	private static final Map<Class<?>, Lookup> LOOKUP_CACHE = new ConcurrentHashMap<>();
 
 	private static Constructor<Lookup> LOOKUP_CONSTRUCTOR = null;
 
-	private static Lookup lookup( final Class<?> type ) throws Throwable
+	private static Lookup cachedLookupInstance( final Class<?> type )
+		throws Throwable
 	{
 		return LOOKUP_CACHE.computeIfAbsent( type, key ->
 		{

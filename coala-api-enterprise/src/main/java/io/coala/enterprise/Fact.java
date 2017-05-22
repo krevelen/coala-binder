@@ -169,7 +169,9 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	@JsonIgnore
 	default boolean isIncoming( final Actor.ID id )
 	{
-		return id.organizationRef().equals( responderRef().organizationRef() );
+		return (Boolean) properties().computeIfAbsent(
+				"_incoming" + id.unwrap(), key -> id.organizationRef()
+						.equals( responderRef().organizationRef() ) );
 	}
 
 	@JsonIgnore

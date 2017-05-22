@@ -15,6 +15,7 @@
  */
 package io.coala.log;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.function.Supplier;
 
@@ -22,17 +23,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.FormattedMessage;
 import org.apache.logging.log4j.message.Message;
+import org.apache.logging.log4j.message.MessageFormatMessage;
+import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.message.StringFormattedMessage;
 
 import io.coala.util.Util;
 
 /**
- * {@link LogUtil}
- * 
- * @version $Id$
- * @author Rick van Krevelen
- */
-/**
- * {@link LogUtil}
+ * {@link LogUtil} provides some utility methods for Log4j (v2)
+ * MessageFormatMessage
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -116,10 +115,20 @@ public class LogUtil implements Util
 	}
 
 	/**
+	 * The returned {@link FormattedMessage} will try
+	 * <ol>
+	 * <li>{@link MessageFormat}, e.g. '{0}' or '{1,number,$,##}';
+	 * <li>{@link String#format}, e.g. '%s' or '%04.2f'; and finally
+	 * <li>{@link ParameterizedMessage} standard '{}' formatting.
+	 * </ol>
+	 * 
 	 * @param pattern
 	 * @param arg
-	 * @return a {@link FormattedMessage} for delayed parameterized formatting
+	 * @return a {@link FormattedMessage} for (delayed) parameterized formatting
 	 *         in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @see MessageFormatMessage
+	 * @see StringFormattedMessage
+	 * @see ParameterizedMessage
 	 */
 	public static FormattedMessage messageOf( final String pattern,
 		final Object arg )
@@ -128,11 +137,21 @@ public class LogUtil implements Util
 	}
 
 	/**
+	 * The returned {@link FormattedMessage} will try
+	 * <ol>
+	 * <li>{@link MessageFormat}, e.g. '{0}' or '{1,number,$,##}';
+	 * <li>{@link String#format}, e.g. '%s' or '%04.2f'; and finally
+	 * <li>{@link ParameterizedMessage} standard '{}' formatting.
+	 * </ol>
+	 * 
 	 * @param pattern
 	 * @param arg1
 	 * @param arg2
 	 * @return a {@link FormattedMessage} for delayed parameterized formatting
 	 *         in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @see MessageFormatMessage
+	 * @see StringFormattedMessage
+	 * @see ParameterizedMessage
 	 */
 	public static FormattedMessage messageOf( final String pattern,
 		final Object arg1, Object arg2 )
@@ -141,10 +160,20 @@ public class LogUtil implements Util
 	}
 
 	/**
+	 * The returned {@link FormattedMessage} will try
+	 * <ol>
+	 * <li>{@link MessageFormat}, e.g. '{0}' or '{1,number,$,##}';
+	 * <li>{@link String#format}, e.g. '%s' or '%04.2f'; and finally
+	 * <li>{@link ParameterizedMessage} standard '{}' formatting.
+	 * </ol>
+	 * 
 	 * @param pattern
 	 * @param args
 	 * @return a {@link FormattedMessage} for delayed parameterized formatting
 	 *         in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @see MessageFormatMessage
+	 * @see StringFormattedMessage
+	 * @see ParameterizedMessage
 	 */
 	public static FormattedMessage messageOf( final String pattern,
 		final Object... args )
@@ -153,11 +182,21 @@ public class LogUtil implements Util
 	}
 
 	/**
+	 * The returned {@link FormattedMessage} will try
+	 * <ol>
+	 * <li>{@link MessageFormat}, e.g. '{0}' or '{1,number,$,##}';
+	 * <li>{@link String#format}, e.g. '%s' or '%04.2f'; and finally
+	 * <li>{@link ParameterizedMessage} standard '{}' formatting.
+	 * </ol>
+	 * 
 	 * @param throwable
 	 * @param pattern
 	 * @param args
 	 * @return a {@link FormattedMessage} for delayed parameterized formatting
 	 *         in e.g. {@link Logger#trace(Message,Throwable)}
+	 * @see MessageFormatMessage
+	 * @see StringFormattedMessage
+	 * @see ParameterizedMessage
 	 */
 	public static FormattedMessage messageOf( final Throwable throwable,
 		final String pattern, final Object... args )
