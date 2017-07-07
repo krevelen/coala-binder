@@ -67,6 +67,8 @@ public interface ProviderConfig extends GlobalConfig
 	{
 		final Pattern pattern = Pattern.compile( "^"
 				+ Pattern.quote( PARAMETERS_KEY + KEY_SEP ) + "(?<sub>.*)" );
+		System.err.println( pattern + " -> " + ConfigUtil.export( this )
+				+ " :: " + ConfigUtil.export( this, pattern, "${sub}" ) );
 		return ConfigUtil
 				.expand( ConfigUtil.export( this, pattern, "${sub}" ) );
 	}

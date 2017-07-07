@@ -30,6 +30,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import io.coala.json.JsonUtil;
+import io.coala.json.Wrapper;
 import io.coala.log.LogUtil;
 
 /**
@@ -88,6 +89,17 @@ public class InstantTest
 		LOG.trace( "test '{}' \u2248 '{}'", Instant.ZERO, zeroDays );
 		assertThat( "Should compare equal", Instant.ZERO,
 				comparesEqualTo( zeroDays ) );
+
+		final Instant t1 = Instant.of( 1.2, TimeUnits.ANNUM ),
+				t2 = Instant.of( 1.1, TimeUnits.ANNUM );
+		final long start1 = System.currentTimeMillis(), n = 10000000;
+		for( long i = 0; i < n; i++ )
+			Wrapper.Util.compare( t1, t2 );
+		final long start2 = System.currentTimeMillis(), dur1 = start2 - start1;
+		for( long i = 0; i < n; i++ )
+			t1.compareTo( t2 );
+		final long dur2 = System.currentTimeMillis() - start2;
+		LOG.trace( "compare: {}ms vs {}ms", dur1, dur2 );
 
 		LOG.info( "Completed InstantTest#testCompareZero() test" );
 	}

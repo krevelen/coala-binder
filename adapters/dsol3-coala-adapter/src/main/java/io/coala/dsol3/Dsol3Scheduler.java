@@ -49,7 +49,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 
 	@SafeVarargs
 	public static <Q extends Quantity<Q>> Dsol3Scheduler<Q>
-		of( final Map<String, String>... imports )
+		of( final Map<String, Object>... imports )
 	{
 		return of( Dsol3Config.of( imports ) );
 	}
@@ -140,6 +140,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	{
 		if( this.config == null ) this.config = this.replConfig == null
 				? Dsol3Config.get() : Dsol3Config.of( this.replConfig );
+		LOG.trace( "Imported config: {}", this.replConfig );
 		LOG.trace( "Using config: {}", this.config );
 		final Class<? extends DEVSSimulator> type = this.config.simulatorType();
 		this.scheduler = DsolTime.createDEVSSimulator( type );

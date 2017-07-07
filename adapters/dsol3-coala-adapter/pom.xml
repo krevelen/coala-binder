@@ -19,8 +19,7 @@
 	</description>
 
 	<properties>
-		<dsol.version>3.00.20</dsol.version>
-		<quartz.version>2.2.3</quartz.version>
+		<dsol.version>3.01.06</dsol.version>
 	</properties>
 
 	<repositories>
@@ -82,6 +81,13 @@
 		<dependency>
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest-all</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<!-- Java Enterprise eXtension APIs, including JPA 2.1 -->
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
 			<scope>test</scope>
 		</dependency>
 

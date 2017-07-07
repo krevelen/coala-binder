@@ -8,7 +8,7 @@ import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Frequency;
 import javax.measure.quantity.Time;
 
-import io.coala.exception.Thrower;
+import io.coala.log.LogUtil;
 import io.coala.math.QuantityUtil;
 import tec.uom.se.format.SimpleUnitFormat;
 import tec.uom.se.function.RationalConverter;
@@ -109,8 +109,10 @@ public class TimeUnits extends Units
 		case SECONDS:
 			return SECOND;
 		default:
-			return Thrower.throwNew( IllegalArgumentException.class,
-					"Time unit {} unknown", unit );
+			LogUtil.getLogger( TimeUnits.class ).warn(
+					"Time unit {} unknown, assuming {}", unit,
+					TimeUnits.STEPS );
+			return TimeUnits.STEPS;
 		}
 	}
 }

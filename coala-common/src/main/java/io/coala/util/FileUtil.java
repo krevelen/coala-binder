@@ -214,34 +214,46 @@ public class FileUtil // implements Util
 	/**
 	 * @param path
 	 * @return
+	 * @throws IOException
 	 */
 	public static OutputStream toOutputStream( final String path )
+		throws IOException
 	{
-		return toOutputStream( new File( path ), true );
+		return toOutputStream( Objects.requireNonNull( path ), true );
 	}
 
 	/**
 	 * @param path
 	 * @return
+	 * @throws IOException
+	 */
+	public static OutputStream toOutputStream( final String path,
+		final boolean append ) throws IOException
+	{
+		return toOutputStream( new File( path ), append );
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
 	 */
 	public static OutputStream toOutputStream( final File file,
-		final boolean append )
+		final boolean append ) throws IOException
 	{
 		Objects.requireNonNull( file );
 
-		try
-		{
-			if( file.createNewFile() )
-				LOG.info( "Created '{}' at location: {}", file.getName(),
-						file.getAbsolutePath() );
-			else
-				LOG.debug( "Found '{}' at location: {}", file.getName(),
-						file.getAbsolutePath() );
-			return new FileOutputStream( file, append );
-		} catch( final IOException e )
-		{
-			return Thrower.rethrowUnchecked( e );
-		}
+		if( file.createNewFile() )
+			LOG.trace( "Creating '{}' at location: {}", file.getName(),
+					file.getAbsolutePath() );
+		else if( append )
+			LOG.trace( "Appending '{}' at location: {}", file.getName(),
+					file.getAbsolutePath() );
+		else
+			LOG.trace( "Overwriting '{}' at location: {}", file.getName(),
+					file.getAbsolutePath() );
+
+		return new FileOutputStream( file, append );
 	}
 
 }

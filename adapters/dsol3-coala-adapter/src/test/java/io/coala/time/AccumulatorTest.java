@@ -19,8 +19,6 @@
  */
 package io.coala.time;
 
-import static org.aeonbits.owner.util.Collections.entry;
-
 import java.util.concurrent.TimeoutException;
 
 import javax.measure.Quantity;
@@ -34,6 +32,7 @@ import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
 import io.coala.math.QuantityUtil;
 import io.coala.time.Accumulator.Integrator;
+import io.coala.util.MapBuilder;
 import io.reactivex.Observer;
 import tec.uom.se.unit.Units;
 
@@ -69,10 +68,11 @@ public class AccumulatorTest
 	public void tesAccumulator() throws TimeoutException
 	{
 		final Unit<?> mps = Units.METRE.divide( Units.SECOND );
-		final Dsol3Config config = Dsol3Config.of(
-				entry( Dsol3Config.ID_KEY, "accumTest" ),
-				entry( Dsol3Config.START_TIME_KEY, "5 s" ),
-				entry( Dsol3Config.RUN_LENGTH_KEY, "100" ) );
+		final Dsol3Config config = Dsol3Config
+				.of( MapBuilder.<String, Object>unordered()
+						.put( Dsol3Config.ID_KEY, "accumTest" )
+						.put( Dsol3Config.START_TIME_KEY, "5 s" )
+						.put( Dsol3Config.RUN_LENGTH_KEY, "100" ).build() );
 		LOG.info( "Starting DSOL test, config: {}", config.toYAML() );
 		final Scheduler scheduler = config.create( s ->
 		{

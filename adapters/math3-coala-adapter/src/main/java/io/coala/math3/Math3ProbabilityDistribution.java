@@ -209,7 +209,7 @@ public abstract class Math3ProbabilityDistribution<S>
 			final PseudoRandom.Factory rngFactory )
 		{
 			this( rngFactory.create( PseudoRandom.Config.NAME_DEFAULT,
-					binder.id().hashCode() ) );
+					binder.id().unwrap().hashCode() ) );
 		}
 
 		public Factory( final PseudoRandom stream )

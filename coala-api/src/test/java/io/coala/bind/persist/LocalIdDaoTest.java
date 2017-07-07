@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.RollbackException;
@@ -33,7 +34,6 @@ import org.apache.logging.log4j.Logger;
 import org.hibernate.cfg.AvailableSettings;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.eaio.uuid.UUID;
@@ -83,8 +83,8 @@ public class LocalIdDaoTest
 		if( emf != null ) emf.close();
 	}
 
-	@Test( expected = Exception.class )
-	public void testSyncConstraint1()
+	@Test( expected = RollbackException.class )
+	public void testSyncConstraint1() throws Exception
 	{
 		final String role = "role", org = "org", agent = "agent";
 		final UUID contextRef = new UUID();
@@ -92,63 +92,83 @@ public class LocalIdDaoTest
 				LocalId.of( agent, LocalId.of( contextRef ) ) ) );
 		final LocalId id2 = LocalId.of( role, LocalId.of( org,
 				LocalId.of( agent, LocalId.of( new UUID() ) ) ) );
+		// FIXME !!
+//		final LocalId id3 = LocalId.of( "role2", id1.parentRef() );
 		try
 		{
 			JPAUtil.session( emf, em ->
 			{
+				LOG.trace( "Persisting #1: {}", id1.toJSON() );
 				id1.persist( em );
+				LOG.trace( "Persisting #2: {}", id2.toJSON() );
 				id2.persist( em );
+//			} );
+//			JPAUtil.session( emf, em ->
+//			{
+//				LOG.trace( "Persisting #3: {}", id3.toJSON() );
+//				id3.persist( em );
+				LOG.debug( "Retrieving sync, context: {}", contextRef );
 				LocalId.findAllSync( em, contextRef ).forEach( id ->
 				{
-					LOG.info( "Sync retrieved: {}", id );
+					LOG.debug( "Sync retrieved: {}", id.toJSON() );
 					assertThat( "contextRef match", id.contextRef(),
 							equalTo( contextRef ) );
 				} );
 			} );
 		} catch( final Exception e )
 		{
+			LOG.error( "Unexpected", e );
 			fail( e.getMessage() );
 		}
 
 		JPAUtil.session( emf, em ->
 		{
 			// persist new wrapper instances to avoid matching cached entities
-			LocalId.of( role,
-					LocalId.of( org,
-							LocalId.of( agent, LocalId.of( contextRef ) ) ) )
-					.persist( em );
-			fail( "Throw constraint violation" );
+			LocalIdDao.create( em, LocalId.of( role, LocalId.of( org,
+					LocalId.of( agent, LocalId.of( contextRef ) ) ) ) );
+
+			em.getTransaction().commit();
+			fail( "Should throw due to constraint violation" );
 		} );
 	}
 
 	@SuppressWarnings( "deprecation" )
-	@Ignore
 	@Test( expected = RollbackException.class )
 	public void testAsyncConstraint2()
 	{
 		final String role = "role", org = "org", agent = "agent";
 		final UUID contextRef = new UUID();
-		final LocalId id3 = LocalId.of( role, LocalId.of( org,
+		final LocalId id1 = LocalId.of( role, LocalId.of( org,
 				LocalId.of( agent, LocalId.of( contextRef ) ) ) );
 		JPAUtil.session( emf, em ->
 		{
-			id3.persist( em );
-			LocalId.findAllAsync( em, contextRef, 2 ).subscribe( id ->
+			LOG.trace( "Persisting #1: {}", id1.toJSON() );
+			id1.persist( em );
+
+			LOG.debug( "Retrieving async, context: {}", contextRef );
+			final AtomicInteger pageCount = new AtomicInteger();
+			LocalId.findAllAsync( em, contextRef, 2 ).subscribe( page ->
 			{
-				LOG.info( "Async retrieved: {}", id );
-				assertThat( "contextRef match", id.contextRef(),
-						equalTo( contextRef ) );
-			}, e -> fail( e.getMessage() ) );
+				pageCount.incrementAndGet();
+				final AtomicInteger idCount = new AtomicInteger();
+				page.forEach( id ->
+				{
+					LOG.debug( "Async retrieved (page {}, nr {}): {}",
+							pageCount.get(), idCount.incrementAndGet(), id );
+					assertThat( "contextRef match", id.contextRef(),
+							equalTo( contextRef ) );
+				} );
+			}, e -> LOG.error( "Unexpected", e ) );
 		} );
 
 		JPAUtil.session( emf, em ->
 		{
 			// persist new wrapper instances to avoid matching cached entities
-			LocalId.of( role,
-					LocalId.of( org,
-							LocalId.of( agent, LocalId.of( contextRef ) ) ) )
-					.persist( em );
-			fail( "Throw constraint violation" );
+			LocalIdDao.create( em, LocalId.of( role, LocalId.of( org,
+					LocalId.of( agent, LocalId.of( contextRef ) ) ) ) );
+
+			em.getTransaction().commit();
+			fail( "Should throw due to constraint violation" );
 		} );
 	}
 }

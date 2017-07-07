@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,6 +38,7 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -244,6 +246,7 @@ public class JsonUtil
 		final Callable<JsonParser> jpFactory,
 		final Callable<ObjectReader> orFactory )
 	{
+		// see http://www.cowtowncoder.com/blog/archives/2009/01/entry_132.html
 		return Observable.using( jpFactory, jp ->
 		{
 			return Observable.<T>create( emitter ->
@@ -492,5 +495,16 @@ public class JsonUtil
 				checkRegistered( om, method.getReturnType(), imports );
 			}
 		return type;
+	}
+
+	/**
+	 * @param providerDefault
+	 * @param object
+	 */
+	public static void forEach( final ObjectNode node,
+		final BiConsumer<String, JsonNode> handler )
+	{
+		node.fields().forEachRemaining(
+				e -> handler.accept( e.getKey(), e.getValue() ) );
 	}
 }

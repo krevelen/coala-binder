@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.measure.Unit;
+import javax.measure.quantity.Time;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalBinding;
@@ -33,6 +34,20 @@ import io.reactivex.subjects.Subject;
 public interface Scheduler extends Proactive, Runnable
 {
 
+	/** @return the {@link ZonedDateTime} offset of virtual time */
+	ZonedDateTime offset();
+
+	/** @return the {@link Unit} of virtual time */
+	Unit<?> timeUnit();
+
+	default ZonedDateTime nowZonedDateTime()
+	{
+		if( !timeUnit().getDimension().equals( Time.class ) ) return Thrower
+				.throwNew( IllegalArgumentException::new, () -> "Time unit "
+						+ timeUnit() + " incompatible, abstract steps?" );
+		return now().toJava8( offset() );
+	}
+
 	@Override
 	default Scheduler scheduler()
 	{
@@ -47,16 +62,10 @@ public interface Scheduler extends Proactive, Runnable
 
 	Disposable onReset( ThrowingConsumer<Scheduler, ?> consumer );
 
-	default Disposable onReset( ThrowingRunnable<?> runnable )
+	default Disposable onReset( final ThrowingRunnable<?> runnable )
 	{
 		return onReset( s -> runnable.run() );
 	}
-
-	/** @return the {@link ZonedDateTime} offset of virtual time */
-	ZonedDateTime offset();
-
-	/** @return the {@link Unit} of virtual time */
-	Unit<?> timeUnit();
 
 	/** continue executing scheduled events until completion */
 	void resume();
@@ -360,7 +369,7 @@ public interface Scheduler extends Proactive, Runnable
 
 		default Scheduler create( ReplicateConfig config )
 		{
-			return Instantiator.instantiate( config.schedulerType() );
+			return Instantiator.instantiate( config.implementation() );
 		}
 
 		default Scheduler create( final Map<?, ?>... imports )
@@ -395,7 +404,7 @@ public interface Scheduler extends Proactive, Runnable
 				// FIXME use some configuration mechanism during injection, rather than resetting 
 				binder().reset( ReplicateConfig.class, config );
 				final Scheduler scheduler = binder()
-						.inject( config.schedulerType() );
+						.inject( config.implementation() );
 				binder().reset( Scheduler.class, scheduler );
 				return scheduler;
 			}

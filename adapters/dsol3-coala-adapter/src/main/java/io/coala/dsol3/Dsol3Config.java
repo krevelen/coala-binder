@@ -27,7 +27,6 @@ import javax.measure.Quantity;
 
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.Converter;
-import org.aeonbits.owner.util.Collections;
 
 import io.coala.config.GlobalConfig;
 import io.coala.config.YamlConfig;
@@ -36,6 +35,7 @@ import io.coala.math.QuantityUtil;
 import io.coala.time.Duration;
 import io.coala.time.ReplicateConfig;
 import io.coala.time.Scheduler;
+import io.coala.util.MapBuilder;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
 import nl.tudelft.simulation.dsol.simulators.DEVSSimulator;
 
@@ -107,15 +107,9 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 	}
 
 	@SafeVarargs
-	static Dsol3Config of( final Map<String, String>... imports )
+	static Dsol3Config of( final Map<String, Object>... imports )
 	{
 		return ConfigCache.getOrCreate( Dsol3Config.class, imports );
-	}
-
-	@SafeVarargs
-	static Dsol3Config of( final Map.Entry<String, String>... entries )
-	{
-		return of( Collections.map( entries ) );
 	}
 
 	/**
@@ -126,11 +120,17 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 	{
 		final Duration duration = replConfig.duration();
 
-		return of( Collections.entry( ID_KEY, replConfig.rawId() ),
-				Collections.entry( START_TIME_KEY,
-						DsolTime.valueOf( 0, duration.unit() ).toString() ),
-				Collections.entry( RUN_LENGTH_KEY, QuantityUtil
-						.toBigDecimal( duration.unwrap() ).toString() ) );
+		return of(
+				MapBuilder.<String, Object>unordered()
+						.put( ID_KEY, replConfig.rawId() )
+						.put( START_TIME_KEY,
+								DsolTime.valueOf( 0, duration.unit() )
+										.toString() )
+						.put( RUN_LENGTH_KEY,
+								QuantityUtil.toBigDecimal( duration.unwrap() )
+										.toString() )
+						.build(),
+				replConfig.export() );
 	}
 
 	default <Q extends Quantity<Q>> Dsol3Scheduler<Q> create()

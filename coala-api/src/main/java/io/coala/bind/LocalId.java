@@ -20,6 +20,8 @@
 package io.coala.bind;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
@@ -164,7 +166,6 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	 * @param binder the {@link LocalBinder} to help instantiate
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
-	//@Transactional
 	public static Stream<LocalId> findAllSync( final EntityManager em,
 		final UUID contextRef )
 	{
@@ -181,12 +182,12 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	 * @param pageSize the page buffer size
 	 * @return an {@link Observable} stream of {@link LocalId} instances, if any
 	 */
-	//@Transactional
 	@Deprecated
-	public static Observable<LocalId> findAllAsync( final EntityManager em,
-		final UUID contextRef, final int pageSize )
+	public static Observable<List<LocalId>> findAllAsync(
+		final EntityManager em, final UUID contextRef, final int pageSize )
 	{
 		return LocalIdDao.findAllAsync( em, contextRef, pageSize )
-				.map( dao -> dao.restore( null ) );
+				.map( page -> page.stream().map( dao -> dao.restore( null ) )
+						.collect( Collectors.toList() ) );
 	}
 }

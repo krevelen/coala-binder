@@ -451,7 +451,7 @@ public final class DynaBean implements Cloneable, Comparable
 				{
 					return ReflectUtil.invokeAsBean(
 							this.bean.dynamicProperties, this.type, method,
-							args );
+							args[0] );
 				} catch( final Exception e )
 				{
 					// non-bean method, assume setter, e.g. val(..), withVal(..)

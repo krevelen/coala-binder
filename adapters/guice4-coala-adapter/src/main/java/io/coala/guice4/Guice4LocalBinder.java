@@ -114,10 +114,13 @@ public class Guice4LocalBinder implements LocalBinder
 															.injectConfig( t,
 																	field,
 																	Integer.toHexString(
-																			binder.hashCode() ) );
+																			binder.hashCode() ),
+																	binder.params
+																			.get( field
+																					.getDeclaringClass() ) );
 												else
 													InjectConfig.Util
-															.injectParams( t,
+															.injectFromJson( t,
 																	field,
 																	binder.params
 																			.get( field

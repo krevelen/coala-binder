@@ -19,7 +19,6 @@
  */
 package io.coala.time;
 
-import static org.aeonbits.owner.util.Collections.entry;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.comparesEqualTo;
 
@@ -31,6 +30,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Config;
+import io.coala.util.MapBuilder;
 
 /**
  * {@link ProactiveTest}
@@ -48,10 +48,11 @@ public class TimeStepTest
 	@Ignore
 	public void testTimeStep() throws TimeoutException
 	{
-		final Dsol3Config config = Dsol3Config.of(
-				entry( Dsol3Config.ID_KEY, "timeStepTest" ),
-				entry( Dsol3Config.START_TIME_KEY, "0" ),
-				entry( Dsol3Config.RUN_LENGTH_KEY, "10" ) );
+		final Dsol3Config config = Dsol3Config
+				.of( MapBuilder.<String, Object>unordered()
+						.put( Dsol3Config.ID_KEY, "timeStepTest" )
+						.put( Dsol3Config.START_TIME_KEY, "0" )
+						.put( Dsol3Config.RUN_LENGTH_KEY, "10" ).build() );
 		LOG.info( "Starting timeStep test, config: {}", config.toYAML() );
 		final Scheduler scheduler = config.create( s ->
 		{

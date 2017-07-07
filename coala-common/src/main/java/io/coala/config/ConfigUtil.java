@@ -41,6 +41,7 @@ import org.aeonbits.owner.Accessible;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigFactory;
 
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 
@@ -116,6 +117,9 @@ public class ConfigUtil implements Util
 
 	/**
 	 * Recursively flatten the {@link JsonNode} into a {@link Properties} map
+	 * 
+	 * <p>
+	 * TODO re-implement for more general {@link TreeNode} interface
 	 * 
 	 * @param props the aggregation {@link Properties} mapping
 	 * @param node the current {@link JsonNode} to flatten

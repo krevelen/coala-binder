@@ -1,7 +1,5 @@
 package io.coala.time;
 
-import static org.aeonbits.owner.util.Collections.entry;
-
 import java.math.BigDecimal;
 import java.util.concurrent.TimeoutException;
 
@@ -11,6 +9,7 @@ import org.junit.Test;
 
 import io.coala.dsol3.Dsol3Config;
 import io.coala.log.LogUtil;
+import io.coala.util.MapBuilder;
 
 public class SignalTest
 {
@@ -21,7 +20,8 @@ public class SignalTest
 	public void testSignal() throws TimeoutException
 	{
 		final Dsol3Config config = Dsol3Config
-				.of( entry( Dsol3Config.ID_KEY, "signalTest" ) );
+				.of( MapBuilder.<String, Object>unordered()
+						.put( Dsol3Config.ID_KEY, "signalTest" ).build() );
 		LOG.info( "Starting signal test, config: {}", config.toYAML() );
 		final Scheduler scheduler = config.create( s ->
 		{

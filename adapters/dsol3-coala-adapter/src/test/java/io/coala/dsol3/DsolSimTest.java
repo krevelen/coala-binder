@@ -17,17 +17,32 @@ package io.coala.dsol3;
 
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.measure.Quantity;
 import javax.naming.NamingException;
 
+import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import io.coala.bind.LocalBinder;
+import io.coala.bind.LocalConfig;
 import io.coala.dsol3.DsolTime.DsolQuantity;
+import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
+import io.coala.time.Duration;
+import io.coala.time.ReplicateConfig;
+import io.coala.time.Scenario;
+import io.coala.time.Scheduler;
+import io.coala.time.TimeUnits;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import net.jodah.concurrentunit.Waiter;
@@ -148,7 +163,7 @@ public class DsolSimTest
 					public void onSubscribe( final Disposable d )
 					{
 						// TODO Auto-generated method stub
-						
+
 					}
 				} );
 
@@ -156,6 +171,56 @@ public class DsolSimTest
 		sim.start();
 		waiter.await( 1, TimeUnit.SECONDS );
 		LOG.trace( "Simulation complete" );
+	}
+
+	@Singleton
+	private static class World implements Scenario
+	{
+
+		@Inject
+		private Scheduler scheduler;
+
+		@Override
+		public Scheduler scheduler()
+		{
+			return this.scheduler;
+		}
+
+		@Override
+		public void init()
+		{
+			final ZonedDateTime offset = LocalDate.now()
+					.atStartOfDay( ZoneId.systemDefault() );
+			after( Duration.of( 1, TimeUnits.DAYS ) )
+					.call( t -> LOG.trace( "A day passed, now at t={}",
+							now().prettify( offset ) ) );
+		}
+
+	}
+
+	@Test
+	public void testBinderConfig()
+	{
+		// configure replication FIXME via LocalConfig?
+		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
+				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );
+
+		// configure tooling
+		final LocalBinder binder = LocalConfig.builder().withId( "world1" )
+				.withProvider( Scheduler.class, Dsol3Scheduler.class,
+						JsonUtil.getJOM().createObjectNode().put( "abc",
+								"def" ) )
+				.build()
+//		final LocalBinder binder = LocalConfig
+//				.openYAML( "world1.yaml", "my-world" )
+				.createBinder();
+
+		LOG.info( "Starting EO test, config: {}", binder );
+		final World world = binder.inject( World.class );
+
+		world.run();
+
+		LOG.info( "completed, t={}", world.now() );
 	}
 
 }

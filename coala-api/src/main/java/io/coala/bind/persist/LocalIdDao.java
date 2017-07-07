@@ -54,7 +54,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.coala.bind.BindableDao;
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalId;
-import io.coala.persist.Persistable;
+import io.coala.persist.JPAUtil;
 import io.coala.persist.UUIDToByteConverter;
 import io.reactivex.Observable;
 
@@ -144,9 +144,9 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	public static List<LocalIdDao> findAll( final EntityManager em,
 		final UUID contextRef )
 	{
-//		em.createQuery( "SELECT d FROM " + LocalIdDao.ENTITY_NAME
+//		em.createQuery( "SELECT d FROM LOCAL_IDS" //+ LocalIdDao.ENTITY_NAME
 //				+ " d WHERE d.contextRef=?1", LocalIdDao.class )
-//				.setParameter( 1, binder.id().contextRef() );
+//				.setParameter( 1, contextRef )
 
 		final CriteriaBuilder cb = em.getCriteriaBuilder();
 		final CriteriaQuery<LocalIdDao> qry = cb
@@ -170,17 +170,15 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	 * @return a {@link Stream} of {@link LocalId} instances, if any
 	 */
 	//@Transactional
-	@Deprecated
-	public static Observable<LocalIdDao> findAllAsync( final EntityManager em,
-		final UUID contextRef, final int pageSize )
+	public static Observable<List<LocalIdDao>> findAllAsync(
+		final EntityManager em, final UUID contextRef, final int pageSize )
 	{
-		final CriteriaBuilder cb = em.getCriteriaBuilder();
-		return Persistable
-				.findAsync( em, LocalIdDao.class, pageSize, LocalIdDao_.pk,
-						qry -> em.createQuery( qry.where( cb.equal(
-								qry.from( LocalIdDao.class )
-										.get( LocalIdDao_.contextRef ),
-								contextRef ) ) ) );
+		return JPAUtil
+				.findAsync( em, pageSize, LocalIdDao_.pk,
+						( qry,
+							root ) -> qry.where( em.getCriteriaBuilder().equal(
+									root.get( LocalIdDao_.contextRef ),
+									contextRef ) ) );
 	}
 
 //	private static final Map<LocalId, LocalIdDao> cache = new ConcurrentHashMap<>();
@@ -196,6 +194,7 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 		final UUID contextRef = Objects.requireNonNull( id.contextRef() );
 		try
 		{
+			em.flush();
 			final CriteriaBuilder cb = em.getCriteriaBuilder();
 			final CriteriaQuery<LocalIdDao> qry = cb
 					.createQuery( LocalIdDao.class );
@@ -205,13 +204,19 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 					.equal( root.get( LocalIdDao_.contextRef ), contextRef ) );
 			filter.getExpressions()
 					.add( cb.equal( root.get( LocalIdDao_.value ), value ) );
-			filter.getExpressions().add(
-//			parentRef != null ? cb.isNull( root.get( LocalIdDao_.parentRef ) ) :
-					cb.equal( root.get( LocalIdDao_.parentRef ), parentRef ) );
-			return em.createQuery( qry.select( root ).where( filter ) )
+			filter.getExpressions()
+					.add( parentRef == null
+							? cb.isNull( root.get( LocalIdDao_.parentRef ) )
+							: cb.equal( root.get( LocalIdDao_.parentRef ),
+									parentRef ) );
+			final LocalIdDao result = em
+					.createQuery( qry.select( root ).where( filter ) )
 					.getSingleResult();
+//			System.err.println( "found: " + result.stringify() );
+			return result;
 		} catch( final NoResultException ignore )
 		{
+//			System.err.println( "not found: " + id );
 			return null;
 		}
 //		} );
@@ -222,14 +227,14 @@ public final class LocalIdDao implements BindableDao<LocalId, LocalIdDao>
 	{
 		final Comparable<?> value = Objects.requireNonNull( id.unwrap() );
 		final LocalIdDao parentRef = Objects.requireNonNull( id.parentRef() )
-				.parentRef() == null ? null : id.persist( em );
+				.parentRef() == null ? null : id.parentRef().persist( em );
 		final UUID contextRef = Objects.requireNonNull( id.contextRef() );
 
 		final LocalIdDao result = new LocalIdDao();
 		result.contextRef = contextRef;
 		result.parentRef = parentRef;
 		result.value = value.toString();
-//			em.persist( result );
+		em.persist( result );
 		return result;
 	}
 

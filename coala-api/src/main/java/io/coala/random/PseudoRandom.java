@@ -32,7 +32,7 @@ import java.util.SortedMap;
 
 import javax.inject.Singleton;
 
-import org.aeonbits.owner.ConfigFactory;
+import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.Converter;
 
 import com.eaio.uuid.UUID;
@@ -382,7 +382,7 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		 */
 		default PseudoRandom create()
 		{
-			return create( ConfigFactory.create( Config.class ) );
+			return create( ConfigCache.getOrCreate( Config.class ) );
 		}
 
 		/**

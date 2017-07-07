@@ -51,7 +51,7 @@ public class DecimalUtil implements Util
 
 	public static class ApfloatUtil
 	{
-		
+
 	}
 
 	/**
@@ -375,6 +375,14 @@ public class DecimalUtil implements Util
 	{
 		return valueOf( dividend ).divide( valueOf( divisor ),
 				DEFAULT_CONTEXT );
+	}
+
+	/**
+	 * applies {@link #DEFAULT_CONTEXT}
+	 */
+	public static BigDecimal inverse( final Number value )
+	{
+		return divide( BigDecimal.ONE, valueOf( value ) );
 	}
 
 	public static Number floor( final Number value )

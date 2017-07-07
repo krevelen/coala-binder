@@ -246,10 +246,17 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 	}
 
 	@Override
-	public int compareTo( final Comparable that )
+	public int compareTo( final Comparable o )
 	{
-		return this.isZero() // && that != null && that instanceof Instant
-				&& ((Instant) that).isZero() ? 0 : Util.compare( this, that );
+		final Instant that = (Instant) o;
+		try
+		{
+			return this.unwrap().compareTo( that.unwrap() );
+		} catch( final /* Incommensurable */ Exception e )
+		{
+			if( this.isZero() && that.isZero() ) return 0;
+			throw e;
+		}
 	}
 
 	public Unit<?> unit()

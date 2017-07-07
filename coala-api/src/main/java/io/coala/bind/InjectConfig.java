@@ -33,8 +33,10 @@ import org.aeonbits.owner.Config;
 import org.aeonbits.owner.ConfigCache;
 import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Factory;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import io.coala.config.ConfigUtil;
 import io.coala.config.YamlUtil;
@@ -129,17 +131,22 @@ public @interface InjectConfig
 	class Util
 	{
 
+		/** */
+		private static final Logger LOG = LogUtil
+				.getLogger( InjectConfig.Util.class );
+
 		/**
 		 * @param encloser
 		 * @param field
 		 * @param params
 		 */
-		public static void injectParams( final Object encloser,
+		public static void injectFromJson( final Object encloser,
 			final Field field, final TreeNode params )
 		{
 			try
 			{
-				System.out.println( "inject params: " + params );
+				LOG.trace( "parse value for field: {}, params: {}", field,
+						params );
 				field.setAccessible( true );
 				field.set( encloser,
 						JsonUtil.valueOf( params, field.getType() ) );
@@ -157,7 +164,8 @@ public @interface InjectConfig
 		 * @param binderHash
 		 */
 		public static void injectConfig( final Object encloser,
-			final Field field, final String binderHash )
+			final Field field, final String binderHash,
+			final JsonNode... providerParams )
 		{
 			/*
 			 * if( binder instanceof LocalBinder ) try { field.setAccessible(
@@ -173,13 +181,18 @@ public @interface InjectConfig
 			final InjectConfig annot = field
 					.getAnnotation( InjectConfig.class );
 			final List<Map<?, ?>> imports = new ArrayList<>();
+			if( providerParams != null && providerParams.length > 0 )
+				for( JsonNode params : providerParams )
+				{
+				LOG.trace( "Import params {}", params );
+				if( params != null ) imports.add( ConfigUtil.flatten( params ) );
+				}
 			if( annot != null && annot.yamlURI().length != 0 )
 			{
 				for( String yamlURI : annot.yamlURI() )
 					try
 					{
-						LogUtil.getLogger( ConfigUtil.class )
-								.trace( "Import YAML from {}", yamlURI );
+						LOG.trace( "Import YAML from {}", yamlURI );
 						final InputStream is = FileUtil
 								.toInputStream( ConfigUtil.expand( yamlURI ) );
 						if( is != null )

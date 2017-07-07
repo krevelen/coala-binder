@@ -17,15 +17,24 @@ package io.coala.persist;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.PersistenceException;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.SingularAttribute;
+import javax.transaction.Transactional;
 
 import org.apache.logging.log4j.Logger;
 
@@ -81,13 +90,12 @@ public class JPAUtil
 			try
 			{
 				latch.await( 1, TimeUnit.SECONDS );
-				if( !error.isEmpty() )
-					Thrower.rethrowUnchecked( error.get( 0 ) );
-				else
+				if( error.isEmpty() )
 					LOG.trace( "JPA session taking >{} seconds", ++secs );
 			} catch( final InterruptedException ignore )
 			{
 			}
+		if( !error.isEmpty() ) Thrower.rethrowUnchecked( error.get( 0 ) );
 	}
 
 	/**
@@ -97,31 +105,55 @@ public class JPAUtil
 	public static Observable<EntityManager>
 		session( final EntityManagerFactory emf )
 	{
-		return Observable.create( sub ->
+		return Observable.using( emf::createEntityManager, em ->
 		{
-			final EntityManager em = emf.createEntityManager();
-			final EntityTransaction tran = em.getTransaction();
-			try
+			return Observable.using( em::getTransaction, tx ->
 			{
-				tran.begin();
-				sub.onNext( em );
-				if( tran.isActive() )
+				return Observable.create( sub ->
 				{
-					tran.commit();
-				}
-				sub.onComplete();
-			} catch( final Throwable e )
+					tx.begin();
+					try
+					{
+						sub.onNext( em );
+						if( tx.isActive() ) // tx may have been committed already
+							tx.commit();
+						sub.onComplete();
+					} catch( final Throwable e )
+					{
+						sub.onError( e );
+					}
+				} );
+			}, tx ->
 			{
-				if( tran.isActive() )
-				{
-					tran.rollback();
-				}
-				sub.onError( e );
-			} finally
-			{
-				em.close();
-			}
-		} );
+				if( tx.isActive() ) tx.rollback();
+			} );
+		}, EntityManager::close );
+
+//		return Observable.create( sub ->
+//		{
+//			final EntityManager em = emf.createEntityManager();
+//			final EntityTransaction tran = em.getTransaction();
+//			try
+//			{
+//				tran.begin();
+//				sub.onNext( em );
+//				if( tran.isActive() )
+//				{
+//					tran.commit();
+//				}
+//				sub.onComplete();
+//			} catch( final Throwable e )
+//			{
+//				if( tran.isActive() )
+//				{
+//					tran.rollback();
+//				}
+//				sub.onError( e );
+//			} finally
+//			{
+//				em.close();
+//			}
+//		} );
 	}
 
 	/**
@@ -133,6 +165,7 @@ public class JPAUtil
 	 * @param factory
 	 * @return
 	 */
+	@Transactional // not really
 	public static <T> void existsOrCreate( final EntityManager outer,
 		final Supplier<Boolean> keyFinder, final Supplier<T> factory )
 	{
@@ -170,6 +203,7 @@ public class JPAUtil
 	 * @param factory
 	 * @return
 	 */
+	@Transactional // not really
 	public static <T> T findOrCreate( final EntityManager outer,
 		final Supplier<T> finder, final Supplier<T> factory )
 	{
@@ -187,17 +221,88 @@ public class JPAUtil
 			return outer.merge( created );
 		} catch( final PersistenceException ex )
 		{
-			tx.rollback(); // unique constraint violation ?
+			if( tx.isActive() ) tx.rollback(); // unique constraint violation ?
 			final T result = finder.get(); // retry
 			if( result == null ) throw ex; // other issue -> fail
 			return result; // ok now
 		} catch( final Throwable t )
 		{
-			tx.rollback();
+			if( tx.isActive() ) tx.rollback();
 			throw t;
 		} finally
 		{
 			inner.close();
 		}
+	}
+
+	/**
+	 * @param em the session or {@link EntityManager}
+	 * @param daoType the type of entity to return
+	 * @param query the JPQL match query {@link String} to execute
+	 * @return a synchronous {@link Stream} of match results, if any
+	 */
+	@Transactional // not really
+	public static <DAO> Stream<DAO> findSync( final EntityManager em,
+		final Class<DAO> daoType, final String query )
+	{
+		return em.createQuery( query, daoType ).getResultList().stream();
+	}
+
+	/**
+	 * utility method
+	 * 
+	 * @param em the session or {@link EntityManager}
+	 * @param query the JPQL match query {@link String} to execute
+	 * @param pageSize the buffer size (small: more SQL, large: more heap)
+	 * @param pkType the type of the primary key attribute/field
+	 * @param pkAtt the name of the primary key attribute/field
+	 * @return a buffered {@link Observable} stream of match results, if any
+	 */
+	@Transactional // not really
+	@SuppressWarnings( "unchecked" )
+	public static <DAO, PK> Observable<List<DAO>> findAsync(
+		final EntityManager em, final int pageSize,
+		final SingularAttribute<? super DAO, PK> pkAttr,
+		final BiFunction<CriteriaQuery<PK>, Root<DAO>, CriteriaQuery<PK>> restrictor )
+	{
+		final Class<DAO> entityType = (Class<DAO>) Objects.requireNonNull(
+				pkAttr.getDeclaringType().getJavaType(),
+				"No declaring entity type" );
+		final Class<PK> pkType = Objects.requireNonNull(
+				pkAttr.getBindableJavaType(), "No bindable attribute type" );
+		final CriteriaBuilder cb = em.getCriteriaBuilder();
+		return Observable.using( () ->
+		{
+			final CriteriaQuery<PK> pkQry = cb.createQuery( pkType );
+			final Root<DAO> pkRoot = pkQry.from( entityType );
+			pkQry.select( pkRoot.get( pkAttr ) );
+			return em
+					.createQuery( restrictor == null ? pkQry
+							: restrictor.apply( pkQry, pkRoot ) )
+					.getResultList();
+		}, pks ->
+		{
+			return Observable.fromIterable( pks )
+					.buffer( Math.max( 1, pageSize ) ).map( page ->
+					{
+						final CriteriaQuery<DAO> pgQry = cb
+								.createQuery( entityType );
+						final Root<DAO> pgRoot = pgQry.from( entityType );
+						// query filtering primary keys in current page only
+						final Predicate pkFilter = cb.disjunction();
+						for( Object pk : page )
+							pkFilter.getExpressions().add(
+									cb.equal( pgRoot.get( pkAttr ), pk ) );
+//								cb.equal( pgRoot.get( pkAttr ), pk );
+						return //Observable.fromIterable( 
+						em.createQuery(
+								pgQry.select( pgRoot ).where( pkFilter ) )
+								.getResultList()
+//									)
+						;
+					} );
+		}, list ->
+		{
+		} );
 	}
 }

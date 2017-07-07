@@ -21,6 +21,7 @@ package io.coala.util;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -84,6 +85,13 @@ public class MapBuilder<K, V, M extends Map<K, V>>
 	{
 		return new MapBuilder<>( HashMap::new, Collections::unmodifiableMap,
 				Collections::synchronizedMap );
+	}
+
+	public static <E extends Enum<E>, V> MapBuilder<E, V, Map<E, V>>
+		enumerated( final Class<E> enumType )
+	{
+		return new MapBuilder<>( () -> new EnumMap<>( enumType ),
+				Collections::unmodifiableMap, Collections::synchronizedMap );
 	}
 
 	public static <K, V> MapBuilder<K, V, Map<K, V>> ordered()

@@ -277,6 +277,18 @@ public class QuantityUtil implements Util
 	}
 
 	/**
+	 * applies {@link DecimalUtil#DEFAULT_CONTEXT}
+	 * 
+	 * @see Quantity#inverse()
+	 * @see tec.uom.se.quantity.DecimalQuantity
+	 */
+	public static Quantity<?> inverse( final Quantity<?> value )
+	{
+		return valueOf( DecimalUtil.inverse( value.getValue() ),
+				value.getUnit().inverse() );
+	}
+
+	/**
 	 * @see Math#floor(double)
 	 */
 	public static <Q extends Quantity<Q>> Quantity<Q>

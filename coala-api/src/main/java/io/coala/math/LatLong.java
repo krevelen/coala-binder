@@ -155,7 +155,9 @@ public class LatLong implements Serializable
 	 * @param that another {@link LatLong}
 	 * @param unit the {@link Unit} of {@link Angle} measurement
 	 * @return the {@link ComparableQuantity} of central {@link Angle}
+	 * @see QuantityUtil#toUnit(Quantity, Unit)
 	 */
+	@SuppressWarnings( "deprecation" )
 	public ComparableQuantity<Angle> angularDistance( final LatLong that,
 		final Unit<Angle> unit )
 	{
@@ -171,8 +173,9 @@ public class LatLong implements Serializable
 												.divide( TWO ) ), TWO ) ) ) ) ) )
 				.precision( Compare.min( lat1.precision(), lon1.precision(),
 						lat2.precision(), lon2.precision() ) );
-		return QuantityUtil.valueOf( DecimalUtil.valueOf( dist ), Units.RADIAN )
-				.to( unit );
+		// NOTE avoid using (standard) ComparableQuantity#to(Unit) !!
+		return QuantityUtil.toUnit( QuantityUtil
+				.valueOf( DecimalUtil.valueOf( dist ), Units.RADIAN ), unit );
 	}
 
 	/**

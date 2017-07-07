@@ -36,8 +36,8 @@ import org.aeonbits.owner.ConfigCache;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import io.coala.bind.ProviderConfig;
 import io.coala.config.ConfigUtil;
-import io.coala.config.GlobalConfig;
 import io.coala.json.JsonUtil;
 
 /**
@@ -46,11 +46,9 @@ import io.coala.json.JsonUtil;
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface ReplicateConfig extends GlobalConfig
+public interface ReplicateConfig extends ProviderConfig
 {
 	String ID_KEY = "replication.id";
-
-	String SCHEDULER_TYPE_KEY = "replication.scheduler-type";
 
 	String TIME_UNIT_KEY = "replication.time-unit";
 
@@ -71,9 +69,10 @@ public interface ReplicateConfig extends GlobalConfig
 	/**
 	 * @return
 	 */
-	@Key( SCHEDULER_TYPE_KEY )
+	@Override
 	@DefaultValue( "io.coala.dsol3.Dsol3Scheduler" )
-	Class<? extends Scheduler> schedulerType();
+	@Key( IMPLEMENTATION_KEY )
+	Class<? extends Scheduler> implementation();
 
 	@Key( TIME_UNIT_KEY )
 	@DefaultValue( TimeUnits.DAYS_LABEL )

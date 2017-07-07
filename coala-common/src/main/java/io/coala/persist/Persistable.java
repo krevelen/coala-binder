@@ -20,15 +20,12 @@
 package io.coala.persist;
 
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.transaction.Transactional;
 
@@ -67,91 +64,27 @@ public interface Persistable<DAO extends Persistable.Dao>
 		}
 	}
 
-	@Transactional // not really
-	DAO persist( EntityManager em );
-
 	@SuppressWarnings( "unchecked" )
 	default Class<DAO> daoType()
 	{
 		return (Class<DAO>) TypeArguments.of( Persistable.class, getClass() )
 				.get( 0 );
-
 	}
 
-	/**
-	 * @param em the session or {@link EntityManager}
-	 * @param query the JPQL match query {@link String} to execute
-	 * @param daoType the type of entity to return
-	 * @return a synchronous {@link Stream} of match results, if any
-	 */
-	@Transactional
-	static <DAO> Stream<DAO> findSync( final EntityManager em,
-		final String query, final Class<DAO> daoType )
+	@Transactional // not really
+	DAO persist( EntityManager em );
+
+	@Transactional // not really
+	default Stream<DAO> findSync( final EntityManager em, final String query )
 	{
-		return em.createQuery( query, daoType ).getResultList().stream();
+		return JPAUtil.findSync( em, daoType(), query );
 	}
 
-	/**
-	 * utility method
-	 * 
-	 * @param em the session or {@link EntityManager}
-	 * @param query the JPQL match query {@link String} to execute
-	 * @param pageSize the buffer size (small: more SQL, large: more heap)
-	 * @param pkType the type of the primary key attribute/field
-	 * @param pkAtt the name of the primary key attribute/field
-	 * @return a buffered {@link Observable} stream of match results, if any
-	 */
-	@Transactional
-	static <DAO> Observable<DAO> findAsync( final EntityManager em,
-		final Class<DAO> entityType, final int pageSize,
-		final SingularAttribute<? super DAO, ?> pkAttr,
-		final Function<CriteriaQuery<?>, TypedQuery<?>> restrictor )
+	@Transactional // not really
+	default <PK> Observable<List<DAO>> findAsync( final EntityManager em,
+		final int pageSize, final SingularAttribute<? super DAO, PK> pkAttr,
+		final BiFunction<CriteriaQuery<PK>, Root<DAO>, CriteriaQuery<PK>> restrictor )
 	{
-		try
-		{
-			// first select only primary key attributes synchronously
-			final CriteriaBuilder cb = em.getCriteriaBuilder();
-			final CriteriaQuery<Object> pkQry = cb.createQuery();
-			pkQry.select( pkQry.from( entityType ).get( pkAttr ) )
-					.distinct( true ); // FIXME why so many joins?
-			final List<?> pks = (restrictor == null ? em.createQuery( pkQry )
-					: restrictor.apply( pkQry )).getResultList();
-
-			// then stream full entities obtained in buffers of given pageSize
-			return Observable.fromIterable( pks )
-					.buffer( Math.max( 1, pageSize ) ).flatMap( page ->
-					{
-						try
-						{
-							final CriteriaQuery<DAO> pgQry = cb
-									.createQuery( entityType );
-							// query filtering primary keys in current page only
-							final Predicate pkFilter = cb.disjunction();
-							for( Object pk : page )
-								pkFilter.getExpressions().add( cb.equal(
-										pgQry.from( entityType ).get( pkAttr ),
-										pk ) );
-							return Observable
-									.fromIterable( em
-											.createQuery( pgQry
-													.select( pgQry
-															.from( entityType ) )
-													.where( pkFilter ) )
-											.getResultList() );
-						} catch( final NoResultException e )
-						{
-							return Observable.empty();
-						} catch( final Exception e )
-						{
-							return Observable.error( e );
-						}
-					} );
-		} catch( final NoResultException e )
-		{
-			return Observable.empty();
-		} catch( final Exception e )
-		{
-			return Observable.error( e );
-		}
+		return JPAUtil.findAsync( em, pageSize, pkAttr, restrictor );
 	}
 }

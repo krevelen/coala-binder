@@ -197,25 +197,15 @@ public interface LocalConfig extends GlobalConfig
 			return withConfig( ConfigUtil.export( config ) );
 		}
 
-		/**
-		 * @param class1
-		 * @param class2
-		 * @return
-		 */
-		public JsonBuilder withSingleton( final Class<?> type,
-			final Class<?> impl )
+		private static final ObjectNode PROVIDER_DEFAULT = JsonUtil.getJOM()
+				.createObjectNode().put( ProviderConfig.SINGLETON_KEY, false )
+				.put( ProviderConfig.MUTABLE_KEY, false )
+				.put( ProviderConfig.INITABLE_KEY, false );
+
+		public JsonBuilder withProvider( final ObjectNode config )
 		{
-			// TODO implement recursively?
-			final ObjectNode provider = JsonUtil.getJOM().createObjectNode()
-					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
-					.put( ProviderConfig.SINGLETON_KEY, true )
-					.put( ProviderConfig.MUTABLE_KEY, false )
-					.put( ProviderConfig.INITABLE_KEY, false );
-			provider.withArray( ProviderConfig.BINDINGS_KEY )
-					.add( JsonUtil.getJOM().createObjectNode()
-							.put( BindingConfig.TYPE_KEY, type.getName() ) );
 			this.tree.with( BINDER_KEY ).withArray( BinderConfig.PROVIDERS_KEY )
-					.add( provider );
+					.add( config );
 			return this;
 		}
 
@@ -227,7 +217,45 @@ public interface LocalConfig extends GlobalConfig
 		public JsonBuilder withProvider( final Class<?> type,
 			final Class<?> impl )
 		{
-			return withProvider( type, impl, false );
+			return withProvider( type, impl, null );
+		}
+
+		/**
+		 * @param class1
+		 * @param class2
+		 * @return
+		 */
+		public JsonBuilder withProvider( final Class<?> type,
+			final Class<?> impl, final ObjectNode params )
+		{
+			final ObjectNode config = PROVIDER_DEFAULT
+					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() );
+			if( params != null )
+				config.set( ProviderConfig.PARAMETERS_KEY, params );
+			config.withArray( ProviderConfig.BINDINGS_KEY )
+					.add( JsonUtil.getJOM().createObjectNode()
+							.put( BindingConfig.TYPE_KEY, type.getName() ) );
+			return withProvider( config );
+		}
+
+		/**
+		 * @param class1
+		 * @param class2
+		 * @return
+		 */
+		public JsonBuilder withSingleton( final Class<?> type,
+			final Class<?> impl, final ObjectNode params )
+		{
+			final ObjectNode config = PROVIDER_DEFAULT
+					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
+					.put( ProviderConfig.SINGLETON_KEY, true )
+					.put( ProviderConfig.MUTABLE_KEY, false )
+					.put( ProviderConfig.INITABLE_KEY, false );
+			config.set( ProviderConfig.PARAMETERS_KEY, params );
+			config.withArray( ProviderConfig.BINDINGS_KEY )
+					.add( JsonUtil.getJOM().createObjectNode()
+							.put( BindingConfig.TYPE_KEY, type.getName() ) );
+			return withProvider( config );
 		}
 
 		/**
@@ -237,25 +265,32 @@ public interface LocalConfig extends GlobalConfig
 		 * @return
 		 */
 		public JsonBuilder withProvider( final Class<?> type,
-			final Class<?> impl, final boolean mutable )
+			final Class<?> impl, final boolean mutable,
+			final ObjectNode params )
 		{
-			return withProvider( type, impl, mutable, false );
+			final ObjectNode config = PROVIDER_DEFAULT
+					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
+					.put( ProviderConfig.MUTABLE_KEY, mutable );
+			config.set( ProviderConfig.PARAMETERS_KEY, params );
+			config.withArray( ProviderConfig.BINDINGS_KEY )
+					.add( JsonUtil.getJOM().createObjectNode()
+							.put( BindingConfig.TYPE_KEY, type.getName() ) );
+			return withProvider( config );
 		}
 
 		public JsonBuilder withProvider( final Class<?> type,
-			final Class<?> impl, final boolean mutable, final boolean init )
+			final Class<?> impl, final boolean mutable, final boolean init,
+			final ObjectNode params )
 		{
-			// TODO implement recursively?
-			final ObjectNode provider = JsonUtil.getJOM().createObjectNode()
+			final ObjectNode config = PROVIDER_DEFAULT
 					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
 					.put( ProviderConfig.MUTABLE_KEY, mutable )
 					.put( ProviderConfig.INITABLE_KEY, init );
-			provider.withArray( ProviderConfig.BINDINGS_KEY )
+			config.set( ProviderConfig.PARAMETERS_KEY, params );
+			config.withArray( ProviderConfig.BINDINGS_KEY )
 					.add( JsonUtil.getJOM().createObjectNode()
 							.put( BindingConfig.TYPE_KEY, type.getName() ) );
-			this.tree.with( BINDER_KEY ).withArray( BinderConfig.PROVIDERS_KEY )
-					.add( provider );
-			return this;
+			return withProvider( config );
 		}
 
 		public LocalConfig build()

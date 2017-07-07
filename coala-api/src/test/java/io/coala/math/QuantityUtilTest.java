@@ -39,9 +39,13 @@ public class QuantityUtilTest
 		final LatLong p3 = LatLong.of( 3.0003, 3.0003, unit );
 		final LatLong p4 = LatLong.of( -0.9999, -0.9999, unit );
 		final Quantity<Angle> d21 = p2.angularDistance( p1, unit );
+		LOG.trace( "d21: {}", d21 );
 		final Quantity<Angle> d23 = p2.angularDistance( p3, unit );
+		LOG.trace( "d23: {}", d23 );
 		final Quantity<Angle> d01 = p0.angularDistance( p1, unit );
+		LOG.trace( "d01: {}", d01 );
 		final Quantity<Angle> d04 = p0.angularDistance( p4, unit );
+		LOG.trace( "d04: {}", d04 );
 		final int precision123 = Compare.min( QuantityUtil.precision( d21 ),
 				QuantityUtil.precision( d23 ) ) - 1; // FIXME allow loss?
 		LOG.trace(

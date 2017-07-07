@@ -45,9 +45,9 @@ public class DynaBeanTest
 
 		BigDecimal value2();
 
-		String k1();
+		Object k1();
 
-		String getK1();
+		Object getK1();
 
 		String k1( String newK1 );
 
