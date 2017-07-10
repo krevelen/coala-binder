@@ -115,14 +115,14 @@ public class Guice4LocalBinder implements LocalBinder
 																	field,
 																	Integer.toHexString(
 																			binder.hashCode() ),
-																	binder.params
+																	binder.configs
 																			.get( field
 																					.getDeclaringClass() ) );
 												else
 													InjectConfig.Util
 															.injectFromJson( t,
 																	field,
-																	binder.params
+																	binder.configs
 																			.get( field
 																					.getDeclaringClass() ) );
 											} );
@@ -182,8 +182,8 @@ public class Guice4LocalBinder implements LocalBinder
 					final boolean initable = binding.initable();
 					final Collection<BindingConfig> typeKeys = binding
 							.bindingConfigs().values();
-					final JsonNode params = binding.params();
-					if( params != null ) binder.params.put( impl, params );
+					final JsonNode params = binding.config();
+					if( params != null ) binder.configs.put( impl, params );
 
 					LocalProvider<?> provider = null;
 
@@ -243,9 +243,16 @@ public class Guice4LocalBinder implements LocalBinder
 			private <T> void bindImpl( final Class<T> type,
 				final Class<?> impl )
 			{
-				bind( type ).to( impl.asSubclass( type ) );
-				emit( type );
-				LOG.trace( "Bound implementation: {} <- {}", type, impl );
+				try
+				{
+					bind( type ).to( impl.asSubclass( type ) );
+					emit( type );
+					LOG.trace( "Bound implementation: {} <- {}", type, impl );
+				} catch( final Exception e )
+				{
+					LOG.error( "Problem binding " + type.getSimpleName()
+							+ " <- " + impl.getSimpleName(), e );
+				}
 			}
 
 			/**
@@ -395,7 +402,7 @@ public class Guice4LocalBinder implements LocalBinder
 
 	private final transient Map<Class<?>, MutableProvider<?>> mutables = new HashMap<>();
 
-	private final transient Map<Class<?>, JsonNode> params = new HashMap<>();
+	private final transient Map<Class<?>, JsonNode> configs = new HashMap<>();
 
 	private final transient List<Class<?>> initable = new ArrayList<>();
 

@@ -22,7 +22,7 @@ import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
-import io.coala.time.ReplicateConfig;
+import io.coala.time.SchedulerConfig;
 import io.coala.time.Scheduler;
 import io.coala.util.Compare;
 import io.reactivex.Observable;
@@ -85,7 +85,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	private Dsol3Config config;
 
 	@InjectConfig
-	private ReplicateConfig replConfig;
+	private SchedulerConfig replConfig;
 
 	private boolean initialized = false;
 
@@ -101,7 +101,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	private transient ZonedDateTime offsetCache;
 
 	@Override
-	public ReplicateConfig config()
+	public SchedulerConfig config()
 	{
 		return this.replConfig;
 	}
@@ -140,7 +140,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	{
 		if( this.config == null ) this.config = this.replConfig == null
 				? Dsol3Config.get() : Dsol3Config.of( this.replConfig );
-		LOG.trace( "Imported config: {}", this.replConfig );
+//		LOG.trace( "Imported config: {}", this.replConfig );
 		LOG.trace( "Using config: {}", this.config );
 		final Class<? extends DEVSSimulator> type = this.config.simulatorType();
 		this.scheduler = DsolTime.createDEVSSimulator( type );

@@ -59,16 +59,16 @@ public interface ProviderConfig extends GlobalConfig
 	@Key( IMPLEMENTATION_KEY )
 	Class<?> implementation();
 
-	String PARAMETERS_KEY = "params";
+	String CONFIG_KEY = "config";
 
 //	@Key( PARAMETERS_KEY )
 //	@ConverterClass( JsonConverter.class )
-	default JsonNode params()
+	default JsonNode config()
 	{
-		final Pattern pattern = Pattern.compile( "^"
-				+ Pattern.quote( PARAMETERS_KEY + KEY_SEP ) + "(?<sub>.*)" );
-		System.err.println( pattern + " -> " + ConfigUtil.export( this )
-				+ " :: " + ConfigUtil.export( this, pattern, "${sub}" ) );
+		final Pattern pattern = Pattern.compile(
+				"^" + Pattern.quote( CONFIG_KEY + KEY_SEP ) + "(?<sub>.*)" );
+//		System.err.println( pattern + " -> " + ConfigUtil.export( this )
+//				+ " :: " + ConfigUtil.export( this, pattern, "${sub}" ) );
 		return ConfigUtil
 				.expand( ConfigUtil.export( this, pattern, "${sub}" ) );
 	}

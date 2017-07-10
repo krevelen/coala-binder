@@ -33,10 +33,13 @@ import org.aeonbits.owner.ConfigFactory;
 import org.aeonbits.owner.Converter;
 
 import com.eaio.uuid.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
+import io.coala.exception.Thrower;
 import io.coala.json.Contextual.Context;
 import io.coala.json.JsonUtil;
 import io.coala.name.Id;
@@ -198,7 +201,8 @@ public interface LocalConfig extends GlobalConfig
 		}
 
 		private static final ObjectNode PROVIDER_DEFAULT = JsonUtil.getJOM()
-				.createObjectNode().put( ProviderConfig.SINGLETON_KEY, false )
+				.createObjectNode().putNull( ProviderConfig.CONFIG_KEY )
+				.put( ProviderConfig.SINGLETON_KEY, false )
 				.put( ProviderConfig.MUTABLE_KEY, false )
 				.put( ProviderConfig.INITABLE_KEY, false );
 
@@ -215,63 +219,57 @@ public interface LocalConfig extends GlobalConfig
 		 * @return this builder for chaining
 		 */
 		public JsonBuilder withProvider( final Class<?> type,
-			final Class<?> impl )
+			final Class<?> impl, final Map<?, ?>... param )
 		{
-			return withProvider( type, impl, null );
+			final ObjectNode obj = JsonUtil.getJOM().createObjectNode();
+			final ArrayNode arr = JsonUtil.getJOM().createArrayNode();
+			if( param != null ) for( Map<?, ?> par : param )
+			{
+				final JsonNode map = ConfigUtil.expand( par );
+				if( map.isArray() )
+					arr.addAll( (ArrayNode) map );
+				else if( map.isObject() )
+					obj.setAll( (ObjectNode) map );
+				else
+					Thrower.throwNew( IllegalArgumentException::new, () -> "" );
+			}
+			return withProvider( type, impl, arr.size() == 0 ? obj
+					: obj.size() == 0 ? arr : obj.set( "values", arr ) );
 		}
 
-		/**
-		 * @param class1
-		 * @param class2
-		 * @return
-		 */
 		public JsonBuilder withProvider( final Class<?> type,
-			final Class<?> impl, final ObjectNode params )
+			final Class<?> impl, final JsonNode params )
 		{
-			final ObjectNode config = PROVIDER_DEFAULT
+			final ObjectNode config = PROVIDER_DEFAULT.deepCopy()
 					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() );
-			if( params != null )
-				config.set( ProviderConfig.PARAMETERS_KEY, params );
+			config.set( ProviderConfig.CONFIG_KEY, params );
 			config.withArray( ProviderConfig.BINDINGS_KEY )
 					.add( JsonUtil.getJOM().createObjectNode()
 							.put( BindingConfig.TYPE_KEY, type.getName() ) );
 			return withProvider( config );
 		}
 
-		/**
-		 * @param class1
-		 * @param class2
-		 * @return
-		 */
 		public JsonBuilder withSingleton( final Class<?> type,
 			final Class<?> impl, final ObjectNode params )
 		{
-			final ObjectNode config = PROVIDER_DEFAULT
+			final ObjectNode config = PROVIDER_DEFAULT.deepCopy()
 					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
-					.put( ProviderConfig.SINGLETON_KEY, true )
-					.put( ProviderConfig.MUTABLE_KEY, false )
-					.put( ProviderConfig.INITABLE_KEY, false );
-			config.set( ProviderConfig.PARAMETERS_KEY, params );
+					.put( ProviderConfig.SINGLETON_KEY, true );
+			config.set( ProviderConfig.CONFIG_KEY, params );
 			config.withArray( ProviderConfig.BINDINGS_KEY )
 					.add( JsonUtil.getJOM().createObjectNode()
 							.put( BindingConfig.TYPE_KEY, type.getName() ) );
 			return withProvider( config );
 		}
 
-		/**
-		 * @param type
-		 * @param impl
-		 * @param mutable
-		 * @return
-		 */
 		public JsonBuilder withProvider( final Class<?> type,
 			final Class<?> impl, final boolean mutable,
 			final ObjectNode params )
 		{
-			final ObjectNode config = PROVIDER_DEFAULT
+			final ObjectNode config = PROVIDER_DEFAULT.deepCopy()
 					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
 					.put( ProviderConfig.MUTABLE_KEY, mutable );
-			config.set( ProviderConfig.PARAMETERS_KEY, params );
+			config.set( ProviderConfig.CONFIG_KEY, params );
 			config.withArray( ProviderConfig.BINDINGS_KEY )
 					.add( JsonUtil.getJOM().createObjectNode()
 							.put( BindingConfig.TYPE_KEY, type.getName() ) );
@@ -282,11 +280,11 @@ public interface LocalConfig extends GlobalConfig
 			final Class<?> impl, final boolean mutable, final boolean init,
 			final ObjectNode params )
 		{
-			final ObjectNode config = PROVIDER_DEFAULT
+			final ObjectNode config = PROVIDER_DEFAULT.deepCopy()
 					.put( ProviderConfig.IMPLEMENTATION_KEY, impl.getName() )
 					.put( ProviderConfig.MUTABLE_KEY, mutable )
 					.put( ProviderConfig.INITABLE_KEY, init );
-			config.set( ProviderConfig.PARAMETERS_KEY, params );
+			config.set( ProviderConfig.CONFIG_KEY, params );
 			config.withArray( ProviderConfig.BINDINGS_KEY )
 					.add( JsonUtil.getJOM().createObjectNode()
 							.put( BindingConfig.TYPE_KEY, type.getName() ) );

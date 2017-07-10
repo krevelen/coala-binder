@@ -41,12 +41,12 @@ import io.coala.config.ConfigUtil;
 import io.coala.json.JsonUtil;
 
 /**
- * {@link ReplicateConfig}
+ * {@link SchedulerConfig}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public interface ReplicateConfig extends ProviderConfig
+public interface SchedulerConfig extends ProviderConfig
 {
 	String ID_KEY = "replication.id";
 
@@ -143,19 +143,19 @@ public interface ReplicateConfig extends ProviderConfig
 				DURATION_KEY + " not set" ), timeUnit() );
 	}
 
-	static ReplicateConfig getOrCreate( final Map<?, ?>... imports )
+	static SchedulerConfig getOrCreate( final Map<?, ?>... imports )
 	{
-		return ConfigCache.getOrCreate( ReplicateConfig.class, imports );
+		return ConfigCache.getOrCreate( SchedulerConfig.class, imports );
 	}
 
-	static ReplicateConfig getOrCreate( final String rawId,
+	static SchedulerConfig getOrCreate( final String rawId,
 		final Map<?, ?>... imports )
 	{
 		return ConfigCache
-				.getOrCreate( rawId, ReplicateConfig.class,
+				.getOrCreate( rawId, SchedulerConfig.class,
 						ConfigUtil.join(
 								Collections.singletonMap(
-										ReplicateConfig.ID_KEY, rawId ),
+										SchedulerConfig.ID_KEY, rawId ),
 								imports ) );
 	}
 }

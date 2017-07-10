@@ -54,8 +54,8 @@ public interface Scheduler extends Proactive, Runnable
 		return this;
 	}
 
-	/** @return the current {@link ReplicateConfig} */
-	ReplicateConfig config();
+	/** @return the current {@link SchedulerConfig} */
+	SchedulerConfig config();
 
 	/** @return an {@link Observable} stream of {@link Instant}s */
 	Observable<Instant> time();
@@ -367,20 +367,20 @@ public interface Scheduler extends Proactive, Runnable
 	interface Factory
 	{
 
-		default Scheduler create( ReplicateConfig config )
+		default Scheduler create( SchedulerConfig config )
 		{
 			return Instantiator.instantiate( config.implementation() );
 		}
 
 		default Scheduler create( final Map<?, ?>... imports )
 		{
-			return create( ReplicateConfig.getOrCreate( imports ) );
+			return create( SchedulerConfig.getOrCreate( imports ) );
 		}
 
 		default Scheduler create( final String rawId,
 			final Map<?, ?>... imports )
 		{
-			return create( ReplicateConfig.getOrCreate( rawId, imports ) );
+			return create( SchedulerConfig.getOrCreate( rawId, imports ) );
 		}
 
 		default Observable<Scheduler> createAndRun(
@@ -399,10 +399,10 @@ public interface Scheduler extends Proactive, Runnable
 			private LocalBinder binder;
 
 			@Override
-			public Scheduler create( final ReplicateConfig config )
+			public Scheduler create( final SchedulerConfig config )
 			{
 				// FIXME use some configuration mechanism during injection, rather than resetting 
-				binder().reset( ReplicateConfig.class, config );
+				binder().reset( SchedulerConfig.class, config );
 				final Scheduler scheduler = binder()
 						.inject( config.implementation() );
 				binder().reset( Scheduler.class, scheduler );

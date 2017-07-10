@@ -46,7 +46,7 @@ import io.coala.name.Identified;
 import io.coala.time.Expectation;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
-import io.coala.time.ReplicateConfig;
+import io.coala.time.SchedulerConfig;
 import io.coala.time.Scheduler;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
@@ -402,7 +402,7 @@ public interface Transaction<F extends Fact>
 			private transient Fact.Factory factFactory;
 
 			@InjectConfig
-			private transient ReplicateConfig config;
+			private transient SchedulerConfig config;
 
 			@SuppressWarnings( "unchecked" )
 			@Override

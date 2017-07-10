@@ -28,7 +28,7 @@ import io.coala.persist.HikariHibernateJPAConfig;
 import io.coala.time.Duration;
 import io.coala.time.Instant;
 import io.coala.time.Proactive;
-import io.coala.time.ReplicateConfig;
+import io.coala.time.SchedulerConfig;
 import io.coala.time.Scheduler;
 import io.coala.time.TimeUnits;
 import io.coala.time.Timing;
@@ -242,8 +242,8 @@ public class EnterpriseTest
 		throws TimeoutException, IOException, InterruptedException
 	{
 		// configure replication FIXME via LocalConfig?
-		ConfigCache.getOrCreate( ReplicateConfig.class, Collections
-				.singletonMap( ReplicateConfig.DURATION_KEY, "" + 200 ) );
+		ConfigCache.getOrCreate( SchedulerConfig.class, Collections
+				.singletonMap( SchedulerConfig.DURATION_KEY, "" + 200 ) );
 
 		// configure tooling
 		final LocalBinder binder = LocalConfig.builder().withId( "world1" )

@@ -15,6 +15,7 @@
  */
 package io.coala.bind;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -165,7 +166,7 @@ public @interface InjectConfig
 		 */
 		public static void injectConfig( final Object encloser,
 			final Field field, final String binderHash,
-			final JsonNode... providerParams )
+			final JsonNode... configs )
 		{
 			/*
 			 * if( binder instanceof LocalBinder ) try { field.setAccessible(
@@ -181,27 +182,29 @@ public @interface InjectConfig
 			final InjectConfig annot = field
 					.getAnnotation( InjectConfig.class );
 			final List<Map<?, ?>> imports = new ArrayList<>();
-			if( providerParams != null && providerParams.length > 0 )
-				for( JsonNode params : providerParams )
+			if( configs != null ) for( JsonNode config : configs )
+				if( config != null )
 				{
-				LOG.trace( "Import params {}", params );
-				if( params != null ) imports.add( ConfigUtil.flatten( params ) );
+					LOG.trace( "Inject json config for {}: {}",
+							encloser.getClass().getSimpleName(), config );
+					imports.add( ConfigUtil.flatten( config ) );
 				}
-			if( annot != null && annot.yamlURI().length != 0 )
-			{
-				for( String yamlURI : annot.yamlURI() )
+			if( annot != null ) for( String yamlURI : annot.yamlURI() )
+				if( yamlURI != null )
+				{
 					try
 					{
-						LOG.trace( "Import YAML from {}", yamlURI );
+						LOG.trace( "Inject YAML for {} from {}",
+								encloser.getClass().getSimpleName(), yamlURI );
 						final InputStream is = FileUtil
 								.toInputStream( ConfigUtil.expand( yamlURI ) );
 						if( is != null )
 							imports.add( YamlUtil.flattenYaml( is ) );
-					} catch( final Exception e )
+					} catch( final IOException e )
 					{
 						Thrower.rethrowUnchecked( e );
 					}
-			}
+				}
 			final Map<?, ?>[] importsArray = imports
 					.toArray( new Map[imports.size()] );
 			final Scope scope = annot != null ? annot.value() : Scope.DEFAULT;

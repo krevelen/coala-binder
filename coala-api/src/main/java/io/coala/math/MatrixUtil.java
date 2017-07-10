@@ -21,6 +21,7 @@ package io.coala.math;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -30,6 +31,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.ujmp.core.Matrix;
+
+import io.coala.exception.Thrower;
+import io.coala.log.LogUtil;
 
 /**
  * {@link MatrixUtil}
@@ -67,6 +71,14 @@ public class MatrixUtil
 	{
 		return map( toStream( m.availableCoordinates(), true ),
 				m::getAsBigDecimal, mapper );
+	}
+
+	// TODO for each 'primitive' type
+	public static void insertObject( final boolean parallel,
+		final Matrix target, final Matrix source, final long... targetOffset )
+	{
+		insert( toStream( source.availableCoordinates(), parallel ),
+				source::getAsObject, target::setAsObject, targetOffset );
 	}
 
 	// TODO for each 'primitive' type
@@ -193,15 +205,33 @@ public class MatrixUtil
 
 	public static long[] add( final long[] coords, final long[] addendum )
 	{
+		if( addendum == null ) return coords;
+		if( coords.length != addendum.length )
+			Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Can't add " + Arrays.asList( addendum ) + " to "
+							+ Arrays.asList( coords ) );
 		return IntStream.range( 0, coords.length )
 				.mapToLong( i -> coords[i] + addendum[i] ).toArray();
 	}
 
-	public static <T> void insert( final Stream<long[]> coords,
+	public static <T> void insert( final Stream<long[]> sourceCoords,
 		final Function<long[], T> sourceGetter,
 		final BiConsumer<T, long[]> targetSetter, final long... targetOffset )
 	{
-		coords.forEach( coord -> targetSetter.accept(
-				sourceGetter.apply( coord ), add( coord, targetOffset ) ) );
+		sourceCoords.forEach( sourceCoord ->
+		{
+			try
+			{
+				final T v = sourceGetter.apply( sourceCoord );
+				final long[] c = add( sourceCoord, targetOffset );
+				targetSetter.accept( v, c );
+			} catch( final Throwable e )
+			{
+				LogUtil.getLogger( MatrixUtil.class ).error(
+						"Problem getting {} + {} -> {}", sourceCoord,
+						targetOffset, add( sourceCoord, targetOffset ) );
+				e.printStackTrace();
+			}
+		} );
 	}
 }

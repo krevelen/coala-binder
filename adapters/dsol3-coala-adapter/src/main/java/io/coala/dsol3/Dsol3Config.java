@@ -33,7 +33,7 @@ import io.coala.config.YamlConfig;
 import io.coala.function.ThrowingConsumer;
 import io.coala.math.QuantityUtil;
 import io.coala.time.Duration;
-import io.coala.time.ReplicateConfig;
+import io.coala.time.SchedulerConfig;
 import io.coala.time.Scheduler;
 import io.coala.util.MapBuilder;
 import nl.tudelft.simulation.dsol.experiment.ReplicationMode;
@@ -113,10 +113,10 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 	}
 
 	/**
-	 * @param replConfig the {@link ReplicateConfig}
+	 * @param replConfig the {@link SchedulerConfig}
 	 * @return a cached {@link Dsol3Config}
 	 */
-	static Dsol3Config of( final ReplicateConfig replConfig )
+	static Dsol3Config of( final SchedulerConfig replConfig )
 	{
 		final Duration duration = replConfig.duration();
 

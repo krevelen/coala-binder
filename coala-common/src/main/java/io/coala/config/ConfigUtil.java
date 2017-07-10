@@ -267,7 +267,7 @@ public class ConfigUtil implements Util
 	/**
 	 * @param props the flat properties {@link Map}, e.g. {@link Properties}
 	 * @param baseKeys the base key(s) to prefix
-	 * @return the expanded property tree root {@link JsonNode}
+	 * @return an expanded property tree root {@link JsonNode} (array or object)
 	 */
 	public static JsonNode expand( final Map<?, ?> props,
 		final String... baseKeys )

@@ -58,9 +58,9 @@ public class ReplicateConfigTest
 	@Test
 	public void test() throws Exception
 	{
-		final ReplicateConfig conf = ReplicateConfig.getOrCreate();
+		final SchedulerConfig conf = SchedulerConfig.getOrCreate();
 		LOG.info( "Testing {} defaults: {}",
-				ReplicateConfig.class.getSimpleName(), conf );
+				SchedulerConfig.class.getSimpleName(), conf );
 
 		try
 		{
