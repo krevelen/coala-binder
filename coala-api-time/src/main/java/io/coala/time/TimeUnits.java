@@ -45,7 +45,7 @@ public class TimeUnits extends Units
 			SECOND, new RationalConverter( 1, 1000000000 ) );
 
 	/** */
-	public static final String HOURS_LABEL = "hrs";
+	public static final String HOURS_LABEL = "hr";
 	public static final Unit<Time> HOURS = new TransformedUnit<>( HOURS_LABEL,
 			SECOND, new RationalConverter( 60 * 60, 1 ) );
 
