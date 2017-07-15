@@ -128,8 +128,8 @@ public interface ConditionalDistribution<T, C>
 	{
 		Objects.requireNonNull( distGen );
 		Objects.requireNonNull( param1Gen );
-		if( param1Gen.isEmpty() ) Thrower
-				.throwNew( IllegalArgumentException.class, "Can't be empty" );
+		if( param1Gen.isEmpty() )
+			Thrower.throwNew( IllegalArgumentException::new, () -> "empty" );
 		return param1Gen instanceof NavigableMap
 				? of( distGen, (NavigableMap<C, X>) param1Gen )
 				: of( distGen, param1Gen::get, new HashMap<>() );

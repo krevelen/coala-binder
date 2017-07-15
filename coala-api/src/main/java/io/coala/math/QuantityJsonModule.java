@@ -83,9 +83,8 @@ public class QuantityJsonModule extends SimpleModule
 			final TreeNode tree = p.readValueAsTree();
 			if( tree.size() == 0 ) return null;
 
-			return Thrower.throwNew( IOException.class,
-					"Problem parsing {} from {}",
-					Quantity.class.getSimpleName(), tree );
+			return Thrower.throwNew( IOException::new, () -> "Problem parsing "
+					+ Quantity.class.getSimpleName() + " from " + tree );
 		}
 	};
 

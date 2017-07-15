@@ -24,18 +24,14 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 
 import org.aeonbits.owner.Converter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import io.coala.exception.Thrower;
 
 /**
  * {@link AgentConfigConverter}
  */
 public class InputStreamConverter implements Converter<InputStream>
 {
-	/** */
-	private static final Logger LOG = LogManager
-			.getLogger( InputStreamConverter.class );
-
 	@Override
 	public InputStream convert( final Method method, final String input )
 	{
@@ -44,8 +40,7 @@ public class InputStreamConverter implements Converter<InputStream>
 			return input == null ? null : FileUtil.toInputStream( input );
 		} catch( final IOException e )
 		{
-			LOG.info( "Ignoring resource {}: {}", input, e.getMessage() );
-			return null;
+			return Thrower.rethrowUnchecked(e );
 		}
 	}
 }

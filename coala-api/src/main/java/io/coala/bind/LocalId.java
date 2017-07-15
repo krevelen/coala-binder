@@ -104,9 +104,9 @@ public class LocalId extends Id.OrdinalChild<Comparable, LocalId>
 	public static LocalId valueOf( final String value )
 	{
 		String[] pair = value.split( "@" );
-		if( pair.length != 2 || pair[1].isEmpty() )
-			Thrower.throwNew( IllegalArgumentException.class,
-					"Can't parse {} from: '{}'", LocalId.class, value );
+		if( pair.length != 2 || pair[1].isEmpty() ) Thrower
+				.throwNew( IllegalArgumentException::new, () -> "Can't parse "
+						+ LocalId.class + " from: '" + value + "'" );
 		LocalId parent = of( new UUID( pair[1] ) );
 		for( pair = pair[0].split( ID_SEP_REGEX,
 				2 ); pair.length == 2; pair = pair[1].split( ID_SEP_REGEX, 2 ) )

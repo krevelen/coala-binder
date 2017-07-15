@@ -268,8 +268,8 @@ public final class DynaBean implements Cloneable, Comparable
 	@Override
 	public int compareTo( final Object o )
 	{
-		return Thrower.throwNew( IllegalStateException.class,
-				"Invocation should be intercepted" );
+		return Thrower.throwNew( IllegalStateException::new,
+				() -> "Invocation should be intercepted" );
 	}
 
 	@Override

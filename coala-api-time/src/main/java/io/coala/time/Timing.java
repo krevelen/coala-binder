@@ -280,11 +280,11 @@ public interface Timing extends Wrapper<String>
 					return of( pattern, InstantTiming.class );
 				} catch( final Exception e2 )
 				{
-					return Thrower.throwNew( IllegalArgumentException.class,
-							"Problem parsing `{}`, errors:"
-									+ "\n\tCron: {}\n\tiCal: {}\n\t Instant: {}",
-							pattern, e.getMessage(), e1.getMessage(),
-							e2.getMessage() );
+					return Thrower.throwNew( IllegalArgumentException::new,
+							() -> "Problem parsing `" + pattern + "`, errors:"
+									+ "\n\tCron: " + e.getMessage()
+									+ "\n\tiCal: " + e1.getMessage()
+									+ "\n\t Instant: " + e2.getMessage() );
 				}
 			}
 		}

@@ -143,9 +143,11 @@ public class FileUtil // implements Util
 	}
 
 	/**
-	 * Searches the file system first and then the context class path for a file
+	 * Searches the file system first and then the (context) java.class.path for
+	 * a file
 	 * 
-	 * @param path an absolute path in the file system or (context) classpath
+	 * @param path an absolute path in the file system or (context)
+	 *            java.class.path
 	 * @return an {@link InputStream} for the specified {@code path}
 	 * @throws IOException
 	 */
@@ -157,11 +159,14 @@ public class FileUtil // implements Util
 	}
 
 	/**
-	 * Searches the file system first and then the context class path for a file
+	 * Searches the file system first and then the (context) java.class.path for
+	 * a file
 	 * 
-	 * @param path an absolute path in the file system or (context) classpath
+	 * @param path an absolute path in the file system or (context)
+	 *            java.class.path
 	 * @return an {@link InputStream} for the specified {@code path}
 	 * @throws IOException
+	 * @see {@link System#getProperties()}
 	 */
 	public static InputStream toInputStream( final String path,
 		final ClassLoader cl ) throws IOException
@@ -189,10 +194,10 @@ public class FileUtil // implements Util
 			return new FileInputStream( userFile );
 		}
 
-		final URL resourcePath = cl.getResource( path );
-		if( resourcePath != null )
+		final URL rsrcPath = cl.getResource( path );
+		if( rsrcPath != null )
 		{
-			LOG.trace( "Found '" + path + "' in classpath: " + resourcePath );
+			LOG.trace( "Found '" + path + "' in java.class.path: " + rsrcPath );
 			return cl.getResourceAsStream( path );
 		}
 
@@ -206,9 +211,12 @@ public class FileUtil // implements Util
 			// ignore
 		}
 
-		return Thrower.throwNew( FileNotFoundException.class,
-				"File not found {}, tried classpath and {}", path,
-				file.getAbsolutePath() );
+		return Thrower.throwNew( FileNotFoundException::new,
+				() -> "File not found: " + path + ", tried "
+						+ file.getAbsolutePath()
+						+ " and (context) java.class.path: "
+						+ System.getProperty( "java.class.path",
+								"<unknown>" ) );
 	}
 
 	/**

@@ -96,8 +96,8 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 	public ProbabilityDistribution<Long> createBinomial( final Number trials,
 		final Number p )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"binomial" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "binomial" );
 	}
 
 	@Override
@@ -114,7 +114,7 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 					.blockingGet();
 			// sanity check
 			if( map.isEmpty() ) return Thrower
-					.throwNew( IllegalArgumentException.class, "empty" );
+					.throwNew( IllegalArgumentException::new, () -> "empty" );
 
 			// sync iteration
 			final BigDecimal total = map.values().parallelStream()
@@ -136,8 +136,8 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 	@Override
 	public ProbabilityDistribution<Long> createGeometric( final Number p )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"geometric" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "geometric" );
 	}
 
 	@Override
@@ -145,61 +145,63 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 		final Number populationSize, final Number numberOfSuccesses,
 		final Number sampleSize )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"hypergeometric" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "hypergeometric" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Long> createPascal( final Number r,
 		final Number p )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"pascal" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "pascal" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Long> createPoisson( final Number mean )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"poisson" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "poisson" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Long>
 		createZipf( final Number numberOfElements, final Number exponent )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class, "zipf" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "zipf" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createBeta( final Number alpha,
 		final Number beta )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class, "beta" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "beta" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createCauchy( final Number median,
 		final Number scale )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"cauchy" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "cauchy" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double>
 		createChiSquared( final Number degreesOfFreedom )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"chi-squared" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "chi-squared" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double>
 		createExponential( final Number mean )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"exponential" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "exponential" );
 	}
 
 	@Override
@@ -208,14 +210,15 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 	{
 		// sanity check
 		if( binCount < 1 ) return Thrower
-				.throwNew( IllegalArgumentException.class, "n_bins < 1" );
+				.throwNew( IllegalArgumentException::new, () -> "n_bins < 1" );
 		final TreeMap<BigDecimal, Long> counts = StreamSupport
 				.stream( Objects.requireNonNull( observations ).spliterator(),
 						true )
 				.collect( Collectors.groupingBy( DecimalUtil::valueOf,
 						TreeMap::new, Collectors.counting() ) );
-		if( counts.size() < binCount ) return Thrower
-				.throwNew( IllegalArgumentException.class, "|n| < n_bins" );
+		if( counts.size() < binCount )
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "|n| < n_bins" );
 
 		final BigDecimal binSize = DecimalUtil.divide(
 				counts.lastKey().subtract( counts.firstKey() ), binCount );
@@ -244,29 +247,32 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 		final Number numeratorDegreesOfFreedom,
 		final Number denominatorDegreesOfFreedom )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class, "f" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "f" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createGamma( final Number shape,
 		final Number scale )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class, "gamma" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "gamma" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createLevy( final Number mu,
 		final Number c )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class, "levy" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "levy" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createLogNormal( final Number scale,
 		final Number shape )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"log-normal" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "log-normal" );
 	}
 
 	@Override
@@ -281,24 +287,24 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 	public ProbabilityDistribution<double[]>
 		createMultinormal( final double[] means, final double[][] covariances )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"multinormal" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "multinormal" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double> createPareto( final Number scale,
 		final Number shape )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"pareto" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "pareto" );
 	}
 
 	@Override
 	public ProbabilityDistribution<Double>
 		createT( final Number degreesOfFreedom )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"student-t" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "student-t" );
 	}
 
 	public <T extends Number> ProbabilityDistribution<BigDecimal>
@@ -366,7 +372,7 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 	public ProbabilityDistribution<Double> createWeibull( final Number alpha,
 		final Number beta )
 	{
-		return Thrower.throwNew( UnsupportedOperationException.class,
-				"weibull" );
+		return Thrower.throwNew( UnsupportedOperationException::new,
+				() -> "weibull" );
 	}
 }

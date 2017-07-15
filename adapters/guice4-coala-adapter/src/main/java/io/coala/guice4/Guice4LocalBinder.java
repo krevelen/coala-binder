@@ -445,9 +445,9 @@ public class Guice4LocalBinder implements LocalBinder
 		final Provider<T> provider )
 	{
 		final MutableProvider<?> mutable = this.mutables.get( type );
-		if( mutable == null ) Thrower.throwNew( IllegalStateException.class,
-				"Can't reset binding for {} without a {}", type,
-				MutableProvider.class.getSimpleName() );
+		if( mutable == null ) Thrower.throwNew( IllegalStateException::new,
+				() -> "Can't reset binding for " + type + " without a "
+						+ MutableProvider.class.getSimpleName() );
 
 		((MutableProvider<T>) mutable)
 				.reset( LocalProvider.of( this, provider, false ) );

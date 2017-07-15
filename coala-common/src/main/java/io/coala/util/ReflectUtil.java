@@ -96,9 +96,12 @@ public class ReflectUtil implements Util
 		throws IllegalAccessException, SecurityException, NoSuchMethodException
 	{
 		final Method result = valueType.getMethod( name, argTypes );
-		if( !Modifier.isStatic( result.getModifiers() ) )
-			return Thrower.throwNew( IllegalAccessException.class,
-					"{}({}) not static", name, Arrays.asList( argTypes ) );
+		if( !Modifier
+				.isStatic(
+						result.getModifiers() ) )
+			return Thrower.throwNew( IllegalAccessException::new, () -> name
+					+ (argTypes.length == 0 ? "()" : Arrays.asList( argTypes ))
+					+ " not static" );
 		if( !result.isAccessible() ) result.setAccessible( true );
 		return result;
 	}
@@ -145,10 +148,10 @@ public class ReflectUtil implements Util
 				if( constructor.isAnnotationPresent( Inject.class ) )
 					return null;
 
-			return Thrower.throwNew( NoSuchMethodException.class,
-					"No matching public constructor found for {}({})",
-					valueType, argTypes == null || argTypes.length == 0 ? ""
-							: Arrays.asList( argTypes ) );
+			return Thrower.throwNew( NoSuchMethodException::new,
+					() -> "No matching public constructor found for valueType"
+							+ (argTypes == null || argTypes.length == 0 ? "()"
+									: Arrays.asList( argTypes )) );
 		}
 	}
 
@@ -194,10 +197,10 @@ public class ReflectUtil implements Util
 					}
 				} );
 		if( prop == null )
-			return Thrower.throwNew( IllegalArgumentException.class,
-					"Not a bean write(set)/read(get)-method"
-							+ ", or undeclared in (interfaces of) {}: {}",
-					beanType, method );
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Not a bean write(set)/read(get)-method"
+							+ ", or undeclared in (interfaces of) " + beanType
+							+ ": " + method );
 
 		if( method.equals( prop.getReadMethod() ) ) return Objects
 				.requireNonNull( properties.get( prop.getName() ), "Missing "
@@ -237,7 +240,7 @@ public class ReflectUtil implements Util
 
 	/**
 	 * @param method the (raw) {@link Method} declaration
-	 * @return the {@link MethodHandle} for direct execution, 
+	 * @return the {@link MethodHandle} for direct execution,
 	 */
 	public static MethodHandle cachedMethodHandle( final Method method )
 	{

@@ -213,8 +213,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			if( Number.class.isAssignableFrom( result.getClass() ) )
 				return (Quantity<Q>) QuantityUtil.valueOf( (Number) result,
 						unit );
-			return Thrower.throwNew( IllegalArgumentException.class,
-					"Can't convert to Quantity: {}", result );
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Can't convert to Quantity: " + result );
 		} );
 	}
 
@@ -710,8 +710,8 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		{
 			if( range.lowerInclusive() && range.upperInclusive() ) return;
 
-			Thrower.throwNew( IllegalArgumentException.class,
-					"Exclusive/infinite bounds not allowed: {}", range );
+			Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Exclusive/infinite bounds not allowed: " + range );
 		}
 	}
 

@@ -132,8 +132,8 @@ public interface Injectable
 				if( (annot = cls.getAnnotation( Entity.class )) != null )
 					return annot.name() == null ? cls.getSimpleName()
 							: annot.name();
-			return Thrower.throwNew( IllegalStateException.class,
-					"{} is not an @{} ", getClass(), Entity.class );
+			return Thrower.throwNew( IllegalStateException::new,
+					() -> getClass() + " is not an @" + Entity.class );
 		}
 
 		protected abstract THIS prePersist( T source );

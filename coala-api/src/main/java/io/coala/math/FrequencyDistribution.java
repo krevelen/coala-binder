@@ -139,8 +139,8 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 					.collect( Collectors.toMap( value -> value,
 							value -> proportionOf( value ),
 							( v1, v2 ) -> Thrower.throwNew(
-									IllegalStateException.class,
-									"merge {} and {} ?", v1, v2 ),
+									IllegalStateException::new,
+									() -> "Can't merge " + v1 + " and " + v2 ),
 							() -> new ConcurrentSkipListMap<>() ) );
 		}
 
@@ -152,8 +152,8 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 					.collect( Collectors.toMap( value -> value,
 							value -> proportionOf( value, unit ),
 							( v1, v2 ) -> Thrower.throwNew(
-									IllegalStateException.class,
-									"merge {} and {} ?", v1, v2 ),
+									IllegalStateException::new,
+									() -> "Can't merge " + v1 + " and " + v2 ),
 							() -> new ConcurrentSkipListMap<>() ) );
 		}
 
@@ -497,8 +497,8 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 							.valueOf( e.getValue().divide( getSumFrequency() ) )
 							.to( unit ),
 							( v1, v2 ) -> Thrower.throwNew(
-									IllegalStateException.class,
-									"merge {} and {} ?", v1, v2 ),
+									IllegalStateException::new, () -> "Can't merge "
+											+ v1 + " and " + v2 ),
 							() -> new ConcurrentSkipListMap<>() ) );
 		}
 	}

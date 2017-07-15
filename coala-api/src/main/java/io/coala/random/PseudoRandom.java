@@ -98,8 +98,8 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	 */
 	default long nextLong( final long bound )
 	{
-		if( bound < 0 ) return Thrower.throwNew( IllegalArgumentException.class,
-				"bound < 0" );
+		if( bound < 0 ) return Thrower.throwNew( IllegalArgumentException::new,
+				() -> "bound < 0" );
 
 		// skip 2^n matching, as per http://stackoverflow.com/a/2546186/1418999
 		long bits, val;
@@ -159,8 +159,8 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	 */
 	default <E> E nextElement( final List<E> elements )
 	{
-		if( Objects.requireNonNull( elements ).isEmpty() )
-			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
+		if( Objects.requireNonNull( elements ).isEmpty() ) return Thrower
+				.throwNew( IllegalArgumentException::new, () -> "empty" );
 		if( elements.size() == 1 ) return elements.get( 0 );
 		return nextElement( elements, 0, elements.size() - 1 );
 	}
@@ -178,16 +178,18 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		final int max )
 	{
 		// sanity check
-		if( Objects.requireNonNull( elements ).isEmpty() )
-			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
-		if( min < 0 ) return Thrower.throwNew( IllegalArgumentException.class,
-				"min < 0" );
-		if( min >= elements.size() ) return Thrower
-				.throwNew( ArrayIndexOutOfBoundsException.class, "min > size" );
-		if( max < min ) return Thrower.throwNew( IllegalArgumentException.class,
-				"max < min" );
-		if( max > elements.size() ) return Thrower
-				.throwNew( ArrayIndexOutOfBoundsException.class, "max > size" );
+		if( Objects.requireNonNull( elements ).isEmpty() ) return Thrower
+				.throwNew( IllegalArgumentException::new, () -> "empty" );
+		if( min < 0 ) return Thrower.throwNew( IllegalArgumentException::new,
+				() -> "min < 0" );
+		if( min >= elements.size() )
+			return Thrower.throwNew( ArrayIndexOutOfBoundsException::new,
+					() -> "min > size" );
+		if( max < min ) return Thrower.throwNew( IllegalArgumentException::new,
+				() -> "max < min" );
+		if( max > elements.size() )
+			return Thrower.throwNew( ArrayIndexOutOfBoundsException::new,
+					() -> "max > size" );
 		if( elements.size() == 1 ) return elements.get( 0 );
 		return elements.get( min + nextInt( max - min ) );
 	}
@@ -202,8 +204,8 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	default <E> E nextElement( final Collection<E> elements )
 	{
 		if( elements instanceof List ) return nextElement( (List<E>) elements );
-		if( Objects.requireNonNull( elements ).isEmpty() )
-			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
+		if( Objects.requireNonNull( elements ).isEmpty() ) return Thrower
+				.throwNew( IllegalArgumentException::new, () -> "empty" );
 		return nextElement( elements, elements.size() );
 	}
 
@@ -220,8 +222,8 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	{
 		if( elements instanceof List )
 			return nextElement( (List<E>) elements, 0, (int) max );
-		if( Objects.requireNonNull( elements ).isEmpty() )
-			return Thrower.throwNew( IllegalArgumentException.class, "empty" );
+		if( Objects.requireNonNull( elements ).isEmpty() ) return Thrower
+				.throwNew( IllegalArgumentException::new, () -> "empty" );
 		return nextElement( (Iterable<E>) elements, max );
 	}
 
@@ -245,8 +247,8 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 		for( long i = 0; it.hasNext(); it.next() )
 			if( n == i++ ) return it.next();
 
-		return Thrower.throwNew( IndexOutOfBoundsException.class,
-				"Out of bounds: " + max + " > size ("
+		return Thrower.throwNew( IndexOutOfBoundsException::new,
+				() -> "Out of bounds: " + max + " > size ("
 						+ (elements instanceof Collection
 								? ((Collection<E>) elements).size()
 								: elements.getClass().getSimpleName())

@@ -78,9 +78,10 @@ public @interface InjectDist
 		{
 			if( !ProbabilityDistribution.class
 					.isAssignableFrom( field.getType() ) )
-				Thrower.throwNew( UnsupportedOperationException.class,
-						"@{} only injects extensions of {}",
-						InjectDist.class.getSimpleName(), Config.class );
+				Thrower.throwNew( UnsupportedOperationException::new,
+						() -> "@" + InjectDist.class.getSimpleName()
+								+ " only injects extensions of "
+								+ Config.class );
 			field.setAccessible( true );
 			final InjectDist annot = field.getAnnotation( InjectDist.class );
 			try
@@ -94,7 +95,8 @@ public @interface InjectDist
 				} else if( QuantityDistribution.class
 						.isAssignableFrom( field.getType() ) )
 				{
-					final Unit<?> unit = annot.unit().isEmpty() ? AbstractUnit.ONE
+					final Unit<?> unit = annot.unit().isEmpty()
+							? AbstractUnit.ONE
 							: AbstractUnit.parse( annot.unit() );
 //					final Class<?> fieldDim = TypeArguments
 //							.of( AmountDistribution.class, field.getType()
@@ -117,10 +119,9 @@ public @interface InjectDist
 //								"Can't convert amounts from parsed {} to injected {}",
 //								parsedDim.getTypeName(), fieldDim.getTypeName() );
 				} else
-					Thrower.throwNew( UnsupportedOperationException.class,
-							"Can't convert values from parsed {} to injected {}",
-							parsedDist.getClass().getTypeName(),
-							field.getType().getTypeName() );
+					Thrower.throwNew( UnsupportedOperationException::new,
+							() ->
+							"Can't convert values from parsed "+parsedDist.getClass().getTypeName()+" to injected "+field.getType().getTypeName() );
 //				final Class<?> fieldValueType = TypeArguments
 //						.of( ProbabilityDistribution.class, field.getType()
 //								.asSubclass( ProbabilityDistribution.class ) )

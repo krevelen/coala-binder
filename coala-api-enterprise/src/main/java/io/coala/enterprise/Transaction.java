@@ -287,14 +287,14 @@ public interface Transaction<F extends Fact>
 
 		protected void checkNotInitiated()
 		{
-			if( this.initiated ) Thrower.throwNew( IllegalStateException.class,
-					"Already initiated: {}", id() );
+			if( this.initiated ) Thrower.throwNew( IllegalStateException::new,
+					() -> "Already initiated: " + id() );
 		}
 
 		protected void checkNotTerminated()
 		{
-			if( this.terminated ) Thrower.throwNew( IllegalStateException.class,
-					"Already terminated: {}", id() );
+			if( this.terminated ) Thrower.throwNew( IllegalStateException::new,
+					() -> "Already terminated: " + id() );
 		}
 
 		@Override
@@ -327,8 +327,8 @@ public interface Transaction<F extends Fact>
 			checkNotTerminated();
 			// prevent re-committing
 			if( this.committedIds.contains( fact.id().unwrap() ) )
-				return Thrower.throwNew( IllegalStateException.class,
-						"Already committed: {}", fact );
+				return Thrower.throwNew( IllegalStateException::new,
+						() -> "Already committed: " + fact );
 			this.committedIds.add( fact.id().unwrap() );
 
 			try
@@ -344,8 +344,9 @@ public interface Transaction<F extends Fact>
 								this.pending.remove( fact.id() );
 							} ) );
 				else if( onExpiration != null )
-					return Thrower.throwNew( IllegalStateException.class,
-							"Expiration function never gets called: {}", fact );
+					return Thrower.throwNew( IllegalStateException::new,
+							() -> "Expiration function never gets called: "
+									+ fact );
 
 				// publish / fire / send
 				this.commits.onNext( fact );

@@ -128,9 +128,10 @@ public class Instantiator<T>
 					: ReflectUtil.getAccessibleConstructor( type, argTypes );
 		} catch( final NoSuchMethodException cause )
 		{
-			Thrower.throwNew( IllegalArgumentException.class, cause,
-					"Missing 'static' 'public' constructor {}({})",
-					type.getName(), argTypes == null ? "" : argTypes );
+			Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Missing 'static' 'public' constructor "
+							+ type.getName()
+							+ (argTypes == null ? "()" : argTypes) );
 		}
 		this.constructor = c;
 	}
@@ -160,10 +161,11 @@ public class Instantiator<T>
 				&& (args == null || args.length == 0 || args[0] == null
 						|| args[0].getClass() != this.type
 								.getEnclosingClass()) )
-			return Thrower.throwNew( IllegalArgumentException.class,
-					"First argument should be an instance of enclosing {} "
-							+ "for instantiating a non-static member: {}",
-					this.type.getEnclosingClass(), this.type );
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "First argument should be an instance of enclosing "
+							+ this.type.getEnclosingClass()
+							+ " for instantiating a non-static member: "
+							+ this.type );
 		try
 		{
 			return this.type.getConstructor( this.type.isMemberClass()

@@ -175,9 +175,10 @@ public @interface InjectConfig
 			 * ignore }
 			 */
 			if( !Config.class.isAssignableFrom( field.getType() ) )
-				Thrower.throwNew( UnsupportedOperationException.class,
-						"@{} injects only bind parameters or {} extensions",
-						InjectConfig.class.getSimpleName(), Config.class );
+				Thrower.throwNew( UnsupportedOperationException::new,
+						() -> "@" + InjectConfig.class.getSimpleName()
+								+ " injects only bind parameters or "
+								+ Config.class + " extensions" );
 
 			final InjectConfig annot = field
 					.getAnnotation( InjectConfig.class );

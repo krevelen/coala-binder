@@ -27,8 +27,7 @@ import io.coala.exception.Thrower;
 public class JsonPropertyEditor extends PropertyEditorSupport
 {
 	@Override
-	public void setAsText( final String json )
-		throws IllegalArgumentException
+	public void setAsText( final String json ) throws IllegalArgumentException
 	{
 		try
 		{
@@ -37,8 +36,8 @@ public class JsonPropertyEditor extends PropertyEditorSupport
 			setValue( JsonUtil.valueOf( json, type ) );
 		} catch( final Throwable e )
 		{
-			Thrower.throwNew( IllegalArgumentException.class, e,
-					"Problem editing property from JSON: {}", json );
+			Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Problem editing property from JSON: " + json );
 		}
 	}
 }

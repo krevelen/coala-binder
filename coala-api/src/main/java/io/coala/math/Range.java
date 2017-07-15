@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
-import java.util.Objects;
 import java.util.SortedMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -114,8 +113,8 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 		final ThrowingFunction<String, T, ?> argParser )
 	{
 		final Matcher m = RANGE_FORMAT.matcher( range.trim() );
-		if( !m.find() ) Thrower.throwNew( IllegalArgumentException.class,
-				"Incorrect format, expected e.g. `[lower;upper>`, was: "
+		if( !m.find() ) Thrower.throwNew( IllegalArgumentException::new,
+				() -> "Incorrect format, expected e.g. `[lower;upper>`, was: "
 						+ range );
 
 		T lower, upper;
@@ -154,15 +153,18 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 
 	public Range( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
+		final Extreme<T> lower = minimum == null ? Extreme.negativeInfinity()
+				: minimum;
+		final Extreme<T> upper = maximum == null ? Extreme.positiveInfinity()
+				: maximum;
 		// sanity check
-		if( Compare.gt(
-				Objects.requireNonNull( minimum, "Minimum can't be null" ),
-				Objects.requireNonNull( maximum, "Maximum can't be null" ) ) )
-			Thrower.throwNew( IllegalArgumentException.class,
-					"Range undefined, min: {}, max: {}", minimum, maximum );
+		if( Compare.gt( lower, upper ) )
+			Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Range undefined, min: " + minimum + ", max: "
+							+ maximum );
 
-		this.lower = minimum;
-		this.upper = maximum;
+		this.lower = lower;
+		this.upper = upper;
 	}
 
 	/** @return the minimum value, or {@code null} for (negative) infinity */

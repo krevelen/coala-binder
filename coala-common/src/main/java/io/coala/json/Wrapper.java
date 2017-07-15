@@ -524,9 +524,9 @@ public interface Wrapper<T>
 //						superType.getSuperClass() );
 				superType = superType.getSuperClass();
 			}
-			return Thrower.throwNew( IllegalStateException.class,
-					"UNEXPECTED : could not resolve Wrapper type argument for {}",
-					wrapperType );
+			return Thrower.throwNew( IllegalStateException::new,
+					() -> "Could not resolve Wrapper type argument for "
+							+ wrapperType );
 		}
 
 		/**

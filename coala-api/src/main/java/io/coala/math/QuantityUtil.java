@@ -133,9 +133,9 @@ public class QuantityUtil implements Util
 	{
 		return value instanceof Number ? AbstractUnit.ONE
 				: value instanceof Quantity ? ((Quantity<?>) value).getUnit()
-						: Thrower.throwNew( IllegalArgumentException.class,
-								"Can't determine unit for {}",
-								value.getClass() );
+						: Thrower.throwNew( IllegalArgumentException::new,
+								() -> "Can't determine unit for "
+										+ value.getClass() );
 	}
 
 	/**
@@ -202,11 +202,12 @@ public class QuantityUtil implements Util
 							Units.SECOND );
 				} catch( final Exception g )
 				{
-					return Thrower.throwNew( IllegalArgumentException.class,
-							"Unable to parse '{}' with JSR-363: '{}'"
-									+ ", JSR-310: '{}', Joda: '{}'",
-							qty, parsedStringOrMessage( e ), f.getMessage(),
-							g.getMessage() );
+					return Thrower.throwNew( IllegalArgumentException::new,
+							() -> "Unable to parse '" + qty
+									+ "' with JSR-363: '"
+									+ parsedStringOrMessage( e )
+									+ "', JSR-310: '" + f.getMessage()
+									+ "', Joda: '" + g.getMessage() + "'" );
 				}
 			}
 		}

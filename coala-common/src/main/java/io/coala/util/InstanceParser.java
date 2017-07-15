@@ -170,9 +170,9 @@ public abstract class InstanceParser<T>
 				return parse( value.trim() );
 			} catch( final Throwable e1 )
 			{
-				return Thrower.throwNew( IllegalArgumentException.class, e,
-						"Problem parsing {} from un/trimmed value: '{}'",
-						this.valueType, value );
+				return Thrower.throwNew( IllegalArgumentException::new,
+						() -> "Problem parsing " + this.valueType
+								+ " from un/trimmed value: '" + value + "'" );
 			}
 		}
 	}

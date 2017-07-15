@@ -449,8 +449,8 @@ public class ConfigUtil implements Util
 			final String key = matcher.group( KEY_GROUP );
 			Object value = System.getProperties().get( key );
 			if( value == null ) value = System.getenv().get( key );
-			if( value == null ) Thrower.throwNew( NullPointerException.class,
-					"Can't expand system/environment variable: {}", key );
+			if( value == null ) Thrower.throwNew( NullPointerException::new,
+					() -> "Can't expand system/environment variable: " + key );
 			matcher.appendReplacement( sb,
 					value.toString().replaceAll( "\\\\", "/" ) );
 		}

@@ -70,12 +70,12 @@ public @interface InjectLogger
 					logger = LogUtil.getJavaLogger(
 							encloser.getClass().getName() + postfix );
 				} else
-					Thrower.throwNew( UnsupportedOperationException.class,
-							"@{} only injects {}, {} or {}",
-							InjectLogger.class.getSimpleName(),
-							Logger.class.getName(),
-							org.slf4j.Logger.class.getName(),
-							java.util.logging.Logger.class.getName() );
+					Thrower.throwNew( UnsupportedOperationException::new,
+							() -> "@" + InjectLogger.class.getSimpleName()
+									+ " only injects " + Logger.class.getName()
+									+ ", " + org.slf4j.Logger.class.getName()
+									+ " or " + java.util.logging.Logger.class
+											.getName() );
 
 				field.setAccessible( true );
 				field.set( encloser, logger );

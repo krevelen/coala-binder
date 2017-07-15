@@ -90,45 +90,43 @@ public interface Invoker
 	static <T> T createProxy( final Class<T> abstractType, final URI address,
 		final Duration timeout, final Supplier<Invoker> invoker )
 	{
-		return (T) Proxy.newProxyInstance(
-				abstractType.getClassLoader(),
+		return (T) Proxy.newProxyInstance( abstractType.getClassLoader(),
 				new Class[]
-				{ abstractType }, ( proxy, method, args ) ->
-				{
-					// shortcut native Object#..() methods to (local) Invoker
-					if( (method.getName() == "toString"
+		{ abstractType }, ( proxy, method, args ) ->
+		{
+			// shortcut native Object#..() methods to (local) Invoker
+			if( (method.getName() == "toString"
+					&& (args == null || args.length == 0))
+					|| (method.getName() == "hashCode"
 							&& (args == null || args.length == 0))
-							|| (method.getName() == "hashCode"
-									&& (args == null || args.length == 0))
-							|| (method.getName() == "equals"
-									&& (args != null && args.length == 1)) )
-						return method.invoke( invoker.get(), args );
-					
-					final Object[] result = { null };
-					final CountDownLatch latch = new CountDownLatch( 1 );
-					invoker.get().invoke( address, method, args )
-							.subscribe( t ->
-							{
-								result[0] = t;
-								latch.countDown();
-							}, e ->
-							{
-								result[0] = e;
-								e.printStackTrace();
-								latch.countDown();
-							}, () ->
-							{
-								latch.countDown();
-							} );
-					final long nanos = timeout.getSeconds() * 1000000000
-							+ timeout.getNano();
-					latch.await( nanos, TimeUnit.NANOSECONDS );
-					if( latch.getCount() != 0 )
-						return Thrower.throwNew( TimeoutException.class,
-								"Response from {} took >{}", address, timeout );
-					if( result[0] instanceof Throwable ) return Thrower
-							.rethrowUnchecked( (Throwable) result[0] );
-					return result[0];
-				} );
+					|| (method.getName() == "equals"
+							&& (args != null && args.length == 1)) )
+				return method.invoke( invoker.get(), args );
+
+			final Object[] result = { null };
+			final CountDownLatch latch = new CountDownLatch( 1 );
+			invoker.get().invoke( address, method, args ).subscribe( t ->
+			{
+				result[0] = t;
+				latch.countDown();
+			}, e ->
+			{
+				result[0] = e;
+				e.printStackTrace();
+				latch.countDown();
+			}, () ->
+			{
+				latch.countDown();
+			} );
+			final long nanos = timeout.getSeconds() * 1000000000
+					+ timeout.getNano();
+			latch.await( nanos, TimeUnit.NANOSECONDS );
+			if( latch.getCount() != 0 ) return Thrower.throwNew(
+					TimeoutException::new,
+					() -> "Response from " + address + " took >" + timeout );
+			if( result[0] instanceof Throwable )
+				return Thrower.rethrowUnchecked( (Throwable) result[0] );
+			return result[0];
+		} );
 	}
 }

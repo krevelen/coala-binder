@@ -239,8 +239,8 @@ public class JsonUtil
 
 	/**
 	 * @param json the JSON array {@link InputStream}
-	 * @param resultType the type of {@link Object} in the JSON array
-	 * @return the parsed/deserialized/unmarshalled {@link Object}
+	 * @param resultType the type of {@link Object} to parse in the JSON array
+	 * @return the deserialized {@link Object}s form first array encountered
 	 */
 	public static <T> Observable<T> readArrayAsync(
 		final Callable<JsonParser> jpFactory,
@@ -249,19 +249,23 @@ public class JsonUtil
 		// see http://www.cowtowncoder.com/blog/archives/2009/01/entry_132.html
 		return Observable.using( jpFactory, jp ->
 		{
+			// parse whichever array comes first
+			final StringBuffer preamble = new StringBuffer();
+			// skip until start-array '['
+			while( jp.nextToken() != JsonToken.START_ARRAY )
+			{
+				if( jp.currentToken() == null ) return Observable
+						.error( new IOException( "Missing input" ) );
+				preamble.append( jp.getText() );
+			}
+			if( preamble.length() > 0 ) LogUtil.getLogger( JsonUtil.class )
+					.warn( "Ignoring unexpected preamble: {}", preamble );
+
 			return Observable.<T>create( emitter ->
 			{
 				try
 				{
-					while( jp.nextToken() != JsonToken.START_ARRAY )
-					{
-						if( jp.nextToken() == null )
-							Thrower.throwNew( IllegalStateException.class,
-									"Empty input, file exists?" );
 
-						LogUtil.getLogger( JsonUtil.class ).warn(
-								"Ignoring unexpected token: {}", jp.getText() );
-					}
 					final ObjectReader or = orFactory.call();
 
 					int i = 0;
@@ -368,8 +372,9 @@ public class JsonUtil
 		// TODO add work-around for Wrapper sub-types?
 		if( resultType.isMemberClass()
 				&& !Modifier.isStatic( resultType.getModifiers() ) )
-			return Thrower.throwNew( IllegalArgumentException.class,
-					"Unable to deserialize non-static member: {}", resultType );
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Unable to deserialize non-static member: "
+							+ resultType );
 
 		try
 		{

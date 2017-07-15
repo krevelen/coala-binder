@@ -20,9 +20,11 @@
 package io.coala.exception;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * {@link Thrower}
@@ -57,28 +59,47 @@ public class Thrower
 	}
 
 	/**
-	 * @param type the {@link Function} to produce the actual Exception
-	 * @param message {@link Callable} message supplier
+	 * @param exceptionFactory the {@link Function} to produce the actual
+	 *            Exception
+	 * @param messageFactory {@link Callable} message supplier
 	 * @param <R> the dynamic (void) return type
 	 * @param <E> the {@link Exception} type thrown
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <R, E extends Exception> R throwNew(
-		final Function<String, E> type, final Callable<String> message )
-		throws E
+		final Function<String, E> exceptionFactory,
+		final Supplier<String> messageFactory ) throws E
 	{
+		return rethrowUnchecked(
+				(E) exceptionFactory.apply( messageFactory.get() ) );
+	}
+
+	/**
+	 * @param type the {@link Exception} to throw using its {@code (String)}
+	 *            {@link Constructor}
+	 * @param messageFormat following {@link MessageFormat} syntax
+	 * @param args stringifiable arguments as referenced in
+	 *            {@code messageFormat}
+	 * @param <R> the dynamic return type
+	 * @param <E> the {@link Exception} type thrown
+	 * @deprecated please consider using the {@link E}::new function on
+	 *             {@link #throwNew(Function, Supplier)}
+	 */
+	@Deprecated
+	@SuppressWarnings( "unchecked" )
+	public static <R, E extends Exception> R throwNew( final Class<E> type,
+		final String messageFormat, final Object... args ) throws E
+	{
+		final String message = ExceptionBuilder.format( messageFormat, args )
+				.getFormattedMessage();
 		try
 		{
-			throw (E) type.apply( message.call() );
-		} catch( final Throwable e )
+			throw type.getConstructor( String.class ).newInstance( message );
+		} catch( final InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e )
 		{
-			try
-			{
-				throw type.apply( "no message: " + e.getMessage() );
-			} catch( final Throwable e2 )
-			{
-				return rethrowUnchecked( e2 );
-			}
+			return rethrowUnchecked( new IllegalStateException( message, e ) );
 		}
 	}
 
@@ -90,46 +111,25 @@ public class Thrower
 	 *            {@code messageFormat}
 	 * @param <R> the dynamic return type
 	 * @param <E> the {@link Exception} type thrown
+	 * @deprecated please consider using the {@link E}::new function on
+	 *             {@link #throwNew(Function, Supplier)}
 	 */
-	@SuppressWarnings( "unchecked" )
-	public static <R, E extends Exception> R throwNew( final Class<E> type,
-		final String messageFormat, final Object... args ) throws E
-	{
-		return throwNew( m ->
-		{
-			try
-			{
-				return type.getConstructor( String.class ).newInstance( m );
-			} catch( final Throwable e )
-			{
-				return rethrowUnchecked( new IllegalStateException( m, e ) );
-			}
-		}, () -> ExceptionBuilder.format( messageFormat, args )
-				.getFormattedMessage() );
-	}
-
-	/**
-	 * @param type the {@link Exception} to throw using its {@code (String)}
-	 *            {@link Constructor}
-	 * @param messageFormat following {@link MessageFormat} syntax
-	 * @param args stringifiable arguments as referenced in
-	 *            {@code messageFormat}
-	 * @param <R> the dynamic return type
-	 * @param <E> the {@link Exception} type thrown
-	 */
+	@Deprecated
 	public static <R, E extends Exception> R throwNew( final Class<E> type,
 		final Throwable cause, final String messageFormat,
 		final Object... args ) throws E
 	{
+		final String message = ExceptionBuilder.format( messageFormat, args )
+				.getFormattedMessage();
 		try
 		{
-			final String message = ExceptionBuilder
-					.format( messageFormat, args ).getFormattedMessage();
 			throw type.getConstructor( String.class, Throwable.class )
 					.newInstance( message, cause );
-		} catch( final Throwable e )
+		} catch( final InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e )
 		{
-			return rethrowUnchecked( e );
+			return rethrowUnchecked( new IllegalStateException( message, e ) );
 		}
 	}
 

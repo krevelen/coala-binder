@@ -276,9 +276,9 @@ public interface Proactive extends Timed
 		static FutureSelf of( final Proactive self, final Instant when )
 		{
 			if( Comparison.is( when ).lt( self.now() ) )
-				Thrower.throwNew( IllegalArgumentException.class,
-						"Can't schedule in past: {} < now({})", when,
-						self.now() );
+				Thrower.throwNew( IllegalArgumentException::new,
+						() -> "Can't schedule in past: " + when + " < (now) "
+								+ self.now() );
 			return new FutureSelf()
 			{
 				@Override
