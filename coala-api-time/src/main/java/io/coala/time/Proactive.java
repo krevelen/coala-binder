@@ -30,7 +30,6 @@ import javax.measure.quantity.Time;
 
 import io.coala.exception.Thrower;
 import io.coala.function.Caller;
-import io.coala.function.ThrowingBiConsumer;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
 import io.coala.util.Comparison;
@@ -96,6 +95,25 @@ public interface Proactive extends Timed
 	default FutureSelf after( final Quantity<?> delay )
 	{
 		return FutureSelf.of( this, now().add( delay ) );
+	}
+
+	/**
+	 * @param runner the {@link Runnable} (method) to call when time comes
+	 * @return the {@link Expectation} for potential cancellation
+	 */
+	default Expectation atOnce( final ThrowingRunnable<?> runner )
+	{
+		return scheduler().schedule( now(), runner );
+	}
+
+	/**
+	 * @param call the {@link Callable} (method) to call when time comes
+	 * @param t arg0
+	 * @return the {@link Expectation} for potential cancellation
+	 */
+	default Expectation atOnce( final ThrowingConsumer<Instant, ?> call )
+	{
+		return atOnce( Caller.ofThrowingConsumer( call, now() )::run );
 	}
 
 	/**
@@ -225,15 +243,6 @@ public interface Proactive extends Timed
 
 		/**
 		 * @param call the {@link Callable} (method) to call when time comes
-		 * @return the {@link Expectation} for potential cancellation
-		 */
-		default <R> Observable<R> emit( final Callable<R> call )
-		{
-			return scheduler().schedule( Observable.just( now() ), call );
-		}
-
-		/**
-		 * @param call the {@link Callable} (method) to call when time comes
 		 * @param t arg0
 		 * @return the {@link Expectation} for potential cancellation
 		 */
@@ -244,25 +253,11 @@ public interface Proactive extends Timed
 
 		/**
 		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t constant arg0
 		 * @return the {@link Expectation} for potential cancellation
 		 */
-		default <T> Expectation call( final ThrowingConsumer<T, ?> call,
-			final T t )
+		default <R> Observable<R> emit( final Callable<R> call )
 		{
-			return call( Caller.ofThrowingConsumer( call, t )::run );
-		}
-
-		/**
-		 * @param call the {@link Callable} (method) to call when time comes
-		 * @param t constant arg0
-		 * @param u constant arg1
-		 * @return the {@link Expectation} for potential cancellation
-		 */
-		default <T, U, E extends Exception> Expectation
-			call( final ThrowingBiConsumer<T, U, E> call, final T t, final U u )
-		{
-			return call( Caller.ofThrowingBiConsumer( call, t, u )::run );
+			return scheduler().schedule( Observable.just( now() ), call );
 		}
 
 		/**

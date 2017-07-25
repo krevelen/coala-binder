@@ -333,6 +333,19 @@ public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		return unwrap();
 	}
 
+	/** @return a JSR-363 {@link Quantity} */
+	public <Q extends Quantity<Q>> ComparableQuantity<Q>
+		toQuantity( final Class<Q> qty )
+	{
+		return unwrap().asType( qty );
+	}
+
+	public <Q extends Quantity<Q>> ComparableQuantity<Q>
+		toQuantity( final Unit<Q> unit )
+	{
+		return unwrap().to( unit );
+	}
+
 	/** @return a Joda {@link org.joda.time.Duration} */
 	public org.joda.time.Duration toJoda()
 	{

@@ -54,7 +54,7 @@ public class AccumulatorTest
 	private void logPoint( final Accumulator<?> acc, final Duration interval )
 	{
 		LOG.trace( "{}", acc.now().prettify( 4 ) );
-		acc.after( interval ).call( this::logPoint, acc, interval );
+		acc.after( interval ).call( t -> logPoint( acc, interval ) );
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class AccumulatorTest
 					QuantityUtil.valueOf( 2, mps ) );
 
 			final Duration delay = Duration.valueOf( "1 s" );
-			s.at( s.now() ).call( this::logPoint, acc, delay );
+			s.at( s.now() ).call( t -> logPoint( acc, delay ) );
 
 			// schedule event at target level
 			final Quantity<Length> target = QuantityUtil.valueOf( 500,

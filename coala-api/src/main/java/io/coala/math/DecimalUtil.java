@@ -6,6 +6,9 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.aeonbits.owner.ConfigCache;
 // TODO move to own utility class
@@ -78,6 +81,12 @@ public class DecimalUtil implements Util
 								: isExact( valueOf( value ) );
 	}
 
+	/**
+	 * @param value
+	 * @param scale
+	 * @return a {@link String} representation of scaled value with
+	 *         {@link #DEFAULT_CONTEXT} rounding mode
+	 */
 	public static String toString( final double value, final int scale )
 	{
 		return BigDecimal.valueOf( value )
@@ -172,10 +181,17 @@ public class DecimalUtil implements Util
 		return BigDecimal.valueOf( value );
 	}
 
+	/**
+	 * @param value a {@link Number}
+	 * @return a {@link BigDecimal} representation
+	 */
 	public static BigDecimal valueOf( final Number value )
 	{
-		return value instanceof BigDecimal ? (BigDecimal) value
-				: value instanceof Long || value instanceof Integer
+		return Objects.requireNonNull( value ) instanceof BigDecimal
+				? (BigDecimal) value
+				: value instanceof Long || value instanceof AtomicLong
+						|| value instanceof Integer
+						|| value instanceof AtomicInteger
 						|| value instanceof Short || value instanceof Byte
 								? valueOf( value.longValue() )
 								: value instanceof Apfloat
@@ -191,8 +207,9 @@ public class DecimalUtil implements Util
 	 * e.g. http://stackoverflow.com/a/13461270/1418999
 	 * 
 	 * @param value the {@link Number} to scale
-	 * @param scale the number of decimals
-	 * @see BigDecimal.setScale(int, RoundingMode)
+	 * @param scale the number of decimals with {@link #DEFAULT_CONTEXT}
+	 *            rounding mode
+	 * @see BigDecimal#setScale(int, RoundingMode)
 	 */
 	public static BigDecimal toScale( final Number value, final int scale )
 	{
@@ -334,7 +351,8 @@ public class DecimalUtil implements Util
 	/**
 	 * @param value
 	 * @param subtrahend
-	 * @return the {@link BigDecimal} subtraction
+	 * @return the {@link BigDecimal} subtraction with {@link #DEFAULT_CONTEXT}
+	 *         precision
 	 */
 	public static BigDecimal subtract( final Number value,
 		final Number subtrahend )
@@ -346,7 +364,8 @@ public class DecimalUtil implements Util
 	/**
 	 * @param value
 	 * @param augend
-	 * @return the {@link BigDecimal} addition
+	 * @return the {@link BigDecimal} addition with {@link #DEFAULT_CONTEXT}
+	 *         precision
 	 */
 	public static BigDecimal add( final Number value, final Number augend )
 	{
@@ -368,7 +387,8 @@ public class DecimalUtil implements Util
 	/**
 	 * @param dividend the numerator
 	 * @param divisor the denominator
-	 * @return the {@link BigDecimal} division
+	 * @return the {@link BigDecimal} division with {@link #DEFAULT_CONTEXT}
+	 *         precision
 	 */
 	public static BigDecimal divide( final Number dividend,
 		final Number divisor )
@@ -378,7 +398,7 @@ public class DecimalUtil implements Util
 	}
 
 	/**
-	 * applies {@link #DEFAULT_CONTEXT}
+	 * 1/value with {@link #DEFAULT_CONTEXT} precision
 	 */
 	public static BigDecimal inverse( final Number value )
 	{
@@ -458,11 +478,26 @@ public class DecimalUtil implements Util
 										toApfloat( exponent ) );
 	}
 
+	/**
+	 * @param value
+	 * @param exponent
+	 * @return the power of value raised to exponent (with
+	 *         {@link #DEFAULT_CONTEXT} precision for non-{@link Apfloat}s)
+	 */
 	public static Number pow( final Number value, final int exponent )
 	{
-		return value instanceof Apfloat
-				? pow( (Apfloat) value, (long) exponent )
-				: valueOf( value ).pow( exponent, DEFAULT_CONTEXT );
+		if( value instanceof Apfloat ) return pow( value, (long) exponent );
+		return valueOf( value ).pow( (int) exponent, DEFAULT_CONTEXT );
+	}
+
+	/**
+	 * @param value
+	 * @param exponent
+	 * @return the power of value raised to exponent
+	 */
+	public static Number pow( final Apfloat value, final long exponent )
+	{
+		return pow( (Apfloat) value, exponent );
 	}
 
 	public static final BigDecimal KILO = BigDecimal.TEN.pow( 3 );

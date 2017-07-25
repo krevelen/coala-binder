@@ -18,6 +18,8 @@ package io.coala.bind;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.coala.name.Identified;
 import io.coala.util.Instantiator;
 import io.reactivex.Observable;
@@ -38,6 +40,13 @@ public interface LocalBinder extends LocalContextual
 	 * @return an instance as provided by a {@link LocalProvider}
 	 */
 	<T> T inject( Class<T> type );
+
+	/**
+	 * @param type the expected type of object
+	 * @param config the {@link JsonNode} to use for {@link InjectConfig}
+	 * @return an instance as provided by a {@link LocalProvider}
+	 */
+	<T> T inject( Class<T> type, JsonNode config );
 
 	/**
 	 * @param encloser the enclosing object to inject members into
@@ -75,7 +84,7 @@ public interface LocalBinder extends LocalContextual
 		LocalProvider.of( this,
 				Instantiator.providerOf( impl.asSubclass( type ), args ),
 				false ) );
-	} 
+	}
 
 	/**
 	 * @return an {@link Observable} stream of all (re)bound {@link Class}s

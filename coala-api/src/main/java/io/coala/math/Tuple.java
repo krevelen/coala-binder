@@ -19,7 +19,6 @@
  */
 package io.coala.math;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,9 +33,9 @@ import io.coala.util.Comparison;
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
-public class Tuple implements Comparable<Tuple>
+public class Tuple implements Comparable//<Tuple>
 {
-	public static Tuple of( final Comparable<?> o )
+	public static Tuple of( final Comparable o )
 	{
 		return of( Collections.singletonList( o ) );
 	}
@@ -47,18 +46,18 @@ public class Tuple implements Comparable<Tuple>
 		return of( Arrays.asList( o ) );
 	}
 
-	public static <T extends Comparable<?>> Tuple of( final List<T> values )
+	public static <T extends Comparable> Tuple of( final List<T> values )
 	{
-		if( values instanceof List ) return new Tuple( (List<T>) values );
-		final List<T> list = new ArrayList<>();
-		for( T value : values )
-			list.add( value );
-		return new Tuple( list );
+//		if( values instanceof List ) return new Tuple( (List<T>) values );
+//		final List<T> list = new ArrayList<>();
+//		for( T value : values )
+//			list.add( value );
+		return new Tuple( values );
 	}
 
 	private List<Comparable> list;
 
-	public Tuple( final List<? extends Comparable<?>> values )
+	public Tuple( final List<? extends Comparable> values )
 	{
 		this.list = Collections.unmodifiableList( values );
 	}
@@ -76,12 +75,12 @@ public class Tuple implements Comparable<Tuple>
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public int compareTo( final Tuple that )
+	public int compareTo( final Object that )
 	{
 		int result = 0;
 		for( int i = 0, n = values().size(); result == 0 && i < n; i++ )
 			result = Comparison.compare( this.values().get( i ),
-					that.values().get( i ) );
+					((Tuple) that).values().get( i ) );
 		return result;
 	}
 

@@ -7,14 +7,20 @@ import io.coala.time.Proactive.FutureSelf;
 import io.reactivex.disposables.Disposable;
 
 /**
- * {@link Expectation} or anticipation confirms that an event is scheduled
- * to occur at some future {@link Instant}
+ * {@link Expectation} or anticipation confirms that an event is scheduled to
+ * occur at some future {@link Instant}
  * 
  * @version $Id: 3d3e16811192f8231b89032b459eab02371a877f $
  * @author Rick van Krevelen
  */
 public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 {
+	public static Expectation of( final Proactive self, final Instant when,
+		final Disposable subscription )
+	{
+		return new Expectation( self, when, subscription );
+	}
+
 	Proactive self;
 
 	Disposable subscription;
@@ -30,6 +36,12 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 		wrap( when );
 		this.self = self;
 		this.subscription = subscription;
+	}
+
+	/** @return the {@link Instant} when the event is scheduled to occur */
+	public Instant due()
+	{
+		return unwrap();
 	}
 
 	/** cancels the scheduled event */
@@ -59,9 +71,4 @@ public class Expectation extends Wrapper.SimpleOrdinal<Instant>
 		return FutureSelf.of( this.self, unwrap().add( delay ) );
 	}
 
-	public static Expectation of( final Proactive self, final Instant when,
-		final Disposable subscription )
-	{
-		return new Expectation( self, when, subscription );
-	}
 }

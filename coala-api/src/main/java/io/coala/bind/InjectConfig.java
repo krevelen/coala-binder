@@ -184,7 +184,7 @@ public @interface InjectConfig
 					.getAnnotation( InjectConfig.class );
 			final List<Map<?, ?>> imports = new ArrayList<>();
 			if( configs != null ) for( JsonNode config : configs )
-				if( config != null )
+				if( config != null && !config.isNull() )
 				{
 					LOG.trace( "Inject json config for {}: {}",
 							encloser.getClass().getSimpleName(), config );
