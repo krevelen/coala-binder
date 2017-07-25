@@ -15,7 +15,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demo code for the Distributed Simulation Objects Library 3 (DSOL3)
-		$Id: 30b2618063ea2b8b986c8e9f4407f89b47ff7571 $
+		$Id$
 	</description>
 
 	<properties>

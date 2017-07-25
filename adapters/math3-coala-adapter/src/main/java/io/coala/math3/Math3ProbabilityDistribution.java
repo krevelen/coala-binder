@@ -1,4 +1,4 @@
-/* $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -75,7 +75,7 @@ import tec.uom.se.ComparableQuantity;
  * {@link Math3ProbabilityDistribution} creates {@link ProbabilityDistribution}s
  * implemented by Apache's commons-math3
  * 
- * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public abstract class Math3ProbabilityDistribution<S>
@@ -181,7 +181,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * {@link Factory} creates {@link ProbabilityDistribution}s implemented by
 	 * Apache's commons-math3 toolkit
 	 * 
-	 * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@Singleton

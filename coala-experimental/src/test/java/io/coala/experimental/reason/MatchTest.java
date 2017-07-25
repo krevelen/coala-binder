@@ -1,4 +1,4 @@
-/* $Id: 2b1e26ab71342c546c0cc2a8bda48184842bc7f1 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -37,7 +37,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link MatchTest}
  * 
- * @version $Id: 2b1e26ab71342c546c0cc2a8bda48184842bc7f1 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class MatchTest

@@ -1,4 +1,4 @@
-/* $Id: 9a68e7e3b4196e0ec0aead8bcad855d27c75dedf $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -52,7 +52,7 @@ import io.reactivex.exceptions.Exceptions;
 /**
  * {@link JsonUtil}
  * 
- * @version $Id: 9a68e7e3b4196e0ec0aead8bcad855d27c75dedf $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class JsonUtil

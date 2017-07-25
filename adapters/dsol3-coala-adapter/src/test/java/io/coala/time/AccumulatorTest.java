@@ -1,4 +1,4 @@
-/* $Id: ee51d7b3461fc7668d04f2bc014c4b52c598462d $
+/* $Id$
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -41,7 +41,7 @@ import tec.uom.se.unit.Units;
  * 
  * FIXME performance leak: multiple events remain scheduled when target reached
  * 
- * @version $Id: ee51d7b3461fc7668d04f2bc014c4b52c598462d $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class AccumulatorTest

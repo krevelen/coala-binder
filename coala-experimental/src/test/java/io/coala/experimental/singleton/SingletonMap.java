@@ -1,4 +1,4 @@
-/* $Id: cdcf0f359335493c53bfae4c71f3a0fa01c50f0d $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -26,7 +26,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link SingletonMap}
  * 
- * @version $Id: cdcf0f359335493c53bfae4c71f3a0fa01c50f0d $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class SingletonMap
@@ -38,7 +38,7 @@ public class SingletonMap
 	/**
 	 * {@link Singleton}
 	 * 
-	 * @version $Id: cdcf0f359335493c53bfae4c71f3a0fa01c50f0d $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	public interface Singleton

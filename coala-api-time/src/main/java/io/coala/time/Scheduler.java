@@ -28,7 +28,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Scheduler}
  * 
- * @version $Id: d60e554b08ebba3a7b59f0924ecbdd8910988d7a $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public interface Scheduler extends Proactive, Runnable

@@ -18,7 +18,7 @@ import tec.uom.se.unit.Units;
 /**
  * {@link TimeUnits}
  * 
- * @version $Id: 057e778f9917d1396ec12c9b4c88843f3bfcf479 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class TimeUnits extends Units

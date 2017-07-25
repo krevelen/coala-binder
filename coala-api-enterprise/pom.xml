@@ -15,7 +15,7 @@
 	<name>${project.artifactId} ${project.version}</name>
 	<description>
 		Utility and demonstration code for a DEMO ontology API
-		$Id: 8fa31d1a21f5de2ffc92a557dd6095efed08a512 $
+		$Id$
 	</description>
 	<url>https://demo.nl/</url>
 

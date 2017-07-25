@@ -1,4 +1,4 @@
-/* $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -60,7 +60,7 @@ import tec.uom.se.format.QuantityFormat;
  * amount} (e.g. units {@code "3 "} or duration {@code "27.5 µs"} );</li>
  * </ul>
  * 
- * @version $Id: e10547851c245342c4636ba562faddb4efc7f5e5 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public interface Timing extends Wrapper<String>

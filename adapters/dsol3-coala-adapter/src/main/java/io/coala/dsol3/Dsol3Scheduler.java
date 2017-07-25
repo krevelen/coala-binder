@@ -40,7 +40,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 /**
  * {@link Dsol3Scheduler}
  * 
- * @version $Id: 5b42b06bdc16c0e0c750f6c8cc214f6e8860fbf8 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @Singleton
