@@ -136,7 +136,8 @@ public class Accumulator<Q extends Quantity<Q>> implements Proactive
 		 * "Got time in past: %s =< %s", t2, t1 ).build();
 		 */
 
-		this.intercepts.put( target, at( t2 ).call( this::onReached, target ) );
+		this.intercepts.put( target,
+				at( t2 ).call( t -> onReached( target ) ) );
 		LOG.trace( "scheduled a={} at t={}, total={}", target.amount, t2,
 				this.intercepts.size() );
 	}

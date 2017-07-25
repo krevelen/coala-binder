@@ -219,22 +219,6 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	}
 
 	/**
-	 * @param <Q> the {@link Quantity} type
-	 * @param qty the {@link Quantity} to cast to
-	 * @return an {@link QuantityDistribution} for measure {@link Quantity}s
-	 */
-	@SuppressWarnings( "unchecked" )
-	default <Q extends Quantity<Q>> QuantityDistribution<Q>
-		toQuantities( final Class<Q> qty )
-	{
-		if( this instanceof QuantityDistribution )
-			return (QuantityDistribution<Q>) this;
-
-		return QuantityDistribution
-				.of( () -> ((Quantity<Q>) draw()).asType( qty ) );
-	}
-
-	/**
 	 * {@link Factory} generates {@link ProbabilityDistribution}s, a small
 	 * subset of those mentioned on
 	 * <a href="https://www.wikiwand.com/en/List_of_probability_distributions">
@@ -741,14 +725,15 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		}
 
 		@SuppressWarnings( "unchecked" )
-		default <Q extends Quantity<Q>> QuantityDistribution<?> parseQuantity(
+		default <Q extends Quantity<Q>> QuantityDistribution<Q> parseQuantity(
 			final String dist, final Class<Q> qty ) throws ParseException
 		{
-			return parse( dist, Quantity.class ).toQuantities( qty );
+			return QuantityDistribution.of( parse( dist, Quantity.class )
+					.map( q -> ((Quantity<?>) q).asType( qty ) ) );
 		}
 
 		@SuppressWarnings( "unchecked" )
-		default <Q extends Quantity<Q>> QuantityDistribution<?> parseQuantity(
+		default <Q extends Quantity<Q>> QuantityDistribution<Q> parseQuantity(
 			final String dist, final Unit<Q> unit ) throws ParseException
 		{
 			return parse( dist, Quantity.class ).toQuantities( unit );

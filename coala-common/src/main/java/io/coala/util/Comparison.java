@@ -71,7 +71,8 @@ public enum Comparison
 		return comparison == 0 ? EQUIVALENT : comparison < 0 ? LESSER : GREATER;
 	}
 
-	public static <T> Comparison of( final Comparable<? super T> o1, final T o2 )
+	public static <T> Comparison of( final Comparable<? super T> o1,
+		final T o2 )
 	{
 		return of( compare( o1, o2 ) );
 	}
@@ -90,7 +91,7 @@ public enum Comparison
 	 */
 	public static <T> boolean eq( final Comparable<? super T> o1, final T o2 )
 	{
-		return of( o1, o2 ) == EQUIVALENT;
+		return compare( o1, o2 ) == 0;//of( o1, o2 ) == EQUIVALENT;
 	}
 
 	/**
@@ -101,7 +102,7 @@ public enum Comparison
 	 */
 	public static <T> boolean lt( final Comparable<? super T> o1, final T o2 )
 	{
-		return of( o1, o2 ) == LESSER;
+		return compare( o1, o2 ) < 0;//of( o1, o2 ) == LESSER;
 	}
 
 	/**
@@ -112,7 +113,7 @@ public enum Comparison
 	 */
 	public static <T> boolean le( final Comparable<? super T> o1, final T o2 )
 	{
-		return of( o1, o2 ) != GREATER;
+		return compare( o1, o2 ) < 1;//of( o1, o2 ) != GREATER;
 	}
 
 	/**
@@ -123,7 +124,7 @@ public enum Comparison
 	 */
 	public static <T> boolean gt( final Comparable<? super T> o1, final T o2 )
 	{
-		return of( o1, o2 ) == GREATER;
+		return compare( o1, o2 ) > 0;//of( o1, o2 ) == GREATER;
 	}
 
 	/**
@@ -134,7 +135,7 @@ public enum Comparison
 	 */
 	public static <T> boolean ge( final Comparable<? super T> o1, final T o2 )
 	{
-		return of( o1, o2 ) != LESSER;
+		return compare( o1, o2 ) > -1;//of( o1, o2 ) != LESSER;
 	}
 
 	public static <T> Matcher<T> is( final Comparable<T> self )

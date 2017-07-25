@@ -480,4 +480,11 @@ public class Guice4LocalBinder implements LocalBinder
 		this.injector.injectMembers( encloser );
 		return encloser;
 	}
+
+	@Override
+	public <T> T inject( final Class<T> type, final JsonNode config )
+	{
+		this.configs.put( type, config );
+		return this.inject( type );
+	}
 }

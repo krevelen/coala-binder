@@ -98,7 +98,8 @@ public interface DistributionParsable
 	default <Q extends Quantity<Q>> QuantityDistribution<Q>
 		parseQuantity( final Class<Q> dimension ) throws ParseException
 	{
-		return parse( Quantity.class ).toQuantities( dimension );
+		return QuantityDistribution.of( parse( Quantity.class )
+				.map( q -> ((Quantity<?>) q).asType( dimension ) ) );
 	}
 
 	/**
