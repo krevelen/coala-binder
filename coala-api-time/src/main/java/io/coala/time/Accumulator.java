@@ -85,7 +85,7 @@ public class Accumulator<Q extends Quantity<Q>> implements Proactive
 		recalculate();
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	protected synchronized void recalculate()
 	{
 		final Instant t0 = this.t, t1 = now();

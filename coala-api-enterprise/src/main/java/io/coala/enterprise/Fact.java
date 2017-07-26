@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -84,7 +84,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Fact}
  * 
- * @version $Id$
+ * @version $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
  * @author Rick van Krevelen
  */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
@@ -272,7 +272,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	 * @param subtype the type of {@link Fact} to mimic
 	 * @return the {@link Proxy} instance
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <F extends Fact> F proxyAs( final Class<F> subtype )
 	{
 		return proxyAs( subtype, null );
@@ -283,7 +283,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	 * @param callObserver an (optional) {@link Observer} of methods called
 	 * @return the {@link Proxy} instance
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <F extends Fact> F proxyAs( final Class<F> subtype,
 		final Observer<Method> callObserver )
 	{
@@ -374,7 +374,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 		}
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	@Override
 	default FactDao persist( final EntityManager em )
 	{
@@ -397,14 +397,14 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 		return prettify( occur().unit(), scale );
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default Pretty prettify( final Unit<?> unit )
 	{
 		return Pretty.of( () -> toString(
 				occur().to( unit ).decimal().toPlainString() + unit ) );
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default Pretty prettify( final Unit<?> unit, final int scale )
 	{
 		return Pretty.of( () -> toString(
@@ -491,7 +491,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	/**
 	 * {@link Simple}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
 	 * @author Rick van Krevelen
 	 */
 	@JsonInclude( Include.NON_NULL )
@@ -656,7 +656,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory
@@ -735,7 +735,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 				return this.binder.id();
 			}
 
-			@SuppressWarnings( "unchecked" )
+//			@SuppressWarnings( "unchecked" )
 			@Override
 			public FactBank<?> factBank()
 			{

@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * {@link Compare}
  * 
- * @version $Id$
+ * @version $Id: a0207df194ab3dfb15dec0e9590283a669114248 $
  * @author Rick van Krevelen
  */
 public class Compare implements Util
@@ -26,7 +26,7 @@ public class Compare implements Util
 	}
 
 	@SafeVarargs
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public static <T extends Comparable<? super T>> T max( final T o1,
 		final T... o )
 	{

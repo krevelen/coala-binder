@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 8fad8f633ea3b7ddc70ba233b570d9d510a017e9 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -33,12 +33,12 @@ import io.coala.json.JsonUtil;
  * {@link JsonConverter} is a {@link Config} converter for {@link TreeNode}
  * values
  * 
- * @version $Id$
+ * @version $Id: 8fad8f633ea3b7ddc70ba233b570d9d510a017e9 $
  * @author Rick van Krevelen
  */
 public class JsonConverter implements Converter<Object>
 {
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	@Override
 	public Object convert( final Method method, final String input )
 	{

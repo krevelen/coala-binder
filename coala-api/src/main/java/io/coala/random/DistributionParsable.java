@@ -61,7 +61,7 @@ public interface DistributionParsable
 	 *             {@link BigDecimal} parameters
 	 * @see {@link ProbabilityDistribution.Parser#parse(String)}
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default ProbabilityDistribution<?> parse() throws ParseException
 	{
 		return parse( null );
@@ -94,7 +94,7 @@ public interface DistributionParsable
 	 *             {@link Quantity} parameters
 	 * @see {@link ProbabilityDistribution.Parser#parse(String,Class)}
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <Q extends Quantity<Q>> QuantityDistribution<Q>
 		parseQuantity( final Class<Q> dimension ) throws ParseException
 	{

@@ -15,7 +15,7 @@ import io.coala.json.JsonUtil;
  * {@link InstanceParser}
  * 
  * @param <T>
- * @version $Id$
+ * @version $Id: 238e9133a5e6642312acc8c5a207a95849db5816 $
  * @author Rick van Krevelen
  */
 public abstract class InstanceParser<T>
@@ -99,7 +99,7 @@ public abstract class InstanceParser<T>
 	@SuppressWarnings( "unchecked" )
 	public static <T> InstanceParser<T> of( final Class<T> valueType )
 	{
-		@SuppressWarnings( "unchecked" )
+//		@SuppressWarnings( "unchecked" )
 		InstanceParser<T> result = (InstanceParser<T>) INVOKER_CACHE
 				.get( valueType );
 		if( result != null ) return result;

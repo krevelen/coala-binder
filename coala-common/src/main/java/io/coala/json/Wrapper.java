@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -58,7 +58,7 @@ import io.coala.util.TypeArguments;
  * {@link Wrapper} is a tag for decorator types that are (or should be)
  * automatically un/wrapped upon JSON de/serialization
  * 
- * @version $Id$
+ * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
@@ -100,7 +100,7 @@ public interface Wrapper<T>
 	 * values must be deserialized as custom defined {@code MyNumber} instances
 	 * (which also extend the default {@link Number} value type)
 	 * 
-	 * @version $Id$
+	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
 	 * @author Rick van Krevelen
 	 */
 	@Documented
@@ -144,7 +144,7 @@ public interface Wrapper<T>
 		/**
 		 * {@link Empty}
 		 * 
-		 * @version $Id$
+		 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
 		 * @author Rick van Krevelen
 		 */
 		class Empty
@@ -159,7 +159,7 @@ public interface Wrapper<T>
 	 * {@link #equals(Object)}, and {@link #toString()} methods
 	 *
 	 * @param <T> the type of wrapped objects
-	 * @version $Id$
+	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
 	 * @author Rick van Krevelen
 	 */
 	class Simple<T> implements Wrapper<T>
@@ -211,7 +211,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id$
+	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -227,7 +227,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id$
+	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -259,7 +259,7 @@ public interface Wrapper<T>
 			this.valueType = Util.resolveValueType( wrapperType );
 		}
 
-		@SuppressWarnings( "unchecked" )
+//		@SuppressWarnings( "unchecked" )
 		@Override
 		public void serialize( final Wrapper<?> wrapper,
 			final JsonGenerator jgen, final SerializerProvider provider )
@@ -340,14 +340,14 @@ public interface Wrapper<T>
 		}
 	}
 
-	@SuppressWarnings( { "serial", "rawtypes", "unchecked" } )
+	@SuppressWarnings( { "serial", /*"rawtypes",*/ "unchecked" } )
 	class JsonDeserializer<S, T extends Wrapper<S>> extends StdDeserializer<T>
 	{
 		private final Provider<T> wrapperProvider;
 		private final JavaType valueType;
 		private final JavaPolymorph annot;
 
-		@SuppressWarnings( "rawtypes" )
+//		@SuppressWarnings( "rawtypes" )
 		public JsonDeserializer( final ObjectMapper om, final Class<T> type )
 		{
 			this( Instantiator.providerOf( type ),
@@ -388,7 +388,7 @@ public interface Wrapper<T>
 		}
 	}
 
-	@SuppressWarnings( "serial" )
+//	@SuppressWarnings( "serial" )
 	class JsonKeyDeserializer extends KeyDeserializer
 	{
 		private final ObjectMapper om;
@@ -415,7 +415,7 @@ public interface Wrapper<T>
 	/**
 	 * {@link Util} provides global utility functions
 	 * 
-	 * @version $Id$
+	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
 	 * @author Rick van Krevelen
 	 */
 	class Util

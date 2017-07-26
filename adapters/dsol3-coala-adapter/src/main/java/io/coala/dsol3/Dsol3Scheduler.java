@@ -40,7 +40,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
 /**
  * {@link Dsol3Scheduler}
  * 
- * @version $Id$
+ * @version $Id: 92c8de500f12866a73a63b235cefc3ca42dec31c $
  * @author Rick van Krevelen
  */
 @Singleton
@@ -231,7 +231,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 		return this.last;
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
+//	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	@Override
 	public void resume()
 	{
@@ -326,7 +326,7 @@ public class Dsol3Scheduler<Q extends Quantity<Q>> implements Scheduler
 	interface ObservableDSOLModel<Q extends Quantity<Q>>
 		extends DSOLModel<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
 	{
-		@SuppressWarnings( { "serial", "unchecked" } )
+		@SuppressWarnings( { "serial"/*, "unchecked"*/ } )
 		static <Q extends Quantity<Q>> ObservableDSOLModel<Q>
 			of( final String id, final Runnable onReset )
 		{

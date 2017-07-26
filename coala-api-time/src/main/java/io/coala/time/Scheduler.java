@@ -28,7 +28,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Scheduler}
  * 
- * @version $Id$
+ * @version $Id: b2709bf0fc58dd79a849baf71d699e8f475355b9 $
  * @author Rick van Krevelen
  */
 public interface Scheduler extends Proactive, Runnable
@@ -202,7 +202,7 @@ public interface Scheduler extends Proactive, Runnable
 	 *         {@link Observable#subscribe} caller until completion of
 	 *         simulation time or observed instants or an error occurs
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default <R> Observable<R> schedule( final Iterable<Instant> when,
 		final Callable<R> what )
 	{
@@ -317,7 +317,7 @@ public interface Scheduler extends Proactive, Runnable
 	 *         {@link Observable#subscribe} caller until completion of
 	 *         simulation time or observed of instants or an error occurs
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default <R> Observable<R> schedule( final Observable<Instant> when,
 		final Callable<R> what )
 	{

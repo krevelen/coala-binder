@@ -48,7 +48,7 @@ public enum Comparison
 		}
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public static <T> int compare( final Comparable<? super T> o1, final T o2 )
 	{
 		Objects.requireNonNull( o1 );

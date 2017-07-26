@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -80,7 +80,7 @@ import io.coala.util.TypeArguments;
 /**
  * {@link DynaBean} implements a dynamic bean, ready for JSON de/serialization
  * 
- * @version $Id$
+ * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
@@ -93,7 +93,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 * entities/tags during de/serialization and specify the property to use for
 	 * {@link Comparable}s
 	 * 
-	 * @version $Id$
+	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
 	 * @author Rick van Krevelen
 	 */
 	@Documented
@@ -294,7 +294,7 @@ public final class DynaBean implements Cloneable, Comparable
 	/**
 	 * {@link DynaBeanInvocationHandler}
 	 * 
-	 * @version $Id$
+	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
 	 * @author Rick van Krevelen
 	 */
 	static class DynaBeanInvocationHandler implements InvocationHandler
@@ -375,7 +375,7 @@ public final class DynaBean implements Cloneable, Comparable
 			// Converters at runtime
 		}
 
-		@SuppressWarnings( "rawtypes" )
+//		@SuppressWarnings( "rawtypes" )
 		@Override
 		public Object invoke( final Object proxy, final Method method,
 			final Object[] args ) throws Throwable
@@ -745,7 +745,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 *            in the annotated property key
 	 * @return a (cached) comparator
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	@SuppressWarnings( { "unchecked"/*, "rawtypes"*/ } )
 	public static <S extends Comparable> Comparator<S>
 		getComparator( final BeanProxy annot )
 	{
@@ -832,7 +832,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 * {@link ProxyProvider}
 	 * 
 	 * @param <T>
-	 * @version $Id$
+	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
 	 * @author Rick van Krevelen
 	 */
 	public static class ProxyProvider<T> implements Provider<T>
@@ -950,7 +950,7 @@ public final class DynaBean implements Cloneable, Comparable
 //	 * 
 //	 * @param <T> the result type
 //	 * @param <THIS> the builder type
-//	 * @version $Id$
+//	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
 //	 * @author Rick van Krevelen
 //	 */
 //	public static class Builder<T, THIS extends Builder<T, THIS>>

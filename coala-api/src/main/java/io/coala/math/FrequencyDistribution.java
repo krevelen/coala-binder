@@ -25,7 +25,7 @@ import tec.uom.se.ComparableQuantity;
  * 
  * @param <T> the type of phenomena
  * @param <THIS> the concrete type of {@link FrequencyDistribution}
- * @version $Id$
+ * @version $Id: 0565cc0db6eb642749fbed05abbda7e37e75e86e $
  * @author Rick van Krevelen
  * @see <a href="https://www.wikiwand.com/en/Frequency_distribution">Wikipedia
  *      </a>
@@ -118,7 +118,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * 
 	 * @param <T> the type of {@link Comparable} phenomena
 	 * @param <THIS> the concrete type of {@link FrequencyDistribution}
-	 * @version $Id$
+	 * @version $Id: 0565cc0db6eb642749fbed05abbda7e37e75e86e $
 	 * @author Rick van Krevelen
 	 */
 	interface Ordinal<T extends Comparable<? super T>, THIS extends Ordinal<T, THIS>>
@@ -177,7 +177,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * 
 	 * @param <Q> the {@link Quantity} type of the {@link Measurable} phenomena
 	 * @param <THIS> the concrete type of {@link FrequencyDistribution}
-	 * @version $Id$
+	 * @version $Id: 0565cc0db6eb642749fbed05abbda7e37e75e86e $
 	 * @author Rick van Krevelen
 	 */
 	interface Interval<Q extends Quantity<Q>, THIS extends Interval<Q, THIS>>
@@ -199,7 +199,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * 
 	 * @param <Q> the type of {@link Quantity} of the measurable phenomena
 	 * @param <THIS> the concrete type of {@link FrequencyDistribution}
-	 * @version $Id$
+	 * @version $Id: 0565cc0db6eb642749fbed05abbda7e37e75e86e $
 	 * @author Rick van Krevelen
 	 */
 	interface Ratio<Q extends Quantity<Q>, THIS extends Ratio<Q, THIS>>
@@ -216,7 +216,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * 
 	 * @param <T> the type of phenomena
 	 * @param <THIS> the concrete type of {@link FrequencyDistribution}
-	 * @version $Id$
+	 * @version $Id: 0565cc0db6eb642749fbed05abbda7e37e75e86e $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( "unchecked" )
@@ -334,7 +334,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * 
 	 * @param <T> the type of {@link Comparable} (i.e. ordinal) phenomena
 	 * @param <THIS> the concrete type of {@link FrequencyDistribution}
-	 * @version $Id$
+	 * @version $Id: 0565cc0db6eb642749fbed05abbda7e37e75e86e $
 	 * @author Rick van Krevelen
 	 */
 	class SimpleOrdinal<T extends Comparable<? super T>, THIS extends SimpleOrdinal<T, THIS>>
@@ -510,7 +510,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 	 * 
 	 * @param <Q> the type of {@link Quantity} of the measurable phenomena
 	 * @param <THIS> the concrete type of {@link FrequencyDistribution}
-	 * @version $Id$
+	 * @version $Id: 0565cc0db6eb642749fbed05abbda7e37e75e86e $
 	 * @author Rick van Krevelen
 	 */
 	class SimpleInterval<Q extends Quantity<Q>, THIS extends SimpleInterval<Q, THIS>>
@@ -526,7 +526,7 @@ public interface FrequencyDistribution<T, THIS extends FrequencyDistribution<T, 
 
 		private ComparableQuantity<Q> mean;
 
-		@SuppressWarnings( "unchecked" )
+//		@SuppressWarnings( "unchecked" )
 		@Override
 		protected ComparableQuantity<Q> calcMedian()
 		{

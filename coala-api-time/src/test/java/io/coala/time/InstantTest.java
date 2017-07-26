@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 6e7cdc7950694a38c5d755cb565960e03c007784 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -36,7 +36,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link InstantTest}
  * 
- * @version $Id$
+ * @version $Id: 6e7cdc7950694a38c5d755cb565960e03c007784 $
  * @author Rick van Krevelen
  */
 public class InstantTest
@@ -44,7 +44,7 @@ public class InstantTest
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( InstantTest.class );
 
-	@SuppressWarnings( "rawtypes" )
+//	@SuppressWarnings( "rawtypes" )
 	@Test
 	public void testInstant()
 	{

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 041401a75f0ee60ad4d19456e8746914450e821e $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -29,7 +29,7 @@ import io.coala.util.Comparison;
  * {@link Bin}
  * 
  * @param <Q> the {@link Quantity} of extreme values
- * @version $Id$
+ * @version $Id: 041401a75f0ee60ad4d19456e8746914450e821e $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
@@ -87,7 +87,7 @@ public class Bin<V extends Comparable> extends Range<V>
 		this.kernel = kernel;
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	@SuppressWarnings( { /*"rawtypes",*/ "unchecked" } )
 	@Override
 	public int compareTo( final Range<V> o )
 	{

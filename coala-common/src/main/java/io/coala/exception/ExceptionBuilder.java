@@ -1,4 +1,4 @@
-/* $Id: 159ef9e618c1d99cb8ef0ad10548596a3f3afff6 $
+/* $Id: 02f315f432a6fa98f449bcbd55a9e2eac36721f2 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,6 @@ import org.apache.logging.log4j.message.StringFormattedMessage;
 
 import com.eaio.uuid.UUID;
 
-import io.coala.exception.ExceptionBuilder.UncheckedException;
 import io.coala.json.Contextual;
 import io.coala.json.Contextual.Context;
 import io.coala.log.LogUtil;
@@ -39,7 +38,7 @@ import io.coala.name.Identified;
  * {@link #build()} via the {@link ExceptionStream}
  * 
  * @param <THIS>
- * @version $Id$
+ * @version $Id: 02f315f432a6fa98f449bcbd55a9e2eac36721f2 $
  * @author Rick van Krevelen
  */
 public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
@@ -217,7 +216,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	/**
 	 * {@link CheckedException}
 	 * 
-	 * @version $Id: 9c42376aeeee3ec696a8eccb1de02b006d538881 $
+	 * @version $Id: 02f315f432a6fa98f449bcbd55a9e2eac36721f2 $
 	 * @author Rick van Krevelen
 	 */
 	public static class CheckedException extends Exception
@@ -292,7 +291,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		/**
 		 * {@link Builder}
 		 * 
-		 * @version $Id$
+		 * @version $Id: 02f315f432a6fa98f449bcbd55a9e2eac36721f2 $
 		 * @author Rick van Krevelen
 		 */
 		public static class Builder extends ExceptionBuilder<Builder>
@@ -324,7 +323,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 	/**
 	 * {@link UncheckedException}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 02f315f432a6fa98f449bcbd55a9e2eac36721f2 $
 	 * @author Rick van Krevelen
 	 */
 	public static class UncheckedException extends RuntimeException
@@ -410,7 +409,7 @@ public abstract class ExceptionBuilder<THIS extends ExceptionBuilder<THIS>>
 		/**
 		 * {@link CheckedExceptionBuilder}
 		 * 
-		 * @version $Id$
+		 * @version $Id: 02f315f432a6fa98f449bcbd55a9e2eac36721f2 $
 		 * @author Rick van Krevelen
 		 */
 		public static class Builder extends ExceptionBuilder<Builder>

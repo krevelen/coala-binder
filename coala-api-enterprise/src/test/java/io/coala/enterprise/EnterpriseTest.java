@@ -39,7 +39,7 @@ import io.coala.util.ReflectUtil;
  * 
  * TODO specialized logging adding e.g. Timed#now() and Identified#id()
  * 
- * @version $Id$
+ * @version $Id: 9a21f6e234cfe4399ef1aca7bf576fef5b1be033 $
  * @author Rick van Krevelen
  */
 public class EnterpriseTest
@@ -86,7 +86,7 @@ public class EnterpriseTest
 		}
 	}
 
-	@SuppressWarnings( "serial" )
+//	@SuppressWarnings( "serial" )
 	@Singleton
 	public static class World implements Proactive
 	{

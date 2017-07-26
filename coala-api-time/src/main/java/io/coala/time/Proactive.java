@@ -131,7 +131,7 @@ public interface Proactive extends Timed
 	 *         pushed to any {@link Observable#subscribe} caller upon each
 	 *         {@link Instant}'s scheduled occurrence
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Instant... when )
 	{
 		if( when == null || when.length == 0 ) return Observable.empty();
@@ -144,7 +144,7 @@ public interface Proactive extends Timed
 	 *         pushed to any {@link Observable#subscribe} caller upon each
 	 *         {@link Instant}'s scheduled occurrence
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Iterable<Instant> when )
 	{
 		return scheduler().schedule( when );
@@ -170,7 +170,7 @@ public interface Proactive extends Timed
 	 *         {@link Observable#subscribe} caller upon each {@link Instant}'s
 	 *         scheduled occurrence
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Observable<Instant> when )
 	{
 		return scheduler().schedule( when );

@@ -26,10 +26,10 @@ import tec.uom.se.unit.Units;
 /**
  * {@link QuantityUtil}
  * 
- * @version $Id$
+ * @version $Id: ebccf2937ccb8d5ea580a52d363364edc746a709 $
  * @author Rick van Krevelen
  */
-@SuppressWarnings( { "rawtypes", "serial" } )
+@SuppressWarnings( { "rawtypes"/*, "serial"*/ } )
 public class QuantityUtil implements Util
 {
 
@@ -94,7 +94,7 @@ public class QuantityUtil implements Util
 		return toUnit( (Quantity<Q>) value, unit );
 	}
 
-	@SuppressWarnings( "rawtypes" )
+//	@SuppressWarnings( "rawtypes" )
 	public static ComparableQuantity valueOf( final CharSequence str )
 	{
 		return tec.uom.se.quantity.Quantities.getQuantity( str );
