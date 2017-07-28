@@ -1,4 +1,4 @@
-/* $Id: 8fad8f633ea3b7ddc70ba233b570d9d510a017e9 $
+/* $Id$
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -20,27 +20,20 @@
 package io.coala.config;
 
 import java.lang.reflect.Method;
+import java.time.LocalDate;
 
 import org.aeonbits.owner.Converter;
 
-import io.coala.json.JsonUtil;
-
-/**
- * {@link JsonConverter} is a JSON-string {@link Converter} to the expected type
- * 
- * @version $Id: 8fad8f633ea3b7ddc70ba233b570d9d510a017e9 $
- * @author Rick van Krevelen
+/** 
+ * {@link LocalDateConverter} parses {@link LocalDate}s 
+ * <p>
+ * TODO parse all of JSR-363 java.time.* -> singleton JavaTimeConverter?
  */
-public class JsonConverter implements Converter<Object>
+public class LocalDateConverter implements Converter<LocalDate>
 {
-//	@SuppressWarnings( "unchecked" )
 	@Override
-	public Object convert( final Method method, final String input )
+	public LocalDate convert( final Method method, final String input )
 	{
-//		final Class<?> returnType = (Class<T>) TypeArguments
-//				.of( JsonConverter.class, getClass() ).get( 0 );
-//		Objects.requireNonNull( returnType );
-		return JsonUtil.valueOf( /* "\"" + */ input /* + "\"" */,
-				method.getReturnType() );
+		return LocalDate.parse( input );
 	}
 }
