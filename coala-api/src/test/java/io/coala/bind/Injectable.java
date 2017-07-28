@@ -58,7 +58,7 @@ public interface Injectable
 	 * TODO: use guice-persist, DAO auto-mapping, {@link TypedQuery} utility,
 	 * etc.
 	 * 
-	 * @version $Id: ccb850afe9da1c0e05dabbd3374aa241dfa9e0e2 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	@JsonAutoDetect( fieldVisibility = Visibility.PROTECTED_AND_PUBLIC )

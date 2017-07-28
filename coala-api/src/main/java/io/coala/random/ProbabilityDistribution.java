@@ -1,4 +1,4 @@
-/* $Id: a7842c5dc1c8963fe6c9721cdcda6c3b21980bb0 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -186,7 +186,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 	 * @return a {@link QuantityDistribution} transforming {@link #draw()}
 	 *         results into {@link Quantity quantity}, preserving precision
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default QuantityDistribution<Dimensionless> toQuantities()
 	{
 		return toQuantities( QuantityUtil.PURE );
@@ -724,7 +724,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 			return parseQuantity( dist, Quantity.class );
 		}
 
-		@SuppressWarnings( "unchecked" )
+//		@SuppressWarnings( "unchecked" )
 		default <Q extends Quantity<Q>> QuantityDistribution<Q> parseQuantity(
 			final String dist, final Class<Q> qty ) throws ParseException
 		{
@@ -732,7 +732,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 					.map( q -> ((Quantity<?>) q).asType( qty ) ) );
 		}
 
-		@SuppressWarnings( "unchecked" )
+//		@SuppressWarnings( "unchecked" )
 		default <Q extends Quantity<Q>> QuantityDistribution<Q> parseQuantity(
 			final String dist, final Unit<Q> unit ) throws ParseException
 		{
@@ -761,7 +761,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		 * @return a {@link ProbabilityDistribution}
 		 * @throws ParseException
 		 */
-		@SuppressWarnings( "unchecked" )
+//		@SuppressWarnings( "unchecked" )
 		<T, V> ProbabilityDistribution<T> parse( String label,
 			List<WeightedValue<V>> args ) throws ParseException;
 	}

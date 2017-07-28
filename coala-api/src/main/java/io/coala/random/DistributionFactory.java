@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 3df512f3540e7eb82e5a1e0f732eb0c515ffedaf $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -42,7 +42,7 @@ import io.reactivex.Single;
  * categorical, uniform, empirical, triangular, bernoulli and gaussian/normal
  * distributions
  * 
- * @version $Id$
+ * @version $Id: 3df512f3540e7eb82e5a1e0f732eb0c515ffedaf $
  * @author Rick van Krevelen
  */
 public class DistributionFactory implements ProbabilityDistribution.Factory
@@ -356,7 +356,7 @@ public class DistributionFactory implements ProbabilityDistribution.Factory
 				* (max.doubleValue() - min.doubleValue());
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	@Override
 	public <T> Single<ProbabilityDistribution<T>>
 		createUniformCategorical( final Observable<T> values )

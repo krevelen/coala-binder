@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 6e7a986a10b9579f78461f433c6daf36dbc23ff4 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -42,7 +42,7 @@ import io.reactivex.subjects.Subject;
  * {@link JAXBCache}
  * 
  * @param <T>
- * @version $Id$
+ * @version $Id: 6e7a986a10b9579f78461f433c6daf36dbc23ff4 $
  * @author Rick van Krevelen
  */
 public class JAXBCache<T>
@@ -72,7 +72,7 @@ public class JAXBCache<T>
 	/**
 	 * @return the cached ObjectMapper
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public synchronized T getObjectFactory()
 	{
 		return this._ObjectMapper != null ? this._ObjectMapper

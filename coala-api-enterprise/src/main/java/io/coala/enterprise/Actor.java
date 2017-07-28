@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 84a0e0593199134740368157dc1dd614a0a46739 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -66,7 +66,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Actor} can handle multiple {@link Transaction} types or kinds
  * 
- * @version $Id$
+ * @version $Id: 84a0e0593199134740368157dc1dd614a0a46739 $
  * @author Rick van Krevelen
  */
 public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
@@ -234,7 +234,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param params additional property (or bean attribute) values, if any
 	 * @return the initial request {@link Fact}
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default F initiate( final Actor.ID executorRef, final Map<?, ?>... params )
 	{
 		return initiate( specialism(), executorRef, null, null, params );
@@ -561,7 +561,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param actorKind the type of {@link Actor} to mimic
 	 * @return the {@link Proxy} instance
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <A extends Actor<T>, T extends F> A
 		proxyAs( final Class<A> actorKind )
 	{
@@ -573,7 +573,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param callObserver an {@link Observer} of method call, or {@code null}
 	 * @return the {@link Proxy} instance
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <A extends Actor<T>, T extends F> A
 		proxyAs( final Class<A> actorKind, final Observer<Method> callObserver )
 	{
@@ -585,7 +585,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param impl an implementation to route calls to
 	 * @return the {@link Proxy} instance
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <A extends Actor<T>, T extends F> A
 		proxyAs( final Actor<? super T> impl, final Class<A> actorKind )
 	{
@@ -878,7 +878,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	/**
 	 * {@link Factory} should ensure that created Actor.IDs are globally unique
 	 * 
-	 * @version $Id$
+	 * @version $Id: 84a0e0593199134740368157dc1dd614a0a46739 $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory extends LocalContextual
@@ -888,9 +888,9 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		 * @param id the {@link ID} of the new {@link Actor}
 		 * @return a (cached) {@link Actor}
 		 */
-		<F extends Fact> Actor<F> create( ID id );
+		Actor<Fact> create( ID id );
 
-		default <F extends Fact> Actor<F> create( final Comparable<?> name )
+		default Actor<Fact> create( final Comparable<?> name )
 		{
 			return create( ID.of( name, id() ) );
 		}

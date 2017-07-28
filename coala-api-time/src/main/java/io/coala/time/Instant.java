@@ -1,4 +1,4 @@
-/* $Id: 67f38cc7a8b7a6c4b7c7fc62ef53a3a464ef0d5e $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -86,7 +86,7 @@ import tec.uom.se.ComparableQuantity;
  * <dd>limitations similar to Joda's time API (millisecond precision only)</dd>
  * </dl>
  * 
- * @version $Id: 67f38cc7a8b7a6c4b7c7fc62ef53a3a464ef0d5e $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )

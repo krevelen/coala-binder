@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: a34df9d8911f543f8e1ca949ccb0e916658ade83 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -33,7 +33,7 @@ import io.reactivex.Observer;
 /**
  * {@link Attributed} tags JSON compatible java beans
  * 
- * @version $Id$
+ * @version $Id: a34df9d8911f543f8e1ca949ccb0e916658ade83 $
  * @author Rick van Krevelen
  */
 public interface Attributed
@@ -87,7 +87,7 @@ public interface Attributed
 		}
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	static <T> T createProxyInstance( final Attributed impl,
 		final Class<T> intf, final Observer<Method> callObserver )
 	{

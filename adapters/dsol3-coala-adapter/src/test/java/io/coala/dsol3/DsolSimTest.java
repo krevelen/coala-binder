@@ -1,4 +1,4 @@
-/* $Id: db00600b42b2236dcc5f74a2e1c4d3a46c3dbb44 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -57,7 +57,7 @@ import nl.tudelft.simulation.event.EventProducer;
 /**
  * {@link DsolSimTest}
  * 
- * @version $Id: db00600b42b2236dcc5f74a2e1c4d3a46c3dbb44 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public class DsolSimTest

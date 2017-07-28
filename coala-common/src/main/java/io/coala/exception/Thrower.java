@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 1887ca37caeee0492a6f9db1125983a28081836e $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 /**
  * {@link Thrower}
  * 
- * @version $Id$
+ * @version $Id: 1887ca37caeee0492a6f9db1125983a28081836e $
  * @author Rick van Krevelen
  */
 public class Thrower
@@ -65,7 +65,7 @@ public class Thrower
 	 * @param <R> the dynamic (void) return type
 	 * @param <E> the {@link Exception} type thrown
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public static <R, E extends Exception> R throwNew(
 		final Function<String, E> exceptionFactory,
 		final Supplier<String> messageFactory ) throws E
@@ -86,7 +86,7 @@ public class Thrower
 	 *             {@link #throwNew(Function, Supplier)}
 	 */
 	@Deprecated
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public static <R, E extends Exception> R throwNew( final Class<E> type,
 		final String messageFormat, final Object... args ) throws E
 	{

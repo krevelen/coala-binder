@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 08fb401f7d109b924650e338ffd402c48c58fd78 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -35,7 +35,7 @@ import io.reactivex.Observable;
 /**
  * {@link Invoker}
  * 
- * @version $Id$
+ * @version $Id: 08fb401f7d109b924650e338ffd402c48c58fd78 $
  * @author Rick van Krevelen
  */
 public interface Invoker
@@ -58,7 +58,7 @@ public interface Invoker
 	 * @param address the exposed {@link URI}
 	 * @return a {@link Proxy} implementation
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <T> T createProxy( final Class<T> abstractType, final URI address )
 	{
 		return createProxy( abstractType, address, SYNC_TIMEOUT );
@@ -70,14 +70,12 @@ public interface Invoker
 	 * @param timeout the timeout {@link Duration}
 	 * @return a {@link Proxy} implementation
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <T> T createProxy( final Class<T> abstractType, final URI address,
 		final Duration timeout )
 	{
 		return createProxy( abstractType, address, timeout, () ->
-		{
-			return this;
-		} );
+		this );
 	}
 
 	/**
@@ -114,10 +112,7 @@ public interface Invoker
 				result[0] = e;
 				e.printStackTrace();
 				latch.countDown();
-			}, () ->
-			{
-				latch.countDown();
-			} );
+			}, () -> latch.countDown() );
 			final long nanos = timeout.getSeconds() * 1000000000
 					+ timeout.getNano();
 			latch.await( nanos, TimeUnit.NANOSECONDS );

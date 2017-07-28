@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: c7b9e3cba904231b99e3ca922c6cfa5565e0897e $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -33,7 +33,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link StAXConfig}
  * 
- * @version $Id$
+ * @version $Id: c7b9e3cba904231b99e3ca922c6cfa5565e0897e $
  * @author Rick van Krevelen
  */
 @LoadPolicy( LoadType.MERGE )
@@ -76,7 +76,7 @@ public interface StAXConfig extends GlobalConfig, YamlConfig
 	 */
 	default XMLInputFactory newXMLInputFactory()
 	{
-		@SuppressWarnings( "deprecation" )
+//		@SuppressWarnings( "deprecation" )
 		final XMLInputFactory result = XMLInputFactory.newInstance(
 //				xmlInputFactoryImpl().getName(),
 //				Thread.currentThread().getContextClassLoader() 

@@ -1,4 +1,4 @@
-/* $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+/* $Id$
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -39,7 +39,7 @@ import io.reactivex.Observable;
  * {@link Proactive} tags entities with self-initiating behaviors, by using
  * their {@link #scheduler()} and several shorthand utility methods
  * 
- * @version $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 public interface Proactive extends Timed
@@ -131,7 +131,7 @@ public interface Proactive extends Timed
 	 *         pushed to any {@link Observable#subscribe} caller upon each
 	 *         {@link Instant}'s scheduled occurrence
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Instant... when )
 	{
 		if( when == null || when.length == 0 ) return Observable.empty();
@@ -144,7 +144,7 @@ public interface Proactive extends Timed
 	 *         pushed to any {@link Observable#subscribe} caller upon each
 	 *         {@link Instant}'s scheduled occurrence
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Iterable<Instant> when )
 	{
 		return scheduler().schedule( when );
@@ -170,7 +170,7 @@ public interface Proactive extends Timed
 	 *         {@link Observable#subscribe} caller upon each {@link Instant}'s
 	 *         scheduled occurrence
 	 */
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Observable<Instant> when )
 	{
 		return scheduler().schedule( when );
@@ -219,7 +219,7 @@ public interface Proactive extends Timed
 	 * itself {@link Proactive} but with its {@link #now()} at a fixed (future)
 	 * {@link Instant} and additional scheduling helper methods
 	 * 
-	 * @version $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	interface FutureSelf extends Proactive

@@ -76,7 +76,7 @@ public interface LocalBinder extends LocalContextual
 	 * @param args the parameter constants to use for each instantiation
 	 * @return this {@link LocalBinder} to allow chaining
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	default <T> LocalBinder reset( final Class<T> type,
 		final Class<? extends T> impl, final Object... args )
 	{

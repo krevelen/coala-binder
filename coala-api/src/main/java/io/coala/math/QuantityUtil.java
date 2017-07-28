@@ -26,10 +26,10 @@ import tec.uom.se.unit.Units;
 /**
  * {@link QuantityUtil}
  * 
- * @version $Id$
+ * @version $Id: ebccf2937ccb8d5ea580a52d363364edc746a709 $
  * @author Rick van Krevelen
  */
-@SuppressWarnings( { "rawtypes", "serial" } )
+@SuppressWarnings( { "rawtypes"/*, "serial"*/ } )
 public class QuantityUtil implements Util
 {
 
@@ -59,15 +59,14 @@ public class QuantityUtil implements Util
 	}
 
 	/**
-	 * @param value
+	 * @param q
 	 * @return
 	 */
 	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
-		valueOf( final Quantity<Q> value )
+		valueOf( final Quantity<Q> q )
 	{
-		return value instanceof ComparableQuantity
-				? (ComparableQuantity<Q>) value
-				: valueOf( value.getValue(), value.getUnit() );
+		return q instanceof ComparableQuantity ? (ComparableQuantity<Q>) q
+				: valueOf( q.getValue(), q.getUnit() );
 	}
 
 	/** TODO remove when degree/radian conversions is fixed in JSR-363 uom-se */
@@ -94,7 +93,7 @@ public class QuantityUtil implements Util
 		return toUnit( (Quantity<Q>) value, unit );
 	}
 
-	@SuppressWarnings( "rawtypes" )
+//	@SuppressWarnings( "rawtypes" )
 	public static ComparableQuantity valueOf( final CharSequence str )
 	{
 		return tec.uom.se.quantity.Quantities.getQuantity( str );
@@ -428,16 +427,16 @@ public class QuantityUtil implements Util
 		return DecimalUtil.doubleValue( valueOf( qty, unit ).getValue() );
 	}
 
-	public <Q extends Quantity<Q>> Quantity<Q> min(
-		final ComparableQuantity<Q> qty1, final ComparableQuantity<Q> qty2 )
+	public static <Q extends Quantity<Q>> Quantity<Q>
+		min( final Quantity<Q> qty1, final Quantity<Q> qty2 )
 	{
-		return Compare.min( qty1, qty2 );
+		return valueOf( qty1 ).compareTo( valueOf( qty2 ) ) > 0 ? qty2 : qty2;
 	}
 
-	public <Q extends Quantity<Q>> Quantity<Q> max(
-		final ComparableQuantity<Q> qty1, final ComparableQuantity<Q> qty2 )
+	public static <Q extends Quantity<Q>> Quantity<Q>
+		max( final Quantity<Q> qty1, final Quantity<Q> qty2 )
 	{
-		return Compare.max( qty1, qty2 );
+		return valueOf( qty1 ).compareTo( valueOf( qty2 ) ) > 0 ? qty1 : qty2;
 	}
 
 	public static boolean approximates( final Quantity<Angle> qty1,
@@ -496,5 +495,52 @@ public class QuantityUtil implements Util
 		final Unit<Q> unit, final int scale )
 	{
 		return Pretty.of( () -> toScale( qty.to( unit ), scale ) );
+	}
+
+	private static final Map<Unit, ComparableQuantity> UNIT_ZEROES = new HashMap<>(),
+			UNIT_ONES = new HashMap<>();
+
+	/**
+	 * @param dimension
+	 * @return zero
+	 */
+	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
+		zero( final Class<Q> dimension )
+	{
+		return zero( Units.getInstance().getUnit( dimension ) );
+	}
+
+	/**
+	 * @param unit
+	 * @return zero
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
+		zero( final Unit<Q> unit )
+	{
+		return UNIT_ZEROES.computeIfAbsent( unit,
+				key -> valueOf( BigDecimal.ZERO, unit ) );
+	}
+
+	/**
+	 * @param dimension
+	 * @return one
+	 */
+	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
+		one( final Class<Q> dimension )
+	{
+		return one( Units.getInstance().getUnit( dimension ) );
+	}
+
+	/**
+	 * @param unit
+	 * @return one
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
+		one( final Unit<Q> unit )
+	{
+		return UNIT_ONES.computeIfAbsent( unit,
+				key -> valueOf( BigDecimal.ONE, unit ) );
 	}
 }

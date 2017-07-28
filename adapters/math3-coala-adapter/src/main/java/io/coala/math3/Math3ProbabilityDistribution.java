@@ -1,4 +1,4 @@
-/* $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
+/* $Id: 436480a40f5aa7494d0524f4024f44a8cab15b0e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -75,7 +75,7 @@ import tec.uom.se.ComparableQuantity;
  * {@link Math3ProbabilityDistribution} creates {@link ProbabilityDistribution}s
  * implemented by Apache's commons-math3
  * 
- * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
+ * @version $Id: 436480a40f5aa7494d0524f4024f44a8cab15b0e $
  * @author Rick van Krevelen
  */
 public abstract class Math3ProbabilityDistribution<S>
@@ -181,7 +181,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	 * {@link Factory} creates {@link ProbabilityDistribution}s implemented by
 	 * Apache's commons-math3 toolkit
 	 * 
-	 * @version $Id: 9535a51bd51d7c4d1b66f64b408b7d57515371ff $
+	 * @version $Id: 436480a40f5aa7494d0524f4024f44a8cab15b0e $
 	 * @author Rick van Krevelen
 	 */
 	@Singleton
@@ -501,7 +501,7 @@ public abstract class Math3ProbabilityDistribution<S>
 			);
 		}
 
-		@SuppressWarnings( "unchecked" )
+//		@SuppressWarnings( "unchecked" )
 		@Override
 		public <T> Single<ProbabilityDistribution<T>>
 			createUniformCategorical( final Observable<T> values )
@@ -518,7 +518,7 @@ public abstract class Math3ProbabilityDistribution<S>
 	/**
 	 * {@link Fitter}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 436480a40f5aa7494d0524f4024f44a8cab15b0e $
 	 * @author Rick van Krevelen
 	 */
 	@Singleton

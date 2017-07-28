@@ -1,4 +1,4 @@
-/* $Id: 78aec19c5642407975198ddbf792739c70842b11 $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -35,7 +35,7 @@ import io.coala.name.Identified;
  * {@link InjectLogger} follows this <a
  * href=https://github.com/google/guice/wiki/CustomInjections>guice example</a>
  * 
- * @version $Id: 78aec19c5642407975198ddbf792739c70842b11 $
+ * @version $Id$
  * @author Rick van Krevelen
  */
 @Qualifier

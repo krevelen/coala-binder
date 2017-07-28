@@ -63,6 +63,15 @@ public class MatrixUtil
 		return toStream( coordinates( source, ALL ), PARALLEL );
 	}
 
+	/**
+	 * FIXME work-around, see <a
+	 * href=https://github.com/ujmp/universal-java-matrix-package/issues/22>ujmp
+	 * issue 22</a>
+	 * 
+	 * @param source the matrix to traverse
+	 * @param all whether to return all coordinates, or just the sparse ones
+	 * @return a {@link Iterable} coordinate supplier for parallel traversal
+	 */
 	public static Iterable<long[]> coordinates( final Matrix source,
 		final boolean all )
 	{

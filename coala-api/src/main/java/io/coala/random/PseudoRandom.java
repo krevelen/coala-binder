@@ -1,4 +1,4 @@
-/* $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+/* $Id$
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -293,7 +293,7 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	/**
 	 * {@link Name}
 	 * 
-	 * @version $Id: 1af879e91e793fc6b991cfc2da7cb93928527b4b $
+	 * @version $Id$
 	 * @author Rick van Krevelen
 	 */
 	class Name extends Id.Ordinal<String>

@@ -1,4 +1,4 @@
-/* $Id: 671a7409b1683c5e4597c38bf9f6f4248800b94e $
+/* $Id: 3a709681cd90898a22ee40915e0915a641b8bbee $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -48,7 +48,7 @@ import tec.uom.se.ComparableQuantity;
  * of {@link BigDecimal} time values for maximal compatibility with COALA
  * {@link Instant} values
  * 
- * @version $Id: 671a7409b1683c5e4597c38bf9f6f4248800b94e $
+ * @version $Id: 3a709681cd90898a22ee40915e0915a641b8bbee $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )
@@ -107,7 +107,7 @@ public class DsolTime<Q extends Quantity<Q>>
 		}
 	}
 
-	@SuppressWarnings( { "unchecked", "rawtypes" } )
+	@SuppressWarnings( { /*"unchecked",*/ "rawtypes" } )
 	public static DsolTime valueOf( final String value )
 	{
 		return valueOf( Instant.valueOf( value ) );
@@ -117,7 +117,7 @@ public class DsolTime<Q extends Quantity<Q>>
 	 * @param time
 	 * @return
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public static <Q extends Quantity<Q> & Comparable<Q>> DsolTime<Q> valueOf(
 		final SimTime<? extends Number, ?, ?> time, final Unit<Q> unit )
 	{
@@ -138,7 +138,7 @@ public class DsolTime<Q extends Quantity<Q>>
 	 * @param absoluteTime
 	 * @return the new {@link DsolTime}
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public static DsolTime<Dimensionless> valueOf( final Number absoluteTime )
 	{
 		return valueOf( QuantityUtil.valueOf( absoluteTime ) );
@@ -148,7 +148,7 @@ public class DsolTime<Q extends Quantity<Q>>
 	 * @param time
 	 * @return
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public static <Q extends Quantity<Q>> DsolTime<Q>
 		valueOf( final Number time, final Unit<Q> unit )
 	{
@@ -230,7 +230,7 @@ public class DsolTime<Q extends Quantity<Q>>
 				.add( QuantityUtil.valueOf( relativeTime, unit() ) ) ) );
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> plus( final DsolTime<Q> relativeTime )
 	{
 		return valueOf( quantity().add( relativeTime.quantity() ) );
@@ -248,13 +248,13 @@ public class DsolTime<Q extends Quantity<Q>>
 				.subtract( QuantityUtil.valueOf( relativeTime, unit() ) ) ) );
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> subtract( final DsolTime<Q> relativeTime )
 	{
 		return valueOf( quantity().subtract( relativeTime.quantity() ) );
 	}
 
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	@Override
 	public BigDecimal minus( final DsolTime<Q> absoluteTime )
 	{
@@ -263,7 +263,7 @@ public class DsolTime<Q extends Quantity<Q>>
 	}
 
 	@Override
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> copy()
 	{
 		return valueOf( get() );
@@ -282,7 +282,7 @@ public class DsolTime<Q extends Quantity<Q>>
 	}
 
 	@Override
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public DsolTime<Q> setZero()
 	{
 		return valueOf( BigDecimal.ZERO, unit() );

@@ -19,7 +19,7 @@ import io.coala.json.JsonUtil;
  * {@link Instantiator}
  * 
  * @param <T>
- * @version $Id$
+ * @version $Id: b7a09b219ad1ad447cb695b30be4186fd2a46179 $
  * @author Rick van Krevelen
  */
 public class Instantiator<T>
@@ -141,7 +141,7 @@ public class Instantiator<T>
 	 *            imports (i.e. {@link Properties Properties[]})
 	 * @return the newly constructed instance
 	 */
-	@SuppressWarnings( "unchecked" )
+//	@SuppressWarnings( "unchecked" )
 	public T instantiate( final Object... args )
 	{
 		if( ClassUtil.isAbstract( this.type ) )
