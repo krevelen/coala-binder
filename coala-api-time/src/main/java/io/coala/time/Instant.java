@@ -302,7 +302,7 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 
 	public Instant add( final Quantity augend )
 	{
-		if( QuantityUtil.signum( augend ) == 0 ) return this;
+//		if( QuantityUtil.signum( augend ) == 0 ) return this;
 		return of( unwrap().add( augend ) );
 	}
 

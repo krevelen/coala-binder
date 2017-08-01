@@ -46,7 +46,7 @@ public class LogUtil implements Util
 				.equals( System.getProperty( LogConfig.JUL_MANAGER_KEY ) ) )
 			getLogger( LogUtil.class ).trace(
 					"java.util.logging not bridged to Log4j2; "
-							+ "set JVM system property (-D) {}={}",
+							+ "set JVM system property (-D) manually: {}={}",
 					LogConfig.JUL_MANAGER_KEY, LogConfig.JUL_MANAGER_DEFAULT );
 
 		Locale.setDefault( conf.locale() );

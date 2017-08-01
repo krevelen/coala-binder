@@ -25,6 +25,7 @@ package io.coala.time;
  * @version $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
  * @author Rick van Krevelen
  */
+@FunctionalInterface
 public interface Timed
 {
 	/** @return the current {@link Instant} */

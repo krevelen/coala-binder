@@ -17,7 +17,7 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.dsol3;
+package io.coala.dsol3.legacy;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;

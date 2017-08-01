@@ -45,23 +45,8 @@ import io.coala.log.LogUtil;
  */
 public class MatrixUtil
 {
-	private static boolean PARALLEL = true, ALL = false;
-
-	/** */
-	public static Stream<long[]> toStream( final Iterable<long[]> coords,
-		final boolean parallel )
-	{
-		return StreamSupport.stream( coords.spliterator(), parallel );
-	}
-
-	/**
-	 * @param selectColumns
-	 * @return
-	 */
-	public static Stream<long[]> coordinateStream( final Matrix source )
-	{
-		return toStream( coordinates( source, ALL ), PARALLEL );
-	}
+	// TODO read default behavior from config
+	private static boolean PARALLEL = true;
 
 	/**
 	 * FIXME work-around, see <a
@@ -109,31 +94,79 @@ public class MatrixUtil
 		};
 	}
 
+	/** */
+	public static Stream<long[]> stream( final Iterable<long[]> coords,
+		final boolean parallel )
+	{
+		return StreamSupport.stream( coords.spliterator(), parallel );
+	}
+
+	/**
+	 * @param source
+	 * @return
+	 */
+	public static Stream<long[]>
+		streamAvailableCoordinates( final Matrix source )
+	{
+		return streamAvailableCoordinates( source, PARALLEL );
+	}
+
+	/**
+	 * @param source
+	 * @return
+	 */
+	public static Stream<long[]> streamAvailableCoordinates(
+		final Matrix source, final boolean parallel )
+	{
+		return stream( coordinates( source, false ), parallel );
+	}
+
+	/**
+	 * @param source
+	 * @return
+	 */
+	public static Stream<long[]> streamAllCoordinates( final Matrix source )
+	{
+		return streamAllCoordinates( source, PARALLEL );
+	}
+
+	/**
+	 * @param source
+	 * @return
+	 */
+	public static Stream<long[]> streamAllCoordinates( final Matrix source,
+		final boolean parallel )
+	{
+		return stream( coordinates( source, true ), parallel );
+	}
+
 	// TODO for each 'primitive' type
 	public static Stream<BigDecimal> streamBigDecimal( final Matrix m )
 	{
-		return coordinateStream( m ).map( m::getAsBigDecimal );
+		return streamAvailableCoordinates( m ).map( m::getAsBigDecimal );
 	}
 
 	// TODO for each 'primitive' type
 	public static void forEachBigDecimal( final Matrix m,
 		final BiConsumer<BigDecimal, long[]> consumer )
 	{
-		forEach( coordinateStream( m ), m::getAsBigDecimal, consumer );
+		forEach( streamAvailableCoordinates( m ), m::getAsBigDecimal,
+				consumer );
 	}
 
 	// TODO for each 'primitive' type
 	public static <T> Stream<T> mapBigDecimal( final Matrix m,
 		final BiFunction<BigDecimal, long[], T> mapper )
 	{
-		return map( coordinateStream( m ), m::getAsBigDecimal, mapper );
+		return map( streamAvailableCoordinates( m ), m::getAsBigDecimal,
+				mapper );
 	}
 
 	// TODO for each 'primitive' type
 	public static void insertObject( final boolean parallel,
 		final Matrix target, final Matrix source, final long... targetOffset )
 	{
-		insert( toStream( coordinates( source, ALL ), parallel ),
+		insert( streamAvailableCoordinates( source, parallel ),
 				source::getAsObject, target::setAsObject, targetOffset );
 	}
 
@@ -141,7 +174,7 @@ public class MatrixUtil
 	public static void insertBigDecimal( final Matrix target,
 		final Matrix source, final long... targetOffset )
 	{
-		insert( coordinateStream( source ), source::getAsBigDecimal,
+		insert( streamAvailableCoordinates( source ), source::getAsBigDecimal,
 				target::setAsBigDecimal, targetOffset );
 	}
 
@@ -253,7 +286,7 @@ public class MatrixUtil
 	public static <T> Matrix compute( final Matrix m, final Function<T, T> func,
 		final Function<long[], T> getter, final BiConsumer<T, long[]> setter )
 	{
-		coordinateStream( m ).forEach( coord -> setter
+		streamAvailableCoordinates( m ).forEach( coord -> setter
 				.accept( func.apply( getter.apply( coord ) ), coord ) );
 		return m;
 	}

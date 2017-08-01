@@ -57,6 +57,9 @@ public interface Scheduler extends Proactive, Runnable
 	/** @return the current {@link SchedulerConfig} */
 	SchedulerConfig config();
 
+	@Override
+	Instant now();
+
 	/** @return an {@link Observable} stream of {@link Instant}s */
 	Observable<Instant> time();
 

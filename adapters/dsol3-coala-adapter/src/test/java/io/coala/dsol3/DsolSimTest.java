@@ -20,28 +20,31 @@ import java.rmi.RemoteException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.measure.Quantity;
 import javax.naming.NamingException;
 
-import org.aeonbits.owner.ConfigCache;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalConfig;
-import io.coala.dsol3.DsolTime.DsolQuantity;
+import io.coala.dsol3.legacy.DsolEvent;
+import io.coala.dsol3.legacy.DsolEventObservable;
+import io.coala.dsol3.legacy.DsolTime;
+import io.coala.dsol3.legacy.DsolTime.DsolQuantity;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
+import io.coala.math.DecimalUtil;
 import io.coala.time.Duration;
-import io.coala.time.SchedulerConfig;
 import io.coala.time.Scenario;
 import io.coala.time.Scheduler;
+import io.coala.time.SchedulerConfig;
 import io.coala.time.TimeUnits;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
@@ -69,7 +72,7 @@ public class DsolSimTest
 	/** */
 	@SuppressWarnings( { "serial", "rawtypes" } )
 	public static class MyModel<Q extends Quantity<Q>> extends EventProducer
-		implements DSOLModel<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
+		implements DSOLModel<DsolTime.DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
 	{
 		/** the scheduler {@link DEVSSimulator} */
 		private DEVSSimulator<DsolQuantity<Q>, BigDecimal, DsolTime<Q>> scheduler;
@@ -91,10 +94,10 @@ public class DsolSimTest
 			this.scheduler = (DEVSSimulator<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>) simulator;
 
 			LOG.trace( "Schedulable job count: " + this.jobCount );
-			for( int i = 0; i < this.jobCount; i++ )
+			for( int i = 1; i <= this.jobCount; i++ )
 			{
 				final DsolTime<Q> t = (DsolTime<Q>) DsolTime
-						.valueOf( 1.0d * i );
+						.valueOf( 100.0d / i );
 				this.scheduler.scheduleEventAbs( t, new Executable()
 				{
 					@Override
@@ -104,7 +107,7 @@ public class DsolSimTest
 								.valueOf( "SimEvent at t=" + getTime() ) );
 					}
 				} );
-				LOG.trace( "Scheduled execution at t=" + t );
+//				LOG.trace( "Scheduled execution at t=" + t );
 			}
 		}
 
@@ -120,13 +123,15 @@ public class DsolSimTest
 		}
 	}
 
+	private static final int count = Integer.MAX_VALUE / 1000;
+
 	@Test
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public void testDEVSSimulator() throws SimRuntimeException, RemoteException,
 		NamingException, TimeoutException
 	{
-		LOG.trace( "Create model" );
-		final MyModel model = new MyModel().withJobCount( 10 );
+		LOG.trace( "Create model, count={}", count );
+		final MyModel model = new MyModel().withJobCount( count );
 
 		LOG.trace( "Initialize sim" );
 		final DEVSSimulator sim = DsolTime
@@ -137,6 +142,9 @@ public class DsolSimTest
 				ReplicationMode.TERMINATING );
 
 		final Waiter waiter = new Waiter();
+		final AtomicInteger actual = new AtomicInteger();
+		final long start = System.currentTimeMillis();
+		final int logModulo = 10000;
 		new DsolEventObservable().subscribeTo( model, DsolEvent.class ).events()
 				.ofType( DsolEvent.class ).subscribe( new Observer<DsolEvent>()
 				{
@@ -155,8 +163,14 @@ public class DsolSimTest
 					@Override
 					public void onNext( final DsolEvent t )
 					{
-						LOG.trace( "Observed {}, t={}", t,
-								model.getSimulator().getSimulatorTime() );
+						if( actual.incrementAndGet() % logModulo == 0 ) LOG
+								.trace( "t={}, another {} events = {}/s",
+										t.getContent(), logModulo,
+										DecimalUtil.divide( actual.get(),
+												DecimalUtil.divide(
+														System.currentTimeMillis()
+																- start,
+														1000 ) ) );
 					}
 
 					@Override
@@ -169,8 +183,10 @@ public class DsolSimTest
 
 		LOG.trace( "Starting sim" );
 		sim.start();
-		waiter.await( 1, TimeUnit.SECONDS );
-		LOG.trace( "Simulation complete" );
+		waiter.await( 1, TimeUnit.MINUTES );
+		LOG.trace( "Simulation complete, {}/{} = {}/s", actual.get(), count,
+				DecimalUtil.divide( actual.get(), DecimalUtil
+						.divide( System.currentTimeMillis() - start, 1000 ) ) );
 	}
 
 	@Singleton
@@ -194,6 +210,22 @@ public class DsolSimTest
 			after( Duration.of( 1, TimeUnits.DAYS ) )
 					.call( t -> LOG.trace( "A day passed, now at t={}",
 							now().prettify( offset ) ) );
+			final AtomicInteger actual = new AtomicInteger();
+			final long start = System.currentTimeMillis();
+			final int logModulo = 10000;
+			for( int i = 1; i <= count; i++ )
+			{
+				after( DecimalUtil.divide( 200, i ), TimeUnits.DAYS ).call( t ->
+				{
+					if( actual.incrementAndGet() % logModulo == 0 ) LOG.trace(
+							"t={}, another {} events = {}/s", t, logModulo,
+							DecimalUtil.divide( actual.get(),
+									DecimalUtil.divide(
+											System.currentTimeMillis() - start,
+											1000 ) ) );
+				} );
+			}
+
 		}
 
 	}
@@ -201,21 +233,17 @@ public class DsolSimTest
 	@Test
 	public void testBinderConfig()
 	{
-		// configure replication FIXME via LocalConfig?
-		ConfigCache.getOrCreate( SchedulerConfig.class, Collections
-				.singletonMap( SchedulerConfig.DURATION_KEY, "" + 200 ) );
-
 		// configure tooling
 		final LocalBinder binder = LocalConfig.builder().withId( "world1" )
 				.withProvider( Scheduler.class, Dsol3Scheduler.class,
-						JsonUtil.getJOM().createObjectNode().put( "abc",
-								"def" ) )
+						JsonUtil.getJOM().createObjectNode()
+								.put( SchedulerConfig.DURATION_KEY, "" + 200 ) )
 				.build()
 //		final LocalBinder binder = LocalConfig
 //				.openYAML( "world1.yaml", "my-world" )
 				.createBinder();
 
-		LOG.info( "Starting EO test, config: {}", binder );
+		LOG.info( "Starting DSOL3 binder test, config: {}", binder );
 		final World world = binder.inject( World.class );
 
 		world.run();

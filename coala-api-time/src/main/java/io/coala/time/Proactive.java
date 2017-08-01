@@ -42,6 +42,7 @@ import io.reactivex.Observable;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@FunctionalInterface
 public interface Proactive extends Timed
 {
 
@@ -49,6 +50,7 @@ public interface Proactive extends Timed
 	Scheduler scheduler();
 
 	/** @return the current {@link Instant} */
+	@Override
 	default Instant now()
 	{
 		return scheduler().now();
@@ -195,7 +197,7 @@ public interface Proactive extends Timed
 	 * expression, e.g.
 	 * 
 	 * <pre>
-	 * myProactiveObj.{@link Proactive#atEach(Iterable) atEach}( 
+	 * myProactiveObj.{@link Proactive#atEach atEach}( 
 	 *   () -> ({@link Infiniterator}) 
 	 *     () -> {@link #now()}.add( this::myVariableDelay ) 
 	 * ).subscribe( this::myInfiniteBehavior );

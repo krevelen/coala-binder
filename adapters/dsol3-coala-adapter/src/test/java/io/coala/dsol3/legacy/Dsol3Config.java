@@ -17,7 +17,7 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.dsol3;
+package io.coala.dsol3.legacy;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -133,14 +133,14 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 				replConfig.export() );
 	}
 
-	default <Q extends Quantity<Q>> Dsol3Scheduler<Q> create()
+	default <Q extends Quantity<Q>> Dsol3SchedulerLegacy<Q> create()
 	{
-		return Dsol3Scheduler.of( this );
+		return Dsol3SchedulerLegacy.of( this );
 	}
 
-	default <Q extends Quantity<Q>> Dsol3Scheduler<Q>
+	default <Q extends Quantity<Q>> Dsol3SchedulerLegacy<Q>
 		create( final ThrowingConsumer<Scheduler, ?> modelInitializer )
 	{
-		return Dsol3Scheduler.of( this, modelInitializer );
+		return Dsol3SchedulerLegacy.of( this, modelInitializer );
 	}
 }

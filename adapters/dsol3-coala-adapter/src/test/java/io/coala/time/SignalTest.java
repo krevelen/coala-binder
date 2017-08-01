@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
-import io.coala.dsol3.Dsol3Config;
+import io.coala.dsol3.legacy.Dsol3Config;
 import io.coala.log.LogUtil;
 import io.coala.util.MapBuilder;
 

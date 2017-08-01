@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.coala.dsol3;
+package io.coala.dsol3.legacy;
 
 import java.math.BigDecimal;
 
@@ -57,7 +57,7 @@ public class DsolTime<Q extends Quantity<Q>>
 	implements Wrapper<DsolTime.DsolQuantity<Q>>
 {
 
-	static class DsolQuantity<Q extends Quantity<Q>>
+	public static class DsolQuantity<Q extends Quantity<Q>>
 		extends Wrapper.Simple<ComparableQuantity<Q>>
 		implements Comparable<DsolQuantity<Q>>
 	{

@@ -28,7 +28,7 @@ import javax.measure.quantity.Length;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import io.coala.dsol3.Dsol3Config;
+import io.coala.dsol3.legacy.Dsol3Config;
 import io.coala.log.LogUtil;
 import io.coala.math.QuantityUtil;
 import io.coala.time.Accumulator.Integrator;

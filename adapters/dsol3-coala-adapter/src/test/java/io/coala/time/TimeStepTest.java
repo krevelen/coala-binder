@@ -29,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import io.coala.dsol3.Dsol3Config;
+import io.coala.dsol3.legacy.Dsol3Config;
 import io.coala.util.MapBuilder;
 
 /**
