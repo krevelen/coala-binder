@@ -57,7 +57,7 @@ public interface SchedulerConfig extends ProviderConfig
 	String OFFSET_KEY = "replication.offset";
 
 	@Key( ID_KEY )
-	@DefaultValue( "repl0" )
+//	@DefaultValue( "repl0" )
 	String rawId();
 
 	default <T> T id( final Class<T> idType )

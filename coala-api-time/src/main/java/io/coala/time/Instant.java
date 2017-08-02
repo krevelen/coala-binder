@@ -15,6 +15,7 @@
  */
 package io.coala.time;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.time.LocalDate;
@@ -91,8 +92,12 @@ import tec.uom.se.ComparableQuantity;
  */
 @SuppressWarnings( { "unchecked", "rawtypes" } )
 public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
+	implements Serializable
 {
 
+	/** the serialVersionUID */
+	private static final long serialVersionUID = -1311500177936804662L;
+	
 	/** the ZERO value in dimensionless units or {@link TimeUnits#STEPS} */
 	public static final Instant ZERO = of( BigDecimal.ZERO, TimeUnits.STEPS );
 

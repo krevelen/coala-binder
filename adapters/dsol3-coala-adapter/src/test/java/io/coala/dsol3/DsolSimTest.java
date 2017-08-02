@@ -23,6 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -143,8 +144,8 @@ public class DsolSimTest
 
 		final Waiter waiter = new Waiter();
 		final AtomicInteger actual = new AtomicInteger();
-		final long start = System.currentTimeMillis();
-		final int logModulo = 10000;
+		final AtomicLong start = new AtomicLong( System.currentTimeMillis() );
+		final int logModulo = 100000;
 		new DsolEventObservable().subscribeTo( model, DsolEvent.class ).events()
 				.ofType( DsolEvent.class ).subscribe( new Observer<DsolEvent>()
 				{
@@ -163,20 +164,21 @@ public class DsolSimTest
 					@Override
 					public void onNext( final DsolEvent t )
 					{
-						if( actual.incrementAndGet() % logModulo == 0 ) LOG
-								.trace( "t={}, another {} events = {}/s",
-										t.getContent(), logModulo,
-										DecimalUtil.divide( actual.get(),
-												DecimalUtil.divide(
-														System.currentTimeMillis()
-																- start,
-														1000 ) ) );
+						if( actual.incrementAndGet() % logModulo == 0 )
+						{
+							final long sysTime = System.currentTimeMillis(),
+									dt = sysTime - start.getAndSet( sysTime );
+							LOG.trace( "t={}, another {} events = {}/ms",
+									t.getContent(), logModulo,
+									dt > 0 ? DecimalUtil
+											.divide( actual.getAndSet( 0 ), dt )
+											: "NaN" );
+						}
 					}
 
 					@Override
 					public void onSubscribe( final Disposable d )
 					{
-						// TODO Auto-generated method stub
 
 					}
 				} );
@@ -184,9 +186,7 @@ public class DsolSimTest
 		LOG.trace( "Starting sim" );
 		sim.start();
 		waiter.await( 1, TimeUnit.MINUTES );
-		LOG.trace( "Simulation complete, {}/{} = {}/s", actual.get(), count,
-				DecimalUtil.divide( actual.get(), DecimalUtil
-						.divide( System.currentTimeMillis() - start, 1000 ) ) );
+		LOG.trace( "Simulation complete, t={}", sim.getSimulatorTime() );
 	}
 
 	@Singleton
@@ -211,18 +211,23 @@ public class DsolSimTest
 					.call( t -> LOG.trace( "A day passed, now at t={}",
 							now().prettify( offset ) ) );
 			final AtomicInteger actual = new AtomicInteger();
-			final long start = System.currentTimeMillis();
-			final int logModulo = 10000;
+			final AtomicLong start = new AtomicLong(
+					System.currentTimeMillis() );
+			final int logModulo = 100000;
 			for( int i = 1; i <= count; i++ )
 			{
 				after( DecimalUtil.divide( 200, i ), TimeUnits.DAYS ).call( t ->
 				{
-					if( actual.incrementAndGet() % logModulo == 0 ) LOG.trace(
-							"t={}, another {} events = {}/s", t, logModulo,
-							DecimalUtil.divide( actual.get(),
-									DecimalUtil.divide(
-											System.currentTimeMillis() - start,
-											1000 ) ) );
+					if( actual.incrementAndGet() % logModulo == 0 )
+					{
+						final long sysTime = System.currentTimeMillis(),
+								dt = sysTime - start.getAndSet( sysTime );
+						LOG.trace( "t={}, another {} events = {}/ms", t,
+								logModulo, dt > 0
+										? DecimalUtil.divide(
+												actual.getAndSet( 0 ), dt )
+										: "NaN" );
+					}
 				} );
 			}
 
