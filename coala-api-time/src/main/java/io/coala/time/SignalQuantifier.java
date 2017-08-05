@@ -33,42 +33,45 @@ import javax.measure.quantity.Time;
  */
 public interface SignalQuantifier<Q extends Quantity<?>>
 {
-	/** @return the signal {@link Differentiater} */
-	Differentiater<Q> differentiater();
+	/** @return the signal {@link Integrator} for &part;q/&part;t */
+	Integrator<Q> integrator();
 
-	/** @return the signal {@link Intercepter} */
-	Intercepter<Q> intercepter();
+	/** @return the signal {@link Interceptor} for &part;t/&part;q */
+	Interceptor<Q> interceptor();
 
 	/**
-	 * {@link Differentiater} derives the {@link Quantity} difference after
-	 * applying constant k to q_0 over period dt starting from t_0:
-	 * <blockquote>dq = &part;q/&part;t &larr;
-	 * <sub>t<sub>0</sub></sub>&int;<sup>t<sub>0</sub>+dt</sup>
-	 * f(q<sub>t</sub>,k)</blockquote>
-	 * 
-	 * @param t_0 signal offset {@link Instant} (for periodic effects)
-	 * @param dt the signal duration {@link Quantity} of {@link Time}
-	 * @param q_0 the {@link Quantity} at t_0
+	 * {@link Integrator} derives the {@link Quantity} difference after applying
+	 * constant {@code k} to {@code q_0} over period {@code dt} starting from
+	 * {@code t_0}
 	 */
 	@FunctionalInterface
-	interface Differentiater<Q extends Quantity<?>>
+	interface Integrator<Q extends Quantity<?>>
 	{
+		/**
+		 * @param t_0 signal offset {@link Instant} (for periodic effects)
+		 * @param dt the signal duration {@link Quantity} of {@link Time}
+		 * @param q_0 the {@link Quantity} at {@code t_0}
+		 * @return dq = <sub>t<sub>0</sub></sub>&int;<sup>t<sub>0</sub>+dt</sup>
+		 *         q(t) &middot; &part;t
+		 */
 		Q dq( Instant t_0, Quantity<Time> dt, Q q_0 );
 	}
 
 	/**
-	 * {@link Intercepter} solves the smallest duration dt>0 starting from
-	 * t_0 where q_t is first reached, or {@code null} if this never occurs in
-	 * state k: <blockquote>min(dt) such that f(q<sub>t<sub>0</sub>+dt</sub>,k)
-	 * = q<sub>t</sub></blockquote>
-	 * 
-	 * @param t_0 the signal offset {@link Instant}, for periodic effects
-	 * @param q_0 the current signal {@link Quantity} at t_0
-	 * @param q_t the signal target {@link Quantity}
+	 * {@link Interceptor} solves the smallest duration {@code dt>0} starting
+	 * from {@code t_0} where {@code q_t} is first reached, or {@code null} if
+	 * this never occurs in state {@code k}
 	 */
 	@FunctionalInterface
-	interface Intercepter<Q extends Quantity<?>>
+	interface Interceptor<Q extends Quantity<?>>
 	{
-		Quantity<Time> dt( Instant t_0, Q q_0, Q q_t );
+		/**
+		 * @param t_0 the signal offset {@link Instant}, for periodic effects
+		 * @param q_0 the current signal {@link Quantity} at {@code t_0}
+		 * @param q_t the signal target {@link Quantity}
+		 * @return min(dt) such that q(t<sub>0</sub>+dt) = q<sub>t</sub> or
+		 *         &bottom;
+		 */
+		Quantity<Time> dtMin( Instant t_0, Q q_0, Q q_t );
 	}
 }
