@@ -21,33 +21,26 @@ package io.coala.time;
 
 import java.lang.reflect.Method;
 
-import javax.measure.Unit;
-import javax.measure.format.ParserException;
-
 import org.aeonbits.owner.Converter;
 
 import io.coala.math.QuantityUtil;
+import tec.uom.se.ComparableQuantity;
 import tec.uom.se.quantity.Quantities;
 
 /**
- * {@link TimeUnitsConverter} overrides
+ * {@link TimeQuantityConverter} overrides
  * {@link QuantityUtil#valueOf(CharSequence)} and
  * {@link Quantities#getQuantity(CharSequence)}
  * 
  * @version $Id$
  * @author Rick van Krevelen
  */
-public class TimeUnitsConverter implements Converter<Unit<?>>
+public class TimeQuantityConverter implements Converter<ComparableQuantity<?>>
 {
 	@Override
-	public Unit<?> convert( final Method method, final String input )
+	public ComparableQuantity<?> convert( final Method method,
+		final String input )
 	{
-		try
-		{
-			return TimeUnits.UNIT_FORMAT.parse( input );
-		} catch( final ParserException e )
-		{
-			throw new IllegalArgumentException( e.getParsedString(), e );
-		}
+		return QuantityUtil.valueOf( input, TimeUnits.UNIT_FORMAT );
 	}
 }

@@ -23,6 +23,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.concurrent.Callable;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -65,13 +66,27 @@ public class Thrower
 	 * @param <R> the dynamic (void) return type
 	 * @param <E> the {@link Exception} type thrown
 	 */
-//	@SuppressWarnings( "unchecked" )
 	public static <R, E extends Exception> R throwNew(
 		final Function<String, E> exceptionFactory,
 		final Supplier<String> messageFactory ) throws E
 	{
 		return rethrowUnchecked(
 				(E) exceptionFactory.apply( messageFactory.get() ) );
+	}
+
+	/**
+	 * @param exceptionFactory the {@link Function} to produce the actual
+	 *            Exception
+	 * @param messageFactory {@link Callable} message supplier
+	 * @param <R> the dynamic (void) return type
+	 * @param <E> the {@link Exception} type thrown
+	 */
+	public static <R, T extends Throwable, E extends Exception> R throwNew(
+		final BiFunction<String, T, E> exceptionFactory,
+		final Supplier<String> messageFactory, final T cause ) throws E
+	{
+		return rethrowUnchecked(
+				(E) exceptionFactory.apply( messageFactory.get(), cause ) );
 	}
 
 	/**

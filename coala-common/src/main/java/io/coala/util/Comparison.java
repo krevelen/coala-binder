@@ -1,7 +1,9 @@
 package io.coala.util;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Objects;
+import java.util.SortedMap;
 
 /**
  * {@link Comparison} utility class
@@ -48,12 +50,13 @@ public enum Comparison
 		}
 	}
 
-//	@SuppressWarnings( "unchecked" )
-	public static <T> int compare( final Comparable<? super T> o1, final T o2 )
+	@SuppressWarnings( "unchecked" )
+	public static <T> int compare( final Comparable<? super T> o1,
+		final Object o2 )
 	{
 		Objects.requireNonNull( o1 );
 		Objects.requireNonNull( o2 );
-		return o1.compareTo( o2 );
+		return o1.compareTo( (T) o2 );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -64,6 +67,33 @@ public enum Comparison
 		Objects.requireNonNull( o1 );
 		Objects.requireNonNull( o2 );
 		return comparator.compare( (T) o1, (T) o2 );
+	}
+
+	/**
+	 * @param m1
+	 * @param m2
+	 * @return <0 iff less or smaller values, 0 iff equal, >0 otherwise
+	 */
+	public static <K, V> int compare( final SortedMap<K, V> m1,
+		final Map<K, V> m2 )
+	{
+		if( m1.equals( m2 ) ) return 0;
+		for( Map.Entry<K, V> e : m1.entrySet() )
+		{
+			final V v = m2.get( e.getKey() );
+			if( v == null ) return -1;
+			if( e.getValue() == null ) return 1;
+			if( !e.getValue().equals( v ) )
+			{
+				@SuppressWarnings( { "unchecked", "rawtypes" } )
+				int comparison = Comparison.compare( (Comparable) e.getValue(),
+						v );
+				if( comparison != 0 ) return comparison;
+			}
+		}
+		for( Object k2 : m2.keySet() )
+			if( !m1.containsKey( k2 ) ) return 1;
+		return 0;
 	}
 
 	public static Comparison of( final int comparison )
@@ -177,5 +207,4 @@ public enum Comparison
 			return Comparison.ge( this.self, other );
 		}
 	}
-
 }

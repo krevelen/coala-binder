@@ -1,23 +1,21 @@
 package io.coala.time;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.measure.Unit;
-import javax.measure.quantity.Time;
 
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalBinding;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
-import io.coala.log.LogUtil;
 import io.coala.util.Instantiator;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -34,18 +32,20 @@ import io.reactivex.subjects.Subject;
 public interface Scheduler extends Proactive, Runnable
 {
 
-	/** @return the {@link ZonedDateTime} offset of virtual time */
-	ZonedDateTime offset();
-
 	/** @return the {@link Unit} of virtual time */
 	Unit<?> timeUnit();
 
-	default ZonedDateTime nowZonedDateTime()
+	/** @return the {@link ZonedDateTime} offset of virtual time */
+	ZonedDateTime offset();
+
+	default ZonedDateTime nowDT()
 	{
-		if( !timeUnit().getDimension().equals( Time.class ) ) return Thrower
-				.throwNew( IllegalArgumentException::new, () -> "Time unit "
-						+ timeUnit() + " incompatible, abstract steps?" );
 		return now().toJava8( offset() );
+	}
+
+	default String now( final DateTimeFormatter formatter )
+	{
+		return formatter.format( nowDT() );
 	}
 
 	@Override
@@ -53,6 +53,13 @@ public interface Scheduler extends Proactive, Runnable
 	{
 		return this;
 	}
+
+	/**
+	 * causes {@link #time} to halt
+	 * 
+	 * @param e the {@link Throwable} cause
+	 */
+	void fail( Throwable e );
 
 	/** @return the current {@link SchedulerConfig} */
 	SchedulerConfig config();
@@ -70,21 +77,36 @@ public interface Scheduler extends Proactive, Runnable
 		return onReset( s -> runnable.run() );
 	}
 
+	default Disposable onEnd( final Consumer<Instant> onLast )
+	{
+		return onEnd( onLast, e ->
+		{
+			// consume errors to prevent duplication
+		} );
+	}
+
+	default Disposable onEnd( final Consumer<Instant> onLast,
+		final Consumer<? super Throwable> onError )
+	{
+		return time().lastElement().subscribe( onLast::accept,
+				onError::accept );
+	}
+
+	default Disposable onEnd( final Runnable runnable,
+		final Consumer<? super Throwable> onError )
+	{
+		return onEnd( s -> runnable.run(), onError );
+	}
+
 	/** continue executing scheduled events until completion */
 	void resume();
 
-	/** block Thread until completion */
+	/** block calling Thread until completion or error */
 	@Override
 	default void run()
 	{
 		resume();
-		try
-		{
-			time().blockingLast();
-		} catch( final NoSuchElementException e )
-		{
-			// ignore
-		}
+		time().blockingSubscribe();
 	}
 
 	/** continue executing scheduled events until completion */
@@ -185,9 +207,7 @@ public interface Scheduler extends Proactive, Runnable
 				what.accept( t );
 			} catch( final Throwable e )
 			{
-				LogUtil.getLogger( Scheduler.class )
-						.error( "Problem in " + what, e );
-				result.onError( e );
+				fail( e );
 			}
 		}, e ->
 		{
@@ -233,6 +253,7 @@ public interface Scheduler extends Proactive, Runnable
 		final Expectation exp0 = schedule( t0, delayedCopy::onNext );
 		if( what != null ) what.onNext( exp0 );
 		// schedule each following element upon merge with delayed previous
+		onEnd( delayedCopy::onComplete, delayedCopy::onError );
 		return delayedCopy.zipWith( () -> it, ( t, t_next ) ->
 		{
 			final Expectation exp = schedule( t_next, delayedCopy::onNext );
@@ -302,7 +323,7 @@ public interface Scheduler extends Proactive, Runnable
 			}
 		}, e ->
 		{
-			// consume errors, as they are already passed to result Observable
+			result.onError( e );
 		} );
 		return result;
 	}
@@ -320,7 +341,6 @@ public interface Scheduler extends Proactive, Runnable
 	 *         {@link Observable#subscribe} caller until completion of
 	 *         simulation time or observed of instants or an error occurs
 	 */
-//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default <R> Observable<R> schedule( final Observable<Instant> when,
 		final Callable<R> what )
 	{

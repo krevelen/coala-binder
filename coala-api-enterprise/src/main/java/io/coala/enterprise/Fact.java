@@ -22,7 +22,6 @@ package io.coala.enterprise;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -47,7 +46,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.eaio.uuid.UUID;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -76,10 +74,8 @@ import io.coala.name.Identified;
 import io.coala.persist.JPAUtil;
 import io.coala.persist.Persistable;
 import io.coala.time.Instant;
-import io.reactivex.Observable;
+import io.coala.util.ReflectUtil;
 import io.reactivex.Observer;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
 
 /**
  * {@link Fact}
@@ -120,9 +116,10 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	 */
 	@SuppressWarnings( "unchecked" )
 	@JsonIgnore
-	default <F extends Fact> F with( final String property, final Object value )
+	default Fact with( final String property, final Object value )
 	{
-		return (F) with( property, value, (Class<F>) type() );
+		set( property, value );
+		return this;
 	}
 
 	/**
@@ -152,6 +149,12 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	default Class<? extends Fact> type()
 	{
 		return Objects.requireNonNull( transaction() ).kind();
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default <F extends Fact> F typed()
+	{
+		return (F) type().cast( this );
 	}
 
 	default Actor.ID creatorRef()
@@ -235,7 +238,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 
 	default ZonedDateTime offset()
 	{
-		return transaction().scheduler().offset();
+		Transaction<Fact> tx = Objects.requireNonNull( transaction(), "no tx" );
+		return Objects.requireNonNull( tx.scheduler(), "no sched" ).offset();
 	}
 
 	/**
@@ -283,11 +287,11 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	 * @param callObserver an (optional) {@link Observer} of methods called
 	 * @return the {@link Proxy} instance
 	 */
-//	@SuppressWarnings( "unchecked" )
 	default <F extends Fact> F proxyAs( final Class<F> subtype,
 		final Observer<Method> callObserver )
 	{
-		return Attributed.createProxyInstance( this, subtype, callObserver );
+		return ReflectUtil.createProxyInstance( this, subtype, this::properties,
+				callObserver );
 	}
 
 	// @JsonValue
@@ -397,14 +401,12 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 		return prettify( occur().unit(), scale );
 	}
 
-//	@SuppressWarnings( "unchecked" )
 	default Pretty prettify( final Unit<?> unit )
 	{
 		return Pretty.of( () -> toString(
 				occur().to( unit ).decimal().toPlainString() + unit ) );
 	}
 
-//	@SuppressWarnings( "unchecked" )
 	default Pretty prettify( final Unit<?> unit, final int scale )
 	{
 		return Pretty.of( () -> toString(
@@ -489,13 +491,11 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	}
 
 	/**
-	 * {@link Simple}
-	 * 
-	 * @version $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
-	 * @author Rick van Krevelen
+	 * {@link Fact.Simple}
 	 */
 	@JsonInclude( Include.NON_NULL )
-	class Simple implements Fact
+	class Simple extends Attributed.Publisher.SimpleOrdinal<Identified<Fact.ID>>
+		implements Fact
 	{
 		private static Map<ObjectMapper, Module> TX_MODULE_CACHE = new HashMap<>();
 
@@ -504,7 +504,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 		 */
 		public static void checkRegistered( final ObjectMapper om )
 		{
-			JsonUtil.checkRegisteredMembers( om, Simple.class );
+			JsonUtil.checkRegisteredMembers( om, Fact.Simple.class );
 			TX_MODULE_CACHE.computeIfAbsent( om, key ->
 			{
 				final SimpleModule result = new SimpleModule(
@@ -525,10 +525,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 		private FactKind kind;
 		private Instant expiration;
 		private Fact.ID causeRef;
-
-		private transient final Map<String, Object> properties = new HashMap<>();
-		private transient final Subject<PropertyChangeEvent> changes = PublishSubject
-				.create();
 
 		/**
 		 * {@link Simple} zero-arg bean constructor
@@ -606,29 +602,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 			return this.causeRef;
 		}
 
-		@Override
-		public Map<String, Object> properties()
-		{
-			return this.properties;
-		}
-
-		@JsonAnySetter
-		@Override
-		public Object set( final String propertyName, final Object newValue )
-		{
-			final Object oldValue = properties().put( propertyName, newValue );
-			this.changes.onNext(
-					new PropertyChangeEvent( self() == null ? this : self(),
-							propertyName, oldValue, newValue ) );
-			return oldValue;
-		}
-
-		@Override
-		public Observable<PropertyChangeEvent> emitChanges()
-		{
-			return this.changes;
-		}
-
 		@SuppressWarnings( "unchecked" )
 		@Override
 		public <F extends Fact> F self()
@@ -647,8 +620,8 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 		public <F extends Fact> F proxyAs( final Class<F> subtype,
 			final Observer<Method> callObserver )
 		{
-			this.proxy = Attributed.createProxyInstance( this, subtype,
-					callObserver );
+			this.proxy = ReflectUtil.createProxyInstance( this, subtype,
+					this::properties, callObserver );
 			return (F) this.proxy;
 		}
 	}

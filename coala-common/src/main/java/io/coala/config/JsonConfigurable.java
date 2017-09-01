@@ -19,9 +19,12 @@
  */
 package io.coala.config;
 
-import java.text.ParseException;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import io.coala.exception.Thrower;
+import io.coala.util.Instantiator;
 
 /**
  * {@link JsonConfigurable} objects can be (re)configured via JSON trees
@@ -29,21 +32,27 @@ import com.fasterxml.jackson.databind.JsonNode;
  * @version $Id$
  * @author Rick van Krevelen
  */
+@FunctionalInterface
 public interface JsonConfigurable<THIS extends JsonConfigurable<?>>
 {
-
-	/**
-	 * @param config a {@link JsonNode} configuration
-	 * @return this {@link JsonConfigurable} for chaining
-	 */
-	THIS reset( JsonNode config ) throws ParseException;
 
 	/** @return the (current) configuration */
 	JsonNode config();
 
 	default String stringify()
 	{
-		return getClass().getSimpleName() + config();
+		return config() == null ? getClass().getSimpleName() + "{}"
+				: getClass().getSimpleName() + config();
+	}
+
+	default <T> T fromConfig( final String key, final Class<T> returnType,
+		final T defaultValue ) throws ClassNotFoundException
+	{
+		if( config() == null ) return defaultValue;
+		final JsonNode node = config().get( key );
+		return node == null || node.isNull() ? defaultValue
+				: Instantiator.instantiate( Class.forName( node.asText() )
+						.asSubclass( returnType ) );
 	}
 
 	default boolean fromConfig( final String key, final boolean defaultValue )
@@ -59,6 +68,17 @@ public interface JsonConfigurable<THIS extends JsonConfigurable<?>>
 		if( config() == null ) return defaultValue;
 		final JsonNode node = config().get( key );
 		return node == null || node.isNull() ? defaultValue : node.asText();
+	}
+
+	default String fromConfigNonEmpty( final String key )
+	{
+		final String result = Objects
+				.requireNonNull( config().get( key ),
+						"Missing '" + key + "' in config: " + config() )
+				.asText();
+		if( result.isEmpty() ) Thrower.throwNew( IllegalStateException::new,
+				() -> "Empty: " + key );
+		return result;
 	}
 
 	// TODO create all primitive property getters

@@ -66,6 +66,17 @@
 			<groupId>dsol</groupId>
 			<artifactId>dsol-core</artifactId>
 			<version>${dsol.version}</version>
+			<!-- exclude Java3D by default -->
+			<exclusions>
+				<exclusion>
+					<groupId>java3d</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>java3d</groupId>
+					<artifactId>j3d-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>

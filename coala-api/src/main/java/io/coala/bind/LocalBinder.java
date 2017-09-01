@@ -43,7 +43,7 @@ public interface LocalBinder extends LocalContextual
 
 	/**
 	 * @param type the expected type of object
-	 * @param config the {@link JsonNode} to use for {@link InjectConfig}
+	 * @param config the {@link JsonNode} for {@link InjectConfig @InjectConfig}
 	 * @return an instance as provided by a {@link LocalProvider}
 	 */
 	<T> T inject( Class<T> type, JsonNode config );
@@ -56,7 +56,7 @@ public interface LocalBinder extends LocalContextual
 
 	/**
 	 * @param type the factory type to (re)bind
-	 * @param provider the instance {@link Provider}
+	 * @param provider the replacement {@link Provider}
 	 * @return this {@link LocalBinder} to allow chaining
 	 */
 	<T> LocalBinder reset( Class<T> type, Provider<T> provider );

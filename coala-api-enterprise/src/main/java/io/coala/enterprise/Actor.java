@@ -31,7 +31,6 @@ import java.util.function.BiConsumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.util.StdConverter;
 
@@ -52,6 +51,8 @@ import io.coala.time.Instant;
 import io.coala.time.Proactive;
 import io.coala.time.Scheduler;
 import io.coala.time.Timing;
+import io.coala.util.Comparison;
+import io.coala.util.ReflectUtil;
 import io.coala.util.TypeArguments;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -94,11 +95,11 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @return this {@link Actor} cast to run-time role() type to allow chaining
 	 * @see #with(String, Object, Class)
 	 */
-	@SuppressWarnings( "unchecked" )
-	default <A extends Actor<F>> A with( final String property,
-		final Object value )
+	@Override
+	default Actor<? extends F> with( final String property, final Object value )
 	{
-		return (A) with( property, value, (Class<A>) role() );
+		set( property, value );
+		return this;
 	}
 
 	/**
@@ -389,7 +390,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	{
 		try
 		{
-			return atEach( when.offset( scheduler().offset() ).iterate(), what );
+			return atEach( when.offset( scheduler().offset() ).iterate(),
+					what );
 		} catch( final ParseException e )
 		{
 			return Observable.error( e );
@@ -415,6 +417,12 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 *         this {@link #role()}
 	 */
 	Class<F> specialism();
+
+	@SuppressWarnings( "unchecked" )
+	default <A> A specialist()
+	{
+		return (A) role().cast( this );
+	}
 
 	/**
 	 * @param actorKind
@@ -573,11 +581,11 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param callObserver an {@link Observer} of method call, or {@code null}
 	 * @return the {@link Proxy} instance
 	 */
-//	@SuppressWarnings( "unchecked" )
 	default <A extends Actor<T>, T extends F> A
 		proxyAs( final Class<A> actorKind, final Observer<Method> callObserver )
 	{
-		return Attributed.createProxyInstance( this, actorKind, callObserver );
+		return ReflectUtil.createProxyInstance( this, actorKind,
+				this::properties, callObserver );
 	}
 
 	/**
@@ -585,11 +593,11 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	 * @param impl an implementation to route calls to
 	 * @return the {@link Proxy} instance
 	 */
-//	@SuppressWarnings( "unchecked" )
 	default <A extends Actor<T>, T extends F> A
 		proxyAs( final Actor<? super T> impl, final Class<A> actorKind )
 	{
-		return Attributed.createProxyInstance( impl, actorKind, null );
+		return ReflectUtil.createProxyInstance( this, actorKind,
+				this::properties, null );
 	}
 
 	/**
@@ -674,7 +682,12 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		}
 	}
 
-	class Simple implements Actor<Fact>
+	/**
+	 * {@link Fact.Simple}
+	 */
+	class Simple
+		extends Attributed.Publisher.SimpleOrdinal<Identified<Actor.ID>>
+		implements Actor<Fact>
 	{
 		public static Simple of( final LocalBinder binder, final ID id,
 			final Class<? extends Actor<?>> role )
@@ -693,11 +706,6 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 
 		private transient final Map<Class<?>, Actor<?>> specialists = new ConcurrentHashMap<>();
 
-		private transient final Map<String, Object> properties = new ConcurrentHashMap<>();
-
-		private transient final Subject<PropertyChangeEvent> changes = PublishSubject
-				.create();
-
 		@Inject
 		private transient Transaction.Factory txFactory;
 
@@ -712,45 +720,26 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 
 		private ID id;
 
-		@Inject
-		public Simple()
-		{
-			// empty bean constructor
-		}
-
 		@Override
 		public ID id()
 		{
 			return this.id;
 		}
 
+		@SuppressWarnings( "rawtypes" )
+		@Override
+		public int compareTo( final Identified o )
+		{
+			final int idCompare = id().compareTo( (ID) o.id() );
+			if( idCompare != 0 ) return idCompare;
+			return Comparison.compare( properties(),
+					((Simple) o).properties() );
+		}
+
 		@Override
 		public Actor<Fact> root()
 		{
 			return this;
-		}
-
-		@Override
-		public Map<String, Object> properties()
-		{
-			return this.properties;
-		}
-
-		@JsonAnySetter
-		@Override
-		public Object set( final String propertyName, final Object newValue )
-		{
-			final Object oldValue = properties().put( propertyName, newValue );
-			final Actor<?> self = this;
-			this.changes.onNext( new PropertyChangeEvent( self, propertyName,
-					oldValue, newValue ) );
-			return oldValue;
-		}
-
-		@Override
-		public Observable<PropertyChangeEvent> emitChanges()
-		{
-			return this.changes;
 		}
 
 		@Override

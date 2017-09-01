@@ -22,11 +22,21 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import org.aeonbits.owner.util.Collections;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,12 +48,16 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.eaio.UUIDModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.coala.exception.Thrower;
+import io.coala.function.Caller;
+import io.coala.function.ThrowingBiFunction;
+import io.coala.function.ThrowingFunction;
 import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.reactivex.Observable;
@@ -249,9 +263,8 @@ public class JsonUtil
 		// see http://www.cowtowncoder.com/blog/archives/2009/01/entry_132.html
 		return Observable.using( jpFactory, jp ->
 		{
-			// parse whichever array comes first
 			final StringBuffer preamble = new StringBuffer();
-			// skip until start-array '['
+			// parse whichever array comes first, skip until start-array '['
 			while( jp.nextToken() != JsonToken.START_ARRAY )
 			{
 				if( jp.currentToken() == null ) return Observable
@@ -503,13 +516,134 @@ public class JsonUtil
 	}
 
 	/**
-	 * @param providerDefault
-	 * @param object
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @param onNext
 	 */
-	public static void forEach( final ObjectNode node,
-		final BiConsumer<String, JsonNode> handler )
+	public static void forEach( final ObjectNode json,
+		final BiConsumer<String, JsonNode> onNext )
 	{
-		node.fields().forEachRemaining(
-				e -> handler.accept( e.getKey(), e.getValue() ) );
+		json.fields().forEachRemaining(
+				e -> onNext.accept( e.getKey(), e.getValue() ) );
+	}
+
+	/**
+	 * @param json [val1, val2, ...]
+	 * @param onNext
+	 */
+	public static void forEach( final ArrayNode json,
+		final BiConsumer<Integer, JsonNode> onNext )
+	{
+		IntStream.range( 0, json.size() )
+				.forEach( i -> onNext.accept( i, json.get( i ) ) );
+	}
+
+	/**
+	 * @param json [val1, val2, ...]
+	 * @param onNext
+	 */
+	public static void forEachParallel( final ArrayNode json,
+		final BiConsumer<Integer, JsonNode> onNext )
+	{
+		IntStream.range( 0, json.size() ).parallel()
+				.forEach( i -> onNext.accept( i, json.get( i ) ) );
+	}
+
+	/**
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @param parallel
+	 * @return the (synchronous) stream
+	 */
+	public static Stream<Entry<String, JsonNode>> stream( final ObjectNode json,
+		final boolean parallel )
+	{
+		return StreamSupport.stream(
+				((Iterable<Map.Entry<String, JsonNode>>) () -> json.fields())
+						.spliterator(),
+				parallel );
+	}
+
+	/**
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @return {@link Observable} stream of {@link JsonNode} mappings
+	 */
+	public static Observable<Entry<String, JsonNode>>
+		streamAsync( final ObjectNode json )
+	{
+		return Observable.fromIterable(
+				(Iterable<Entry<String, JsonNode>>) () -> json.fields() );
+	}
+
+	/**
+	 * @param json [val1, val2, ...]
+	 * @return {@link Observable} stream of {@link JsonNode} mappings
+	 */
+	public static Observable<Entry<Integer, JsonNode>>
+		streamAsync( final ArrayNode json )
+	{
+		return Observable.range( 0, json.size() )
+				.map( i -> Collections.entry( i, json.get( i ) ) );
+	}
+
+	/**
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @param mapper (key,node)->v | e
+	 * @return {@link TreeMap}
+	 */
+	public static <V> TreeMap<String, V> toMap( final ObjectNode json,
+		final boolean parallel, final BiFunction<String, JsonNode, V> mapper )
+	{
+		return stream( json, parallel )
+				.collect( Collectors.toMap( Entry::getKey,
+						prop -> mapper.apply( prop.getKey(), prop.getValue() ),
+						( k1, k2 ) -> k1, TreeMap::new ) );
+	}
+
+	/**
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @param mapper (key,node)->v | e
+	 * @return a {@link TreeMap}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <V> TreeMap<String, V> toMap( final ObjectNode json,
+		final ThrowingBiFunction<String, JsonNode, V, ?> mapper )
+	{
+		return (TreeMap<String, V>) streamAsync( json )
+				.toMap( Entry::getKey,
+						prop -> Caller.ofThrowingBiFunction( mapper,
+								prop.getKey(), prop.getValue() ).call(),
+						TreeMap::new )
+				.blockingGet();
+	}
+
+	/**
+	 * @param json [val1, val2, ...]
+	 * @param mapper (key,node)->v | e
+	 * @return {@link TreeMap}
+	 */
+//	public static <V> TreeMap<String, V> toMap( final ArrayNode json,
+//		final Function<Integer, String> keyMapper,
+//		final Function<JsonNode, V> valueMapper )
+//	{
+//		return IntStream.range( 0, json.size() ).mapToObj( i -> i )
+//				.collect( Collectors.toMap( i -> keyMapper.apply( i ),
+//						i -> valueMapper.apply( json.get( i ) ),
+//						( k1, k2 ) -> k1, TreeMap::new ) );
+//	}
+
+	/**
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @param mapper (key,node)->v | e
+	 * @return a {@link TreeMap}
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <V> TreeMap<String, V> toMap( final ArrayNode json,
+		final Function<Integer, String> keyMapper,
+		final ThrowingFunction<JsonNode, V, ?> mapper )
+	{
+		return (TreeMap<String, V>) Observable.range( 0, json.size() )
+				.toMap( i -> keyMapper.apply( i ), i -> Caller
+						.ofThrowingFunction( mapper, json.get( i ) ).call(),
+						TreeMap::new )
+				.blockingGet();
 	}
 }

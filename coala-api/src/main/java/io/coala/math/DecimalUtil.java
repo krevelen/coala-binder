@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.LongStream;
 
 import org.aeonbits.owner.ConfigCache;
 // TODO move to own utility class
@@ -405,17 +406,18 @@ public class DecimalUtil implements Util
 		return divide( BigDecimal.ONE, valueOf( value ) );
 	}
 
-	public static Number floor( final Number value )
+	public static BigDecimal floor( final Number value )
 	{
-		return isExact( value ) ? value
-				: value instanceof Apfloat ? ((Apfloat) value).floor()
+		return isExact( value ) ? valueOf( value )
+				: value instanceof Apfloat
+						? valueOf( ((Apfloat) value).floor() )
 						: valueOf( value ).setScale( 0, RoundingMode.FLOOR );
 	}
 
-	public static Number ceil( final Number value )
+	public static BigDecimal ceil( final Number value )
 	{
-		return isExact( value ) ? value
-				: value instanceof Apfloat ? ((Apfloat) value).ceil()
+		return isExact( value ) ? valueOf( value )
+				: value instanceof Apfloat ? valueOf( ((Apfloat) value).ceil() )
 						: valueOf( value ).setScale( 0, RoundingMode.CEILING );
 	}
 
@@ -466,16 +468,16 @@ public class DecimalUtil implements Util
 		return ApfloatMath.root( toApfloat( value ), n );
 	}
 
-	public static Number pow( final Number value, final Number exponent )
+	public static BigDecimal pow( final Number value, final Number exponent )
 	{
 		return exponent instanceof Integer || exponent instanceof Short
 				|| exponent instanceof Byte
 						? pow( value, exponent.intValue() )
-						: exponent instanceof Long
+						: valueOf( exponent instanceof Long
 								? ApfloatMath.pow( toApfloat( value ),
 										exponent.longValue() )
 								: ApfloatMath.pow( toApfloat( value ),
-										toApfloat( exponent ) );
+										toApfloat( exponent ) ) );
 	}
 
 	/**
@@ -484,7 +486,7 @@ public class DecimalUtil implements Util
 	 * @return the power of value raised to exponent (with
 	 *         {@link #DEFAULT_CONTEXT} precision for non-{@link Apfloat}s)
 	 */
-	public static Number pow( final Number value, final int exponent )
+	public static BigDecimal pow( final Number value, final int exponent )
 	{
 		if( value instanceof Apfloat ) return pow( value, (long) exponent );
 		return valueOf( value ).pow( (int) exponent, DEFAULT_CONTEXT );
@@ -516,12 +518,39 @@ public class DecimalUtil implements Util
 								.toBigIntegerExact();
 	}
 
-	/**
-	 * @param value
-	 * @return
-	 */
 	public static boolean isZero( final Number value )
 	{
 		return signum( value ) == 0;
+	}
+
+	public static BigInteger factorial( final long value )
+	{
+		return LongStream.range( 2, value ).mapToObj( BigInteger::valueOf )
+				.reduce( BigInteger::multiply ).orElse( BigInteger.ONE );
+	}
+
+	public static BigDecimal euler( final int factorial )
+	{
+		BigInteger i_factorial = BigInteger.ONE;
+		BigDecimal e = BigDecimal.ONE;
+		for( int i = 1; i < factorial; i++ )
+		{
+			i_factorial = i_factorial.multiply( BigInteger.valueOf( i ) );
+			e = e.add( inverse(
+					BigDecimal.valueOf( i_factorial.longValueExact() ) ) );
+		}
+		return e;
+	}
+
+	public static final BigDecimal E = BigDecimal.valueOf( Math.E );
+
+	public static BigDecimal exp( final Number exponent )
+	{
+		return pow( E, exponent );
+	}
+
+	public static BigDecimal exp( final Number exponent, final int factorial )
+	{
+		return pow( euler( factorial ), exponent );
 	}
 }

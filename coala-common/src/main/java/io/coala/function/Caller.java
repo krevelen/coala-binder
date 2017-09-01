@@ -146,10 +146,7 @@ public interface Caller<T, U, R, E extends Throwable>
 		of( final ThrowingSupplier<R, ? extends E> supplier )
 	{
 		Objects.requireNonNull( supplier );
-		return () ->
-		{
-			return supplier::get;
-		};
+		return () -> supplier::get;
 	}
 
 	/** 

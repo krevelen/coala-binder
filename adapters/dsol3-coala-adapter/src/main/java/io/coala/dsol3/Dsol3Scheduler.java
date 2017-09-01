@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.measure.Quantity;
@@ -16,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 
 import io.coala.bind.InjectConfig;
 import io.coala.bind.LocalBinder;
-import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.log.LogUtil;
 import io.coala.math.QuantityUtil;
@@ -49,9 +47,11 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	implements Scheduler
 {
 
-	private final BehaviorSubject<Instant> time = BehaviorSubject.create();
+	// TODO handle tie-reset in separate 'experimenter'
 	private final PublishSubject<Scheduler> reset = PublishSubject.create();
 
+	private final BehaviorSubject<Instant> time = BehaviorSubject.create();
+	
 	private final LocalBinder binder;
 
 	@InjectConfig
@@ -103,6 +103,14 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 		return this.time;
 	}
 
+	@Override
+	public void fail( final Throwable e )
+	{
+		this.time.onError( e );
+		this.sim.cleanUp();
+		this.sim = null;
+	}
+
 	/** */
 	private static final Logger LOG = LogUtil.getLogger( Dsol3Scheduler.class );
 
@@ -117,9 +125,9 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 				consumer.accept( scheduler );
 			} catch( final Throwable e )
 			{
-				Thrower.rethrowUnchecked( e );
+				fail( e );
 			}
-		} );
+		}, this::fail );
 	}
 
 	@Override
@@ -164,27 +172,21 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 									this.reset.onNext( this );
 								} catch( final Throwable e )
 								{
-									this.time.onError( e );
+									fail( e );
 								}
 							} ),
 					ReplicationMode.TERMINATING );
 		} catch( final Throwable e )
 		{
-			this.time.onError( e );
-			this.sim.cleanUp();
-			this.sim = null;
-			Thrower.rethrowUnchecked( e );
+			fail( e );
 		}
-		if( !this.sim.isRunning() ) try
+		// start the simulation worker thread
+		if( this.sim != null && !this.sim.isRunning() ) try
 		{
-			// start the simulation worker thread
 			this.sim.start();
 		} catch( final Throwable e )
 		{
-			this.time.onError( e );
-			this.sim.cleanUp();
-			this.sim = null;
-			Thrower.rethrowUnchecked( e );
+			fail( e );
 		}
 	}
 
@@ -202,7 +204,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 							what.accept( when );
 						} catch( final Throwable e )
 						{
-							this.time.onError( e );
+							fail( e );
 						}
 					} );
 
@@ -226,7 +228,8 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 			} );
 		} catch( final Exception e )
 		{
-			return Thrower.rethrowUnchecked( e );
+			fail( e );
+			return null;
 		}
 	}
 
@@ -234,7 +237,6 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	 * {@link BaseTimeQ} is a minimal thread-safe {@link Quantity} wrapper for
 	 * efficient comparison
 	 */
-	@ThreadSafe
 	static class BaseTimeQ implements Comparable<BaseTimeQ>, Serializable
 	{
 		/** the serialVersionUID */
@@ -283,7 +285,6 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	 * {@link SimTime} using {@link BaseTimeQ} wrappers for quick comparisons of
 	 * some {@link Quantity} of time
 	 */
-	@ThreadSafe
 	static class SimTimeQ extends SimTime<BaseTimeQ, BigDecimal, SimTimeQ>
 	{
 

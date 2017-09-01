@@ -1,7 +1,10 @@
 package io.coala.math;
 
+import static tec.uom.se.format.FormatBehavior.LOCALE_NEUTRAL;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.ParsePosition;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +25,7 @@ import io.coala.util.Compare;
 import io.coala.util.Util;
 import tec.uom.se.AbstractUnit;
 import tec.uom.se.ComparableQuantity;
+import tec.uom.se.format.QuantityFormat;
 import tec.uom.se.format.SimpleUnitFormat;
 import tec.uom.se.unit.Units;
 
@@ -96,17 +100,19 @@ public class QuantityUtil implements Util
 		return toUnit( (Quantity<Q>) value, unit );
 	}
 
-//	@SuppressWarnings( "rawtypes" )
-	public static ComparableQuantity valueOf( final CharSequence str )
+	public static ComparableQuantity valueOf( final CharSequence csq )
 	{
-		return tec.uom.se.quantity.Quantities.getQuantity( str );
+//		return tec.uom.se.quantity.Quantities.getQuantity( csq );
+		try
+		{
+			return QuantityFormat.getInstance( LOCALE_NEUTRAL ).parse( csq,
+					new ParsePosition( 0 ) );
+		} catch( final ParserException e )
+		{
+			throw new IllegalArgumentException( e.getParsedString(), e );
+		}
 	}
 
-	/**
-	 * @param input
-	 * @param unitFormat
-	 * @return
-	 */
 	public static ComparableQuantity valueOf( final CharSequence str,
 		final UnitFormat unitFormat )
 	{
@@ -280,7 +286,8 @@ public class QuantityUtil implements Util
 	}
 
 	/**
-	 * applies {@link DecimalUtil#DEFAULT_CONTEXT}
+	 * applies {@link DecimalUtil#DEFAULT_CONTEXT} to avoid
+	 * {@link ArithmeticException} due to non-terminating decimal expansion
 	 * 
 	 * @see Quantity#inverse()
 	 * @see tec.uom.se.quantity.DecimalQuantity

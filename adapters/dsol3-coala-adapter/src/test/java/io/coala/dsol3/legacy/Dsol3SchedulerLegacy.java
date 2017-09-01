@@ -70,7 +70,8 @@ public class Dsol3SchedulerLegacy<Q extends Quantity<Q>> implements Scheduler
 	}
 
 	/** */
-	private static final Logger LOG = LogUtil.getLogger( Dsol3SchedulerLegacy.class );
+	private static final Logger LOG = LogUtil
+			.getLogger( Dsol3SchedulerLegacy.class );
 
 	/** the time */
 	private final Subject<Instant> time = PublishSubject.create();
@@ -283,6 +284,12 @@ public class Dsol3SchedulerLegacy<Q extends Quantity<Q>> implements Scheduler
 		return this.time;
 	}
 
+	@Override
+	public void fail( final Throwable e )
+	{
+		throw new Error( "Not implemented" );
+	}
+
 	@SuppressWarnings( "unchecked" )
 	@Override
 	public Expectation schedule( final Instant when,
@@ -326,7 +333,7 @@ public class Dsol3SchedulerLegacy<Q extends Quantity<Q>> implements Scheduler
 	interface ObservableDSOLModel<Q extends Quantity<Q>>
 		extends DSOLModel<DsolQuantity<Q>, BigDecimal, DsolTime<Q>>
 	{
-		@SuppressWarnings( { "serial"/*, "unchecked"*/ } )
+		@SuppressWarnings( { "serial"/* , "unchecked" */ } )
 		static <Q extends Quantity<Q>> ObservableDSOLModel<Q>
 			of( final String id, final Runnable onReset )
 		{
