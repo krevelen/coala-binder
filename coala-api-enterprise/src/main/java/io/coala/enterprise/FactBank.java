@@ -596,7 +596,7 @@ public interface FactBank<F extends Fact> extends AutoCloseable
 
 		private BigDecimal normalize( final Instant t )
 		{
-			return QuantityUtil.toBigDecimal( t.toQuantity(),
+			return QuantityUtil.decimalValue( t.toQuantity(),
 					this.scheduler.timeUnit() );
 		}
 

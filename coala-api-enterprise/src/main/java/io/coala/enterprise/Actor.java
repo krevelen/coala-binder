@@ -71,7 +71,7 @@ import io.reactivex.subjects.Subject;
  * @author Rick van Krevelen
  */
 public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
-	Observer<Fact>, Proactive, LocalBinding, Attributed.Publisher
+	Observer<Fact>, Proactive, LocalBinding, Attributed.Reactive
 {
 
 	/** setup hook triggered after instantiation/injection is complete */
@@ -558,9 +558,9 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			}
 
 			@Override
-			public Observable<PropertyChangeEvent> emitChanges()
+			public Observable<PropertyChangeEvent> changeEmitter()
 			{
-				return parent.emitChanges();
+				return parent.changeEmitter();
 			}
 		};
 	}
@@ -685,14 +685,13 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	/**
 	 * {@link Fact.Simple}
 	 */
-	class Simple
-		extends Attributed.Publisher.SimpleOrdinal<Identified<Actor.ID>>
+	class Simple extends Attributed.Reactive.SimpleOrdinal<Identified<Actor.ID>>
 		implements Actor<Fact>
 	{
-		public static Simple of( final LocalBinder binder, final ID id,
+		public static Actor.Simple of( final LocalBinder binder, final ID id,
 			final Class<? extends Actor<?>> role )
 		{
-			final Simple result = binder.inject( Simple.class );
+			final Actor.Simple result = binder.inject( Actor.Simple.class );
 			result.id = id;
 			result.role = role;
 			return result;
@@ -733,7 +732,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			final int idCompare = id().compareTo( (ID) o.id() );
 			if( idCompare != 0 ) return idCompare;
 			return Comparison.compare( properties(),
-					((Simple) o).properties() );
+					((Actor.Simple) o).properties() );
 		}
 
 		@Override
@@ -846,7 +845,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 			return this.binder;
 		}
 
-		private Simple withId( final ID id )
+		private Actor.Simple withId( final ID id )
 		{
 			this.id = id;
 			return this;
@@ -856,8 +855,8 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 		 * @param factExchange
 		 * @return
 		 */
-		private Simple withExchangeDirection( final FactExchange factExchange,
-			final Direction direction )
+		private Actor.Simple withExchangeDirection(
+			final FactExchange factExchange, final Direction direction )
 		{
 			factExchange.register( this, direction );
 			return this;

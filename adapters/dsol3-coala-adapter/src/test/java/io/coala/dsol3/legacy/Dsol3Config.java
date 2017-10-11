@@ -127,7 +127,7 @@ public interface Dsol3Config extends GlobalConfig, YamlConfig
 								DsolTime.valueOf( 0, duration.unit() )
 										.toString() )
 						.put( RUN_LENGTH_KEY,
-								QuantityUtil.toBigDecimal( duration.unwrap() )
+								QuantityUtil.decimalValue( duration.unwrap() )
 										.toString() )
 						.build(),
 				replConfig.export() );

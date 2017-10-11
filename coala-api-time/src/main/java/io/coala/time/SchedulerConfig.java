@@ -33,6 +33,7 @@ import java.util.Objects;
 import javax.measure.Unit;
 
 import org.aeonbits.owner.ConfigCache;
+import org.aeonbits.owner.ConfigFactory;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 
@@ -158,4 +159,10 @@ public interface SchedulerConfig extends ProviderConfig
 										SchedulerConfig.ID_KEY, rawId ),
 								imports ) );
 	}
+
+	static SchedulerConfig create( final Map<?, ?>... imports )
+	{
+		return ConfigFactory.create( SchedulerConfig.class, imports );
+	}
+
 }

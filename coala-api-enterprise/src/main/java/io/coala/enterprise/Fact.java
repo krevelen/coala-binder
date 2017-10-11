@@ -84,7 +84,7 @@ import io.reactivex.Observer;
  * @author Rick van Krevelen
  */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
-	Attributed.Publisher
+	Attributed.Reactive
 {
 	String TRANSACTION_JSON_PROPERTY = "transaction";
 
@@ -494,7 +494,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	 * {@link Fact.Simple}
 	 */
 	@JsonInclude( Include.NON_NULL )
-	class Simple extends Attributed.Publisher.SimpleOrdinal<Identified<Fact.ID>>
+	class Simple extends Attributed.Reactive.SimpleOrdinal<Identified<Fact.ID>>
 		implements Fact
 	{
 		private static Map<ObjectMapper, Module> TX_MODULE_CACHE = new HashMap<>();

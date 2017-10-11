@@ -20,9 +20,6 @@
 	</description>
 
 	<properties>
-		<uom-se.version>1.0.1</uom-se.version>
-		<apfloat.version>1.8.2</apfloat.version>
-		<ujmp.version>0.3.0</ujmp.version>
 
 		<!-- Eclipse JPA activation, see http://stackoverflow.com/a/37604836 -->
 		<m2e.jpa.activation>false</m2e.jpa.activation>
@@ -57,34 +54,6 @@
 		</repository>
 	</repositories>
 
-	<dependencyManagement>
-		<dependencies>
-
-			<!-- reference implementation of javax.measurement JSR-363 -->
-			<dependency>
-				<groupId>tec.uom</groupId>
-				<artifactId>uom-se</artifactId>
-				<version>${uom-se.version}</version>
-			</dependency>
-
-			<!-- High performance arbitrary precision arithmetic library -->
-			<dependency>
-				<groupId>org.apfloat</groupId>
-				<artifactId>apfloat</artifactId>
-				<version>${apfloat.version}</version>
-			</dependency>
-
-			<!-- matrix calculations -->
-			<dependency>
-				<groupId>org.ujmp</groupId>
-				<artifactId>ujmp-core</artifactId>
-				<version>${ujmp.version}</version>
-			</dependency>
-			<!-- <dependency> <groupId>org.ujmp</groupId> <artifactId>ujmp-gui</artifactId> 
-				<version>${ujmp.version}</version> <scope>test</scope> </dependency> -->
-		</dependencies>
-	</dependencyManagement>
-
 	<dependencies>
 
 		<dependency>
@@ -102,15 +71,15 @@
 		<dependency>
 			<groupId>org.apfloat</groupId>
 			<artifactId>apfloat</artifactId>
-			<!-- TODO <scope>provided</scope> -->
 		</dependency>
 
-		<!-- matrix calculations -->
+		<!-- matrix calculations (jar 1.2MB -->
 		<dependency>
 			<groupId>org.ujmp</groupId>
 			<artifactId>ujmp-core</artifactId>
 			<scope>provided</scope>
 		</dependency>
+
 		<!-- <dependency> <groupId>org.ujmp</groupId> <artifactId>ujmp-gui</artifactId> 
 			<version>${ujmp.version}</version> <scope>test</scope> </dependency> -->
 

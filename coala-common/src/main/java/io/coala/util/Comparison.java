@@ -54,8 +54,8 @@ public enum Comparison
 	public static <T> int compare( final Comparable<? super T> o1,
 		final Object o2 )
 	{
-		Objects.requireNonNull( o1 );
-		Objects.requireNonNull( o2 );
+		if( Objects.requireNonNull( o1 ) == Objects.requireNonNull( o2 ) )
+			return 0;
 		return o1.compareTo( (T) o2 );
 	}
 
@@ -63,10 +63,9 @@ public enum Comparison
 	public static <T> int compare( final Comparator<T> comparator,
 		final Object o1, final Object o2 )
 	{
-		Objects.requireNonNull( comparator );
-		Objects.requireNonNull( o1 );
-		Objects.requireNonNull( o2 );
-		return comparator.compare( (T) o1, (T) o2 );
+		if( Objects.requireNonNull( o1 ) == Objects.requireNonNull( o2 ) )
+			return 0;
+		return Objects.requireNonNull( comparator ).compare( (T) o1, (T) o2 );
 	}
 
 	/**

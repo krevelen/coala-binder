@@ -54,13 +54,18 @@ import io.reactivex.Single;
  * @author Rick van Krevelen
  */
 @FunctionalInterface
-public interface ProbabilityDistribution<T> //extends Serializable
+public interface ProbabilityDistribution<T> extends Supplier<T>
 {
 
 	/**
 	 * @return the next pseudo-random sample
 	 */
 	T draw();
+
+	default T get()
+	{
+		return draw();
+	}
 
 	/**
 	 * From
@@ -208,6 +213,7 @@ public interface ProbabilityDistribution<T> //extends Serializable
 		return QuantityDistribution.of( () ->
 		{
 			final T result = draw();
+			if( result == null ) return null;
 			if( Quantity.class.isAssignableFrom( result.getClass() ) )
 				return ((Quantity<Q>) result).to( unit );
 			if( Number.class.isAssignableFrom( result.getClass() ) )

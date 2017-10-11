@@ -26,53 +26,21 @@ public interface Signal<T> extends Proactive
 	 */
 	T current();
 
-//	void set(T current);
-
 	/** @return an {@link Observable} stream of {@link T} evaluations */
-	Observable<T> emitValues();
+	Observable<T> emit();
 
 	<U> Signal<U> map( Function<T, U> transform );
 
 	default Observable<Signal<T>> on( final T target )
 	{
 		Objects.requireNonNull( target );
-		return emitValues().filter( v -> v.equals( target ) ).map( v -> this );
-	}
-
-	/**
-	 * {@link TimeInvariant} provides a time-invariant {@link Function}
-	 * {@code <T, Instant>} {@link #get(Instant)}
-	 * 
-	 * @param <T>
-	 */
-	public static class TimeInvariant<T>
-	{
-		private T value;
-
-		public static <T> TimeInvariant<T> of( final T value )
-		{
-			final TimeInvariant<T> result = new TimeInvariant<T>();
-			result.set( value );
-			return result;
-		}
-
-		public synchronized void set( final T value )
-		{
-			this.value = value;
-		}
-
-		public synchronized T get( final Instant t )
-		{
-			return this.value;
-		}
+		return emit().filter( v -> v.equals( target ) ).map( v -> this );
 	}
 
 	/**
 	 * {@link Simple} implementation of {@link Signal}
 	 * 
 	 * @param <T> the type of value being signaled
-	 * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
-	 * @author Rick van Krevelen
 	 */
 	class Simple<T> implements Signal<T>
 	{
@@ -80,8 +48,7 @@ public interface Signal<T> extends Proactive
 		public static <T> Signal<T> of( final Scheduler scheduler,
 			final T constant )
 		{
-			return of( scheduler, Range.infinite(),
-					TimeInvariant.of( constant )::get );
+			return of( scheduler, Range.infinite(), t -> constant );
 		}
 
 		public static <T> Signal<T> of( final Scheduler scheduler,
@@ -181,23 +148,16 @@ public interface Signal<T> extends Proactive
 		}
 
 		@Override
-		public Observable<T> emitValues()
+		public Observable<T> emit()
 		{
 			return this.values;
 		}
 
 		@Override
-		public <U> Signal<U> map( Function<T, U> transform )
+		public <U> Signal<U> map( final Function<T, U> transform )
 		{
 			return of( scheduler(), domain(),
-					partialTransform( getFunction(), transform ) );
-		}
-
-		static <T, U> Function<Instant, U> partialTransform(
-			final Function<Instant, T> function,
-			final Function<T, U> transform )
-		{
-			return ( instant ) -> transform.apply( function.apply( instant ) );
+					t -> transform.apply( getFunction().apply( t ) ) );
 		}
 	}
 

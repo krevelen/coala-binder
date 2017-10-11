@@ -47,6 +47,7 @@ import io.coala.json.Wrapper;
 import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
 import io.coala.math.QuantityUtil;
+import io.coala.util.Comparison;
 import io.coala.xml.XmlUtil;
 import tec.uom.se.ComparableQuantity;
 
@@ -97,7 +98,7 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 
 	/** the serialVersionUID */
 	private static final long serialVersionUID = -1311500177936804662L;
-	
+
 	/** the ZERO value in dimensionless units or {@link TimeUnits#STEPS} */
 	public static final Instant ZERO = of( BigDecimal.ZERO, TimeUnits.STEPS );
 
@@ -256,7 +257,7 @@ public class Instant extends Wrapper.SimpleOrdinal<ComparableQuantity>
 		final Instant that = (Instant) o;
 		try
 		{
-			return this.unwrap().compareTo( that.unwrap() );
+			return Comparison.compare( this.unwrap(), that.unwrap() );
 		} catch( final /* Incommensurable */ Exception e )
 		{
 			if( this.isZero() && that.isZero() ) return 0;

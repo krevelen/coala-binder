@@ -80,6 +80,9 @@ import io.coala.util.TypeArguments;
 /**
  * {@link DynaBean} implements a dynamic bean, ready for JSON de/serialization
  * 
+ * <p>
+ * NOT THREAD-SAFE
+ * 
  * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
  * @author Rick van Krevelen
  */
@@ -217,20 +220,20 @@ public final class DynaBean implements Cloneable, Comparable
 	protected void set( final Map<String, ?> values )
 	{
 		Map<String, Object> map = getOrCreateMap();
-		synchronized( map )
-		{
-			map.putAll( values );
-		}
+//		synchronized( map )
+//		{
+		map.putAll( values );
+//		}
 	}
 
 	@JsonAnySetter
-	protected Object set( final String key, final Object value )
+	public Object set( final String key, final Object value )
 	{
 		Map<String, Object> map = getOrCreateMap();
-		synchronized( map )
-		{
-			return map.put( key, value );
-		}
+//		synchronized( map )
+//		{
+		return map.put( key, value );
+//		}
 	}
 
 	protected Object remove( final String key )
@@ -745,7 +748,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 *            in the annotated property key
 	 * @return a (cached) comparator
 	 */
-	@SuppressWarnings( { "unchecked"/*, "rawtypes"*/ } )
+	@SuppressWarnings( { "unchecked"/* , "rawtypes" */ } )
 	public static <S extends Comparable> Comparator<S>
 		getComparator( final BeanProxy annot )
 	{

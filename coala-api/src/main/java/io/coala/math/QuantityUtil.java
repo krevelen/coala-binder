@@ -232,39 +232,36 @@ public class QuantityUtil implements Util
 						: e.getMessage();
 	}
 
-	public static String toString( final Quantity<?> qty )
+	public static String toString( final Quantity qty )
 	{
-		return toBigDecimal( qty ).toPlainString() + " " + qty.getUnit();
+		return decimalValue( qty ).toPlainString() + " " + qty.getUnit();
 	}
 
-	public static String toString( final Quantity<?> qty, final int scale )
+	public static String toString( final Quantity qty, final int scale )
 	{
-		return toBigDecimal( qty ).setScale( scale, RoundingMode.HALF_UP )
+		return decimalValue( qty ).setScale( scale, RoundingMode.HALF_UP )
 				.toPlainString() + " " + qty.getUnit();
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public static <Q extends Quantity<Q>> Number
-		toNumber( final Quantity<?> qty, final Unit<Q> unit )
+	public static Number toNumber( final Quantity qty, final Unit unit )
 	{
-		return ((Quantity<Q>) qty).to( unit ).getValue();
+		return qty.to( unit ).getValue();
 	}
 
-	public static BigDecimal toBigDecimal( final Quantity<?> amount )
+	public static BigDecimal decimalValue( final Quantity qty, final Unit unit )
 	{
-		return toBigDecimal( amount, amount.getUnit() );
+		return DecimalUtil.valueOf( toNumber( qty, unit ) );
 	}
 
-	@SuppressWarnings( "unchecked" )
-	public static <Q extends Quantity<Q>> BigDecimal
-		toBigDecimal( final Quantity<?> qty, final Unit<Q> unit )
+	public static BigDecimal decimalValue( final Quantity qty )
 	{
-		return DecimalUtil.valueOf( ((Quantity<Q>) qty).to( unit ).getValue() );
+		return DecimalUtil.valueOf( qty.getValue() );
 	}
 
-	public static boolean isNegative( final Quantity<?> amount )
+	public static boolean isNegative( final Quantity<?> qty )
 	{
-		return toBigDecimal( amount ).signum() < 0;
+		return decimalValue( qty ).signum() < 0;
 	}
 
 	/**

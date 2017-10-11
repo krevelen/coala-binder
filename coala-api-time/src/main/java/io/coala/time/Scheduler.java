@@ -11,8 +11,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.measure.Unit;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.coala.bind.LocalBinder;
 import io.coala.bind.LocalBinding;
+import io.coala.config.ConfigUtil;
 import io.coala.exception.Thrower;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
@@ -77,11 +80,11 @@ public interface Scheduler extends Proactive, Runnable
 		return onReset( s -> runnable.run() );
 	}
 
-	default Disposable onEnd( final Consumer<Instant> onLast )
+	default Disposable atEnd( final Consumer<Instant> onLast )
 	{
 		return onEnd( onLast, e ->
 		{
-			// consume errors to prevent duplication
+			// rather than propagating, consume errors to prevent duplication
 		} );
 	}
 
@@ -390,14 +393,20 @@ public interface Scheduler extends Proactive, Runnable
 	interface Factory
 	{
 
-		default Scheduler create( SchedulerConfig config )
+		default Scheduler create( final SchedulerConfig config )
 		{
-			return Instantiator.instantiate( config.implementation() );
+			return Instantiator.instantiate( config.implementation(), config );
 		}
 
 		default Scheduler create( final Map<?, ?>... imports )
 		{
 			return create( SchedulerConfig.getOrCreate( imports ) );
+		}
+
+		default Scheduler create( final JsonNode config )
+		{
+			return create( SchedulerConfig
+					.getOrCreate( ConfigUtil.flatten( config ) ) );
 		}
 
 		default Scheduler create( final String rawId,
@@ -415,6 +424,7 @@ public interface Scheduler extends Proactive, Runnable
 					sub::onError, sub::onComplete ) );
 		}
 
+		@Deprecated
 		@Singleton
 		class Rebinder implements Factory, LocalBinding
 		{
@@ -425,11 +435,22 @@ public interface Scheduler extends Proactive, Runnable
 			public Scheduler create( final SchedulerConfig config )
 			{
 				// FIXME use some configuration mechanism during injection, rather than resetting 
-				binder().reset( SchedulerConfig.class, config );
-				final Scheduler scheduler = binder()
-						.inject( config.implementation() );
-				binder().reset( Scheduler.class, scheduler );
-				return scheduler;
+//				binder().reset( SchedulerConfig.class, config );
+//				final Scheduler scheduler = binder()
+//						.inject( config.implementation(), config );
+				final Scheduler result = binder()
+						.inject( config.implementation(), config.toJSON() );
+				
+				// FIXME LocalBinder#reset() does not work !!!
+				
+//				binder().reset( Scheduler.class, result );
+//				final Scheduler s1 = binder().inject( Scheduler.class );
+//				System.err.println( "Sched " + s1 + '@'
+//						+ Integer.toHexString( s1.hashCode() ) + s1.config()
+//						+ "=" + result.getClass().getSimpleName() + '@'
+//						+ Integer.toHexString( result.hashCode() ) + " conf: "
+//						+ result.config() );
+				return result;
 			}
 
 			@Override

@@ -44,6 +44,10 @@ public interface DecimalConfig extends GlobalConfig
 	@DefaultValue( "HALF_UP" )
 	RoundingMode roundingMode();
 
+	/**
+	 * @return a {@link MathContext} using configured {@link #precision()} and
+	 *         {@link #roundingMode()}
+	 */
 	default MathContext createMathContext()
 	{
 		return new MathContext( precision(), roundingMode() );

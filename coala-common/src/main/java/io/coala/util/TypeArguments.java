@@ -128,10 +128,12 @@ public class TypeArguments
 //									parameterizedIntf
 //											.getActualTypeArguments() );
 
-							if( !concreteDescendantType.isInterface() )
-								return of( superClass, concreteDescendantType );
+//							if( !concreteDescendantType.isInterface() )
+//								return of( superClass, concreteDescendantType );
 
+							// Found generic super interface
 							type = parameterizedIntf;
+							break;
 						}
 						superClass = (Class<? super S>) superClass
 								.getSuperclass();

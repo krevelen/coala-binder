@@ -62,7 +62,7 @@ public class MatrixUtil
 	{
 		return () -> new Iterator<long[]>()
 		{
-			final long[] n = source.getSize(), x = Arrays.copyOf( n, n.length );
+			final long[] next = source.getSize(), x = Arrays.copyOf( next, next.length );
 			Matrix row = null;
 
 			@Override
@@ -74,20 +74,21 @@ public class MatrixUtil
 			@Override
 			public boolean hasNext()
 			{
-				while( x[0] != -1 )
+				while( this.x[0] != -1 )
 				{
-					while( row == null && --x[0] != -1 )
+					while( this.row == null && --this.x[0] != -1 )
 					{
-						row = source.selectRows( Ret.LINK, x[0] );
-						x[1] = n[1];
+						this.row = source.selectRows( Ret.LINK, this.x[0] );
+						this.x[1] = this.next[1];
 					}
-					if( row == null ) return false;
 
-					while( --x[1] != -1 )
-						if( all || row.containsCoordinates( 0, x[1] ) )
+					if( this.row == null ) return false;
+
+					while( --this.x[1] != -1 )
+						if( all || this.row.containsCoordinates( 0, this.x[1] ) )
 							return true; // lacks index[], may add log(n)*k ops
 
-					row = null;
+					this.row = null;
 				}
 				return false;
 			}

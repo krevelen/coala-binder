@@ -159,10 +159,11 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	 */
 	default <E> E nextElement( final List<E> elements )
 	{
-		if( Objects.requireNonNull( elements ).isEmpty() ) return Thrower
-				.throwNew( IllegalArgumentException::new, () -> "empty" );
+		if( Objects.requireNonNull( elements, "Missing values" ).isEmpty() )
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Nothing to pick from" );
 		if( elements.size() == 1 ) return elements.get( 0 );
-		return nextElement( elements, 0, elements.size() - 1 );
+		return nextElement( elements, 0, elements.size() );
 	}
 
 	/**

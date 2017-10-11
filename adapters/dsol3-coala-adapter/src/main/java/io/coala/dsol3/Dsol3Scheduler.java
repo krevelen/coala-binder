@@ -51,8 +51,8 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	private final PublishSubject<Scheduler> reset = PublishSubject.create();
 
 	private final BehaviorSubject<Instant> time = BehaviorSubject.create();
-	
-	private final LocalBinder binder;
+
+	private final String binderId;
 
 	@InjectConfig
 	private SchedulerConfig config;
@@ -64,7 +64,13 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	@Inject
 	public Dsol3Scheduler( final LocalBinder binder )
 	{
-		this.binder = binder;
+		this.binderId = binder.id().toString();
+	}
+
+	public Dsol3Scheduler( final SchedulerConfig config )
+	{
+		this.binderId = config.rawId();
+		this.config = config;
 	}
 
 	@Override
@@ -100,14 +106,14 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	@Override
 	public Observable<Instant> time()
 	{
-		return this.time;
+		return this.time.distinct();
 	}
 
 	@Override
 	public void fail( final Throwable e )
 	{
 		this.time.onError( e );
-		this.sim.cleanUp();
+		if( sim != null ) this.sim.cleanUp();
 		this.sim = null;
 	}
 
@@ -140,14 +146,15 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 			this.sim.setPauseOnError( true );
 			// clean up if VM terminates suddenly (e.g. jUnit test)
 			final String id = this.config.rawId(), name = id != null ? id
-					: this.binder != null ? this.binder.id().toString()
+					: this.binderId != null ? this.binderId
 							: "repl-" + (System.currentTimeMillis()
 									& System.nanoTime());
-			Runtime.getRuntime()
-					.addShutdownHook( new Thread( this.sim::cleanUp ) );
+//			Runtime.getRuntime().addShutdownHook( new Thread( this.sim::cleanUp ) );
+			final SimTimeQ startTime = SimTimeQ.zero( timeUnit() );
+			this.time.onNext( startTime.toInstant() );
 			this.sim.initialize(
 					new Replication<BaseTimeQ, BigDecimal, SimTimeQ>( name,
-							SimTimeQ.zero( timeUnit() ), BigDecimal.ZERO,
+							startTime, BigDecimal.ZERO,
 							this.config.rawDuration(), (Model) sim ->
 							{
 								try
@@ -155,9 +162,6 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 									// rename the simulation worker thread
 									this.sim.scheduleEventNow( () -> Thread
 											.currentThread().setName( name ) );
-									// initialize start time
-									this.time.onNext( sim.getSimulatorTime()
-											.toInstant() );
 									// publish time instants
 									sim.addListener(
 											e -> this.time.onNext(
@@ -166,7 +170,10 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 											SimulatorInterface.TIME_CHANGED_EVENT );
 									// complete time instants at replication end
 									sim.addListener(
-											e -> this.time.onComplete(),
+											e -> {
+												this.time.onComplete();
+												this.sim.cleanUp();
+											},
 											SimulatorInterface.END_OF_REPLICATION_EVENT );
 									// scheduler ready, publish
 									this.reset.onNext( this );
@@ -196,8 +203,11 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	{
 		try
 		{
-			final SimEventInterface<SimTimeQ> event = this.sim.scheduleEventAbs(
-					new SimTimeQ( new BaseTimeQ( when, timeUnit() ) ), () ->
+			final SimTimeQ t = this.time.getValue().equals( when )
+					? this.sim.getSimulatorTime()
+					: new SimTimeQ( new BaseTimeQ( when, timeUnit() ) );
+			final SimEventInterface<SimTimeQ> event = this.sim
+					.scheduleEventAbs( t, () ->
 					{
 						try
 						{
@@ -261,7 +271,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 			this.instant = instant;
 			this.decimalCache = baseUnit == null
 					|| baseUnit.equals( instant.unit() ) ? instant.decimal()
-							: QuantityUtil.toBigDecimal(
+							: QuantityUtil.decimalValue(
 									instant.toQuantity( baseUnit ) );
 		}
 

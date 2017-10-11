@@ -24,7 +24,6 @@ import java.util.Objects;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.coala.exception.Thrower;
-import io.coala.util.Instantiator;
 
 /**
  * {@link JsonConfigurable} objects can be (re)configured via JSON trees
@@ -45,14 +44,20 @@ public interface JsonConfigurable<THIS extends JsonConfigurable<?>>
 				: getClass().getSimpleName() + config();
 	}
 
-	default <T> T fromConfig( final String key, final Class<T> returnType,
-		final T defaultValue ) throws ClassNotFoundException
+	default <T> Class<? extends T> fromConfig( final String key,
+		final Class<T> returnType ) throws ClassNotFoundException
+	{
+		return fromConfig( key, returnType, null );
+	}
+
+	default <T> Class<? extends T> fromConfig( final String key,
+		final Class<T> returnType, final Class<? extends T> defaultValue )
+		throws ClassNotFoundException
 	{
 		if( config() == null ) return defaultValue;
 		final JsonNode node = config().get( key );
 		return node == null || node.isNull() ? defaultValue
-				: Instantiator.instantiate( Class.forName( node.asText() )
-						.asSubclass( returnType ) );
+				: Class.forName( node.asText() ).asSubclass( returnType );
 	}
 
 	default boolean fromConfig( final String key, final boolean defaultValue )

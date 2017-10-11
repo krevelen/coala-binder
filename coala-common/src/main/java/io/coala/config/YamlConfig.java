@@ -72,19 +72,16 @@ public interface YamlConfig extends Accessible
 		return ConfigUtil.expand( ConfigUtil.export( this ), baseKeys );
 	}
 
-	// default not (yet) supported in OWNER api proxy implementation
 	default String toYAML()
 	{
 		return toYAML( null );
 	}
 
-	// default not (yet) supported in OWNER api proxy implementation
 	default String toYAML( final String comment, final String... baseKeys )
 	{
 		return YamlUtil.toYAML( comment, toJSON( baseKeys ) );
 	}
 
-	// default not (yet) supported in OWNER api proxy implementation
 	default void storeToYAML( final OutputStream out, final String comment )
 		throws IOException
 	{

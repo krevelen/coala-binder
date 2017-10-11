@@ -95,6 +95,8 @@ public class Guice4LocalBinderTest
 		}
 	}
 
+	// TODO test LocalBinder#reset() 
+
 	@Test
 	public void testLauncher() throws IOException
 	{

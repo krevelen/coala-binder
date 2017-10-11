@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 import io.coala.util.Comparison;
 import io.reactivex.Observable;
+import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
@@ -74,35 +75,26 @@ public interface Attributed
 		return this;
 	}
 
-//	/**
-//	 * Builder-style bean property setter
-//	 * 
-//	 * @param property the property (or bean attribute) to change
-//	 * @param value the new value
-//	 * @param subtype a (concrete) sub-type
-//	 * @param <THIS> the run-time sub-type
-//	 * @return this as {@link Attributed} sub-type to allow chaining
-//	 */
-//	default <THIS extends Attributed> THIS with( final String property,
-//		final Object value, final Class<THIS> subtype )
-//	{
-//		return subtype.cast( with( property, value ) );
-//	}
-
-	interface Publisher extends Attributed
+	interface Reactive extends Attributed
 	{
-		Observable<PropertyChangeEvent> emitChanges();
+		Observable<PropertyChangeEvent> changeEmitter();
 
-		default <T> Observable<T> emitChanges( final String propertyName,
+		default <T> Observable<T> valueEmitter( final String propertyName,
 			final Class<T> propertyType )
 		{
-			return emitChanges()
-					.filter( e -> propertyName.equals( e.getPropertyName() ) )
-					.map( e -> e.getNewValue() ).cast( propertyType );
+			final T currentValue = propertyType
+					.cast( properties().get( propertyName ) );
+			return (currentValue == null ? BehaviorSubject.<T>create()
+					: BehaviorSubject.createDefault( currentValue ))
+							.mergeWith( changeEmitter()
+									.filter( e -> e.getPropertyName()
+											.equals( propertyName ) )
+									.map( e -> e.getNewValue() )
+									.cast( propertyType ) );
 		}
 
 		@SuppressWarnings( "rawtypes" )
-		class SimpleOrdinal<C> implements Publisher, Comparable<C>
+		class Simple implements Reactive
 		{
 
 			private final TreeMap<String, Object> properties = new TreeMap<>();
@@ -124,7 +116,6 @@ public interface Attributed
 
 			@SuppressWarnings( "unchecked" )
 			@Override
-			@JsonAnySetter
 			public <T> T set( final String property, final T value )
 			{
 				final Object previous = properties().put( property, value );
@@ -134,11 +125,15 @@ public interface Attributed
 			}
 
 			@Override
-			public Observable<PropertyChangeEvent> emitChanges()
+			public Observable<PropertyChangeEvent> changeEmitter()
 			{
 				return this.changes;
 			}
+		}
 
+		@SuppressWarnings( "rawtypes" )
+		class SimpleOrdinal<C> extends Simple implements Comparable<C>
+		{
 			@SuppressWarnings( "unchecked" )
 			@Override
 			public int compareTo( final C o )

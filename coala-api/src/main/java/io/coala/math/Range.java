@@ -99,7 +99,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 * or <code>[0:15]</code>
 	 */
 	public static <T extends Comparable<?>> Range<T> parse( final String range,
-		final Class<T> valueType ) //throws ParseException
+		final Class<T> valueType ) throws ParseException
 	{
 		return parse( range, InstanceParser.of( valueType )::parse );
 	}
@@ -108,14 +108,16 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	 * @param timeRange
 	 * @param valueType
 	 * @return
+	 * @throws ParseException
 	 */
 	public static <T extends Comparable<?>> Range<T> parse( final String range,
-		final ThrowingFunction<String, T, ?> argParser )
+		final ThrowingFunction<String, T, ?> argParser ) throws ParseException
 	{
 		final Matcher m = RANGE_FORMAT.matcher( range.trim() );
-		if( !m.find() ) Thrower.throwNew( IllegalArgumentException::new,
+		if( !m.find() ) return Thrower.throwNew( ParseException::new,
 				() -> "Incorrect format, expected e.g. `[lower;upper>`, was: "
-						+ range );
+						+ range,
+				0 );
 
 		T lower, upper;
 		boolean lowerIncl, upperIncl;
@@ -148,7 +150,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 
 	protected Range()
 	{
-
+		// bean constructor
 	}
 
 	public Range( final Extreme<T> minimum, final Extreme<T> maximum )

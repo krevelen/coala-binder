@@ -1,4 +1,4 @@
-/* $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+/* $Id$
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -17,27 +17,32 @@
  * 
  * Copyright (c) 2016 RIVM National Institute for Health and Environment 
  */
-package io.coala.time;
+package io.coala.math;
 
-import java.math.BigDecimal;
+import java.lang.reflect.Method;
+import java.text.ParseException;
 
-import io.coala.math.QuantityUtil;
+import org.aeonbits.owner.Converter;
 
-/**
- * {@link Timed}
- * 
- * @version $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
- * @author Rick van Krevelen
- */
-@FunctionalInterface
-public interface Timed
+import io.coala.exception.Thrower;
+import tec.uom.se.ComparableQuantity;
+
+@SuppressWarnings( "rawtypes" ) // raw enables unit conversion
+public
+class QuantityRangeConfigConverter
+	implements Converter<Range<ComparableQuantity>>
 {
-	/** @return the current {@link Instant} */
-	Instant now();
-
-	default BigDecimal nowDecimal()
+	@Override
+	public Range<ComparableQuantity>
+		convert( final Method method, final String input )
 	{
-		return now() == null ? BigDecimal.ZERO
-				: QuantityUtil.decimalValue( now().toQuantity() );
+		try
+		{
+			return Range.parse( input,
+					QuantityUtil::valueOf );
+		} catch( final ParseException e )
+		{
+			return Thrower.rethrowUnchecked( e );
+		}
 	}
 }

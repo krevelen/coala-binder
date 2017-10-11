@@ -104,7 +104,9 @@
 		<junit.version>4.11</junit.version>
 		<concurrentunit.version>0.4.2</concurrentunit.version>
 		<hamcrest.version>1.3</hamcrest.version>
-		<!-- JPA provider for (classic) O/R and (noSQL) O/G mapping models -->
+		<ujmp.version>0.3.0</ujmp.version>
+		<uom-se.version>1.0.1</uom-se.version>
+		<apfloat.version>1.8.2</apfloat.version>
 		<log4j.version>2.8.2</log4j.version>
 		<jackson.version>2.8.8</jackson.version>
 		<hibernate.version>5.1.0.Final</hibernate.version>
@@ -202,6 +204,8 @@
 				<artifactId>hamcrest-all</artifactId>
 				<version>${hamcrest.version}</version>
 			</dependency>
+
+			<!-- JSON, YAML, XML de/serialization -->
 			<dependency>
 				<groupId>com.fasterxml.jackson</groupId>
 				<artifactId>jackson-bom</artifactId>
@@ -209,6 +213,29 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+
+			<!-- reference implementation of javax.measurement JSR-363 -->
+			<dependency>
+				<groupId>tec.uom</groupId>
+				<artifactId>uom-se</artifactId>
+				<version>${uom-se.version}</version>
+			</dependency>
+
+			<!-- High performance arbitrary precision arithmetic library -->
+			<dependency>
+				<groupId>org.apfloat</groupId>
+				<artifactId>apfloat</artifactId>
+				<version>${apfloat.version}</version>
+			</dependency>
+
+			<!-- matrix calculations -->
+			<dependency>
+				<groupId>org.ujmp</groupId>
+				<artifactId>ujmp-core</artifactId>
+				<version>${ujmp.version}</version>
+			</dependency>
+
+			<!-- logging -->
 			<dependency>
 				<groupId>org.apache.logging.log4j</groupId>
 				<artifactId>log4j-bom</artifactId>
@@ -216,6 +243,8 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+
+			<!-- logging -->
 			<dependency>
 				<groupId>org.hibernate.ogm</groupId>
 				<artifactId>hibernate-ogm-bom</artifactId>
@@ -223,11 +252,15 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+
+			<!-- JPA provider for (classic) O/R and (noSQL) O/G mapping models -->
 			<dependency>
 				<groupId>org.hibernate</groupId>
 				<artifactId>hibernate-hikaricp</artifactId>
 				<version>${hibernate.version}</version>
 			</dependency>
+
+			<!-- servlets etc. -->
 			<dependency>
 				<groupId>org.wildfly.bom</groupId>
 				<artifactId>wildfly-javaee7</artifactId>

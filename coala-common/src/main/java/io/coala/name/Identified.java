@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 //@JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
 //	property = "@class" )
+@FunctionalInterface
 public interface Identified<T>
 {
 
@@ -70,8 +71,7 @@ public interface Identified<T>
 
 	class Simple<T> implements Identified<T>
 	{
-
-		protected static <T extends Simple<ID>, ID> T of( final T result,
+		public static <T extends Simple<ID>, ID> T of( final T result,
 			final ID id )
 		{
 			result.id = id;
@@ -114,6 +114,13 @@ public interface Identified<T>
 	class SimpleOrdinal<T extends Comparable> extends Simple<T>
 		implements Ordinal<T>
 	{
+		public static <T extends Simple<ID>, ID> T of( final T result,
+			final ID id )
+		{
+			result.id = id;
+			return result;
+		}
+		
 		public static <T extends Comparable> SimpleOrdinal<T> of( final T id )
 		{
 			return of( new SimpleOrdinal<T>(), id );

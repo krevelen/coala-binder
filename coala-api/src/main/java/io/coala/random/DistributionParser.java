@@ -100,7 +100,10 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 
 	/**
 	 * @param <P> the type of argument to parse
-	 * @param dist the {@link String} representation
+	 * @param dist the {@link String} representation as
+	 *            {@code "dist(arg1; arg2; ...)"}, for instance
+	 *            {@code "gauss(mean, stdev)"} or
+	 *            {@code "enum(val1:w1; val2:w2; ...)"}
 	 * @param parser the {@link DistributionParser}
 	 * @param argType the concrete argument {@link Class}
 	 * @return a {@link ProbabilityDistribution} of {@link T} values
@@ -116,11 +119,11 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 				"Incorrect format, expected <dist>(p0;p1;p2), was: " + dist,
 				0 );
 		final List<WeightedValue<P>> params = new ArrayList<>();
-		
+
 		// FIXME register separate Jackson Module artifact
 		if( Quantity.class.isAssignableFrom( argType ) )
-			QuantityJsonModule.checkRegistered( JsonUtil.getJOM() ); 
-		
+			QuantityJsonModule.checkRegistered( JsonUtil.getJOM() );
+
 		final InstanceParser<P> argParser = InstanceParser.of( argType );
 		for( String valuePair : m.group( PARAMS_GROUP )
 				.split( PARAM_SEPARATORS ) )
@@ -151,7 +154,7 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 				.unitOf( params.get( 0 ).getValue() );
 		final List<WeightedValue<BigDecimal>> numbers = params.stream()
 				.map( wv -> WeightedValue.of( QuantityUtil
-						.toBigDecimal( (Quantity<?>) wv.getValue(), firstUnit ),
+						.decimalValue( (Quantity<?>) wv.getValue(), firstUnit ),
 						wv.getWeight() ) )
 				.collect( Collectors.toList() );
 		return (ProbabilityDistribution<T>) parse( m.group( DIST_GROUP ),
@@ -161,7 +164,8 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 	/**
 	 * @param <T> the type of value in the {@link ProbabilityDistribution}
 	 * @param <V> the type of arguments
-	 * @param name the symbol of the {@link ProbabilityDistribution}
+	 * @param name the symbol of the {@link ProbabilityDistribution}, e.g.
+	 *            {@code "poisson"} or {@code "const"}
 	 * @param args the arguments as a {@link List} of {@link WeightedValue}
 	 *            pairs with at least a value of type {@link T} and possibly
 	 *            some numeric weight
@@ -197,6 +201,8 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 			return (ProbabilityDistribution<T>) getFactory()
 					.createDeterministic( args.get( 0 ).getValue() );
 
+		case "p":
+		case "bool":
 		case "bernoulli":
 			return (ProbabilityDistribution<T>) getFactory()
 					.createBernoulli( (Number) args.get( 0 ).getValue() );

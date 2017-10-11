@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
+import java.util.function.LongFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -40,8 +40,6 @@ import org.ujmp.core.calculation.Calculation.Ret;
 import org.ujmp.core.enums.ValueType;
 
 import io.coala.log.LogUtil;
-import io.coala.math.DecimalUtil;
-import io.coala.math.MatrixUtil;
 
 /**
  * {@link MatrixBuilder}
@@ -302,10 +300,18 @@ public class MatrixBuilder
 		return this;
 	}
 
-	public <T> MatrixBuilder labelRows( final T[] labels )
+	@SuppressWarnings( "unchecked" )
+	public <T> MatrixBuilder labelRows( final T... labels )
 	{
 		if( labels != null ) for( int i = labels.length; i-- != 0; )
 			labelRow( i, labels[i] );
+		return this;
+	}
+
+	public <T> MatrixBuilder labelRows( final LongFunction<T> labeler )
+	{
+		if( labeler != null ) LongStream.range( 0, this.m.getRowCount() )
+				.forEach( i -> this.m.setRowLabel( i, labeler.apply( i ) ) );
 		return this;
 	}
 
@@ -315,10 +321,18 @@ public class MatrixBuilder
 		return this;
 	}
 
-	public <T> MatrixBuilder labelColumns( final T[] labels )
+	@SuppressWarnings( "unchecked" )
+	public <T> MatrixBuilder labelColumns( final T... labels )
 	{
 		if( labels != null ) for( int i = labels.length; i-- != 0; )
 			labelColumn( i, labels[i] );
+		return this;
+	}
+
+	public <T> MatrixBuilder labelColumns( final LongFunction<T> labeler )
+	{
+		if( labeler != null ) LongStream.range( 0, this.m.getColumnCount() )
+				.forEach( i -> this.m.setColumnLabel( i, labeler.apply( i ) ) );
 		return this;
 	}
 
@@ -373,8 +387,15 @@ public class MatrixBuilder
 	public MatrixBuilder withContent( final Matrix values,
 		final long... offset )
 	{
-		this.m.setContent( Ret.ORIG, values,
-				verifyBounds( this.m, offset, true ) );
+		final long[] x = verifyBounds( this.m, offset, true ),
+				size = this.m.getSize();
+		if( x[0] + values.getRowCount() > size[0]
+				|| x[1] + values.getColumnCount() > size[1] )
+			throw new IllegalArgumentException( "Does not fit at offset: "
+					+ Arrays.toString( values.getSize() ) + " + "
+					+ Arrays.toString( x ) + " >= " + Arrays.toString( size ) );
+
+		this.m.setContent( Ret.ORIG, values, x );
 		return this;
 	}
 
@@ -397,10 +418,10 @@ public class MatrixBuilder
 	}
 
 	public <V> MatrixBuilder withContent( final Iterable<V> values,
-		final long offset )
+		final long... offset )
 	{
-		return withContent(
-				StreamSupport.stream( values.spliterator(), true ) );
+		return withContent( StreamSupport.stream( values.spliterator(), true ),
+				offset );
 	}
 
 	public <V> MatrixBuilder withContent( final Stream<V> values )
@@ -427,10 +448,21 @@ public class MatrixBuilder
 	}
 
 	public <V> MatrixBuilder withContent( final Stream<V> values,
-		final long offset )
+		final long... offset )
 	{
-		final AtomicLong i = new AtomicLong( offset );
-		checkParallel( values ).forEach( v -> with( v, i.getAndIncrement() ) );
+		final AtomicReference<long[]> i = new AtomicReference<>( offset );
+		values.forEach( v -> with( v, i.getAndUpdate( x ->
+		{
+			switch( x.length )
+			{
+			case 1: // 1D: increment offset (horizontal/vertical/diagonal)
+				return new long[] { x[0] + 1 };
+			case 2: // 2D: increment column
+				return new long[] { x[0], x[1] + 1 };
+			default: // no/multiD offset, try 1D
+				return new long[] { 1 };
+			}
+		} ) ) );
 		return this;
 	}
 
@@ -459,16 +491,20 @@ public class MatrixBuilder
 		return this;
 	}
 
-	public MatrixBuilder apply( final UnaryOperator<Number> operator,
+	public MatrixBuilder apply( final Function<BigDecimal, Number> operator,
 		final long... coords )
 	{
+		if( coords == null || coords.length == 0 ) return withAvailableNumbers(
+				( x, v ) -> DecimalUtil.valueOf( operator.apply( v ) ) );
+
 		final long[] x = verifyBounds( this.m, coords );
 		setNumber( operator.apply( getNumber( x ) ), x );
 		return this;
 	}
 
-	public MatrixBuilder apply( final BinaryOperator<Number> function,
-		final Number operand, final long... coords )
+	public <T> MatrixBuilder apply(
+		final BiFunction<BigDecimal, T, Number> function, final T operand,
+		final long... coords )
 	{
 		return apply( v -> function.apply( v, operand ), coords );
 	}

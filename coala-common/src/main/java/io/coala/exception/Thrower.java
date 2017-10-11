@@ -77,16 +77,33 @@ public class Thrower
 	/**
 	 * @param exceptionFactory the {@link Function} to produce the actual
 	 *            Exception
-	 * @param messageFactory {@link Callable} message supplier
-	 * @param <R> the dynamic (void) return type
+	 * @param messageFactory the first argument (e.g. message) supplier
+	 * @param arg2 the second argument, e.g. Throwable cause
+	 * @param <R> the run-time (void) return type
 	 * @param <E> the {@link Exception} type thrown
 	 */
-	public static <R, T extends Throwable, E extends Exception> R throwNew(
+	public static <R, T, E extends Exception> R throwNew(
 		final BiFunction<String, T, E> exceptionFactory,
-		final Supplier<String> messageFactory, final T cause ) throws E
+		final Supplier<String> messageFactory, final T arg2 ) throws E
 	{
 		return rethrowUnchecked(
-				(E) exceptionFactory.apply( messageFactory.get(), cause ) );
+				(E) exceptionFactory.apply( messageFactory.get(), arg2 ) );
+	}
+
+	/**
+	 * @param exceptionFactory the {@link Function} to produce the actual
+	 *            Exception
+	 * @param messageFactory the first argument (e.g. message) supplier
+	 * @param arg2 the second argument, e.g. Throwable cause
+	 * @param <R> the run-time (void) return type
+	 * @param <E> the {@link Exception} type thrown
+	 */
+	public static <R, E extends Exception> R throwNew(
+		final BiFunction<String, Integer, E> exceptionFactory,
+		final Supplier<String> messageFactory, final int arg2 ) throws E
+	{
+		return rethrowUnchecked(
+				(E) exceptionFactory.apply( messageFactory.get(), arg2 ) );
 	}
 
 	/**
@@ -101,7 +118,6 @@ public class Thrower
 	 *             {@link #throwNew(Function, Supplier)}
 	 */
 	@Deprecated
-//	@SuppressWarnings( "unchecked" )
 	public static <R, E extends Exception> R throwNew( final Class<E> type,
 		final String messageFormat, final Object... args ) throws E
 	{

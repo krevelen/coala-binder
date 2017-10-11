@@ -17,6 +17,7 @@ import org.apfloat.Apfloat;
 import org.apfloat.ApfloatMath;
 import org.apfloat.Apint;
 
+import io.coala.exception.Thrower;
 import io.coala.util.Util;
 
 /**
@@ -28,12 +29,27 @@ import io.coala.util.Util;
 public class DecimalUtil implements Util
 {
 
-	/** */
+	/** {@link MathContext} by {@link DecimalConfig#createMathContext} */
 	public static final MathContext DEFAULT_CONTEXT = ConfigCache
 			.getOrCreate( DecimalConfig.class ).createMathContext();
 
-	/** */
+	/** 5E-1 or 0.5 */
 	public static final BigDecimal ONE_HALF = BigDecimal.valueOf( 5, 1 );
+
+	/** 1E3 or 1,000 */
+	public static final BigDecimal KILO = BigDecimal.TEN.pow( 3 );
+
+	/** 1E6 or 1,000,000 */
+	public static final BigDecimal MEGA = BigDecimal.TEN.pow( 6 );
+
+	/**
+	 * Java's {@link Math#E} Euler's number, achievable by summing to 1/18! and
+	 * scaling to 15 digits: {@link #toScale}( {@link #euler}( 18 ), 15 )
+	 */
+	public static final BigDecimal E = BigDecimal.valueOf( Math.E );
+
+	/** */
+	private static final Apfloat TWO = new Apint( 2 );
 
 	/**
 	 * {@link DecimalUtil} inaccessible singleton constructor
@@ -135,12 +151,12 @@ public class DecimalUtil implements Util
 
 	public static BigDecimal valueOf( final Apfloat value )
 	{
-		return new BigDecimal( value.toString() );
+		return new BigDecimal( value.toString(), DEFAULT_CONTEXT );
 	}
 
 	public static BigDecimal valueOf( final CharSequence value )
 	{
-		return new BigDecimal( value.toString() );
+		return new BigDecimal( value.toString(), DEFAULT_CONTEXT );
 	}
 
 	// 
@@ -174,12 +190,12 @@ public class DecimalUtil implements Util
 
 	public static BigDecimal valueOf( final BigInteger value )
 	{
-		return valueOf( value.longValueExact() );
+		return new BigDecimal( value, DEFAULT_CONTEXT );
 	}
 
 	public static BigDecimal valueOf( final long value )
 	{
-		return BigDecimal.valueOf( value );
+		return new BigDecimal( value, DEFAULT_CONTEXT );
 	}
 
 	/**
@@ -188,19 +204,27 @@ public class DecimalUtil implements Util
 	 */
 	public static BigDecimal valueOf( final Number value )
 	{
-		return Objects.requireNonNull( value ) instanceof BigDecimal
-				? (BigDecimal) value
-				: value instanceof Long || value instanceof AtomicLong
-						|| value instanceof Integer
-						|| value instanceof AtomicInteger
-						|| value instanceof Short || value instanceof Byte
-								? valueOf( value.longValue() )
-								: value instanceof Apfloat
-										? valueOf( (Apfloat) value )
-										: value instanceof BigInteger
-												? valueOf( (BigInteger) value )
-												: BigDecimal.valueOf(
-														value.doubleValue() );
+		try
+		{
+			return Objects.requireNonNull( value ) instanceof BigDecimal
+					? (BigDecimal) value
+					: value instanceof Long || value instanceof Integer
+							|| value instanceof Short || value instanceof Byte
+							|| value instanceof AtomicInteger
+							|| value instanceof AtomicLong
+									? valueOf( value.longValue() )
+									: value instanceof Apfloat
+											? valueOf( (Apfloat) value )
+											: value instanceof BigInteger
+													? valueOf(
+															(BigInteger) value )
+													: BigDecimal.valueOf( value
+															.doubleValue() );
+		} catch( final NumberFormatException nfe )
+		{
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Problem converting to BigDecimal: " + value, nfe );
+		}
 	}
 
 	/**
@@ -288,8 +312,6 @@ public class DecimalUtil implements Util
 		return value instanceof Double ? (Double) value
 				: valueOf( value ).doubleValue();
 	}
-
-	private static final Apfloat TWO = new Apint( 2 );
 
 	/**
 	 * Binary (information) entropy
@@ -502,10 +524,6 @@ public class DecimalUtil implements Util
 		return pow( (Apfloat) value, exponent );
 	}
 
-	public static final BigDecimal KILO = BigDecimal.TEN.pow( 3 );
-
-	public static final BigDecimal MEGA = BigDecimal.TEN.pow( 6 );
-
 	/**
 	 * @param posix the POSIX {@link ZonedDateTime} time stamp (seconds + nanos)
 	 * @return the rounded milliseconds
@@ -531,18 +549,23 @@ public class DecimalUtil implements Util
 
 	public static BigDecimal euler( final int factorial )
 	{
-		BigInteger i_factorial = BigInteger.ONE;
+		BigDecimal i_factorial = BigDecimal.ONE;
 		BigDecimal e = BigDecimal.ONE;
+		long time = System.currentTimeMillis(), dt;
 		for( int i = 1; i < factorial; i++ )
 		{
-			i_factorial = i_factorial.multiply( BigInteger.valueOf( i ) );
-			e = e.add( inverse(
-					BigDecimal.valueOf( i_factorial.longValueExact() ) ) );
+			if( (dt = System.currentTimeMillis() - time) >= 1000 )
+			{
+				System.err.println( "Calculating Euler, factorial " + i + " of "
+						+ factorial + ", n!-precision: "
+						+ i_factorial.precision() + ", e-scale: " + e.scale() );
+				time += dt;
+			}
+			i_factorial = i_factorial.multiply( valueOf( i ) );
+			e = e.add( inverse( i_factorial ) );
 		}
 		return e;
 	}
-
-	public static final BigDecimal E = BigDecimal.valueOf( Math.E );
 
 	public static BigDecimal exp( final Number exponent )
 	{

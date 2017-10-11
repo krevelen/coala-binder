@@ -19,6 +19,8 @@
  */
 package io.coala.time;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import javax.measure.Quantity;
 
 import io.coala.math.QuantityUtil;
@@ -40,21 +42,21 @@ public class Indicator<Q extends Quantity<Q>>
 		of( final Scheduler scheduler, final Quantity<Q> initialValue )
 	{
 		return new Indicator<Q>( scheduler,
-				TimeInvariant.of( QuantityUtil.valueOf( initialValue ) ) );
+				new AtomicReference<>( QuantityUtil.valueOf( initialValue ) ) );
 	}
 
-	private final TimeInvariant<ComparableQuantity<Q>> timeInvariant;
+	private final AtomicReference<ComparableQuantity<Q>> value;
 
 	public Indicator( final Scheduler scheduler,
-		final TimeInvariant<ComparableQuantity<Q>> timeInvariant )
+		final AtomicReference<ComparableQuantity<Q>> value )
 	{
-		super( scheduler, Range.infinite(), timeInvariant::get );
-		this.timeInvariant = timeInvariant;
+		super( scheduler, Range.infinite(), t -> value.get() );
+		this.value = value;
 	}
 
 	public void setValue( final Quantity<Q> amount )
 	{
-		this.timeInvariant.set( QuantityUtil.valueOf( amount ) );
+		this.value.set( QuantityUtil.valueOf( amount ) );
 	}
 
 	/**

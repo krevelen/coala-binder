@@ -92,7 +92,7 @@ public class InstantDao implements BindableDao<Instant, InstantDao>
 		{
 			result.posix = instant.toDate( offset );
 			result.num = QuantityUtil
-					.toBigDecimal( instant.unwrap().to( unit ) );
+					.decimalValue( instant.unwrap().to( unit ) );
 			result.str = instant.toString();
 		}
 		return result;

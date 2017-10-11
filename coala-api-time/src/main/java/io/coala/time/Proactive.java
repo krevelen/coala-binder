@@ -19,8 +19,11 @@
  */
 package io.coala.time;
 
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import javax.measure.Quantity;
@@ -32,6 +35,7 @@ import io.coala.exception.Thrower;
 import io.coala.function.Caller;
 import io.coala.function.ThrowingConsumer;
 import io.coala.function.ThrowingRunnable;
+import io.coala.math.QuantityUtil;
 import io.coala.util.Comparison;
 import io.reactivex.Observable;
 
@@ -54,6 +58,11 @@ public interface Proactive extends Timed
 	default Instant now()
 	{
 		return scheduler().now();
+	}
+
+	default FutureSelf after( final java.time.Duration delay )
+	{
+		return after( delay.toNanos(), TimeUnits.NANOS );
 	}
 
 	/**
@@ -84,7 +93,8 @@ public interface Proactive extends Timed
 	 */
 	default FutureSelf after( final Number delay, final Unit<?> unit )
 	{
-		return after( Duration.of( delay, unit ) );
+		Objects.requireNonNull( delay, "no delay?" );
+		return after( QuantityUtil.valueOf( delay, unit ) );
 	}
 
 	/**
@@ -96,7 +106,9 @@ public interface Proactive extends Timed
 	 */
 	default FutureSelf after( final Quantity<?> delay )
 	{
-		return FutureSelf.of( this, now().add( delay ) );
+		Objects.requireNonNull( delay, "no delay?" );
+		return FutureSelf.of( this,
+				QuantityUtil.signum( delay ) < 1 ? now() : now().add( delay ) );
 	}
 
 	/**
@@ -119,12 +131,40 @@ public interface Proactive extends Timed
 	}
 
 	/**
-	 * @param delay the future {@link Instant}
+	 * @param when the future {@link Instant}
 	 * @return a {@link FutureSelf} wrapper to allow chaining
 	 */
 	default FutureSelf at( final Instant when )
 	{
 		return FutureSelf.of( this, when );
+	}
+
+	/**
+	 * @param when the future {@link Instant}
+	 * @return a {@link FutureSelf} wrapper to allow chaining
+	 */
+	default FutureSelf at( final java.time.Instant when )
+	{
+		return after( java.time.Duration
+				.between( scheduler().nowDT().toInstant(), when ) );
+	}
+
+	/**
+	 * @param when the future {@link Instant}
+	 * @return a {@link FutureSelf} wrapper to allow chaining
+	 */
+	default FutureSelf at( final ZonedDateTime when )
+	{
+		return at( when.toInstant() );
+	}
+
+	/**
+	 * @param when the future {@link Instant}
+	 * @return a {@link FutureSelf} wrapper to allow chaining
+	 */
+	default FutureSelf at( final LocalDateTime when )
+	{
+		return at( when.toInstant( scheduler().offset().getOffset() ) );
 	}
 
 	/**
@@ -250,7 +290,7 @@ public interface Proactive extends Timed
 		 */
 		default Expectation call( final ThrowingConsumer<Instant, ?> call )
 		{
-			return call( Caller.ofThrowingConsumer( call, now() )::run );
+			return call( () -> call.accept( now() ) );
 		}
 
 		/**

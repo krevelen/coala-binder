@@ -145,9 +145,11 @@ public class ConfigUtil implements Util
 			for( JsonNode child : node )
 				flatten( props, child, subKey( key, Integer.toString( i++ ) ) );
 			break;
+		case NUMBER:
+			props.setProperty( key.toString(), node.decimalValue().toPlainString() ); // end recursion
+			break;
 		case BINARY:
 		case BOOLEAN:
-		case NUMBER:
 		case STRING:
 			props.setProperty( key.toString(), node.asText() ); // end recursion
 			break;

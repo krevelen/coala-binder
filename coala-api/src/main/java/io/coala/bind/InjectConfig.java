@@ -26,6 +26,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Qualifier;
@@ -146,8 +147,8 @@ public @interface InjectConfig
 		{
 			try
 			{
-				LOG.trace( "parse value for field: {}, params: {}", field,
-						params );
+//				LOG.trace( "parse value for field: {}, params: {}", field,
+//						params );
 				field.setAccessible( true );
 				field.set( encloser,
 						JsonUtil.valueOf( params, field.getType() ) );
@@ -186,9 +187,10 @@ public @interface InjectConfig
 			if( configs != null ) for( JsonNode config : configs )
 				if( config != null && !config.isNull() )
 				{
-					LOG.trace( "Inject json config for {}: {}",
-							encloser.getClass().getSimpleName(), config );
-					imports.add( ConfigUtil.flatten( config ) );
+					final Properties flattened = ConfigUtil.flatten( config );
+					LOG.trace( "Inject JSON config for {}: {}",
+							encloser.getClass().getSimpleName(), flattened );
+					imports.add( flattened );
 				}
 			if( annot != null ) for( String yamlURI : annot.yamlURI() )
 				if( yamlURI != null )
