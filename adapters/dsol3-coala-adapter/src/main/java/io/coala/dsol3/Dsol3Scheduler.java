@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -24,7 +25,6 @@ import io.coala.time.Scheduler;
 import io.coala.time.SchedulerConfig;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import nl.tudelft.simulation.dsol.DSOLModel;
 import nl.tudelft.simulation.dsol.SimRuntimeException;
@@ -50,7 +50,8 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	// TODO handle tie-reset in separate 'experimenter'
 	private final PublishSubject<Scheduler> reset = PublishSubject.create();
 
-	private final BehaviorSubject<Instant> time = BehaviorSubject.create();
+	private final PublishSubject<Instant> time = PublishSubject.create();
+	private final AtomicReference<Instant> t = new AtomicReference<>();
 
 	private final String binderId;
 
@@ -100,7 +101,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	@Override
 	public Instant now()
 	{
-		return this.time.getValue();
+		return this.t.get();
 	}
 
 	@Override
@@ -113,7 +114,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	public void fail( final Throwable e )
 	{
 		this.time.onError( e );
-		if( sim != null ) this.sim.cleanUp();
+		if( this.sim != null ) this.sim.cleanUp();
 		this.sim = null;
 	}
 
@@ -136,6 +137,11 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 		}, this::fail );
 	}
 
+	private void advanceTo(final Instant t)
+	{
+		this.time.onNext( this.t.updateAndGet(old->t ) );
+	}
+	
 	@Override
 	public void resume()
 	{
@@ -151,7 +157,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 									& System.nanoTime());
 //			Runtime.getRuntime().addShutdownHook( new Thread( this.sim::cleanUp ) );
 			final SimTimeQ startTime = SimTimeQ.zero( timeUnit() );
-			this.time.onNext( startTime.toInstant() );
+			advanceTo( startTime.toInstant() );
 			this.sim.initialize(
 					new Replication<BaseTimeQ, BigDecimal, SimTimeQ>( name,
 							startTime, BigDecimal.ZERO,
@@ -164,7 +170,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 											.currentThread().setName( name ) );
 									// publish time instants
 									sim.addListener(
-											e -> this.time.onNext(
+											e -> advanceTo(
 													((SimTimeQ) e.getContent())
 															.toInstant() ),
 											SimulatorInterface.TIME_CHANGED_EVENT );
@@ -203,7 +209,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	{
 		try
 		{
-			final SimTimeQ t = this.time.getValue().equals( when )
+			final SimTimeQ t = now().equals( when )
 					? this.sim.getSimulatorTime()
 					: new SimTimeQ( new BaseTimeQ( when, timeUnit() ) );
 			final SimEventInterface<SimTimeQ> event = this.sim

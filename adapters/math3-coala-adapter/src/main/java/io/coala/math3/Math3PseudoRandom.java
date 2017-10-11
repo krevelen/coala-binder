@@ -18,6 +18,7 @@ package io.coala.math3;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Singleton;
 
 import org.apache.commons.math3.random.ISAACRandom;
@@ -34,12 +35,13 @@ import io.coala.random.PseudoRandom;
 import io.coala.util.Instantiator;
 
 /**
- * {@link Math3PseudoRandom} decorates several commons-math3
- * {@link RandomGenerator}s as {@link PseudoRandom}
+ * {@link Math3PseudoRandom} decorates a [@code commons-math3}
+ * {@link RandomGenerator} as {@link ThreadSafe} {@link PseudoRandom}
  * 
  * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
  * @author Rick van Krevelen
  */
+@ThreadSafe
 public class Math3PseudoRandom implements PseudoRandom
 {
 
@@ -165,49 +167,49 @@ public class Math3PseudoRandom implements PseudoRandom
 	}
 
 	@Override
-	public boolean nextBoolean()
+	public synchronized boolean nextBoolean()
 	{
 		return unwrap().nextBoolean();
 	}
 
 	@Override
-	public void nextBytes( byte[] bytes )
+	public synchronized void nextBytes( byte[] bytes )
 	{
 		unwrap().nextBytes( bytes );
 	}
 
 	@Override
-	public int nextInt()
+	public synchronized int nextInt()
 	{
 		return unwrap().nextInt();
 	}
 
 	@Override
-	public int nextInt( int n )
+	public synchronized int nextInt( int n )
 	{
 		return unwrap().nextInt( n );
 	}
 
 	@Override
-	public long nextLong()
+	public synchronized long nextLong()
 	{
 		return unwrap().nextLong();
 	}
 
 	@Override
-	public float nextFloat()
+	public synchronized float nextFloat()
 	{
 		return unwrap().nextFloat();
 	}
 
 	@Override
-	public double nextDouble()
+	public synchronized double nextDouble()
 	{
 		return unwrap().nextDouble();
 	}
 
 	@Override
-	public double nextGaussian()
+	public synchronized double nextGaussian()
 	{
 		return unwrap().nextGaussian();
 	}

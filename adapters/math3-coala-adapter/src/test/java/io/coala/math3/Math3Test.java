@@ -242,25 +242,25 @@ public class Math3Test
 		{
 			return Observable.create( sub ->
 			{
-				// [X,Y,R] (Sellke, 1983)
-				final long[] y = population();
-				// rho/removal hazard rate (Sellke, 1983)
-				final double gamma = 1. / recovery();
-				// resistance/maximum accumulated "exposure to infection" (Sellke, 1983)
-				final double beta = gamma * reproduction();
-				final double beta_per_N = beta / (y[0] + y[1] + y[2]);
-				final double[] T = t();
-
-				final Long seed = seed();
-				final RandomGenerator rng = new MersenneTwister(
-						seed == null ? System.currentTimeMillis() : seed );
-
-				final ExponentialDistribution resistanceDist = new ExponentialDistribution(
-						rng, 1 );
-
-				final ExponentialDistribution recoveryDist = new ExponentialDistribution(
-						rng, gamma / beta_per_N );
-
+//				// [X,Y,R] (Sellke, 1983)
+//				final long[] y = population();
+//				// rho/removal hazard rate (Sellke, 1983)
+//				final double gamma = 1. / recovery();
+//				// resistance/maximum accumulated "exposure to infection" (Sellke, 1983)
+//				final double beta = gamma * reproduction();
+//				final double beta_per_N = beta / (y[0] + y[1] + y[2]);
+//				final double[] T = t();
+//
+//				final Long seed = seed();
+//				final RandomGenerator rng = new MersenneTwister(
+//						seed == null ? System.currentTimeMillis() : seed );
+//
+//				final ExponentialDistribution resistanceDist = new ExponentialDistribution(
+//						rng, 1 );
+//
+//				final ExponentialDistribution recoveryDist = new ExponentialDistribution(
+//						rng, gamma / beta_per_N );
+//
 //				final TreeMap<Double, Double> resistance = LongStream.range(0,y[0]).mapToDouble(i->resistanceDist.sample() ).sorted();
 //				for( int i = 0; i < y[0]; i++ )
 //

@@ -64,7 +64,7 @@ public class MapBuilder<K, V, M extends Map<K, V>>
 				Collections::unmodifiableMap, Collections::synchronizedMap );
 	}
 
-	// helper function to determine run-time type arguments at compile time
+	// help compiler determine run-time type arguments at compile time
 	public static <K extends Enum<K>, V> MapBuilder<K, V, Map<K, V>>
 		ordered( final Class<K> enumType, final Class<V> valueType )
 	{

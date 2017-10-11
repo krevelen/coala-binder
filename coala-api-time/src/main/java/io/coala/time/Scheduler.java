@@ -82,23 +82,23 @@ public interface Scheduler extends Proactive, Runnable
 
 	default Disposable atEnd( final Consumer<Instant> onLast )
 	{
-		return onEnd( onLast, e ->
+		return atEnd( onLast, e ->
 		{
 			// rather than propagating, consume errors to prevent duplication
 		} );
 	}
 
-	default Disposable onEnd( final Consumer<Instant> onLast,
+	default Disposable atEnd( final Consumer<Instant> onLast,
 		final Consumer<? super Throwable> onError )
 	{
 		return time().lastElement().subscribe( onLast::accept,
 				onError::accept );
 	}
 
-	default Disposable onEnd( final Runnable runnable,
+	default Disposable atEnd( final Runnable runnable,
 		final Consumer<? super Throwable> onError )
 	{
-		return onEnd( s -> runnable.run(), onError );
+		return atEnd( s -> runnable.run(), onError );
 	}
 
 	/** continue executing scheduled events until completion */
@@ -256,7 +256,7 @@ public interface Scheduler extends Proactive, Runnable
 		final Expectation exp0 = schedule( t0, delayedCopy::onNext );
 		if( what != null ) what.onNext( exp0 );
 		// schedule each following element upon merge with delayed previous
-		onEnd( delayedCopy::onComplete, delayedCopy::onError );
+		atEnd( delayedCopy::onComplete, delayedCopy::onError );
 		return delayedCopy.zipWith( () -> it, ( t, t_next ) ->
 		{
 			final Expectation exp = schedule( t_next, delayedCopy::onNext );
@@ -440,9 +440,9 @@ public interface Scheduler extends Proactive, Runnable
 //						.inject( config.implementation(), config );
 				final Scheduler result = binder()
 						.inject( config.implementation(), config.toJSON() );
-				
+
 				// FIXME LocalBinder#reset() does not work !!!
-				
+
 //				binder().reset( Scheduler.class, result );
 //				final Scheduler s1 = binder().inject( Scheduler.class );
 //				System.err.println( "Sched " + s1 + '@'
