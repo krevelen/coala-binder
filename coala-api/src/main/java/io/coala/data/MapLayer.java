@@ -115,9 +115,9 @@ public class MapLayer<ID> implements DataLayer
 	public <T extends Tuple> Table<T> createTable( final Class<T> tupleType )
 	{
 		@SuppressWarnings( "unchecked" )
-		final Table<T> result = new Table.Simple<>( this.properties,
+		final Table<T> result = new Table.Simple<>( this.properties::stream,
 				this.indexer::get, this.data::remove,
-				() -> this.data.keySet().stream(),
+				this.data.keySet()::stream,
 				( key, changes ) -> (T) createTuple( tupleType ).reset( key,
 						changes, k -> get( key, k ),
 						( k, v ) -> put( key, k, v ), () -> stringify( key ) ),

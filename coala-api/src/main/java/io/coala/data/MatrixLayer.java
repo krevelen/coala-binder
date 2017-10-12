@@ -263,7 +263,7 @@ public class MatrixLayer implements DataLayer
 	@Override
 	public <T extends Tuple> Table<T> createTable( final Class<T> tupleType )
 	{
-		final Table<T> result = new Table.Simple<>( this.columns,
+		final Table<T> result = new Table.Simple<>( this.columns::stream,
 				this::nextIndex, this::removeIndex,
 				this::indices, ( key, emitter ) -> isIndex( key )
 						? (T) generate( tupleType ).reset( key, emitter,

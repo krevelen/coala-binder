@@ -36,7 +36,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import io.coala.exception.Thrower;
 import io.coala.util.TypeArguments;
@@ -46,7 +45,8 @@ import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
 /**
- * {@link Table} is an {@link Iterable} {@link Map} of key-{@link Tuple} pairs
+ * {@link Table} is a state-less {@link Iterable} {@link Map}-layer over some
+ * {@link Tuple}s at some data source using basic persistence {@link Operation}s
  * 
  * @param <ID> key type, for consistency
  * @param <T>
@@ -58,39 +58,33 @@ public interface Table<T extends Table.Tuple>
 	Observable<Change> changes();
 
 	@SuppressWarnings( "rawtypes" )
-	Iterable<Class<? extends Property>> properties();
+	Stream<Class<? extends Property>> properties();
 
 	/** @return a new tuple */
 	@SuppressWarnings( "rawtypes" )
-	T insertAll( Map<Class<? extends Property>, Object> values );
+	T insertValues( Map<Class<? extends Property>, Object> values );
 
 	/** @return a new tuple */
 	@SuppressWarnings( "rawtypes" )
-	default T insertAll( final Stream<Property<?>> values )
+	default T insertValues( final Stream<Property> values )
 	{
-		return insertAll( values.collect( Collectors
-				.<Property<?>, Class<? extends Property>, Object>toMap(
+		return insertValues( values.collect( Collectors
+				.<Property, Class<? extends Property>, Object>toMap(
 						Property::getClass, Property::get ) ) );
-	}
-
-	/** @return a new tuple */
-	default T insertAll( final Iterable<Property<?>> values )
-	{
-		return insertAll( StreamSupport.stream( values.spliterator(), false ) );
 	}
 
 	/** @return a new tuple */
 	@SuppressWarnings( "rawtypes" )
 	default T insert()
 	{
-		return insertAll( Collections.emptyMap() );
+		return insertValues( Collections.emptyMap() );
 	}
 
 	/** @return a new tuple */
 	@SuppressWarnings( "rawtypes" )
 	default <P extends Property> T insert( final P property )
 	{
-		return insertAll( Collections.singletonMap( property.getClass(),
+		return insertValues( Collections.singletonMap( property.getClass(),
 				property.get() ) );
 	}
 
@@ -99,7 +93,7 @@ public interface Table<T extends Table.Tuple>
 	default T insert( final Property... properties )
 	{
 		return properties == null ? insert()
-				: insertAll( Arrays.stream( properties ) );
+				: insertValues( Arrays.stream( properties ) );
 	}
 
 	/** @param key */
@@ -113,16 +107,6 @@ public interface Table<T extends Table.Tuple>
 	 * @return a {@link Tuple}
 	 */
 	T select( Object key );
-
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
-	default Map<Class<? extends Property>, Object>
-		selectValues( final Object key )
-	{
-		final T t = select( key );
-		if( t == null ) return null;
-		return StreamSupport.stream( properties().spliterator(), false )
-				.collect( Collectors.toMap( p -> p, t::get ) );
-	}
 
 	default Observable<Change> changes( final Object keyFilter )
 	{
@@ -191,7 +175,7 @@ public interface Table<T extends Table.Tuple>
 		if( fromTuple.key().equals( toKey ) ) return fromTuple;
 		final T oldTuple = select( toKey ),
 				toTuple = oldTuple == null ? insert() : oldTuple;
-		StreamSupport.stream( properties().spliterator(), false ).forEach( p ->
+		properties().forEach( p ->
 		{
 			// swap non-null values
 			@SuppressWarnings( "unchecked" )
@@ -263,6 +247,15 @@ public interface Table<T extends Table.Tuple>
 	default Stream<T> stream()
 	{
 		return keys().map( this::select );
+	}
+
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	default Map<Class<? extends Property>, Object>
+		selectAsMap( final Object key )
+	{
+		final T t = select( key );
+		if( t == null ) return null;
+		return properties().collect( Collectors.toMap( p -> p, t::get ) );
 	}
 
 	default <K extends Property<V>, V> Stream<V>
@@ -487,6 +480,13 @@ public interface Table<T extends Table.Tuple>
 			return this.key;
 		}
 
+		@SuppressWarnings( "unchecked" )
+		public Map<Class<? extends Property>, Object>
+			asMap( final Stream<Class<? extends Property>> properties )
+		{
+			return properties.collect( Collectors.toMap( p -> p, this::get ) );
+		}
+
 		public <K extends Property<V>, V> V put( final K property )
 		{
 			@SuppressWarnings( "unchecked" )
@@ -561,7 +561,7 @@ public interface Table<T extends Table.Tuple>
 	class Simple<PK, T extends Tuple> implements Table<T>
 	{
 		@SuppressWarnings( "rawtypes" )
-		private final Iterable<Class<? extends Property>> properties;
+		private final Supplier<Stream<Class<? extends Property>>> properties;
 
 		private final Supplier<PK> adder;
 
@@ -580,7 +580,7 @@ public interface Table<T extends Table.Tuple>
 		private final Subject<Change> emitter = PublishSubject.create();
 
 		public Simple(
-			@SuppressWarnings( "rawtypes" ) final Iterable<Class<? extends Property>> properties,
+			@SuppressWarnings( "rawtypes" ) final Supplier<Stream<Class<? extends Property>>> properties,
 			final Supplier<PK> adder, final Consumer<PK> remover,
 			final Supplier<Stream<PK>> indexer,
 			final BiFunction<PK, Observer<Change>, T> retriever,
@@ -618,7 +618,7 @@ public interface Table<T extends Table.Tuple>
 		@SuppressWarnings( { "unchecked", "rawtypes" } )
 		@Override
 		public T
-			insertAll( final Map<Class<? extends Property>, Object> properties )
+			insertValues( final Map<Class<? extends Property>, Object> properties )
 		{
 			final T result = this.retriever.apply( this.adder.get(), null );
 			if( properties != null && !properties.isEmpty() )
@@ -662,9 +662,9 @@ public interface Table<T extends Table.Tuple>
 
 		@SuppressWarnings( "rawtypes" )
 		@Override
-		public Iterable<Class<? extends Property>> properties()
+		public Stream<Class<? extends Property>> properties()
 		{
-			return this.properties;
+			return this.properties.get();
 		}
 	}
 }
