@@ -22,6 +22,7 @@ package io.coala.data;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,21 +44,27 @@ import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
 
 import io.coala.data.Table.Change;
+import io.coala.data.Table.Operation;
 import io.coala.data.Table.Property;
 import io.coala.data.Table.Tuple;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.math.DecimalUtil;
+import io.coala.util.MapBuilder;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
 /**
- * {@link DataLayer} provides table-like views on some data source
+ * {@link DataLayer} provides {@link Table}-indirection on some data source with
+ * the basic persistence {@link Operation}s
+ * <p>
+ * TODO JSON tree, JDBC/JPA, HTTP/REST, ...
  * 
  * @param <ID>
  * @version $Id$
  * @author Rick van Krevelen
+ * @version beta release, still undergoing changes
  */
 public interface DataLayer
 {
@@ -70,7 +77,7 @@ public interface DataLayer
 		return CHANGES;
 	}
 
-	default Table<Tuple> createTable()
+	default Table<Tuple> defaultTable()
 	{
 		return createTable( Tuple.class );
 	}
@@ -80,48 +87,47 @@ public interface DataLayer
 		return TUPLE_SOURCES
 				.computeIfAbsent( tupleType,
 						k -> Thrower.throwNew( IllegalStateException::new,
-								() -> "No data source for: " + k ) )
+								() -> k == Tuple.class ? "Default table not set"
+										: "Data source not set for: " + k ) )
 				.createTable( tupleType );
 	}
 
-	default DataLayer withSource( final Matrix data,
-		final Map<Class<?>, List<Class<?>>> tupleProperties )
+	default DataLayer withSource( final PropertyMapper propertyMapper,
+		final Matrix data )
 	{
-		return withSource( tupleProperties,
+		return withSource( propertyMapper,
 				props -> new MatrixLayer( data, props ) );
 	}
 
-	@SuppressWarnings( "rawtypes" )
-	default DataLayer
-		withSource( final Map<Class<?>, List<Class<?>>> tupleProperties )
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	default DataLayer resetDefault( final MapFactory<Long> mapFactory,
+		final Class<? extends Property>... properties )
 	{
-		return withSource( new HashMap<>(), tupleProperties );
+		return withSource(
+				map -> map.put( Tuple.class, Arrays.asList( properties ) ),
+				mapFactory );
+	}
+
+	default DataLayer withSource( final PropertyMapper propertyMapper,
+		final MapFactory<Long> mapFactory )
+	{
+		return withSource( propertyMapper, mapFactory,
+				new AtomicLong()::getAndIncrement );
+	}
+
+	default <PK> DataLayer withSource( final PropertyMapper propertyMapper,
+		final MapFactory<PK> mapFactory, final Supplier<PK> indexer )
+	{
+		return withSource( propertyMapper,
+				props -> new MapLayer<>( mapFactory.get(), props, indexer ) );
 	}
 
 	@SuppressWarnings( "rawtypes" )
-	default DataLayer withSource(
-		final Map<Long, Map<Class<? extends Property>, Object>> data,
-		Map<Class<?>, List<Class<?>>> tupleProperties )
+	default DataLayer withSource( final PropertyMapper propertyMapper,
+		Function<List<Class<? extends Property>>, DataLayer> sourceGenerator )
 	{
-		return withSource( data, new AtomicLong()::getAndIncrement,
-				tupleProperties );
-	}
-
-	@SuppressWarnings( "rawtypes" )
-	default <ID> DataLayer withSource(
-		final Map<ID, Map<Class<? extends Property>, Object>> data,
-		final Supplier<ID> indexer,
-		Map<Class<?>, List<Class<?>>> tupleProperties )
-	{
-		return withSource( tupleProperties,
-				props -> new MapLayer<>( data, props, indexer ) );
-	}
-
-	default DataLayer withSource( Map<Class<?>, List<Class<?>>> tupleProperties,
-		Function<List<Class<?>>, DataLayer> sourceGenerator )
-	{
-		final List<?> replaced = tupleProperties.entrySet().stream()
-				.filter( e ->
+		final List<?> replaced = propertyMapper.map( MapBuilder.unordered() )
+				.build().entrySet().stream().filter( e ->
 				{
 					final DataLayer layer = sourceGenerator
 							.apply( e.getValue() );
@@ -133,12 +139,35 @@ public interface DataLayer
 		return this;
 	}
 
-	// TODO JSON tree, JDBC, ...
+	/**
+	 * {@link PropertyMapper} removes painstaking type argument definitions
+	 */
+	@FunctionalInterface
+	interface PropertyMapper
+	{
+		@SuppressWarnings( "rawtypes" )
+		MapBuilder<Class<? extends Tuple>, List<Class<? extends Property>>, ?>
+			map( MapBuilder<Class<? extends Tuple>, List<Class<? extends Property>>, ?> mapBuilder );
+	}
 
+	/**
+	 * {@link MapFactory} removes painstaking type argument definitions
+	 */
+	@FunctionalInterface
+	interface MapFactory<PK>
+	{
+		@SuppressWarnings( "rawtypes" )
+		Map<PK, Map<Class<? extends Property>, Object>> get();
+	}
+
+	/**
+	 * {@link Simple} provides the default {@link DataLayer} method
+	 * implementations
+	 */
 	@Singleton
 	class Simple implements DataLayer
 	{
-		// apply default implementations
+		// empty
 	}
 
 	/**
@@ -150,7 +179,7 @@ public interface DataLayer
 	{
 		private final Map<ID, Map<Class<? extends Property>, Object>> data;
 
-		private final List<Class<?>> properties;
+		private final List<Class<? extends Property>> properties;
 
 		private final Supplier<ID> indexer;
 
@@ -158,7 +187,8 @@ public interface DataLayer
 
 		public MapLayer(
 			final Map<ID, Map<Class<? extends Property>, Object>> data,
-			final List<Class<?>> properties, final Supplier<ID> indexer )
+			final List<Class<? extends Property>> properties,
+			final Supplier<ID> indexer )
 		{
 			this.data = data;
 			this.properties = properties;
@@ -217,20 +247,20 @@ public interface DataLayer
 			return this.changes;
 		}
 
-		@SuppressWarnings( { "unchecked" } )
 		@Override
 		public <T extends Tuple> Table<T>
 			createTable( final Class<T> tupleType )
 		{
-			final Table<T> result = new Table.Simple<>( this.indexer::get,
-					key -> this.data.remove( key ),
+			@SuppressWarnings( "unchecked" )
+			final Table<T> result = new Table.Simple<>( this.properties,
+					this.indexer::get, this.data::remove,
 					() -> this.data.keySet().stream(),
 					( key,
 						changes ) -> (T) createTuple( tupleType ).reset( key,
 								changes, k -> get( key, k ),
 								( k, v ) -> put( key, k, v ),
 								() -> stringify( key ) ),
-					this.data::toString );
+					this.data::size, this.data::toString, this.data::clear );
 			result.changes().subscribe( this.changes );
 			return result;
 		}
@@ -245,7 +275,7 @@ public interface DataLayer
 	{
 		private final Matrix data;
 
-		private final List<Class<?>> columns;
+		private final List<Class<? extends Property>> columns;
 
 		private final Map<Class<?>, Long> columnIndices; // derived
 
@@ -258,11 +288,8 @@ public interface DataLayer
 		private final Subject<Change> changes = PublishSubject.create();
 
 		public MatrixLayer( final Matrix data,
-			final List<Class<?>> columnProperties )
+			final List<Class<? extends Property>> columnProperties )
 		{
-			if( columnProperties == null || columnProperties.isEmpty() )
-				Thrower.throwNew( IllegalArgumentException::new,
-						() -> "No columns specified" );
 			this.data = data;
 			this.columns = columnProperties;
 			this.rowLabeler = i -> "row" + i;
@@ -459,8 +486,8 @@ public interface DataLayer
 		public <T extends Tuple> Table<T>
 			createTable( final Class<T> tupleType )
 		{
-			final Table<T> result = new Table.Simple<>( this::nextIndex,
-					this::removeIndex,
+			final Table<T> result = new Table.Simple<>( this.columns,
+					this::nextIndex, this::removeIndex,
 					this::indices, ( key, emitter ) -> isIndex( key )
 							? (T) generate( tupleType ).reset( key, emitter,
 									propertyType -> getValue( key,
@@ -470,7 +497,8 @@ public interface DataLayer
 									() -> toString( key ) )
 							: Thrower.throwNew( IndexOutOfBoundsException::new,
 									() -> "Uncreated or removed: " + key ),
-					this.data::stringValue );
+					() -> (int) this.rowMax.get() - this.rowRecycler.size(),
+					this.data::stringValue, this.data::clear );
 			result.changes().subscribe( this.changes );
 			return result;
 		}

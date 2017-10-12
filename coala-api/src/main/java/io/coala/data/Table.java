@@ -19,16 +19,24 @@
  */
 package io.coala.data;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import io.coala.exception.Thrower;
 import io.coala.util.TypeArguments;
@@ -38,21 +46,67 @@ import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
 /**
- * {@link Table}
+ * {@link Table} is an {@link Iterable} {@link Map} of key-{@link Tuple} pairs
  * 
  * @param <ID> key type, for consistency
  * @param <T>
  */
-public interface Table<T extends Table.Tuple> extends Iterable<T>
+public interface Table<T extends Table.Tuple>
+	extends Map<Object, T>, Iterable<T>
 {
 	/** return an {@link Observable} stream of {@link Change}s */
 	Observable<Change> changes();
 
+	@SuppressWarnings( "rawtypes" )
+	Iterable<Class<? extends Property>> properties();
+
 	/** @return a new tuple */
-	T create( Property<?>... properties );
+	@SuppressWarnings( "rawtypes" )
+	T insertAll( Map<Class<? extends Property>, Object> values );
+
+	/** @return a new tuple */
+	@SuppressWarnings( "rawtypes" )
+	default T insertAll( final Stream<Property<?>> values )
+	{
+		return insertAll( values.collect( Collectors
+				.<Property<?>, Class<? extends Property>, Object>toMap(
+						Property::getClass, Property::get ) ) );
+	}
+
+	/** @return a new tuple */
+	default T insertAll( final Iterable<Property<?>> values )
+	{
+		return insertAll( StreamSupport.stream( values.spliterator(), false ) );
+	}
+
+	/** @return a new tuple */
+	@SuppressWarnings( "rawtypes" )
+	default T insert()
+	{
+		return insertAll( Collections.emptyMap() );
+	}
+
+	/** @return a new tuple */
+	@SuppressWarnings( "rawtypes" )
+	default <P extends Property> T insert( final P property )
+	{
+		return insertAll( Collections.singletonMap( property.getClass(),
+				property.get() ) );
+	}
+
+	/** @return a new tuple */
+	@SuppressWarnings( "rawtypes" )
+	default T insert( final Property... properties )
+	{
+		return properties == null ? insert()
+				: insertAll( Arrays.stream( properties ) );
+	}
 
 	/** @param key */
-	void remove( Object key );
+	boolean delete( Object key );
+
+	/** @return a {@link Stream} of available keys */
+	Stream<?> keys();
 
 	/**
 	 * @param key
@@ -60,8 +114,151 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 	 */
 	T select( Object key );
 
-	/** @return a {@link Stream} of available keys */
-	Stream<?> keys();
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	default Map<Class<? extends Property>, Object>
+		selectValues( final Object key )
+	{
+		final T t = select( key );
+		if( t == null ) return null;
+		return StreamSupport.stream( properties().spliterator(), false )
+				.collect( Collectors.toMap( p -> p, t::get ) );
+	}
+
+	default Observable<Change> changes( final Object keyFilter )
+	{
+		return changes().filter( chg -> chg.sourceRef().equals( keyFilter ) );
+	}
+
+	default <K extends Property<?>> Observable<Change> changes(
+		final Object keyFilter, final Class<? extends Property<?>> key )
+	{
+		return changes( keyFilter )
+				.filter( chg -> chg.changedType().equals( key ) );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Observable<T> creation()
+	{
+		return changes().filter( chg -> chg.crud() == Operation.CREATE )
+				.map( chg -> (T) chg.newValue() );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Observable<T> deletion()
+	{
+		return changes().filter( chg -> chg.crud() == Operation.DELETE )
+				.map( chg -> (T) chg.oldValue() );
+	}
+
+	@Override
+	default boolean isEmpty()
+	{
+		return size() == 0;
+	}
+
+	@Override
+	default boolean containsKey( final Object key )
+	{
+		return select( key ) != null;
+	}
+
+	@Override
+	default boolean containsValue( final Object value )
+	{
+		return stream().anyMatch( v -> v.equals( value ) );
+	}
+
+	@Override
+	default T get( final Object key )
+	{
+		return select( key );
+	}
+
+	/** @deprecated use {@link Change#delete(Object)} instead */
+	@Deprecated
+	@Override
+	default T remove( final Object key )
+	{
+		final T old = select( key );
+		if( old == null ) return null;
+		delete( key );
+		return old; // FIXME return detached tuple with cloned state
+	}
+
+	@Override
+	default T put( final Object toKey, final T fromTuple )
+	{
+		if( fromTuple.key().equals( toKey ) ) return fromTuple;
+		final T oldTuple = select( toKey ),
+				toTuple = oldTuple == null ? insert() : oldTuple;
+		StreamSupport.stream( properties().spliterator(), false ).forEach( p ->
+		{
+			// swap non-null values
+			@SuppressWarnings( "unchecked" )
+			final Object oldValue = toTuple.get( p );
+			if( oldValue == null ) return;
+			@SuppressWarnings( "unchecked" )
+			final Object newValue = fromTuple.get( p );
+			toTuple.set( p, newValue );
+			fromTuple.set( p, oldValue );
+		} );
+		return fromTuple; // FIXME return detached tuple with cloned state?
+	}
+
+	@Override
+	default void putAll( final Map<? extends Object, ? extends T> m )
+	{
+		m.forEach( this::put );
+	}
+
+	/** @deprecated use {@link #keys()} instead */
+	@Deprecated
+	@Override
+	default public Set<Object> keySet()
+	{
+		return keys().collect( Collectors.toSet() );
+	}
+
+	/** @deprecated use {@link #stream()} instead */
+	@Deprecated
+	@Override
+	default Collection<T> values()
+	{
+		return stream().collect( Collectors.toList() );
+	}
+
+	/** @deprecated use {@link #forEach(BiConsumer)} instead */
+	@Deprecated
+	@Override
+	default Set<Map.Entry<Object, T>> entrySet()
+	{
+		return keys()
+				.map( key -> org.aeonbits.owner.util.Collections
+						.<Object, T>entry( key, select( key ) ) )
+				.collect( Collectors.toSet() );
+	}
+
+	@Override
+	default void
+		forEach( final BiConsumer<? super Object, ? super T> keyTupleVisitor )
+	{
+		keys().forEach( key -> keyTupleVisitor.accept( key, select( key ) ) );
+	}
+
+	default void forEachLazy(
+		final BiConsumer<? super Object, Supplier<T>> keyTupleVisitor )
+	{
+		keys().forEach(
+				key -> keyTupleVisitor.accept( key, () -> select( key ) ) );
+	}
+
+	default <K extends Property<V>, V> void forEachValue(
+		final Class<K> propertyType,
+		final BiConsumer<Object, V> keyValueVisitor )
+	{
+		keys().forEach( key -> keyValueVisitor.accept( key,
+				select( key ).get( propertyType ) ) );
+	}
 
 	default Stream<T> stream()
 	{
@@ -129,52 +326,18 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 		return select( key ) != null;
 	}
 
-	default void forEach( final BiConsumer<Object, T> keyTupleVisitor )
-	{
-		keys().forEach( key -> keyTupleVisitor.accept( key, select( key ) ) );
-	}
-
-	default <K extends Property<V>, V> void forEach(
-		final Class<K> propertyType,
-		final BiConsumer<Object, V> keyValueVisitor )
-	{
-		keys().forEach( ownerRef -> keyValueVisitor.accept( ownerRef,
-				select( ownerRef ).get( propertyType ) ) );
-	}
-
-	default Observable<Change> changes( final Object keyFilter )
-	{
-		return changes().filter( chg -> chg.sourceRef().equals( keyFilter ) );
-	}
-
-	default <K extends Property<?>> Observable<Change> changes(
-		final Object keyFilter, final Class<? extends Property<?>> key )
-	{
-		return changes( keyFilter )
-				.filter( chg -> chg.changedType().equals( key ) );
-	}
-
-	@SuppressWarnings( "unchecked" )
-	default Observable<T> creation()
-	{
-		return changes().filter( chg -> chg.crud() == CRUD.CREATE )
-				.map( chg -> (T) chg.newValue() );
-	}
-
-	@SuppressWarnings( "unchecked" )
-	default Observable<T> deletion()
-	{
-		return changes().filter( chg -> chg.crud() == CRUD.DELETE )
-				.map( chg -> (T) chg.oldValue() );
-	}
-
-	enum CRUD
+	/**
+	 * {@link Operation} enumerates four persistence operations, see <a href=
+	 * "https://www.wikiwand.com/en/Create,_read,_update_and_delete">CRUD</a>
+	 */
+	enum Operation
 	{
 		CREATE, READ, UPDATE, DELETE;
 	}
 
 	/**
-	 * {@link Property} of a {@link Tuple} in a {@link Table}
+	 * {@link Property} wraps a value, possibly stored within a {@link Tuple}
+	 * and a {@link Table}
 	 * 
 	 * @param <T> the value return type
 	 */
@@ -191,8 +354,24 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 			return (THIS) this;
 		}
 
+		@SuppressWarnings( "unchecked" )
+		default Class<T> returnType()
+		{
+			return (Class<T>) returnType( this );
+		}
+
 		Map<Class<?>, Class<?>> RETURN_TYPE_CACHE = new HashMap<>();
 
+		@SuppressWarnings( { "unchecked", "rawtypes" } )
+		static Class<?> returnType( final Property<?> property )
+		{
+			return returnType( Objects.requireNonNull( property ).getClass() );
+		}
+
+		/**
+		 * @param propertyType the concrete (run-time) type to reflect on
+		 * @return the (cached) type of the (run-time) type argument
+		 */
 		@SuppressWarnings( { "unchecked", "rawtypes" } )
 		static Class<?>
 			returnType( final Class<? extends Property> propertyType )
@@ -205,11 +384,12 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 	}
 
 	/**
-	 * {@link Change}
+	 * {@link Change} notifies modifications made to e.g. a {@link Property},
+	 * {@link Tuple}, {@link Table} or their sub-types
 	 */
 	class Change
 	{
-		private final CRUD crud;
+		private final Operation crud;
 
 		private final Object sourceRef;
 
@@ -219,7 +399,7 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 
 		private final Object newValue;
 
-		public Change( final CRUD crud, final Object sourceRef,
+		public Change( final Operation crud, final Object sourceRef,
 			final Class<?> changedType, final Object oldValue,
 			final Object newValue )
 		{
@@ -238,7 +418,7 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 					+ newValue();
 		}
 
-		public CRUD crud()
+		public Operation crud()
 		{
 			return this.crud;
 		}
@@ -264,6 +444,10 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 		}
 	}
 
+	/**
+	 * {@link Tuple} represents a {@link Property} set from a row in a
+	 * {@link Table}
+	 */
 	@SuppressWarnings( "rawtypes" )
 	class Tuple
 	{
@@ -332,7 +516,7 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 			final Object oldValue = this.getter.apply( propertyType );
 			this.setter.accept( propertyType, value );
 			if( this.emitter != null && value != oldValue )
-				this.emitter.onNext( new Change( CRUD.UPDATE, key(),
+				this.emitter.onNext( new Change( Operation.UPDATE, key(),
 						propertyType, oldValue, value ) );
 		}
 
@@ -376,34 +560,47 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 
 	class Simple<PK, T extends Tuple> implements Table<T>
 	{
-		private final Subject<Change> emitter = PublishSubject.create();
+		@SuppressWarnings( "rawtypes" )
+		private final Iterable<Class<? extends Property>> properties;
 
 		private final Supplier<PK> adder;
 
-		private final Consumer<PK> remover;
+		private final Consumer<PK> deleter;
 
-		private final Supplier<Stream<PK>> keyStreamer;
+		private final Supplier<Stream<PK>> indexer;
 
 		private final BiFunction<PK, Observer<Change>, T> retriever;
 
-		private final Supplier<String> stringifier;
+		private final IntSupplier counter;
 
-		public Simple( final Supplier<PK> adder, final Consumer<PK> remover,
-			final Supplier<Stream<PK>> keyStreamer,
+		private final Supplier<String> printer;
+
+		private final Runnable cleaner;
+
+		private final Subject<Change> emitter = PublishSubject.create();
+
+		public Simple(
+			@SuppressWarnings( "rawtypes" ) final Iterable<Class<? extends Property>> properties,
+			final Supplier<PK> adder, final Consumer<PK> remover,
+			final Supplier<Stream<PK>> indexer,
 			final BiFunction<PK, Observer<Change>, T> retriever,
-			final Supplier<String> stringifier )
+			final IntSupplier counter, final Supplier<String> printer,
+			final Runnable cleaner )
 		{
+			this.properties = properties;
 			this.adder = adder;
-			this.remover = remover;
-			this.keyStreamer = keyStreamer;
+			this.deleter = remover;
+			this.indexer = indexer;
 			this.retriever = retriever;
-			this.stringifier = stringifier;
+			this.counter = counter;
+			this.printer = printer;
+			this.cleaner = cleaner;
 		}
 
 		@Override
 		public String toString()
 		{
-			return this.stringifier.get();
+			return this.printer.get();
 		}
 
 		@Override
@@ -415,36 +612,59 @@ public interface Table<T extends Table.Tuple> extends Iterable<T>
 		@Override
 		public Stream<?> keys()
 		{
-			return this.keyStreamer.get();
+			return this.indexer.get();
 		}
 
-		@SuppressWarnings( "unchecked" )
-		public T create( final Property<?>... properties )
+		@SuppressWarnings( { "unchecked", "rawtypes" } )
+		@Override
+		public T
+			insertAll( final Map<Class<? extends Property>, Object> properties )
 		{
 			final T result = this.retriever.apply( this.adder.get(), null );
-			if( properties != null && properties.length > 0 )
-				for( Property<?> property : properties )
-				result.set( property );
+			if( properties != null && !properties.isEmpty() )
+				properties.forEach( result::set );
 //			if( !Long.valueOf( 0 ).equals( result.key() ) )
-			this.emitter.onNext( new Change( CRUD.CREATE, result.key(),
+			this.emitter.onNext( new Change( Operation.CREATE, result.key(),
 					result.getClass(), null, result ) );
 			return result;
 		}
 
 		@SuppressWarnings( "unchecked" )
+		@Override
 		public T select( final Object key )
 		{
 			return this.retriever.apply( (PK) key, this.emitter );
 		}
 
 		@SuppressWarnings( "unchecked" )
-		public void remove( final Object key )
+		@Override
+		public boolean delete( final Object key )
 		{
 			final T old = select( key );
-			this.remover.accept( (PK) key );
-			this.emitter.onNext(
-					new Change( CRUD.DELETE, key, old.getClass(), old, null ) );
+			if( old == null ) return false;
+			this.deleter.accept( (PK) key );
+			this.emitter.onNext( new Change( Operation.DELETE, key,
+					old.getClass(), old, null ) );
+			return true;
+		}
+
+		@Override
+		public int size()
+		{
+			return this.counter.getAsInt();
+		}
+
+		@Override
+		public void clear()
+		{
+			this.cleaner.run();
+		}
+
+		@SuppressWarnings( "rawtypes" )
+		@Override
+		public Iterable<Class<? extends Property>> properties()
+		{
+			return this.properties;
 		}
 	}
-
 }
