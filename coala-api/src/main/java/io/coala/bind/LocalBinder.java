@@ -76,7 +76,7 @@ public interface LocalBinder extends LocalContextual
 	 * @param args the parameter constants to use for each instantiation
 	 * @return this {@link LocalBinder} to allow chaining
 	 */
-//	@SuppressWarnings( "unchecked" )
+	@SuppressWarnings( "unchecked" )
 	default <T> LocalBinder reset( final Class<T> type,
 		final Class<? extends T> impl, final Object... args )
 	{
@@ -137,8 +137,8 @@ public interface LocalBinder extends LocalContextual
 					.equals( (LocalContextual) provider, origin ) )
 				return (LocalProvider<T>) provider;
 
-			final LocalWrapped<T> result = caching ? new LocalCaching<T>()
-					: new LocalWrapped<T>();
+			final LocalWrapped<T> result = caching ? new LocalCaching<>()
+					: new LocalWrapped<>();
 			result.origin = origin;
 			result.provider = provider;
 			return result;

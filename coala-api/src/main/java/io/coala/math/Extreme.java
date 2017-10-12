@@ -210,7 +210,7 @@ public class Extreme<T extends Comparable> implements Comparable<Extreme<T>>
 	public static <T extends Comparable<?>> Extreme<T> of( final T value,
 		final Inclusiveness inclusiveness, final BoundaryPosition position )
 	{
-		return new Extreme<T>( value, inclusiveness, position );
+		return new Extreme<>( value, inclusiveness, position );
 	}
 
 	public <R extends Comparable> Extreme<R> map( final Function<T, R> mapper )

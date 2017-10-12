@@ -406,7 +406,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	public static <T extends Comparable<?>> Range<T>
 		of( final Extreme<T> minimum, final Extreme<T> maximum )
 	{
-		return new Range<T>( minimum, maximum );
+		return new Range<>( minimum, maximum );
 	}
 
 	public static <Q extends Quantity<Q>> Range<ComparableQuantity<Q>>

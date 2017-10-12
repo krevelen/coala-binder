@@ -37,7 +37,7 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 	 */
 	public static <V> WeightedValue<V> of( final V value, final Number weight )
 	{
-		return new WeightedValue<V>( value, weight );
+		return new WeightedValue<>( value, weight );
 	}
 
 	public static <V> WeightedValue<V>
@@ -157,7 +157,7 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 	public static <V extends Comparable<? super V>> WeightedValue<V>
 		ofOrdinal( final V key, final Number value )
 	{
-		return new Ordinal<V>( key, value );
+		return new Ordinal<>( key, value );
 	}
 
 	public static <V extends Comparable<? super V>>

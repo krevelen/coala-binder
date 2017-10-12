@@ -204,7 +204,7 @@ public interface DecisionAnalyzer<A> extends Comparator<A>
 			apply( final Map<K, V> alternatives )
 		{
 			normalize();
-			final NavigableMap<K, V> result = new ConcurrentSkipListMap<K, V>(
+			final NavigableMap<K, V> result = new ConcurrentSkipListMap<>(
 					this );
 			result.putAll( alternatives );
 			return result;
@@ -215,7 +215,7 @@ public interface DecisionAnalyzer<A> extends Comparator<A>
 			apply( final Collection<E> alternatives )
 		{
 			normalize();
-			final NavigableSet<E> result = new ConcurrentSkipListSet<E>( this );
+			final NavigableSet<E> result = new ConcurrentSkipListSet<>( this );
 			result.addAll( alternatives );
 			return result;
 		}

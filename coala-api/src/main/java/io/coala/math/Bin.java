@@ -38,7 +38,7 @@ public class Bin<V extends Comparable> extends Range<V>
 
 	public static <V extends Comparable<?>> Bin<V> of( final V unit )
 	{
-		return new Bin<V>( Extreme.lower( unit, true ),
+		return new Bin<>( Extreme.lower( unit, true ),
 				Extreme.upper( unit, true ), unit );
 	}
 
@@ -65,7 +65,7 @@ public class Bin<V extends Comparable> extends Range<V>
 	{
 		final Extreme<V> minimum = Extreme.lower( minIncl, minIncl != null );
 		final Extreme<V> maximum = Extreme.upper( maxExcl, false );
-		return new Bin<V>( minimum, maximum, average );
+		return new Bin<>( minimum, maximum, average );
 	}
 
 	private V kernel;
