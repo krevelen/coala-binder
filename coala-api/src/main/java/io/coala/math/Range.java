@@ -3,6 +3,7 @@ package io.coala.math;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.util.Comparator;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.SortedMap;
@@ -463,5 +464,38 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 		final T to = upperFinite() ? upperValue() : set.last();
 		final boolean toIncl = upperInclusive() || !upperFinite();
 		return set.subSet( from, fromIncl, to, toIncl );
+	}
+
+	/**
+	 * @param lhs comparison's left-hand-side
+	 * @param rhs comparison's right-hand-side
+	 * @param c the comparison's evaluator
+	 * @return -1, 0 or 1 if lhs is respectively smaller, comparable, or bigger
+	 *         than/to rhs
+	 */
+	public static <V extends Comparable> int compare( final Range<V> lhs,
+		final Range<V> rhs, final Comparator<? super V> c )
+	{
+		return lhs.lowerFinite()
+				? (rhs.lowerFinite()
+						? (lhs.upperFinite()
+								? (rhs.upperFinite()
+										// fin;fin ? fin;fin
+										? c.compare( lhs.lowerValue(),
+												rhs.lowerValue() )
+										// fin;fin < fin;inf
+										: -1)
+								: (rhs.upperFinite()
+										// fin;inf > fin;fin
+										? 1
+										// fin;inf = fin;inf
+										: 0))
+						// fin;* > -inf;*
+						: 1)
+				: (rhs.lowerFinite()
+						// -inf;* < fin;*
+						? -1
+						// -inf;* = -inf;*
+						: 0);
 	}
 }

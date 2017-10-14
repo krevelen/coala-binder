@@ -240,17 +240,19 @@ public class MatrixLayer implements DataLayer
 
 	private String toString( final Long row )
 	{
-		return "#" + row + "{" + IntStream
-				.range( 0, (int) this.data.getColumnCount() ).mapToObj( i ->
+		return "[" + IntStream.range( 0, (int) this.data.getColumnCount() )
+				.mapToObj( i ->
 				{
 					final Object v = getValueAs(
 							Property.returnType( this.columns.get( i )
 									.asSubclass( Property.class ) ),
 							row, i );
-					return this.columns.get( i ).getSimpleName() + "="
-							+ (v == null ? "" : v);
-				} ).reduce( ( s1, s2 ) -> String.join( ", ", s1, s2 ) )
-				.orElse( "" ) + "}";
+					if( v == null ) return "";
+					final String result = v.toString();
+					return result.substring( 0,
+							Math.min( result.length(), 6 ) );
+				} ).reduce( ( s1, s2 ) -> String.join( ";", s1, s2 ) )
+				.orElse( "" ) + "]";
 	}
 
 	@Override

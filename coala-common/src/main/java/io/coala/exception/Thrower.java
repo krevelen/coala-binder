@@ -68,10 +68,10 @@ public class Thrower
 	 */
 	public static <R, E extends Exception> R throwNew(
 		final Function<String, E> exceptionFactory,
-		final Supplier<String> messageFactory ) throws E
+		final Supplier<Object> messageFactory ) throws E
 	{
 		return rethrowUnchecked(
-				(E) exceptionFactory.apply( messageFactory.get() ) );
+				(E) exceptionFactory.apply( messageFactory.get().toString() ) );
 	}
 
 	/**
