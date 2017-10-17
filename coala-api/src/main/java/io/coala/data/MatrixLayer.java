@@ -90,9 +90,10 @@ public class MatrixLayer implements DataLayer
 	private long[] coords( final Number key,
 		final Class<? extends Property> propertyType )
 	{
-		return new long[] { key.longValue(), Objects.requireNonNull(
+		final Long col = Objects.requireNonNull(
 				this.columnIndices.get( propertyType ),
-				"Column undefined for: " + propertyType.getSimpleName() ) };
+				"Column undefined for: " + propertyType.getSimpleName() );
+		return new long[] { key.longValue(), col };
 	}
 
 	private Object getValue( final Number key,
@@ -102,6 +103,9 @@ public class MatrixLayer implements DataLayer
 		return getValueAs( returnType, coords( key, propertyType ) );
 	}
 
+	// FIXME arbitrary return value, should not be necessary...
+	private static final Object OBJECT_NULL_DEFAULT = Long.valueOf( 0 );
+
 	@SuppressWarnings( "unchecked" )
 	private <T> T getValueAs( final Class<T> returnType, final long... coords )
 	{
@@ -110,18 +114,14 @@ public class MatrixLayer implements DataLayer
 		{
 			// Matrix stores ZERO or FALSE as (Number)0 or (Object)null
 			if( returnType.isEnum() ) return returnType.getEnumConstants()[0];
-			if( Boolean.class.isAssignableFrom( returnType ) )
-				return (T) Boolean.FALSE;
+			if( Object.class == returnType ) return (T) OBJECT_NULL_DEFAULT;
+			if( Boolean.class == returnType ) return (T) Boolean.FALSE;
 			if( BigDecimal.class.isAssignableFrom( returnType ) )
 				return (T) BigDecimal.ZERO;
-			if( Long.class.isAssignableFrom( returnType ) )
-				return (T) Long.valueOf( 0L );
-			if( Integer.class.isAssignableFrom( returnType ) )
-				return (T) Integer.valueOf( 0 );
-			if( Double.class.isAssignableFrom( returnType ) )
-				return (T) Double.valueOf( 0d );
-			if( Float.class.isAssignableFrom( returnType ) )
-				return (T) Float.valueOf( 0f );
+			if( Long.class == returnType ) return (T) Long.valueOf( 0L );
+			if( Integer.class == returnType ) return (T) Integer.valueOf( 0 );
+			if( Double.class == returnType ) return (T) Double.valueOf( 0d );
+			if( Float.class == returnType ) return (T) Float.valueOf( 0f );
 			if( BigInteger.class.isAssignableFrom( returnType ) )
 				return (T) BigInteger.ZERO;
 			return null;

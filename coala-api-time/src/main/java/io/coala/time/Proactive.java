@@ -22,9 +22,9 @@ package io.coala.time;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
@@ -112,6 +112,96 @@ public interface Proactive extends Timed
 	}
 
 	/**
+	 * @param delay the {@link Supplier} of {@link Quantity} delays to schedule
+	 * @return the {@link Instant}s, {@link Observable} after each delay passes
+	 */
+	default Observable<Instant>
+		infiniterate( final Callable<? extends Quantity<?>> delay )
+	{
+		return atEach( () -> (Infiniterator<Instant>) () ->
+		{
+			try
+			{
+				return now().add( delay.call() );
+			} catch( final Exception e )
+			{
+				scheduler().fail( e );
+				return Thrower.rethrowUnchecked( e );
+			}
+		} );
+	}
+
+	/**
+	 * @param delay the {@link Supplier} of {@link Quantity} delays to schedule
+	 * @return the {@link Instant}s, {@link Observable} after each delay passes
+	 */
+	default Observable<Expectation> infiniterate(
+		final Callable<? extends Quantity<?>> delay,
+		final ThrowingConsumer<Instant, ?> call )
+	{
+		return atEach( () -> (Infiniterator<Instant>) () ->
+		{
+			try
+			{
+				return now().add( delay.call() );
+			} catch( final Exception e )
+			{
+				scheduler().fail( e );
+				return Thrower.rethrowUnchecked( e );
+			}
+		}, call );
+	}
+
+//	/**
+//	 * @param when the {@link Iterable} stream of {@link Instant}s to schedule
+//	 * @return an {@link Observable} stream of {@link FutureSelf} wrappers
+//	 *         pushed to any {@link Observable#subscribe} caller upon each
+//	 *         {@link Instant}'s scheduled occurrence
+//	 */
+//	default Observable<Instant> atEach( final Iterable<Instant> when )
+//	{
+//		return scheduler().schedule( when );
+//	}
+//
+//	/**
+//	 * @param when the {@link Iterable} stream of {@link Instant}s to schedule
+//	 * @param what the {@link ThrowingConsumer} function to call each time
+//	 * @return {@link Observable} stream of {@link Expectation}s pushed to any
+//	 *         {@link Observable#subscribe} caller
+//	 */
+//	default Observable<Expectation> atEach( final Iterable<Instant> when,
+//		final ThrowingConsumer<Instant, ?> what )
+//	{
+//		return scheduler().schedule( when, what );
+//	}
+//
+//	/**
+//	 * NOTE irreproducible: iterable is buffered asynchronously/unordered
+//	 * 
+//	 * @param when the {@link Observable} stream of {@link Instant}s to schedule
+//	 * @return an {@link Observable} stream of {@link Instant}s pushed to any
+//	 *         {@link Observable#subscribe} caller upon each {@link Instant}'s
+//	 *         scheduled occurrence
+//	 */
+//	default Observable<Instant> atEach( final Observable<Instant> when )
+//	{
+//		return scheduler().schedule( when );
+//	}
+//
+//	/**
+//	 * NOTE irreproducible: iterable is buffered asynchronously/unordered
+//	 * 
+//	 * @param when the {@link Observable} stream of {@link Instant}s to schedule
+//	 * @param what the {@link ThrowingConsumer} function to call each time
+//	 * @return
+//	 */
+//	default Observable<Expectation> atEach( final Observable<Instant> when,
+//		final ThrowingConsumer<Instant, ?> what )
+//	{
+//		return scheduler().schedule( when, what );
+//	}
+
+	/**
 	 * @param runner the {@link Runnable} (method) to call when time comes
 	 * @return the {@link Expectation} for potential cancellation
 	 */
@@ -173,7 +263,6 @@ public interface Proactive extends Timed
 	 *         pushed to any {@link Observable#subscribe} caller upon each
 	 *         {@link Instant}'s scheduled occurrence
 	 */
-//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Instant... when )
 	{
 		if( when == null || when.length == 0 ) return Observable.empty();
@@ -186,7 +275,6 @@ public interface Proactive extends Timed
 	 *         pushed to any {@link Observable#subscribe} caller upon each
 	 *         {@link Instant}'s scheduled occurrence
 	 */
-//	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	default Observable<Instant> atEach( final Iterable<Instant> when )
 	{
 		return scheduler().schedule( when );
@@ -212,10 +300,10 @@ public interface Proactive extends Timed
 	 *         {@link Observable#subscribe} caller upon each {@link Instant}'s
 	 *         scheduled occurrence
 	 */
-//	@SuppressWarnings( { "unchecked", "rawtypes" } )
-	default Observable<Instant> atEach( final Observable<Instant> when )
+	default Observable<FutureSelf> atEach( final Observable<Instant> when )
 	{
-		return scheduler().schedule( when );
+		return scheduler().schedule( when )
+				.map( t -> FutureSelf.of( this, t ) );
 	}
 
 	/**
@@ -229,31 +317,6 @@ public interface Proactive extends Timed
 		final ThrowingConsumer<Instant, ?> what )
 	{
 		return scheduler().schedule( when, what );
-	}
-
-	/**
-	 * {@link Infiniterator} is a utility interface for lazy scheduling of some
-	 * infinite behavior with variable delays using a single functional lambda
-	 * expression, e.g.
-	 * 
-	 * <pre>
-	 * myProactiveObj.{@link Proactive#atEach atEach}( 
-	 *   () -> ({@link Infiniterator}) 
-	 *     () -> {@link #now()}.add( this::myVariableDelay ) 
-	 * ).subscribe( this::myInfiniteBehavior );
-	 * </pre>
-	 * 
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-	@FunctionalInterface
-	public interface Infiniterator extends Iterator<Instant>
-	{
-		@Override
-		default boolean hasNext()
-		{
-			return true; // on to infinity (i.e. when scheduler completes)
-		}
 	}
 
 	/**

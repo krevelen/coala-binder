@@ -240,13 +240,13 @@ public interface Scheduler extends Proactive, Runnable
 	 * and optionally observe each prior {@link Expectation}, e.g. to cancel one
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
-	 * @param what (optional) {@link Observer} of {@link Expectation}s for each
+	 * @param expecter (optional) {@link Observer} of {@link Expectation}s for each
 	 *            upcoming {@link Instant}
 	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
 	 *         pushed to any {@link Observable#subscribe} caller
 	 */
 	default Observable<Instant> schedule( final Iterable<Instant> when,
-		final Observer<Expectation> what )
+		final Observer<Expectation> expecter )
 	{
 		final Subject<Instant> delayedCopy = PublishSubject.create();
 		// schedule first element from iterator
@@ -254,13 +254,13 @@ public interface Scheduler extends Proactive, Runnable
 		if( !it.hasNext() ) return Observable.empty();
 		final Instant t0 = it.next();
 		final Expectation exp0 = schedule( t0, delayedCopy::onNext );
-		if( what != null ) what.onNext( exp0 );
+		if( expecter != null ) expecter.onNext( exp0 );
 		// schedule each following element upon merge with delayed previous
 		atEnd( delayedCopy::onComplete, delayedCopy::onError );
 		return delayedCopy.zipWith( () -> it, ( t, t_next ) ->
 		{
 			final Expectation exp = schedule( t_next, delayedCopy::onNext );
-			if( what != null ) what.onNext( exp );
+			if( expecter != null ) expecter.onNext( exp );
 			return t;
 		} )/* .serialize() */;
 	}

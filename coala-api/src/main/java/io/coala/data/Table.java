@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -46,6 +47,7 @@ import java.util.stream.Stream;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.math.Range;
+import io.coala.random.PseudoRandom;
 import io.coala.util.MapBuilder;
 import io.coala.util.TypeArguments;
 import io.reactivex.Observable;
@@ -72,6 +74,16 @@ public interface Table<T extends Table.Tuple>
 	/** @return a new tuple */
 	@SuppressWarnings( "rawtypes" )
 	T insertValues( Map<Class<? extends Property>, Object> values );
+
+	@SuppressWarnings( "rawtypes" )
+	default T insertValues(
+		final UnaryOperator<MapBuilder<Class<? extends Property>, Object, Map<Class<? extends Property>, Object>>> mapOp )
+	{
+		return insertValues( mapOp
+				.apply( MapBuilder
+						.<Class<? extends Property>, Object>unordered() )
+				.build() );
+	}
 
 	/** @return a new tuple */
 	@SuppressWarnings( "rawtypes" )
@@ -444,23 +456,31 @@ public interface Table<T extends Table.Tuple>
 		}
 	}
 
-	// must be comparable to reproduce random picking (same seed -> same pick)
+	/**
+	 * {@link Partition} maintains an ordered index and split points for
+	 * (combinations of) properties, which must have comparable value types to
+	 * reproduce random picking across replications (same seed -> same pick)
+	 * <p>
+	 * TODO replace tree (duplicate end/begin indices) by flat split point array
+	 * 
+	 * @param <T> the type of {@link Tuple} used in the referent {@link Table}
+	 */
 	@SuppressWarnings( "rawtypes" )
-	class Partition<T extends Tuple>
+	class Partition
 	{
 
-		private final Table<T> tuples;
+		private final Table<?> tuples;
 
 		private final PartitionNode root;
 
 		private final List<Object> keys;
 
 		@SuppressWarnings( "unchecked" )
-		public Partition( final Table<T> view )
+		public Partition( final Table<?> view )
 		{
 			this.tuples = view;
-			this.keys = Collections.synchronizedList( new ArrayList<>(
-					this.tuples.keys().collect( Collectors.toList() ) ) );
+			this.keys = Collections.synchronizedList( this.tuples.keys()
+					.collect( Collectors.toCollection( ArrayList::new ) ) );
 			this.root = new PartitionNode( null,
 					new int[]
 			{ 0, this.keys.size() } );
@@ -473,11 +493,11 @@ public interface Table<T extends Table.Tuple>
 //				} 
 //				else 
 				if( d.crud() == Operation.CREATE )
-					this.root.find( view.get( d.sourceRef() ), false, +1,
+					this.root.resize( view.get( d.sourceRef() ), false, +1,
 							bounds -> this.keys.add( bounds[1],
 									d.sourceRef() ) );
 				else if( d.crud() == Operation.DELETE ) this.root
-						.find( view.get( d.sourceRef() ), false, -1, bounds ->
+						.resize( view.get( d.sourceRef() ), false, -1, bounds ->
 						{
 							Object removed = null;
 							for( int i = bounds[0]; removed == null
@@ -507,15 +527,51 @@ public interface Table<T extends Table.Tuple>
 			return this.keys;
 		}
 
+		public List<Object> keys( final Comparable rootValueFilter )
+		{
+			return keys( Range.of( rootValueFilter ) );
+		}
+
+		public List<Object> keys( final Range<?> rootValueFilter )
+		{
+			final PartitionNode node = this.root.children
+					.floorEntry( rootValueFilter ).getValue();
+			return this.keys.subList( node.bounds[0], node.bounds[1] );
+		}
+
+		public Object removeRandomKey( final int[] bounds,
+			final PseudoRandom rng )
+		{
+			if( bounds[0] == bounds[1] ) return null;
+
+			final int i = bounds[0] + rng.nextInt( bounds[1] - bounds[0] ),
+					last = bounds[0] + bounds[1] - 1; // within bounds
+			synchronized( this.keys )
+			{
+				final Object result = this.keys.get( i );
+				// swap with last, so ArrayList#remove() needs not shift so many
+				if( i != last ) this.keys.set( i, this.keys.get( last ) );
+				this.keys.remove( this.keys.size() - 1 );
+				return result;
+			}
+		}
+
+		public <P extends Property<V>, V extends Comparable> void
+			split( final Class<P> property )
+		{
+			split( property, Comparator.naturalOrder(),
+					this.tuples.values( property ) );
+		}
+
 		@SuppressWarnings( "unchecked" )
-		public final <P extends Property<V>, V extends Comparable> void
+		public <P extends Property<V>, V extends Comparable> void
 			split( final Class<P> property, final List<V> splitValues )
 		{
 			split( property, Comparator.naturalOrder(), splitValues.stream() );
 		}
 
 		@SuppressWarnings( "unchecked" )
-		public final <P extends Property<V>, V extends Comparable> void split(
+		public <P extends Property<V>, V extends Comparable> void split(
 			final Class<P> property,
 			final Comparator<? super V> valueComparator,
 			final Stream<V> splitValues )
@@ -631,16 +687,16 @@ public interface Table<T extends Table.Tuple>
 								.flatMapToInt( n -> n.keys() );
 			}
 
-			void find( final Tuple t, final boolean match, final int delta,
-				final Consumer<int[]> matchBounds )
+			void resize( final Tuple t, final boolean match, final int delta,
+				final Consumer<int[]> matchBoundHandler )
 			{
 				if( match ) // matched on previous/smaller sibling, shift range
 				{
 					this.bounds[0] += delta;
 					this.bounds[1] += delta;
 					if( this.children != null )
-						this.children.values().forEach( child -> child.find( t,
-								true, delta, matchBounds ) );
+						this.children.values().forEach( child -> child
+								.resize( t, true, delta, matchBoundHandler ) );
 				} else if( this.children != null ) // search leaves
 				{
 					@SuppressWarnings( "unchecked" )
@@ -651,16 +707,17 @@ public interface Table<T extends Table.Tuple>
 							.entrySet() )
 					{
 						if( subMatch )
-							e.getValue().find( t, true, delta, matchBounds );
+							e.getValue().resize( t, true, delta,
+									matchBoundHandler );
 						else if( e.getKey().contains( value ) )
 						{
 							subMatch = true;
 							this.bounds[1] += delta; // extend ranges recursively
 							if( e.getValue().children != null )
-								e.getValue().find( t, false, delta,
-										matchBounds );
+								e.getValue().resize( t, false, delta,
+										matchBoundHandler );
 							else
-								matchBounds.accept( e.getValue().bounds );
+								matchBoundHandler.accept( e.getValue().bounds );
 						}
 					}
 				}
@@ -876,8 +933,24 @@ public interface Table<T extends Table.Tuple>
 		{
 			final T result = this.retriever.apply( this.adder.get(), null );
 			if( properties != null && !properties.isEmpty() )
-				properties.forEach( result::set );
-//			if( !Long.valueOf( 0 ).equals( result.key() ) )
+			{
+				boolean consistent = false;
+				while( !consistent )
+				{
+					properties.forEach( result::set );
+					consistent = true;
+					for( Map.Entry<Class<? extends Property>, ?> e : properties
+							.entrySet() )
+					{
+						final Object v2 = result.get( e.getKey() );
+						consistent &= v2 == null ? e.getValue() == null
+								: v2.equals( e.getValue() );
+					}
+//					if( !consistent )
+//						System.err.println( "repairing #" + result.key() + ": "
+//								+ result + " <- " + properties.values() );
+				}
+			}
 			this.emitter.onNext( new Change( Operation.CREATE, result.key(),
 					result.getClass(), null, result ) );
 			return result;
