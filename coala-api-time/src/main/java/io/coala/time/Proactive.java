@@ -300,10 +300,9 @@ public interface Proactive extends Timed
 	 *         {@link Observable#subscribe} caller upon each {@link Instant}'s
 	 *         scheduled occurrence
 	 */
-	default Observable<FutureSelf> atEach( final Observable<Instant> when )
+	default Observable<Instant> atEach( final Observable<Instant> when )
 	{
-		return scheduler().schedule( when )
-				.map( t -> FutureSelf.of( this, t ) );
+		return scheduler().schedule( when );
 	}
 
 	/**
