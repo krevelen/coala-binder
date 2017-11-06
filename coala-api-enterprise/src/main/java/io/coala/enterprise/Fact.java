@@ -534,12 +534,11 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 
 		}
 
-		protected Simple( final Fact.ID id, final Instant occurrence,
+		public Simple( final Fact.ID id, final Instant occurrence,
 			final Transaction<?> transaction, final FactKind kind,
 			final Instant expiration, final Fact.ID causeRef,
 			final Map<?, ?>... properties )
 		{
-
 			this.id = Objects.requireNonNull( id );
 			this.occurrence = Objects.requireNonNull( occurrence );
 			this.transaction = Objects.requireNonNull( transaction );

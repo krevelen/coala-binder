@@ -50,6 +50,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import io.coala.exception.Thrower;
+import io.coala.function.ThrowingSupplier;
 import io.coala.name.Id;
 import io.coala.util.Instantiator;
 import io.coala.util.TypeArguments;
@@ -340,7 +341,7 @@ public interface Wrapper<T>
 		}
 	}
 
-	@SuppressWarnings( { "serial", /*"rawtypes",*/ "unchecked" } )
+	@SuppressWarnings( { "serial", /* "rawtypes", */ "unchecked" } )
 	class JsonDeserializer<S, T extends Wrapper<S>> extends StdDeserializer<T>
 	{
 		private final Provider<T> wrapperProvider;
@@ -539,7 +540,7 @@ public interface Wrapper<T>
 		{
 			if( type.isInterface() )
 				return valueOf( json, DynaBean.ProxyProvider.of( type ).get() );
-			return valueOf( json, Instantiator.of( type ) );
+			return valueOf( json, type::newInstance );
 		}
 
 		/**
@@ -548,9 +549,15 @@ public interface Wrapper<T>
 		 * @return the deserialized {@link Wrapper} sub-type
 		 */
 		public static <S, T extends Wrapper<S>> T valueOf( final String json,
-			final Instantiator<T> provider )
+			final ThrowingSupplier<T, ?> provider )
 		{
-			return valueOf( json, provider.instantiate() );
+			try
+			{
+				return valueOf( json, provider.get() );
+			} catch( final Throwable e )
+			{
+				return Thrower.rethrowUnchecked( e );
+			}
 		}
 
 		/**

@@ -307,7 +307,7 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 				&& ((Range<T>) that).getUpper().equals( getUpper() );
 	}
 
-	private static final Range<?> INFINITE = of( null, false, null, false );
+	public static final Range<?> INFINITE = of( null, false, null, false );
 
 	@SuppressWarnings( "unchecked" )
 	public static <T extends Comparable<?>> Range<T> infinite()

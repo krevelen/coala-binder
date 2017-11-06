@@ -281,10 +281,13 @@ public interface Timing extends Wrapper<String>
 				} catch( final Exception e2 )
 				{
 					return Thrower.throwNew( IllegalArgumentException::new,
-							() -> "Problem parsing `" + pattern + "`, errors:"
-									+ "\n\tCron: " + e.getMessage()
-									+ "\n\tiCal: " + e1.getMessage()
-									+ "\n\t Instant: " + e2.getMessage() );
+							() -> "Problem parsing CRON rule `" + pattern
+									+ "`, nor as iCal: "
+									+ e1.getClass().getSimpleName() + "("
+									+ e1.getMessage() + ") or Instant: "
+									+ e2.getClass().getSimpleName() + "("
+									+ e2.getMessage() + ")",
+							e );
 				}
 			}
 		}

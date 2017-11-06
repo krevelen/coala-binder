@@ -128,8 +128,10 @@ public class TypeArguments
 //									parameterizedIntf
 //											.getActualTypeArguments() );
 
-//							if( !concreteDescendantType.isInterface() )
-//								return of( superClass, concreteDescendantType );
+							// TODO test this for intf vs class "sibblings"
+							if( !concreteDescendantType.isInterface()
+									&& superClass != concreteDescendantType )
+								return of( superClass, concreteDescendantType );
 
 							// Found generic super interface
 							type = parameterizedIntf;
@@ -179,10 +181,8 @@ public class TypeArguments
 				final TypeVariable<?>[] typeParameters = rawType
 						.getTypeParameters();
 				for( int i = 0; i < actualTypeArguments.length; i++ )
-				{
 					resolvedTypes.put( typeParameters[i],
 							actualTypeArguments[i] );
-				}
 
 				if( !genericAncestorType.equals( rawType ) )
 				{
@@ -211,7 +211,9 @@ public class TypeArguments
 			while( resolvedTypes.containsKey( baseType ) )
 				baseType = resolvedTypes.get( baseType );
 
-			result.add( ClassUtil.toClass( baseType ) );
+			result.add( Objects.requireNonNull( ClassUtil.toClass( baseType ),
+					"type arg unknown (yet) for " + type + " sub: "
+							+ concreteDescendantType ) );
 		}
 		// LOG.trace(String.format(
 		// "Got child %s's type arguments for %s: %s",
