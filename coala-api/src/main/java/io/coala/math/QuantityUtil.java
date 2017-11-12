@@ -249,6 +249,12 @@ public class QuantityUtil implements Util
 		return qty.to( unit ).getValue();
 	}
 
+	public static BigDecimal decimalValue( final Quantity qty, final Unit unit,
+		final int scale )
+	{
+		return DecimalUtil.toScale( toNumber( qty, unit ), scale );
+	}
+
 	public static BigDecimal decimalValue( final Quantity qty, final Unit unit )
 	{
 		return DecimalUtil.valueOf( toNumber( qty, unit ) );
@@ -475,11 +481,21 @@ public class QuantityUtil implements Util
 	/**
 	 * @see DecimalUtil#toScale(Number, int)
 	 */
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
+		toScale( final Quantity<Q> qty, final Unit unit, final int scale )
+	{
+		return valueOf( decimalValue( qty, unit, scale ), unit );
+	}
+
+	/**
+	 * @see DecimalUtil#toScale(Number, int)
+	 */
 	public static <Q extends Quantity<Q>> ComparableQuantity<Q>
 		toScale( final Quantity<Q> qty, final int scale )
 	{
-		return QuantityUtil.valueOf(
-				DecimalUtil.toScale( qty.getValue(), scale ), qty.getUnit() );
+		return valueOf( DecimalUtil.toScale( qty.getValue(), scale ),
+				qty.getUnit() );
 	}
 
 	/**

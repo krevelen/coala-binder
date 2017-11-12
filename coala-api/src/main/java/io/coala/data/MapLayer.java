@@ -102,7 +102,7 @@ public class MapLayer<ID> implements DataLayer
 								+ (values.containsKey( p ) ? values.get( p )
 										: "") )
 						.reduce( ( s1, s2 ) -> String.join( ", ", s1, s2 ) )
-						+ "}");
+						.orElse( "" ) + "}");
 	}
 
 	@Override

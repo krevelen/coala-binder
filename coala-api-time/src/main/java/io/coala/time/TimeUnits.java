@@ -62,6 +62,7 @@ public class TimeUnits extends Units
 			DAILY_LABEL, HERTZ, new RationalConverter( 1, 60 * 60 * 24 ) );
 
 	public static final String ANNUM_LABEL = "yr";
+	/** A year of 365 full days */
 	public static final Unit<Time> ANNUM = new TransformedUnit<>( ANNUM_LABEL,
 			SECOND, new RationalConverter( 60 * 60 * 24 * 365, 1 ) );
 

@@ -86,7 +86,8 @@ public interface DataLayer
 		final MapFactory<Long> mapFactory )
 	{
 		return withSource( propertyMapper, mapFactory,
-				new AtomicLong()::getAndIncrement );
+				// start at 1, Matrix transforms 0 to 'null' 
+				new AtomicLong( 1L )::getAndIncrement );
 	}
 
 	default <PK> DataLayer withSource( final PropertyMapper propertyMapper,

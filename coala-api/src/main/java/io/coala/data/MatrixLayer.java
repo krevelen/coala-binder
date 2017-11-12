@@ -47,8 +47,13 @@ import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
 /**
- * {@link MatrixLayer} provides layers upon 2D matrices: <br/>
- * { tupleKey/row -> { propertyType/column -> propertyValue } }
+ * {@link MatrixLayer} provides layers upon
+ * <a href="https://ujmp.org/">UJMP</a>'s <a href=
+ * "https://ujmp.org/0.3.0/ujmp-core/apidocs/index.html?org/ujmp/core/Matrix2D.html">2D
+ * Matrices</a>: <br/>
+ * { tupleKey/row -> { propertyType/column -> propertyValue/object } }
+ * <p>
+ * <b>NOTE</b> not thread-safe!
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -106,6 +111,8 @@ public class MatrixLayer implements DataLayer
 	// FIXME arbitrary return value, should not be necessary...
 	private static final Object OBJECT_NULL_DEFAULT = Long.valueOf( 0 );
 
+	private static final int ENUM_ORDINAL_DELTA = 1;
+
 	@SuppressWarnings( "unchecked" )
 	private <T> T getValueAs( final Class<T> returnType, final long... coords )
 	{
@@ -113,7 +120,7 @@ public class MatrixLayer implements DataLayer
 		if( value == null )
 		{
 			// Matrix stores ZERO or FALSE as (Number)0 or (Object)null
-			if( returnType.isEnum() ) return returnType.getEnumConstants()[0];
+//			if( returnType.isEnum() ) return returnType.getEnumConstants()[0];
 			if( Object.class == returnType ) return (T) OBJECT_NULL_DEFAULT;
 			if( Boolean.class == returnType ) return (T) Boolean.FALSE;
 			if( BigDecimal.class.isAssignableFrom( returnType ) )
@@ -134,8 +141,8 @@ public class MatrixLayer implements DataLayer
 		if( Number.class.isAssignableFrom( valueType ) )
 		{
 			final BigDecimal bd = DecimalUtil.valueOf( (Number) value );
-			if( returnType.isEnum() )
-				return returnType.getEnumConstants()[bd.intValue()];
+			if( returnType.isEnum() ) return returnType
+					.getEnumConstants()[bd.intValue() - ENUM_ORDINAL_DELTA];
 			if( BigDecimal.class.isAssignableFrom( returnType ) ) return (T) bd;
 			if( Long.class.isAssignableFrom( returnType ) )
 				return (T) Long.valueOf( bd.longValue() );
@@ -164,13 +171,12 @@ public class MatrixLayer implements DataLayer
 	private void setValue( final Number key,
 		final Class<? extends Property> propertyType, final Object value )
 	{
-//			synchronized( this.semaphores.get( key.intValue() ) )
-		{
-			this.data.setAsObject(
-					value != null && value.getClass().isEnum()
-							? ((Enum<?>) value).ordinal() : value,
-					coords( key, propertyType ) );
-		}
+//		synchronized( this.semaphores.get( key.intValue() ) )
+//		{
+		this.data.setAsObject( value != null && value.getClass().isEnum()
+				? ((Enum<?>) value).ordinal() + ENUM_ORDINAL_DELTA : value,
+				coords( key, propertyType ) );
+//		}
 	}
 
 	private Tuple generate( final Class<? extends Tuple> type )
@@ -240,8 +246,8 @@ public class MatrixLayer implements DataLayer
 
 	private String toString( final Long row )
 	{
-		return "[" + IntStream.range( 0, (int) this.data.getColumnCount() )
-				.mapToObj( i ->
+		return "#" + row + "[" + IntStream
+				.range( 0, (int) this.data.getColumnCount() ).mapToObj( i ->
 				{
 					final Object v = getValueAs(
 							Property.returnType( this.columns.get( i )

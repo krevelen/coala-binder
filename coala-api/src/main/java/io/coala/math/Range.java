@@ -8,6 +8,7 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.SortedMap;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +38,15 @@ import tec.uom.se.ComparableQuantity;
 @JsonSerialize( using = Range.JsonSer.class )
 public class Range<T extends Comparable> implements Comparable<Range<T>>
 {
+
+	public static final Range<?> INFINITE = of( null, false, null, false );
+
+	@SuppressWarnings( "unchecked" )
+	public static <T extends Comparable<?>> Range<T> infinite()
+	{
+		return (Range<T>) INFINITE;//of( null, null, null, null );
+	}
+
 	@SuppressWarnings( "serial" )
 	public static class JsonSer extends StdSerializer<Range>
 	{
@@ -293,26 +303,19 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	@Override
 	public int compareTo( final Range<T> that )
 	{
-		final int minComparison = this.getLower().compareTo( that.getLower() );
-		return minComparison != 0 ? minComparison
-				: this.getUpper().compareTo( that.getUpper() );
+		return compare( this, that, Comparator.naturalOrder() );
 	}
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public boolean equals( final Object that )
+	public boolean equals( final Object rhs )
 	{
-		return that != null && that instanceof Range
-				&& ((Range<T>) that).getLower().equals( getLower() )
-				&& ((Range<T>) that).getUpper().equals( getUpper() );
-	}
-
-	public static final Range<?> INFINITE = of( null, false, null, false );
-
-	@SuppressWarnings( "unchecked" )
-	public static <T extends Comparable<?>> Range<T> infinite()
-	{
-		return (Range<T>) INFINITE;//of( null, null, null, null );
+		if( rhs == null || rhs instanceof Range == false ) return false;
+		final Range<T> that = (Range<T>) rhs;
+		return that == this || ((lowerFinite()
+				? getLower().equals( that.getLower() ) : !that.lowerFinite())
+				&& (upperFinite() ? getUpper().equals( that.getUpper() )
+						: !that.upperFinite()));
 	}
 
 	/**
@@ -478,24 +481,43 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	{
 		return lhs.lowerFinite()
 				? (rhs.lowerFinite()
-						? (lhs.upperFinite()
-								? (rhs.upperFinite()
-										// fin;fin ? fin;fin
-										? c.compare( lhs.lowerValue(),
-												rhs.lowerValue() )
-										// fin;fin < fin;inf
-										: -1)
-								: (rhs.upperFinite()
-										// fin;inf > fin;fin
-										? 1
-										// fin;inf = fin;inf
-										: 0))
+						? unequalOrElse(
+								c.compare( lhs.lowerValue(), rhs.lowerValue() ),
+								() -> (lhs.upperFinite()
+										? (rhs.upperFinite()
+												// ;fin ? ;fin
+												? c.compare( lhs.upperValue(),
+														rhs.upperValue() )
+												// ;fin < ;+inf
+												: -1)
+										: (rhs.upperFinite()
+												// ;+inf > ;fin
+												? 1
+												// ;+inf = ;+inf
+												: 0)) )
 						// fin;* > -inf;*
 						: 1)
 				: (rhs.lowerFinite()
 						// -inf;* < fin;*
 						? -1
 						// -inf;* = -inf;*
-						: 0);
+						: lhs.upperFinite()
+								? (rhs.upperFinite()
+										// -inf;fin ? -inf;fin
+										? c.compare( lhs.upperValue(),
+												rhs.upperValue() )
+										// -inf;fin > -inf;+inf
+										: 1)
+								: (rhs.upperFinite()
+										// -inf;+inf < -inf;fin
+										? -1
+										// -inf;+inf = -inf;+inf
+										: 0));
+	}
+
+	static int unequalOrElse( final int comparison,
+		final IntSupplier equalResolver )
+	{
+		return comparison != 0 ? comparison : equalResolver.getAsInt();
 	}
 }

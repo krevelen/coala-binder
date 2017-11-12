@@ -19,19 +19,14 @@
  */
 package io.coala.data;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -41,13 +36,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import org.apache.logging.log4j.Logger;
 
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
-import io.coala.math.Range;
-import io.coala.random.PseudoRandom;
+import io.coala.math.DecimalUtil;
 import io.coala.util.MapBuilder;
 import io.coala.util.TypeArguments;
 import io.reactivex.Observable;
@@ -116,6 +111,9 @@ public interface Table<T extends Table.Tuple>
 		return properties == null ? insert()
 				: insertValues( Arrays.stream( properties ) );
 	}
+
+	<P extends Property<V>, V> boolean equals( T tuple, Class<P> property,
+		V value );
 
 	/** @param key */
 	boolean delete( Object key );
@@ -457,409 +455,6 @@ public interface Table<T extends Table.Tuple>
 	}
 
 	/**
-	 * {@link Partition} maintains an ordered index and split points for
-	 * (combinations of) properties, which must have comparable value types to
-	 * reproduce random picking across replications (same seed -> same pick)
-	 * <p>
-	 * TODO replace tree (duplicate end/begin indices) by flat split point array
-	 * 
-	 * @param <T> the type of {@link Tuple} used in the referent {@link Table}
-	 */
-	@SuppressWarnings( "rawtypes" )
-	class Partition
-	{
-
-		private final Table<?> tuples;
-
-		private final PartitionNode root;
-
-		private final List<Object> keys;
-
-		private final List<PartitionDim> dims = new ArrayList<>();
-
-		@SuppressWarnings( "unchecked" )
-		public Partition( final Table<?> view )
-		{
-			this.tuples = view;
-			this.keys = Collections.synchronizedList( this.tuples.keys()
-					.collect( Collectors.toCollection( ArrayList::new ) ) );
-			this.root = new PartitionNode( null,
-					new int[]
-			{ 0, this.keys.size() } );
-			view.changes().subscribe( d ->
-			{
-//				if( d.changedType() == propertyType )
-//				{
-//					remove( d.sourceRef(), (V) d.oldValue() );
-//					insert( d.sourceRef(), (V) d.newValue() );
-//				} 
-//				else 
-				if( d.crud() == Operation.CREATE )
-				{
-					final Tuple created = view.get( d.sourceRef() );
-					this.root.resize( created, false, +1, bounds -> this.keys
-							.add( bounds[1], d.sourceRef() ) );
-				} else if( d.crud() == Operation.DELETE ) this.root
-						.resize( view.get( d.sourceRef() ), false, -1, bounds ->
-						{
-							Object removed = null;
-							for( int i = bounds[0]; removed == null
-									&& i < bounds[1]; i++ )
-								if( this.keys.get( i ).equals( d.sourceRef() ) )
-									removed = this.keys.remove( i );
-							if( removed == null )
-								Thrower.throwNew( IllegalStateException::new,
-										() -> "Not indexed? " + d.sourceRef() );
-						} );
-			}, Thrower::rethrowUnchecked );
-		}
-
-		@Override
-		public String toString()
-		{
-			final int n = this.keys.size();
-			return (n < 7 ? this.keys
-					: LogUtil.messageOf( "[{}, {}, {}, ..., {}, {}, {}]",
-							IntStream.of( 0, 1, 2, n - 3, n - 2, n - 1 )
-									.mapToObj( this.keys::get ).toArray() ))
-					+ " <- " + this.root.toString( 0 );
-		}
-
-		public List<Object> keys()
-		{
-			return this.keys;
-		}
-
-		public List<Object> keys( final Comparable rootValueFilter )
-		{
-			return keys( Range.of( rootValueFilter ) );
-		}
-
-		public List<Object> keys( final Comparable... valueFilter )
-		{
-			if( valueFilter == null || valueFilter.length == 0 )
-				return this.keys;
-			if( valueFilter.length == 1 ) return keys( valueFilter[0] );
-			PartitionNode node = this.root;
-			Map.Entry<Range, PartitionNode> childEntry = null;
-			for( Comparable value : valueFilter )
-			{
-				if( node.isEmpty() ) return Collections.emptyList(); // no keys?
-				final Range valueRange = Range.of( value );
-				childEntry = node.children.floorEntry( valueRange );
-				if( childEntry.getValue().isEmpty() )
-				{
-					Map.Entry<Range, PartitionNode> prev = childEntry,
-							next = childEntry;
-					while( prev != null && prev.getValue().isEmpty() )
-						prev = node.children.lowerEntry( prev.getKey() );
-					while( next != null && next.getValue().isEmpty() )
-						next = node.children.higherEntry( next.getKey() );
-					// upper category undefined/empty, expand by 1 within bounds
-					final int start = prev == null ? node.bounds[0]
-							: prev.getValue().bounds[0],
-							end = next == null ? node.bounds[1]
-									: next.getValue().bounds[1];
-					System.err.println( node.dim.property.getSimpleName() + "="
-							+ value + ": empty, broadened to [" + start + ","
-							+ end + "] of " + Arrays.toString( node.bounds ) );
-					return this.keys.subList( start, end );
-				}
-				node = childEntry.getValue();
-			}
-			return this.keys.subList( node.bounds[0], node.bounds[1] );
-		}
-
-		public List<Object> keys( final Range<?> rootValueFilter )
-		{
-			final PartitionNode node = this.root.children
-					.floorEntry( rootValueFilter ).getValue();
-			return this.keys.subList( node.bounds[0], node.bounds[1] );
-		}
-
-		public Object removeRandomKey( final int[] bounds,
-			final PseudoRandom rng )
-		{
-			if( bounds[0] == bounds[1] ) return null;
-
-			final int i = bounds[0] + rng.nextInt( bounds[1] - bounds[0] ),
-					last = bounds[0] + bounds[1] - 1; // within bounds
-			synchronized( this.keys )
-			{
-				final Object result = this.keys.get( i );
-				// swap with last, so ArrayList#remove() needs not shift so many
-				if( i != last ) this.keys.set( i, this.keys.get( last ) );
-				this.keys.remove( this.keys.size() - 1 );
-				return result;
-			}
-		}
-
-		public <P extends Property<V>, V extends Comparable> void
-			groupBy( final Class<P> property )
-		{
-			groupBy( property, Comparator.naturalOrder(),
-					this.tuples.values( property ) );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public <P extends Property<V>, V extends Comparable> void
-			groupBy( final Class<P> property, final List<V> splitValues )
-		{
-			groupBy( property, Comparator.naturalOrder(),
-					splitValues.stream() );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public <P extends Property<V>, V extends Comparable> void groupBy(
-			final Class<P> property,
-			final Comparator<? super V> valueComparator,
-			final Stream<V> splitValues )
-		{
-
-			// TODO cache comparator?
-			final List<V> points = splitValues.distinct()
-					.sorted( valueComparator )
-					.collect( Collectors.toCollection( ArrayList::new ) );
-
-			final Comparator<Object> keyComparator = ( k1,
-				k2 ) -> valueComparator.compare(
-						this.tuples.get( k1 ).get( property ),
-						this.tuples.get( k2 ).get( property ) );
-
-			final PartitionDim dim = new PartitionDim( property,
-					valueComparator, points );
-			this.dims.add( dim );
-
-			this.root.split( property, parent ->
-			{
-				parent.dim = dim;
-//				if( points.isEmpty() || this.keys.isEmpty()
-//						|| parent.isEmpty() )
-//					return MapBuilder.<Range, PartitionNode>sorted()
-//							.put( Range.infinite(),
-//									new PartitionNode( parent, parent.bounds ) )
-//							.build();
-
-				// sort node key-partition using given property value comparator
-				final List<Object> partition = this.keys
-						.subList( parent.bounds[0], parent.bounds[1] );
-				Collections.sort( partition, keyComparator );
-				if( points.isEmpty() && !partition.isEmpty() )
-				{
-					// split points empty? add all distinct values as split point
-					points.add( this.tuples.get( partition.get( 0 ) )
-							.get( property ) );
-					for( int i = 1; i != partition.size(); i++ )
-					{
-						final V v = this.tuples.get( partition.get( i ) )
-								.get( property );
-						if( keyComparator.compare(
-								points.get( points.size() - 1 ), v ) != 0 )
-							points.add( v );
-					}
-				}
-				final int[] splitKeys = new int[points.size()];
-				for( int i = 0, k = 0; i != points.size(); i++ )
-				{
-					while( k < partition.size()
-							&& valueComparator.compare( this.tuples
-									.get( partition.get( k ) ).get( property ),
-									points.get( i ) ) < 0 )
-						k++; // value[key] > point[i] : put key in next range
-					splitKeys[i] = parent.bounds[0] + k;
-				}
-
-				// map split points to respective sub-partition bounds
-				final NavigableMap<Range, PartitionNode> result = IntStream
-						.range( 0, points.size() + 1 ).collect(
-								// create new partition's range-bounds mapping
-								() -> new TreeMap<>( ( r1, r2 ) -> Range
-										.compare( r1, r2, valueComparator ) ),
-								// add split node (value range and key bounds)
-								( map, i ) -> map.put( toRange( points, i ),
-										new PartitionNode( parent,
-												toBounds( parent.bounds,
-														splitKeys, i ) ) ),
-								// map-reduce parallelism
-								NavigableMap::putAll );
-				return result;
-			} );
-		}
-
-		private static int[] toBounds( final int[] bounds,
-			final int[] splitKeys, final int i )
-		{
-			return new int[] { i == 0 ? bounds[0] : splitKeys[i - 1],
-					i == splitKeys.length ? bounds[1] : splitKeys[i] };
-		}
-
-		private static <V extends Comparable> Range<V>
-			toRange( final List<V> points, final int i )
-		{
-			return Range.of( i == 0 ? null : (V) points.get( i - 1 ), i != 0,
-					i == points.size() ? null : (V) points.get( i ), false );
-		}
-
-		static class PartitionDim<V extends Comparable>
-		{
-
-			final Class<? extends Property<V>> property;
-
-			final Comparator<? super V> comparator;
-
-			final List<V> splitPoints;
-
-			final Map<V, Range<V>> groups = new HashMap<>();
-
-			PartitionDim( final Class<? extends Property<V>> property,
-				final Comparator<? super V> comparator,
-				final List<V> splitPoints )
-			{
-				this.property = property;
-				this.comparator = comparator;
-				this.splitPoints = splitPoints;
-			}
-
-		}
-
-		/**
-		 * {@link PartitionNode} helper class to build the partition-tree
-		 */
-		static class PartitionNode
-		{
-			final PartitionNode parent; // null == root
-			PartitionDim dim; // null == leaf
-			final int[] bounds;
-			NavigableMap<Range, PartitionNode> children; // null = leaf
-
-			PartitionNode( final PartitionNode parent, final int[] indexRange )
-			{
-				this.parent = parent;
-				this.bounds = Arrays.copyOf( indexRange, indexRange.length );
-			}
-
-			boolean isEmpty()
-			{
-				return this.bounds[0] == this.bounds[1];
-			}
-
-			String toString( final int level )
-			{
-				return (level == 0 ? "" : " ")
-						+ (this.children == null ? "[" + (isEmpty() ? ""
-								: this.bounds[0]
-										+ (this.bounds[1] - this.bounds[0] == 1
-												? ""
-												: ".." + (this.bounds[1] - 1)))
-								+ "]"
-								: "{ " + this.dim.property.getSimpleName()
-										+ this.children.entrySet().stream()
-												.map( e -> (e.getKey()
-														.lowerFinite()
-																? " <"
-																		+ e.getKey()
-																				.lowerValue()
-																		+ "=<"
-																: "")
-														+ e.getValue().toString(
-																level + 1 ) )
-												.reduce( String::concat )
-												.orElse( "" )
-										+ " }");
-			}
-
-			IntStream keys()
-			{
-				return this.children == null
-						? IntStream.range( this.bounds[0], this.bounds[1] )
-						: this.children.values().stream()
-								.flatMapToInt( n -> n.keys() );
-			}
-
-			void resize( final Tuple t, final boolean match, final int delta,
-				final Consumer<int[]> matchBoundHandler )
-			{
-				if( match ) // matched on previous/smaller sibling, shift range
-				{
-					this.bounds[0] += delta;
-					this.bounds[1] += delta;
-					if( this.children != null )
-						this.children.values().forEach( child -> child
-								.resize( t, true, delta, matchBoundHandler ) );
-				} else if( this.children != null )// search leaves
-				{
-					@SuppressWarnings( "unchecked" )
-					final Comparable value = (Comparable) t
-							.get( this.dim.property );
-					if( this.dim.splitPoints.isEmpty() )
-					{
-						// no split points: each value is a bin
-						final Range bin = Range.of( value );
-						final PartitionNode child = this.children
-								.computeIfAbsent( bin, k ->
-								{
-									final Range prev = this.children
-											.lowerKey( bin );
-									final int start = prev == null
-											? this.bounds[0]
-											: this.children
-													.get( prev ).bounds[1];
-									if( prev == Range.infinite() )
-										this.children.remove( prev );
-									System.err.println( "Inserting bin " + bin
-											+ "->" + start + ", prev: " + prev
-											+ "->"
-											+ Arrays.toString( this.children
-													.get( prev ).bounds ) );
-									return new PartitionNode( this,
-											new int[]
-							{ start, start } );
-								} );
-						this.bounds[1] += delta; // extend ranges recursively
-						if( child.children != null )
-							child.resize( t, false, delta, matchBoundHandler );
-						else
-							matchBoundHandler.accept( child.bounds );
-					} else
-					{
-						// find appropriate range between split points
-						boolean subMatch = false;
-						for( Map.Entry<Range, PartitionNode> e : this.children
-								.entrySet() )
-						{
-							if( subMatch )
-								e.getValue().resize( t, true, delta,
-										matchBoundHandler );
-							else if( e.getKey().contains( value ) )
-							{
-								subMatch = true;
-								this.bounds[1] += delta; // extend ranges recursively
-								if( e.getValue().children != null )
-									e.getValue().resize( t, false, delta,
-											matchBoundHandler );
-								else
-									matchBoundHandler
-											.accept( e.getValue().bounds );
-							}
-						}
-					}
-				}
-			}
-
-			@SuppressWarnings( "unchecked" )
-			void split( final Class<? extends Property> property,
-				final Function<PartitionNode, NavigableMap<Range, PartitionNode>> splitter )
-			{
-				if( this.children == null ) // reached leaf node
-					this.children = splitter.apply( this );
-				else // visit leaf nodes
-					this.children.values().forEach(
-							child -> child.split( property, splitter ) );
-			}
-		}
-	}
-
-	/**
 	 * {@link Tuple} represents a {@link Property} set from a row in a
 	 * {@link Table}
 	 */
@@ -877,13 +472,12 @@ public interface Table<T extends Table.Tuple>
 
 		private Supplier<String> stringifier;
 
-		public Tuple reset( final Object ownerRef,
-			final Observer<Change> emitter,
+		public Tuple reset( final Object key, final Observer<Change> emitter,
 			final Function<Class<? extends Property>, Object> getter,
 			final BiConsumer<Class<? extends Property>, Object> setter,
 			final Supplier<String> stringifier )
 		{
-			this.key = ownerRef;
+			this.key = key;
 			this.emitter = emitter;
 			this.getter = getter;
 			this.setter = setter;
@@ -929,6 +523,22 @@ public interface Table<T extends Table.Tuple>
 		public void set( final Property<?> property )
 		{
 			set( property.getClass(), property.get() );
+		}
+
+		public <K extends Property<V>, V> V updateAndGet(
+			final Class<K> propertyType, final UnaryOperator<V> op )
+		{
+			final V updated = op.apply( this.get( propertyType ) );
+			set( propertyType, updated );
+			return updated;
+		}
+
+		public <K extends Property<V>, V> V getAndUpdate(
+			final Class<K> propertyType, final UnaryOperator<V> op )
+		{
+			final V prev = this.get( propertyType );
+			set( propertyType, op.apply( prev ) );
+			return prev;
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -985,10 +595,29 @@ public interface Table<T extends Table.Tuple>
 			return match( property.getClass(), property.get() );
 		}
 
+		public <P extends Property<W>, W> Tuple
+			override( final Class<P> property, final W override )
+		{
+			return new Tuple()
+			{
+				@Override
+				@SuppressWarnings( "unchecked" )
+				public <K extends Property<V>, V> V get( final Class<K> key )
+				{
+					return key == property ? (V) override : super.get( key );
+				}
+			}.reset( this.key, this.emitter, this.getter, this.setter,
+					this.stringifier );
+		}
+
 	}
 
 	class Simple<PK, T extends Tuple> implements Table<T>
 	{
+		/** */
+		private static final Logger LOG = LogUtil
+				.getLogger( Table.Simple.class );
+
 		@SuppressWarnings( "rawtypes" )
 		private final Supplier<Stream<Class<? extends Property>>> properties;
 
@@ -1044,6 +673,8 @@ public interface Table<T extends Table.Tuple>
 			return this.indexer.get();
 		}
 
+		private static final int MAX_REPAIRS = 5;
+
 		@SuppressWarnings( { "unchecked", "rawtypes" } )
 		@Override
 		public T insertValues(
@@ -1052,22 +683,28 @@ public interface Table<T extends Table.Tuple>
 			final T result = this.retriever.apply( this.adder.get(), null );
 			if( properties != null && !properties.isEmpty() )
 			{
-				boolean consistent = false;
-				while( !consistent )
+				int tries = 0;
+				repair: while( tries++ < MAX_REPAIRS )
 				{
 					properties.forEach( result::set );
-					consistent = true;
-					for( Map.Entry<Class<? extends Property>, ?> e : properties
+
+					for( Map.Entry<Class<? extends Property>, Object> e : properties
 							.entrySet() )
-					{
-						final Object v2 = result.get( e.getKey() );
-						consistent &= v2 == null ? e.getValue() == null
-								: v2.equals( e.getValue() );
-					}
-//					if( !consistent )
-//						System.err.println( "repairing #" + result.key() + ": "
-//								+ result + " <- " + properties.values() );
+						if( !equals( result, e.getKey(), e.getValue() ) )
+						{
+							LOG.warn(
+									"Inconsistent, try: {}: {}<-{}, stored: {}",
+									tries, e.getKey().getSimpleName(),
+									e.getValue(), result.get( e.getKey() ) );
+							continue repair;
+						}
+
+					break repair;
 				}
+				if( tries == MAX_REPAIRS )
+					Thrower.throwNew( IllegalStateException::new,
+							() -> "Failed to repair #" + result.key() + ": "
+									+ result + " <- " + properties.values() );
 			}
 			this.emitter.onNext( new Change( Operation.CREATE, result.key(),
 					result.getClass(), null, result ) );
@@ -1111,6 +748,16 @@ public interface Table<T extends Table.Tuple>
 		public Stream<Class<? extends Property>> properties()
 		{
 			return this.properties.get();
+		}
+
+		@Override
+		public <P extends io.coala.data.Table.Property<V>, V> boolean
+			equals( final T tuple, final Class<P> property, final V value )
+		{
+			final V v = tuple.get( property );
+			return v == null ? (value == null || (value instanceof Number
+					&& DecimalUtil.valueOf( (Number) value ).signum() == 0))
+					: v.equals( value );
 		}
 	}
 }

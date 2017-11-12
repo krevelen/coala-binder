@@ -50,6 +50,9 @@ import io.reactivex.Observable;
  * {@link PseudoRandom} generates a stream of pseudo-random numbers, with an API
  * similar to the standard Java {@link Random} generator (which is wrapped
  * accordingly in the {@link JavaRandom} decorator)
+ * <p>
+ * <b>NOTE</b> Implement a thread-safe/multi-threaded default, e.g. <a href=
+ * "https://gist.github.com/dhadka/f5a3adc36894cc6aebcaf3dc1bbcef9f">ThreadLocal</a>
  * 
  * @version $Id$
  * @author Rick van Krevelen
