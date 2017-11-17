@@ -186,8 +186,8 @@ public class EnterpriseTest
 					() -> LOG.trace( "sales/rq completed?" ) );
 			LOG.trace( "initialized business rule(s)" );
 
-			atEach( Timing.valueOf( "0 0 0 30 * ? *" ).offset( offset )
-					.iterate(), t ->
+			atEach( Timing.valueOf( "0 0 0 30 * ? *" ).iterate( scheduler() ),
+					t ->
 					{
 						// spawn initial transactions from/with self
 						final Sale rq = proc.initiate( sales.id(), t.add( 1 ) )
@@ -274,7 +274,7 @@ public class EnterpriseTest
 				.createBinder(
 //						Collections.singletonMap( EntityManagerFactory.class, 
 //								ConfigFactory.create( MyJPAConfig.class ).createEMF() )
-						);
+		);
 
 		LOG.info( "Starting EO test, config: {}", binder );
 		final Scheduler scheduler = binder.inject( World.class ).scheduler();

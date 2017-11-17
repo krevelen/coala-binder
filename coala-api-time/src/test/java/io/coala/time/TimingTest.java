@@ -80,7 +80,8 @@ public class TimingTest
 				.parse( "2017-08-22T11:55:12+02:00" );
 		LOG.info( "Testing Timing pattern: {} with offset: {}", pattern,
 				offset );
-		for( Instant t : Timing.of( pattern ).offset( offset ).iterate() )
+		for( Instant t : Timing.of( pattern ).offset( offset )
+				.iterate( Instant.ZERO ) )
 			LOG.trace( "pattern includes t: {} == {}",
 					t.prettify( TimeUnits.DAYS, 2 ), t.prettify( offset ) );
 		LOG.info( "test: done" );

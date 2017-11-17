@@ -378,7 +378,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	{
 		try
 		{
-			return atEach( when.offset( scheduler().offset() ).iterate() );
+			return atEach( when.iterate( scheduler() ) );
 		} catch( final ParseException e )
 		{
 			return Observable.error( e );
@@ -390,8 +390,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	{
 		try
 		{
-			return atEach( when.offset( scheduler().offset() ).iterate(),
-					what );
+			return atEach( when.iterate( scheduler() ), what );
 		} catch( final ParseException e )
 		{
 			return Observable.error( e );

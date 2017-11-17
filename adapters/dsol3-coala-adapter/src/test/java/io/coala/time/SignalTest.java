@@ -29,7 +29,8 @@ public class SignalTest
 			final Signal<BigDecimal> signal = Signal.Simple.of( s,
 					BigDecimal.valueOf( 1.2 ) );
 			signal.atEach(
-					Timing.of( "0 0 13 * * ?" ).offset( offset ).iterate(), t ->
+					Timing.of( "0 0 13 * * ?" ).iterate( signal.scheduler() ),
+					t ->
 					{
 						LOG.trace( "t={}, dt={} (1pm), const={}",
 								t.prettify( TimeUnits.DAYS, 2 ),

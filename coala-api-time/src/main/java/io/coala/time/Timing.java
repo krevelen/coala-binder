@@ -38,6 +38,7 @@ import com.google.ical.compat.jodatime.DateTimeIteratorFactory;
 
 import io.coala.exception.Thrower;
 import io.coala.json.Wrapper;
+import io.coala.math.QuantityUtil;
 import io.reactivex.Observable;
 import tec.uom.se.format.FormatBehavior;
 import tec.uom.se.format.QuantityFormat;
@@ -67,23 +68,52 @@ public interface Timing extends Wrapper<String>
 {
 
 	/**
+	 * @param offsetSim the absolute virtual start time {@link Instant}
 	 * @param offsetUtc the absolute epoch {@link java.time.Instant} start date
 	 * @param max the maximum number of iterations to generate (if possible)
 	 * @return an {@link Iterable} stream of {@link Instant}s following this
 	 *         {@link Timing} pattern calculated from given offset
 	 * @throws Exception for instance a {@link ParseException}
 	 */
-	Iterable<Instant> iterate( java.time.Instant offsetUtc, Long max )
-		throws ParseException;
+	Iterable<Instant> iterate( Instant offsetSim, java.time.Instant offsetUtc,
+		Long max ) throws ParseException;
+
+	/**
+	 * @param offsetSim the absolute virtual start time {@link Instant}
+	 * @param offsetUtc the absolute epoch {@link java.time.Instant} start date
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
+	default Iterable<Instant> iterate( Instant offsetSim,
+		java.time.Instant offsetUtc ) throws ParseException
+	{
+		return iterate( offsetSim, offsetUtc, max() );
+	}
+
+	/**
+	 * @param offsetSim the absolute virtual start time {@link Instant}
+	 * @param offsetUtc the absolute epoch {@link java.time.Instant} start date
+	 * @return an {@link Iterable} stream of {@link Instant}s following this
+	 *         {@link Timing} pattern calculated from given offset
+	 * @throws Exception for instance a {@link ParseException}
+	 */
+	default Iterable<Instant> iterate( Scheduler scheduler )
+		throws ParseException
+	{
+		final Instant now = scheduler.now();
+		return iterate( now, now.toJava8( scheduler.offset() ).toInstant(),
+				max() );
+	}
 
 	/**
 	 * @return an {@link Iterable} stream of {@link Instant}s calculated from
 	 *         {@link #unwrap() pattern}, {@link #offset()} and {@link #max()}
 	 * @throws ParseException
 	 */
-	default Iterable<Instant> iterate() throws ParseException
+	default Iterable<Instant> iterate( Instant offsetSim ) throws ParseException
 	{
-		return iterate( offset(), max() );
+		return iterate( offsetSim, offset(), max() );
 	}
 
 	/**
@@ -164,10 +194,11 @@ public interface Timing extends Wrapper<String>
 			}
 
 			@Override
-			public Iterable<Instant> iterate( final java.time.Instant offset,
-				final Long max ) throws ParseException
+			public Iterable<Instant> iterate( final Instant offsetSim,
+				final java.time.Instant offset, final Long max )
+				throws ParseException
 			{
-				return self.iterate( offset, max );
+				return self.iterate( offsetSim, offset, max );
 			}
 		};
 	}
@@ -211,10 +242,11 @@ public interface Timing extends Wrapper<String>
 			}
 
 			@Override
-			public Iterable<Instant> iterate( final java.time.Instant offset,
-				final Long max ) throws ParseException
+			public Iterable<Instant> iterate( final Instant offsetSim,
+				final java.time.Instant offset, final Long max )
+				throws ParseException
 			{
-				return self.iterate( offset, max );
+				return self.iterate( offsetSim, offset, max );
 			}
 		};
 	}
@@ -231,11 +263,11 @@ public interface Timing extends Wrapper<String>
 	 * @return an {@link Observable} stream of {@link Instant}s calculated from
 	 *         {@link #unwrap() pattern}, {@link #offset()} and {@link #max()}
 	 */
-	default Observable<Instant> stream()
+	default Observable<Instant> stream( final Instant offsetSim )
 	{
 		try
 		{
-			return Observable.fromIterable( iterate() );
+			return Observable.fromIterable( iterate( offsetSim ) );
 		} catch( final Throwable e )
 		{
 			return Observable.error( e );
@@ -315,10 +347,10 @@ public interface Timing extends Wrapper<String>
 	{
 
 		@Override
-		public Iterable<Instant> iterate( final java.time.Instant offsetNanos,
-			final Long max )
+		public Iterable<Instant> iterate( final Instant offsetSim,
+			final java.time.Instant offsetUtc, final Long max )
 		{
-			final Date offsetMillis = Date.from( offsetNanos );
+			final Date offsetMillis = Date.from( offsetUtc );
 			final CronTrigger trigger = TriggerBuilder.newTrigger()
 					.startAt( offsetMillis )
 					.withSchedule(
@@ -331,7 +363,7 @@ public interface Timing extends Wrapper<String>
 				{
 					private Date current = trigger.getFireTimeAfter(
 							// just 1ms earlier, to make offset inclusive
-							new Date( offsetNanos.toEpochMilli() - 1 ) );
+							new Date( offsetUtc.toEpochMilli() - 1 ) );
 					private long count = 0;
 
 					@Override
@@ -347,9 +379,9 @@ public interface Timing extends Wrapper<String>
 						final Date next = this.current;
 						this.current = trigger.getFireTimeAfter( this.current );
 						this.count++;
-						return Instant.of(
+						return offsetSim.add( QuantityUtil.valueOf(
 								next.getTime() - offsetMillis.getTime(),
-								TimeUnits.MILLIS );
+								TimeUnits.MILLIS ) );
 					}
 				};
 			};
@@ -383,8 +415,9 @@ public interface Timing extends Wrapper<String>
 				.compile( "TZID=([^:;]*)" );
 
 		@Override
-		public Iterable<Instant> iterate( final java.time.Instant offset,
-			final Long max ) throws ParseException
+		public Iterable<Instant> iterate( final Instant offsetSim,
+			final java.time.Instant offsetUtc, final Long max )
+			throws ParseException
 		{
 			return () ->
 			{
@@ -415,10 +448,10 @@ public interface Timing extends Wrapper<String>
 						public Instant next()
 						{
 							this.count++;
-							return Instant.of(
+							return offsetSim.add( QuantityUtil.valueOf(
 									this.it.next().getMillis()
-											- offset.toEpochMilli(),
-									TimeUnits.MILLIS );
+											- offsetUtc.toEpochMilli(),
+									TimeUnits.MILLIS ) );
 						}
 					};
 				} catch( final Exception e )
@@ -439,8 +472,8 @@ public interface Timing extends Wrapper<String>
 	class InstantTiming extends Simple<String> implements Timing
 	{
 		@Override
-		public Iterable<Instant> iterate( final java.time.Instant offset,
-			final Long max )
+		public Iterable<Instant> iterate( final Instant offsetSim,
+			final java.time.Instant offsetUtc, final Long max )
 		{
 			final long absMax = max == null ? 1L : Math.max( max, 1L );
 			return () ->
@@ -459,7 +492,10 @@ public interface Timing extends Wrapper<String>
 					public Instant next()
 					{
 						this.count++;
-						return Instant.valueOf( unwrap() );
+						return offsetSim.add( QuantityUtil.valueOf(
+								Instant.valueOf( unwrap() ).toMillisLong()
+										- offsetUtc.toEpochMilli(),
+								TimeUnits.MILLIS ) );
 					}
 				};
 			};
