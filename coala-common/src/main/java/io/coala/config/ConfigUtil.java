@@ -146,7 +146,8 @@ public class ConfigUtil implements Util
 				flatten( props, child, subKey( key, Integer.toString( i++ ) ) );
 			break;
 		case NUMBER:
-			props.setProperty( key.toString(), node.decimalValue().toPlainString() ); // end recursion
+			props.setProperty( key.toString(),
+					node.decimalValue().toPlainString() ); // end recursion
 			break;
 		case BINARY:
 		case BOOLEAN:
@@ -486,5 +487,38 @@ public class ConfigUtil implements Util
 		final Properties result = new Properties();
 		result.load( FileUtil.toInputStream( path ) );
 		return result;
+	}
+
+	/**
+	 * convert command-line arguments to map
+	 * 
+	 * @param args
+	 * @return
+	 */
+	public static String cliConfBase( final Map<String, String> argMap,
+		final String cfgKey, final String cfgDir, final String cfgFile )
+	{
+		return argMap.computeIfAbsent( cfgKey,
+				k -> System.getProperty( cfgKey, cfgDir ) ) + cfgFile;
+	}
+
+	/**
+	 * convert command-line arguments to map
+	 * 
+	 * @param args
+	 * @return
+	 */
+	public static Map<String, String> cliArgMap( final String... args )
+	{
+		return args == null ? Collections.emptyMap()
+				: Arrays.stream( args ).filter( arg -> arg.contains( "=" ) )
+						.map( arg -> arg.split( "=" ) )
+						.filter( arr -> arr.length > 1 )
+						.collect( Collectors.toMap( arr -> arr[0], arr ->
+						{
+							final String[] value = new String[arr.length - 1];
+							System.arraycopy( arr, 1, value, 0, value.length );
+							return String.join( "=", value );
+						} ) );
 	}
 }

@@ -271,15 +271,19 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 
 	public boolean overlaps( final Range<T> that )
 	{
-		return intersect( that ) != null;
+		if( that.upperFinite() && this.gt( that.upperValue() ) ) return false;
+		if( that.lowerFinite() && this.lt( that.lowerValue() ) ) return false;
+		if( this.upperFinite() && that.gt( this.upperValue() ) ) return false;
+		if( this.lowerFinite() && that.lt( this.lowerValue() ) ) return false;
+		return true;
 	}
 
 	public Range<T> intersect( final Range<T> that )
 	{
-		if( this.gt( that.upperValue() ) || this.lt( that.lowerValue() ) )
-			return null;
-		return of( Compare.max( this.getLower(), that.getLower() ),
-				Compare.min( this.getUpper(), that.getUpper() ) );
+		if( this.overlaps( that ) )
+			return of( Compare.max( this.getLower(), that.getLower() ),
+					Compare.min( this.getUpper(), that.getUpper() ) );
+		return null;
 	}
 
 	public <R extends Comparable<? super R>> Range<R>
@@ -295,9 +299,13 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	@Override
 	public String toString()
 	{
-		return new StringBuilder().append( lowerInclusive() ? '[' : '<' )
-				.append( getLower() ).append( "; " ).append( getUpper() )
-				.append( upperInclusive() ? ']' : '>' ).toString();
+		final StringBuilder sb = new StringBuilder()
+				.append( lowerInclusive() ? '[' : '<' ).append( getLower() );
+		if( !lowerFinite() || !upperFinite()
+				|| !lowerValue().equals( upperValue() ) )
+			sb.append( "; " ).append( getUpper() );
+		sb.append( upperInclusive() ? ']' : '>' );
+		return sb.toString();
 	}
 
 	@Override
@@ -479,40 +487,38 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	public static <V extends Comparable> int compare( final Range<V> lhs,
 		final Range<V> rhs, final Comparator<? super V> c )
 	{
-		return lhs.lowerFinite()
-				? (rhs.lowerFinite()
-						? unequalOrElse(
-								c.compare( lhs.lowerValue(), rhs.lowerValue() ),
-								() -> (lhs.upperFinite()
-										? (rhs.upperFinite()
-												// ;fin ? ;fin
-												? c.compare( lhs.upperValue(),
-														rhs.upperValue() )
-												// ;fin < ;+inf
-												: -1)
-										: (rhs.upperFinite()
-												// ;+inf > ;fin
-												? 1
-												// ;+inf = ;+inf
-												: 0)) )
+		return lhs.overlaps( rhs ) ? 0 // any overlap compares equal (symmetry)
+				: lhs.lowerFinite() ? (rhs.lowerFinite() ? unequalOrElse(
+						c.compare( lhs.lowerValue(), rhs.lowerValue() ),
+						() -> (lhs.upperFinite() ? (rhs.upperFinite()
+								// ;fin ? ;fin
+								? c.compare( lhs.upperValue(),
+										rhs.upperValue() )
+								// ;fin < ;+inf
+								: -1)
+								: (rhs.upperFinite()
+										// ;+inf > ;fin
+										? 1
+										// ;+inf = ;+inf
+										: 0)) )
 						// fin;* > -inf;*
 						: 1)
-				: (rhs.lowerFinite()
-						// -inf;* < fin;*
-						? -1
-						// -inf;* = -inf;*
-						: lhs.upperFinite()
-								? (rhs.upperFinite()
-										// -inf;fin ? -inf;fin
-										? c.compare( lhs.upperValue(),
-												rhs.upperValue() )
-										// -inf;fin > -inf;+inf
-										: 1)
-								: (rhs.upperFinite()
-										// -inf;+inf < -inf;fin
-										? -1
-										// -inf;+inf = -inf;+inf
-										: 0));
+						: (rhs.lowerFinite()
+								// -inf;* < fin;*
+								? -1
+								// -inf;* = -inf;*
+								: lhs.upperFinite()
+										? (rhs.upperFinite()
+												// -inf;fin ? -inf;fin
+												? c.compare( lhs.upperValue(),
+														rhs.upperValue() )
+												// -inf;fin > -inf;+inf
+												: 1)
+										: (rhs.upperFinite()
+												// -inf;+inf < -inf;fin
+												? -1
+												// -inf;+inf = -inf;+inf
+												: 0));
 	}
 
 	static int unequalOrElse( final int comparison,

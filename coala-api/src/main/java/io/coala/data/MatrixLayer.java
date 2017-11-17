@@ -269,7 +269,7 @@ public class MatrixLayer implements DataLayer
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public <T extends Tuple> Table<T> createTable( final Class<T> tupleType )
+	public <T extends Tuple> Table<T> getTable( final Class<T> tupleType )
 	{
 		final Table<T> result = new Table.Simple<>( this.columns::stream,
 				this::nextIndex, this::removeIndex,

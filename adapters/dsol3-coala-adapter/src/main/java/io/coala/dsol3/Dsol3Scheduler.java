@@ -114,7 +114,11 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	public void fail( final Throwable e )
 	{
 		this.time.onError( e );
-		if( this.sim != null ) this.sim.cleanUp();
+		if( this.sim != null )
+		{
+			if( this.sim.isRunning() ) this.sim.stop( false );
+			this.sim.cleanUp();
+		}
 		this.sim = null;
 	}
 
@@ -137,11 +141,11 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 		}, this::fail );
 	}
 
-	private void advanceTo(final Instant t)
+	private void advanceTo( final Instant t )
 	{
-		this.time.onNext( this.t.updateAndGet(old->t ) );
+		this.time.onNext( this.t.updateAndGet( old -> t ) );
 	}
-	
+
 	@Override
 	public void resume()
 	{
@@ -175,12 +179,11 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 															.toInstant() ),
 											SimulatorInterface.TIME_CHANGED_EVENT );
 									// complete time instants at replication end
-									sim.addListener(
-											e -> {
-												this.time.onComplete();
-												this.sim.cleanUp();
-											},
-											SimulatorInterface.END_OF_REPLICATION_EVENT );
+									sim.addListener( e ->
+									{
+										this.time.onComplete();
+										this.sim.cleanUp();
+									}, SimulatorInterface.END_OF_REPLICATION_EVENT );
 									// scheduler ready, publish
 									this.reset.onNext( this );
 								} catch( final Throwable e )
@@ -207,6 +210,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	public Expectation schedule( final Instant when,
 		final ThrowingConsumer<Instant, ?> what )
 	{
+		if( this.sim == null ) return null; // sim/model failed
 		try
 		{
 			final SimTimeQ t = now().equals( when )
@@ -238,7 +242,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 				@Override
 				public void dispose()
 				{
-					if( !this.cancelled )
+					if( !this.cancelled && sim != null )
 						this.cancelled = sim.cancelEvent( event );
 				}
 			} );
@@ -286,6 +290,12 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 			// assume time delta is in baseUnit amounts
 			return new BaseTimeQ( this.decimalCache.add( dt ),
 					this.instant.unit(), this.instant.unit() );
+		}
+
+		@Override
+		public String toString()
+		{
+			return "t=" + this.decimalCache + "(" + this.instant + ")";
 		}
 
 		@SuppressWarnings( "unchecked" )

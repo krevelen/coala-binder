@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -38,6 +39,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Logger;
 
+import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.math.Range;
 import io.coala.util.MapBuilder;
@@ -48,7 +50,8 @@ import io.coala.util.MapBuilder;
  * to reproduce random picking across replications (same seed -> same pick)
  * <p>
  * TODO replace tree (duplicate end/begin indices) by flat split point array?
- * will reduce tree-search speed across siblings unless Arrays.binarysearch fits
+ * may reduce tree-search speed across (unbalanced) siblings compared to
+ * Arrays#binarysearch
  * 
  * @param <T> the type of {@link Tuple} used in the referent {@link Table}
  */
@@ -60,40 +63,56 @@ public class IndexPartition
 
 	private final Table<?> source;
 
-	private final IndexPartition.PartitionNode root;
+	final IndexPartition.PartitionNode root;
 
 	private final List<Object> keys;
 
 	private final List<PartitionDim> dims = new ArrayList<>();
 
-	private boolean validation = false; // TODO from config
+	private boolean validation = true; // TODO from config
 
 	@SuppressWarnings( "unchecked" )
-	public IndexPartition( final Table<?> view )
+	public IndexPartition( final Table<?> view,
+		final Consumer<Throwable> onError )
 	{
-		this.source = view;
+		this.source = Objects.requireNonNull( view, "No table?" );
 		this.keys = Collections.synchronizedList( this.source.keys()
 				.collect( Collectors.toCollection( ArrayList::new ) ) );
-		this.root = new PartitionNode( null,
+		this.root = new PartitionNode( null, null,
 				new int[]
 		{ 0, this.keys.size() } );
-		view.changes().subscribe( this::onChange );
+		view.changes().subscribe( ch ->
+		{
+			try
+			{
+				onChange( ch );
+			} catch( final Throwable e )
+			{
+				// internal error
+				onError.accept( e );
+			}
+		}
+		// upstream error
+				, onError::accept );
 	}
 
 	@Override
 	public String toString()
 	{
-		final int n = this.keys.size();
-		return (n < 8 ? this.keys
-				: LogUtil.messageOf( "[{}, {}, {}, ..., {}, {}, {}]",
-						IntStream.of( 0, 1, 2, n - 3, n - 2, n - 1 )
-								.mapToObj( this.keys::get ).toArray() ))
-				+ " <- " + this.root;
-	}
-
-	public List<Object> keys()
-	{
-		return this.keys;
+		try
+		{
+			final int n = this.keys.size();
+			return (n < 8 ? this.keys
+					: LogUtil.messageOf( "[{}, {}, {}, ..., {}, {}, {}]",
+							IntStream.of( 0, 1, 2, n - 3, n - 2, n - 1 )
+									.mapToObj( this.keys::get ).toArray() ))
+					+ " <-" + Arrays.toString( this.root.bounds ) + "- "
+					+ this.root;
+		} catch( final Exception e )
+		{
+			e.printStackTrace();
+			return "";
+		}
 	}
 
 	public <P extends Table.Property<V>, V extends Comparable> void
@@ -104,9 +123,9 @@ public class IndexPartition
 
 	@SuppressWarnings( "unchecked" )
 	public <P extends Table.Property<V>, V extends Comparable> void
-		groupBy( final Class<P> property, final List<V> splitValues )
+		groupBy( final Class<P> property, final Stream<V> splitValues )
 	{
-		groupBy( property, Comparator.naturalOrder(), splitValues.stream() );
+		groupBy( property, Comparator.naturalOrder(), splitValues );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -125,20 +144,53 @@ public class IndexPartition
 				this::nodeSplitter );
 	}
 
+	public PartitionNode node( final Comparable... valueFilter )
+	{
+		if( this.root.isEmpty() || valueFilter == null
+				|| valueFilter.length == 0 )
+			return this.root;
+		PartitionNode result = this.root;
+		for( Comparable value : valueFilter )
+		{
+			if( result.dim == null )
+				return Thrower.throwNew( IllegalArgumentException::new,
+						() -> "Too many filters: "
+								+ Arrays.toString( valueFilter ) );
+			final Range range = value instanceof Range ? (Range) value
+					: Range.of( value );
+			if( result.dim.splitPoints.isEmpty() ) // walk (value) branch
+				result = result.valueNode( range, this::nodeSplitter );
+			else if( result.children != null ) // walk (sub-range) branch
+				result = result.children.floorEntry( range ).getValue();
+			else
+				return Thrower.throwNew( IllegalStateException::new,
+						() -> "Unexpected, no match for filters: "
+								+ Arrays.toString( valueFilter ) );
+		}
+		return result;
+	}
+
+	public List<Object> keys( final Comparable... valueFilter )
+	{
+		if( this.root.isEmpty() ) return Collections.emptyList();
+		final PartitionNode leaf = node( valueFilter );
+		return Collections.unmodifiableList( partitioner( leaf.bounds ) );
+	}
+
 	@SuppressWarnings( "unchecked" )
-	public <P extends Table.Property<P>, V extends Comparable<?>> List<Object>
-		nearestKeys( final BiPredicate<Class<P>, Range<V>> deviationConfirmer,
-			final Comparable... valueFilter )
+	public List<Object> nearestKeys(
+		final BiPredicate<Class<?>, Range<?>> deviationConfirmer,
+		final Comparable... valueFilter )
 	{
 		if( this.root.isEmpty() ) return Collections.emptyList();
 		if( valueFilter == null || valueFilter.length == 0 )
 			return Collections.unmodifiableList( this.keys );
-		if( valueFilter.length == 1 )
-		{
-			final IndexPartition.PartitionNode node = this.root.children
-					.floorEntry( Range.of( valueFilter[0] ) ).getValue();
-			return Collections.unmodifiableList( partitioner( node.bounds ) );
-		}
+//		if( valueFilter.length == 1 )
+//		{
+//			final IndexPartition.PartitionNode node = this.root.children
+//					.floorEntry( Range.of( valueFilter[0] ) ).getValue();
+//			return Collections.unmodifiableList( partitioner( node.bounds ) );
+//		}
 
 		IndexPartition.PartitionNode node = this.root;
 		Map.Entry<Range, IndexPartition.PartitionNode> childEntry = null;
@@ -168,7 +220,8 @@ public class IndexPartition
 			} else
 				valueRange = Range.of( value );
 
-			childEntry = node.children.floorEntry( valueRange );
+			childEntry = node.children == null ? null
+					: node.children.floorEntry( valueRange );
 			if( childEntry == null || childEntry.getValue().isEmpty() )
 			{
 				Map.Entry<Range, IndexPartition.PartitionNode> prev = childEntry,
@@ -178,12 +231,9 @@ public class IndexPartition
 				while( next != null && next.getValue().isEmpty() )
 					next = node.children.higherEntry( next.getKey() );
 				// upper category undefined/empty, expand by 1 within bounds
-				if( !deviationConfirmer.test( node.dim.property,
-						(Range<V>) Range.of(
-								prev == null ? null
-										: prev.getKey().lowerValue(),
-								next == null ? null
-										: next.getKey().upperValue() ) ) )
+				if( !deviationConfirmer.test( node.dim.property, Range.of(
+						prev == null ? null : prev.getKey().lowerValue(),
+						next == null ? null : next.getKey().upperValue() ) ) )
 					return Collections.emptyList();
 				final int start = prev == null ? node.bounds[0]
 						: prev.getValue().bounds[0],
@@ -193,9 +243,10 @@ public class IndexPartition
 			}
 			node = childEntry.getValue();
 		}
-		return partitioner( node.bounds );
+		return Collections.unmodifiableList( partitioner( node.bounds ) );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	void onChange( final Table.Change d )
 	{
 		switch( d.crud() )
@@ -270,11 +321,33 @@ public class IndexPartition
 			final int i = partitioner( leaf.bounds ).indexOf( t.key() );
 			if( i < 0 )
 			{
-				LOG.error( LogUtil.messageOf(
-						"Remove failed, {} not in #{}, index: #{}", t.key(),
-						leaf.bounds, this.keys.indexOf( t.key() ) ),
-						new IllegalStateException() );
-				return false;
+				final int j = this.keys.indexOf( t.key() );
+				if( j < 0 )
+				{
+					LOG.warn( "Already removed from index: {}", t );
+					return false;
+				}
+				final List<Range> leafRanges = new ArrayList<>(),
+						indexRanges = new ArrayList<>(),
+						values = new ArrayList<>();
+				for( PartitionNode node = leaf; node.parent != null; node = node.parent )
+					leafRanges.add( 0, node.parentRange );
+				for( PartitionNode node = this.root; node != null; node = node.children == null
+						? null
+						: node.children.values().stream().filter(
+								n -> n.bounds[0] <= j && j < n.bounds[1] )
+								.findAny().orElse( null ) )
+					if( node.parentRange != null )
+					{
+						indexRanges.add( node.parentRange );
+						values.add( Range.of( (Comparable<?>) t
+								.get( node.parent.dim.property ) ) );
+					}
+				return Thrower.throwNew( IllegalStateException::new,
+						() -> "Remove failed, " + t.key() + " " + values
+								+ " not in #" + Arrays.toString( leaf.bounds )
+								+ " " + leafRanges + ", but found at #" + j
+								+ " " + indexRanges + ": " + this.root );
 			}
 //			LOG.trace( "removing #{}={} in #{}", i + leaf.bounds[0], key,
 //					leaf.bounds );
@@ -301,6 +374,7 @@ public class IndexPartition
 	{
 		node.split( dim, this::partitioner, key -> evaluator( dim, key ),
 				this::nodeSplitter );
+		if( this.validation ) validate();
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -343,17 +417,19 @@ public class IndexPartition
 	/**
 	 * {@link PartitionNode} helper class to build the partition-tree
 	 */
-	static class PartitionNode
+	public static class PartitionNode
 	{
-		final IndexPartition.PartitionNode parent; // null == root
-		IndexPartition.PartitionDim dim; // null == leaf
+		final PartitionNode parent; // null == root
+		final Range parentRange; // null == root
+		PartitionDim dim; // null == leaf
 		final int[] bounds;
-		NavigableMap<Range, IndexPartition.PartitionNode> children; // null = leaf
+		NavigableMap<Range, PartitionNode> children; // null = leaf
 
-		PartitionNode( final IndexPartition.PartitionNode parent,
+		PartitionNode( final PartitionNode parent, final Range parentRange,
 			final int[] indexRange )
 		{
 			this.parent = parent;
+			this.parentRange = parentRange;
 			this.bounds = Arrays.copyOf( indexRange, indexRange.length );
 		}
 
@@ -408,17 +484,17 @@ public class IndexPartition
 			return result;
 		}
 
-		boolean isEmpty()
+		public boolean isEmpty()
 		{
 			return this.bounds[0] == this.bounds[1];
 		}
 
-		IntStream keys()
+		public IntStream indexKeyStream()
 		{
 			return this.children == null
 					? IntStream.range( this.bounds[0], this.bounds[1] )
 					: this.children.values().stream()
-							.flatMapToInt( n -> n.keys() );
+							.flatMapToInt( n -> n.indexKeyStream() );
 		}
 
 		void resize( final Table.Tuple t, final int delta,
@@ -426,7 +502,9 @@ public class IndexPartition
 			final Consumer<PartitionNode> nodeSplitter )
 		{
 			@SuppressWarnings( "unchecked" )
-			final Comparable value = (Comparable) t.get( this.dim.property );
+			final Comparable value = (Comparable) Objects.requireNonNull(
+					t.get( this.dim.property ), t.getClass().getSimpleName()
+							+ " missing " + this.dim.property.getSimpleName() );
 			if( this.dim.splitPoints.isEmpty() )
 			{
 				// no split points: each value is a bin
@@ -437,47 +515,58 @@ public class IndexPartition
 					// resize children/sub-ranges recursively
 					child.resize( t, delta, leafHandler, nodeSplitter );
 					this.bounds[1] += delta; // resize parent after child
-					shift( this.children.tailMap( bin, false ), delta );
+					shift( this.children.tailMap( bin, false ).values()
+							.stream(), delta );
 				} else if( leafHandler.test( bin, child ) )
 				{
 					// resize matching leaf child (end recursion)
 					child.bounds[1] += delta; // resize leaf
 					this.bounds[1] += delta; // resize parent after child
-					shift( this.children.tailMap( bin, false ), delta );
+					shift( this.children.tailMap( bin, false ).values()
+							.stream(), delta );
 				} else
 					LOG.warn( "leaf not adjusted: " + bin );
 			} else
 			{
 				// find appropriate range between provided split points
 				final Range bin = Range.of( value );
-				final Map.Entry<Range, IndexPartition.PartitionNode> entry = this.children
+				final Map.Entry<Range, PartitionNode> entry = this.children
 						.floorEntry( bin );
-				this.bounds[1] += delta; // resize parent
-				if( entry.getValue().children != null )
+				if( entry == null ) Thrower.throwNew(
+						IllegalStateException::new,
+						() -> "Unexpected, " + this.dim.property.getSimpleName()
+								+ ": " + value + " -> " + bin + " < "
+								+ this.children.firstKey() );
+				final PartitionNode child = entry.getValue();
+				if( child.children != null )
 				{
 					// resize children/sub-ranges recursively
-					entry.getValue().resize( t, delta, leafHandler,
-							nodeSplitter );
-					shift( this.children.tailMap( bin, false ), delta );
-				} else if( leafHandler.test( entry.getKey(),
-						entry.getValue() ) )
+					child.resize( t, delta, leafHandler, nodeSplitter );
+					this.bounds[1] += delta; // resize parent
+					shift( this.children.tailMap( bin, false ).values().stream()
+//							.filter( n -> n != child )
+							, delta );
+				} else if( leafHandler.test( entry.getKey(), child ) )
 				{
 					// resize matching leaf child (end recursion)
-					entry.getValue().bounds[1] += delta;
-					shift( this.children.tailMap( bin, false ), delta );
+					child.bounds[1] += delta;
+					this.bounds[1] += delta; // resize parent
+					shift( this.children.tailMap( bin, false ).values().stream()
+//							.filter( n -> n != child )
+							, delta );
 				}
 			}
 
 		}
 
-		void shift( final NavigableMap<Range, PartitionNode> map,
-			final int delta )
+		void shift( final Stream<PartitionNode> nodes, final int delta )
 		{
-			map.values().forEach( node ->
+			nodes.forEach( node ->
 			{
 				node.bounds[0] += delta;
 				node.bounds[1] += delta;
-				if( node.children != null ) shift( node.children, delta );
+				if( node.children != null )
+					shift( node.children.values().stream(), delta );
 			} );
 		}
 
@@ -574,11 +663,19 @@ public class IndexPartition
 							() -> new TreeMap<>( ( r1, r2 ) -> Range
 									.compare( r1, r2, dim.comparator ) ),
 							// add split node (value range and key bounds)
-							( map, i ) -> map.put(
-									toRange( dim.splitPoints, i ),
-									new PartitionNode( this,
-											toBounds( this.bounds, splitKeys,
-													i ) ) ),
+							( map, i ) ->
+							{
+								final Range range = toRange( dim.splitPoints,
+										i );
+//								LOG.trace( "Splitting {} -> {}", i, range );
+								final PartitionNode next = new PartitionNode(
+										this, range,
+										toBounds( this.bounds, splitKeys, i ) ),
+										old = map.put( range, next );
+								if( old != null ) LOG.warn(
+										"Not mutually exclusive? {} vs {}",
+										old.parentRange, next.parentRange );
+							},
 							// map-reduce parallelism
 							NavigableMap::putAll );
 		}
@@ -592,8 +689,9 @@ public class IndexPartition
 				final Range prev = this.children.lowerKey( bin );
 				final int i = prev == null ? this.bounds[0]
 						: this.children.get( prev ).bounds[1];
-				final int[] range = { i, i }; // initialize empty 
-				final PartitionNode result = new PartitionNode( this, range );
+				final int[] bounds = { i, i }; // initialize empty 
+				final PartitionNode result = new PartitionNode( this, bin,
+						bounds );
 				nodeSplitter.accept( result );
 				return result;
 			} );

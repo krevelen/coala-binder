@@ -240,8 +240,8 @@ public interface Scheduler extends Proactive, Runnable
 	 * and optionally observe each prior {@link Expectation}, e.g. to cancel one
 	 * 
 	 * @param when the {@link Iterable} stream of {@link Instant}s
-	 * @param expecter (optional) {@link Observer} of {@link Expectation}s for each
-	 *            upcoming {@link Instant}
+	 * @param expecter (optional) {@link Observer} of {@link Expectation}s for
+	 *            each upcoming {@link Instant}
 	 * @return transformed {@link Observable} stream of delayed {@link Instant}s
 	 *         pushed to any {@link Observable#subscribe} caller
 	 */
@@ -254,6 +254,7 @@ public interface Scheduler extends Proactive, Runnable
 		if( !it.hasNext() ) return Observable.empty();
 		final Instant t0 = it.next();
 		final Expectation exp0 = schedule( t0, delayedCopy::onNext );
+		if( exp0 == null ) expecter.onComplete(); // sim/model failed
 		if( expecter != null ) expecter.onNext( exp0 );
 		// schedule each following element upon merge with delayed previous
 		atEnd( delayedCopy::onComplete, delayedCopy::onError );

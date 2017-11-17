@@ -162,7 +162,7 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	 */
 	default <E> E nextElement( final List<E> elements )
 	{
-		if( Objects.requireNonNull( elements, "Missing values" ).isEmpty() )
+		if( elements.isEmpty() )
 			return Thrower.throwNew( IllegalArgumentException::new,
 					() -> "Nothing to pick from" );
 		if( elements.size() == 1 ) return elements.get( 0 );

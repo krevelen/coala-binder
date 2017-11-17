@@ -24,7 +24,7 @@ import java.math.BigDecimal;
 import io.coala.math.QuantityUtil;
 
 /**
- * {@link Timed}
+ * {@link Timed} objects tell time, i.e. current {@link Instant} {@link #now()} 
  * 
  * @version $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
  * @author Rick van Krevelen

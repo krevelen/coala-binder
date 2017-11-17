@@ -30,7 +30,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -55,9 +55,6 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.coala.exception.Thrower;
-import io.coala.function.Caller;
-import io.coala.function.ThrowingBiFunction;
-import io.coala.function.ThrowingFunction;
 import io.coala.json.DynaBean.BeanProxy;
 import io.coala.log.LogUtil;
 import io.reactivex.Observable;
@@ -605,14 +602,11 @@ public class JsonUtil
 	 */
 	@SuppressWarnings( "unchecked" )
 	public static <V> TreeMap<String, V> toMap( final ObjectNode json,
-		final ThrowingBiFunction<String, JsonNode, V, ?> mapper )
+		final BiFunction<String, JsonNode, V> mapper )
 	{
-		return (TreeMap<String, V>) streamAsync( json )
-				.toMap( Entry::getKey,
-						prop -> Caller.ofThrowingBiFunction( mapper,
-								prop.getKey(), prop.getValue() ).call(),
-						TreeMap::new )
-				.blockingGet();
+		return (TreeMap<String, V>) streamAsync( json ).toMap( Entry::getKey,
+				prop -> mapper.apply( prop.getKey(), prop.getValue() ),
+				TreeMap::new ).blockingGet();
 	}
 
 	/**
@@ -635,15 +629,18 @@ public class JsonUtil
 	 * @param mapper (key,node)->v | e
 	 * @return a {@link TreeMap}
 	 */
-	@SuppressWarnings( "unchecked" )
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	public static <V> TreeMap<String, V> toMap( final ArrayNode json,
-		final Function<Integer, String> keyMapper,
-		final ThrowingFunction<JsonNode, V, ?> mapper )
+		final IntFunction<String> keyMapper,
+		final BiFunction<String, JsonNode, V> mapper )
 	{
-		return (TreeMap<String, V>) Observable.range( 0, json.size() )
-				.toMap( i -> keyMapper.apply( i ), i -> Caller
-						.ofThrowingFunction( mapper, json.get( i ) ).call(),
-						TreeMap::new )
-				.blockingGet();
+		return IntStream.range( 0, json.size() )
+				// FIXME use a Map collector compatible with ObjIntConsumer
+				.mapToObj( i -> i )
+				.collect( Collectors.<Integer, String, V, TreeMap>toMap(
+						i -> keyMapper.apply( i ),
+						i -> mapper.apply( keyMapper.apply( i ),
+								json.get( i ) ),
+						( v1, v2 ) -> v1, TreeMap::new ) );
 	}
 }

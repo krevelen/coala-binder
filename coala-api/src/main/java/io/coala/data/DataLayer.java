@@ -48,6 +48,8 @@ import io.reactivex.Observable;
  * the basic persistence {@link Operation}s
  * <p>
  * TODO JSON/XML, JDBC/JPA, HTTP/REST, ...
+ * <p>
+ * TODO n-by-m relations a/symmetric, e.g. matrix sparsely linking sources n, m
  * 
  * @param <ID>
  * @version $Id$
@@ -58,17 +60,17 @@ public interface DataLayer
 {
 	default Observable<Change> changes()
 	{
-		return Observable.fromIterable( Default.LAYER_CHANGES )
+		return Observable.fromIterable( StaticCaching.LAYER_CHANGES )
 				.flatMap( rx -> rx );
 	}
 
-	default <T extends Tuple> Table<T> createTable( final Class<T> tupleType )
+	default <T extends Tuple> Table<T> getTable( final Class<T> tupleType )
 	{
-		return Default.SOURCE_CACHE
+		return StaticCaching.SOURCE_CACHE
 				.computeIfAbsent( tupleType,
 						k -> Thrower.throwNew( IllegalStateException::new,
 								() -> "Data source not set for: " + k ) )
-				.createTable( tupleType );
+				.getTable( tupleType );
 	}
 
 	default DataLayer withSource( final PropertyMapper propertyMapper,
@@ -77,7 +79,7 @@ public interface DataLayer
 		return withSource( propertyMapper, props ->
 		{
 			final MatrixLayer result = new MatrixLayer( data, props );
-			Default.LAYER_CHANGES.add( result.changes() );
+			StaticCaching.LAYER_CHANGES.add( result.changes() );
 			return result;
 		} );
 	}
@@ -97,7 +99,7 @@ public interface DataLayer
 		{
 			final MapLayer<PK> result = new MapLayer<>( mapFactory.get(), props,
 					indexer );
-			Default.LAYER_CHANGES.add( result.changes() );
+			StaticCaching.LAYER_CHANGES.add( result.changes() );
 			return result;
 		} );
 	}
@@ -109,7 +111,7 @@ public interface DataLayer
 		final List<?> replaced = propertyMapper.map( MapBuilder.unordered() )
 				.build().entrySet().stream()
 				// for each tuple, create a new layer for their property subset
-				.filter( e -> Default.SOURCE_CACHE.put( e.getKey(),
+				.filter( e -> StaticCaching.SOURCE_CACHE.put( e.getKey(),
 						layerGenerator.apply( e.getValue() ) ) != null )
 				// collect list of replaced tuple/layer combinations
 				.map( Map.Entry::getKey ).collect( Collectors.toList() );
@@ -120,11 +122,11 @@ public interface DataLayer
 
 	static Table<Tuple> defaultTable()
 	{
-		return Default.SOURCE_CACHE
+		return StaticCaching.SOURCE_CACHE
 				.computeIfAbsent( Tuple.class,
 						k -> Thrower.throwNew( IllegalStateException::new,
 								() -> "Default table not set" ) )
-				.createTable( Tuple.class );
+				.getTable( Tuple.class );
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
@@ -141,7 +143,7 @@ public interface DataLayer
 		final DataLayer result = new MapLayer<>( mapFactory.get(),
 				Arrays.asList( properties ),
 				new AtomicLong()::getAndIncrement );
-		Default.SOURCE_CACHE.put( Tuple.class, result );
+		StaticCaching.SOURCE_CACHE.put( Tuple.class, result );
 		return result;
 	}
 
@@ -171,7 +173,7 @@ public interface DataLayer
 	 * implementations
 	 */
 	@Singleton
-	class Default implements DataLayer
+	class StaticCaching implements DataLayer
 	{
 
 		static final Map<Class<?>, DataLayer> SOURCE_CACHE = new HashMap<>();

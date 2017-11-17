@@ -137,7 +137,7 @@ public class LatLong implements Serializable
 	 */
 	public ComparableQuantity<Angle> angularDistance( final LatLong that )
 	{
-		return QuantityUtil.valueOf( angularDistance( that ), this.unit );
+		return angularDistance( that, this.unit );
 	}
 
 	/**

@@ -336,6 +336,18 @@ public interface Proactive extends Timed
 			return self().scheduler();
 		}
 
+		// test
+		default Expectation call( final Callable<?> call )
+		{
+			return scheduler().schedule( now(), t -> call.call() );
+		}
+
+		// test
+//		default Expectation call( final Runnable call )
+//		{
+//			return scheduler().schedule( now(), t -> call.run() );
+//		}
+
 		/**
 		 * @param runner the {@link Runnable} (method) to call when time comes
 		 * @return the {@link Expectation} for potential cancellation
@@ -352,7 +364,7 @@ public interface Proactive extends Timed
 		 */
 		default Expectation call( final ThrowingConsumer<Instant, ?> call )
 		{
-			return call( () -> call.accept( now() ) );
+			return scheduler().schedule( now(), call );
 		}
 
 		/**
