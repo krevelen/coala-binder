@@ -51,8 +51,10 @@ import io.reactivex.Observable;
  * similar to the standard Java {@link Random} generator (which is wrapped
  * accordingly in the {@link JavaRandom} decorator)
  * <p>
- * <b>NOTE</b> Implement a thread-safe/multi-threaded default, e.g. <a href=
+ * <b>TODO</b> Implement a thread-safe/multi-threaded default, e.g. <a href=
  * "https://gist.github.com/dhadka/f5a3adc36894cc6aebcaf3dc1bbcef9f">ThreadLocal</a>
+ * or
+ * <a href="https://github.com/jopasserat/tasklocalrandom">TaskLocalRandom</a>
  * 
  * @version $Id$
  * @author Rick van Krevelen
@@ -433,6 +435,11 @@ public interface PseudoRandom extends Identified<PseudoRandom.Name>
 	{
 		/** the serialVersionUID */
 		private static final long serialVersionUID = 1L;
+
+		public static JavaRandom of( final CharSequence id, final long seed )
+		{
+			return of( Name.of( id ), seed );
+		}
 
 		public static JavaRandom of( final Name id, final long seed )
 		{

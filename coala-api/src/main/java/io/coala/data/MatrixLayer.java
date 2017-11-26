@@ -43,8 +43,6 @@ import io.coala.data.Table.Tuple;
 import io.coala.exception.Thrower;
 import io.coala.math.DecimalUtil;
 import io.reactivex.Observable;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
 
 /**
  * {@link MatrixLayer} provides layers upon
@@ -73,7 +71,7 @@ public class MatrixLayer implements DataLayer
 
 	private final AtomicLong rowMax = new AtomicLong();
 
-	private final Subject<Change> changes = PublishSubject.create();
+	private final List<Observable<Change>> changes = new ArrayList<>();
 
 	public MatrixLayer( final Matrix data,
 		final List<Class<? extends Property>> columnProperties )
@@ -96,8 +94,7 @@ public class MatrixLayer implements DataLayer
 		final Class<? extends Property> propertyType )
 	{
 		final Long col = Objects.requireNonNull(
-				this.columnIndices.get( propertyType ),
-				"Column undefined for: " + propertyType.getSimpleName() );
+				this.columnIndices.get( propertyType ), "Column undefined" );
 		return new long[] { key.longValue(), col };
 	}
 
@@ -208,9 +205,8 @@ public class MatrixLayer implements DataLayer
 	private void removeIndex( final Long row )
 	{
 		final long max = this.rowMax.get();
-		if( row < 0 || row > max )
-			Thrower.throwNew( IndexOutOfBoundsException::new,
-					() -> "Row not in [0," + max + "]: " + row );
+		if( !isIndex( row ) ) Thrower.throwNew( IndexOutOfBoundsException::new,
+				() -> "Row not in [0," + max + "]: " + row );
 
 		this.data.selectRows( Ret.LINK, row ).clear();
 		this.data.setRowLabel( row, null );
@@ -238,10 +234,15 @@ public class MatrixLayer implements DataLayer
 		} ).reduce( Stream.empty(), Stream::concat );
 	}
 
+	/** */
+//	private static final Logger LOG = LogUtil.getLogger( MatrixLayer.class );
+
 	private boolean isIndex( final Long row )
 	{
-		return row > -1 && row < this.rowMax.get()
+		final boolean result = row > -1 && row < this.rowMax.get()
 				&& !this.rowRecycler.contains( row );
+//		if( !result ) LOG.warn( "Recycled {}, bin: {}", row, this.rowRecycler );
+		return result;
 	}
 
 	private String toString( final Long row )
@@ -264,26 +265,31 @@ public class MatrixLayer implements DataLayer
 	@Override
 	public Observable<Change> changes()
 	{
-		return this.changes;
+		return Observable.fromIterable( this.changes ).flatMap( rx -> rx );
 	}
+
+	private final Map<Class<?>, Table<?>> tableCache = new HashMap<>();
 
 	@SuppressWarnings( "unchecked" )
 	@Override
 	public <T extends Tuple> Table<T> getTable( final Class<T> tupleType )
 	{
-		final Table<T> result = new Table.Simple<>( this.columns::stream,
-				this::nextIndex, this::removeIndex,
-				this::indices, ( key, emitter ) -> isIndex( key )
-						? (T) generate( tupleType ).reset( key, emitter,
-								propertyType -> getValue( key, propertyType ),
-								( propertyType, value ) -> setValue( key,
-										propertyType, value ),
-								() -> toString( key ) )
-						: Thrower.throwNew( IndexOutOfBoundsException::new,
-								() -> "Uncreated or removed: " + key ),
-				() -> (int) this.rowMax.get() - this.rowRecycler.size(),
-				this.data::stringValue, this.data::clear );
-		this.changes.mergeWith( result.changes() );
-		return result;
+		return (Table<T>) this.tableCache.computeIfAbsent( tupleType, k ->
+		{
+			final Table<?> result = new Table.Simple<>( this.columns::stream,
+					this::nextIndex, this::removeIndex, this::indices,
+					( key, emitter ) -> isIndex( key )
+							? generate( tupleType ).reset( key, emitter,
+									propertyType -> getValue( key,
+											propertyType ),
+									( propertyType, value ) -> setValue( key,
+											propertyType, value ),
+									() -> toString( key ) )
+							: null,
+					() -> (int) this.rowMax.get() - this.rowRecycler.size(),
+					this.data::stringValue, this.data::clear );
+			this.changes.add( result.changes() );
+			return result;
+		} );
 	}
 }

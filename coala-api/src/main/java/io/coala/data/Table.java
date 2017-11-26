@@ -19,11 +19,9 @@
  */
 package io.coala.data;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,11 +41,10 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Logger;
 
+import io.coala.data.Table.Property;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
 import io.coala.math.DecimalUtil;
-import io.coala.math.Range;
-import io.coala.random.PseudoRandom;
 import io.coala.util.MapBuilder;
 import io.coala.util.TypeArguments;
 import io.reactivex.Observable;
@@ -67,6 +64,64 @@ public interface Table<T extends Table.Tuple>
 {
 	/** return an {@link Observable} stream of {@link Change}s */
 	Observable<Change> changes();
+
+	default Observable<Change> changes( final Object keyFilter )
+	{
+		return changes().filter( chg -> chg.sourceRef().equals( keyFilter ) );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Table<T> onCreate( final Consumer<T> onCreate,
+		final Consumer<? super Throwable> onError )
+	{
+		changes().filter( chg -> chg.crud() == Operation.CREATE ).subscribe(
+				chg -> onCreate.accept( (T) chg.newValue() ), onError::accept );
+		return this;
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default Table<T> onDelete( final Consumer<T> onDelete,
+		final Consumer<? super Throwable> onError )
+	{
+		changes().filter( chg -> chg.crud() == Operation.DELETE ).subscribe(
+				chg -> onDelete.accept( (T) chg.oldValue() ), onError::accept );
+		return this;
+	}
+
+	@SuppressWarnings( "unchecked" )
+	default <P extends Property<V>, V> Table<T> onUpdate(
+		final Class<P> propertyType, final TriConsumer<Object, V, V> onUpdate,
+		final Consumer<? super Throwable> onError )
+	{
+		changes()
+				.filter( chg -> chg.crud() == Operation.UPDATE
+						&& chg.changedType() == propertyType )
+				.subscribe(
+						chg -> onUpdate.accept( chg.sourceRef(),
+								(V) chg.oldValue(), (V) chg.newValue() ),
+						onError::accept );
+		return this;
+	}
+
+	@FunctionalInterface
+	interface TriConsumer<A, B, C>
+	{
+		void accept( A a, B b, C c );
+	}
+
+//	default <K extends Property<?>> Observable<Change> changes(
+//		final Object keyFilter, final Class<? extends Property<?>> key )
+//	{
+//		return changes( keyFilter )
+//				.filter( chg -> chg.changedType().equals( key ) );
+//	}
+//
+//	@SuppressWarnings( "unchecked" )
+//	default <K extends Property<V>, V> Observable<V>
+//		valueChanges( final Object keyFilter, final Class<K> property )
+//	{
+//		return changes( keyFilter, property ).map( chg -> (V) chg.newValue() );
+//	}
 
 	@SuppressWarnings( "rawtypes" )
 	Stream<Class<? extends Property>> properties();
@@ -135,18 +190,6 @@ public interface Table<T extends Table.Tuple>
 	default Stream<T> select( final Object... keys )
 	{
 		return Arrays.stream( keys ).map( this::select );
-	}
-
-	default Observable<Change> changes( final Object keyFilter )
-	{
-		return changes().filter( chg -> chg.sourceRef().equals( keyFilter ) );
-	}
-
-	default <K extends Property<?>> Observable<Change> changes(
-		final Object keyFilter, final Class<? extends Property<?>> key )
-	{
-		return changes( keyFilter )
-				.filter( chg -> chg.changedType().equals( key ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -285,20 +328,13 @@ public interface Table<T extends Table.Tuple>
 	{
 		final T t = select( key );
 		if( t == null ) return null;
-		return properties().collect( Collectors.toMap( p -> p, t::get ) );
+		return t.toMap( properties() );
 	}
 
 	default <K extends Property<V>, V> Stream<V>
 		values( final Class<K> property )
 	{
 		return stream().map( t -> t.get( property ) );
-	}
-
-	@SuppressWarnings( "unchecked" )
-	default <K extends Property<V>, V> Observable<V>
-		valueChanges( final Object keyFilter, final Class<K> property )
-	{
-		return changes( keyFilter, property ).map( chg -> (V) chg.newValue() );
 	}
 
 	@Override
@@ -497,6 +533,12 @@ public interface Table<T extends Table.Tuple>
 			return this;
 		}
 
+		@SuppressWarnings( "rawtypes" )
+		public List<Class<? extends Property>> properties()
+		{
+			return Collections.emptyList();
+		}
+
 		@Override
 		public String toString()
 		{
@@ -510,7 +552,7 @@ public interface Table<T extends Table.Tuple>
 
 		@SuppressWarnings( "unchecked" )
 		public Map<Class<? extends Property>, Object>
-			asMap( final Stream<Class<? extends Property>> properties )
+			toMap( final Stream<Class<? extends Property>> properties )
 		{
 			return properties.collect( Collectors.toMap( p -> p, this::get ) );
 		}
@@ -537,7 +579,7 @@ public interface Table<T extends Table.Tuple>
 		}
 
 		@SuppressWarnings( "unchecked" )
-		protected <K extends Property<V>, V> void
+		public <K extends Property<V>, V> void
 			set( final Class<K> propertyType, final V value )
 		{
 			this.setter.accept( propertyType, value );
@@ -620,6 +662,7 @@ public interface Table<T extends Table.Tuple>
 		public <P extends Property<W>, W> Tuple
 			override( final Class<P> property, final W override )
 		{
+			final Tuple self = this;
 			return new Tuple()
 			{
 				@Override
@@ -627,6 +670,12 @@ public interface Table<T extends Table.Tuple>
 				public <K extends Property<V>, V> V get( final Class<K> key )
 				{
 					return key == property ? (V) override : super.get( key );
+				}
+
+				@Override
+				public List<Class<? extends Property>> properties()
+				{
+					return self.properties();
 				}
 			}.reset( this.key, this.emitter, this.getter, this.setter,
 					this.stringifier );
@@ -773,228 +822,13 @@ public interface Table<T extends Table.Tuple>
 		}
 
 		@Override
-		public <P extends io.coala.data.Table.Property<V>, V> boolean
-			equals( final T tuple, final Class<P> property, final V value )
+		public <P extends Property<V>, V> boolean equals( final T tuple,
+			final Class<P> property, final V value )
 		{
 			final V v = tuple.get( property );
 			return v == null ? (value == null || (value instanceof Number
 					&& DecimalUtil.valueOf( (Number) value ).signum() == 0))
 					: v.equals( value );
-		}
-	}
-
-	/**
-	 * 
-	 * {@link Picker} recursive selection builder API; TODO implement
-	 * 
-	 * @param <P>
-	 * @param <T>
-	 * @version $Id$
-	 * @author Rick van Krevelen
-	 */
-//	@Deprecated
-	interface Picker<P extends Picker<?, ?>, T extends Tuple>
-	{
-		P parent();
-
-		@SuppressWarnings( "rawtypes" )
-		<THIS extends Picker<P, ?>, K extends Property<V>, V extends Comparable>
-			Filter<V, THIS> groupBy( Class<K> property,
-				Comparator<? super V> valueComparator, Stream<V> splitValues );
-
-		@SuppressWarnings( "unchecked" )
-		default T pick()
-		{
-			return (T) parent().pick();
-		}
-
-		default List<Comparable<?>> filter()
-		{
-			return parent().filter();
-		}
-
-		default IndexPartition index()
-		{
-			return parent().index();
-		}
-
-		interface Root<T extends Tuple> extends Picker<Root<T>, T>
-		{
-			@Override
-			default Root<T> parent()
-			{
-				return this;
-			}
-
-			@SuppressWarnings( { "rawtypes", "unchecked" } )
-			default <THIS extends Root<T>, K extends Property<V>, V extends Comparable>
-				Filter<V, THIS>
-				splitBy( final Class<K> property, final V... splitValues )
-			{
-				final Stream<V> values = splitValues == null
-						|| splitValues.length == 0 ? Stream.empty()
-								: Arrays.stream( splitValues );
-				return groupBy( property, Comparator.naturalOrder(), values );
-			}
-
-			@SuppressWarnings( "rawtypes" )
-			default <THIS extends Root<T>, K extends Property<V>, V extends Comparable>
-				Filter<V, THIS> splitBy( final Class<K> property,
-					final Collection<V> splitValues )
-			{
-				return groupBy( property, Comparator.naturalOrder(),
-						splitValues.stream() );
-			}
-
-			@SuppressWarnings( "rawtypes" )
-			default <THIS extends Root<T>, K extends Property<V>, V extends Comparable>
-				Filter<V, THIS> splitBy( Class<K> property,
-					Comparator<? super V> valueComparator,
-					Stream<V> splitValues )
-			{
-				return groupBy( property, valueComparator, splitValues );
-			}
-		}
-
-		static <T extends Table.Tuple> Root<T> of( final Table<T> source,
-			final PseudoRandom rng, final Consumer<Throwable> onError )
-		{
-			final Logger log = LogUtil.getLogger( Picker.class );
-			return of( source, rng, ( filter, k, v ) ->
-			{
-				log.trace( "Pick [{};{}] deviates: {} in {}", filter,
-						k.getSimpleName(), v );
-				return true;
-			}, e -> log.error( "Problem while re-indexing", e ) );
-		}
-
-		@FunctionalInterface
-		interface DeviationConfirmer
-		{
-			boolean confirm( Comparable<?>[] filter, Class<?> property,
-				Range<?> bin );
-
-		}
-
-		static <T extends Table.Tuple> Root<T> of( final Table<T> source,
-			final PseudoRandom rng, final DeviationConfirmer deviationConfirmer,
-			final Consumer<Throwable> onError )
-		{
-			final IndexPartition index = new IndexPartition( source, onError );
-			return new Root<T>()
-			{
-				final List<Comparable<?>> filter = new ArrayList<>();
-
-				@Override
-				public T pick()
-				{
-					@SuppressWarnings( "rawtypes" )
-					final Comparable[] filter = filter()
-							.toArray( new Comparable[filter().size()] );
-//					System.err.println( "" + this.filter + "->" + index );
-					this.filter.clear();
-					final List<Object> selection = index.nearestKeys( ( k,
-						v ) -> deviationConfirmer.confirm( filter, k, v ),
-							filter );
-					return source.select( rng.nextElement( selection ) );
-				}
-
-				@Override
-				public List<Comparable<?>> filter()
-				{
-					return this.filter;
-				}
-
-				@Override
-				public IndexPartition index()
-				{
-					return index;
-				}
-
-				@SuppressWarnings( "rawtypes" )
-				@Override
-				public <THIS extends Picker<Root<T>, ?>, K extends Property<V>, V extends Comparable>
-					Filter<V, THIS> groupBy( final Class<K> property,
-						final Comparator<? super V> valueComparator,
-						final Stream<V> splitValues )
-				{
-					index.groupBy( property, valueComparator, splitValues );
-					@SuppressWarnings( "unchecked" )
-					final THIS parent = (THIS) this;
-					return Filter.of( parent );
-				}
-			};
-		}
-
-		interface Filter<V extends Comparable<?>, P extends Picker<?, ?>>
-			extends Picker<P, Tuple>
-		{
-
-			@SuppressWarnings( { "rawtypes", "unchecked" } )
-			default <THIS extends Filter<V, P>, K extends Property<W>, W extends Comparable>
-				Filter<W, THIS>
-				thenBy( final Class<K> property, final W... splitValues )
-			{
-				final Stream<W> values = splitValues == null
-						|| splitValues.length == 0 ? Stream.empty()
-								: Arrays.stream( splitValues );
-				return groupBy( property, Comparator.naturalOrder(), values );
-			}
-
-			@SuppressWarnings( "rawtypes" )
-			default <THIS extends Filter<V, P>, K extends Property<W>, W extends Comparable>
-				Filter<W, THIS> thenBy( final Class<K> property,
-					final Collection<W> splitValues )
-			{
-				return groupBy( property, Comparator.naturalOrder(),
-						splitValues.stream() );
-			}
-
-			@SuppressWarnings( "rawtypes" )
-			default <THIS extends Filter<V, P>, K extends Property<W>, W extends Comparable>
-				Filter<W, THIS> thenBy( final Class<K> property,
-					final Comparator<? super W> valueComparator,
-					final Stream<W> splitValues )
-			{
-				return groupBy( property, valueComparator, splitValues );
-			}
-
-			default P narrow( final V value )
-			{
-				filter().add( 0, value );
-				return Objects.requireNonNull( parent(), "orphan?" );
-			}
-
-			default P narrow( final Range<V> range )
-			{
-				filter().add( 0, range );
-				return Objects.requireNonNull( parent(), "orphan?" );
-			}
-
-			static <V extends Comparable<?>, P extends Picker<?, ?>>
-				Filter<V, P> of( final P parent )
-			{
-				return new Filter<V, P>()
-				{
-					@Override
-					public P parent()
-					{
-						return parent;
-					}
-
-					@SuppressWarnings( "rawtypes" )
-					@Override
-					public <THIS extends Picker<P, ?>, K extends Property<W>, W extends Comparable>
-						Filter<W, THIS> groupBy( final Class<K> property,
-							final Comparator<? super W> valueComparator,
-							final Stream<W> splitValues )
-					{
-						@SuppressWarnings( "unchecked" )
-						final THIS self = (THIS) this;
-						return Filter.of( self );
-					}
-				};
-			}
 		}
 	}
 }

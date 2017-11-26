@@ -32,7 +32,13 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.ujmp.core.Matrix;
 
+import io.coala.data.Picker.Groups;
+import io.coala.data.Picker.Root;
+import io.coala.data.Table.Property;
+import io.coala.data.Table.Tuple;
 import io.coala.log.LogUtil;
+import io.coala.math.Range;
+import io.coala.random.PseudoRandom;
 
 /**
  * {@link IndexPartitionTest}
@@ -46,8 +52,7 @@ public class IndexPartitionTest
 	/** */
 	static final Logger LOG = LogUtil.getLogger( IndexPartitionTest.class );
 
-	class Prop1 extends AtomicReference<Double>
-		implements Table.Property<Double>
+	class Prop1 extends AtomicReference<Float> implements Table.Property<Float>
 	{
 	}
 
@@ -68,11 +73,11 @@ public class IndexPartitionTest
 
 		final int n = 10;
 		@SuppressWarnings( "rawtypes" )
-		final List<Class<? extends Table.Property>> props = Arrays
+		final List<Class<? extends Property>> props = Arrays
 				.asList( Prop1.class, Prop2.class, Prop3.class );
 		final Matrix m = Matrix.Factory.rand( 2 * n, props.size() );
-		final Table<Table.Tuple> t = new MatrixLayer( m, props )
-				.getTable( Table.Tuple.class );
+		final Table<Tuple> t = new MatrixLayer( m, props )
+				.getTable( Tuple.class );
 		final List<Object> removable = IntStream.range( 0, n / 2 )
 				.mapToObj( i ->
 				{
@@ -89,6 +94,17 @@ public class IndexPartitionTest
 		LOG.trace( "partition col1-2: {}", p );
 		p.groupBy( Prop3.class, Stream.of( .8 ) );
 		LOG.trace( "partition col1-3: {}", p );
+		final PseudoRandom rng = PseudoRandom.JavaRandom.of( "rng", 1L );
+		final Groups<Double, Groups<Double, Groups<Float, Root<Tuple>>>> picker = Picker
+				.of( t, rng, Throwable::printStackTrace ).splitBy( Prop1.class )
+				.thenBy( Prop2.class, Stream.of( .8 ) )
+				.thenBy( Prop3.class, Stream.of( .8 ) );
+		LOG.trace( "   picker col1-3: {}", picker.index() );
+		LOG.trace( "Picks, 10x in prop1=1: {}",
+				IntStream.range( 0, 10 )
+						.mapToObj( i -> picker.any().any()
+								.match( Range.of( 1f, 3f ) ).draw() )
+						.collect( Collectors.toList() ) );
 		IntStream.range( n / 2, n ).forEach( i ->
 		{
 			m.setAsInt( 1 + i / 3, i, 0 );

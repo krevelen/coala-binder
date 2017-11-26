@@ -111,18 +111,24 @@ public class MapLayer<ID> implements DataLayer
 		return Observable.fromIterable( this.changes ).flatMap( rx -> rx );
 	}
 
+	private final Map<Class<?>, Table<?>> tableCache = new HashMap<>();
+
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public <T extends Tuple> Table<T> getTable( final Class<T> tupleType )
 	{
-		@SuppressWarnings( "unchecked" )
-		final Table<T> result = new Table.Simple<>( this.properties::stream,
-				this.indexer::get, this.data::remove,
-				this.data.keySet()::stream,
-				( key, changes ) -> (T) createTuple( tupleType ).reset( key,
-						changes, k -> get( key, k ),
-						( k, v ) -> put( key, k, v ), () -> stringify( key ) ),
-				this.data::size, this.data::toString, this.data::clear );
-		this.changes.add( result.changes() );
-		return result;
+		return (Table<T>) this.tableCache.computeIfAbsent( tupleType, p ->
+		{
+			@SuppressWarnings( "unchecked" )
+			final Table<?> result = new Table.Simple<>( this.properties::stream,
+					this.indexer::get, this.data::remove,
+					this.data.keySet()::stream,
+					( key, changes ) -> createTuple( tupleType ).reset( key,
+							changes, k -> get( key, k ),
+							( k, v ) -> put( key, k, v ), () -> stringify( key ) ),
+					this.data::size, this.data::toString, this.data::clear );
+			this.changes.add( result.changes() );
+			return result;
+		} );
 	}
 }

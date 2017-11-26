@@ -66,10 +66,9 @@ public interface DataLayer
 
 	default <T extends Tuple> Table<T> getTable( final Class<T> tupleType )
 	{
-		return StaticCaching.SOURCE_CACHE
-				.computeIfAbsent( tupleType,
-						k -> Thrower.throwNew( IllegalStateException::new,
-								() -> "Data source not set for: " + k ) )
+		return StaticCaching.SOURCE_CACHE.compute( tupleType, ( k,
+			v ) -> v == null ? Thrower.throwNew( IllegalStateException::new,
+					() -> "Data source not set for: " + k ) : v )
 				.getTable( tupleType );
 	}
 

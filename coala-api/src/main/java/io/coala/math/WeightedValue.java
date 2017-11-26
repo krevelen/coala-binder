@@ -86,10 +86,17 @@ public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable
 	@Override
 	public boolean equals( final Object that )
 	{
-		return super.equals( that ) && getWeight() == null
+		return super.equals( that ) && (getWeight() == null
 				? ((WeightedValue<V>) that).getWeight() == null
-				: getWeight().equals( ((WeightedValue<V>) that).getWeight() );
+				: getWeight().equals( ((WeightedValue<V>) that).getWeight() ));
 	}
+
+//	@Override
+//	public int hashCode()
+//	{
+//		return super.hashCode()
+//				+ (getWeight() == null ? 0 : getWeight().hashCode() * 31);
+//	}
 
 	/**
 	 * @return the value

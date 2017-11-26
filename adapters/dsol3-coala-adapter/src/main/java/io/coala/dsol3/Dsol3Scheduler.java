@@ -14,6 +14,8 @@ import javax.measure.Unit;
 
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.coala.bind.InjectConfig;
 import io.coala.bind.LocalBinder;
 import io.coala.function.ThrowingConsumer;
@@ -107,7 +109,7 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 	@Override
 	public Observable<Instant> time()
 	{
-		return this.time.distinct();
+		return this.time;//.distinctUntilChanged();
 	}
 
 	@Override
@@ -143,7 +145,11 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 
 	private void advanceTo( final Instant t )
 	{
-		this.time.onNext( this.t.updateAndGet( old -> t ) );
+		this.t.updateAndGet( old ->
+		{
+			if( !t.equals( old ) ) this.time.onNext( t );
+			return t;
+		} );
 	}
 
 	@Override
@@ -213,11 +219,20 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 		if( this.sim == null ) return null; // sim/model failed
 		try
 		{
-			final SimTimeQ t = now().equals( when )
-					? this.sim.getSimulatorTime()
-					: new SimTimeQ( new BaseTimeQ( when, timeUnit() ) );
+			final SimTimeQ t;
+			final short priority;
+			if( now() == when )
+			{
+				t = this.sim.getSimulatorTime();
+				priority = SimEventInterface.MIN_PRIORITY;
+//				new IllegalStateException( "same instant" ).printStackTrace();
+			} else
+			{
+				t = new SimTimeQ( new BaseTimeQ( when, timeUnit() ) );
+				priority = SimEventInterface.NORMAL_PRIORITY;
+			}
 			final SimEventInterface<SimTimeQ> event = this.sim
-					.scheduleEventAbs( t, () ->
+					.scheduleEventAbs( t, priority, () ->
 					{
 						try
 						{
@@ -336,6 +351,16 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 		SimTimeQ( final BaseTimeQ absoluteTime )
 		{
 			super( absoluteTime );
+		}
+
+		@JsonIgnore
+		private int hashCode = 0;
+
+		@Override
+		public int hashCode()
+		{
+			return this.hashCode == 0 ? (this.hashCode = super.hashCode())
+					: this.hashCode;
 		}
 
 		@Override

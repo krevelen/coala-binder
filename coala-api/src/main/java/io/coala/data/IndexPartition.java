@@ -63,7 +63,7 @@ public class IndexPartition
 
 	private final Table<?> source;
 
-	final IndexPartition.PartitionNode root;
+	final PartitionNode root;
 
 	private final List<Object> keys;
 
@@ -81,7 +81,9 @@ public class IndexPartition
 		this.root = new PartitionNode( null, null,
 				new int[]
 		{ 0, this.keys.size() } );
-		view.changes().subscribe( ch ->
+
+		// TODO subscribe as last last subscriber
+		view.changes().doAfterNext( ch ->
 		{
 			try
 			{
@@ -91,9 +93,7 @@ public class IndexPartition
 				// internal error
 				onError.accept( e );
 			}
-		}
-		// upstream error
-				, onError::accept );
+		} ).subscribe();
 	}
 
 	@Override
@@ -324,7 +324,7 @@ public class IndexPartition
 				final int j = this.keys.indexOf( t.key() );
 				if( j < 0 )
 				{
-					LOG.warn( "Already removed from index: {}", t );
+//					LOG.warn( "Already removed from index: {}", t );
 					return false;
 				}
 				final List<Range> leafRanges = new ArrayList<>(),
@@ -524,8 +524,9 @@ public class IndexPartition
 					this.bounds[1] += delta; // resize parent after child
 					shift( this.children.tailMap( bin, false ).values()
 							.stream(), delta );
-				} else
-					LOG.warn( "leaf not adjusted: " + bin );
+				}
+//				else
+//					LOG.warn( "leaf not adjusted: " + bin );
 			} else
 			{
 				// find appropriate range between provided split points
@@ -610,10 +611,17 @@ public class IndexPartition
 			this.dim = dim;
 			// sort node key-partition using given property value comparator
 			final List<Object> partition = partitioner.apply( this.bounds );
-			Collections.sort( partition,
-					( k1, k2 ) -> dim.comparator.compare(
-							valueSupplier.apply( k1 ),
-							valueSupplier.apply( k2 ) ) );
+			try
+			{
+				Collections.sort( partition,
+						( k1, k2 ) -> dim.comparator.compare(
+								valueSupplier.apply( k1 ),
+								valueSupplier.apply( k2 ) ) );
+			} catch( final NullPointerException e )
+			{
+				Thrower.throwNew( IllegalStateException::new,
+						() -> "Missing value(s) for " + this.dim.property, e );
+			}
 
 			if( dim.splitPoints.isEmpty() )
 			{
