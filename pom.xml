@@ -511,7 +511,7 @@
 				<executions> <execution> <goals> <goal>site</goal> </goals> <phase>deploy</phase> 
 				</execution> </executions> </plugin> -->
 
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>${jacoco-maven-plugin.version}</version>
@@ -550,7 +550,7 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 

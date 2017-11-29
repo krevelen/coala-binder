@@ -169,7 +169,8 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 		};
 	}
 
-	interface Groups<V extends Comparable<?>, P extends Picker<?, ?>>
+	@SuppressWarnings( "rawtypes" )
+	interface Groups<V extends Comparable, P extends Picker<?, ?>>
 		extends Picker<P, Table.Tuple>
 	{
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
