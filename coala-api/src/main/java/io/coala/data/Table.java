@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 8c9473f02ba2ddb5a321b89c76cbfb26bcd149f6 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -150,7 +150,6 @@ public interface Table<T extends Table.Tuple>
 	}
 
 	/** @return a new tuple */
-	@SuppressWarnings( "rawtypes" )
 	default T insert()
 	{
 		return insertValues( Collections.emptyMap() );
@@ -251,10 +250,8 @@ public interface Table<T extends Table.Tuple>
 		properties().forEach( p ->
 		{
 			// swap non-null values
-			@SuppressWarnings( "unchecked" )
 			final Object oldValue = toTuple.get( p );
 			if( oldValue == null ) return;
-			@SuppressWarnings( "unchecked" )
 			final Object newValue = fromTuple.get( p );
 			toTuple.set( p, newValue );
 			fromTuple.set( p, oldValue );
@@ -322,7 +319,7 @@ public interface Table<T extends Table.Tuple>
 		return keys().map( this::select );
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	@SuppressWarnings( { "rawtypes" } )
 	default Map<Class<? extends Property>, Object>
 		selectAsMap( final Object key )
 	{
@@ -359,7 +356,7 @@ public interface Table<T extends Table.Tuple>
 		return selectWhere( t -> t.match( property ) );
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	@SuppressWarnings( { "rawtypes" } )
 	default Stream<T> selectAnd( final Property... filter )
 	{
 		if( filter == null || filter.length == 0 ) return Stream.empty();
@@ -372,7 +369,7 @@ public interface Table<T extends Table.Tuple>
 		} );
 	}
 
-	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	@SuppressWarnings( { "rawtypes" } )
 	default Stream<T> selectOr( final Property... filter )
 	{
 		if( filter == null || filter.length == 0 ) return Stream.empty();
@@ -420,7 +417,6 @@ public interface Table<T extends Table.Tuple>
 
 		Map<Class<?>, Class<?>> RETURN_TYPE_CACHE = new HashMap<>();
 
-		@SuppressWarnings( { "unchecked", "rawtypes" } )
 		static Class<?> returnType( final Property<?> property )
 		{
 			return returnType( Objects.requireNonNull( property ).getClass() );
@@ -430,7 +426,7 @@ public interface Table<T extends Table.Tuple>
 		 * @param propertyType the concrete (run-time) type to reflect on
 		 * @return the (cached) type of the (run-time) type argument
 		 */
-		@SuppressWarnings( { "unchecked", "rawtypes" } )
+		@SuppressWarnings( { "rawtypes" } )
 		static Class<?>
 			returnType( final Class<? extends Property> propertyType )
 		{
@@ -533,7 +529,6 @@ public interface Table<T extends Table.Tuple>
 			return this;
 		}
 
-		@SuppressWarnings( "rawtypes" )
 		public List<Class<? extends Property>> properties()
 		{
 			return Collections.emptyList();
@@ -564,7 +559,6 @@ public interface Table<T extends Table.Tuple>
 					v -> property.get() );
 		}
 
-		@SuppressWarnings( "rawtypes" )
 		public void set( final Property... properties )
 		{
 			if( properties == null || properties.length == 0 ) return;
@@ -578,7 +572,6 @@ public interface Table<T extends Table.Tuple>
 			set( property.getClass(), property.get() );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		public <K extends Property<V>, V> void
 			set( final Class<K> propertyType, final V value )
 		{
@@ -621,7 +614,6 @@ public interface Table<T extends Table.Tuple>
 			return (V) this.getter.apply( key );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		public <K extends Property<V>, V> V getNonNull( final Class<K> key )
 		{
 			final V value = get( key );

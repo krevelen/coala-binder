@@ -1,4 +1,4 @@
-/* $Id: a34df9d8911f543f8e1ca949ccb0e916658ade83 $
+/* $Id: db5051646ed8357e0d1cb29bd6a47d5b78eab29b $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -35,7 +35,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Attributed} tags JSON compatible java beans
  * 
- * @version $Id: a34df9d8911f543f8e1ca949ccb0e916658ade83 $
+ * @version $Id: db5051646ed8357e0d1cb29bd6a47d5b78eab29b $
  * @author Rick van Krevelen
  */
 public interface Attributed
@@ -93,7 +93,6 @@ public interface Attributed
 									.cast( propertyType ) );
 		}
 
-		@SuppressWarnings( "rawtypes" )
 		class Simple implements Reactive
 		{
 
@@ -134,7 +133,6 @@ public interface Attributed
 		@SuppressWarnings( "rawtypes" )
 		class SimpleOrdinal<C> extends Simple implements Comparable<C>
 		{
-			@SuppressWarnings( "unchecked" )
 			@Override
 			public int compareTo( final C o )
 			{

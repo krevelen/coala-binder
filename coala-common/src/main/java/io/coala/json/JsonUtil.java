@@ -600,7 +600,6 @@ public class JsonUtil
 	 * @param mapper (key,node)->v | e
 	 * @return a {@link TreeMap}
 	 */
-	@SuppressWarnings( "unchecked" )
 	public static <V> TreeMap<String, V> toMap( final ObjectNode json,
 		final BiFunction<String, JsonNode, V> mapper )
 	{

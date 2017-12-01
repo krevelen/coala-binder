@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 9b49dbfc1de3d4a817e27cdaaf4d72df97b595fc $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -71,7 +71,6 @@ public class IndexPartition
 
 	private boolean validation = true; // TODO from config
 
-	@SuppressWarnings( "unchecked" )
 	public IndexPartition( final Table<?> view,
 		final Consumer<Throwable> onError )
 	{
@@ -121,7 +120,6 @@ public class IndexPartition
 		groupBy( property, Comparator.naturalOrder(), Stream.empty() );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	public <P extends Table.Property<V>, V extends Comparable> void
 		groupBy( final Class<P> property, final Stream<V> splitValues )
 	{
@@ -177,7 +175,6 @@ public class IndexPartition
 		return Collections.unmodifiableList( partitioner( leaf.bounds ) );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	public List<Object> nearestKeys(
 		final BiPredicate<Class<?>, Range<?>> deviationConfirmer,
 		final Comparable... valueFilter )
@@ -314,6 +311,7 @@ public class IndexPartition
 		}, this::nodeSplitter );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	void remove( final Table.Tuple t )
 	{
 		this.root.resize( t, -1, ( bin, leaf ) ->
@@ -368,7 +366,6 @@ public class IndexPartition
 		return this.source.get( key ).get( dim.property );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	<V extends Comparable> void split( final PartitionNode node,
 		final PartitionDim<V> dim )
 	{
@@ -626,7 +623,7 @@ public class IndexPartition
 			if( dim.splitPoints.isEmpty() )
 			{
 				// split points empty? add all distinct values as split point
-				this.children = MapBuilder.<Range, PartitionNode>sorted()
+				this.children = MapBuilder.<Range, PartitionNode> sorted()
 //						.put( Range.infinite(),
 //								// infinity placeholder range
 //								new PartitionNode( this, this.bounds ) )
@@ -688,7 +685,6 @@ public class IndexPartition
 							NavigableMap::putAll );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		<V extends Comparable> PartitionNode valueNode( final Range bin,
 			final Consumer<PartitionNode> nodeSplitter )
 		{
