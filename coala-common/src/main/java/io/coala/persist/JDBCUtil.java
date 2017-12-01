@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ecc045eee03e5bb0270f6511fc7f6784e6f111ae $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -19,9 +19,11 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.Logger;
@@ -34,11 +36,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.coala.json.JsonUtil;
 import io.coala.log.LogUtil;
 import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 
 /**
  * {@link JDBCUtil}
  * 
- * @version $Id$
+ * @version $Id: ecc045eee03e5bb0270f6511fc7f6784e6f111ae $
  * @author Rick van Krevelen
  */
 public class JDBCUtil
@@ -51,24 +55,69 @@ public class JDBCUtil
 		// singleton
 	}
 
-	/**
-	 * @param conf
-	 * @param sql
-	 * @param consumer
-	 * @throws SQLException
-	 */
 	public static void execute( final URI url, final String username,
 		final String password, final String sql,
 		final Consumer<ResultSet> consumer ) throws SQLException
 	{
+		execute( url, username, password, ( conn, stmt ) -> sql, consumer );
+	}
+
+	public static void execute( final URI url, final String username,
+		final String password,
+		final BiFunction<Connection, Statement, String> querier,
+		final Consumer<ResultSet> consumer ) throws SQLException
+	{
+		consumer.accept(
+				execute( url, username, password, querier ).blockingGet() );
+	}
+
+	public static Single<ResultSet> execute( final URI url,
+		final String username, final String password,
+		final BiFunction<Connection, Statement, String> querier )
+	{
 		// FIXME use data-source connection pool with time-outs?
-		try( final Connection conn = DriverManager
-				.getConnection( url.toASCIIString(), username, password );
-				final Statement stmt = conn.createStatement();
-				final ResultSet rs = stmt.executeQuery( sql ); )
+		return Single.create( sub ->
 		{
-			consumer.accept( rs );
-		}
+			try
+			{
+				final Connection conn = DriverManager.getConnection(
+						url.toASCIIString(), username, password );
+				final Statement stmt = conn.createStatement();
+				final ResultSet rs = stmt
+						.executeQuery( querier.apply( conn, stmt ) );
+				
+				sub.setDisposable( new Disposable()
+				{
+					private boolean disposed = false;
+
+					@Override
+					public void dispose()
+					{
+						if( this.disposed ) return;
+						this.disposed = true;
+						try
+						{
+							if( rs != null ) rs.close();
+							if( stmt != null ) stmt.close();
+							if( conn != null ) conn.close();
+						} catch( final SQLException ignore )
+						{
+							// empty
+						}
+					}
+
+					@Override
+					public boolean isDisposed()
+					{
+						return this.disposed;
+					}
+				} );
+				sub.onSuccess( rs );
+			} catch( final Exception e )
+			{
+				sub.onError( e );
+			}
+		} );
 	}
 
 	/**
@@ -129,22 +178,61 @@ public class JDBCUtil
 	}
 
 	public static Observable<ObjectNode> toJSON( final ObjectMapper om,
-		final ResultSet rs )
+		final ResultSet resultSet )
 	{
-		return Observable.create( sub ->
-		{
-			try
-			{
-				while( rs.next() )
+		return Observable.using( () -> resultSet,
+				rs -> Observable.create( sub ->
 				{
-					sub.onNext( rowToJSON( om, rs ) );
-					if( rs.getWarnings() != null ) LOG.warn( rs.getWarnings() );
-				}
-			} catch( final SQLException e )
-			{
-				sub.onError( e );
-			}
-		} );
+					try
+					{
+						while( rs.next() )
+						{
+							sub.onNext( rowToJSON( om, rs ) );
+							if( rs.getWarnings() != null )
+								LOG.warn( rs.getWarnings() );
+						}
+						sub.onComplete();
+					} catch( final SQLException e )
+					{
+						sub.onError( e );
+					}
+				} ), ResultSet::close );
+	}
+
+	public static ObjectNode metaToJSON( final ResultSetMetaData meta )
+		throws SQLException
+	{
+		return metaToJSON( JsonUtil.getJOM(), meta );
+	}
+
+	public static ObjectNode metaToJSON( final ObjectMapper om,
+		final ResultSetMetaData meta ) throws SQLException
+	{
+		return metaColumnToJSON( om, meta )
+				.reduceWith( om::createObjectNode,
+						( result,
+							col ) -> (ObjectNode) result.set(
+									col.get( "column_label" ).asText(), col ) )
+				.blockingGet();
+	}
+
+	public static Observable<ObjectNode>
+		metaColumnToJSON( final ObjectMapper om, final ResultSetMetaData meta )
+			throws SQLException
+	{
+		return Observable.range( 1, meta.getColumnCount() )
+				.map( i -> om.createObjectNode()
+						.put( "column_label", meta.getColumnLabel( i ) )
+						.put( "column_name", meta.getColumnName( i ) )
+						.put( "column_type_name", meta.getColumnTypeName( i ) )
+						.put( "column_type", meta.getColumnType( i ) )
+						.put( "column_class", meta.getColumnClassName( i ) )
+						.put( "display_size", meta.getColumnDisplaySize( i ) )
+						.put( "precision", meta.getPrecision( i ) )
+						.put( "scale", meta.getScale( i ) )
+						.put( "schema_name", meta.getSchemaName( i ) )
+						.put( "catalog_name", meta.getCatalogName( i ) )
+						.put( "table_name", meta.getTableName( i ) ) );
 	}
 
 	public static ObjectNode rowToJSON( final ResultSet rs ) throws SQLException
@@ -176,12 +264,12 @@ public class JDBCUtil
 					break;
 
 				case Types.DOUBLE:
-					entry.put( col, rs.getDouble( i ) );
-					break;
+//					entry.put( col, rs.getDouble( i ) );
+//					break;
 
 				case Types.FLOAT:
-					entry.put( col, rs.getFloat( i ) );
-					break;
+//					entry.put( col, rs.getFloat( i ) );
+//					break;
 
 				case Types.BIGINT:
 				case Types.DECIMAL:
@@ -227,6 +315,11 @@ public class JDBCUtil
 //						case Types.VARCHAR:
 				default:
 					final String s = rs.getString( i );
+					if( s == null )
+					{
+						entry.putNull( col );
+						continue;
+					}
 					if( s.startsWith( JsonToken.START_OBJECT.asString() ) || s
 							.startsWith( JsonToken.START_ARRAY.asString() ) )
 						try
