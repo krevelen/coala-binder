@@ -41,7 +41,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
  * {@link Dsol3Scheduler} wraps a {@link DEVSSimulator} in a {@link Scheduler}
  * using {@link BigDecimal} time precision and any {@link Unit} time units
  * 
- * @version $Id: 92c8de500f12866a73a63b235cefc3ca42dec31c $
+ * @version $Id: 8477923ef5a9a531d278d6e729079fc3f72e77bb $
  * @author Rick van Krevelen
  */
 @Singleton
@@ -253,7 +253,6 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 					return this.cancelled;
 				}
 
-				@SuppressWarnings( "unchecked" )
 				@Override
 				public void dispose()
 				{
@@ -278,7 +277,6 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 		private static final long serialVersionUID = -8304339278326796545L;
 
 		/** the original time quantity and units */
-		@SuppressWarnings( "rawtypes" )
 		private Instant instant;
 
 		/** the time quantity in base units for quick sorting and scheduling */
@@ -290,7 +288,6 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 			this( Instant.of( value, unit ), baseUnit );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		BaseTimeQ( final Instant instant, final Unit<?> baseUnit )
 		{
 			this.instant = instant;
@@ -313,7 +310,6 @@ public class Dsol3Scheduler//<Q extends Quantity<Q>>
 			return "t=" + this.decimalCache + "(" + this.instant + ")";
 		}
 
-		@SuppressWarnings( "unchecked" )
 		@Override
 		public int compareTo( final BaseTimeQ o )
 		{

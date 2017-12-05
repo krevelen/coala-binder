@@ -173,7 +173,7 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 	interface Groups<V extends Comparable, P extends Picker<?, ?>>
 		extends Picker<P, Table.Tuple>
 	{
-		@SuppressWarnings( { "rawtypes", "unchecked" } )
+		@SuppressWarnings( { "unchecked" } )
 		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
 			Groups<W, THIS>
 			thenBy( final Class<K> property, final W... splitValues )
@@ -184,7 +184,6 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 			return thenBy( property, Comparator.naturalOrder(), values );
 		}
 
-		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
 			Groups<W, THIS>
 			thenBy( final Class<K> property, final Stream<W> values )
@@ -192,7 +191,6 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 			return thenBy( property, Comparator.naturalOrder(), values );
 		}
 
-		@SuppressWarnings( "rawtypes" )
 		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
 			Groups<W, THIS>
 			thenBy( final Class<K> property, final Collection<W> splitValues )
@@ -201,7 +199,6 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 					splitValues.stream() );
 		}
 
-		@SuppressWarnings( "rawtypes" )
 		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
 			Groups<W, THIS> thenBy( final Class<K> property,
 				final Comparator<? super W> valueComparator,

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 1cab6f17a435eef277bbb1284b313e898d7b9aaf $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -56,7 +56,7 @@ import io.reactivex.Observable;
 /**
  * {@link XmlUtil}
  * 
- * @version $Id$
+ * @version $Id: 1cab6f17a435eef277bbb1284b313e898d7b9aaf $
  * @author Rick van Krevelen
  */
 public class XmlUtil
@@ -142,7 +142,6 @@ public class XmlUtil
 	 * @return
 	 * @throws Exception
 	 */
-	@SuppressWarnings( "incomplete-switch" )
 	public static Observable<XMLStreamReader> matchElementPath(
 		final ThrowingSupplier<XMLStreamReader, ?> supplier,
 		final List<String> elemPath )

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 65c3234b967cdc71198de42cc309c1391c55f57b $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -24,10 +24,13 @@ import static org.aeonbits.owner.util.Collections.map;
 
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import javax.sql.DataSource;
@@ -40,11 +43,12 @@ import org.aeonbits.owner.Converter;
 
 import io.coala.config.ConfigUtil;
 import io.coala.config.GlobalConfig;
+import io.reactivex.Single;
 
 /**
  * {@link JDBCConfig}
  * 
- * @version $Id$
+ * @version $Id: 65c3234b967cdc71198de42cc309c1391c55f57b $
  * @author Rick van Krevelen
  */
 @Sources( "classpath:jdbc.properties" )
@@ -130,9 +134,27 @@ public interface JDBCConfig extends GlobalConfig
 	default void execute( final String sql, final Consumer<ResultSet> consumer )
 		throws SQLException, ClassNotFoundException
 	{
-		jdbcDriver();
-		JDBCUtil.execute( jdbcUrl(), jdbcUsername(), jdbcPassword(), sql,
-				consumer );
+		consumer.accept( execute( ( conn, stmt ) -> sql ).blockingGet() );
+	}
+
+	/**
+	 * @param querier the SQL statement, dependent on the current connection
+	 * @param consumer a {@link ResultSet} handler
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
+	default Single<ResultSet>
+		execute( final BiFunction<Connection, Statement, String> querier )
+	{
+		try
+		{
+			jdbcDriver();
+		} catch( final Exception e )
+		{
+			return Single.error( e );
+		}
+		return JDBCUtil.execute( jdbcUrl(), jdbcUsername(), jdbcPassword(),
+				querier );
 	}
 
 	/**
@@ -158,7 +180,7 @@ public interface JDBCConfig extends GlobalConfig
 					&& !input.toLowerCase().contains( PASSWORD_PROMPT_VALUE ) )
 				return input;
 
-			final String message = "Enter password (now: " + input + ")";
+			final String message = "Enter database password";
 			if( System.console() != null ) // terminal console
 				return new String(
 						System.console().readPassword( "%s> ", message ) );

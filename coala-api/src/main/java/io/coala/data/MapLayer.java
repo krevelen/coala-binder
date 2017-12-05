@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: 8e6b9d4fb059e036ced8243714db663d8fd446d2 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -36,7 +36,7 @@ import io.reactivex.Observable;
  * { tupleKey -> { propertyType -> propertyValue } }
  * 
  * @param <ID>
- * @version $Id$
+ * @version $Id: 8e6b9d4fb059e036ced8243714db663d8fd446d2 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
@@ -79,13 +79,11 @@ public class MapLayer<ID> implements DataLayer
 						() -> "Illegal property: " + prop );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	private Object get( final ID key, final Class<? extends Property> k )
 	{
 		return validValues( key, k ).get( k );
 	}
 
-	@SuppressWarnings( "unchecked" )
 	private Object put( final ID key, final Class<? extends Property> k,
 		final Object v )
 	{
@@ -119,7 +117,6 @@ public class MapLayer<ID> implements DataLayer
 	{
 		return (Table<T>) this.tableCache.computeIfAbsent( tupleType, p ->
 		{
-			@SuppressWarnings( "unchecked" )
 			final Table<?> result = new Table.Simple<>( this.properties::stream,
 					this.indexer::get, this.data::remove,
 					this.data.keySet()::stream,

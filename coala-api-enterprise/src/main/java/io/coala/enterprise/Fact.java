@@ -1,4 +1,4 @@
-/* $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
+/* $Id: f06fe9dae625cd8ea1c78fb6e3ddecf36d3f3750 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -80,7 +80,7 @@ import io.reactivex.Observer;
 /**
  * {@link Fact}
  * 
- * @version $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
+ * @version $Id: f06fe9dae625cd8ea1c78fb6e3ddecf36d3f3750 $
  * @author Rick van Krevelen
  */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
@@ -114,7 +114,6 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	 * @return this {@link Fact} to allow chaining
 	 * @see #with(String, Object, Class)
 	 */
-	@SuppressWarnings( "unchecked" )
 	@JsonIgnore
 	default Fact with( final String property, final Object value )
 	{
@@ -628,7 +627,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id: 85b4db5fec4b09abbf35e52ca95b55bfed8fa514 $
+	 * @version $Id: f06fe9dae625cd8ea1c78fb6e3ddecf36d3f3750 $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory
