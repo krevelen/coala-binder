@@ -21,19 +21,20 @@ package io.coala.config;
 
 import java.lang.reflect.Method;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.aeonbits.owner.Converter;
 
 /**
- * {@link LocalDateConverter} parses {@link LocalDate}s
+ * {@link LocalDateTimeConverter} parses {@link LocalDate}s
  * <p>
  * TODO parse all of JSR-363 java.time.* -> singleton JavaTimeConverter?
  */
-public class LocalDateConverter implements Converter<LocalDate>
+public class LocalDateTimeConverter implements Converter<LocalDateTime>
 {
 	@Override
-	public LocalDate convert( final Method method, final String input )
+	public LocalDateTime convert( final Method method, final String input )
 	{
-		return LocalDate.parse( input );
+		return LocalDateTime.parse( input );
 	}
 }

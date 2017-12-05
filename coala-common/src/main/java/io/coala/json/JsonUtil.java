@@ -280,7 +280,8 @@ public class JsonUtil
 
 					int i = 0;
 					T t = null;
-					while( jp.nextToken() != JsonToken.END_ARRAY )
+					while( !emitter.isDisposed()
+							&& jp.nextToken() != JsonToken.END_ARRAY )
 					{
 						emitter.onNext( t = or.readValue( jp ) );
 						i++;
