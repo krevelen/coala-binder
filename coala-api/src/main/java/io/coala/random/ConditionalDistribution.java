@@ -93,7 +93,14 @@ public interface ConditionalDistribution<T, C>
 		of( final Function<C, ProbabilityDistribution<T>> distGen )
 	{
 		Objects.requireNonNull( distGen );
-		return c -> distGen.apply( c ).draw();
+		return c ->
+		{
+			final ProbabilityDistribution<T> dist = distGen.apply( c );
+			return dist == null
+					? Thrower.throwNew( IllegalArgumentException::new,
+							() -> "Distribution undefined for condition: " + c )
+					: dist.draw();
+		};
 	}
 
 	/**

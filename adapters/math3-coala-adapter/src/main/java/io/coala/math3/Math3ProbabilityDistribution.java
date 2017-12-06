@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -364,14 +364,13 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public <T extends Number> ProbabilityDistribution<Double>
-			createEmpirical( final Iterable<? extends Number> observations,
+			createEmpirical( final Stream<? extends Number> observations,
 				final int binCount )
 		{
 			final EmpiricalDistribution result = new EmpiricalDistribution(
 					binCount, this.rng );
 			result.load(
-					StreamSupport.stream( observations.spliterator(), true )
-							.mapToDouble( Number::doubleValue ).toArray() );
+					observations.mapToDouble( Number::doubleValue ).toArray() );
 			return Math3ProbabilityDistribution.of( result );
 		}
 

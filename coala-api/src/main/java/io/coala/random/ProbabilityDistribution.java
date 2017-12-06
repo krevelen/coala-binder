@@ -17,21 +17,32 @@ package io.coala.random;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
 
 import io.coala.exception.Thrower;
+import io.coala.math.DecimalUtil;
 import io.coala.math.FrequencyDistribution;
 import io.coala.math.QuantityUtil;
 import io.coala.math.Range;
 import io.coala.math.WeightedValue;
+import io.coala.util.Compare;
 import io.coala.util.Instantiator;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -104,6 +115,173 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		createBernoulli( final PseudoRandom rng, final Number probability )
 	{
 		return () -> rng.nextDouble() < probability.doubleValue();
+	}
+
+	/**
+	 * &ldquo;Multi-noulli&rdquo;
+	 * 
+	 * <img alt="Probability density function" height="150" src=
+	 * "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/2D-simplex.svg/440px-2D-simplex.svg.png"/>
+	 * 
+	 * @param <T> the type of value to draw
+	 * @param pmf the {@link WeightedValue} enumeration (i.e. probability mass
+	 *            function)
+	 * @return a categorical {@link ProbabilityDistribution}
+	 * @see <a href="https://www.wikiwand.com/en/Categorical_distribution">
+	 *      Wikipedia</a> and <a href=
+	 *      "https://www.wolframalpha.com/input/?i=bernoulli+distribution">
+	 *      Wolfram &alpha;</a>
+	 */
+	@SuppressWarnings( "unchecked" )
+	static <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
+		createCategorical( final PseudoRandom rng, final Stream<WV> pmf )
+	{
+		final AtomicReference<BigDecimal> sum = new AtomicReference<>(
+				BigDecimal.ZERO );
+		final HashMap<T, BigDecimal> map = pmf.map( wv -> WeightedValue
+				.of( wv.getValue(), DecimalUtil.valueOf( wv.getWeight() ) ) )
+				.filter( wv ->
+				{
+					final BigDecimal w = (BigDecimal) wv.getWeight();
+					if( w.signum() < 1 )
+						Thrower.throwNew( IllegalArgumentException::new,
+								() -> "Illegal weighted value: " + wv );
+					sum.updateAndGet( s -> s.add( w ) );
+					return true;
+				} )
+				.collect( Collectors.toMap( wv -> wv.getValue(),
+						wv -> (BigDecimal) wv.getWeight(), BigDecimal::add,
+						HashMap::new ) );
+
+		// sanity check
+		if( map.isEmpty() ) return Thrower
+				.throwNew( IllegalArgumentException::new, () -> "Empty" );
+		if( sum.get().signum() < 1 ) return Thrower
+				.throwNew( IllegalStateException::new, () -> "Sum: " + sum );
+
+		if( map.size() == 1 )
+			return createDeterministic( map.keySet().iterator().next() );
+
+		final Object[] values = new Object[map.size()];
+		final double[] wNormCum = new double[map.size()];
+		final AtomicInteger index = new AtomicInteger();
+		map.forEach( ( v_i, w_i ) ->
+		{
+			final int i = index.get();
+			values[i] = v_i;
+			final double w = DecimalUtil.divide( w_i, sum.get() ).doubleValue();
+			wNormCum[i] = i == 0 ? w : (w + wNormCum[i - 1]);
+			index.incrementAndGet();
+		} );
+		return () ->
+		{
+			final double rnd = rng.nextDouble();
+			final int i = Arrays.binarySearch( wNormCum, rnd );
+			return (T) (i < 0 ? values[-i - 1] : values[i]);
+		};
+	}
+
+	static <T extends Number> ProbabilityDistribution<BigDecimal>
+		createTriangular( final PseudoRandom rng, final T min, final T max,
+			final T mode )
+	{
+		final BigDecimal modeBD = DecimalUtil.valueOf( mode ),
+				minBD = DecimalUtil.valueOf( min ),
+				maxBD = DecimalUtil.valueOf( max ),
+				lower = modeBD.subtract( minBD ),
+				upper = maxBD.subtract( modeBD ),
+				total = maxBD.subtract( minBD ),
+				lowerDivTotal = DecimalUtil.divide( lower, total ),
+				lowerTimesTotal = DecimalUtil.multiply( lower, total ),
+				upperTimesTotal = DecimalUtil.multiply( upper, total );
+		return () ->
+		{
+			final BigDecimal p = BigDecimal.valueOf( rng.nextDouble() );
+			return Compare.lt( p, lowerDivTotal )
+					? DecimalUtil.add( minBD,
+							DecimalUtil.sqrt( p.multiply( lowerTimesTotal ) ) )
+					: DecimalUtil.subtract( maxBD,
+							DecimalUtil.sqrt( BigDecimal.ONE.subtract( p )
+									.multiply( upperTimesTotal ) ) );
+		};
+	}
+
+	static <T extends Number> ProbabilityDistribution<Double> createEmpirical(
+		final PseudoRandom rng, final Stream<? extends Number> observations,
+		final int binCount )
+	{
+		// sanity check
+		if( binCount < 1 ) return Thrower
+				.throwNew( IllegalArgumentException::new, () -> "n_bins < 1" );
+		final TreeMap<BigDecimal, Long> counts = observations
+				.collect( Collectors.groupingBy( DecimalUtil::valueOf,
+						TreeMap::new, Collectors.counting() ) );
+		if( counts.size() < binCount )
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "|n| < n_bins" );
+
+		final BigDecimal binSize = DecimalUtil.divide(
+				counts.lastKey().subtract( counts.firstKey() ), binCount );
+		final List<Range<BigDecimal>> bins = IntStream
+				.range( 0,
+						binCount - 1 )
+				.mapToObj( i -> Range.of(
+						counts.firstKey()
+								.add( DecimalUtil.multiply( binSize, i ) ),
+						true,
+						counts.firstKey()
+								.add( DecimalUtil.multiply( binSize, i + 1 ) ),
+						i == binCount - 1 ) )
+				.collect( Collectors.toList() );
+
+		// FIXME use Gaussians per bin, i.e. createNormal( bin_mean, bin_stdev )
+		final ConditionalDistribution<BigDecimal, Range<BigDecimal>> dist = ConditionalDistribution
+				.of( pmf -> createCategorical( rng, pmf ),
+						range -> WeightedValue.listOf( range.apply( counts ) )
+								.stream() );
+
+		return () -> dist.draw( rng.nextElement( bins ) ).doubleValue();
+	}
+
+	static ProbabilityDistribution<Double> createNormal( final PseudoRandom rng,
+		final Number mean, final Number stDev )
+	{
+		return () -> rng.nextGaussian() * stDev.doubleValue()
+				+ mean.doubleValue();
+	}
+
+	static <T> ProbabilityDistribution<T> createUniformCategorical(
+		final PseudoRandom rng, final Stream<T> values )
+	{
+		final List<T> list = values.collect( Collectors.toList() );
+		return () -> rng.nextElement( list );
+	}
+
+	static ProbabilityDistribution<Double> createUniformContinuous(
+		final PseudoRandom rng, final Number min, final Number max )
+	{
+		final double range = max.doubleValue() - min.doubleValue();
+		if( range <= 0 ) return Thrower.throwNew( IllegalArgumentException::new,
+				() -> "range: " + min + " > " + max );
+		return () -> min.doubleValue() + rng.nextDouble() * range;
+	}
+
+	static ProbabilityDistribution<Long> createUniformDiscrete(
+		final PseudoRandom rng, final Number min, final Number max )
+	{
+		final long lower = min.longValue();
+		final long range = max.longValue() - lower;
+		if( range <= 0 ) return Thrower.throwNew( IllegalArgumentException::new,
+				() -> "range: " + min + " > " + max );
+		return () -> lower + rng.nextLong( max.longValue() - lower );
+	}
+
+	static void checkUniformRange( final Range<? extends Number> range )
+	{
+		if( range.lowerInclusive() && range.upperInclusive() ) return;
+
+		Thrower.throwNew( IllegalArgumentException::new,
+				() -> "Exclusive/infinite bounds not allowed: " + range );
 	}
 
 	/**
@@ -244,13 +422,19 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 * @param value the constant to be returned on each draw
 		 * @return a degenerate or deterministic {@link ProbabilityDistribution}
 		 */
-		<T> ProbabilityDistribution<T> createDeterministic( T value );
+		default <T> ProbabilityDistribution<T> createDeterministic( T value )
+		{
+			return ProbabilityDistribution.createDeterministic( value );
+		}
 
 		/**
 		 * @param p
 		 * @return a binomial distribution with n=1
 		 */
-		ProbabilityDistribution<Boolean> createBernoulli( Number p );
+		default ProbabilityDistribution<Boolean> createBernoulli( Number p )
+		{
+			return ProbabilityDistribution.createBernoulli( getStream(), p );
+		}
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -281,15 +465,27 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 *      "https://www.wolframalpha.com/input/?i=bernoulli+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		<T, WV extends WeightedValue<T>> Single<ProbabilityDistribution<T>>
-			createCategorical( Observable<WV> probabilities );
+		default <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
+			createCategorical( final Stream<WV> probabilities )
+		{
+			return ProbabilityDistribution.createCategorical( getStream(),
+					probabilities );
+		}
 
 		default <T, WV extends WeightedValue<T>> ProbabilityDistribution<T>
 			createCategorical( final Iterable<WV> probabilities )
 		{
-			return createCategorical( Observable
-					.fromIterable( Objects.requireNonNull( probabilities ) ) )
-							.blockingGet();
+			return createCategorical( StreamSupport
+					.stream( probabilities.spliterator(), false ) );
+		}
+
+		default <T, WV extends WeightedValue<T>>
+			Single<ProbabilityDistribution<T>>
+			createCategorical( final Observable<WV> probabilities )
+		{
+			return Single.<ProbabilityDistribution<T>>fromCallable(
+					() -> createCategorical(
+							probabilities.blockingIterable() ) );
 		}
 
 		/**
@@ -442,31 +638,73 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 * @return an empirical {@link ProbabilityDistribution} of <em>n/10</em>
 		 *         bins without underlying probability mass function assumptions
 		 */
-		<T extends Number> ProbabilityDistribution<Double> createEmpirical(
-			Iterable<? extends Number> observations, int binCount );
+		default <T extends Number> ProbabilityDistribution<Double>
+			createEmpirical( final Stream<? extends Number> observations,
+				final int binCount )
+		{
+			return ProbabilityDistribution.createEmpirical( getStream(),
+					observations, binCount );
+		}
+
+		default <T extends Number> ProbabilityDistribution<Double>
+			createEmpirical( final Collection<? extends Number> observations )
+		{
+			final int binCount = Math.max( 1,
+					observations.size() / VALUES_PER_BIN );
+			return createEmpirical( observations, binCount );
+		}
 
 		@SuppressWarnings( "unchecked" )
 		default <T extends Number> ProbabilityDistribution<Double>
-			createEmpirical( T... values )
+			createEmpirical( final Iterable<T> observations,
+				final int binCount )
 		{
-			return createEmpirical( Observable.fromArray( values ) )
-					.blockingGet();
+			return createEmpirical(
+					StreamSupport.stream( observations.spliterator(), false ),
+					binCount );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		default <T extends Number> ProbabilityDistribution<Double>
+			createEmpirical( final T... observations )
+		{
+			final int binCount = Math.max( 1,
+					observations.length / VALUES_PER_BIN );
+			return createEmpirical( Arrays.stream( observations ), binCount );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		default <T extends Number> ProbabilityDistribution<Double>
+			createEmpirical( final int binCount, final T... observations )
+		{
+			return createEmpirical( Arrays.stream( observations ), binCount );
 		}
 
 		default <T extends Number> Single<ProbabilityDistribution<Double>>
-			createEmpirical( final Observable<T> values )
+			createEmpirical( final Observable<T> observations )
 		{
-			return createEmpirical( values, 10 );
+			return createEmpirical( observations, VALUES_PER_BIN );
 		}
+
+		int VALUES_PER_BIN = 10;
 
 		default <T extends Number> Single<ProbabilityDistribution<Double>>
 			createEmpirical( final Observable<T> observations,
 				final int valuesPerBin )
 		{
-			final List<T> values = observations.toList().blockingGet();
-			// default to ~10 values per bin
-			final int binCount = Math.max( 1, values.size() / valuesPerBin );
-			return Single.just( createEmpirical( values, binCount ) );
+			return Single.create( sub ->
+			{
+				try
+				{
+					final List<T> values = observations.toList().blockingGet();
+					final int binCount = Math.max( 1,
+							values.size() / valuesPerBin );
+					sub.onSuccess( createEmpirical( values, binCount ) );
+				} catch( final Exception e )
+				{
+					sub.onError( e );
+				}
+			} );
 		}
 
 		/**
@@ -544,8 +782,12 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 *      "https://www.wolframalpha.com/input/?i=normal+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		ProbabilityDistribution<Double> createNormal( Number mean,
-			Number stDev );
+		default ProbabilityDistribution<Double> createNormal( Number mean,
+			Number stDev )
+		{
+			return ProbabilityDistribution.createNormal( getStream(), mean,
+					stDev );
+		}
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -597,17 +839,29 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 * <img alt="Probability density function" height="150" src=
 		 * "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Triangular_distribution_PMF.png/650px-Triangular_distribution_PMF.png"/>
 		 * 
-		 * @param a <em>min</em>
-		 * @param b <em>peak</em>
-		 * @param c <em>max</em>
+		 * @param min
+		 * @param max
+		 * @param mode
 		 * @return a triangular {@link ProbabilityDistribution}
 		 * @see <a href="https://www.wikiwand.com/en/Triangular_distribution">
 		 *      Wikipedia</a> and <a href=
 		 *      "https://www.wolframalpha.com/input/?i=triangular+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		ProbabilityDistribution<Double> createTriangular( Number a, Number b,
-			Number c );
+		default ProbabilityDistribution<Double> createTriangular( Number min,
+			Number max, Number mode )
+		{
+			return ProbabilityDistribution
+					.createTriangular( getStream(), min, max, mode )
+					.map( Number::doubleValue );
+		}
+
+		default ProbabilityDistribution<BigDecimal> createTriangular(
+			final BigDecimal min, final BigDecimal max, final BigDecimal mode )
+		{
+			return ProbabilityDistribution.createTriangular( getStream(), min,
+					max, mode );
+		}
 
 		/**
 		 * <img alt="Probability density function" height="150" src=
@@ -622,8 +876,12 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 *      "https://www.wolframalpha.com/input/?i=discrete+uniform+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		ProbabilityDistribution<Long> createUniformDiscrete( Number min,
-			Number max );
+		default ProbabilityDistribution<Long> createUniformDiscrete( Number min,
+			Number max )
+		{
+			return ProbabilityDistribution.createUniformDiscrete( getStream(),
+					min, max );
+		}
 
 		default ProbabilityDistribution<Long>
 			createUniformDiscrete( final Range<? extends Number> range )
@@ -646,8 +904,12 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 *      "https://www.wolframalpha.com/input/?i=uniform+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		ProbabilityDistribution<Double> createUniformContinuous( Number min,
-			Number max );
+		default ProbabilityDistribution<Double>
+			createUniformContinuous( Number min, Number max )
+		{
+			return ProbabilityDistribution.createUniformContinuous( getStream(),
+					min, max );
+		}
 
 		default ProbabilityDistribution<Double>
 			createUniformContinuous( final Range<? extends Number> range )
@@ -670,15 +932,43 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 *      "https://www.wolframalpha.com/input/?i=discrete+uniform+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		<T> Single<ProbabilityDistribution<T>>
-			createUniformCategorical( Observable<T> values );
+		default <T> Single<ProbabilityDistribution<T>>
+			createUniformCategorical( Observable<T> values )
+		{
+			return Single.create( sub ->
+			{
+				try
+				{
+					sub.onSuccess( createUniformCategorical(
+							values.blockingIterable() ) );
+				} catch( final Exception e )
+				{
+					sub.onError( e );
+				}
+			} );
+		}
 
 		@SuppressWarnings( "unchecked" )
 		default <T> ProbabilityDistribution<T>
-			createUniformCategorical( T... values )
+			createUniformCategorical( final Iterable<T> values )
 		{
-			return createUniformCategorical( Observable.fromArray( values ) )
-					.blockingGet();
+			return createUniformCategorical(
+					StreamSupport.stream( values.spliterator(), false ) );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		default <T> ProbabilityDistribution<T>
+			createUniformCategorical( final Stream<T> values )
+		{
+			return ProbabilityDistribution
+					.createUniformCategorical( getStream(), values );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		default <T> ProbabilityDistribution<T>
+			createUniformCategorical( final T... values )
+		{
+			return createUniformCategorical( Arrays.stream( values ) );
 		}
 
 		/**
@@ -695,14 +985,6 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 */
 		ProbabilityDistribution<Double> createWeibull( Number alpha,
 			Number beta );
-
-		static void checkUniformRange( final Range<? extends Number> range )
-		{
-			if( range.lowerInclusive() && range.upperInclusive() ) return;
-
-			Thrower.throwNew( IllegalArgumentException::new,
-					() -> "Exclusive/infinite bounds not allowed: " + range );
-		}
 	}
 
 	interface Parser
