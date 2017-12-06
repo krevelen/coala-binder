@@ -547,11 +547,74 @@ public class JsonUtil
 	}
 
 	/**
+	 * @param node an {@link ObjectNode}
+	 * @param property the property name of the required {@link ObjectNode}
+	 * @return
+	 */
+	public static ObjectNode with( final JsonNode json, final String property )
+	{
+		return (ObjectNode) json.with( property );
+	}
+
+	/**
+	 * @param json {property: {key1: val1, key2: val2, ...}}
+	 * @param property
+	 * @return the (synchronous) stream
+	 */
+	public static Stream<Entry<String, JsonNode>> stream( final JsonNode json,
+		final String property )
+	{
+		return stream( json, property, false );
+	}
+
+	/**
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @return the (synchronous) stream
+	 */
+	public static Stream<Entry<String, JsonNode>> stream( final JsonNode json )
+	{
+		return stream( json, false );
+	}
+
+	/**
+	 * @param json {property: {key1: val1, key2: val2, ...}}
+	 * @param property
+	 * @return the (synchronous) stream
+	 */
+	public static Stream<Entry<String, JsonNode>>
+		parallelStream( final JsonNode json, final String property )
+	{
+		return stream( json, property, true );
+	}
+
+	/**
+	 * @param json {key1: val1, key2: val2, ...}
+	 * @return the (synchronous) stream
+	 */
+	public static Stream<Entry<String, JsonNode>>
+		parallelStream( final JsonNode json, final boolean parallel )
+	{
+		return stream( json, true );
+	}
+
+	/**
+	 * @param json {property: {key1: val1, key2: val2, ...}}
+	 * @param property
+	 * @param parallel
+	 * @return the (synchronous) stream
+	 */
+	public static Stream<Entry<String, JsonNode>> stream( final JsonNode json,
+		final String property, final boolean parallel )
+	{
+		return stream( with( json, property ), parallel );
+	}
+
+	/**
 	 * @param json {key1: val1, key2: val2, ...}
 	 * @param parallel
 	 * @return the (synchronous) stream
 	 */
-	public static Stream<Entry<String, JsonNode>> stream( final ObjectNode json,
+	public static Stream<Entry<String, JsonNode>> stream( final JsonNode json,
 		final boolean parallel )
 	{
 		return StreamSupport.stream(
@@ -561,11 +624,11 @@ public class JsonUtil
 	}
 
 	/**
-	 * @param json {key1: val1, key2: val2, ...}
+	 * @param json e.g. {key1: val1, key2: val2, ...} or [val1, val2, ...]
 	 * @return {@link Observable} stream of {@link JsonNode} mappings
 	 */
 	public static Observable<Entry<String, JsonNode>>
-		streamAsync( final ObjectNode json )
+		streamAsync( final JsonNode json )
 	{
 		return Observable.fromIterable(
 				(Iterable<Entry<String, JsonNode>>) () -> json.fields() );
