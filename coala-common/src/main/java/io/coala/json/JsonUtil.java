@@ -624,6 +624,17 @@ public class JsonUtil
 	}
 
 	/**
+	 * @param json [val1, val2, ...]
+	 * @return the (synchronous) stream
+	 */
+	public static Stream<Entry<Integer, JsonNode>>
+		stream( final ArrayNode json )
+	{
+		return IntStream.range( 0, json.size() )
+				.mapToObj( i -> Collections.entry( i, json.get( i ) ) );
+	}
+
+	/**
 	 * @param json e.g. {key1: val1, key2: val2, ...} or [val1, val2, ...]
 	 * @return {@link Observable} stream of {@link JsonNode} mappings
 	 */

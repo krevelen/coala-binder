@@ -143,9 +143,10 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 				.filter( wv ->
 				{
 					final BigDecimal w = (BigDecimal) wv.getWeight();
-					if( w.signum() < 1 )
-						Thrower.throwNew( IllegalArgumentException::new,
-								() -> "Illegal weighted value: " + wv );
+					if( w.signum() < 0 )
+						return Thrower.throwNew( IllegalArgumentException::new,
+								() -> "Illegal value weight: " + wv );
+					if( w.signum() == 0 ) return false;
 					sum.updateAndGet( s -> s.add( w ) );
 					return true;
 				} )
