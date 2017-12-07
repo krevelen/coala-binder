@@ -64,15 +64,23 @@ public interface JsonConfigurable<THIS extends JsonConfigurable<?>>
 	{
 		if( config() == null ) return defaultValue;
 		final JsonNode node = config().get( key );
-		return node.isNumber() ? node.asDouble() > 0
-				: node.asBoolean( defaultValue );
+		return node != null && //node.isNumber() ? node.asDouble() > 0 :
+				node.asBoolean( defaultValue );
 	}
 
 	default int fromConfig( final String key, final int defaultValue )
 	{
 		if( config() == null ) return defaultValue;
 		final JsonNode node = config().get( key );
-		return node.isNumber() ? node.asInt() : defaultValue;
+		return node != null && node.isNumber() ? node.asInt() : defaultValue;
+	}
+
+	default double fromConfig( final String key, final double defaultValue )
+	{
+		if( config() == null ) return defaultValue;
+		final JsonNode node = config().get( key );
+		return node != null && node.isNumber() ? node.asDouble( defaultValue )
+				: defaultValue;
 	}
 
 	default String fromConfig( final String key, final String defaultValue )

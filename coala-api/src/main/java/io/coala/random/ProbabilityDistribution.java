@@ -183,8 +183,8 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 	}
 
 	static <T extends Number> ProbabilityDistribution<BigDecimal>
-		createTriangular( final PseudoRandom rng, final T min, final T max,
-			final T mode )
+		createTriangular( final PseudoRandom rng, final T min, final T mode,
+			final T max )
 	{
 		final BigDecimal modeBD = DecimalUtil.valueOf( mode ),
 				minBD = DecimalUtil.valueOf( min ),
@@ -849,19 +849,19 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 		 *      "https://www.wolframalpha.com/input/?i=triangular+distribution">
 		 *      Wolfram &alpha;</a>
 		 */
-		default ProbabilityDistribution<Double> createTriangular( Number min,
-			Number max, Number mode )
+		default ProbabilityDistribution<Double> createTriangular(
+			final Number min, final Number mode, final Number max )
 		{
 			return ProbabilityDistribution
-					.createTriangular( getStream(), min, max, mode )
+					.createTriangular( getStream(), min, mode, max )
 					.map( Number::doubleValue );
 		}
 
 		default ProbabilityDistribution<BigDecimal> createTriangular(
-			final BigDecimal min, final BigDecimal max, final BigDecimal mode )
+			final BigDecimal min, final BigDecimal mode, final BigDecimal max )
 		{
 			return ProbabilityDistribution.createTriangular( getStream(), min,
-					max, mode );
+					mode, max );
 		}
 
 		/**

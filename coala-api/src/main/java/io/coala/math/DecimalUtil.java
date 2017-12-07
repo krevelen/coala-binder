@@ -229,7 +229,7 @@ public class DecimalUtil implements Util
 
 	/**
 	 * for difference between scale (decimals) and precision (significance), see
-	 * e.g. http://stackoverflow.com/a/13461270/1418999
+	 * e.g. http://stackoverflow.com/a/13461270
 	 * 
 	 * @param value the {@link Number} to scale
 	 * @param scale the number of decimals with {@link #DEFAULT_CONTEXT}

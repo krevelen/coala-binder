@@ -189,170 +189,180 @@ public class DistributionParser implements ProbabilityDistribution.Parser
 			return ProbabilityDistribution.createDeterministic( value );
 		}
 
-		// FIXME use some singleton/modular registration of types and labels
-		switch( label.trim().toLowerCase( Locale.ROOT ) )
+		try
 		{
-		case "const":
-		case "constant":
-		case "degen":
-		case "degenerate":
-		case "determ":
-		case "deterministic":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createDeterministic( args.get( 0 ).getValue() );
+			// FIXME use some singleton/modular registration of types and labels
+			switch( label.trim().toLowerCase( Locale.ROOT ) )
+			{
+			case "const":
+			case "constant":
+			case "degen":
+			case "degenerate":
+			case "determ":
+			case "deterministic":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createDeterministic( args.get( 0 ).getValue() );
 
-		case "p":
-		case "bool":
-		case "bernoulli":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createBernoulli( (Number) args.get( 0 ).getValue() );
+			case "p":
+			case "bool":
+			case "bernoulli":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createBernoulli( (Number) args.get( 0 ).getValue() );
 
-		case "binom":
-		case "binomial":
-			return (ProbabilityDistribution<T>) getFactory().createBinomial(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "binom":
+			case "binomial":
+				return (ProbabilityDistribution<T>) getFactory().createBinomial(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "enum":
-		case "enumerated":
-		case "categorical":
-		case "multinoulli":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createCategorical( args );
+			case "enum":
+			case "enumerated":
+			case "categorical":
+			case "multinoulli":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createCategorical( args );
 
-		case "geom":
-		case "geometric":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createGeometric( (Number) args.get( 0 ).getValue() );
+			case "geom":
+			case "geometric":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createGeometric( (Number) args.get( 0 ).getValue() );
 
-		case "hypergeom":
-		case "hypergeometric":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createHypergeometric( (Number) args.get( 0 ).getValue(),
-							(Number) args.get( 1 ).getValue(),
-							(Number) args.get( 2 ).getValue() );
+			case "hypergeom":
+			case "hypergeometric":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createHypergeometric(
+								(Number) args.get( 0 ).getValue(),
+								(Number) args.get( 1 ).getValue(),
+								(Number) args.get( 2 ).getValue() );
 
-		case "pascal":
-			return (ProbabilityDistribution<T>) getFactory().createPascal(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "pascal":
+				return (ProbabilityDistribution<T>) getFactory().createPascal(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "poisson":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createPoisson( (Number) args.get( 0 ).getValue() );
+			case "poisson":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createPoisson( (Number) args.get( 0 ).getValue() );
 
-		case "zipf":
-			return (ProbabilityDistribution<T>) getFactory().createZipf(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "zipf":
+				return (ProbabilityDistribution<T>) getFactory().createZipf(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "beta":
-			return (ProbabilityDistribution<T>) getFactory().createBeta(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "beta":
+				return (ProbabilityDistribution<T>) getFactory().createBeta(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "cauchy":
-		case "cauchy-lorentz":
-		case "lorentz":
-		case "lorentzian":
-		case "breit-wigner":
-			return (ProbabilityDistribution<T>) getFactory().createCauchy(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "cauchy":
+			case "cauchy-lorentz":
+			case "lorentz":
+			case "lorentzian":
+			case "breit-wigner":
+				return (ProbabilityDistribution<T>) getFactory().createCauchy(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "chi":
-		case "chisquare":
-		case "chisquared":
-		case "chi-square":
-		case "chi-squared":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createChiSquared( (Number) args.get( 0 ).getValue() );
+			case "chi":
+			case "chisquare":
+			case "chisquared":
+			case "chi-square":
+			case "chi-squared":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createChiSquared( (Number) args.get( 0 ).getValue() );
 
-		case "exp":
-		case "exponent":
-		case "exponential":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createExponential( (Number) args.get( 0 ).getValue() );
+			case "exp":
+			case "exponent":
+			case "exponential":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createExponential( (Number) args.get( 0 ).getValue() );
 
-		case "pearson6":
-		case "beta-prime":
-		case "inverted-beta":
-		case "f":
-			return (ProbabilityDistribution<T>) getFactory().createF(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "pearson6":
+			case "beta-prime":
+			case "inverted-beta":
+			case "f":
+				return (ProbabilityDistribution<T>) getFactory().createF(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "pearson3":
-		case "erlang": // where arg1 is an integer)
-		case "gamma":
-			return (ProbabilityDistribution<T>) getFactory().createGamma(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "pearson3":
+			case "erlang": // where arg1 is an integer)
+			case "gamma":
+				return (ProbabilityDistribution<T>) getFactory().createGamma(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "levy":
-			return (ProbabilityDistribution<T>) getFactory().createLevy(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "levy":
+				return (ProbabilityDistribution<T>) getFactory().createLevy(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "lognormal":
-		case "log-normal":
-		case "gibrat":
-			return (ProbabilityDistribution<T>) getFactory().createLogNormal(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "lognormal":
+			case "log-normal":
+			case "gibrat":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createLogNormal( (Number) args.get( 0 ).getValue(),
+								(Number) args.get( 1 ).getValue() );
 
-		case "gauss":
-		case "gaussian":
-		case "normal":
-			return (ProbabilityDistribution<T>) getFactory().createNormal(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "gauss":
+			case "gaussian":
+			case "normal":
+				return (ProbabilityDistribution<T>) getFactory().createNormal(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "pareto":
-		case "pareto1":
-			return (ProbabilityDistribution<T>) getFactory().createPareto(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "pareto":
+			case "pareto1":
+				return (ProbabilityDistribution<T>) getFactory().createPareto(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
 
-		case "students-t":
-		case "t":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createT( (Number) args.get( 0 ).getValue() );
+			case "students-t":
+			case "t":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createT( (Number) args.get( 0 ).getValue() );
 
-		case "tria":
-		case "triangular":
-			return (ProbabilityDistribution<T>) getFactory().createTriangular(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue(),
-					(Number) args.get( 2 ).getValue() );
+			case "tria":
+			case "triangular":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createTriangular( (Number) args.get( 0 ).getValue(),
+								(Number) args.get( 1 ).getValue(),
+								(Number) args.get( 2 ).getValue() );
 
-		case "uniform-discrete":
-		case "uniform-integer":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createUniformDiscrete( (Number) args.get( 0 ).getValue(),
-							(Number) args.get( 1 ).getValue() );
+			case "uniform-discrete":
+			case "uniform-integer":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createUniformDiscrete(
+								(Number) args.get( 0 ).getValue(),
+								(Number) args.get( 1 ).getValue() );
 
-		case "uniform":
-		case "uniform-real":
-		case "uniform-continuous":
-			return (ProbabilityDistribution<T>) getFactory()
-					.createUniformContinuous( (Number) args.get( 0 ).getValue(),
-							(Number) args.get( 1 ).getValue() );
+			case "uniform":
+			case "uniform-real":
+			case "uniform-continuous":
+				return (ProbabilityDistribution<T>) getFactory()
+						.createUniformContinuous(
+								(Number) args.get( 0 ).getValue(),
+								(Number) args.get( 1 ).getValue() );
 
-		case "uniform-enum":
-		case "uniform-enumerated":
-		case "uniform-categorical":
-			final List<T> values = new ArrayList<>();
-			for( WeightedValue<V> pair : args )
-				values.add( (T) pair.getValue() );
-			return (ProbabilityDistribution<T>) getFactory()
-					.createUniformCategorical( values.toArray() );
+			case "uniform-enum":
+			case "uniform-enumerated":
+			case "uniform-categorical":
+				final List<T> values = new ArrayList<>();
+				for( WeightedValue<V> pair : args )
+					values.add( (T) pair.getValue() );
+				return (ProbabilityDistribution<T>) getFactory()
+						.createUniformCategorical( values.toArray() );
 
-		case "frechet":
-		case "weibull":
-			return (ProbabilityDistribution<T>) getFactory().createWeibull(
-					(Number) args.get( 0 ).getValue(),
-					(Number) args.get( 1 ).getValue() );
+			case "frechet":
+			case "weibull":
+				return (ProbabilityDistribution<T>) getFactory().createWeibull(
+						(Number) args.get( 0 ).getValue(),
+						(Number) args.get( 1 ).getValue() );
+			}
+		} catch( final Exception e )
+		{
+			return Thrower.throwNew( IllegalArgumentException::new,
+					() -> "Problem constructing " + label + args, e );
 		}
 		throw new ParseException( "Unknown distribution symbol: " + label, 0 );
 	}

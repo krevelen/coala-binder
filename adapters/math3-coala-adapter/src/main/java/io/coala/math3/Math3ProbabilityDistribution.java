@@ -460,11 +460,11 @@ public abstract class Math3ProbabilityDistribution<S>
 
 		@Override
 		public ProbabilityDistribution<Double> createTriangular( final Number a,
-			final Number b, final Number c )
+			final Number c, final Number b )
 		{
 			return Math3ProbabilityDistribution
 					.of( new TriangularDistribution( this.rng, a.doubleValue(),
-							b.doubleValue(), c.doubleValue() )
+							c.doubleValue(), b.doubleValue() )
 //					, this.stream, a, b, c 
 			);
 		}
