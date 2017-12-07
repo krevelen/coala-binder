@@ -68,6 +68,13 @@ public interface JsonConfigurable<THIS extends JsonConfigurable<?>>
 				: node.asBoolean( defaultValue );
 	}
 
+	default int fromConfig( final String key, final int defaultValue )
+	{
+		if( config() == null ) return defaultValue;
+		final JsonNode node = config().get( key );
+		return node.isNumber() ? node.asInt() : defaultValue;
+	}
+
 	default String fromConfig( final String key, final String defaultValue )
 	{
 		if( config() == null ) return defaultValue;
@@ -77,6 +84,8 @@ public interface JsonConfigurable<THIS extends JsonConfigurable<?>>
 
 	default String fromConfigNonEmpty( final String key )
 	{
+		if( config() == null ) Thrower.throwNew( IllegalStateException::new,
+				() -> "No config for " + stringify() );
 		final String result = Objects
 				.requireNonNull( config().get( key ),
 						"Missing '" + key + "' in config: " + config() )
