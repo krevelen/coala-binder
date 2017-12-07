@@ -116,6 +116,19 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 	}
 
 	/**
+	 * matches string representations like: <code>&#x3008;&larr;; +inf></code>
+	 * or <code>[10 year; 12 year]</code>
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <Q extends Quantity<Q>> Range<ComparableQuantity<Q>>
+		parseQuantity( final String range, final Class<Q> dim )
+			throws ParseException
+	{
+		return parse( range, QuantityUtil::valueOf )
+				.map( q -> q.asType( dim ) );
+	}
+
+	/**
 	 * @param timeRange
 	 * @param valueType
 	 * @return

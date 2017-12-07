@@ -102,10 +102,7 @@ public interface ConditionalDistribution<T, C>
 		return c ->
 		{
 			final ProbabilityDistribution<T> dist = distGen.apply( c );
-			return dist == null
-					? Thrower.throwNew( IllegalArgumentException::new,
-							() -> "Distribution undefined for condition: " + c )
-					: dist.draw();
+			return dist == null ? null : dist.draw();
 		};
 	}
 
