@@ -75,79 +75,7 @@ public class Guice4LocalBinder implements LocalBinder
 			@Override
 			public void configure()
 			{
-				bindListener( Matchers.any(), new TypeListener()
-				{
-					@Override
-					public <T> void hear( final TypeLiteral<T> typeLiteral,
-						final TypeEncounter<T> typeEncounter )
-					{
-						for( Class<?> clazz = typeLiteral
-								.getRawType(); clazz != Object.class; clazz = clazz
-										.getSuperclass() )
-						{
-							for( Field field : clazz.getDeclaredFields() )
-							{
-								if( field.isAnnotationPresent(
-										InjectLogger.class )
-										// also provide @Inject fields of Logger 
-										|| (field.isAnnotationPresent(
-												Inject.class )
-												&& (field
-														.getType() == Logger.class
-														|| field.getType() == org.slf4j.Logger.class
-														|| field.getType() == java.util.logging.Logger.class)) )
-								{
-									typeEncounter.register(
-											// replace default logger
-											(InjectionListener<T>) t -> InjectLogger.Util
-													.injectLogger( t, field ) );
-								} else if( field.isAnnotationPresent(
-										InjectConfig.class ) )
-								{
-									typeEncounter
-											.register( (MembersInjector<T>) t ->
-											{
-												if( Config.class
-														.isAssignableFrom( field
-																.getType() ) )
-													InjectConfig.Util
-															.injectConfig( t,
-																	field,
-																	Integer.toHexString(
-																			binder.hashCode() ),
-																	binder.configs
-																			.get( field
-																					.getDeclaringClass() ) );
-												else
-													InjectConfig.Util
-															.injectFromJson( t,
-																	field,
-																	binder.configs
-																			.get( field
-																					.getDeclaringClass() ) );
-											} );
-								} else if( field.isAnnotationPresent(
-										InjectProxy.class ) )
-								{
-									typeEncounter.register(
-											(MembersInjector<T>) t -> InjectProxy.Util
-													.injectProxy( t, field,
-															() -> binder.inject(
-																	Invoker.class ) ) );
-								} else if( field.isAnnotationPresent(
-										InjectDist.class ) )
-								{
-									typeEncounter.register(
-											(MembersInjector<T>) t -> InjectDist.Util
-													.injectDistribution( t,
-															field,
-															() -> binder.inject(
-																	ProbabilityDistribution.Parser.class ) ) );
-								}
-							}
-						}
-					}
-				} );
+				bindListener( Matchers.any(), binder::hear );
 
 				// binds itself, how nice :-)
 				bind( LocalBinder.class ).toInstance( binder );
@@ -176,7 +104,7 @@ public class Guice4LocalBinder implements LocalBinder
 					final Class<?> impl = binding.implementation();
 					Objects.requireNonNull( impl,
 							ProviderConfig.IMPLEMENTATION_KEY + " not set for "
-									+ " for " + binding.base() );
+									+ binding.base() );
 					final boolean singleton = binding.singleton();
 					final boolean mutable = binding.mutable();
 					final boolean initable = binding.initable();
@@ -486,5 +414,62 @@ public class Guice4LocalBinder implements LocalBinder
 	{
 		this.configs.put( type, config );
 		return this.inject( type );
+	}
+
+	/**
+	 * see {@link TypeListener#hear}
+	 * 
+	 * @param typeLiteral
+	 * @param typeEncounter
+	 */
+	private <T> void hear( final TypeLiteral<T> typeLiteral,
+		final TypeEncounter<T> typeEncounter )
+	{
+		for( Class<?> clazz = typeLiteral
+				.getRawType(); clazz != Object.class; clazz = clazz
+						.getSuperclass() )
+		{
+			for( Field field : clazz.getDeclaredFields() )
+			{
+				if( field.isAnnotationPresent( InjectLogger.class )
+						// also provide @Inject fields of Logger 
+						|| (field.isAnnotationPresent( Inject.class ) && (field
+								.getType() == Logger.class
+								|| field.getType() == org.slf4j.Logger.class
+								|| field.getType() == java.util.logging.Logger.class)) )
+				{
+					typeEncounter.register(
+							// replace default logger
+							(InjectionListener<T>) t -> InjectLogger.Util
+									.injectLogger( t, field ) );
+				} else if( field.isAnnotationPresent( InjectConfig.class ) )
+				{
+					typeEncounter.register( (MembersInjector<T>) t ->
+					{
+						if( Config.class.isAssignableFrom( field.getType() ) )
+							InjectConfig.Util.injectConfig( t, field,
+									Integer.toHexString( this.hashCode() ),
+									this.configs
+											.get( typeLiteral.getRawType() ) );
+						else
+							InjectConfig.Util.injectFromJson( t, field,
+									this.configs
+											.get( typeLiteral.getRawType() ) );
+					} );
+				} else if( field.isAnnotationPresent( InjectProxy.class ) )
+				{
+					typeEncounter.register(
+							(MembersInjector<T>) t -> InjectProxy.Util
+									.injectProxy( t, field,
+											() -> inject( Invoker.class ) ) );
+				} else if( field.isAnnotationPresent( InjectDist.class ) )
+				{
+					typeEncounter
+							.register( (MembersInjector<T>) t -> InjectDist.Util
+									.injectDistribution( t, field, () -> inject(
+											ProbabilityDistribution.Parser.class ) ) );
+				}
+			}
+		}
 	}
 }
