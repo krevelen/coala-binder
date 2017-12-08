@@ -38,6 +38,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.Logger;
 
@@ -540,9 +541,59 @@ public interface Table<T extends Table.Tuple>
 			return this.stringifier.get();
 		}
 
+		@SuppressWarnings( "unchecked" )
+		public String toString( final Class<? extends Property>... properties )
+		{
+			return properties == null ? "[]"
+					: toString( Arrays.stream( properties ) );
+		}
+
+		public String
+			toString( final Iterable<Class<? extends Property>> properties )
+		{
+			return properties == null ? "[]"
+					: toString( StreamSupport.stream( properties.spliterator(),
+							false ) );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		public String
+			toString( final Stream<Class<? extends Property>> properties )
+		{
+			final String sep = ", ";
+			return properties
+					.<StringBuilder>map(
+							p -> new StringBuilder( p.getSimpleName() )
+									.append( '=' )
+									.append( String
+											.valueOf( (Object) get( p ) ) ) )
+					.collect( () -> new StringBuilder( '[' ),
+							( s, v ) -> s.append( sep ).append( v ),
+							( s1, s2 ) -> s1.append( sep ).append( s2 ) )
+					.append( ']' ).toString();
+		}
+
 		public Object key()
 		{
 			return this.key;
+		}
+
+		@SuppressWarnings( "unchecked" )
+		public Map<Class<? extends Property>, Object>
+			toMap( final Class<? extends Property>... properties )
+		{
+			return properties == null || properties.length == 0
+					|| properties[0] == null ? Collections.emptyMap()
+							: toMap( Arrays.stream( properties ) );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		public Map<Class<? extends Property>, Object>
+			toMap( final Iterable<Class<? extends Property>> properties )
+		{
+			return properties == null ? Collections.emptyMap()
+					: toMap( StreamSupport.stream( properties.spliterator(),
+							false ) );
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -572,8 +623,8 @@ public interface Table<T extends Table.Tuple>
 			set( property.getClass(), property.get() );
 		}
 
-		public <K extends Property<V>, V> void
-			set( final Class<K> propertyType, final V value )
+		public <K extends Property<V>, V> void set( final Class<K> propertyType,
+			final V value )
 		{
 			this.setter.accept( propertyType, value );
 		}
