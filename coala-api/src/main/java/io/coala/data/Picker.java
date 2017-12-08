@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.Logger;
-
-import io.coala.log.LogUtil;
 import io.coala.math.Range;
 import io.coala.random.ProbabilityDistribution;
 import io.coala.random.PseudoRandom;
@@ -55,6 +52,12 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 		return (T) parent().draw();
 	}
 
+	@SuppressWarnings( "unchecked" )
+	default T draw( final DeviationConfirmer onDeviation )
+	{
+		return (T) parent().draw( onDeviation );
+	}
+
 	default List<Comparable<?>> filter()
 	{
 		return parent().filter();
@@ -63,6 +66,68 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 	default IndexPartition index()
 	{
 		return parent().index();
+	}
+
+	@FunctionalInterface
+	interface DeviationConfirmer
+	{
+		boolean confirm( Comparable<?>[] filter, Class<?> property,
+			Range<?> bin );
+
+	}
+
+	static <T extends Table.Tuple> Root<T> of( final Table<T> source,
+		final PseudoRandom rng )
+	{
+		return of( source, rng, Throwable::printStackTrace );
+	}
+
+	static <T extends Table.Tuple> Root<T> of( final Table<T> source,
+		final PseudoRandom rng, final Consumer<Throwable> onError )
+	{
+		return of( source, rng, ( filter, k, v ) -> true, onError );
+	}
+
+	static <T extends Table.Tuple> Root<T> of( final Table<T> source,
+		final PseudoRandom rng, final DeviationConfirmer defaultConfirmer,
+		final Consumer<Throwable> onError )
+	{
+		final IndexPartition index = new IndexPartition( source, onError );
+		return new Root<T>()
+		{
+			final List<Comparable<?>> filter = new ArrayList<>();
+
+			@Override
+			public T draw()
+			{
+				return draw( defaultConfirmer );
+			}
+
+			@Override
+			public T draw( final DeviationConfirmer onDeviation )
+			{
+				@SuppressWarnings( "rawtypes" )
+				final Comparable[] filterArgs = this.filter
+						.toArray( new Comparable[this.filter.size()] );
+				this.filter.clear();
+				final List<Object> selection = index.nearestKeys(
+						( k, v ) -> onDeviation.confirm( filterArgs, k, v ),
+						filterArgs );
+				return source.select( rng.nextElement( selection ) );
+			}
+
+			@Override
+			public List<Comparable<?>> filter()
+			{
+				return this.filter;
+			}
+
+			@Override
+			public IndexPartition index()
+			{
+				return index;
+			}
+		};
 	}
 
 	interface Root<T extends Table.Tuple> extends Picker<Root<T>, T>
@@ -111,62 +176,6 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 			final THIS parent = (THIS) this;
 			return Groups.of( parent );
 		}
-	}
-
-	static <T extends Table.Tuple> Root<T> of( final Table<T> source,
-		final PseudoRandom rng, final Consumer<Throwable> onError )
-	{
-		final Logger log = LogUtil.getLogger( Picker.class );
-		return of( source, rng, ( filter, k, v ) ->
-		{
-			log.trace( "Pick [{};{}] deviates: {} in {}", filter,
-					k.getSimpleName(), v );
-			return true;
-		}, e -> log.error( "Problem while re-indexing", e ) );
-	}
-
-	@FunctionalInterface
-	interface DeviationConfirmer
-	{
-		boolean confirm( Comparable<?>[] filter, Class<?> property,
-			Range<?> bin );
-
-	}
-
-	static <T extends Table.Tuple> Root<T> of( final Table<T> source,
-		final PseudoRandom rng, final DeviationConfirmer onDeviation,
-		final Consumer<Throwable> onError )
-	{
-		final IndexPartition index = new IndexPartition( source, onError );
-		return new Root<T>()
-		{
-			final List<Comparable<?>> filter = new ArrayList<>();
-
-			@Override
-			public T draw()
-			{
-				@SuppressWarnings( "rawtypes" )
-				final Comparable[] filterArgs = this.filter
-						.toArray( new Comparable[this.filter.size()] );
-				this.filter.clear();
-				final List<Object> selection = index.nearestKeys(
-						( k, v ) -> onDeviation.confirm( filterArgs, k, v ),
-						filterArgs );
-				return source.select( rng.nextElement( selection ) );
-			}
-
-			@Override
-			public List<Comparable<?>> filter()
-			{
-				return this.filter;
-			}
-
-			@Override
-			public IndexPartition index()
-			{
-				return index;
-			}
-		};
 	}
 
 	@SuppressWarnings( "rawtypes" )
