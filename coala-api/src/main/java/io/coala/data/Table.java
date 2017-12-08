@@ -508,6 +508,9 @@ public interface Table<T extends Table.Tuple>
 	class Tuple
 	{
 
+		private static final char start = '[', end = ']', eq = ':';
+		private static final String delim = "; ";
+
 		private Object key;
 
 		private Observer<Change> emitter;
@@ -545,8 +548,9 @@ public interface Table<T extends Table.Tuple>
 		@SuppressWarnings( "unchecked" )
 		public Pretty pretty( final Class<? extends Property>... properties )
 		{
-			return pretty(
-					properties == null ? null : Arrays.stream( properties ) );
+			return pretty( properties == null || properties.length == 0
+					|| properties[0] == null ? null
+							: Arrays.stream( properties ) );
 		}
 
 		public Pretty
@@ -556,14 +560,11 @@ public interface Table<T extends Table.Tuple>
 					: StreamSupport.stream( properties.spliterator(), false ) );
 		}
 
-		private static final char start = '[', end = ']', eq = ':';
-		private static final String delim = "; ", empty = "[]";
-
 		@SuppressWarnings( "unchecked" )
 		public Pretty
 			pretty( final Stream<Class<? extends Property>> properties )
 		{
-			return Pretty.of( () -> properties == null ? empty
+			return Pretty.of( () -> properties == null ? toString()
 					: properties
 							.<StringBuilder>map(
 									p -> new StringBuilder( p.getSimpleName() )
