@@ -45,6 +45,7 @@ import org.apache.logging.log4j.Logger;
 import io.coala.data.Table.Property;
 import io.coala.exception.Thrower;
 import io.coala.log.LogUtil;
+import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
 import io.coala.util.MapBuilder;
 import io.coala.util.TypeArguments;
@@ -542,35 +543,39 @@ public interface Table<T extends Table.Tuple>
 		}
 
 		@SuppressWarnings( "unchecked" )
-		public String toString( final Class<? extends Property>... properties )
+		public Pretty pretty( final Class<? extends Property>... properties )
 		{
-			return properties == null ? "[]"
-					: toString( Arrays.stream( properties ) );
+			return pretty(
+					properties == null ? null : Arrays.stream( properties ) );
 		}
 
-		public String
-			toString( final Iterable<Class<? extends Property>> properties )
+		public Pretty
+			pretty( final Iterable<Class<? extends Property>> properties )
 		{
-			return properties == null ? "[]"
-					: toString( StreamSupport.stream( properties.spliterator(),
-							false ) );
+			return pretty( properties == null ? null
+					: StreamSupport.stream( properties.spliterator(), false ) );
 		}
+
+		private static final char start = '[', end = ']', eq = ':';
+		private static final String delim = "; ", empty = "[]";
 
 		@SuppressWarnings( "unchecked" )
-		public String
-			toString( final Stream<Class<? extends Property>> properties )
+		public Pretty
+			pretty( final Stream<Class<? extends Property>> properties )
 		{
-			final String sep = ", ";
-			return properties
-					.<StringBuilder>map(
-							p -> new StringBuilder( p.getSimpleName() )
-									.append( '=' )
-									.append( String
-											.valueOf( (Object) get( p ) ) ) )
-					.collect( () -> new StringBuilder( '[' ),
-							( s, v ) -> s.append( sep ).append( v ),
-							( s1, s2 ) -> s1.append( sep ).append( s2 ) )
-					.append( ']' ).toString();
+			return Pretty.of( () -> properties == null ? empty
+					: properties
+							.<StringBuilder>map(
+									p -> new StringBuilder( p.getSimpleName() )
+											.append( eq )
+											.append( String.valueOf(
+													(Object) get( p ) ) ) )
+							.collect( () -> new StringBuilder(), ( s,
+								v ) -> (s.length() == 0 ? s.append( start )
+										: s.append( delim )).append( v ),
+									( s1, s2 ) -> s1.append( delim )
+											.append( s2 ) )
+							.append( end ) );
 		}
 
 		public Object key()
