@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.ujmp.core.Matrix;
 
-import io.coala.data.Picker.Groups;
+import io.coala.data.Picker.Branch;
 import io.coala.data.Picker.Root;
 import io.coala.data.Table.Property;
 import io.coala.data.Table.Tuple;
@@ -95,7 +95,7 @@ public class IndexPartitionTest
 		p.groupBy( Prop3.class, Stream.of( .8 ) );
 		LOG.trace( "partition col1-3: {}", p );
 		final PseudoRandom rng = PseudoRandom.JavaRandom.of( "rng", 1L );
-		final Groups<Double, Groups<Double, Groups<Float, Root<Tuple>>>> picker = Picker
+		final Branch<Double, Branch<Double, Branch<Float, Root<Tuple>>>> picker = Picker
 				.of( t, rng, Throwable::printStackTrace ).splitBy( Prop1.class )
 				.thenBy( Prop2.class, Stream.of( .8 ) )
 				.thenBy( Prop3.class, Stream.of( .8 ) );

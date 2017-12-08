@@ -140,7 +140,7 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 
 		@SuppressWarnings( { "rawtypes", "unchecked" } )
 		default <THIS extends Root<T>, K extends Table.Property<V>, V extends Comparable>
-			Groups<V, THIS>
+			Branch<V, THIS>
 			splitBy( final Class<K> property, final V... splitValues )
 		{
 			final Stream<V> values = splitValues == null
@@ -151,7 +151,7 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 
 		@SuppressWarnings( "rawtypes" )
 		default <THIS extends Root<T>, K extends Table.Property<V>, V extends Comparable>
-			Groups<V, THIS>
+			Branch<V, THIS>
 			splitBy( final Class<K> property, final Stream<V> splitValues )
 		{
 			return splitBy( property, Comparator.naturalOrder(), splitValues );
@@ -159,7 +159,7 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 
 		@SuppressWarnings( "rawtypes" )
 		default <THIS extends Root<T>, K extends Table.Property<V>, V extends Comparable>
-			Groups<V, THIS>
+			Branch<V, THIS>
 			splitBy( final Class<K> property, final Collection<V> splitValues )
 		{
 			return splitBy( property, Comparator.naturalOrder(),
@@ -168,23 +168,23 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 
 		@SuppressWarnings( "rawtypes" )
 		default <THIS extends Root<T>, K extends Table.Property<V>, V extends Comparable>
-			Groups<V, THIS> splitBy( Class<K> property,
+			Branch<V, THIS> splitBy( Class<K> property,
 				Comparator<? super V> valueComparator, Stream<V> splitValues )
 		{
 			index().groupBy( property, valueComparator, splitValues );
 			@SuppressWarnings( "unchecked" )
 			final THIS parent = (THIS) this;
-			return Groups.of( parent );
+			return Branch.of( parent );
 		}
 	}
 
 	@SuppressWarnings( "rawtypes" )
-	interface Groups<V extends Comparable, P extends Picker<?, ?>>
+	interface Branch<V extends Comparable, P extends Picker<?, ?>>
 		extends Picker<P, Table.Tuple>
 	{
 		@SuppressWarnings( { "unchecked" } )
-		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
-			Groups<W, THIS>
+		default <THIS extends Branch<V, P>, K extends Table.Property<W>, W extends Comparable>
+			Branch<W, THIS>
 			thenBy( final Class<K> property, final W... splitValues )
 		{
 			final Stream<W> values = splitValues == null
@@ -193,30 +193,30 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 			return thenBy( property, Comparator.naturalOrder(), values );
 		}
 
-		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
-			Groups<W, THIS>
+		default <THIS extends Branch<V, P>, K extends Table.Property<W>, W extends Comparable>
+			Branch<W, THIS>
 			thenBy( final Class<K> property, final Stream<W> values )
 		{
 			return thenBy( property, Comparator.naturalOrder(), values );
 		}
 
-		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
-			Groups<W, THIS>
+		default <THIS extends Branch<V, P>, K extends Table.Property<W>, W extends Comparable>
+			Branch<W, THIS>
 			thenBy( final Class<K> property, final Collection<W> splitValues )
 		{
 			return thenBy( property, Comparator.naturalOrder(),
 					splitValues.stream() );
 		}
 
-		default <THIS extends Groups<V, P>, K extends Table.Property<W>, W extends Comparable>
-			Groups<W, THIS> thenBy( final Class<K> property,
+		default <THIS extends Branch<V, P>, K extends Table.Property<W>, W extends Comparable>
+			Branch<W, THIS> thenBy( final Class<K> property,
 				final Comparator<? super W> valueComparator,
 				final Stream<W> splitValues )
 		{
 			index().groupBy( property, valueComparator, splitValues );
 			@SuppressWarnings( "unchecked" )
 			final THIS parent = (THIS) this;
-			return Groups.of( parent );
+			return Branch.of( parent );
 		}
 
 		default P any()
@@ -237,10 +237,10 @@ public interface Picker<P extends Picker<?, ?>, T extends Table.Tuple>
 			return parent();
 		}
 
-		static <V extends Comparable<?>, P extends Picker<?, ?>> Groups<V, P>
+		static <V extends Comparable<?>, P extends Picker<?, ?>> Branch<V, P>
 			of( final P parent )
 		{
-			return new Groups<V, P>()
+			return new Branch<V, P>()
 			{
 				@Override
 				public P parent()
