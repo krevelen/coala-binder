@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.LongStream;
 
 import org.aeonbits.owner.ConfigCache;
@@ -18,6 +19,7 @@ import org.apfloat.ApfloatMath;
 import org.apfloat.Apint;
 
 import io.coala.exception.Thrower;
+import io.coala.log.LogUtil.Pretty;
 import io.coala.util.Util;
 
 /**
@@ -575,5 +577,11 @@ public class DecimalUtil implements Util
 	public static BigDecimal exp( final Number exponent, final int factorial )
 	{
 		return pow( euler( factorial ), exponent );
+	}
+
+	public static Pretty pretty( final Supplier<? extends Number> value,
+		int scale )
+	{
+		return Pretty.of( () -> toScale( value.get(), scale ) );
 	}
 }

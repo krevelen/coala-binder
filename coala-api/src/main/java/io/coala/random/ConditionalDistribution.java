@@ -66,11 +66,11 @@ public interface ConditionalDistribution<T, C>
 
 	T draw( C condition );
 
-	@SuppressWarnings( "unchecked" )
-	default T draw( Object... conditions )
-	{
-		return draw( (C) conditions );
-	}
+//	@SuppressWarnings( "unchecked" )
+//	default T draw( Object... conditions )
+//	{
+//		return draw( (C) conditions );
+//	}
 
 	/**
 	 * Simple example usage for Bernoulli distributions

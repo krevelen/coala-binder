@@ -73,6 +73,12 @@
 			<artifactId>apfloat</artifactId>
 		</dependency>
 
+		<!-- used by Table.Tuple -->
+		<dependency>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-all</artifactId>
+		</dependency>
+
 		<!-- matrix calculations (jar 1.2MB -->
 		<dependency>
 			<groupId>org.ujmp</groupId>
@@ -97,11 +103,6 @@
 			<!-- Used as unit testing framework, supports test-driven development -->
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.hamcrest</groupId>
-			<artifactId>hamcrest-all</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

@@ -41,9 +41,11 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.Logger;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
-import io.coala.data.Table.Property;
 import io.coala.exception.Thrower;
+import io.coala.function.TriConsumer;
 import io.coala.log.LogUtil;
 import io.coala.log.LogUtil.Pretty;
 import io.coala.math.DecimalUtil;
@@ -105,41 +107,20 @@ public interface Table<T extends Table.Tuple>
 		return this;
 	}
 
-	@FunctionalInterface
-	interface TriConsumer<A, B, C>
-	{
-		void accept( A a, B b, C c );
-	}
-
-//	default <K extends Property<?>> Observable<Change> changes(
-//		final Object keyFilter, final Class<? extends Property<?>> key )
-//	{
-//		return changes( keyFilter )
-//				.filter( chg -> chg.changedType().equals( key ) );
-//	}
-//
-//	@SuppressWarnings( "unchecked" )
-//	default <K extends Property<V>, V> Observable<V>
-//		valueChanges( final Object keyFilter, final Class<K> property )
-//	{
-//		return changes( keyFilter, property ).map( chg -> (V) chg.newValue() );
-//	}
-
 	@SuppressWarnings( "rawtypes" )
 	Stream<Class<? extends Property>> properties();
 
-	/** @return a new tuple */
+	/** @return a new tuple */ // TODO hide this method to avoid type errors?
 	@SuppressWarnings( "rawtypes" )
 	T insertValues( Map<Class<? extends Property>, Object> values );
 
 	@SuppressWarnings( "rawtypes" )
-	default T insertValues(
-		final UnaryOperator<MapBuilder<Class<? extends Property>, Object, Map<Class<? extends Property>, Object>>> mapOp )
+	default T insertValues( final UnaryOperator<PropertySetter> mapOp )
 	{
-		return insertValues( mapOp
-				.apply( MapBuilder
-						.<Class<? extends Property>, Object>unordered() )
-				.build() );
+		final MapBuilder<Class<? extends Property>, Object, ?> map = MapBuilder
+				.unordered();
+		mapOp.apply( PropertySetter.ofMapBuilder( map ) );
+		return insertValues( map.build() );
 	}
 
 	/** @return a new tuple */
@@ -355,7 +336,7 @@ public interface Table<T extends Table.Tuple>
 
 	default Stream<T> selectWhere( final Property<?> property )
 	{
-		return selectWhere( t -> t.match( property ) );
+		return selectWhere( t -> t.isEqual( property ) );
 	}
 
 	@SuppressWarnings( { "rawtypes" } )
@@ -366,9 +347,34 @@ public interface Table<T extends Table.Tuple>
 		return selectWhere( t ->
 		{
 			for( int i = 0; i < filter.length; i++ )
-				if( !t.match( filter[i] ) ) return false;
+				if( !t.isEqual( filter[i] ) ) return false;
 			return true;
 		} );
+	}
+
+	/**
+	 * {@link PropertySetter} enables type-safe property setting for
+	 * {@link Table#insertValues(UnaryOperator)}
+	 */
+	interface PropertySetter
+	{
+		<P extends Property<? super V>, V> PropertySetter
+			set( Class<P> propertyType, V value );
+
+		static PropertySetter ofMapBuilder(
+			@SuppressWarnings( "rawtypes" ) final MapBuilder<Class<? extends Property>, Object, ?> map )
+		{
+			return new PropertySetter()
+			{
+				@Override
+				public <P extends Property<? super V>, V> PropertySetter
+					set( final Class<P> propertyType, final V value )
+				{
+					map.put( propertyType, value );
+					return this;
+				}
+			};
+		}
 	}
 
 	@SuppressWarnings( { "rawtypes" } )
@@ -379,7 +385,7 @@ public interface Table<T extends Table.Tuple>
 		return selectWhere( t ->
 		{
 			for( int i = 0; i < filter.length; i++ )
-				if( t.match( filter[i] ) ) return true;
+				if( t.isEqual( filter[i] ) ) return true;
 			return false;
 		} );
 	}
@@ -671,6 +677,13 @@ public interface Table<T extends Table.Tuple>
 			return (V) this.getter.apply( key );
 		}
 
+		public <K extends Property<V>, V> V get( final Class<K> key,
+			final V defaultValue )
+		{
+			final V value = get( key );
+			return value == null ? defaultValue : value;
+		}
+
 		public <K extends Property<V>, V> V getNonNull( final Class<K> key )
 		{
 			final V value = get( key );
@@ -681,7 +694,7 @@ public interface Table<T extends Table.Tuple>
 
 		@SuppressWarnings( "unchecked" )
 		public <THIS extends Tuple, P extends Property<V>, V> THIS
-			with( final Property<P> property )
+			with( final P property )
 		{
 			return (THIS) with( property.getClass(), property.get() );
 		}
@@ -690,22 +703,27 @@ public interface Table<T extends Table.Tuple>
 		public <THIS extends Tuple, P extends Property<V>, V> THIS
 			with( final Class<P> propertyType, final V value )
 		{
-			while( !match( propertyType, value ) )
+			while( !match( propertyType, Matchers.equalTo( value ) ) )
 				this.setter.accept( propertyType, value );
 			return (THIS) this;
 		}
 
-		public boolean match( final Class<? extends Property> propertyType,
-			final Object test )
+		public <P extends Property<V>, V> boolean
+			match( final Class<P> propertyType, final Matcher<V> test )
 		{
-			@SuppressWarnings( "unchecked" )
-			final Object value = get( propertyType );
-			return value == null ? test == null : value.equals( test );
+			return test.matches( get( propertyType ) );
 		}
 
-		public boolean match( final Property<?> property )
+		public <P extends Property<V>, V> boolean
+			isEqual( final Class<P> propertyType, final V equals )
 		{
-			return match( property.getClass(), property.get() );
+			return match( propertyType, Matchers.equalTo( equals ) );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		public boolean isEqual( final Property<?> property )
+		{
+			return isEqual( property.getClass(), property.get() );
 		}
 
 		public <P extends Property<W>, W> Tuple
