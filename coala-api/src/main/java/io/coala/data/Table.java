@@ -326,7 +326,8 @@ public interface Table<T extends Table.Tuple>
 	default <K extends Property<V>, V> V selectValue( final Object key,
 		final Class<K> property )
 	{
-		return select( key ).get( property );
+		final T t = select( key );
+		return t == null ? null : t.get( property );
 	}
 
 	default Stream<T> selectWhere( final Predicate<? super T> filter )

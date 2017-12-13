@@ -555,8 +555,9 @@ public class IndexPartition
 					shift( this.children.tailMap( bin, false ).values().stream()
 //							.filter( n -> n != child )
 							, delta );
-				} else
-					LOG.warn( "leaf not adjusted: " + bin );
+				}
+//				else
+//					LOG.warn( "leaf not adjusted: " + bin );
 			}
 
 		}
