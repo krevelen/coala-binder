@@ -571,7 +571,7 @@ public interface Table<T extends Table.Tuple>
 			pretty( final Stream<Class<? extends Property>> properties )
 		{
 			return Pretty.of( () -> properties == null ? toString()
-					: properties
+					: "#" + key() + properties
 							.<StringBuilder>map(
 									p -> new StringBuilder( p.getSimpleName() )
 											.append( eq )

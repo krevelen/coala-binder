@@ -69,7 +69,7 @@ public class IndexPartition
 
 	private final List<PartitionDim> dims = new ArrayList<>();
 
-	private boolean validation = true; // TODO from config
+	private boolean validation = false; // TODO from config
 
 	public IndexPartition( final Table<?> view,
 		final Consumer<Throwable> onError )
@@ -274,8 +274,11 @@ public class IndexPartition
 				if( dim.property == d.changedType() )
 				{
 					final Table.Tuple t = this.source.get( d.sourceRef() );
-					remove( t.override( dim.property, d.oldValue() ) );
-					add( t );
+//					if( t.isEqual( dim.property, d.oldValue() ) )
+					{
+						remove( t.override( dim.property, d.oldValue() ) );
+						add( t );
+					}
 					if( this.validation )
 					{
 						validate();
@@ -341,11 +344,12 @@ public class IndexPartition
 						values.add( Range.of( (Comparable<?>) t
 								.get( node.parent.dim.property ) ) );
 					}
-				return Thrower.throwNew( IllegalStateException::new,
-						() -> "Remove failed, " + t.key() + " " + values
-								+ " not in #" + Arrays.toString( leaf.bounds )
-								+ " " + leafRanges + ", but found at #" + j
-								+ " " + indexRanges + ": " + this.root );
+				LOG.warn(
+						"Remove failed, {} {} not in #{} {}"
+								+ ", but found at #{} {}: {}",
+						t.key(), values, leaf.bounds, leafRanges, j,
+						indexRanges, this.root );
+				return false;
 			}
 //			LOG.trace( "removing #{}={} in #{}", i + leaf.bounds[0], key,
 //					leaf.bounds );
@@ -495,7 +499,7 @@ public class IndexPartition
 		}
 
 		void resize( final Table.Tuple t, final int delta,
-			final BiPredicate<Range, IndexPartition.PartitionNode> leafHandler,
+			final BiPredicate<Range, PartitionNode> leafHandler,
 			final Consumer<PartitionNode> nodeSplitter )
 		{
 			@SuppressWarnings( "unchecked" )
@@ -521,9 +525,8 @@ public class IndexPartition
 					this.bounds[1] += delta; // resize parent after child
 					shift( this.children.tailMap( bin, false ).values()
 							.stream(), delta );
-				}
-//				else
-//					LOG.warn( "leaf not adjusted: " + bin );
+				} else
+					LOG.warn( "leaf not adjusted: " + bin );
 			} else
 			{
 				// find appropriate range between provided split points
@@ -552,7 +555,8 @@ public class IndexPartition
 					shift( this.children.tailMap( bin, false ).values().stream()
 //							.filter( n -> n != child )
 							, delta );
-				}
+				} else
+					LOG.warn( "leaf not adjusted: " + bin );
 			}
 
 		}
@@ -623,7 +627,7 @@ public class IndexPartition
 			if( dim.splitPoints.isEmpty() )
 			{
 				// split points empty? add all distinct values as split point
-				this.children = MapBuilder.<Range, PartitionNode> sorted()
+				this.children = MapBuilder.<Range, PartitionNode>sorted()
 //						.put( Range.infinite(),
 //								// infinity placeholder range
 //								new PartitionNode( this, this.bounds ) )
