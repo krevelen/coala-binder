@@ -1,12 +1,15 @@
 package io.coala.util;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 /**
- * {@link Compare}
+ * {@link Compare} is a utility class with {@link Comparable#compareTo(Object)}
+ * short-hands
  * 
  * @version $Id: a0207df194ab3dfb15dec0e9590283a669114248 $
  * @author Rick van Krevelen
+ * @see Comparator#naturalOrder()
  */
 public class Compare implements Util
 {
@@ -26,7 +29,6 @@ public class Compare implements Util
 	}
 
 	@SafeVarargs
-//	@SuppressWarnings( "unchecked" )
 	public static <T extends Comparable<? super T>> T max( final T o1,
 		final T... o )
 	{
