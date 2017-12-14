@@ -15,6 +15,8 @@
  */
 package io.coala.log;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -282,8 +284,18 @@ public class LogUtil implements Util
 				public String toString()
 				{
 					if( this.cache != null ) return this.cache;
-					final Object obj = supplier.get();
-					return (this.cache = obj == null ? null : obj.toString());
+					try
+					{
+						final Object obj = supplier.get();
+						return (this.cache = obj == null ? null
+								: obj.toString());
+					} catch( final Exception e )
+					{
+						final StringWriter w = new StringWriter()
+								.append( "ERROR in " + supplier + ": " );
+						e.printStackTrace( new PrintWriter( w ) );
+						return w.toString();
+					}
 				}
 			};
 		}

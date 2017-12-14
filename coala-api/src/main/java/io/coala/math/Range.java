@@ -452,6 +452,15 @@ public class Range<T extends Comparable> implements Comparable<Range<T>>
 
 	/**
 	 * @param map the source mapping
+	 * @return a submap view containing values with intersecting keys
+	 */
+	public <V> NavigableMap<T, V> apply( final NavigableMap<T, V> map )
+	{
+		return apply( map, false );
+	}
+
+	/**
+	 * @param map the source mapping
 	 * @param floorLower include the lower bound by flooring it (if possible)
 	 * @return a SortedMap view containing only values of intersecting keys
 	 */
