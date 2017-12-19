@@ -540,7 +540,7 @@ public interface Wrapper<T>
 		{
 			if( type.isInterface() )
 				return valueOf( json, DynaBean.ProxyProvider.of( type ).get() );
-			return valueOf( json, type::newInstance );
+			return valueOf( json, (ThrowingSupplier<T, ?>) type::newInstance );
 		}
 
 		/**
