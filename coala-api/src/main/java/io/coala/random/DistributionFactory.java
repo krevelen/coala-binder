@@ -1,4 +1,4 @@
-/* $Id: 3df512f3540e7eb82e5a1e0f732eb0c515ffedaf $
+/* $Id: 6e0f40aa15b543af93929baf41c2959e5f96314b $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -26,7 +26,7 @@ import io.coala.exception.Thrower;
  * categorical, uniform, empirical, triangular, bernoulli and gaussian/normal
  * distributions
  * 
- * @version $Id: 3df512f3540e7eb82e5a1e0f732eb0c515ffedaf $
+ * @version $Id: 6e0f40aa15b543af93929baf41c2959e5f96314b $
  * @author Rick van Krevelen
  */
 public class DistributionFactory implements ProbabilityDistribution.Factory

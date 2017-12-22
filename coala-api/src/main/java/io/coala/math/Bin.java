@@ -1,4 +1,4 @@
-/* $Id: 041401a75f0ee60ad4d19456e8746914450e821e $
+/* $Id: ef5b1bbaed3edb225604efcc1ba47345d017fd6e $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -29,7 +29,7 @@ import io.coala.util.Comparison;
  * {@link Bin}
  * 
  * @param <Q> the {@link Quantity} of extreme values
- * @version $Id: 041401a75f0ee60ad4d19456e8746914450e821e $
+ * @version $Id: ef5b1bbaed3edb225604efcc1ba47345d017fd6e $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )

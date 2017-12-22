@@ -1,4 +1,4 @@
-/* $Id: 01dc7612a810c2dd7cb72089ff66146f1f91fbda $
+/* $Id: eb50a6e299761c0608a887d9d48342cd29abc2b2 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -31,7 +31,7 @@ import tec.uom.se.ComparableQuantity;
  * {@link Indicator} is a linear-time {@link Signal} of {@link Amount}s
  * 
  * @param <Q> the type of {@link Quantity} being indicated
- * @version $Id: 01dc7612a810c2dd7cb72089ff66146f1f91fbda $
+ * @version $Id: eb50a6e299761c0608a887d9d48342cd29abc2b2 $
  * @author Rick van Krevelen
  */
 public class Indicator<Q extends Quantity<Q>>

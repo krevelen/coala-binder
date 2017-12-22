@@ -1,4 +1,4 @@
-/* $Id: ecc045eee03e5bb0270f6511fc7f6784e6f111ae $
+/* $Id: 2fdf4a870253b4bb44c79416450ba61ba44cbd33 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -42,7 +42,7 @@ import io.reactivex.disposables.Disposable;
 /**
  * {@link JDBCUtil}
  * 
- * @version $Id: ecc045eee03e5bb0270f6511fc7f6784e6f111ae $
+ * @version $Id: 2fdf4a870253b4bb44c79416450ba61ba44cbd33 $
  * @author Rick van Krevelen
  */
 public class JDBCUtil

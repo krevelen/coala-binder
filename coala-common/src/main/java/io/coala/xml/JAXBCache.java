@@ -1,4 +1,4 @@
-/* $Id: 6e7a986a10b9579f78461f433c6daf36dbc23ff4 $
+/* $Id: e21285b664762490cbfc8dee925491cead091913 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -42,7 +42,7 @@ import io.reactivex.subjects.Subject;
  * {@link JAXBCache}
  * 
  * @param <T>
- * @version $Id: 6e7a986a10b9579f78461f433c6daf36dbc23ff4 $
+ * @version $Id: e21285b664762490cbfc8dee925491cead091913 $
  * @author Rick van Krevelen
  */
 public class JAXBCache<T>

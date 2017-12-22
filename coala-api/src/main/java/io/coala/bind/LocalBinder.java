@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: b238149c5603c3fd5aff586654ed6c0144c8fdfd $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -29,7 +29,7 @@ import io.reactivex.Observable;
  * objects {@link LocalContextual}, i.e. within its own locally
  * {@link Identified} {@link Context}
  * 
- * @version $Id$
+ * @version $Id: b238149c5603c3fd5aff586654ed6c0144c8fdfd $
  * @author Rick van Krevelen
  */
 public interface LocalBinder extends LocalContextual
@@ -76,7 +76,6 @@ public interface LocalBinder extends LocalContextual
 	 * @param args the parameter constants to use for each instantiation
 	 * @return this {@link LocalBinder} to allow chaining
 	 */
-	@SuppressWarnings( "unchecked" )
 	default <T> LocalBinder reset( final Class<T> type,
 		final Class<? extends T> impl, final Object... args )
 	{
@@ -95,7 +94,7 @@ public interface LocalBinder extends LocalContextual
 	 * {@link LocalProvider} is a {@link LocalContextual} {@link Provider}
 	 * 
 	 * @param <T>
-	 * @version $Id$
+	 * @version $Id: b238149c5603c3fd5aff586654ed6c0144c8fdfd $
 	 * @author Rick van Krevelen
 	 */
 	interface LocalProvider<T> extends Provider<T>, LocalContextual
@@ -179,7 +178,7 @@ public interface LocalBinder extends LocalContextual
 		 * {@link LocalCaching}
 		 * 
 		 * @param <T>
-		 * @version $Id$
+		 * @version $Id: b238149c5603c3fd5aff586654ed6c0144c8fdfd $
 		 * @author Rick van Krevelen
 		 */
 		class LocalCaching<T> extends LocalWrapped<T>
@@ -200,7 +199,7 @@ public interface LocalBinder extends LocalContextual
 	 * {@link #reset(LocalProvider)} function
 	 * 
 	 * @param <T>
-	 * @version $Id$
+	 * @version $Id: b238149c5603c3fd5aff586654ed6c0144c8fdfd $
 	 * @author Rick van Krevelen
 	 */
 	interface MutableProvider<T> extends LocalProvider<T>
@@ -232,7 +231,7 @@ public interface LocalBinder extends LocalContextual
 		 * {@link MutableCaching}
 		 * 
 		 * @param <T>
-		 * @version $Id$
+		 * @version $Id: b238149c5603c3fd5aff586654ed6c0144c8fdfd $
 		 * @author Rick van Krevelen
 		 */
 		class MutableCaching<T> extends LocalCaching<T>

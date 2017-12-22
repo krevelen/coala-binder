@@ -5,7 +5,7 @@ package io.coala.function;
  * 
  * @param <T>
  * @param <E>
- * @version $Id: e26122353351dff082b1d0e4d4e438a338aa9a2d $
+ * @version $Id: 8221efaa8af28d9ef3d39387f34083fb0f35d06b $
  * @author Rick van Krevelen
  */
 @FunctionalInterface

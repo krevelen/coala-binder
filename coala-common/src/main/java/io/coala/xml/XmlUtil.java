@@ -1,4 +1,4 @@
-/* $Id: 1cab6f17a435eef277bbb1284b313e898d7b9aaf $
+/* $Id: 4bfb9903824e618ca9ccfa0f09cbaa389148de92 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -56,7 +56,7 @@ import io.reactivex.Observable;
 /**
  * {@link XmlUtil}
  * 
- * @version $Id: 1cab6f17a435eef277bbb1284b313e898d7b9aaf $
+ * @version $Id: 4bfb9903824e618ca9ccfa0f09cbaa389148de92 $
  * @author Rick van Krevelen
  */
 public class XmlUtil

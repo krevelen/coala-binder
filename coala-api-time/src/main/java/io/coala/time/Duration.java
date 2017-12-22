@@ -1,4 +1,4 @@
-/* $Id: a4d1db0cef5ed1fc88522da2c69aa49907d8de7d $
+/* $Id: 4df8fa72621b4b2695db65b350c2e337e0730137 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -86,7 +86,7 @@ import tec.uom.se.ComparableQuantity;
  * </dl>
  * 
  * @date $Date$
- * @version $Id: a4d1db0cef5ed1fc88522da2c69aa49907d8de7d $
+ * @version $Id: 4df8fa72621b4b2695db65b350c2e337e0730137 $
  */
 @SuppressWarnings( { "rawtypes", "unchecked" } )
 public class Duration extends Wrapper.SimpleOrdinal<ComparableQuantity>

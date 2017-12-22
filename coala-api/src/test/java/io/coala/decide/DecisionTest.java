@@ -1,4 +1,4 @@
-/* $Id: 1de92762f6b7fa1576b680ebac1d734f9d591c3a $
+/* $Id: a9e0552fab7306c518474967b3ab27c92394f24b $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -31,7 +31,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link DecisionTest}
  * 
- * @version $Id$
+ * @version $Id: a9e0552fab7306c518474967b3ab27c92394f24b $
  * @author Rick van Krevelen
  */
 public class DecisionTest
@@ -43,7 +43,7 @@ public class DecisionTest
 	/**
 	 * {@link MyCriterion}
 	 * 
-	 * @version $Id$
+	 * @version $Id: a9e0552fab7306c518474967b3ab27c92394f24b $
 	 * @author Rick van Krevelen
 	 */
 	enum MyCriterion // implements WeightedCriterion
@@ -60,7 +60,7 @@ public class DecisionTest
 	/**
 	 * {@link MyAlternative}
 	 * 
-	 * @version $Id$
+	 * @version $Id: a9e0552fab7306c518474967b3ab27c92394f24b $
 	 * @author Rick van Krevelen
 	 */
 	class MyAlternative implements MultiCriteriaWeightedAlternative<MyCriterion>

@@ -1,4 +1,4 @@
-/* $Id: 2070bb85b6ee8891e4612011dac89dfe69f9fa38 $
+/* $Id: efde8d3917fa224743214a66cfaceb9b49b7738a $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -29,7 +29,7 @@ import io.coala.exception.Thrower;
 /**
  * {@link ClassUtil}
  * 
- * @version $Id: 2070bb85b6ee8891e4612011dac89dfe69f9fa38 $
+ * @version $Id: efde8d3917fa224743214a66cfaceb9b49b7738a $
  * @author Rick van Krevelen
  */
 public class ClassUtil implements Util

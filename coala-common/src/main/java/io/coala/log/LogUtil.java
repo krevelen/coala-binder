@@ -1,4 +1,4 @@
-/* $Id: ea08c5561c228e73b61d6868506fcd5150e897c0 $
+/* $Id: 4f23dfdf61f2dda530b5b2588f296f5889748fd4 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -35,7 +35,7 @@ import io.coala.util.Util;
  * {@link LogUtil} provides some utility methods for Log4j (v2)
  * MessageFormatMessage
  * 
- * @version $Id$
+ * @version $Id: 4f23dfdf61f2dda530b5b2588f296f5889748fd4 $
  * @author Rick van Krevelen
  */
 public class LogUtil implements Util
@@ -259,7 +259,7 @@ public class LogUtil implements Util
 	/**
 	 * {@link Pretty}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 4f23dfdf61f2dda530b5b2588f296f5889748fd4 $
 	 * @author Rick van Krevelen
 	 */
 	public static interface Pretty

@@ -17,7 +17,7 @@ import io.coala.random.DistributionParsable.FromString;
 /**
  * {@link DistributionParserTest}
  * 
- * @version $Id: 44fed16f2368cf0e2f826585d7b9e1902919166d $
+ * @version $Id: 1a5d7307585db8807c284829be756b25800e2760 $
  * @author Rick van Krevelen
  */
 public class DistributionParserTest

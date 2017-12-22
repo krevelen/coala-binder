@@ -10,7 +10,7 @@ import io.reactivex.disposables.Disposable;
  * {@link Expectation} or anticipation confirms that an event is scheduled to
  * occur at some future {@link Instant}
  * 
- * @version $Id: 3d3e16811192f8231b89032b459eab02371a877f $
+ * @version $Id: 3bf794ad6be84b466cf248d1360b0ed96172e295 $
  * @author Rick van Krevelen
  */
 public class Expectation extends Wrapper.SimpleOrdinal<Instant>

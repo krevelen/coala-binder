@@ -1,4 +1,4 @@
-/* $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+/* $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -59,7 +59,7 @@ import io.coala.util.TypeArguments;
  * {@link Wrapper} is a tag for decorator types that are (or should be)
  * automatically un/wrapped upon JSON de/serialization
  * 
- * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+ * @version $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
  * @author Rick van Krevelen
  */
 @JsonInclude( Include.NON_NULL )
@@ -101,7 +101,7 @@ public interface Wrapper<T>
 	 * values must be deserialized as custom defined {@code MyNumber} instances
 	 * (which also extend the default {@link Number} value type)
 	 * 
-	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+	 * @version $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
 	 * @author Rick van Krevelen
 	 */
 	@Documented
@@ -145,7 +145,7 @@ public interface Wrapper<T>
 		/**
 		 * {@link Empty}
 		 * 
-		 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+		 * @version $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
 		 * @author Rick van Krevelen
 		 */
 		class Empty
@@ -160,7 +160,7 @@ public interface Wrapper<T>
 	 * {@link #equals(Object)}, and {@link #toString()} methods
 	 *
 	 * @param <T> the type of wrapped objects
-	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+	 * @version $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
 	 * @author Rick van Krevelen
 	 */
 	class Simple<T> implements Wrapper<T>
@@ -212,7 +212,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+	 * @version $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -228,7 +228,7 @@ public interface Wrapper<T>
 	 * {@link #compareTo(Object)} method
 	 *
 	 * @param <T> the concrete {@link Comparable} type of wrapped objects
-	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+	 * @version $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
 	 * @author Rick van Krevelen
 	 */
 	@SuppressWarnings( { "rawtypes" } )
@@ -416,7 +416,7 @@ public interface Wrapper<T>
 	/**
 	 * {@link Util} provides global utility functions
 	 * 
-	 * @version $Id: c63f5df0731459f556ac07b63b8b818d65a2d35e $
+	 * @version $Id: dbdadef12639dfbd95bc8d32301fac20997edd26 $
 	 * @author Rick van Krevelen
 	 */
 	class Util

@@ -1,4 +1,4 @@
-/* $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+/* $Id: 6f2a9d8bbd7b6f7893f339a898b2eb317c8e1aec $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -26,7 +26,7 @@ import io.coala.math.QuantityUtil;
 /**
  * {@link Timed} objects tell time, i.e. current {@link Instant} {@link #now()} 
  * 
- * @version $Id: 4eb1db7e94a23f97caceb033cb485c0814b05ea6 $
+ * @version $Id: 6f2a9d8bbd7b6f7893f339a898b2eb317c8e1aec $
  * @author Rick van Krevelen
  */
 @FunctionalInterface

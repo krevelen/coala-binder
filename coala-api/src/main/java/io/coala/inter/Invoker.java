@@ -1,4 +1,4 @@
-/* $Id: 08fb401f7d109b924650e338ffd402c48c58fd78 $
+/* $Id: 8a4a05908ddbd1ff11538f952eeb93cca85a6a98 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -35,7 +35,7 @@ import io.reactivex.Observable;
 /**
  * {@link Invoker}
  * 
- * @version $Id: 08fb401f7d109b924650e338ffd402c48c58fd78 $
+ * @version $Id: 8a4a05908ddbd1ff11538f952eeb93cca85a6a98 $
  * @author Rick van Krevelen
  */
 public interface Invoker

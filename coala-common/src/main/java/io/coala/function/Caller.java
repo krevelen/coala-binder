@@ -19,7 +19,7 @@ import io.coala.exception.Thrower;
  * (checked) invariant {@link Function} {@link #ignore(Object)} which ignores
  * its input
  * 
- * @version $Id: 2d65cc65d254385fb7416a8ed713ae80ed7aadf2 $
+ * @version $Id: 30b8654773356c36e82349900d8ae6d51f5206b0 $
  * @author Rick van Krevelen
  */
 public interface Caller<T, U, R, E extends Throwable>
@@ -139,7 +139,7 @@ public interface Caller<T, U, R, E extends Throwable>
 	 * @param <U>
 	 * @param <R>
 	 * @param <E>
-	 * @version $Id: 2d65cc65d254385fb7416a8ed713ae80ed7aadf2 $
+	 * @version $Id: 30b8654773356c36e82349900d8ae6d51f5206b0 $
 	 * @author Rick van Krevelen
 	 */
 	static <T, U, R, E extends Throwable> Caller<T, U, R, E>

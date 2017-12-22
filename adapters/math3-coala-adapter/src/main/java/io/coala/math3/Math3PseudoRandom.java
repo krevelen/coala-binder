@@ -1,4 +1,4 @@
-/* $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
+/* $Id: 35899cea600f2163e82d1bced04ff39ab24d5ed9 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -38,7 +38,7 @@ import io.coala.util.Instantiator;
  * {@link Math3PseudoRandom} decorates a [@code commons-math3}
  * {@link RandomGenerator} as {@link ThreadSafe} {@link PseudoRandom}
  * 
- * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
+ * @version $Id: 35899cea600f2163e82d1bced04ff39ab24d5ed9 $
  * @author Rick van Krevelen
  */
 @ThreadSafe
@@ -217,7 +217,7 @@ public class Math3PseudoRandom implements PseudoRandom
 	/**
 	 * {@link Factory} of {@link Math3PseudoRandom}s
 	 * 
-	 * @version $Id: 92e818fed3349a554d6cbeb45e1ac316fd6668df $
+	 * @version $Id: 35899cea600f2163e82d1bced04ff39ab24d5ed9 $
 	 * @author Rick van Krevelen
 	 */
 	public static class Factory implements PseudoRandom.Factory
@@ -305,7 +305,7 @@ public class Math3PseudoRandom implements PseudoRandom
 	 * {@link MersenneTwisterFactory} implements a {@link Factory} for
 	 * {@link MersenneTwister} instances decorated as {@link PseudoRandom}
 	 * 
-	 * @version $Id$
+	 * @version $Id: 35899cea600f2163e82d1bced04ff39ab24d5ed9 $
 	 * @author Rick van Krevelen
 	 */
 	@Singleton

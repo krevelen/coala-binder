@@ -17,7 +17,7 @@ import io.coala.random.PseudoRandom;
 /**
  * {@link InjectDistTest}
  * 
- * @version $Id: 44fed16f2368cf0e2f826585d7b9e1902919166d $
+ * @version $Id: 0aa09fec9e93e3dd29a5f23e157c5791881ac552 $
  * @author Rick van Krevelen
  */
 public class InjectDistTest

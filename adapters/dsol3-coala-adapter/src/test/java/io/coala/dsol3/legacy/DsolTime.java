@@ -1,4 +1,4 @@
-/* $Id: 3a709681cd90898a22ee40915e0915a641b8bbee $
+/* $Id: 923e13db670e30d79a861fac657b6017d2106551 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -48,7 +48,7 @@ import tec.uom.se.ComparableQuantity;
  * of {@link BigDecimal} time values for maximal compatibility with COALA
  * {@link Instant} values
  * 
- * @version $Id: 3a709681cd90898a22ee40915e0915a641b8bbee $
+ * @version $Id: 923e13db670e30d79a861fac657b6017d2106551 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "serial" )

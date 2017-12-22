@@ -1,4 +1,4 @@
-/* $Id: 6eb6e896ff64c5101804a1f87c3a8287db474d0f $
+/* $Id: b07068f89ef98cffba1b4d9e0b6049d74435e307 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -23,7 +23,7 @@ package io.coala.time;
  * {@link Scenario} is a helper interface to reset and start a scenario
  * factories for behaviors, persistence, interactions, etc.
  * 
- * @version $Id: 6eb6e896ff64c5101804a1f87c3a8287db474d0f $
+ * @version $Id: b07068f89ef98cffba1b4d9e0b6049d74435e307 $
  * @author Rick van Krevelen
  */
 public interface Scenario extends Proactive, Runnable

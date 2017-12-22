@@ -15,7 +15,7 @@ import io.coala.json.JsonUtil;
  * {@link InstanceParser}
  * 
  * @param <T>
- * @version $Id: 238e9133a5e6642312acc8c5a207a95849db5816 $
+ * @version $Id: 19a5b23b6a2bae9aae13a308f5b7582838db9c12 $
  * @author Rick van Krevelen
  */
 public abstract class InstanceParser<T>

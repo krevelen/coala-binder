@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: c56fc25d49848927b23ac31f79f1e77bb3645932 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -61,7 +61,7 @@ import io.reactivex.Single;
  * discrete: https://www.wikiwand.com/en/Probability_mass_function
  * 
  * @param <T>
- * @version $Id$
+ * @version $Id: c56fc25d49848927b23ac31f79f1e77bb3645932 $
  * @author Rick van Krevelen
  */
 @FunctionalInterface
@@ -655,7 +655,6 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 			return createEmpirical( observations, binCount );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		default <T extends Number> ProbabilityDistribution<Double>
 			createEmpirical( final Iterable<T> observations,
 				final int binCount )
@@ -949,7 +948,6 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 			} );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		default <T> ProbabilityDistribution<T>
 			createUniformCategorical( final Iterable<T> values )
 		{
@@ -957,7 +955,6 @@ public interface ProbabilityDistribution<T> extends Supplier<T>
 					StreamSupport.stream( values.spliterator(), false ) );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		default <T> ProbabilityDistribution<T>
 			createUniformCategorical( final Stream<T> values )
 		{

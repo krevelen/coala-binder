@@ -32,7 +32,7 @@ import tec.uom.se.unit.Units;
 /**
  * {@link QuantityUtil}
  * 
- * @version $Id: ebccf2937ccb8d5ea580a52d363364edc746a709 $
+ * @version $Id: a791df7ca8971a0eae76edf9268c5c5433949d3c $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( { "rawtypes"/* , "serial" */ } )

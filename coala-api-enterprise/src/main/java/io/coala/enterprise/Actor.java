@@ -1,4 +1,4 @@
-/* $Id: 84a0e0593199134740368157dc1dd614a0a46739 $
+/* $Id: 545bfeb2d037654c94412444eb8586d1fbe06767 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -67,7 +67,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Actor} can handle multiple {@link Transaction} types or kinds
  * 
- * @version $Id: 84a0e0593199134740368157dc1dd614a0a46739 $
+ * @version $Id: 545bfeb2d037654c94412444eb8586d1fbe06767 $
  * @author Rick van Krevelen
  */
 public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
@@ -865,7 +865,7 @@ public interface Actor<F extends Fact> extends Identified.Ordinal<Actor.ID>,
 	/**
 	 * {@link Factory} should ensure that created Actor.IDs are globally unique
 	 * 
-	 * @version $Id: 84a0e0593199134740368157dc1dd614a0a46739 $
+	 * @version $Id: 545bfeb2d037654c94412444eb8586d1fbe06767 $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory extends LocalContextual

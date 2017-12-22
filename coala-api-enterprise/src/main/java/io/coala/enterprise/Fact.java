@@ -1,4 +1,4 @@
-/* $Id: f06fe9dae625cd8ea1c78fb6e3ddecf36d3f3750 $
+/* $Id: aa60aad14ac05e5d186e361434a7ea00eb4ca4c4 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -80,7 +80,7 @@ import io.reactivex.Observer;
 /**
  * {@link Fact}
  * 
- * @version $Id: f06fe9dae625cd8ea1c78fb6e3ddecf36d3f3750 $
+ * @version $Id: aa60aad14ac05e5d186e361434a7ea00eb4ca4c4 $
  * @author Rick van Krevelen
  */
 public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
@@ -627,7 +627,7 @@ public interface Fact extends Identified.Ordinal<Fact.ID>, Persistable<FactDao>,
 	/**
 	 * {@link Factory}
 	 * 
-	 * @version $Id: f06fe9dae625cd8ea1c78fb6e3ddecf36d3f3750 $
+	 * @version $Id: aa60aad14ac05e5d186e361434a7ea00eb4ca4c4 $
 	 * @author Rick van Krevelen
 	 */
 	interface Factory

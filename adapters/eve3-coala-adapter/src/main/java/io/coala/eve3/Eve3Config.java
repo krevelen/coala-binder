@@ -1,4 +1,4 @@
-/* $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
+/* $Id: fb69241d05ed885974ecab5db634c312f0a25453 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -55,7 +55,7 @@ import io.coala.util.FileUtil;
 /**
  * {@link Eve3Config}
  * 
- * @version $Id: b3752a83c21eae03a6823438121a4c70ae5a140e $
+ * @version $Id: fb69241d05ed885974ecab5db634c312f0a25453 $
  * @author Rick van Krevelen
  */
 public interface Eve3Config extends GlobalConfig, Mutable
@@ -201,7 +201,7 @@ public interface Eve3Config extends GlobalConfig, Mutable
 	/**
 	 * {@link AgentBuilderConfig}
 	 * 
-	 * @version $Id$
+	 * @version $Id: fb69241d05ed885974ecab5db634c312f0a25453 $
 	 * @author Rick van Krevelen
 	 */
 	interface AgentBuilderConfig extends LocalConfig
@@ -234,7 +234,7 @@ public interface Eve3Config extends GlobalConfig, Mutable
 	/**
 	 * {@link DefaultAgentBuilderConfig}
 	 * 
-	 * @version $Id$
+	 * @version $Id: fb69241d05ed885974ecab5db634c312f0a25453 $
 	 * @author Rick van Krevelen
 	 */
 	interface DefaultAgentBuilderConfig extends AgentBuilderConfig

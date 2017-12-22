@@ -18,7 +18,7 @@ import io.coala.json.JsonUtil;
 /**
  * {@link TimingTest}
  * 
- * @version $Id: 44fed16f2368cf0e2f826585d7b9e1902919166d $
+ * @version $Id: ee4603c0f87c6f272e782d4892f92806db9f327c $
  * @author Rick van Krevelen
  */
 public class TimingTest

@@ -1,4 +1,4 @@
-/* $Id: 8c9473f02ba2ddb5a321b89c76cbfb26bcd149f6 $
+/* $Id: c9a87ba763bfe7c6aff6a8f5de1bdca019a0d548 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -600,7 +600,6 @@ public interface Table<T extends Table.Tuple>
 							: toMap( Arrays.stream( properties ) );
 		}
 
-		@SuppressWarnings( "unchecked" )
 		public Map<Class<? extends Property>, Object>
 			toMap( final Iterable<Class<? extends Property>> properties )
 		{

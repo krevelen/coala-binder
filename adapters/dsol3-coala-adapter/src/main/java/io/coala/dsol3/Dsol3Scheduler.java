@@ -41,7 +41,7 @@ import nl.tudelft.simulation.dsol.simulators.SimulatorInterface;
  * {@link Dsol3Scheduler} wraps a {@link DEVSSimulator} in a {@link Scheduler}
  * using {@link BigDecimal} time precision and any {@link Unit} time units
  * 
- * @version $Id: 8477923ef5a9a531d278d6e729079fc3f72e77bb $
+ * @version $Id: 49142c324219249bfdb8d5bdd1f74b54552edd53 $
  * @author Rick van Krevelen
  */
 @Singleton

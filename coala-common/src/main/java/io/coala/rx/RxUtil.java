@@ -1,4 +1,4 @@
-/* $Id: 22ed904f25e18843f1aa37b5e6644038453c9d75 $
+/* $Id: 1985d4f78badb6ddf5ae4821a1131efbc50e0895 $
  *  
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,7 +33,7 @@ import io.reactivex.functions.Function;
  * {@link RxUtil} provides some
  * <a href="https://github.com/Netflix/RxJava/wiki">RxJava</a>-related utilities
  * 
- * @version $Id$
+ * @version $Id: 1985d4f78badb6ddf5ae4821a1131efbc50e0895 $
  * @author Rick van Krevelen
  */
 public class RxUtil implements Util
@@ -56,7 +56,7 @@ public class RxUtil implements Util
 	 * 
 	 * @param <T> the input value type
 	 * @param <R> the result type
-	 * @version $Id$
+	 * @version $Id: 1985d4f78badb6ddf5ae4821a1131efbc50e0895 $
 	 * @author Rick van Krevelen
 	 */
 	public static interface ThrowingFunc1<T, R> extends Function<T, R>

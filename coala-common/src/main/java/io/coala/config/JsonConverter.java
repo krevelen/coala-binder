@@ -1,4 +1,4 @@
-/* $Id: 8fad8f633ea3b7ddc70ba233b570d9d510a017e9 $
+/* $Id: f72f19c87e997baef47903c8d71facb597eea58b $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -28,7 +28,7 @@ import io.coala.json.JsonUtil;
 /**
  * {@link JsonConverter} is a JSON-string {@link Converter} to the expected type
  * 
- * @version $Id: 8fad8f633ea3b7ddc70ba233b570d9d510a017e9 $
+ * @version $Id: f72f19c87e997baef47903c8d71facb597eea58b $
  * @author Rick van Krevelen
  */
 public class JsonConverter implements Converter<Object>

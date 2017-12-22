@@ -21,7 +21,7 @@ import io.coala.json.Wrapper;
  * 
  * @param <V> the concrete type of value
  * @param <W> the concrete type of weight {@link Number}
- * @version $Id: a7842c5dc1c8963fe6c9721cdcda6c3b21980bb0 $
+ * @version $Id: 467bd7b818e195be388f53ab1f2ffbf4636a1e88 $
  * @author Rick van Krevelen
  */
 public class WeightedValue<V> extends Wrapper.Simple<V> implements Serializable

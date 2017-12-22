@@ -12,7 +12,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Signal} produces values over some (in)finite interval for some period
  * 
- * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
+ * @version $Id: b9733afe0885ab9fd660c519391a18a9c815a59c $
  * @author Rick van Krevelen
  */
 public interface Signal<T> extends Proactive
@@ -166,7 +166,7 @@ public interface Signal<T> extends Proactive
 	 * {@link Comparable} values
 	 * 
 	 * @param <T> the type of {@link Comparable} value being signaled
-	 * @version $Id: 7d659c9403f5fb9639efb5aca3a7555665b7f6b6 $
+	 * @version $Id: b9733afe0885ab9fd660c519391a18a9c815a59c $
 	 * @author Rick van Krevelen
 	 */
 	class SimpleOrdinal<T extends Comparable<? super T>> extends Simple<T>

@@ -19,7 +19,7 @@ import io.reactivex.Observable;
  * and RDATEs}
  * 
  * @param <T> the type of value being timed
- * @version $Id: 3f259d90e612644155e22a31efa504fedef959c0 $
+ * @version $Id: e4549ddea004fbe7e39640cac8e443a908783d31 $
  * @author Rick van Krevelen
  * @see Timing
  */

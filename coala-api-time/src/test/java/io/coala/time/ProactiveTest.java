@@ -1,4 +1,4 @@
-/* $Id: ded717d12ec0e332fc68d22797ac203f45f182d6 $
+/* $Id: 6277d09a29f8b5f28a3451ad37cefebb42e54efd $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -32,7 +32,7 @@ import org.junit.Test;
 /**
  * {@link ProactiveTest}
  * 
- * @version $Id: ded717d12ec0e332fc68d22797ac203f45f182d6 $
+ * @version $Id: 6277d09a29f8b5f28a3451ad37cefebb42e54efd $
  * @author Rick van Krevelen
  */
 public class ProactiveTest

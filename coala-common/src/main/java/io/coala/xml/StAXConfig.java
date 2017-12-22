@@ -1,4 +1,4 @@
-/* $Id: c7b9e3cba904231b99e3ca922c6cfa5565e0897e $
+/* $Id: b8d074110a052aa4099af0f651d94410ffe8f661 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -33,7 +33,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link StAXConfig}
  * 
- * @version $Id: c7b9e3cba904231b99e3ca922c6cfa5565e0897e $
+ * @version $Id: b8d074110a052aa4099af0f651d94410ffe8f661 $
  * @author Rick van Krevelen
  */
 @LoadPolicy( LoadType.MERGE )

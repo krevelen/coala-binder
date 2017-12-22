@@ -1,4 +1,4 @@
-/* $Id: 6e7cdc7950694a38c5d755cb565960e03c007784 $
+/* $Id: f737abd1830ce1deafe05e916d8a6933fd0d4fd8 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -36,7 +36,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link InstantTest}
  * 
- * @version $Id: 6e7cdc7950694a38c5d755cb565960e03c007784 $
+ * @version $Id: f737abd1830ce1deafe05e916d8a6933fd0d4fd8 $
  * @author Rick van Krevelen
  */
 public class InstantTest

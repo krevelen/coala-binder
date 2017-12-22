@@ -19,7 +19,7 @@ import io.coala.json.JsonUtil;
  * {@link Instantiator}
  * 
  * @param <T>
- * @version $Id: b7a09b219ad1ad447cb695b30be4186fd2a46179 $
+ * @version $Id: 934a5ff588ef7f55fbe5eabfd0fa7fc9a23637a5 $
  * @author Rick van Krevelen
  */
 public class Instantiator<T>

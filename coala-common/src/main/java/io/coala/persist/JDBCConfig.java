@@ -1,4 +1,4 @@
-/* $Id: 65c3234b967cdc71198de42cc309c1391c55f57b $
+/* $Id: 4bf5b5cca256272f37a586f0e3e728d47890a500 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -48,7 +48,7 @@ import io.reactivex.Single;
 /**
  * {@link JDBCConfig}
  * 
- * @version $Id: 65c3234b967cdc71198de42cc309c1391c55f57b $
+ * @version $Id: 4bf5b5cca256272f37a586f0e3e728d47890a500 $
  * @author Rick van Krevelen
  */
 @Sources( "classpath:jdbc.properties" )

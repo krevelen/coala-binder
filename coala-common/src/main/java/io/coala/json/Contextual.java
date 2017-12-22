@@ -1,4 +1,4 @@
-/* $Id: 86b29591d7882848883604bf4871baced695fb20 $
+/* $Id: e85337757927d515113f3281de855db5335a890f $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
  * number information, e.g. UUIDs), time-stamps, number of retries, time-outs,
  * etc.
  * 
- * @version $Id$
+ * @version $Id: e85337757927d515113f3281de855db5335a890f $
  * @author Rick van Krevelen
  */
 //@JsonTypeInfo( use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
@@ -53,7 +53,7 @@ public interface Contextual
 	 * {@link Context} exposes some protected methods inherited from
 	 * {@link DynaBean}
 	 * 
-	 * @version $Id$
+	 * @version $Id: e85337757927d515113f3281de855db5335a890f $
 	 * @author Rick van Krevelen
 	 */
 	public class Context //extends DynaBean
@@ -88,7 +88,7 @@ public interface Contextual
 		/**
 		 * {@link ConfigConverter}
 		 * 
-		 * @version $Id$
+		 * @version $Id: e85337757927d515113f3281de855db5335a890f $
 		 * @author Rick van Krevelen
 		 */
 		public static class ConfigConverter implements Converter<Context>

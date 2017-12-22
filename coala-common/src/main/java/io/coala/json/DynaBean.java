@@ -1,4 +1,4 @@
-/* $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
+/* $Id: 9aa95f266f44246a9109c47c32971f2658d49c57 $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -83,7 +83,7 @@ import io.coala.util.TypeArguments;
  * <p>
  * NOT THREAD-SAFE
  * 
- * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
+ * @version $Id: 9aa95f266f44246a9109c47c32971f2658d49c57 $
  * @author Rick van Krevelen
  */
 @SuppressWarnings( "rawtypes" )
@@ -96,7 +96,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 * entities/tags during de/serialization and specify the property to use for
 	 * {@link Comparable}s
 	 * 
-	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
+	 * @version $Id: 9aa95f266f44246a9109c47c32971f2658d49c57 $
 	 * @author Rick van Krevelen
 	 */
 	@Documented
@@ -297,7 +297,7 @@ public final class DynaBean implements Cloneable, Comparable
 	/**
 	 * {@link DynaBeanInvocationHandler}
 	 * 
-	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
+	 * @version $Id: 9aa95f266f44246a9109c47c32971f2658d49c57 $
 	 * @author Rick van Krevelen
 	 */
 	static class DynaBeanInvocationHandler implements InvocationHandler
@@ -835,7 +835,7 @@ public final class DynaBean implements Cloneable, Comparable
 	 * {@link ProxyProvider}
 	 * 
 	 * @param <T>
-	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
+	 * @version $Id: 9aa95f266f44246a9109c47c32971f2658d49c57 $
 	 * @author Rick van Krevelen
 	 */
 	public static class ProxyProvider<T> implements Provider<T>
@@ -953,7 +953,7 @@ public final class DynaBean implements Cloneable, Comparable
 //	 * 
 //	 * @param <T> the result type
 //	 * @param <THIS> the builder type
-//	 * @version $Id: ef3fdccd265ebdcd1fa53df1afb494764cbf664c $
+//	 * @version $Id: 9aa95f266f44246a9109c47c32971f2658d49c57 $
 //	 * @author Rick van Krevelen
 //	 */
 //	public static class Builder<T, THIS extends Builder<T, THIS>>

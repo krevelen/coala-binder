@@ -1,4 +1,4 @@
-/* $Id: 1887ca37caeee0492a6f9db1125983a28081836e $
+/* $Id: f9ab0d28d2eb1475477f9a4ac26f6cfef5f474fa $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -30,7 +30,7 @@ import java.util.function.Supplier;
 /**
  * {@link Thrower}
  * 
- * @version $Id: 1887ca37caeee0492a6f9db1125983a28081836e $
+ * @version $Id: f9ab0d28d2eb1475477f9a4ac26f6cfef5f474fa $
  * @author Rick van Krevelen
  */
 public class Thrower

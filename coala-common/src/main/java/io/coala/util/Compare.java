@@ -7,7 +7,7 @@ import java.util.Objects;
  * {@link Compare} is a utility class with {@link Comparable#compareTo(Object)}
  * short-hands
  * 
- * @version $Id: a0207df194ab3dfb15dec0e9590283a669114248 $
+ * @version $Id: ba15828e9f458e2d20d24cdf65bdbbf6644e07c6 $
  * @author Rick van Krevelen
  * @see Comparator#naturalOrder()
  */

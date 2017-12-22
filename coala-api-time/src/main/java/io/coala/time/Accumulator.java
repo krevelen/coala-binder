@@ -1,4 +1,4 @@
-/* $Id: 3c1bb7eab4725ffbc8a549da6b73f785a96e3e42 $
+/* $Id: c42c818be7ac37e941ca94c96ac25f1a01b74baa $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -39,7 +39,7 @@ import io.reactivex.subjects.Subject;
  * FIXME extend Indicator ?
  * 
  * @param <Q> the type of accumulated {@link Quantity}
- * @version $Id: 3c1bb7eab4725ffbc8a549da6b73f785a96e3e42 $
+ * @version $Id: c42c818be7ac37e941ca94c96ac25f1a01b74baa $
  * @author Rick van Krevelen
  */
 public class Accumulator<Q extends Quantity<Q>> implements Proactive

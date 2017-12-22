@@ -40,7 +40,7 @@ import io.coala.util.ReflectUtil;
  * 
  * TODO specialized logging adding e.g. Timed#now() and Identified#id()
  * 
- * @version $Id: 9a21f6e234cfe4399ef1aca7bf576fef5b1be033 $
+ * @version $Id: 51002a696ffbf1ab847b1ea28bd553c408d26a02 $
  * @author Rick van Krevelen
  */
 public class EnterpriseTest

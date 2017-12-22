@@ -1,4 +1,4 @@
-/* $Id: 7737851fe4a7f43d24e1968cf145cacf66dddfe3 $
+/* $Id: 27c637b196be24dd0bf8bd6cb967448d1aec5fe7 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -62,7 +62,7 @@ import io.reactivex.subjects.Subject;
  * their expiration handling
  * 
  * @param <F> the type of {@link Fact} representing the transaction kind
- * @version $Id: 7737851fe4a7f43d24e1968cf145cacf66dddfe3 $
+ * @version $Id: 27c637b196be24dd0bf8bd6cb967448d1aec5fe7 $
  * @author Rick van Krevelen
  */
 public interface Transaction<F extends Fact>
@@ -141,7 +141,7 @@ public interface Transaction<F extends Fact>
 	/**
 	 * {@link ID}
 	 * 
-	 * @version $Id: 7737851fe4a7f43d24e1968cf145cacf66dddfe3 $
+	 * @version $Id: 27c637b196be24dd0bf8bd6cb967448d1aec5fe7 $
 	 * @author Rick van Krevelen
 	 */
 	@JsonDeserialize( converter = ID.FromStringConverter.class )

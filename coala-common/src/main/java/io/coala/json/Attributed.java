@@ -1,4 +1,4 @@
-/* $Id: db5051646ed8357e0d1cb29bd6a47d5b78eab29b $
+/* $Id: 9230af8f82d958e5449ced56e3dc62f311223f16 $
  * 
  * Part of ZonMW project no. 50-53000-98-156
  * 
@@ -35,7 +35,7 @@ import io.reactivex.subjects.Subject;
 /**
  * {@link Attributed} tags JSON compatible java beans
  * 
- * @version $Id: db5051646ed8357e0d1cb29bd6a47d5b78eab29b $
+ * @version $Id: 9230af8f82d958e5449ced56e3dc62f311223f16 $
  * @author Rick van Krevelen
  */
 public interface Attributed

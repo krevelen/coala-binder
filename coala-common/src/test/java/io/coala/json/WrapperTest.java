@@ -25,7 +25,7 @@ import io.coala.log.LogUtil;
 /**
  * {@link WrapperTest} tests various {@link Wrapper} usages
  * 
- * @version $Id: 20a533399b4b4e3055bdb44d7a92137e63ea1c6f $
+ * @version $Id: 4b7ebf614f7e4aa3a1d42083f985f2777a12afbc $
  * @author Rick van Krevelen
  */
 public class WrapperTest
@@ -37,7 +37,7 @@ public class WrapperTest
 	/**
 	 * {@link MySimpleWrapper} decorates any {@link Object}
 	 * 
-	 * @version $Id: 20a533399b4b4e3055bdb44d7a92137e63ea1c6f $
+	 * @version $Id: 4b7ebf614f7e4aa3a1d42083f985f2777a12afbc $
 	 * @author Rick van Krevelen
 	 */
 	public static class MySimpleWrapper extends Wrapper.Simple<Object>
@@ -87,7 +87,7 @@ public class WrapperTest
 	/**
 	 * {@link MyPolymorphNumberWrapper} decorates any {@link Number}
 	 * 
-	 * @version $Id: 20a533399b4b4e3055bdb44d7a92137e63ea1c6f $
+	 * @version $Id: 4b7ebf614f7e4aa3a1d42083f985f2777a12afbc $
 	 * @author Rick van Krevelen
 	 */
 	@JavaPolymorph( stringAs = MyImaginaryNumber.class,
@@ -115,7 +115,7 @@ public class WrapperTest
 	/**
 	 * {@link MyImaginaryNumber} decorates imaginary number values
 	 * 
-	 * @version $Id: 20a533399b4b4e3055bdb44d7a92137e63ea1c6f $
+	 * @version $Id: 4b7ebf614f7e4aa3a1d42083f985f2777a12afbc $
 	 * @author Rick van Krevelen
 	 */
 	public static class MyImaginaryNumber extends Number

@@ -1,4 +1,4 @@
-/* $Id: bfadf655bd8008aafea9b9abf73eab34d7701718 $
+/* $Id: 63dbfe3c7b33783ed0e0de485d21717c0a276a0e $
  * 
  * @license
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -52,7 +52,7 @@ import io.reactivex.Observable;
 /**
  * {@link Math3Test}
  * 
- * @version $Id: bfadf655bd8008aafea9b9abf73eab34d7701718 $
+ * @version $Id: 63dbfe3c7b33783ed0e0de485d21717c0a276a0e $
  * @author Rick van Krevelen
  */
 public class Math3Test
